@@ -1,0 +1,25 @@
+{
+	"name": "@techstream/worker",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"lint": "biome format --write && biome check --write"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"packageManager": "pnpm@10.12.1",
+	"dependencies": {
+		"@techstream/db": "workspace:*",
+		"@techstream/jobs": "workspace:*",
+		"bullmq": "^5.64.1",
+		"dotenv": "^17.2.3"
+	},
+	"devDependencies": {
+		"@techstream/config": "workspace:*",
+		"@types/node": "^24.10.1",
+		"tsx": "^4.20.6"
+	}
+}

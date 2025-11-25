@@ -1,0 +1,22 @@
+{
+	"name": "@techstream/db",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"lint": "biome format --write && biome check --write",
+		"db:generate": "prisma generate"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"packageManager": "pnpm@10.12.1",
+	"devDependencies": {
+		"@techstream/config": "workspace:*",
+		"prisma": "^7.0.0"
+	},
+	"dependencies": {
+		"@prisma/client": "^7.0.0"
+	}
+}

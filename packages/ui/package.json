@@ -1,0 +1,22 @@
+{
+	"name": "@techstream/ui",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"lint": "biome format --write && biome check --write"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"packageManager": "pnpm@10.12.1",
+	"devDependencies": {
+		"@techstream/config": "workspace:*",
+		"@types/react": "^19.2.7",
+		"@types/react-dom": "^19.2.3",
+		"react": "19.2.0",
+		"react-dom": "19.2.0",
+		"typescript": "^5.9.3"
+	}
+}
