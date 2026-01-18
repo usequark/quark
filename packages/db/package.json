@@ -1,10 +1,9 @@
 {
 	"name": "@techstream/db",
-	"version": "1.0.0",
-	"description": "",
-	"main": "index.js",
+	"version": "1.0.0",	"type": "module",	"description": "",
+	"main": "src/index.ts",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1",
+		"test": "node --test src/**/*.test.js",
 		"lint": "biome format --write && biome check --write",
 		"db:generate": "prisma generate"
 	},

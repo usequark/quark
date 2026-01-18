@@ -1,10 +1,12 @@
 {
 	"name": "@techstream/worker",
 	"version": "1.0.0",
+	"type": "module",
 	"description": "",
 	"main": "index.js",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1",
+		"test": "node --test src/**/*.test.js",
+		"dev": "tsx watch src/index.js",
 		"lint": "biome format --write && biome check --write"
 	},
 	"keywords": [],

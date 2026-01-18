@@ -1,16 +1,13 @@
 {
   "name": "@techstream/config",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "version": "1.0.0",  "type": "module",  "description": "",
+  "main": "src/index.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test src/**/*.test.js",
+    "lint": "biome format --write && biome check --write"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.12.1",
-  "devDependencies": {
-    "typescript": "^5.9.3"
-  }
+  "packageManager": "pnpm@10.12.1"
 }

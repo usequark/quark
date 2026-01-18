@@ -12,3 +12,23 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  posts     Post[]
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  title     String
+  content   String?
+  published Boolean  @default(false)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
