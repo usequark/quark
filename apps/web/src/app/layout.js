@@ -1,7 +1,7 @@
 import React from "react";
 
 export const metadata = {
-  title: "TechStream Core",
+  title: "Quark",
   description: "A modern monorepo with Next.js, React, and Prisma",
 };
 

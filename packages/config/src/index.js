@@ -1,3 +1,3 @@
 export const config = {
-  appName: "TechStream",
+  appName: "Quark",
 };

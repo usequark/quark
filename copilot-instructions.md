@@ -1,4 +1,4 @@
-# Developer Onboarding — Techstream Monorepo
+# Developer Onboarding — Quark Monorepo
 
 ## Quick start
 

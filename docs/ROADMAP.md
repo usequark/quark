@@ -1,8 +1,8 @@
-# TechStream Monorepo Expansion Roadmap
+# Quark Monorepo Expansion Roadmap
 
 ## Executive Summary
 
-This document outlines a comprehensive plan to expand the TechStream monorepo based on the current architecture analysis and the following requirements:
+This document outlines a comprehensive plan to expand the Quark monorepo based on the current architecture analysis and the following requirements:
 
 1. **UI Playground** - Interactive testing environment for UI components
 2. **Worker Playground** - Testing environment for job queue features
@@ -17,7 +17,7 @@ This document outlines a comprehensive plan to expand the TechStream monorepo ba
 ### Existing Structure
 
 ```
-techstream-core/
+quark/
 ├── apps/
 │   ├── web/          # Next.js application (basic NextAuth setup)
 │   └── worker/       # BullMQ worker (single email queue)
@@ -33,10 +33,10 @@ techstream-core/
 
 | Package | Status | Completeness |
 |---------|--------|--------------|
-| `@techstream/config` | ⚠️ Minimal | ~10% - Only `appName` defined |
-| `@techstream/db` | ⚠️ Basic | ~25% - Basic User/Post models, no auth tables |
-| `@techstream/jobs` | ⚠️ Basic | ~15% - Single email queue |
-| `@techstream/ui` | ⚠️ Basic | ~10% - Single Button component |
+| `@quark/config` | ⚠️ Minimal | ~10% - Only `appName` defined |
+| `@quark/db` | ⚠️ Basic | ~25% - Basic User/Post models, no auth tables |
+| `@quark/jobs` | ⚠️ Basic | ~15% - Single email queue |
+| `@quark/ui` | ⚠️ Basic | ~10% - Single Button component |
 | `apps/web` | ⚠️ Basic | ~20% - Stub NextAuth with credentials only |
 | `apps/worker` | ✅ Functional | ~40% - Working BullMQ worker |
 
@@ -53,7 +53,7 @@ techstream-core/
 ### New Directory Structure
 
 ```
-techstream-core/
+quark/
 ├── apps/
 │   ├── web/                    # Main Next.js application
 │   ├── worker/                 # BullMQ worker process
@@ -224,7 +224,7 @@ apps/worker-playground/
 
 ```typescript
 // Job Creator with type safety
-import { JOB_QUEUES, JOB_NAMES, EmailJobData } from "@techstream/jobs";
+import { JOB_QUEUES, JOB_NAMES, EmailJobData } from "@quark/jobs";
 
 function EmailJobCreator() {
   const [formData, setFormData] = useState<EmailJobData>({
@@ -421,13 +421,13 @@ For very large projects with distinct bounded contexts:
 
 ```
 packages/
-├── db-auth/           # @techstream/db-auth
+├── db-auth/           # @quark/db-auth
 │   └── prisma/
 │       └── schema.prisma
-├── db-content/        # @techstream/db-content
+├── db-content/        # @quark/db-content
 │   └── prisma/
 │       └── schema.prisma
-└── db/                # @techstream/db (aggregates all)
+└── db/                # @quark/db (aggregates all)
 ```
 
 **Not recommended** unless you have 50+ models and multiple teams.
@@ -446,7 +446,7 @@ packages/
 
 ## Phase 4: Expanded Package Code (Priority: Medium)
 
-### 4.1 Enhanced `@techstream/config`
+### 4.1 Enhanced `@quark/config`
 
 ```typescript
 // packages/config/src/index.ts
@@ -481,7 +481,7 @@ export const env = envSchema.parse(process.env);
 
 // Application config
 export const config = {
-  appName: "TechStream",
+  appName: "Quark",
   appUrl: env.NEXTAUTH_URL,
   
   features: {
@@ -511,7 +511,7 @@ export const features = {
 } as const;
 ```
 
-### 4.2 Enhanced `@techstream/db`
+### 4.2 Enhanced `@quark/db`
 
 ```typescript
 // packages/db/src/queries.ts
@@ -646,7 +646,7 @@ export const posts = {
 export const transaction = prisma.$transaction.bind(prisma);
 ```
 
-### 4.3 Enhanced `@techstream/jobs`
+### 4.3 Enhanced `@quark/jobs`
 
 ```typescript
 // packages/jobs/src/definitions.ts
@@ -773,7 +773,7 @@ export const CRON_SCHEDULES = {
 } as const;
 ```
 
-### 4.4 Enhanced `@techstream/ui`
+### 4.4 Enhanced `@quark/ui`
 
 New components to add:
 
@@ -891,9 +891,9 @@ Input.displayName = "Input";
 #### 5.1 Install Dependencies
 
 ```bash
-pnpm add next-auth @auth/prisma-adapter --filter @techstream/web
-pnpm add bcryptjs --filter @techstream/web
-pnpm add -D @types/bcryptjs --filter @techstream/web
+pnpm add next-auth @auth/prisma-adapter --filter @quark/web
+pnpm add bcryptjs --filter @quark/web
+pnpm add -D @types/bcryptjs --filter @quark/web
 ```
 
 #### 5.2 Create Auth Package
@@ -916,7 +916,7 @@ packages/auth/
 ```typescript
 import { NextAuthOptions } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import { prisma } from "@techstream/db";
+import { prisma } from "@quark/db";
 import { providers } from "./providers";
 import { callbacks } from "./callbacks";
 
@@ -948,7 +948,7 @@ import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 import EmailProvider from "next-auth/providers/email";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { prisma } from "@techstream/db";
+import { prisma } from "@quark/db";
 import bcrypt from "bcryptjs";
 
 export const providers: Provider[] = [
@@ -1038,7 +1038,7 @@ export const providers: Provider[] = [
 
 ```typescript
 import { NextAuthOptions } from "next-auth";
-import { prisma } from "@techstream/db";
+import { prisma } from "@quark/db";
 
 export const callbacks: NextAuthOptions["callbacks"] = {
   async signIn({ user, account, profile }) {
@@ -1189,9 +1189,9 @@ apps/web/src/app/
 - [ ] Refactor Prisma schema (multi-file or sectioned)
 
 #### Sprint 2 (Week 2-3)
-- [ ] Expand `@techstream/config` with env validation
-- [ ] Expand `@techstream/db` with pagination and more queries
-- [ ] Expand `@techstream/jobs` with additional job types
+- [ ] Expand `@quark/config` with env validation
+- [ ] Expand `@quark/db` with pagination and more queries
+- [ ] Expand `@quark/jobs` with additional job types
 - [ ] Add more UI components
 
 #### Sprint 3 (Week 3-4)
@@ -1205,7 +1205,7 @@ apps/web/src/app/
 
 ## Additional Recommendations
 
-### 1. New Package: `@techstream/email`
+### 1. New Package: `@quark/email`
 
 For email templates and sending:
 
@@ -1224,7 +1224,7 @@ packages/email/
 
 Consider using [React Email](https://react.email/) for type-safe email templates.
 
-### 2. New Package: `@techstream/validators`
+### 2. New Package: `@quark/validators`
 
 Shared Zod schemas:
 

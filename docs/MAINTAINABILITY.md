@@ -1,8 +1,8 @@
-# TechStream Maintainability Guide
+# Quark Maintainability Guide
 
 ## Overview
 
-This document provides guidelines and best practices for maintaining projects built on the TechStream monorepo. Following these practices ensures long-term code health, reduces technical debt, and improves developer experience across teams.
+This document provides guidelines and best practices for maintaining projects built on the Quark monorepo. Following these practices ensures long-term code health, reduces technical debt, and improves developer experience across teams.
 
 ---
 
@@ -42,21 +42,21 @@ packages/example/
 
 | Package | Responsibility | Should NOT Contain |
 |---------|---------------|-------------------|
-| `@techstream/config` | App configuration, environment variables | Business logic, UI code |
-| `@techstream/db` | Database client, queries, Prisma schema | HTTP handlers, UI code |
-| `@techstream/jobs` | Job queue definitions, worker logic | Database queries, UI code |
-| `@techstream/ui` | Reusable UI components | Business logic, API calls |
+| `@quark/config` | App configuration, environment variables | Business logic, UI code |
+| `@quark/db` | Database client, queries, Prisma schema | HTTP handlers, UI code |
+| `@quark/jobs` | Job queue definitions, worker logic | Database queries, UI code |
+| `@quark/ui` | Reusable UI components | Business logic, API calls |
 
 ### Import Guidelines
 
 ```typescript
 // ✅ Good - Import from package public API
-import { Button } from "@techstream/ui";
-import { prisma, user } from "@techstream/db";
+import { Button } from "@quark/ui";
+import { prisma, user } from "@quark/db";
 
 // ❌ Bad - Deep imports bypass the public API
-import { Button } from "@techstream/ui/src/button";
-import { prisma } from "@techstream/db/src/client";
+import { Button } from "@quark/ui/src/button";
+import { prisma } from "@quark/db/src/client";
 ```
 
 ### Barrel Exports
@@ -84,8 +84,8 @@ Use workspace protocol for internal packages:
 ```json
 {
   "dependencies": {
-    "@techstream/ui": "workspace:*",
-    "@techstream/db": "workspace:*"
+    "@quark/ui": "workspace:*",
+    "@quark/db": "workspace:*"
   }
 }
 ```
@@ -194,7 +194,7 @@ pnpm test:coverage
 pnpm test:watch
 
 # Run tests for specific package
-pnpm test --filter @techstream/ui
+pnpm test --filter @quark/ui
 ```
 
 ### Test Naming Conventions
@@ -412,7 +412,7 @@ chore(deps): update prisma to v6.2.0
 
 ```typescript
 // Use structured logging
-import { logger } from "@techstream/config";
+import { logger } from "@quark/config";
 
 // ✅ Good - Structured with context
 logger.info("User created", { 
@@ -522,7 +522,7 @@ async function getUserPosts(userId: string) {
   return posts;
 }
 
-// After: Centralized in @techstream/db
+// After: Centralized in @quark/db
 // packages/db/src/queries.ts
 export const post = {
   findByAuthor: (authorId: string) =>
@@ -583,7 +583,7 @@ Maintain a list of known technical debt:
 git checkout -b chore/upgrade-next-16
 
 # 2. Update package versions
-pnpm update next@latest --filter @techstream/web
+pnpm update next@latest --filter @quark/web
 
 # 3. Run tests
 pnpm test
@@ -645,7 +645,7 @@ export function getUserById(id: string) {
 2. Create `package.json`:
    ```json
    {
-     "name": "@techstream/new-package",
+     "name": "@quark/new-package",
      "version": "0.0.0",
      "private": true,
      "main": "./src/index.ts",
@@ -713,7 +713,7 @@ turbo run build --dry-run
 
 ```bash
 # Analyze web bundle
-pnpm --filter @techstream/web analyze
+pnpm --filter @quark/web analyze
 
 # Check for duplicate dependencies
 pnpm dedupe

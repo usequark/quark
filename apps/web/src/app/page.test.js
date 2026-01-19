@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert";
 
-test("Home Page - should have TechStream defined", () => {
-  assert.ok("TechStream Core");
+test("Home Page - should have Quark defined", () => {
+  assert.ok("Quark");
 });
 
 test("Home Page - page module exists", () => {

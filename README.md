@@ -1,8 +1,8 @@
-# TechStream Core
+# Quark
 
 ## Overview
 
-TechStream Core is a modern monorepo built with Turborepo, Next.js, and Prisma.
+Quark is a modern monorepo built with Turborepo, Next.js, and Prisma.
 
 ## Architecture
 

@@ -1,5 +1,5 @@
 {
-	"name": "@techstream/db",
+	"name": "@quark/db",
 	"version": "1.0.0",	"type": "module",	"description": "",
 	"main": "src/index.ts",
 	"scripts": {
@@ -12,7 +12,7 @@
 	"license": "ISC",
 	"packageManager": "pnpm@10.12.1",
 	"devDependencies": {
-		"@techstream/config": "workspace:*",
+		"@quark/config": "workspace:*",
 		"prisma": "^7.0.0"
 	},
 	"dependencies": {

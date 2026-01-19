@@ -1,5 +1,5 @@
 {
-	"name": "@techstream/web",
+	"name": "@quark/web",
 	"version": "0.1.0",
 	"type": "module",
 	"private": true,
@@ -11,9 +11,9 @@
 		"lint": "biome format --write && biome check --write"
 	},
 	"dependencies": {
-		"@techstream/db": "workspace:*",
-		"@techstream/jobs": "workspace:*",
-		"@techstream/ui": "workspace:*",
+		"@quark/db": "workspace:*",
+		"@quark/jobs": "workspace:*",
+		"@quark/ui": "workspace:*",
 		"next": "16.0.4",
 		"next-auth": "^4.24.13",
 		"react": "19.2.0",
@@ -21,7 +21,7 @@
 	},
 	"devDependencies": {
 		"@tailwindcss/postcss": "^4",
-		"@techstream/config": "workspace:*",
+		"@quark/config": "workspace:*",
 		"@types/node": "^20",
 		"tailwindcss": "^4"
 	}

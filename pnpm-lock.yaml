@@ -23,13 +23,13 @@ importers:
 
   apps/web:
     dependencies:
-      '@techstream/db':
+      '@quark/db':
         specifier: workspace:*
         version: link:../../packages/db
-      '@techstream/jobs':
+      '@quark/jobs':
         specifier: workspace:*
         version: link:../../packages/jobs
-      '@techstream/ui':
+      '@quark/ui':
         specifier: workspace:*
         version: link:../../packages/ui
       next:
@@ -45,12 +45,12 @@ importers:
         specifier: 19.2.0
         version: 19.2.0(react@19.2.0)
     devDependencies:
+      '@quark/config':
+        specifier: workspace:*
+        version: link:../../packages/config
       '@tailwindcss/postcss':
         specifier: ^4
         version: 4.1.17
-      '@techstream/config':
-        specifier: workspace:*
-        version: link:../../packages/config
       '@types/node':
         specifier: ^20
         version: 20.19.25
@@ -60,10 +60,10 @@ importers:
 
   apps/worker:
     dependencies:
-      '@techstream/db':
+      '@quark/db':
         specifier: workspace:*
         version: link:../../packages/db
-      '@techstream/jobs':
+      '@quark/jobs':
         specifier: workspace:*
         version: link:../../packages/jobs
       bullmq:
@@ -73,7 +73,7 @@ importers:
         specifier: ^17.2.3
         version: 17.2.3
     devDependencies:
-      '@techstream/config':
+      '@quark/config':
         specifier: workspace:*
         version: link:../../packages/config
       '@types/node':
@@ -91,7 +91,7 @@ importers:
         specifier: ^7.0.0
         version: 7.0.0(prisma@7.0.0(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3))(typescript@5.9.3)
     devDependencies:
-      '@techstream/config':
+      '@quark/config':
         specifier: workspace:*
         version: link:../config
       prisma:
@@ -106,7 +106,7 @@ importers:
 
   packages/ui:
     devDependencies:
-      '@techstream/config':
+      '@quark/config':
         specifier: workspace:*
         version: link:../config
       '@types/react':

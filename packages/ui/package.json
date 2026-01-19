@@ -1,5 +1,5 @@
 {
-	"name": "@techstream/ui",
+	"name": "@quark/ui",
 	"version": "1.0.0",
 	"type": "module",
 	"description": "",
@@ -13,7 +13,7 @@
 	"license": "ISC",
 	"packageManager": "pnpm@10.12.1",
 	"devDependencies": {
-		"@techstream/config": "workspace:*",
+		"@quark/config": "workspace:*",
 		"@types/react": "^19.2.7",
 		"@types/react-dom": "^19.2.3",
 		"react": "19.2.0",

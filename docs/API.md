@@ -1,8 +1,8 @@
-# TechStream API Documentation
+# Quark API Documentation
 
 ## Overview
 
-TechStream provides a REST API for interacting with the platform. Authentication is handled via NextAuth.js.
+Quark provides a REST API for interacting with the platform. Authentication is handled via NextAuth.js.
 
 ---
 
@@ -97,12 +97,12 @@ interface EmailJobData {
 
 ## Packages
 
-### @techstream/db
+### @quark/db
 
 Database client and query helpers.
 
 ```typescript
-import { prisma, user, post } from "@techstream/db";
+import { prisma, user, post } from "@quark/db";
 
 // Find user by ID
 const foundUser = await user.findById("cuid123");
@@ -120,12 +120,12 @@ const newPost = await post.create({ title: "My Post", authorId: "cuid123" });
 const publishedPosts = await post.findPublished();
 ```
 
-### @techstream/ui
+### @quark/ui
 
 Shared UI components.
 
 ```tsx
-import { Button } from "@techstream/ui";
+import { Button } from "@quark/ui";
 
 // Primary button (default)
 <Button>Click me</Button>
@@ -137,12 +137,12 @@ import { Button } from "@techstream/ui";
 <Button disabled onClick={() => {}}>Submit</Button>
 ```
 
-### @techstream/jobs
+### @quark/jobs
 
 Job queue definitions.
 
 ```typescript
-import { JOB_QUEUES, JOB_NAMES, EmailJobData } from "@techstream/jobs";
+import { JOB_QUEUES, JOB_NAMES, EmailJobData } from "@quark/jobs";
 
 // Queue names
 JOB_QUEUES.EMAIL // "email-queue"
@@ -151,14 +151,14 @@ JOB_QUEUES.EMAIL // "email-queue"
 JOB_NAMES.SEND_WELCOME_EMAIL // "send-welcome-email"
 ```
 
-### @techstream/config
+### @quark/config
 
 Shared configuration.
 
 ```typescript
-import { config } from "@techstream/config";
+import { config } from "@quark/config";
 
-config.appName // "TechStream"
+config.appName // "Quark"
 ```
 
 ---
