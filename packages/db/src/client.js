@@ -1,9 +1,5 @@
-import { PrismaClient } from "./generated/prisma/client.js";
+import { createDbClient } from "@quark/core";
 
-const globalForPrisma = globalThis;
-
-export const prisma = globalForPrisma.prisma || new PrismaClient({});
-
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+export const prisma = createDbClient();
 
 export * from "./generated/prisma/client.js";

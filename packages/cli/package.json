@@ -1,0 +1,13 @@
+{
+  "name": "@quark/create-app",
+  "version": "1.0.0",
+  "type": "module",
+  "bin": "src/index.js",
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "execa": "^9.4.1",
+    "fs-extra": "^11.2.0",
+    "prompts": "^2.4.2"
+  }
+}
