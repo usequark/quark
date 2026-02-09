@@ -48,9 +48,9 @@ Quark is a modern monorepo built with Turborepo, Next.js, and Prisma.
 
 ## Documentation
 
-- **[Implementation Checklist](./docs/IMPLEMENTATION_CHECKLIST.md)** - Complete task list with 93 items organized by priority (P1-P4)
 - **[Documentation Index](./docs/INDEX.md)** - Start here to navigate all documentation
-- **[Roadmap](./docs/ROADMAP.md)** - Long-term vision and strategic direction
-- **[Maintainability Guide](./docs/MAINTAINABILITY.md)** - Code style and best practices
+- **[Developer Guide](./copilot-instructions.md)** - Setup, conventions, and workflows
+- **[Architecture](./docs/ARCHITECTURE.md)** - Core design patterns and inheritance model
 - **[API Reference](./docs/API.md)** - API documentation and endpoints
-- **[Developer Onboarding](./copilot-instructions.md)** - Setup and conventions guide
+- **[Maintainability Guide](./docs/MAINTAINABILITY.md)** - Code style and best practices
+- **[Roadmap](./docs/ROADMAP.md)** - Long-term vision and strategic direction
