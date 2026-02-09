@@ -1,33 +1,95 @@
-# Quick Start — Starting a New Project from Quark
+# Quick Start — Creating a New Project with Quark
 
-This guide explains how to bootstrap a new project using the Quark monorepo as your base.
+Quark provides a **CLI tool** to scaffold new projects instantly with a full-stack setup.
 
-## Starting a New Project from Quark
+## Prerequisites
 
-### **Option 1: Clone Quark and customize**
+- Node.js 18+
+- pnpm 9+
+- Docker & Docker Compose (for local development)
 
-The simplest way to start a new project is to clone Quark and adapt it for your needs.
+## Create a New App (Fastest Way)
 
-#### **Step 1: Clone the repository**
+### **Step 1: Clone the Quark repository** (one-time setup)
+
 ```bash
-# Clone Quark (replace with your repo URL)
-git clone <quark-repo-url> my-new-project
-cd my-new-project
-```
-
-#### **Step 2: Remove the original git history**
-```bash
-# Start fresh with your own git history
-rm -rf .git
-git init
-git add .
-git commit -m "Initial commit from Quark template"
-```
-
-#### **Step 3: Install dependencies**
-```bash
+git clone <quark-repo-url> quark
+cd quark
 pnpm install
 ```
+
+### **Step 2: Create your new app**
+
+From the Quark repo root, run:
+
+```bash
+pnpm new my-awesome-app
+```
+
+This will:
+- Prompt you to select optional packages (UI, Jobs, Config)
+- Create a scaffolded project with the full Quark stack
+- Initialize git in the new project
+
+### **Step 3: Navigate to your app**
+
+```bash
+cd ../my-awesome-app
+```
+
+### **Step 4: Configure Environment**
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env`:
+- Set `NEXTAUTH_SECRET` (run `openssl rand -base64 32`)
+- (Optional) Add `GITHUB_ID` and `GITHUB_SECRET` for GitHub login
+
+### **Step 5: Start Services**
+
+```bash
+docker compose up -d
+```
+
+This starts PostgreSQL, Redis, and other services.
+
+### **Step 6: Initialize Database**
+
+```bash
+pnpm db:push    # Sync schema
+pnpm db:seed    # Seed test data
+```
+
+### **Step 7: Run Your App**
+
+```bash
+pnpm dev
+```
+
+Visit [http://localhost:3000](http://localhost:3000).
+
+---
+
+## Quick Test
+
+### Create a User
+
+```bash
+curl -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email": "dev@app.com", "password": "password123", "name": "Developer"}'
+```
+
+### Login
+
+Visit `http://localhost:3000/api/auth/signin` and use credentials above.
+
+### View Posts
+
+Once logged in, visit `http://localhost:3000/api/posts`.
+
 
 #### **Step 4: Set up environment variables**
 ```bash

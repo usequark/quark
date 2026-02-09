@@ -7,7 +7,7 @@
 	},
 	"files": {
 		"ignoreUnknown": false,
-		"includes": ["**", "!**/.next/**", "!**/dist/**", "!**/.turbo/**"]
+		"includes": ["**", "!**/.next/**", "!**/dist/**", "!**/.turbo/**", "!**/coverage/**"]
 	},
 	"formatter": {
 		"enabled": true,

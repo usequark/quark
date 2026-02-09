@@ -1,0 +1,26 @@
+{
+  "name": "@myquark/root",
+  "private": true,
+  "version": "1.0.0",
+  "description": "My Quark project",
+  "main": "index.js",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "db:generate": "turbo run db:generate"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.12.1",
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.13",
+    "@types/node": "^24.10.9",
+    "tsx": "^4.21.0",
+    "turbo": "^2.8.1"
+  }
+}

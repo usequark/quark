@@ -1,13 +1,15 @@
 {
-  "name": "@quark/config",
-  "version": "1.0.0",  "type": "module",  "description": "",
-  "main": "src/index.ts",
-  "scripts": {
-    "test": "node --test src/**/*.test.js",
-    "lint": "biome format --write && biome check --write"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "packageManager": "pnpm@10.12.1"
+	"name": "@quark/config",
+	"version": "1.0.0",
+	"type": "module",
+	"description": "",
+	"main": "src/index.js",
+	"scripts": {
+		"test": "node --test src/**/*.test.js",
+		"lint": "biome format --write && biome check --write"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"packageManager": "pnpm@10.12.1"
 }

@@ -1,17 +1,19 @@
 {
-  "name": "@quark/jobs",
-  "version": "1.0.0",  "type": "module",  "description": "",
-  "main": "src/index.ts",
-  "types": "src/index.ts",
-  "scripts": {
-    "test": "node --test src/**/*.test.js",
-    "lint": "biome format --write && biome check --write"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "packageManager": "pnpm@10.12.1",
-  "dependencies": {
-    "bullmq": "^5.64.1"
-  }
+	"name": "@quark/jobs",
+	"version": "1.0.0",
+	"type": "module",
+	"description": "",
+	"main": "src/index.ts",
+	"types": "src/index.ts",
+	"scripts": {
+		"test": "node --test src/**/*.test.js",
+		"lint": "biome format --write && biome check --write"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"packageManager": "pnpm@10.12.1",
+	"dependencies": {
+		"bullmq": "^5.64.1"
+	}
 }

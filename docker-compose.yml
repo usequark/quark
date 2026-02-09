@@ -1,42 +1,40 @@
-version: '3.8'
-
 services:
   # --- 1. PostgreSQL Database ---
   postgres:
     image: postgres:16-alpine
-    container_name: ts_postgres
+    container_name: postgres
     restart: always
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
-      - ts_postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
 
   # --- 2. Redis Cache & Job Queue ---
   redis:
     image: redis:7-alpine
-    container_name: ts_redis
+    container_name: redis
     restart: always
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     command: redis-server --appendonly yes
     volumes:
-      - ts_redis_data:/data
+      - redis_data:/data
 
   # --- 3. Mailhog (Local SMTP Server) ---
   mailhog:
     image: mailhog/mailhog
-    container_name: ts_mailhog
+    container_name: mailhog
     restart: always
     ports:
       # SMTP port (used by application to send mail)
-      - "1025:1025"
+      - "${MAILHOG_SMTP_PORT:-1025}:1025"
       # Web UI port (to view sent emails)
-      - "8025:8025"
+      - "${MAILHOG_UI_PORT:-8025}:8025"
 
 volumes:
-  ts_postgres_data:
-  ts_redis_data:
+  postgres_data:
+  redis_data:
