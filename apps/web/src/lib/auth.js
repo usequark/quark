@@ -5,7 +5,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GithubProvider from "next-auth/providers/github";
 
 const providers = [
-	CredentialsProvider.default({
+	CredentialsProvider({
 		name: "Credentials",
 		credentials: {
 			email: { label: "Email", type: "email" },
@@ -43,17 +43,19 @@ const providers = [
 
 if (process.env.GITHUB_ID && process.env.GITHUB_SECRET) {
 	providers.push(
-		GithubProvider.default({
+		GithubProvider({
 			clientId: process.env.GITHUB_ID,
 			clientSecret: process.env.GITHUB_SECRET,
 		}),
 	);
 }
 
-export const authOptions = createAuthConfig({
-	adapter: PrismaAdapter(prisma),
-	providers: providers,
-	session: {
-		strategy: "jwt",
-	},
-});
+export function getAuthOptions() {
+	return createAuthConfig({
+		adapter: PrismaAdapter(prisma),
+		providers: providers,
+		session: {
+			strategy: "jwt",
+		},
+	});
+}

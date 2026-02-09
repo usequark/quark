@@ -1,6 +1,4 @@
-import pkg from "@prisma/client";
-
-const { PrismaClient } = pkg;
+import { PrismaClient } from "@quark/db";
 
 /**
  * Creates a singleton Prisma client.

@@ -50,10 +50,12 @@ if (process.env.GITHUB_ID && process.env.GITHUB_SECRET) {
 	);
 }
 
-export const authOptions = createAuthConfig({
-	adapter: PrismaAdapter(prisma),
-	providers: providers,
-	session: {
-		strategy: "jwt",
-	},
-});
+export function getAuthOptions() {
+	return createAuthConfig({
+		adapter: PrismaAdapter(prisma),
+		providers: providers,
+		session: {
+			strategy: "jwt",
+		},
+	});
+}

@@ -4,6 +4,7 @@
  */
 
 import { Queue, QueueEvents, Worker } from "bullmq";
+import { ServiceError } from "../errors.js";
 
 /**
  * Default Redis configuration
@@ -128,7 +129,6 @@ export const addJob = async (queue, data, jobOptions = {}) => {
 		const job = await queue.add(queue.name, data, jobOptions);
 		return job;
 	} catch (error) {
-		const ServiceError = require("./errors.js").ServiceError;
 		throw new ServiceError(
 			"BullMQ",
 			`Failed to add job to queue "${queue.name}": ${error.message}`,

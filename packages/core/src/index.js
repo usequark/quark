@@ -7,6 +7,8 @@ export * from "./db/index.js";
 export * from "./errors.js";
 // Queue exports
 export * from "./queue/index.js";
+// Redis exports
+export * from "./redis.js";
 
 // Utility exports
 export * from "./utils.js";

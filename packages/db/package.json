@@ -22,8 +22,10 @@
 		"prisma": "^7.0.0"
 	},
 	"dependencies": {
+		"@prisma/adapter-pg": "^7.3.0",
 		"@prisma/client": "^7.0.0",
 		"dotenv": "^17.2.3",
+		"pg": "^8.18.0",
 		"zod": "^4.3.6"
 	}
 }
