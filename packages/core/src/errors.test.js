@@ -1,19 +1,19 @@
-import assert from "assert";
+import assert from "node:assert";
 import { test } from "node:test";
 import {
 	AppError,
-	ValidationError,
-	UnauthorizedError,
-	ForbiddenError,
-	NotFoundError,
 	ConflictError,
-	RateLimitError,
 	DatabaseError,
-	ServiceError,
+	ForbiddenError,
 	getErrorMessage,
 	getStatusCode,
-	normalizeError,
 	logError,
+	NotFoundError,
+	normalizeError,
+	RateLimitError,
+	ServiceError,
+	UnauthorizedError,
+	ValidationError,
 } from "../src/errors.js";
 
 test("Error Module", async (t) => {
@@ -88,9 +88,7 @@ test("Error Module", async (t) => {
 
 	await t.test("getErrorMessage extracts from various types", () => {
 		assert(getErrorMessage("string error") === "string error");
-		assert(
-			getErrorMessage(new Error("error message")) === "error message"
-		);
+		assert(getErrorMessage(new Error("error message")) === "error message");
 		assert(getErrorMessage({ message: "obj error" }) === "obj error");
 		assert(getErrorMessage({}).includes("unknown")); // Changed from null to empty object
 	});

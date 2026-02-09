@@ -3,9 +3,9 @@
  * Verifies the application and its dependencies are functioning correctly
  */
 
-import { NextResponse } from "next/server";
-import { prisma } from "@quark/db";
 import { redis } from "@quark/core";
+import { prisma } from "@quark/db";
+import { NextResponse } from "next/server";
 
 export async function GET() {
 	const health = {
@@ -50,7 +50,7 @@ export async function GET() {
 				timestamp: new Date().toISOString(),
 				message: error.message,
 			},
-			{ status: 500 }
+			{ status: 500 },
 		);
 	}
 }

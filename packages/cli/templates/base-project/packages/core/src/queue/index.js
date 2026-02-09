@@ -3,15 +3,15 @@
  * Provides BullMQ queue initialization and management
  */
 
-import { Queue, Worker, QueueEvents } from "bullmq";
+import { Queue, QueueEvents, Worker } from "bullmq";
 
 /**
  * Default Redis configuration
  */
 const DEFAULT_REDIS_CONFIG = {
 	host: process.env.REDIS_HOST || "localhost",
-	port: parseInt(process.env.REDIS_PORT || "6379"),
-	db: parseInt(process.env.REDIS_DB || "0"),
+	port: parseInt(process.env.REDIS_PORT || "6379", 10),
+	db: parseInt(process.env.REDIS_DB || "0", 10),
 	retryStrategy: (times) => {
 		const delay = Math.min(times * 50, 2000);
 		return delay;
@@ -94,7 +94,7 @@ export const createWorker = (queueName, handler, options = {}) => {
 	worker.on("failed", (job, error) => {
 		console.error(
 			`Job ${job.id} in queue "${queueName}" failed:`,
-			error.message
+			error.message,
 		);
 	});
 
@@ -108,10 +108,7 @@ export const createWorker = (queueName, handler, options = {}) => {
  * @returns {QueueEvents} BullMQ QueueEvents instance
  */
 export const createQueueEvents = (queueName, options = {}) => {
-	const {
-		redis = DEFAULT_REDIS_CONFIG,
-		...eventsOptions
-	} = options;
+	const { redis = DEFAULT_REDIS_CONFIG, ...eventsOptions } = options;
 
 	return new QueueEvents(queueName, {
 		connection: redis,
@@ -135,7 +132,7 @@ export const addJob = async (queue, data, jobOptions = {}) => {
 		throw new ServiceError(
 			"BullMQ",
 			`Failed to add job to queue "${queue.name}": ${error.message}`,
-			500
+			500,
 		);
 	}
 };

@@ -1,11 +1,11 @@
 {
-  "name": "@myquark/ui",
-  "version": "1.0.0",
-  "type": "module",
-  "exports": {
-    ".": "./src/index.js"
-  },
-  "devDependencies": {
-    "react": "^18.0.0"
-  }
+	"name": "@myquark/ui",
+	"version": "1.0.0",
+	"type": "module",
+	"exports": {
+		".": "./src/index.js"
+	},
+	"devDependencies": {
+		"react": "^18.0.0"
+	}
 }

@@ -30,10 +30,7 @@ export const retryAsync = async (fn, options = {}) => {
 			lastError = error;
 
 			if (attempt < maxAttempts) {
-				const delay = Math.min(
-					initialDelay * Math.pow(2, attempt - 1),
-					maxDelay
-				);
+				const delay = Math.min(initialDelay * 2 ** (attempt - 1), maxDelay);
 				if (onRetry) {
 					onRetry({ attempt, delay, error });
 				}
@@ -65,7 +62,7 @@ export const validateEnv = (vars) => {
 
 	if (missing.length > 0) {
 		throw new Error(
-			`Missing required environment variables: ${missing.join(", ")}`
+			`Missing required environment variables: ${missing.join(", ")}`,
 		);
 	}
 
@@ -115,7 +112,7 @@ export const isObject = (item) => {
 export const normalizeErrorMessage = (error) => {
 	if (typeof error === "string") return error;
 	if (error instanceof Error) return error.message;
-	if (error && error.message) return error.message;
+	if (error?.message) return error.message;
 	return "An unknown error occurred";
 };
 
@@ -127,7 +124,7 @@ export const normalizeErrorMessage = (error) => {
  */
 export const randomString = (
 	length = 16,
-	chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+	chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
 ) => {
 	let result = "";
 	for (let i = 0; i < length; i++) {
@@ -160,7 +157,7 @@ export const formatBytes = (bytes) => {
 	const sizes = ["Bytes", "KB", "MB", "GB"];
 	const i = Math.floor(Math.log(bytes) / Math.log(k));
 
-	return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
+	return `${Math.round((bytes / k ** i) * 100) / 100} ${sizes[i]}`;
 };
 
 /**

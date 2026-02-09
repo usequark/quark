@@ -5,7 +5,10 @@
 
 const envSchema = {
 	// Database
-	DATABASE_URL: { required: false, description: "PostgreSQL connection string" },
+	DATABASE_URL: {
+		required: false,
+		description: "PostgreSQL connection string",
+	},
 	POSTGRES_HOST: { required: false, description: "PostgreSQL host" },
 	POSTGRES_PORT: { required: false, description: "PostgreSQL port" },
 	POSTGRES_USER: { required: false, description: "PostgreSQL user" },
@@ -24,11 +27,17 @@ const envSchema = {
 	MAILHOG_UI_PORT: { required: false, description: "Mailhog UI port" },
 
 	// NextAuth
-	NEXTAUTH_SECRET: { required: true, description: "NextAuth secret for JWT signing" },
+	NEXTAUTH_SECRET: {
+		required: true,
+		description: "NextAuth secret for JWT signing",
+	},
 	NEXTAUTH_URL: { required: false, description: "NextAuth callback URL" },
 
 	// Application
-	NODE_ENV: { required: false, description: "Environment (development, test, production)" },
+	NODE_ENV: {
+		required: false,
+		description: "Environment (development, test, production)",
+	},
 	WEB_PORT: { required: false, description: "Web server port" },
 };
 
@@ -45,7 +54,9 @@ export function validateEnv() {
 		const value = process.env[key];
 
 		if (config.required && !value) {
-			errors.push(`Missing required environment variable: ${key} (${config.description})`);
+			errors.push(
+				`Missing required environment variable: ${key} (${config.description})`,
+			);
 		}
 
 		if (value) {

@@ -5,7 +5,9 @@ export const config = {
 		baseUrl: process.env.API_BASE_URL || "http://localhost:3000",
 	},
 	database: {
-		url: process.env.DATABASE_URL || "postgresql://user:password@localhost:5432/myapp",
+		url:
+			process.env.DATABASE_URL ||
+			"postgresql://user:password@localhost:5432/myapp",
 	},
 	redis: {
 		url: process.env.REDIS_URL || "redis://localhost:6379",

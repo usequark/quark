@@ -1,14 +1,12 @@
 // Database exports
-export * from "./db/index.js";
 
 // Auth exports
 export * from "./auth/index.js";
-
-// Queue exports
-export * from "./queue/index.js";
-
+export * from "./db/index.js";
 // Error exports
 export * from "./errors.js";
+// Queue exports
+export * from "./queue/index.js";
 
 // Utility exports
 export * from "./utils.js";

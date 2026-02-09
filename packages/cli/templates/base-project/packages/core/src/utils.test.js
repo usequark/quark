@@ -1,17 +1,17 @@
-import assert from "assert";
+import assert from "node:assert";
 import { test } from "node:test";
 import {
-	retryAsync,
-	sleep,
-	validateEnv,
+	debounce,
 	deepMerge,
+	formatBytes,
 	isObject,
+	memoize,
 	normalizeErrorMessage,
 	randomString,
+	retryAsync,
 	sanitizeId,
-	formatBytes,
-	debounce,
-	memoize,
+	sleep,
+	validateEnv,
 } from "../src/utils.js";
 
 test("Utils Module", async (t) => {
@@ -34,7 +34,7 @@ test("Utils Module", async (t) => {
 				if (attempts < 3) throw new Error("Fail");
 				return "success";
 			},
-			{ maxAttempts: 5, initialDelay: 10 }
+			{ maxAttempts: 5, initialDelay: 10 },
 		);
 
 		assert(result === "success");
@@ -49,7 +49,7 @@ test("Utils Module", async (t) => {
 					attempts++;
 					throw new Error("Always fails");
 				},
-				{ maxAttempts: 3, initialDelay: 10 }
+				{ maxAttempts: 3, initialDelay: 10 },
 			);
 		});
 
@@ -75,10 +75,7 @@ test("Utils Module", async (t) => {
 	});
 
 	await t.test("deepMerge merges objects", () => {
-		const result = deepMerge(
-			{ a: 1, b: { c: 2 } },
-			{ b: { d: 3 }, e: 4 }
-		);
+		const result = deepMerge({ a: 1, b: { c: 2 } }, { b: { d: 3 }, e: 4 });
 
 		assert.deepStrictEqual(result, {
 			a: 1,
@@ -88,10 +85,7 @@ test("Utils Module", async (t) => {
 	});
 
 	await t.test("deepMerge handles nested objects", () => {
-		const result = deepMerge(
-			{ a: { b: { c: 1 } } },
-			{ a: { b: { d: 2 } } }
-		);
+		const result = deepMerge({ a: { b: { c: 1 } } }, { a: { b: { d: 2 } } });
 
 		assert.deepStrictEqual(result, {
 			a: { b: { c: 1, d: 2 } },
@@ -143,7 +137,7 @@ test("Utils Module", async (t) => {
 		assert(formatBytes(1024 * 1024 * 1024) === "1 GB");
 	});
 
-	await t.test("debounce delays function execution", (t, done) => {
+	await t.test("debounce delays function execution", (_t, done) => {
 		let callCount = 0;
 		const debounced = debounce(() => {
 			callCount++;
@@ -177,14 +171,14 @@ test("Utils Module", async (t) => {
 		assert(callCount === 2); // Different input, new call
 	});
 
-	await t.test("memoize respects TTL", (t, done) => {
+	await t.test("memoize respects TTL", (_t, done) => {
 		let callCount = 0;
 		const memoized = memoize(
 			(x) => {
 				callCount++;
 				return x * 2;
 			},
-			30 // 30ms TTL
+			30, // 30ms TTL
 		);
 
 		assert(memoized(5) === 10);

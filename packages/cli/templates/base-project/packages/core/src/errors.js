@@ -160,7 +160,7 @@ export const normalizeError = (error) => {
 	return new AppError(
 		typeof error === "string" ? error : "An unknown error occurred",
 		500,
-		"INTERNAL_ERROR"
+		"INTERNAL_ERROR",
 	);
 };
 

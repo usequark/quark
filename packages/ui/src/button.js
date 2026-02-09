@@ -10,6 +10,7 @@ export const Button = ({ variant = "primary", className, ...props }) => {
 	return React.createElement(
 		"button",
 		{
+			type: "button",
 			className: `${baseStyles} ${variants[variant]} ${className || ""}`,
 			...props,
 		},

@@ -1,14 +1,14 @@
-import { JOB_QUEUES, JOB_NAMES } from "./definitions.js";
+import { JOB_NAMES } from "./definitions.js";
 
 export async function sendWelcomeEmail(job) {
-	const { email, name } = job.data;
+	const { email } = job.data;
 	console.log(`Sending welcome email to ${email}`);
 	// Add your email sending logic here
 	return { success: true };
 }
 
 export async function sendResetPasswordEmail(job) {
-	const { email, resetLink } = job.data;
+	const { email } = job.data;
 	console.log(`Sending reset password email to ${email}`);
 	// Add your email sending logic here
 	return { success: true };

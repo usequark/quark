@@ -1,4 +1,4 @@
-import assert from "assert";
+import assert from "node:assert";
 import { test } from "node:test";
 
 // Note: createDbClient test is skipped because Prisma requires a proper schema

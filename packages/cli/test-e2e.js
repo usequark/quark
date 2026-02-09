@@ -1,12 +1,13 @@
 #!/usr/bin/env node
+
 /**
  * End-to-end test for @quark/create-app CLI
  * This manually walks through creating a project
  */
 
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import fs from "fs-extra";
-import path from "path";
-import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const testDir = "/tmp/e2e-test-quark";
@@ -44,16 +45,16 @@ const features = ["ui", "jobs"];
 console.log(`✓ Copying selected packages: ${features.join(", ")}`);
 
 for (const feature of features) {
-  const packageDir = path.join(projectPath, "packages", feature);
-  const templatePath = path.join(templatesDir, feature);
-  await fs.copy(templatePath, packageDir);
+	const packageDir = path.join(projectPath, "packages", feature);
+	const templatePath = path.join(templatesDir, feature);
+	await fs.copy(templatePath, packageDir);
 
-  // Update package.json name
-  const packageJsonPath = path.join(packageDir, "package.json");
-  const packageJson = await fs.readJSON(packageJsonPath);
-  const packagePart = packageJson.name.split("/")[1];
-  packageJson.name = `@${scope}/${packagePart}`;
-  await fs.writeJSON(packageJsonPath, packageJson, { spaces: 2 });
+	// Update package.json name
+	const packageJsonPath = path.join(packageDir, "package.json");
+	const packageJson = await fs.readJSON(packageJsonPath);
+	const packagePart = packageJson.name.split("/")[1];
+	packageJson.name = `@${scope}/${packagePart}`;
+	await fs.writeJSON(packageJsonPath, packageJson, { spaces: 2 });
 }
 
 // Step 5: Create .env.example
@@ -84,32 +85,32 @@ await fs.writeFile(path.join(projectPath, ".env.example"), envExample);
 console.log("\n✅ Verification Results:\n");
 
 const verifyFile = async (relativePath) => {
-  const fullPath = path.join(projectPath, relativePath);
-  const exists = await fs.pathExists(fullPath);
-  console.log(`  ${exists ? "✓" : "✗"} ${relativePath}`);
-  return exists;
+	const fullPath = path.join(projectPath, relativePath);
+	const exists = await fs.pathExists(fullPath);
+	console.log(`  ${exists ? "✓" : "✗"} ${relativePath}`);
+	return exists;
 };
 
 const verifyDir = async (relativePath) => {
-  const fullPath = path.join(projectPath, relativePath);
-  const exists = await fs.pathExists(fullPath);
-  const isDir = exists && (await fs.stat(fullPath)).isDirectory();
-  console.log(`  ${isDir ? "✓" : "✗"} ${relativePath}/ (directory)`);
-  return isDir;
+	const fullPath = path.join(projectPath, relativePath);
+	const exists = await fs.pathExists(fullPath);
+	const isDir = exists && (await fs.stat(fullPath)).isDirectory();
+	console.log(`  ${isDir ? "✓" : "✗"} ${relativePath}/ (directory)`);
+	return isDir;
 };
 
 const checks = [
-  verifyFile("package.json"),
-  verifyFile("turbo.json"),
-  verifyFile("docker-compose.yml"),
-  verifyFile("pnpm-workspace.yaml"),
-  verifyFile(".gitignore"),
-  verifyFile(".env.example"),
-  verifyFile("README.md"),
-  verifyDir("apps"),
-  verifyDir("packages"),
-  verifyDir("packages/ui"),
-  verifyDir("packages/jobs"),
+	verifyFile("package.json"),
+	verifyFile("turbo.json"),
+	verifyFile("docker-compose.yml"),
+	verifyFile("pnpm-workspace.yaml"),
+	verifyFile(".gitignore"),
+	verifyFile(".env.example"),
+	verifyFile("README.md"),
+	verifyDir("apps"),
+	verifyDir("packages"),
+	verifyDir("packages/ui"),
+	verifyDir("packages/jobs"),
 ];
 
 const results = await Promise.all(checks);
@@ -120,31 +121,39 @@ console.log(`\n✅ Structure check: ${passed}/${total} items verified`);
 
 // Verify package.json names are updated
 console.log("\n✅ Package scope verification:\n");
-const uiPackageJson = await fs.readJSON(path.join(projectPath, "packages/ui/package.json"));
-const jobsPackageJson = await fs.readJSON(path.join(projectPath, "packages/jobs/package.json"));
+const uiPackageJson = await fs.readJSON(
+	path.join(projectPath, "packages/ui/package.json"),
+);
+const jobsPackageJson = await fs.readJSON(
+	path.join(projectPath, "packages/jobs/package.json"),
+);
 
-console.log(`  ${uiPackageJson.name === `@${scope}/ui` ? "✓" : "✗"} UI package: ${uiPackageJson.name}`);
-console.log(`  ${jobsPackageJson.name === `@${scope}/jobs` ? "✓" : "✗"} Jobs package: ${jobsPackageJson.name}`);
+console.log(
+	`  ${uiPackageJson.name === `@${scope}/ui` ? "✓" : "✗"} UI package: ${uiPackageJson.name}`,
+);
+console.log(
+	`  ${jobsPackageJson.name === `@${scope}/jobs` ? "✓" : "✗"} Jobs package: ${jobsPackageJson.name}`,
+);
 
 // List the project structure
 console.log("\n📂 Project Structure:\n");
-const listDir = (dir, prefix = "", isLast = true) => {
-  const files = fs.readdirSync(dir).filter(f => !f.startsWith("."));
-  
-  files.forEach((file, index) => {
-    const isLastFile = index === files.length - 1;
-    const fullPath = path.join(dir, file);
-    const isDirectory = fs.statSync(fullPath).isDirectory();
-    
-    const connector = isLastFile ? "└── " : "├── ";
-    const nextPrefix = prefix + (isLastFile ? "    " : "│   ");
-    
-    console.log(prefix + connector + (isDirectory ? "📁 " : "📄 ") + file);
-    
-    if (isDirectory && file !== "node_modules" && file !== ".git") {
-      listDir(fullPath, nextPrefix, isLastFile);
-    }
-  });
+const listDir = (dir, prefix = "", _isLast = true) => {
+	const files = fs.readdirSync(dir).filter((f) => !f.startsWith("."));
+
+	files.forEach((file, index) => {
+		const isLastFile = index === files.length - 1;
+		const fullPath = path.join(dir, file);
+		const isDirectory = fs.statSync(fullPath).isDirectory();
+
+		const connector = isLastFile ? "└── " : "├── ";
+		const nextPrefix = prefix + (isLastFile ? "    " : "│   ");
+
+		console.log(prefix + connector + (isDirectory ? "📁 " : "📄 ") + file);
+
+		if (isDirectory && file !== "node_modules" && file !== ".git") {
+			listDir(fullPath, nextPrefix, isLastFile);
+		}
+	});
 };
 
 console.log(`${projectName}/`);

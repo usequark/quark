@@ -8,19 +8,19 @@ import { ValidationError } from "./errors.js";
  * @returns {Promise<any>} - Validated data
  */
 export async function validateBody(request, schema) {
-  let body;
-  try {
-    body = await request.json();
-  } catch (err) {
-    throw new ValidationError("Invalid JSON body");
-  }
+	let body;
+	try {
+		body = await request.json();
+	} catch (_err) {
+		throw new ValidationError("Invalid JSON body");
+	}
 
-  try {
-    return schema.parse(body);
-  } catch (error) {
-    if (error instanceof ZodError) {
-      throw new ValidationError("Validation failed", error.errors);
-    }
-    throw error;
-  }
+	try {
+		return schema.parse(body);
+	} catch (error) {
+		if (error instanceof ZodError) {
+			throw new ValidationError("Validation failed", error.errors);
+		}
+		throw error;
+	}
 }

@@ -1,8 +1,8 @@
 {
-  "name": "@myquark/config",
-  "version": "1.0.0",
-  "type": "module",
-  "exports": {
-    ".": "./src/index.js"
-  }
+	"name": "@myquark/config",
+	"version": "1.0.0",
+	"type": "module",
+	"exports": {
+		".": "./src/index.js"
+	}
 }

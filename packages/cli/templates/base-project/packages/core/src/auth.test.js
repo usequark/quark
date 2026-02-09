@@ -1,14 +1,12 @@
-import assert from "assert";
+import assert from "node:assert";
 import { test } from "node:test";
 import {
 	createAuthConfig,
-	getCurrentSession,
-	isAuthenticated,
-	getUserId,
 	getUserEmail,
+	getUserId,
+	isAuthenticated,
 	requireAuth,
 } from "../src/auth/index.js";
-import { UnauthorizedError } from "../src/errors.js";
 
 test("Auth Module", async (t) => {
 	await t.test("createAuthConfig returns valid config", () => {
@@ -71,7 +69,7 @@ test("Auth Module", async (t) => {
 	await t.test("requireAuth throws error for unauthenticated session", () => {
 		assert.throws(
 			() => requireAuth(null),
-			(err) => err instanceof Error
+			(err) => err instanceof Error,
 		);
 	});
 });

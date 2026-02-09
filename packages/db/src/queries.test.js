@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { test } from "node:test";
 
 // Create a mock for prisma client
-const mockPrisma = {
+const _mockPrisma = {
 	user: {
 		findUnique: async (params) => params,
 		create: async (params) => params,

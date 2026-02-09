@@ -1,27 +1,27 @@
 {
-  "name": "@quark/create-app",
-  "version": "1.0.0",
-  "type": "module",
-  "bin": {
-    "quark-create-app": "src/index.js",
-    "create-quark-app": "src/index.js"
-  },
-  "files": [
-    "src",
-    "templates",
-    "README.md"
-  ],
-  "scripts": {
-    "test": "node test-cli.js",
-    "test:e2e": "node test-e2e.js",
-    "test:integration": "node test-integration.js",
-    "test:all": "node test-all.js"
-  },
-  "dependencies": {
-    "chalk": "^5.3.0",
-    "commander": "^12.1.0",
-    "execa": "^9.4.1",
-    "fs-extra": "^11.2.0",
-    "prompts": "^2.4.2"
-  }
+	"name": "@quark/create-app",
+	"version": "1.0.0",
+	"type": "module",
+	"bin": {
+		"quark-create-app": "src/index.js",
+		"create-quark-app": "src/index.js"
+	},
+	"files": [
+		"src",
+		"templates",
+		"README.md"
+	],
+	"scripts": {
+		"test": "node test-cli.js",
+		"test:e2e": "node test-e2e.js",
+		"test:integration": "node test-integration.js",
+		"test:all": "node test-all.js"
+	},
+	"dependencies": {
+		"chalk": "^5.3.0",
+		"commander": "^12.1.0",
+		"execa": "^9.4.1",
+		"fs-extra": "^11.2.0",
+		"prompts": "^2.4.2"
+	}
 }

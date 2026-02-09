@@ -1,4 +1,5 @@
 import pkg from "@prisma/client";
+
 const { PrismaClient } = pkg;
 
 /**
@@ -6,12 +7,12 @@ const { PrismaClient } = pkg;
  * In development, it attaches to globalThis to prevent multiple instances.
  */
 export const createDbClient = (options = {}) => {
-  const globalForPrisma = globalThis;
-  const prisma = globalForPrisma.prisma || new PrismaClient(options);
+	const globalForPrisma = globalThis;
+	const prisma = globalForPrisma.prisma || new PrismaClient(options);
 
-  if (process.env.NODE_ENV !== "production") {
-    globalForPrisma.prisma = prisma;
-  }
+	if (process.env.NODE_ENV !== "production") {
+		globalForPrisma.prisma = prisma;
+	}
 
-  return prisma;
+	return prisma;
 };

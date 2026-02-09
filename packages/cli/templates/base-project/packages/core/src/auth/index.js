@@ -28,7 +28,7 @@ export const createAuthConfig = (options = {}) => {
 
 	if (!secret && process.env.NODE_ENV === "production") {
 		throw new Error(
-			"NEXTAUTH_SECRET must be set in production or passed via options"
+			"NEXTAUTH_SECRET must be set in production or passed via options",
 		);
 	}
 
@@ -86,7 +86,7 @@ export const getCurrentSession = async (getSession) => {
  * @returns {boolean} True if user is authenticated
  */
 export const isAuthenticated = (session) => {
-	return session && session.user && session.user.email;
+	return session?.user?.email;
 };
 
 /**
