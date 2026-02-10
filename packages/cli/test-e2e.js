@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * End-to-end test for @quark/create-app CLI
+ * End-to-end test for @Bobnoddle/quark-create-app CLI
  * This manually walks through creating a project
  */
 

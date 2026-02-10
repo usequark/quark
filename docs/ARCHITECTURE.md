@@ -1,6 +1,6 @@
 # Core vs. Ejected: The Quark Inheritance Pattern
 
-This document explains the philosophy behind `@quark/core` and how applications inherit, customize, and "eject" from core infrastructure.
+This document explains the philosophy behind `@Bobnoddle/quark-core` and how applications inherit, customize, and "eject" from core infrastructure.
 
 ## The Problem We're Solving
 
@@ -19,7 +19,7 @@ Traditional web frameworks often lock you into their patterns. Quark takes a dif
 │  Ejected/Custom Layer (optional overrides)          │
 │  - Custom auth config, error handlers, etc.         │
 ├─────────────────────────────────────────────────────┤
-│  @quark/core - The Plumbing                         │
+│  @Bobnoddle/quark-core - The Plumbing                         │
 │  - Database client factory                          │
 │  - Auth initialization                              │
 │  - Job queue wrapper                                │
@@ -68,8 +68,8 @@ Traditional web frameworks often lock you into their patterns. Quark takes a dif
 
 **In Core:**
 ```javascript
-// @quark/core - Provides defaults
-import { createAuthConfig } from "@quark/core";
+// @Bobnoddle/quark-core - Provides defaults
+import { createAuthConfig } from "@Bobnoddle/quark-core";
 
 export const createAuthConfig = (options = {}) => {
   return {
@@ -84,7 +84,7 @@ export const createAuthConfig = (options = {}) => {
 **Ejected in Your App:**
 ```javascript
 // @quark/web/lib/auth.js - Your customizations
-import { createAuthConfig } from "@quark/core";
+import { createAuthConfig } from "@Bobnoddle/quark-core";
 import GitHubProvider from "next-auth/providers/github";
 
 export const authConfig = createAuthConfig({
@@ -120,7 +120,7 @@ export const authConfig = createAuthConfig({
 
 **In Core:**
 ```javascript
-// @quark/core/src/errors.js
+// @Bobnoddle/quark-core/src/errors.js
 export class ValidationError extends AppError {
   constructor(message, details = null) {
     super(message, 400, "VALIDATION_ERROR");
@@ -132,7 +132,7 @@ export class ValidationError extends AppError {
 **Optionally Ejected in Your App:**
 ```javascript
 // @quark/web/lib/errors.js - Custom domain errors
-import { AppError } from "@quark/core";
+import { AppError } from "@Bobnoddle/quark-core";
 
 export class PaymentError extends AppError {
   constructor(message, code = "PAYMENT_FAILED", provider) {
@@ -142,7 +142,7 @@ export class PaymentError extends AppError {
 }
 
 // Use both Core and Custom errors
-import { ValidationError, NotFoundError } from "@quark/core";
+import { ValidationError, NotFoundError } from "@Bobnoddle/quark-core";
 import { PaymentError } from "./errors.js";
 ```
 
@@ -155,7 +155,7 @@ import { PaymentError } from "./errors.js";
 
 **In Core:**
 ```javascript
-// @quark/core/src/queue/index.js
+// @Bobnoddle/quark-core/src/queue/index.js
 export const createQueue = (name, options = {}) => {
   return new Queue(name, {
     connection: {
@@ -171,7 +171,7 @@ export const createQueue = (name, options = {}) => {
 **In Your Worker App:**
 ```javascript
 // @quark/worker/src/queues.js
-import { createQueue, createWorker } from "@quark/core";
+import { createQueue, createWorker } from "@Bobnoddle/quark-core";
 
 // Inherit defaults but customize for this app
 export const emailQueue = createQueue("emails", {
@@ -199,7 +199,7 @@ export const emailWorker = createWorker(
 
 **In Core:**
 ```javascript
-// @quark/core/src/db/index.js
+// @Bobnoddle/quark-core/src/db/index.js
 export const createDbClient = (options = {}) => {
   const globalForPrisma = globalThis;
   const prisma = globalForPrisma.prisma || new PrismaClient(options);
@@ -215,7 +215,7 @@ export const createDbClient = (options = {}) => {
 **In Your App:**
 ```javascript
 // @quark/web/lib/db.js
-import { createDbClient } from "@quark/core";
+import { createDbClient } from "@Bobnoddle/quark-core";
 
 // Use with defaults - zero configuration!
 const db = createDbClient();
@@ -252,7 +252,7 @@ Use core for some things, replace others:
 
 ```javascript
 // Keep core auth
-import { createAuthConfig } from "@quark/core";
+import { createAuthConfig } from "@Bobnoddle/quark-core";
 
 // Use custom queue setup
 import Queue from "bullmq";
@@ -266,7 +266,7 @@ const customQueue = new Queue("special", { custom: "options" });
 Add behavior without changing core:
 
 ```javascript
-import { createDbClient } from "@quark/core";
+import { createDbClient } from "@Bobnoddle/quark-core";
 
 const db = createDbClient({
   middleware: [
@@ -286,7 +286,7 @@ Create application-specific wrappers around core:
 
 ```javascript
 // lib/api-utils.js
-import { requireAuth, UnauthorizedError } from "@quark/core";
+import { requireAuth, UnauthorizedError } from "@Bobnoddle/quark-core";
 
 export const withAuth = (handler) => {
   return async (req, res) => {
@@ -335,7 +335,7 @@ class AppApiError extends AppError {
 pnpm create quark my-app
 
 # 2. Inherit core automatically
-import { createDbClient } from "@quark/core";
+import { createDbClient } from "@Bobnoddle/quark-core";
 
 # 3. Start using core utilities
 const db = createDbClient(); // Works immediately
@@ -350,7 +350,7 @@ export const config = { providers: [...], ... };
 
 // After: use core, eject what you need
 // app/lib/auth.js
-import { createAuthConfig } from "@quark/core";
+import { createAuthConfig } from "@Bobnoddle/quark-core";
 
 export const config = createAuthConfig({
   providers: [...],
@@ -378,7 +378,7 @@ export const config = createAuthConfig({
 
 ```javascript
 // ✅ Good: Extend core
-import { createAuthConfig } from "@quark/core";
+import { createAuthConfig } from "@Bobnoddle/quark-core";
 
 export const authConfig = createAuthConfig({
   providers: [CustomProvider()],
@@ -397,7 +397,7 @@ Core should work standalone:
 
 ```javascript
 // ✅ Good: Core works in any app
-import { createQueue } from "@quark/core";
+import { createQueue } from "@Bobnoddle/quark-core";
 const q = createQueue("jobs");
 
 // ❌ Bad: Core depends on app setup
@@ -412,12 +412,12 @@ import { db } from "./db";         // App-specific
 /**
  * Authentication config for MyApp
  * 
- * Extends @quark/core with:
+ * Extends @Bobnoddle/quark-core with:
  * - GitHub OAuth provider
  * - Custom role field in JWT
  * - Email domain validation
  */
-import { createAuthConfig } from "@quark/core";
+import { createAuthConfig } from "@Bobnoddle/quark-core";
 
 export const authConfig = createAuthConfig({
   // Our customizations here...

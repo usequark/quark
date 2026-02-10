@@ -1,10 +1,10 @@
-# @quark/core - The Quark Platform Core
+# @Bobnoddle/quark-core - The Quark Platform Core
 
 The central "plumbing" package for the Quark platform. Every Quark application inherits this core infrastructure, providing database access, authentication, job queuing, and error handling out of the box.
 
 ## Philosophy
 
-`@quark/core` provides **opinionated, zero-configuration defaults** for common infrastructure concerns:
+`@Bobnoddle/quark-core` provides **opinionated, zero-configuration defaults** for common infrastructure concerns:
 
 - **Database**: Prisma ORM with singleton pattern
 - **Authentication**: Next-auth helpers with sensible defaults
@@ -28,7 +28,7 @@ Applications **inherit these tools** but can **extend and override** them as nee
 ❌ **Does NOT belong in Core:**
 - Application-specific business logic
 - Domain models (use Prisma schema instead)
-- UI components (use @quark/ui)
+- UI components (use @Bobnoddle/quark-ui)
 - Config-specific settings (use environment variables)
 
 ### What Gets "Ejected"
@@ -37,7 +37,7 @@ The "ejection" pattern allows apps to customize Core defaults:
 
 ```javascript
 // Import core helpers
-import { createAuthConfig, createQueue } from "@quark/core";
+import { createAuthConfig, createQueue } from "@Bobnoddle/quark-core";
 
 // Override/extend with app-specific config
 export const authConfig = createAuthConfig({
@@ -58,7 +58,7 @@ export const authConfig = createAuthConfig({
 Access the Prisma singleton client:
 
 ```javascript
-import { createDbClient } from "@quark/core";
+import { createDbClient } from "@Bobnoddle/quark-core";
 
 const db = createDbClient();
 
@@ -74,7 +74,7 @@ In development, the client automatically attaches to `globalThis` to prevent hot
 Create a next-auth configuration with defaults:
 
 ```javascript
-import { createAuthConfig, getCurrentSession, getUserId } from "@quark/core";
+import { createAuthConfig, getCurrentSession, getUserId } from "@Bobnoddle/quark-core";
 
 export const authConfig = createAuthConfig({
   providers: [GitHubProvider({ ... })],
@@ -105,7 +105,7 @@ const userId = getUserId(session);
 Initialize background job processing:
 
 ```javascript
-import { createQueue, createWorker, addJob } from "@quark/core";
+import { createQueue, createWorker, addJob } from "@Bobnoddle/quark-core";
 
 // Create a queue
 const emailQueue = createQueue("emails", {
@@ -157,7 +157,7 @@ import {
   AppError,
   logError,
   normalizeError,
-} from "@quark/core";
+} from "@Bobnoddle/quark-core";
 
 // Throw specific errors
 if (!email) {
@@ -214,7 +214,7 @@ import {
   sanitizeId,
   measureTime,
   memoize,
-} from "@quark/core";
+} from "@Bobnoddle/quark-core";
 
 // Retry with exponential backoff
 const result = await retryAsync(
@@ -290,7 +290,7 @@ See [Core Tests](./test/) for examples.
 ### Custom Error Types
 
 ```javascript
-import { AppError } from "@quark/core";
+import { AppError } from "@Bobnoddle/quark-core";
 
 export class PaymentError extends AppError {
   constructor(message, code = "PAYMENT_FAILED") {
@@ -302,7 +302,7 @@ export class PaymentError extends AppError {
 ### Custom Queue Handlers
 
 ```javascript
-import { createWorker } from "@quark/core";
+import { createWorker } from "@Bobnoddle/quark-core";
 
 createWorker("analytics", async (job) => {
   await trackEvent(job.data);
@@ -318,7 +318,7 @@ createWorker("analytics", async (job) => {
 ### Middleware & Hooks
 
 ```javascript
-import { createDbClient } from "@quark/core";
+import { createDbClient } from "@Bobnoddle/quark-core";
 
 const db = createDbClient({
   middleware: [
@@ -338,7 +338,7 @@ const db = createDbClient({
 ## Architecture
 
 ```
-@quark/core/
+@Bobnoddle/quark-core/
 ├── src/
 │   ├── index.js          # Main exports
 │   ├── auth/
@@ -374,7 +374,7 @@ Example migration:
 export const authConfig = { ... };
 
 // After: inherit and extend from Core
-import { createAuthConfig } from "@quark/core";
+import { createAuthConfig } from "@Bobnoddle/quark-core";
 
 export const authConfig = createAuthConfig({
   providers: [...],  // add app-specific providers

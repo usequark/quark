@@ -1,10 +1,10 @@
 {
-	"name": "@quark/core",
+	"name": "@Bobnoddle/quark-core",
 	"version": "1.0.0",
 	"type": "module",
 	"main": "src/index.js",
 	"dependencies": {
-		"@quark/db": "workspace:*",
+		"@Bobnoddle/quark-db": "workspace:*",
 		"bcryptjs": "^3.0.3",
 		"bullmq": "^5.67.3",
 		"next-auth": "5.0.0-beta.30",

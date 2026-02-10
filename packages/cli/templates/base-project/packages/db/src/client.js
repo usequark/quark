@@ -1,4 +1,4 @@
-import { createDbClient } from "@quark/core";
+import { createDbClient } from "@Bobnoddle/quark-core";
 
 export const prisma = createDbClient();
 

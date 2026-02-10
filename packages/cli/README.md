@@ -1,4 +1,4 @@
-# @quark/create-app CLI
+# @Bobnoddle/quark-create-app CLI
 
 A command-line tool to scaffold new Quark projects with customizable package selection and full git integration.
 
@@ -279,13 +279,13 @@ Run the CLI tests:
 
 ```bash
 # Unit tests
-pnpm --filter @quark/create-app test-cli
+pnpm --filter @Bobnoddle/quark-create-app test-cli
 
 # Integration test
-pnpm --filter @quark/create-app test-integration
+pnpm --filter @Bobnoddle/quark-create-app test-integration
 
 # End-to-end simulation
-pnpm --filter @quark/create-app test-e2e
+pnpm --filter @Bobnoddle/quark-create-app test-e2e
 ```
 
 ## Troubleshooting
@@ -293,7 +293,7 @@ pnpm --filter @quark/create-app test-e2e
 ### Command not found
 Make sure the package is installed globally:
 ```bash
-npm install -g @quark/create-app
+npm install -g @Bobnoddle/quark-create-app
 ```
 
 ### Port conflicts

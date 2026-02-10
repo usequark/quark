@@ -1,4 +1,4 @@
-import { PrismaClient } from "@quark/db";
+import { PrismaClient } from "@Bobnoddle/quark-db";
 
 /**
  * Creates a singleton Prisma client.

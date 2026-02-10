@@ -33,10 +33,10 @@ quark/
 
 | Package | Status | Completeness |
 |---------|--------|--------------|
-| `@quark/config` | ⚠️ Minimal | ~10% - Only `appName` defined |
-| `@quark/db` | ⚠️ Basic | ~25% - Basic User/Post models, no auth tables |
-| `@quark/jobs` | ⚠️ Basic | ~15% - Single email queue |
-| `@quark/ui` | ⚠️ Basic | ~10% - Single Button component |
+| `@Bobnoddle/quark-config` | ⚠️ Minimal | ~10% - Only `appName` defined |
+| `@Bobnoddle/quark-db` | ⚠️ Basic | ~25% - Basic User/Post models, no auth tables |
+| `@Bobnoddle/quark-jobs` | ⚠️ Basic | ~15% - Single email queue |
+| `@Bobnoddle/quark-ui` | ⚠️ Basic | ~10% - Single Button component |
 | `apps/web` | ⚠️ Basic | ~20% - Stub NextAuth with credentials only |
 | `apps/worker` | ✅ Functional | ~40% - Working BullMQ worker |
 
@@ -224,7 +224,7 @@ apps/worker-playground/
 
 ```typescript
 // Job Creator with type safety
-import { JOB_QUEUES, JOB_NAMES, EmailJobData } from "@quark/jobs";
+import { JOB_QUEUES, JOB_NAMES, EmailJobData } from "@Bobnoddle/quark-jobs";
 
 function EmailJobCreator() {
   const [formData, setFormData] = useState<EmailJobData>({
@@ -421,13 +421,13 @@ For very large projects with distinct bounded contexts:
 
 ```
 packages/
-├── db-auth/           # @quark/db-auth
+├── db-auth/           # @Bobnoddle/quark-db-auth
 │   └── prisma/
 │       └── schema.prisma
-├── db-content/        # @quark/db-content
+├── db-content/        # @Bobnoddle/quark-db-content
 │   └── prisma/
 │       └── schema.prisma
-└── db/                # @quark/db (aggregates all)
+└── db/                # @Bobnoddle/quark-db (aggregates all)
 ```
 
 **Not recommended** unless you have 50+ models and multiple teams.
@@ -446,7 +446,7 @@ packages/
 
 ## Phase 4: Expanded Package Code (Priority: Medium)
 
-### 4.1 Enhanced `@quark/config`
+### 4.1 Enhanced `@Bobnoddle/quark-config`
 
 ```typescript
 // packages/config/src/index.ts
@@ -511,7 +511,7 @@ export const features = {
 } as const;
 ```
 
-### 4.2 Enhanced `@quark/db`
+### 4.2 Enhanced `@Bobnoddle/quark-db`
 
 ```typescript
 // packages/db/src/queries.ts
@@ -646,7 +646,7 @@ export const posts = {
 export const transaction = prisma.$transaction.bind(prisma);
 ```
 
-### 4.3 Enhanced `@quark/jobs`
+### 4.3 Enhanced `@Bobnoddle/quark-jobs`
 
 ```typescript
 // packages/jobs/src/definitions.ts
@@ -773,7 +773,7 @@ export const CRON_SCHEDULES = {
 } as const;
 ```
 
-### 4.4 Enhanced `@quark/ui`
+### 4.4 Enhanced `@Bobnoddle/quark-ui`
 
 New components to add:
 
@@ -916,7 +916,7 @@ packages/auth/
 ```typescript
 import { NextAuthOptions } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import { prisma } from "@quark/db";
+import { prisma } from "@Bobnoddle/quark-db";
 import { providers } from "./providers";
 import { callbacks } from "./callbacks";
 
@@ -948,7 +948,7 @@ import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 import EmailProvider from "next-auth/providers/email";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { prisma } from "@quark/db";
+import { prisma } from "@Bobnoddle/quark-db";
 import bcrypt from "bcryptjs";
 
 export const providers: Provider[] = [
@@ -1038,7 +1038,7 @@ export const providers: Provider[] = [
 
 ```typescript
 import { NextAuthOptions } from "next-auth";
-import { prisma } from "@quark/db";
+import { prisma } from "@Bobnoddle/quark-db";
 
 export const callbacks: NextAuthOptions["callbacks"] = {
   async signIn({ user, account, profile }) {
@@ -1189,9 +1189,9 @@ apps/web/src/app/
 - [ ] Refactor Prisma schema (multi-file or sectioned)
 
 #### Sprint 2 (Week 2-3)
-- [ ] Expand `@quark/config` with env validation
-- [ ] Expand `@quark/db` with pagination and more queries
-- [ ] Expand `@quark/jobs` with additional job types
+- [ ] Expand `@Bobnoddle/quark-config` with env validation
+- [ ] Expand `@Bobnoddle/quark-db` with pagination and more queries
+- [ ] Expand `@Bobnoddle/quark-jobs` with additional job types
 - [ ] Add more UI components
 
 #### Sprint 3 (Week 3-4)

@@ -1,5 +1,5 @@
 /**
- * @quark/core - Job Queue Module
+ * @Bobnoddle/quark-core - Job Queue Module
  * Provides BullMQ queue initialization and management
  */
 

@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { test } from "node:test";
 
 // Note: createDbClient test is skipped because Prisma requires a proper schema
-// and generated client in the consuming application, not in @quark/core itself.
+// and generated client in the consuming application, not in @Bobnoddle/quark-core itself.
 // The db module is properly tested in integration tests with actual applications.
 
 test("DB Module", async (t) => {

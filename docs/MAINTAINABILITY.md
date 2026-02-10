@@ -42,21 +42,21 @@ packages/example/
 
 | Package | Responsibility | Should NOT Contain |
 |---------|---------------|-------------------|
-| `@quark/config` | App configuration, environment variables | Business logic, UI code |
-| `@quark/db` | Database client, queries, Prisma schema | HTTP handlers, UI code |
-| `@quark/jobs` | Job queue definitions, worker logic | Database queries, UI code |
-| `@quark/ui` | Reusable UI components | Business logic, API calls |
+| `@Bobnoddle/quark-config` | App configuration, environment variables | Business logic, UI code |
+| `@Bobnoddle/quark-db` | Database client, queries, Prisma schema | HTTP handlers, UI code |
+| `@Bobnoddle/quark-jobs` | Job queue definitions, worker logic | Database queries, UI code |
+| `@Bobnoddle/quark-ui` | Reusable UI components | Business logic, API calls |
 
 ### Import Guidelines
 
 ```typescript
 // ✅ Good - Import from package public API
-import { Button } from "@quark/ui";
-import { prisma, user } from "@quark/db";
+import { Button } from "@Bobnoddle/quark-ui";
+import { prisma, user } from "@Bobnoddle/quark-db";
 
 // ❌ Bad - Deep imports bypass the public API
-import { Button } from "@quark/ui/src/button";
-import { prisma } from "@quark/db/src/client";
+import { Button } from "@Bobnoddle/quark-ui/src/button";
+import { prisma } from "@Bobnoddle/quark-db/src/client";
 ```
 
 ### Barrel Exports
@@ -84,8 +84,8 @@ Use workspace protocol for internal packages:
 ```json
 {
   "dependencies": {
-    "@quark/ui": "workspace:*",
-    "@quark/db": "workspace:*"
+    "@Bobnoddle/quark-ui": "workspace:*",
+    "@Bobnoddle/quark-db": "workspace:*"
   }
 }
 ```
@@ -194,7 +194,7 @@ pnpm test:coverage
 pnpm test:watch
 
 # Run tests for specific package
-pnpm test --filter @quark/ui
+pnpm test --filter @Bobnoddle/quark-ui
 ```
 
 ### Test Naming Conventions
@@ -412,7 +412,7 @@ chore(deps): update prisma to v6.2.0
 
 ```typescript
 // Use structured logging
-import { logger } from "@quark/config";
+import { logger } from "@Bobnoddle/quark-config";
 
 // ✅ Good - Structured with context
 logger.info("User created", { 
@@ -522,7 +522,7 @@ async function getUserPosts(userId: string) {
   return posts;
 }
 
-// After: Centralized in @quark/db
+// After: Centralized in @Bobnoddle/quark-db
 // packages/db/src/queries.ts
 export const post = {
   findByAuthor: (authorId: string) =>

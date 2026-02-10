@@ -35,7 +35,7 @@ Welcome to the Quark monorepo documentation. This index helps you navigate all a
 - Authentication endpoints
 - Database models and queries
 - Job queue definitions
-- Package APIs (@quark/db, @quark/ui, @quark/jobs)
+- Package APIs (@Bobnoddle/quark-db, @Bobnoddle/quark-ui, @Bobnoddle/quark-jobs)
 
 ### [MAINTAINABILITY.md](./MAINTAINABILITY.md)
 **Code quality guidelines**

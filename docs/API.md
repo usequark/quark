@@ -97,12 +97,12 @@ interface EmailJobData {
 
 ## Packages
 
-### @quark/db
+### @Bobnoddle/quark-db
 
 Database client and query helpers.
 
 ```typescript
-import { prisma, user, post } from "@quark/db";
+import { prisma, user, post } from "@Bobnoddle/quark-db";
 
 // Find user by ID
 const foundUser = await user.findById("cuid123");
@@ -120,12 +120,12 @@ const newPost = await post.create({ title: "My Post", authorId: "cuid123" });
 const publishedPosts = await post.findPublished();
 ```
 
-### @quark/ui
+### @Bobnoddle/quark-ui
 
 Shared UI components.
 
 ```tsx
-import { Button } from "@quark/ui";
+import { Button } from "@Bobnoddle/quark-ui";
 
 // Primary button (default)
 <Button>Click me</Button>
@@ -137,12 +137,12 @@ import { Button } from "@quark/ui";
 <Button disabled onClick={() => {}}>Submit</Button>
 ```
 
-### @quark/jobs
+### @Bobnoddle/quark-jobs
 
 Job queue definitions.
 
 ```typescript
-import { JOB_QUEUES, JOB_NAMES, EmailJobData } from "@quark/jobs";
+import { JOB_QUEUES, JOB_NAMES, EmailJobData } from "@Bobnoddle/quark-jobs";
 
 // Queue names
 JOB_QUEUES.EMAIL // "email-queue"
@@ -151,12 +151,12 @@ JOB_QUEUES.EMAIL // "email-queue"
 JOB_NAMES.SEND_WELCOME_EMAIL // "send-welcome-email"
 ```
 
-### @quark/config
+### @Bobnoddle/quark-config
 
 Shared configuration.
 
 ```typescript
-import { config } from "@quark/config";
+import { config } from "@Bobnoddle/quark-config";
 
 config.appName // "Quark"
 ```

@@ -1,6 +1,6 @@
+import { createAuthConfig, verifyPassword } from "@Bobnoddle/quark-core";
+import { prisma, user } from "@Bobnoddle/quark-db";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import { createAuthConfig, verifyPassword } from "@quark/core";
-import { prisma, user } from "@quark/db";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GithubProvider from "next-auth/providers/github";
 
