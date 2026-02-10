@@ -1,9 +1,8 @@
 import { UnauthorizedError } from "@quark/core";
-import { getServerSession } from "next-auth/next";
-import { getAuthOptions } from "./auth";
+import { auth } from "./auth";
 
 export async function requireAuth() {
-	const session = await getServerSession(getAuthOptions());
+	const session = await auth();
 
 	if (!session) {
 		throw new UnauthorizedError(

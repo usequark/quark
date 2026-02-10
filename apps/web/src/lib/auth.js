@@ -1,6 +1,7 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { createAuthConfig, verifyPassword } from "@quark/core";
 import { prisma, user } from "@quark/db";
+import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GithubProvider from "next-auth/providers/github";
 
@@ -59,3 +60,5 @@ export function getAuthOptions() {
 		},
 	});
 }
+
+export const { auth, handlers, signIn, signOut } = NextAuth(getAuthOptions());
