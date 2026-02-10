@@ -18,5 +18,8 @@
 		"@types/react-dom": "^19.2.3",
 		"react": "19.2.0",
 		"react-dom": "19.2.0"
+	},
+	"publishConfig": {
+		"registry": "https://npm.pkg.github.com"
 	}
 }

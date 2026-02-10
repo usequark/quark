@@ -32,24 +32,24 @@ importers:
 
   apps/web:
     dependencies:
+      '@Bobnoddle/quark-core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@Bobnoddle/quark-db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@Bobnoddle/quark-jobs':
+        specifier: workspace:*
+        version: link:../../packages/jobs
+      '@Bobnoddle/quark-ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       '@auth/prisma-adapter':
         specifier: ^2.11.1
         version: 2.11.1(@prisma/client@7.3.0(prisma@7.3.0(@types/react@19.2.13)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3))(typescript@5.9.3))
       '@prisma/client':
         specifier: ^7.3.0
         version: 7.3.0(prisma@7.3.0(@types/react@19.2.13)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3))(typescript@5.9.3)
-      '@quark/core':
-        specifier: workspace:*
-        version: link:../../packages/core
-      '@quark/db':
-        specifier: workspace:*
-        version: link:../../packages/db
-      '@quark/jobs':
-        specifier: workspace:*
-        version: link:../../packages/jobs
-      '@quark/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
       next:
         specifier: 16.1.6
         version: 16.1.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -66,7 +66,7 @@ importers:
         specifier: 19.2.0
         version: 19.2.0(react@19.2.0)
     devDependencies:
-      '@quark/config':
+      '@Bobnoddle/quark-config':
         specifier: workspace:*
         version: link:../../packages/config
       '@tailwindcss/postcss':
@@ -81,10 +81,10 @@ importers:
 
   apps/worker:
     dependencies:
-      '@quark/db':
+      '@Bobnoddle/quark-db':
         specifier: workspace:*
         version: link:../../packages/db
-      '@quark/jobs':
+      '@Bobnoddle/quark-jobs':
         specifier: workspace:*
         version: link:../../packages/jobs
       bullmq:
@@ -94,7 +94,7 @@ importers:
         specifier: ^17.2.4
         version: 17.2.4
     devDependencies:
-      '@quark/config':
+      '@Bobnoddle/quark-config':
         specifier: workspace:*
         version: link:../../packages/config
       '@types/node':
@@ -126,7 +126,7 @@ importers:
 
   packages/core:
     dependencies:
-      '@quark/db':
+      '@Bobnoddle/quark-db':
         specifier: workspace:*
         version: link:../db
       bcryptjs:
@@ -164,7 +164,7 @@ importers:
         specifier: ^4.3.6
         version: 4.3.6
     devDependencies:
-      '@quark/config':
+      '@Bobnoddle/quark-config':
         specifier: workspace:*
         version: link:../config
       prisma:
@@ -179,7 +179,7 @@ importers:
 
   packages/ui:
     devDependencies:
-      '@quark/config':
+      '@Bobnoddle/quark-config':
         specifier: workspace:*
         version: link:../config
       '@types/react':

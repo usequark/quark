@@ -15,5 +15,8 @@
 	"packageManager": "pnpm@10.12.1",
 	"dependencies": {
 		"bullmq": "^5.67.3"
+	},
+	"publishConfig": {
+		"registry": "https://npm.pkg.github.com"
 	}
 }

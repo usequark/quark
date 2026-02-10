@@ -16,5 +16,8 @@
 	"scripts": {
 		"test": "node --test src/**/*.test.js",
 		"lint": "biome format --write && biome check --write"
+	},
+	"publishConfig": {
+		"registry": "https://npm.pkg.github.com"
 	}
 }
