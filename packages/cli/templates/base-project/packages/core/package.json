@@ -7,7 +7,7 @@
 		"@prisma/client": "^6.2.1",
 		"bcryptjs": "^3.0.3",
 		"bullmq": "^5.64.1",
-		"next-auth": "^5.0.0-beta.25",
+		"next-auth": "5.0.0-beta.30",
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {

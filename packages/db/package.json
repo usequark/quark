@@ -19,12 +19,12 @@
 	"packageManager": "pnpm@10.12.1",
 	"devDependencies": {
 		"@quark/config": "workspace:*",
-		"prisma": "^7.0.0"
+		"prisma": "^7.3.0"
 	},
 	"dependencies": {
 		"@prisma/adapter-pg": "^7.3.0",
-		"@prisma/client": "^7.0.0",
-		"dotenv": "^17.2.3",
+		"@prisma/client": "^7.3.0",
+		"dotenv": "^17.2.4",
 		"pg": "^8.18.0",
 		"zod": "^4.3.6"
 	}

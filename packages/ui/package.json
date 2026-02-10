@@ -14,7 +14,7 @@
 	"packageManager": "pnpm@10.12.1",
 	"devDependencies": {
 		"@quark/config": "workspace:*",
-		"@types/react": "^19.2.7",
+		"@types/react": "^19.2.13",
 		"@types/react-dom": "^19.2.3",
 		"react": "19.2.0",
 		"react-dom": "19.2.0"

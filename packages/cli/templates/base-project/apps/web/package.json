@@ -15,8 +15,8 @@
 		"@quark/db": "workspace:*",
 		"@quark/jobs": "workspace:*",
 		"@quark/ui": "workspace:*",
-		"next": "16.0.4",
-		"next-auth": "^4.24.13",
+		"next": "16.1.6",
+		"next-auth": "5.0.0-beta.30",
 		"react": "19.2.0",
 		"react-dom": "19.2.0"
 	},
