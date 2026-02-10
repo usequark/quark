@@ -5,7 +5,7 @@
 	"description": "",
 	"main": "index.js",
 	"scripts": {
-		"test": "node --test 'src/**/*.test.js'",
+		"test": "node --test $(find src -name '*.test.js')",
 		"dev": "tsx watch src/index.js",
 		"lint": "biome format --write && biome check --write"
 	},

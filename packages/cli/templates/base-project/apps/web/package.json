@@ -7,7 +7,7 @@
 		"dev": "next dev",
 		"build": "next build",
 		"start": "next start",
-		"test": "node --test 'src/**/*.test.js'",
+		"test": "node --test $(find src -name '*.test.js')",
 		"lint": "biome format --write && biome check --write"
 	},
 	"dependencies": {
