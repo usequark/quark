@@ -129,7 +129,7 @@ createWorker("emails", async (job) => {
 });
 
 // Add a job
-await addJob(emailQueue, {
+await addJob(emailQueue, "send-email", {
   to: "user@example.com",
   subject: "Welcome!",
 });
@@ -139,7 +139,7 @@ await addJob(emailQueue, {
 
 - `createQueue(name, options)` - Creates a BullMQ queue
 - `createWorker(queueName, handler, options)` - Creates a job processor
-- `addJob(queue, data, jobOptions)` - Adds a job to queue
+- `addJob(queue, jobName, data, jobOptions)` - Adds a job to queue
 - `getJobStatus(job)` - Gets job status/progress
 - `clearQueue(queue)` - Clears all jobs from queue
 - `closeAllQueues()` - Gracefully closes all queues

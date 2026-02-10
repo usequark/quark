@@ -119,19 +119,20 @@ export const createQueueEvents = (queueName, options = {}) => {
 /**
  * Utility to add a job to a queue with error handling
  * @param {Queue} queue - BullMQ Queue instance
+ * @param {string} jobName - Job name/type (e.g., 'send-welcome-email')
  * @param {Object} data - Job data
  * @param {Object} jobOptions - Job-specific options
  * @returns {Promise<Job>} Queued job
  */
-export const addJob = async (queue, data, jobOptions = {}) => {
+export const addJob = async (queue, jobName, data, jobOptions = {}) => {
 	try {
-		const job = await queue.add(queue.name, data, jobOptions);
+		const job = await queue.add(jobName, data, jobOptions);
 		return job;
 	} catch (error) {
 		const ServiceError = require("./errors.js").ServiceError;
 		throw new ServiceError(
 			"BullMQ",
-			`Failed to add job to queue "${queue.name}": ${error.message}`,
+			`Failed to add job "${jobName}" to queue "${queue.name}": ${error.message}`,
 			500,
 		);
 	}

@@ -2,7 +2,7 @@
 
 This document contains a comprehensive list of all missing features, issues, and tasks needed to bring Quark to production. Tasks are organized by priority level.
 
-**Total Tasks:** 93
+**Total Tasks:** 92
 
 ---
 
@@ -77,24 +77,27 @@ This document contains a comprehensive list of all missing features, issues, and
 - [x] **Protect API routes**
   - Update User/Post endpoints to require authentication where appropriate
 
-- [x] **Add auth environment variables**
-  - Update `.env.example` with NEXTAUTH_URL, NEXTAUTH_SECRET, OAuth provider keys
+- [ ] **Add auth environment variables**
+  - [x] NEXTAUTH_SECRET already present
+  - [ ] Add NEXTAUTH_URL
+  - [ ] Add OAuth provider keys (GITHUB_ID, GITHUB_SECRET, etc.)
 
 ### Background Jobs
 
-- [ ] **Implement worker service**
-  - Files: `apps/worker/src/index.js` (rewrite)
-  - Should initialize BullMQ, connect to Redis, start consuming jobs
+- [x] **Implement worker service**
+  - Files: `apps/worker/src/index.js`
+  - Initializes BullMQ, connects to Redis, starts consuming jobs
 
-- [ ] **Implement job handlers**
-  - Files: `apps/worker/src/handlers/send-welcome-email.js` (create)
-  - Should handle SEND_WELCOME_EMAIL job
+- [~] **Implement job handlers**
+  - Files: `apps/worker/src/index.js`
+  - [x] Basic handler structure with job dispatcher
+  - [ ] Extract handlers to separate files for maintainability
+  - [ ] Connect to email service when ready
 
-- [ ] **Connect worker to database**
-  - Worker should be able to query user data for email personalization
+- [x] **Add job retry logic**
+  - Configured in `createQueue` defaultJobOptions (3 attempts, exponential backoff)
 
-- [ ] **Add job retry logic**
-  - Implement exponential backoff and dead letter queue handling
+**NOTE:** The Prisma Job model exists for potential dual-tracking (BullMQ in Redis + database audit trail). Currently unused by the worker. Consider removing if long-term job history is not needed, or implement persistence layer if audit requirements exist.
 
 ### Email Service
 
@@ -150,9 +153,10 @@ This document contains a comprehensive list of all missing features, issues, and
 - [ ] **Add error tracking**
   - Setup Sentry or similar for error capture in production
 
-- [x] **Add health check endpoint**
+- [~] **Add health check endpoint**
   - Files: `apps/web/src/app/api/health/route.js`
-  - Should verify DB and Redis connectivity
+  - [x] DB connectivity check
+  - [ ] Redis ping check
 
 - [ ] **Add application metrics**
   - Track request counts, response times, error rates
@@ -162,9 +166,10 @@ This document contains a comprehensive list of all missing features, issues, and
 - [ ] **Configure database connection pooling**
   - Update Prisma client settings for max connections, timeouts
 
-- [ ] **Add Redis client initialization**
-  - Files: `packages/core/src/redis.js` (create)
-  - Should create singleton Redis client
+- [~] **Add Redis client initialization**
+  - Files: `packages/core/src/redis.js`
+  - [x] Build Redis connection config from env
+  - [ ] Create shared Redis client instance
 
 - [ ] **Implement query result caching**
   - Cache frequently accessed data (users, posts) with TTL
@@ -177,9 +182,10 @@ This document contains a comprehensive list of all missing features, issues, and
 
 ### Configuration & Environment
 
-- [x] **Add config validation**
-  - Use Zod to validate all environment variables on startup
-  - Files: `packages/config/src/env-schema.js` (create)
+- [~] **Add config validation**
+  - Files: `packages/config/src/validate-env.js`
+  - [x] Validate environment variables on startup
+  - [ ] Zod-based schema (if desired for runtime type safety)
 
 - [ ] **Document all environment variables**
   - Update `.env.example` with descriptions for each variable
@@ -378,11 +384,11 @@ This document contains a comprehensive list of all missing features, issues, and
 
 | Priority | Count | Category |
 |----------|-------|----------|
-| **P1: Critical** | 24 | Infrastructure, DB, API, Validation, Auth, Jobs, Email |
+| **P1: Critical** | 23 | Infrastructure, DB, API, Validation, Auth, Jobs, Email |
 | **P2: High** | 27 | Security, Logging, Caching, Config, Testing, AuthZ |
 | **P3: Medium** | 22 | API Features, Files, Docs, CLI |
 | **P4: Low** | 20 | DevOps, Monitoring, Advanced, DX |
-| **TOTAL** | **93** | |
+| **TOTAL** | **92** | |
 
 ---
 
@@ -442,11 +448,11 @@ Focus on DevOps, advanced features, and developer experience.
 
 These tasks can be completed quickly and provide immediate value:
 
-- [ ] Sync lockfile (`pnpm install`)
-- [ ] Fix package.json main fields (2 files)
-- [ ] Exclude coverage from linting (Biome config)
-- [ ] Validate environment variables on startup
-- [ ] Add health check endpoint
+- [x] Sync lockfile (`pnpm install`)
+- [x] Fix package.json main fields (2 files)
+- [x] Exclude coverage from linting (Biome config)
+- [x] Validate environment variables on startup
+- [x] Add health check endpoint
 
 **Estimated effort:** Less than 1 hour total
 
@@ -469,11 +475,11 @@ These tasks can be completed quickly and provide immediate value:
 Use this section to track which items have been completed:
 
 ```
-P1 Complete:   5/24
-P2 Complete:   1/27
-P3 Complete:   0/22
-P4 Complete:   0/20
-Total:         6/93
+P1 Complete:   17/23 (74%)
+P2 Complete:   1/27 (4%)
+P3 Complete:   0/22 (0%)
+P4 Complete:   0/20 (0%)
+Total:         18/92 (20%)
 ```
 
-Last Updated: 6 February 2026
+Last Updated: 10 February 2026
