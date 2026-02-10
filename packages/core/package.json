@@ -14,7 +14,7 @@
 		"@types/node": "^24.10.12"
 	},
 	"scripts": {
-		"test": "node --test src/**/*.test.js",
+		"test": "node --test 'src/**/*.test.js'",
 		"lint": "biome format --write && biome check --write"
 	},
 	"publishConfig": {
