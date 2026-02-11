@@ -61,4 +61,31 @@ export function getAuthOptions() {
 	});
 }
 
-export const { auth, handlers, signIn, signOut } = NextAuth(getAuthOptions());
+let authInstance = null;
+
+function getAuthInstance() {
+	if (!authInstance) {
+		authInstance = NextAuth(getAuthOptions());
+	}
+	return authInstance;
+}
+
+export function getAuth() {
+	return getAuthInstance();
+}
+
+export async function auth() {
+	return getAuthInstance().auth();
+}
+
+export const handlers = new Proxy(
+	{},
+	{
+		get(target, prop) {
+			return getAuthInstance().handlers[prop];
+		},
+	},
+);
+
+export const signIn = (...args) => getAuthInstance().signIn(...args);
+export const signOut = (...args) => getAuthInstance().signOut(...args);

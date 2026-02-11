@@ -1,11 +1,12 @@
 import { createAuthConfig, verifyPassword } from "@Bobnoddle/quark-core";
 import { prisma, user } from "@Bobnoddle/quark-db";
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GithubProvider from "next-auth/providers/github";
 
 const providers = [
-	CredentialsProvider.default({
+	CredentialsProvider({
 		name: "Credentials",
 		credentials: {
 			email: { label: "Email", type: "email" },
@@ -43,7 +44,7 @@ const providers = [
 
 if (process.env.GITHUB_ID && process.env.GITHUB_SECRET) {
 	providers.push(
-		GithubProvider.default({
+		GithubProvider({
 			clientId: process.env.GITHUB_ID,
 			clientSecret: process.env.GITHUB_SECRET,
 		}),
@@ -59,3 +60,32 @@ export function getAuthOptions() {
 		},
 	});
 }
+
+let authInstance = null;
+
+function getAuthInstance() {
+	if (!authInstance) {
+		authInstance = NextAuth(getAuthOptions());
+	}
+	return authInstance;
+}
+
+export function getAuth() {
+	return getAuthInstance();
+}
+
+export async function auth() {
+	return getAuthInstance().auth();
+}
+
+export const handlers = new Proxy(
+	{},
+	{
+		get(target, prop) {
+			return getAuthInstance().handlers[prop];
+		},
+	},
+);
+
+export const signIn = (...args) => getAuthInstance().signIn(...args);
+export const signOut = (...args) => getAuthInstance().signOut(...args);
