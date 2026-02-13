@@ -1,60 +1,79 @@
-# Core vs. Ejected: The Quark Inheritance Pattern
+# Quark Architecture: Core-Only Registry Model
 
-This document explains the philosophy behind `@Bobnoddle/quark-core` and how applications inherit, customize, and "eject" from core infrastructure.
+This document explains Quark's distribution architecture and the philosophy behind what gets published to the registry versus what gets scaffolded locally.
 
 ## The Problem We're Solving
 
-Traditional web frameworks often lock you into their patterns. Quark takes a different approach:
+Traditional web frameworks force a choice:
+- **Framework-as-dependency**: Get updates but lose control (Next.js, Rails)
+- **Boilerplate generators**: Full control but no updates (Create React App ejected, Rails new)
 
-- **Core provides sensible defaults** - Zero configuration needed to start
-- **Apps can inherit and extend** - Customize without forking
-- **Eject when needed** - Take full control of any layer
+Quark takes a hybrid approach:
 
-## The Inheritance Model
+- **Core infrastructure comes from registry** - Centralized updates for auth, queues, validation
+- **Business logic scaffolds locally** - Full control over database, jobs, UI
+- **Update what you need** - Infrastructure gets updates, domain logic stays yours
+
+## The Distribution Model
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│  Your Application (@quark/web, @quark/api, etc.)    │
+│  Your Application (@yourapp/web, @yourapp/worker)   │
+│  ├─ imports @bobnoddle/quark-core (from registry)   │
+│  └─ imports @yourapp/db, @yourapp/jobs (local)      │
 ├─────────────────────────────────────────────────────┤
-│  Ejected/Custom Layer (optional overrides)          │
-│  - Custom auth config, error handlers, etc.         │
+│  @bobnoddle/quark-core (GitHub Packages)            │
+│  - createAuthConfig()                               │
+│  - createQueue(), createWorker()                    │
+│  - AppError, ValidationError                        │
+│  - validateBody(), validateParams()                 │
+│  ❌ No database client (no Prisma)                  │
+│  ❌ No domain-specific logic                        │
 ├─────────────────────────────────────────────────────┤
-│  @Bobnoddle/quark-core - The Plumbing                         │
-│  - Database client factory                          │
-│  - Auth initialization                              │
-│  - Job queue wrapper                                │
-│  - Error types                                      │
-│  - Common utilities                                 │
+│  @yourapp/db (Local - Always Scaffolded)            │
+│  - schema.prisma (YOUR models)                      │
+│  - PrismaClient instantiation                       │
+│  - Query builders for your domain                   │
 ├─────────────────────────────────────────────────────┤
-│  Infrastructure Packages (@prisma/client, BullMQ, etc.) │
+│  @yourapp/ui (Local - Optional)                     │
+│  @yourapp/jobs (Local - Optional)                   │
+│  @yourapp/config (Local - Optional)                 │
+├─────────────────────────────────────────────────────┤
+│  Infrastructure Packages (npm)                      │
+│  - @prisma/client, BullMQ, next-auth, etc.          │
 └─────────────────────────────────────────────────────┘
 ```
 
-## What Lives in Core
+## What Lives in Core (Registry)
 
 ✅ **Infrastructure-Level Utilities**
-- Prisma client factory
 - next-auth initialization helpers
 - BullMQ queue factory
 - Standardized error types
-- Common utility functions
+- Common utility functions (password hashing, etc.)
 
 ✅ **Provider-Agnostic Patterns**
 - Error handling conventions
-- Session management helpers
-- Database client patterns
+- Validation middleware
 - Job queue abstractions
 
 ✅ **Type Definitions**
 - JSDoc for IDE support
-- TypeScript definitions
 - Common interfaces
+
+❌ **Database Client** (moved to local `@yourapp/db`)
+- Prisma schema is always customized per app
+- Client instantiation requires app-specific connection config
 
 ❌ **Domain-Specific Logic**
 - Your business models
 - Your API endpoints
 - Your UI components
-- Your authentication providers
+❌ **Domain-Specific Logic**
+- Your business models
+- Your API endpoints
+- Your UI components
+- Your job handlers
 
 ❌ **Application Configuration**
 - Environment-specific settings
@@ -62,14 +81,50 @@ Traditional web frameworks often lock you into their patterns. Quark takes a dif
 - Feature flags
 - App-specific providers
 
-## Examples: Core vs. Ejected
+## Why This Split?
+
+### Core Infrastructure → Registry
+
+**Auth, queues, validation rarely need customization:**
+- Most apps use BullMQ the same way
+- `createAuthConfig()` defaults work for 90% of cases
+- Error types (`AppError`, `ValidationError`) are universal
+
+**Benefits of registry distribution:**
+- Bug fixes propagate instantly (`pnpm update`)
+- Security patches reach all projects
+- API improvements available immediately
+
+### Database, Jobs, UI → Local Scaffolds
+
+**Every app has unique domain models:**
+- E-commerce needs `Product`, `Order`, `Cart`
+- SaaS needs `Organization`, `Subscription`, `Invoice`
+- Prisma schema is the most customized file in any project
+
+**Jobs are domain-specific:**
+- One app sends transactional emails
+- Another processes video uploads
+- Job handlers contain business logic, not infrastructure
+
+**UI is inherently custom:**
+- Design systems differ per brand
+- Component APIs match product needs
+- Shared components evolve with features
+
+**Benefits of local scaffolding:**
+- Full git history of domain changes
+- No conflicts with central updates
+- Freedom to refactor business logic
+
+## Examples: Registry vs. Local
 
 ### Example 1: Authentication
 
-**In Core:**
+**In Core (Registry):**
 ```javascript
-// @Bobnoddle/quark-core - Provides defaults
-import { createAuthConfig } from "@Bobnoddle/quark-core";
+// @bobnoddle/quark-core - Provides defaults
+import { createAuthConfig } from "@bobnoddle/quark-core";
 
 export const createAuthConfig = (options = {}) => {
   return {
@@ -81,10 +136,10 @@ export const createAuthConfig = (options = {}) => {
 };
 ```
 
-**Ejected in Your App:**
+**In Your App (Local):**
 ```javascript
-// @quark/web/lib/auth.js - Your customizations
-import { createAuthConfig } from "@Bobnoddle/quark-core";
+// apps/web/lib/auth.js - Your customizations
+import { createAuthConfig } from "@bobnoddle/quark-core";
 import GitHubProvider from "next-auth/providers/github";
 
 export const authConfig = createAuthConfig({
@@ -111,51 +166,48 @@ export const authConfig = createAuthConfig({
 });
 ```
 
-**Key Points:**
-- Core provides the foundation
-- App extends with providers and custom logic
-- Custom callbacks are additive, not replacing
+### Example 2: Database Client
 
-### Example 2: Error Handling
-
-**In Core:**
+**Before (Old Architecture - Circular Dependency):**
 ```javascript
-// @Bobnoddle/quark-core/src/errors.js
-export class ValidationError extends AppError {
-  constructor(message, details = null) {
-    super(message, 400, "VALIDATION_ERROR");
-    this.details = details;
-  }
-}
+// ❌ REMOVED: Core had database client
+// @bobnoddle/quark-core/src/db/index.js
+export const createDbClient = () => {
+  // Problem: Core depended on @bobnoddle/quark-db
+  // But db depended on core → circular!
+};
 ```
 
-**Optionally Ejected in Your App:**
+**Now (Core-Only Registry - Clean):**
 ```javascript
-// @quark/web/lib/errors.js - Custom domain errors
-import { AppError } from "@Bobnoddle/quark-core";
+// ✅ Core has NO database code
+// @bobnoddle/quark-core exports: auth, queues, validation, errors ONLY
+```
 
-export class PaymentError extends AppError {
-  constructor(message, code = "PAYMENT_FAILED", provider) {
-    super(message, 402, code);
-    this.provider = provider; // Custom property
-  }
-}
+**In Your Local DB Package:**
+```javascript
+// packages/db/src/client.js - YOU own this
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "./generated/prisma/client.js";
 
-// Use both Core and Custom errors
-import { ValidationError, NotFoundError } from "@Bobnoddle/quark-core";
-import { PaymentError } from "./errors.js";
+// Build connection string from YOUR environment
+const connectionString = `postgresql://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@${process.env.POSTGRES_HOST}...`;
+
+export const prisma = new PrismaClient({
+  adapter: new PrismaPg({ connectionString })
+});
 ```
 
 **Key Points:**
-- Core provides base error types
-- Extend them for domain-specific needs
-- Both types are serializable
+- Core has NO database client (no Prisma dependency)
+- Each app creates client based on its own schema
+- Your schema.prisma is completely custom
 
-### Example 3: Job Queue
+### Example 3: Job Definitions
 
-**In Core:**
+**In Core (Registry):**
 ```javascript
-// @Bobnoddle/quark-core/src/queue/index.js
+// @bobnoddle/quark-core/src/queue/index.js
 export const createQueue = (name, options = {}) => {
   return new Queue(name, {
     connection: {
@@ -168,38 +220,55 @@ export const createQueue = (name, options = {}) => {
 };
 ```
 
+**In Your Local Jobs Package:**
+```javascript
+// packages/jobs/src/definitions.js - YOUR domain jobs
+export const JOB_QUEUES = {
+  EMAIL: "email-queue",
+  VIDEO_PROCESSING: "video-queue", // Your custom queue
+};
+
+export const JOB_NAMES = {
+  SEND_WELCOME_EMAIL: "send-welcome-email",
+  TRANSCODE_VIDEO: "transcode-video", // Your custom job
+};
+```
+
 **In Your Worker App:**
 ```javascript
-// @quark/worker/src/queues.js
-import { createQueue, createWorker } from "@Bobnoddle/quark-core";
+// apps/worker/src/index.js
+import { createQueue, createWorker } from "@bobnoddle/quark-core";
+import { JOB_QUEUES, JOB_NAMES } from "@yourapp/jobs";
 
-// Inherit defaults but customize for this app
-export const emailQueue = createQueue("emails", {
+const videoQueue = createQueue(JOB_QUEUES.VIDEO_PROCESSING, {
   defaultJobOptions: {
-    attempts: 5, // More retries for emails
-    backoff: { type: "fixed", delay: 5000 },
+    attempts: 2,
+    timeout: 300000, // 5 min for video processing
   }
 });
 
-export const emailWorker = createWorker(
-  "emails",
+const worker = createWorker(
+  JOB_QUEUES.VIDEO_PROCESSING,
   async (job) => {
-    await sendEmail(job.data);
-  },
-  { concurrency: 10 } // Custom concurrency
+    // YOUR business logic
+    if (job.name === JOB_NAMES.TRANSCODE_VIDEO) {
+      await transcodeVideo(job.data);
+    }
+  }
 );
 ```
 
 **Key Points:**
-- Core provides factory with smart defaults
-- Apps customize specific values
+- Core provides queue infrastructure (createQueue, createWorker)
+- Your jobs package defines domain-specific queues and job types
+- Worker contains your business logic
 - No need to rewrite queue setup
 
 ### Example 4: Database Client
 
 **In Core:**
 ```javascript
-// @Bobnoddle/quark-core/src/db/index.js
+// @bobnoddle/quark-core/src/db/index.js
 export const createDbClient = (options = {}) => {
   const globalForPrisma = globalThis;
   const prisma = globalForPrisma.prisma || new PrismaClient(options);
@@ -215,7 +284,7 @@ export const createDbClient = (options = {}) => {
 **In Your App:**
 ```javascript
 // @quark/web/lib/db.js
-import { createDbClient } from "@Bobnoddle/quark-core";
+import { createDbClient } from "@bobnoddle/quark-core";
 
 // Use with defaults - zero configuration!
 const db = createDbClient();
@@ -252,7 +321,7 @@ Use core for some things, replace others:
 
 ```javascript
 // Keep core auth
-import { createAuthConfig } from "@Bobnoddle/quark-core";
+import { createAuthConfig } from "@bobnoddle/quark-core";
 
 // Use custom queue setup
 import Queue from "bullmq";
@@ -266,7 +335,7 @@ const customQueue = new Queue("special", { custom: "options" });
 Add behavior without changing core:
 
 ```javascript
-import { createDbClient } from "@Bobnoddle/quark-core";
+import { createDbClient } from "@bobnoddle/quark-core";
 
 const db = createDbClient({
   middleware: [
@@ -286,7 +355,7 @@ Create application-specific wrappers around core:
 
 ```javascript
 // lib/api-utils.js
-import { requireAuth, UnauthorizedError } from "@Bobnoddle/quark-core";
+import { requireAuth, UnauthorizedError } from "@bobnoddle/quark-core";
 
 export const withAuth = (handler) => {
   return async (req, res) => {
@@ -335,7 +404,7 @@ class AppApiError extends AppError {
 pnpm create quark my-app
 
 # 2. Inherit core automatically
-import { createDbClient } from "@Bobnoddle/quark-core";
+import { createDbClient } from "@bobnoddle/quark-core";
 
 # 3. Start using core utilities
 const db = createDbClient(); // Works immediately
@@ -350,7 +419,7 @@ export const config = { providers: [...], ... };
 
 // After: use core, eject what you need
 // app/lib/auth.js
-import { createAuthConfig } from "@Bobnoddle/quark-core";
+import { createAuthConfig } from "@bobnoddle/quark-core";
 
 export const config = createAuthConfig({
   providers: [...],
@@ -378,7 +447,7 @@ export const config = createAuthConfig({
 
 ```javascript
 // ✅ Good: Extend core
-import { createAuthConfig } from "@Bobnoddle/quark-core";
+import { createAuthConfig } from "@bobnoddle/quark-core";
 
 export const authConfig = createAuthConfig({
   providers: [CustomProvider()],
@@ -397,7 +466,7 @@ Core should work standalone:
 
 ```javascript
 // ✅ Good: Core works in any app
-import { createQueue } from "@Bobnoddle/quark-core";
+import { createQueue } from "@bobnoddle/quark-core";
 const q = createQueue("jobs");
 
 // ❌ Bad: Core depends on app setup
@@ -412,12 +481,12 @@ import { db } from "./db";         // App-specific
 /**
  * Authentication config for MyApp
  * 
- * Extends @Bobnoddle/quark-core with:
+ * Extends @bobnoddle/quark-core with:
  * - GitHub OAuth provider
  * - Custom role field in JWT
  * - Email domain validation
  */
-import { createAuthConfig } from "@Bobnoddle/quark-core";
+import { createAuthConfig } from "@bobnoddle/quark-core";
 
 export const authConfig = createAuthConfig({
   // Our customizations here...

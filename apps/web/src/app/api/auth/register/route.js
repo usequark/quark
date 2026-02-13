@@ -1,5 +1,5 @@
-import { hashPassword, validateBody } from "@Bobnoddle/quark-core";
-import { user, userRegisterSchema } from "@Bobnoddle/quark-db";
+import { hashPassword, validateBody } from "@bobnoddle/quark-core";
+import { user, userRegisterSchema } from "@bobnoddle/quark-db";
 import { NextResponse } from "next/server";
 import { handleError } from "../../error-handler";
 

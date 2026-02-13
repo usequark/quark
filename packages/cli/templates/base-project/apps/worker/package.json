@@ -14,13 +14,14 @@
 	"license": "ISC",
 	"packageManager": "pnpm@10.12.1",
 	"dependencies": {
-		"@Bobnoddle/quark-db": "workspace:*",
-		"@Bobnoddle/quark-jobs": "workspace:*",
+		"@bobnoddle/quark-core": "^1.0.0",
+		"@bobnoddle/quark-db": "workspace:*",
+		"@bobnoddle/quark-jobs": "workspace:*",
 		"bullmq": "^5.64.1",
 		"dotenv": "^17.2.3"
 	},
 	"devDependencies": {
-		"@Bobnoddle/quark-config": "workspace:*",
+		"@bobnoddle/quark-config": "workspace:*",
 		"@types/node": "^24.10.1",
 		"tsx": "^4.20.6"
 	}

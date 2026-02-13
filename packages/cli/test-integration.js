@@ -27,6 +27,7 @@ const proc = spawn("node", [cliPath, projectName], {
 
 let _output = "";
 let started = false;
+let tokenPrompted = false;
 
 proc.stdout.on("data", (data) => {
 	const str = data.toString();
@@ -34,10 +35,13 @@ proc.stdout.on("data", (data) => {
 	process.stdout.write(str);
 
 	// Look for the prompt and send input
-	if (!started && str.includes("Which packages")) {
+	if (!started && str.includes("Which optional packages")) {
 		started = true;
-		// Send selections: space space space (toggle all) and enter
 		proc.stdin.write("\n"); // Accept defaults (ui and jobs selected)
+	}
+	if (!tokenPrompted && str.includes("GitHub PAT (read:packages")) {
+		tokenPrompted = true;
+		proc.stdin.write("\n"); // Skip token entry for test
 	}
 });
 
@@ -63,6 +67,7 @@ await new Promise((resolve) => {
 					"turbo.json",
 					"docker-compose.yml",
 					".env.example",
+					".env",
 					"packages/ui",
 					"packages/jobs",
 					".git",

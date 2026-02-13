@@ -1,5 +1,5 @@
 /**
- * @Bobnoddle/quark-core - Authentication Module
+ * @bobnoddle/quark-core - Authentication Module
  * Provides next-auth initialization and session management helpers
  */
 

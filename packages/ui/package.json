@@ -1,5 +1,5 @@
 {
-	"name": "@Bobnoddle/quark-ui",
+	"name": "@bobnoddle/quark-ui",
 	"version": "1.0.0",
 	"type": "module",
 	"description": "",
@@ -13,7 +13,7 @@
 	"license": "ISC",
 	"packageManager": "pnpm@10.12.1",
 	"devDependencies": {
-		"@Bobnoddle/quark-config": "workspace:*",
+		"@bobnoddle/quark-config": "workspace:*",
 		"@types/react": "^19.2.13",
 		"@types/react-dom": "^19.2.3",
 		"react": "19.2.0",

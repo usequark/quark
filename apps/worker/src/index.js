@@ -4,8 +4,8 @@
  * Handles job execution, retries, and error tracking
  */
 
-import { createWorker } from "@Bobnoddle/quark-core";
-import { JOB_NAMES, JOB_QUEUES } from "@Bobnoddle/quark-jobs";
+import { createWorker } from "@bobnoddle/quark-core";
+import { JOB_NAMES, JOB_QUEUES } from "@bobnoddle/quark-jobs";
 import dotenv from "dotenv";
 
 // Load environment variables

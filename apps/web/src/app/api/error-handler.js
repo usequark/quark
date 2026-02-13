@@ -1,4 +1,4 @@
-import { AppError } from "@Bobnoddle/quark-core";
+import { AppError } from "@bobnoddle/quark-core";
 import { NextResponse } from "next/server";
 
 export function handleError(error) {

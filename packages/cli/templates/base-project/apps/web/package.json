@@ -12,16 +12,19 @@
 	},
 	"dependencies": {
 		"@auth/prisma-adapter": "^2.11.1",
-		"@Bobnoddle/quark-db": "workspace:*",
-		"@Bobnoddle/quark-jobs": "workspace:*",
-		"@Bobnoddle/quark-ui": "workspace:*",
+		"@bobnoddle/quark-core": "^1.0.0",
+		"@bobnoddle/quark-db": "workspace:*",
+		"@bobnoddle/quark-jobs": "workspace:*",
+		"@bobnoddle/quark-ui": "workspace:*",
+		"@prisma/client": "^7.3.0",
 		"next": "16.1.6",
 		"next-auth": "5.0.0-beta.30",
+		"pg": "^8.18.0",
 		"react": "19.2.0",
 		"react-dom": "19.2.0"
 	},
 	"devDependencies": {
-		"@Bobnoddle/quark-config": "workspace:*",
+		"@bobnoddle/quark-config": "workspace:*",
 		"@tailwindcss/postcss": "^4",
 		"@types/node": "^20",
 		"tailwindcss": "^4"

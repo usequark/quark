@@ -1,5 +1,5 @@
 /**
- * @Bobnoddle/quark-core - Utility Functions
+ * @bobnoddle/quark-core - Utility Functions
  * Common utility functions used across the platform
  */
 

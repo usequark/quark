@@ -1,5 +1,5 @@
-import { UnauthorizedError, validateBody } from "@Bobnoddle/quark-core";
-import { post, postUpdateSchema } from "@Bobnoddle/quark-db";
+import { UnauthorizedError, validateBody } from "@bobnoddle/quark-core";
+import { post, postUpdateSchema } from "@bobnoddle/quark-db";
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth-middleware";
 import { handleError } from "../../error-handler";

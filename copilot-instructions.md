@@ -85,33 +85,33 @@ packages/example/
 ### Import Guidelines
 ```javascript
 // ✅ Use package public API
-import { Button } from "@Bobnoddle/quark-ui";
-import { prisma, user } from "@Bobnoddle/quark-db";
+import { Button } from "@bobnoddle/quark-ui";
+import { prisma, user } from "@bobnoddle/quark-db";
 
 // ❌ No deep imports
-import { Button } from "@Bobnoddle/quark-ui/src/button";
+import { Button } from "@bobnoddle/quark-ui/src/button";
 ```
 
-## Core Package (@Bobnoddle/quark-core)
+## Core Package (@bobnoddle/quark-core)
 
 Provides infrastructure utilities for all apps:
 
 ```javascript
 // Database
-import { createDbClient } from "@Bobnoddle/quark-core";
+import { createDbClient } from "@bobnoddle/quark-core";
 const db = createDbClient();
 
 // Authentication
-import { createAuthConfig, getCurrentSession } from "@Bobnoddle/quark-core";
+import { createAuthConfig, getCurrentSession } from "@bobnoddle/quark-core";
 
 // Job Queue
-import { createQueue, createWorker, addJob } from "@Bobnoddle/quark-core";
+import { createQueue, createWorker, addJob } from "@bobnoddle/quark-core";
 
 // Error Handling
-import { ValidationError, UnauthorizedError, NotFoundError } from "@Bobnoddle/quark-core";
+import { ValidationError, UnauthorizedError, NotFoundError } from "@bobnoddle/quark-core";
 
 // Utilities
-import { retryAsync, validateEnv, sanitizeId } from "@Bobnoddle/quark-core";
+import { retryAsync, validateEnv, sanitizeId } from "@bobnoddle/quark-core";
 ```
 
 ## Testing

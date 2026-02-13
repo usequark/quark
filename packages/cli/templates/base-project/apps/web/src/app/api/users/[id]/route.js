@@ -1,5 +1,5 @@
-import { validateBody } from "@Bobnoddle/quark-core";
-import { user, userUpdateSchema } from "@Bobnoddle/quark-db";
+import { validateBody } from "@bobnoddle/quark-core";
+import { user, userUpdateSchema } from "@bobnoddle/quark-db";
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth-middleware";
 import { handleError } from "../../error-handler";

@@ -32,16 +32,16 @@ importers:
 
   apps/web:
     dependencies:
-      '@Bobnoddle/quark-core':
+      '@bobnoddle/quark-core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@Bobnoddle/quark-db':
+      '@bobnoddle/quark-db':
         specifier: workspace:*
         version: link:../../packages/db
-      '@Bobnoddle/quark-jobs':
+      '@bobnoddle/quark-jobs':
         specifier: workspace:*
         version: link:../../packages/jobs
-      '@Bobnoddle/quark-ui':
+      '@bobnoddle/quark-ui':
         specifier: workspace:*
         version: link:../../packages/ui
       '@auth/prisma-adapter':
@@ -66,7 +66,7 @@ importers:
         specifier: 19.2.0
         version: 19.2.0(react@19.2.0)
     devDependencies:
-      '@Bobnoddle/quark-config':
+      '@bobnoddle/quark-config':
         specifier: workspace:*
         version: link:../../packages/config
       '@tailwindcss/postcss':
@@ -81,10 +81,10 @@ importers:
 
   apps/worker:
     dependencies:
-      '@Bobnoddle/quark-db':
+      '@bobnoddle/quark-db':
         specifier: workspace:*
         version: link:../../packages/db
-      '@Bobnoddle/quark-jobs':
+      '@bobnoddle/quark-jobs':
         specifier: workspace:*
         version: link:../../packages/jobs
       bullmq:
@@ -94,7 +94,7 @@ importers:
         specifier: ^17.2.4
         version: 17.2.4
     devDependencies:
-      '@Bobnoddle/quark-config':
+      '@bobnoddle/quark-config':
         specifier: workspace:*
         version: link:../../packages/config
       '@types/node':
@@ -126,7 +126,7 @@ importers:
 
   packages/core:
     dependencies:
-      '@Bobnoddle/quark-db':
+      '@bobnoddle/quark-db':
         specifier: workspace:*
         version: link:../db
       bcryptjs:
@@ -164,7 +164,7 @@ importers:
         specifier: ^4.3.6
         version: 4.3.6
     devDependencies:
-      '@Bobnoddle/quark-config':
+      '@bobnoddle/quark-config':
         specifier: workspace:*
         version: link:../config
       prisma:
@@ -179,7 +179,7 @@ importers:
 
   packages/ui:
     devDependencies:
-      '@Bobnoddle/quark-config':
+      '@bobnoddle/quark-config':
         specifier: workspace:*
         version: link:../config
       '@types/react':

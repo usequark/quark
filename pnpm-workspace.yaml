@@ -5,3 +5,7 @@ packages:
 onlyBuiltDependencies:
   - '@prisma/engines'
   - prisma
+  - esbuild
+  - msgpackr-extract
+  - sharp
+  - simple-git-hooks

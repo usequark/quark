@@ -42,21 +42,21 @@ packages/example/
 
 | Package | Responsibility | Should NOT Contain |
 |---------|---------------|-------------------|
-| `@Bobnoddle/quark-config` | App configuration, environment variables | Business logic, UI code |
-| `@Bobnoddle/quark-db` | Database client, queries, Prisma schema | HTTP handlers, UI code |
-| `@Bobnoddle/quark-jobs` | Job queue definitions, worker logic | Database queries, UI code |
-| `@Bobnoddle/quark-ui` | Reusable UI components | Business logic, API calls |
+| `@bobnoddle/quark-config` | App configuration, environment variables | Business logic, UI code |
+| `@bobnoddle/quark-db` | Database client, queries, Prisma schema | HTTP handlers, UI code |
+| `@bobnoddle/quark-jobs` | Job queue definitions, worker logic | Database queries, UI code |
+| `@bobnoddle/quark-ui` | Reusable UI components | Business logic, API calls |
 
 ### Import Guidelines
 
 ```typescript
 // ✅ Good - Import from package public API
-import { Button } from "@Bobnoddle/quark-ui";
-import { prisma, user } from "@Bobnoddle/quark-db";
+import { Button } from "@bobnoddle/quark-ui";
+import { prisma, user } from "@bobnoddle/quark-db";
 
 // ❌ Bad - Deep imports bypass the public API
-import { Button } from "@Bobnoddle/quark-ui/src/button";
-import { prisma } from "@Bobnoddle/quark-db/src/client";
+import { Button } from "@bobnoddle/quark-ui/src/button";
+import { prisma } from "@bobnoddle/quark-db/src/client";
 ```
 
 ### Barrel Exports
@@ -84,8 +84,8 @@ Use workspace protocol for internal packages:
 ```json
 {
   "dependencies": {
-    "@Bobnoddle/quark-ui": "workspace:*",
-    "@Bobnoddle/quark-db": "workspace:*"
+    "@bobnoddle/quark-ui": "workspace:*",
+    "@bobnoddle/quark-db": "workspace:*"
   }
 }
 ```
@@ -194,7 +194,7 @@ pnpm test:coverage
 pnpm test:watch
 
 # Run tests for specific package
-pnpm test --filter @Bobnoddle/quark-ui
+pnpm test --filter @bobnoddle/quark-ui
 ```
 
 ### Test Naming Conventions
@@ -412,7 +412,7 @@ chore(deps): update prisma to v6.2.0
 
 ```typescript
 // Use structured logging
-import { logger } from "@Bobnoddle/quark-config";
+import { logger } from "@bobnoddle/quark-config";
 
 // ✅ Good - Structured with context
 logger.info("User created", { 
@@ -522,7 +522,7 @@ async function getUserPosts(userId: string) {
   return posts;
 }
 
-// After: Centralized in @Bobnoddle/quark-db
+// After: Centralized in @bobnoddle/quark-db
 // packages/db/src/queries.ts
 export const post = {
   findByAuthor: (authorId: string) =>

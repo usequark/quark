@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Test script for @Bobnoddle/quark-create-app CLI
+ * Test script for @bobnoddle/quark-create-app CLI
  * Run with: node packages/cli/test-cli.js
  */
 
@@ -15,7 +15,7 @@ const testDir = path.join(__dirname, "../../tmp-test-project");
 const projectName = "my-test-quark-app";
 const _projectPath = path.join(testDir, projectName);
 
-console.log("🧪 Testing @Bobnoddle/quark-create-app CLI\n");
+console.log("🧪 Testing @bobnoddle/quark-create-app CLI\n");
 
 // Cleanup
 console.log("📦 Setting up test environment...");

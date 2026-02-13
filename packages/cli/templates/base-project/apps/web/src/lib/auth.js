@@ -1,6 +1,6 @@
-import { createAuthConfig, verifyPassword } from "@Bobnoddle/quark-core";
-import { prisma, user } from "@Bobnoddle/quark-db";
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import { createAuthConfig, verifyPassword } from "@bobnoddle/quark-core";
+import { prisma, user } from "@bobnoddle/quark-db";
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GithubProvider from "next-auth/providers/github";
@@ -81,7 +81,7 @@ export async function auth() {
 export const handlers = new Proxy(
 	{},
 	{
-		get(target, prop) {
+		get(_target, prop) {
 			return getAuthInstance().handlers[prop];
 		},
 	},

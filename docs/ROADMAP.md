@@ -33,10 +33,10 @@ quark/
 
 | Package | Status | Completeness |
 |---------|--------|--------------|
-| `@Bobnoddle/quark-config` | ⚠️ Minimal | ~10% - Only `appName` defined |
-| `@Bobnoddle/quark-db` | ⚠️ Basic | ~25% - Basic User/Post models, no auth tables |
-| `@Bobnoddle/quark-jobs` | ⚠️ Basic | ~15% - Single email queue |
-| `@Bobnoddle/quark-ui` | ⚠️ Basic | ~10% - Single Button component |
+| `@bobnoddle/quark-config` | ⚠️ Minimal | ~10% - Only `appName` defined |
+| `@bobnoddle/quark-db` | ⚠️ Basic | ~25% - Basic User/Post models, no auth tables |
+| `@bobnoddle/quark-jobs` | ⚠️ Basic | ~15% - Single email queue |
+| `@bobnoddle/quark-ui` | ⚠️ Basic | ~10% - Single Button component |
 | `apps/web` | ⚠️ Basic | ~20% - Stub NextAuth with credentials only |
 | `apps/worker` | ✅ Functional | ~40% - Working BullMQ worker |
 
@@ -224,7 +224,7 @@ apps/worker-playground/
 
 ```typescript
 // Job Creator with type safety
-import { JOB_QUEUES, JOB_NAMES, EmailJobData } from "@Bobnoddle/quark-jobs";
+import { JOB_QUEUES, JOB_NAMES, EmailJobData } from "@bobnoddle/quark-jobs";
 
 function EmailJobCreator() {
   const [formData, setFormData] = useState<EmailJobData>({
@@ -421,13 +421,13 @@ For very large projects with distinct bounded contexts:
 
 ```
 packages/
-├── db-auth/           # @Bobnoddle/quark-db-auth
+├── db-auth/           # @bobnoddle/quark-db-auth
 │   └── prisma/
 │       └── schema.prisma
-├── db-content/        # @Bobnoddle/quark-db-content
+├── db-content/        # @bobnoddle/quark-db-content
 │   └── prisma/
 │       └── schema.prisma
-└── db/                # @Bobnoddle/quark-db (aggregates all)
+└── db/                # @bobnoddle/quark-db (aggregates all)
 ```
 
 **Not recommended** unless you have 50+ models and multiple teams.
@@ -446,7 +446,7 @@ packages/
 
 ## Phase 4: Expanded Package Code (Priority: Medium)
 
-### 4.1 Enhanced `@Bobnoddle/quark-config`
+### 4.1 Enhanced `@bobnoddle/quark-config`
 
 ```typescript
 // packages/config/src/index.ts
@@ -511,7 +511,7 @@ export const features = {
 } as const;
 ```
 
-### 4.2 Enhanced `@Bobnoddle/quark-db`
+### 4.2 Enhanced `@bobnoddle/quark-db`
 
 ```typescript
 // packages/db/src/queries.ts
@@ -646,7 +646,7 @@ export const posts = {
 export const transaction = prisma.$transaction.bind(prisma);
 ```
 
-### 4.3 Enhanced `@Bobnoddle/quark-jobs`
+### 4.3 Enhanced `@bobnoddle/quark-jobs`
 
 ```typescript
 // packages/jobs/src/definitions.ts
@@ -773,7 +773,7 @@ export const CRON_SCHEDULES = {
 } as const;
 ```
 
-### 4.4 Enhanced `@Bobnoddle/quark-ui`
+### 4.4 Enhanced `@bobnoddle/quark-ui`
 
 New components to add:
 
@@ -916,7 +916,7 @@ packages/auth/
 ```typescript
 import { NextAuthOptions } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import { prisma } from "@Bobnoddle/quark-db";
+import { prisma } from "@bobnoddle/quark-db";
 import { providers } from "./providers";
 import { callbacks } from "./callbacks";
 
@@ -948,7 +948,7 @@ import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 import EmailProvider from "next-auth/providers/email";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { prisma } from "@Bobnoddle/quark-db";
+import { prisma } from "@bobnoddle/quark-db";
 import bcrypt from "bcryptjs";
 
 export const providers: Provider[] = [
@@ -1038,7 +1038,7 @@ export const providers: Provider[] = [
 
 ```typescript
 import { NextAuthOptions } from "next-auth";
-import { prisma } from "@Bobnoddle/quark-db";
+import { prisma } from "@bobnoddle/quark-db";
 
 export const callbacks: NextAuthOptions["callbacks"] = {
   async signIn({ user, account, profile }) {
@@ -1189,9 +1189,9 @@ apps/web/src/app/
 - [ ] Refactor Prisma schema (multi-file or sectioned)
 
 #### Sprint 2 (Week 2-3)
-- [ ] Expand `@Bobnoddle/quark-config` with env validation
-- [ ] Expand `@Bobnoddle/quark-db` with pagination and more queries
-- [ ] Expand `@Bobnoddle/quark-jobs` with additional job types
+- [ ] Expand `@bobnoddle/quark-config` with env validation
+- [ ] Expand `@bobnoddle/quark-db` with pagination and more queries
+- [ ] Expand `@bobnoddle/quark-jobs` with additional job types
 - [ ] Add more UI components
 
 #### Sprint 3 (Week 3-4)

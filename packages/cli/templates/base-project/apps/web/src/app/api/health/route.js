@@ -3,8 +3,8 @@
  * Verifies the application and its dependencies are functioning correctly
  */
 
-import { redis } from "@Bobnoddle/quark-core";
-import { prisma } from "@Bobnoddle/quark-db";
+import { redis } from "@bobnoddle/quark-core";
+import { prisma } from "@bobnoddle/quark-db";
 import { NextResponse } from "next/server";
 
 export async function GET() {

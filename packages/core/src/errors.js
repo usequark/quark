@@ -1,5 +1,5 @@
 /**
- * @Bobnoddle/quark-core - Error Handling Module
+ * @bobnoddle/quark-core - Error Handling Module
  * Standardized error types and utilities for consistent error handling
  */
 

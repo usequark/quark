@@ -1,4 +1,4 @@
-import { UnauthorizedError } from "@Bobnoddle/quark-core";
+import { UnauthorizedError } from "@bobnoddle/quark-core";
 import { auth } from "./auth";
 
 export async function requireAuth() {

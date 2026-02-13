@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * End-to-end test for @Bobnoddle/quark-create-app CLI
+ * End-to-end test for @bobnoddle/quark-create-app CLI
  * This manually walks through creating a project
  */
 
@@ -40,9 +40,17 @@ console.log("✓ Creating apps and packages directories");
 await fs.ensureDir(path.join(projectPath, "apps"));
 await fs.ensureDir(path.join(projectPath, "packages"));
 
-// Step 4: Copy selected feature templates
+// Step 4: Update db package scope (it's already copied from base-project)
+console.log("✓ Updating required package: db");
+const dbPackageDir = path.join(projectPath, "packages", "db");
+const dbPackageJsonPath = path.join(dbPackageDir, "package.json");
+const dbPackageJson = await fs.readJSON(dbPackageJsonPath);
+dbPackageJson.name = `@${scope}/db`;
+await fs.writeJSON(dbPackageJsonPath, dbPackageJson, { spaces: 2 });
+
+// Step 5: Copy selected optional feature templates
 const features = ["ui", "jobs"];
-console.log(`✓ Copying selected packages: ${features.join(", ")}`);
+console.log(`✓ Copying optional packages: ${features.join(", ")}`);
 
 for (const feature of features) {
 	const packageDir = path.join(projectPath, "packages", feature);
@@ -57,7 +65,65 @@ for (const feature of features) {
 	await fs.writeJSON(packageJsonPath, packageJson, { spaces: 2 });
 }
 
-// Step 5: Create .env.example
+// Step 6: Update app dependencies to use correct scope
+console.log("✓ Updating app dependencies");
+
+// Update web app package.json
+const webPackageJsonPath = path.join(
+	projectPath,
+	"apps",
+	"web",
+	"package.json",
+);
+if (await fs.pathExists(webPackageJsonPath)) {
+	const webPackageJson = await fs.readJSON(webPackageJsonPath);
+
+	// Replace @bobnoddle/quark-* with @scope/* for local packages
+	const replaceScope = (deps) => {
+		if (!deps) return;
+		for (const [key, value] of Object.entries(deps)) {
+			if (key.startsWith("@bobnoddle/quark-") && value === "workspace:*") {
+				const packageName = key.replace("@bobnoddle/quark-", "");
+				delete deps[key];
+				deps[`@${scope}/${packageName}`] = value;
+			}
+		}
+	};
+
+	replaceScope(webPackageJson.dependencies);
+	replaceScope(webPackageJson.devDependencies);
+
+	await fs.writeJSON(webPackageJsonPath, webPackageJson, { spaces: 2 });
+}
+
+// Update worker app package.json
+const workerPackageJsonPath = path.join(
+	projectPath,
+	"apps",
+	"worker",
+	"package.json",
+);
+if (await fs.pathExists(workerPackageJsonPath)) {
+	const workerPackageJson = await fs.readJSON(workerPackageJsonPath);
+
+	const replaceScope = (deps) => {
+		if (!deps) return;
+		for (const [key, value] of Object.entries(deps)) {
+			if (key.startsWith("@bobnoddle/quark-") && value === "workspace:*") {
+				const packageName = key.replace("@bobnoddle/quark-", "");
+				delete deps[key];
+				deps[`@${scope}/${packageName}`] = value;
+			}
+		}
+	};
+
+	replaceScope(workerPackageJson.dependencies);
+	replaceScope(workerPackageJson.devDependencies);
+
+	await fs.writeJSON(workerPackageJsonPath, workerPackageJson, { spaces: 2 });
+}
+
+// Step 7: Create .env.example
 console.log("✓ Creating .env.example");
 const envExample = `# Database
 POSTGRES_USER=quark
@@ -78,8 +144,19 @@ API_BASE_URL=http://localhost:3000
 DATABASE_URL=postgresql://quark:development@localhost:5432/${scope}_dev
 REDIS_URL=redis://localhost:6379
 EMAIL_FROM=noreply@${scope}.com
+
+# GitHub Packages Authentication (required for Quark package installation)
+# Generate Personal Access Token at https://github.com/settings/tokens with:
+#   - read:packages (to download packages)
+#   - write:packages (if publishing)
+# Set this BEFORE running pnpm install
+GH_TOKEN=YOUR_PAT_HERE
 `;
 await fs.writeFile(path.join(projectPath, ".env.example"), envExample);
+
+// Step 8: Create .env (mirrors CLI behavior)
+console.log("✓ Creating .env");
+await fs.writeFile(path.join(projectPath, ".env"), envExample);
 
 // Verify the structure
 console.log("\n✅ Verification Results:\n");
@@ -106,9 +183,11 @@ const checks = [
 	verifyFile("pnpm-workspace.yaml"),
 	verifyFile(".gitignore"),
 	verifyFile(".env.example"),
+	verifyFile(".env"),
 	verifyFile("README.md"),
 	verifyDir("apps"),
 	verifyDir("packages"),
+	verifyDir("packages/db"),
 	verifyDir("packages/ui"),
 	verifyDir("packages/jobs"),
 ];
@@ -121,6 +200,9 @@ console.log(`\n✅ Structure check: ${passed}/${total} items verified`);
 
 // Verify package.json names are updated
 console.log("\n✅ Package scope verification:\n");
+const dbPackageJson2 = await fs.readJSON(
+	path.join(projectPath, "packages/db/package.json"),
+);
 const uiPackageJson = await fs.readJSON(
 	path.join(projectPath, "packages/ui/package.json"),
 );
@@ -129,10 +211,31 @@ const jobsPackageJson = await fs.readJSON(
 );
 
 console.log(
+	`  ${dbPackageJson2.name === `@${scope}/db` ? "✓" : "✗"} DB package: ${dbPackageJson2.name}`,
+);
+console.log(
 	`  ${uiPackageJson.name === `@${scope}/ui` ? "✓" : "✗"} UI package: ${uiPackageJson.name}`,
 );
 console.log(
 	`  ${jobsPackageJson.name === `@${scope}/jobs` ? "✓" : "✗"} Jobs package: ${jobsPackageJson.name}`,
+);
+
+// Verify app dependencies were updated
+console.log("\n✅ App dependency scope verification:\n");
+const webPkg = await fs.readJSON(
+	path.join(projectPath, "apps/web/package.json"),
+);
+const hasCorrectDbDep = webPkg.dependencies[`@${scope}/db`] === "workspace:*";
+const hasCorrectUiDep = webPkg.dependencies[`@${scope}/ui`] === "workspace:*";
+const hasCorrectJobsDep =
+	webPkg.dependencies[`@${scope}/jobs`] === "workspace:*";
+const hasCore = webPkg.dependencies["@bobnoddle/quark-core"] === "^1.0.0";
+
+console.log(`  ${hasCorrectDbDep ? "✓" : "✗"} Web app has @${scope}/db`);
+console.log(`  ${hasCorrectUiDep ? "✓" : "✗"} Web app has @${scope}/ui`);
+console.log(`  ${hasCorrectJobsDep ? "✓" : "✗"} Web app has @${scope}/jobs`);
+console.log(
+	`  ${hasCore ? "✓" : "✗"} Web app has @bobnoddle/quark-core (from registry)`,
 );
 
 // List the project structure
