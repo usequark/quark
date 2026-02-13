@@ -342,16 +342,17 @@ const db = createDbClient({
 ├── src/
 │   ├── index.js          # Main exports
 │   ├── auth/
-│   │   └── index.js      # Next-auth helpers
-│   ├── db/
-│   │   └── index.js      # Prisma client factory
+│   │   ├── index.js      # Next-auth helpers
+│   │   └── password.js   # Password hashing (bcryptjs)
 │   ├── queue/
 │   │   └── index.js      # BullMQ integration
 │   ├── errors.js         # Error types & utilities
+│   ├── redis.js          # Redis URL & config helpers
+│   ├── mailhog.js        # Mailhog SMTP/UI config helpers
+│   ├── validation.js     # Zod request body validation
 │   ├── utils.js          # Common helpers
-│   ├── types.js          # Type definitions
+│   ├── types.js          # JSDoc type definitions
 │   ├── auth.test.js      # Auth tests
-│   ├── queue.test.js     # Queue tests
 │   ├── errors.test.js    # Error tests
 │   └── utils.test.js     # Utils tests
 └── package.json

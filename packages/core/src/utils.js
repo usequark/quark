@@ -105,16 +105,12 @@ export const isObject = (item) => {
 };
 
 /**
+ * @deprecated Use `getErrorMessage` from `@bobnoddle/quark-core/errors` instead.
  * Normalizes error messages for consistency
  * @param {Error|string} error - Error to normalize
  * @returns {string} Normalized error message
  */
-export const normalizeErrorMessage = (error) => {
-	if (typeof error === "string") return error;
-	if (error instanceof Error) return error.message;
-	if (error?.message) return error.message;
-	return "An unknown error occurred";
-};
+export { getErrorMessage as normalizeErrorMessage } from "./errors.js";
 
 /**
  * Generates a random string of specified length

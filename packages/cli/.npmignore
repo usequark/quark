@@ -1,0 +1,9 @@
+# Test files
+test-cli.js
+test-e2e.js
+test-integration.js
+test-all.js
+
+# Dev files
+.github/
+.gitignore

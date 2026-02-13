@@ -9,13 +9,14 @@ import prompts from "prompts";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const templatesDir = path.join(__dirname, "../templates");
+const pkg = await fs.readJSON(path.join(__dirname, "../package.json"));
 
 const program = new Command();
 
 program
 	.name("quark-create-app")
 	.description("Scaffold a new project from the Quark monorepo")
-	.version("1.0.0");
+	.version(pkg.version);
 
 /**
  * Copy a template directory to the target location, with variable substitution
@@ -50,14 +51,6 @@ async function initializeGit(projectDir) {
 	try {
 		// Initialize git repo
 		await execa("git", ["init"], { cwd: projectDir });
-
-		// Set git config for the repo (optional but good practice)
-		await execa("git", ["config", "user.email", "you@example.com"], {
-			cwd: projectDir,
-		});
-		await execa("git", ["config", "user.name", "Your Name"], {
-			cwd: projectDir,
-		});
 
 		// Add all files
 		await execa("git", ["add", "."], { cwd: projectDir });
@@ -94,6 +87,20 @@ async function updatePackageJsonName(filePath, scope) {
 	packageJson.name = `@${scope}/${packageName}`;
 
 	await fs.writeFile(filePath, `${JSON.stringify(packageJson, null, 2)}\n`);
+}
+
+/**
+ * Replace @bobnoddle/quark-* workspace deps with @scope/* for local packages
+ */
+function replaceDepsScope(deps, scope) {
+	if (!deps) return;
+	for (const [key, value] of Object.entries(deps)) {
+		if (key.startsWith("@bobnoddle/quark-") && value === "workspace:*") {
+			const packageName = key.replace("@bobnoddle/quark-", "");
+			delete deps[key];
+			deps[`@${scope}/${packageName}`] = value;
+		}
+	}
 }
 
 program
@@ -192,71 +199,22 @@ program
 			// Step 7: Update app dependencies to use correct scope
 			console.log(chalk.cyan("\n  🔧 Updating app dependencies..."));
 
-			// Update web app package.json
-			const webPackageJsonPath = path.join(
-				targetDir,
-				"apps",
-				"web",
-				"package.json",
-			);
-			if (await fs.pathExists(webPackageJsonPath)) {
-				const webPackageJson = await fs.readJSON(webPackageJsonPath);
+			// Update app package.json files to use correct scope
+			const appPaths = [
+				path.join(targetDir, "apps", "web", "package.json"),
+				path.join(targetDir, "apps", "worker", "package.json"),
+			];
 
-				// Replace @bobnoddle/quark-* with @scope/* for local packages
-				const replaceScope = (deps) => {
-					if (!deps) return;
-					for (const [key, value] of Object.entries(deps)) {
-						if (
-							key.startsWith("@bobnoddle/quark-") &&
-							value === "workspace:*"
-						) {
-							const packageName = key.replace("@bobnoddle/quark-", "");
-							delete deps[key];
-							deps[`@${scope}/${packageName}`] = value;
-						}
-					}
-				};
-
-				replaceScope(webPackageJson.dependencies);
-				replaceScope(webPackageJson.devDependencies);
-
-				await fs.writeFile(
-					webPackageJsonPath,
-					`${JSON.stringify(webPackageJson, null, 2)}\n`,
-				);
-			}
-
-			// Update worker app package.json
-			const workerPackageJsonPath = path.join(
-				targetDir,
-				"apps",
-				"worker",
-				"package.json",
-			);
-			if (await fs.pathExists(workerPackageJsonPath)) {
-				const workerPackageJson = await fs.readJSON(workerPackageJsonPath);
-
-				const replaceScope = (deps) => {
-					if (!deps) return;
-					for (const [key, value] of Object.entries(deps)) {
-						if (
-							key.startsWith("@bobnoddle/quark-") &&
-							value === "workspace:*"
-						) {
-							const packageName = key.replace("@bobnoddle/quark-", "");
-							delete deps[key];
-							deps[`@${scope}/${packageName}`] = value;
-						}
-					}
-				};
-
-				replaceScope(workerPackageJson.dependencies);
-				replaceScope(workerPackageJson.devDependencies);
-
-				await fs.writeFile(
-					workerPackageJsonPath,
-					`${JSON.stringify(workerPackageJson, null, 2)}\n`,
-				);
+			for (const appPkgPath of appPaths) {
+				if (await fs.pathExists(appPkgPath)) {
+					const appPkg = await fs.readJSON(appPkgPath);
+					replaceDepsScope(appPkg.dependencies, scope);
+					replaceDepsScope(appPkg.devDependencies, scope);
+					await fs.writeFile(
+						appPkgPath,
+						`${JSON.stringify(appPkg, null, 2)}\n`,
+					);
+				}
 			}
 
 			console.log(chalk.green(`    ✓ App dependencies updated`));
@@ -375,13 +333,9 @@ GH_TOKEN=YOUR_PAT_HERE
 			);
 
 			console.log(chalk.cyan("Learn more:"));
+			console.log(chalk.white(`  📖 Docs: https://github.com/Bobnoddle/quark`));
 			console.log(
-				chalk.white(`  📖 Docs: https://github.com/Bobnoddle/${projectName}`),
-			);
-			console.log(
-				chalk.white(
-					`  💬 Issues: https://github.com/Bobnoddle/${projectName}/issues\n`,
-				),
+				chalk.white(`  💬 Issues: https://github.com/Bobnoddle/quark/issues\n`),
 			);
 		} catch (error) {
 			console.error(chalk.red(`\n✗ Error creating project: ${error.message}`));
@@ -471,7 +425,20 @@ program
 			});
 
 			// Update .quark-link.json
-			quarkLink.quarkVersion = "updated";
+			let updatedVersion = "updated";
+			try {
+				const corePkg = await fs.readJSON(
+					path.join(
+						process.cwd(),
+						"node_modules",
+						"@bobnoddle",
+						"quark-core",
+						"package.json",
+					),
+				);
+				updatedVersion = corePkg.version;
+			} catch {}
+			quarkLink.quarkVersion = updatedVersion;
 			quarkLink.updatedDate = new Date().toISOString();
 			await fs.writeFile(quarkLinkPath, JSON.stringify(quarkLink, null, 2));
 

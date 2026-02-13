@@ -276,12 +276,14 @@ This gives you:
 
 #### `@bobnoddle/quark-core`
 
-Infrastructure provided via GitHub Packages registry. Includes authentication, validation, error handling, and job queue infrastructure.
+Infrastructure provided via GitHub Packages registry. Includes authentication, password hashing, validation, error handling, and job queue infrastructure.
 
 ```javascript
 // In your application
 import {
   createAuthConfig,
+  hashPassword,
+  verifyPassword,
   createQueue,
   createWorker,
   validateBody,
@@ -294,6 +296,10 @@ const authConfig = createAuthConfig({
     // Your providers
   ],
 });
+
+// Example: Hash and verify passwords
+const hashed = await hashPassword("user-password");
+const isValid = await verifyPassword("user-password", hashed);
 ```
 
 See [packages/core/README.md](../packages/core/README.md) for full API reference.

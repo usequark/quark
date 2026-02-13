@@ -3,7 +3,7 @@
  * Verifies the application and its dependencies are functioning correctly
  */
 
-import { createRedisClient } from "@bobnoddle/quark-core";
+import { createRedisConfig } from "@bobnoddle/quark-core";
 import { prisma } from "@bobnoddle/quark-db";
 import { NextResponse } from "next/server";
 
@@ -29,7 +29,7 @@ export async function GET() {
 
 		// Check Redis connectivity
 		try {
-			const redis = createRedisClient();
+			const redis = createRedisConfig();
 			// For now, just check if we can create the config - actual ping requires redis client
 			if (redis.url) {
 				health.checks.redis = { status: "ok" };

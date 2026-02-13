@@ -2,6 +2,8 @@
 export * from "./auth/index.js";
 // Error exports
 export * from "./errors.js";
+// Mailhog exports
+export * from "./mailhog.js";
 // Queue exports
 export * from "./queue/index.js";
 // Redis exports

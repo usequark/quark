@@ -27,7 +27,7 @@ npx @bobnoddle/quark-create-app@latest my-project
 The CLI will:
 - Scaffold the project
 - Prompt you for a GitHub PAT (with `read:packages` scope)
-- Create `.env` and `.npmrc` automatically
+- Create `.env` (with your token as `GH_TOKEN`) and `.npmrc` automatically
 
 > **Need a token?** Go to https://github.com/settings/tokens → Generate new token (classic) → select **`read:packages`** → copy the token (starts with `ghp_`).
 

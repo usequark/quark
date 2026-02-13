@@ -14,18 +14,22 @@ function getRedisUrl() {
 }
 
 /**
- * Creates a Redis client instance.
- * Can be extended to create singleton or connection pooling if needed.
+ * Creates a Redis configuration object from environment variables.
+ * Returns the URL and any additional options — does not create an actual connection.
+ * Pass the URL to your Redis library of choice (e.g., ioredis).
  */
-export const createRedisClient = (options = {}) => {
+export const createRedisConfig = (options = {}) => {
 	const redisUrl = getRedisUrl();
 
-	// Return the URL for now - implement actual client when redis package is added
-	// This allows consumers to pass it to their Redis library of choice
 	return {
 		url: redisUrl,
 		...options,
 	};
 };
+
+/**
+ * @deprecated Use `createRedisConfig` instead.
+ */
+export const createRedisClient = createRedisConfig;
 
 export { getRedisUrl };
