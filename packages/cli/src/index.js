@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import crypto from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import chalk from "chalk";
@@ -17,6 +18,34 @@ program
 	.name("quark-create-app")
 	.description("Scaffold a new project from the Quark monorepo")
 	.version(pkg.version);
+
+/**
+ * Generate a cryptographically secure random string
+ * @param {number} length - Length of the random string (default: 32)
+ * @returns {string} Base64 encoded random string
+ */
+function generateSecureSecret(length = 32) {
+	return crypto
+		.randomBytes(length)
+		.toString("base64")
+		.replace(/[/+=]/g, "")
+		.substring(0, length);
+}
+
+/**
+ * Generate a secure random password
+ * @param {number} length - Length of the password (default: 24)
+ * @returns {string} Alphanumeric password
+ */
+function generateSecurePassword(length = 24) {
+	const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+	const bytes = crypto.randomBytes(length);
+	let result = "";
+	for (let i = 0; i < length; i++) {
+		result += chars[bytes[i] % chars.length];
+	}
+	return result;
+}
 
 /**
  * Copy a template directory to the target location, with variable substitution
@@ -231,48 +260,119 @@ program
 
 			// Step 9: Create .env.example file
 			console.log(chalk.cyan("\n  🔐 Creating environment configuration..."));
-			const envExample = `# Database
-POSTGRES_USER=quark
-POSTGRES_PASSWORD=development
-POSTGRES_DB=${scope}_dev
+			const envExampleTemplate = `# --- Database Configuration ---
+# These map to the service names in docker-compose.yml
+# ⚠️  SECURITY WARNING: Change these default passwords in production!
+# Generate strong passwords with: openssl rand -base64 32
+POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
+POSTGRES_USER=quark_user
+POSTGRES_PASSWORD=CHANGE_ME_TO_STRONG_PASSWORD
+POSTGRES_DB=${scope}_dev
+# Optional: Set DATABASE_URL to override the dynamic construction above
+# DATABASE_URL="postgresql://quark_user:CHANGE_ME_TO_STRONG_PASSWORD@localhost:5432/${scope}_dev?schema=public"
 
-# Redis
+# --- Redis Configuration ---
+REDIS_HOST=localhost
 REDIS_PORT=6379
+# Optional: Set REDIS_URL to override the dynamic construction above
+# REDIS_URL="redis://localhost:6379"
 
-# Email
+# --- Mailhog Configuration ---
+MAILHOG_HOST=localhost
 MAILHOG_SMTP_PORT=1025
 MAILHOG_UI_PORT=8025
+# Optional: Set MAILHOG_SMTP_URL to override the dynamic construction above
+# MAILHOG_SMTP_URL="smtp://localhost:1025"
 
-# Application
-NODE_ENV=development
-API_BASE_URL=http://localhost:3000
-DATABASE_URL=postgresql://quark:development@localhost:5432/${scope}_dev
-REDIS_URL=redis://localhost:6379
-EMAIL_FROM=noreply@${scope}.com
+# --- Application URL ---
+# The canonical URL of your application.
+# NEXTAUTH_URL, CORS origins, and other URL-dependent settings are derived from this.
+# Development: http://localhost:3000
+# Production: https://yourdomain.com
+APP_URL=http://localhost:3000
 
-# GitHub Packages Authentication (required for Quark package installation)
-# Generate Personal Access Token at https://github.com/settings/tokens with:
-#   - read:packages (to download packages)
-#   - write:packages (if publishing)
-# Set this BEFORE running pnpm install
-GH_TOKEN=YOUR_PAT_HERE
+# --- NextAuth Configuration ---
+# ⚠️  CRITICAL: Generate a secure secret with: openssl rand -base64 32
+# This secret is used to encrypt JWT tokens and session data
+NEXTAUTH_SECRET=CHANGE_ME_TO_STRONG_SECRET
+
+# --- OAuth Providers (Optional) ---
+# GitHub OAuth - Get credentials at: https://github.com/settings/developers
+# GITHUB_ID=your_github_client_id
+# GITHUB_SECRET=your_github_client_secret
+
+# Google OAuth - Get credentials at: https://console.cloud.google.com/apis/credentials
+# GOOGLE_CLIENT_ID=your_google_client_id
+# GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+# --- Web App Configuration ---
+WEB_PORT=3000
+
+# --- Worker Configuration ---
+WORKER_CONCURRENCY=5
+
+# --- GitHub Packages Authentication ---
+# Required for installing and updating Quark packages from GitHub Packages
+# (and for publishing if you're maintaining the Quark framework)
+# Generate token at https://github.com/settings/tokens with read:packages scope (and write:packages for publishing)
+# GH_TOKEN=github_pat_YOUR_TOKEN_HERE
 `;
-			await fs.writeFile(path.join(targetDir, ".env.example"), envExample);
+			await fs.writeFile(
+				path.join(targetDir, ".env.example"),
+				envExampleTemplate,
+			);
 			console.log(chalk.green(`    ✓ .env.example`));
 
-			// Step 10: Prompt for GH_TOKEN and write .env
+			// Step 10: Prompt for GH_TOKEN and generate .env with secure defaults
+			console.log(chalk.cyan("\n  🔑 Generating secure environment file..."));
 			const tokenResponse = await prompts({
 				type: "password",
 				name: "githubPat",
 				message: "GitHub PAT (read:packages scope, leave blank to skip)",
 			});
 			const githubPat = (tokenResponse.githubPat || "").trim();
-			const envContent = githubPat
-				? envExample.replace("GH_TOKEN=YOUR_PAT_HERE", `GH_TOKEN=${githubPat}`)
-				: envExample;
+
+			// Generate secure random values
+			const dbPassword = generateSecurePassword(24);
+			const nextAuthSecret = generateSecureSecret(32);
+
+			// Create .env with auto-generated secure values
+			const envContent = `# --- Database Configuration ---
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_USER=quark_user
+POSTGRES_PASSWORD=${dbPassword}
+POSTGRES_DB=${scope}_dev
+
+# --- Redis Configuration ---
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# --- Mailhog Configuration ---
+MAILHOG_HOST=localhost
+MAILHOG_SMTP_PORT=1025
+MAILHOG_UI_PORT=8025
+
+# --- NextAuth Configuration ---
+NEXTAUTH_SECRET=${nextAuthSecret}
+
+# --- Application URL ---
+APP_URL=http://localhost:3000
+
+# --- Web App Configuration ---
+WEB_PORT=3000
+
+# --- Worker Configuration ---
+WORKER_CONCURRENCY=5
+
+# --- GitHub Packages Authentication ---
+${githubPat ? `GH_TOKEN=${githubPat}` : "# GH_TOKEN=github_pat_YOUR_TOKEN_HERE"}
+`;
 			await fs.writeFile(path.join(targetDir, ".env"), envContent);
-			console.log(chalk.green(`    ✓ .env`));
+			console.log(
+				chalk.green(`    ✓ .env (with auto-generated secure secrets)`),
+			);
 
 			// Step 11: Create .quark-link.json to track Quark version
 			const quarkLinkJson = {

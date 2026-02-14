@@ -1,11 +1,14 @@
-# Quark Documentation (Tight Index)
+# Quark Documentation
 
-Single entry point: [../README.md](../README.md)
+Entry point: [../README.md](../README.md)
 
-Deep dives:
-- [ARCHITECTURE.md](./ARCHITECTURE.md)
-- [API.md](./API.md)
-- [MAINTAINABILITY.md](./MAINTAINABILITY.md)
-- [ROADMAP.md](./ROADMAP.md)
-- [IMPLEMENTATION_CHECKLIST.md](./IMPLEMENTATION_CHECKLIST.md)
-- [copilot-instructions.md](../copilot-instructions.md)
+| Document | Purpose |
+|----------|---------|
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | Core-Only Registry model, distribution philosophy |
+| [API.md](./API.md) | REST endpoint reference |
+| [SECURITY.md](./SECURITY.md) | Security features, checklists, incident response |
+| [QUARK_USAGE.md](./QUARK_USAGE.md) | Full usage guide (dev, CLI, updates) |
+| [MAINTAINABILITY.md](./MAINTAINABILITY.md) | Code style, testing, dependency management |
+| [ROADMAP.md](./ROADMAP.md) | Long-term vision and expansion plans |
+| [IMPLEMENTATION_CHECKLIST.md](./IMPLEMENTATION_CHECKLIST.md) | Task tracker with progress percentages |
+| [copilot-instructions.md](../copilot-instructions.md) | AI assistant context |

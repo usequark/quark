@@ -69,10 +69,6 @@ Quark takes a hybrid approach:
 - Your business models
 - Your API endpoints
 - Your UI components
-❌ **Domain-Specific Logic**
-- Your business models
-- Your API endpoints
-- Your UI components
 - Your job handlers
 
 ❌ **Application Configuration**

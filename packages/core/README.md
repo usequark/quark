@@ -266,9 +266,11 @@ REDIS_HOST=localhost
 REDIS_PORT=6379
 REDIS_DB=0
 
+# Application URL
+APP_URL=http://localhost:3000
+
 # Authentication
 NEXTAUTH_SECRET=your-secret-key
-NEXTAUTH_URL=http://localhost:3000
 
 # Node
 NODE_ENV=development

@@ -3,6 +3,10 @@
 	"version": "1.1.0",
 	"type": "module",
 	"main": "src/index.js",
+	"exports": {
+		".": "./src/index.js",
+		"./testing": "./src/testing/index.js"
+	},
 	"dependencies": {
 		"bcryptjs": "^3.0.3",
 		"bullmq": "^5.67.3",

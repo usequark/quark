@@ -3,6 +3,8 @@
  * Standardized error types and utilities for consistent error handling
  */
 
+import { errorReporter } from "./error-reporter.js";
+
 /**
  * Base application error class
  */
@@ -170,13 +172,7 @@ export const normalizeError = (error) => {
  * @param {Object} context - Additional context
  */
 export const logError = (error, context = {}) => {
-	const appError = normalizeError(error);
-	console.error({
-		timestamp: new Date().toISOString(),
-		error: appError.toJSON(),
-		context,
-		stack: error.stack,
-	});
+	errorReporter.report(error, context);
 };
 
 /**
@@ -189,7 +185,7 @@ export const withErrorHandling = (fn) => {
 		try {
 			return await fn(...args);
 		} catch (error) {
-			logError(error);
+			errorReporter.report(error);
 			throw normalizeError(error);
 		}
 	};

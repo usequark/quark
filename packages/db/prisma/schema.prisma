@@ -20,6 +20,7 @@ model User {
   name          String?
   password      String?
   image         String?
+  role          String    @default("viewer")
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

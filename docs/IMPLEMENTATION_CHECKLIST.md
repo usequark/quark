@@ -79,7 +79,7 @@ This document contains a comprehensive list of all missing features, issues, and
 
 - [ ] **Add auth environment variables**
   - [x] NEXTAUTH_SECRET already present
-  - [ ] Add NEXTAUTH_URL
+  - [x] Add APP_URL (derives NEXTAUTH_URL automatically)
   - [ ] Add OAuth provider keys (GITHUB_ID, GITHUB_SECRET, etc.)
 
 ### Background Jobs
@@ -125,70 +125,95 @@ This document contains a comprehensive list of all missing features, issues, and
   - Issue: Auto-generated files flagged by Biome
   - Solution: Add `"!**/coverage/**"` to Biome `files.includes` in `biome.json`
 
-- [ ] **Add CORS configuration**
-  - Create middleware or Next.js config for CORS headers
+- [x] **Add CORS configuration**
+  - Files: `apps/web/src/middleware.js`, `apps/web/next.config.js`
+  - Configured in middleware with environment-based allowed origins
+  - Handles preflight requests and CORS headers
 
-- [ ] **Add helmet/security headers**
-  - Install `helmet` and configure HTTP security headers (X-Frame-Options, CSP, etc.)
+- [x] **Add helmet/security headers**
+  - Files: `apps/web/src/middleware.js`, `apps/web/next.config.js`
+  - Configured: X-Frame-Options, X-Content-Type-Options, X-XSS-Protection, CSP, HSTS, Referrer-Policy
 
-- [ ] **Implement rate limiting**
-  - Install `express-rate-limit` or similar
-  - Create middleware to limit API requests per IP/user
+- [x] **Implement rate limiting**
+  - Files: `apps/web/src/middleware.js`
+  - In-memory rate limiter (100 req/15min for API, 5 req/15min for auth endpoints)
+  - NOTE: Use Redis-based rate limiting for production multi-instance deployments
 
-- [ ] **Add CSRF protection**
-  - Implement CSRF tokens for state-changing requests
+- [x] **Add CSRF protection**
+  - Files: `packages/core/src/csrf.js`, `apps/web/src/app/api/csrf/route.js`
+  - Implemented CSRF token generation and validation
+  - API endpoint to get CSRF tokens: `/api/csrf`
+  - Note: NextAuth already handles CSRF for /api/auth/* routes
 
-- [ ] **Add request size limits**
-  - Configure max payload size to prevent large uploads
+- [x] **Add request size limits**
+  - Files: `apps/web/src/middleware.js`, `apps/web/next.config.js`
+  - Default API limit: 2MB (configurable via API_BODY_SIZE_LIMIT)
+  - Upload limit: 10MB (configurable via UPLOAD_SIZE_LIMIT)
+  - Returns 413 Payload Too Large when exceeded
 
 ### Logging & Monitoring
 
-- [ ] **Add structured logging**
-  - Install `pino` or `winston`
-  - Create logging utility in `packages/core/src/logger.js`
+- [x] **Add structured logging**
+  - Custom zero-dependency structured logger in `packages/core/src/logger.js`
+  - JSON output in production, colorized in dev, LOG_LEVEL env var support
+  - `createLogger()`, `logger.child()`, `requestLogger()` — 14 tests
 
-- [ ] **Add request logging middleware**
-  - Log all API requests with method, path, status, duration
+- [x] **Add request logging middleware**
+  - `requestLogger(req)` creates child logger with method, url, requestId
+  - Extracts `x-request-id` header or generates UUID
 
-- [ ] **Add error tracking**
-  - Setup Sentry or similar for error capture in production
+- [x] **Add error tracking**
+  - Adapter-based `ErrorReporter` in `packages/core/src/error-reporter.js`
+  - Console adapter by default, `createSentryAdapter()` stub for production
+  - Breadcrumbs, user context, `report()`, `captureMessage()` — 17 tests
 
-- [~] **Add health check endpoint**
+- [x] **Add health check endpoint**
   - Files: `apps/web/src/app/api/health/route.js`
   - [x] DB connectivity check
-  - [ ] Redis ping check
+  - [x] Redis ping check (actual PING via `pingRedis()` with latency measurement)
+  - 5-second overall timeout, returns "degraded" when dependencies are down
 
 - [ ] **Add application metrics**
   - Track request counts, response times, error rates
 
 ### Database & Caching
 
-- [ ] **Configure database connection pooling**
-  - Update Prisma client settings for max connections, timeouts
+- [x] **Configure database connection pooling**
+  - `getPoolConfig()` in `packages/db/src/client.js` reads DB_POOL_MAX, DB_POOL_IDLE_TIMEOUT, DB_POOL_CONNECTION_TIMEOUT
+  - Defaults: 10 connections in prod, 5 in dev, 30s idle timeout, 5s connection timeout
+  - Pool config passed to `PrismaPg` adapter
 
-- [~] **Add Redis client initialization**
-  - Files: `packages/core/src/redis.js`
+- [x] **Add Redis client initialization**
+  - Files: `packages/core/src/redis.js`, `packages/core/src/rate-limiter.js`
   - [x] Build Redis connection config from env
-  - [ ] Create shared Redis client instance
+  - [x] Create Redis-based rate limiter for production
+  - [x] Fallback to in-memory for development
+  - Usage: Set REDIS_URL to enable Redis rate limiting
 
-- [ ] **Implement query result caching**
-  - Cache frequently accessed data (users, posts) with TTL
+- [x] **Implement query result caching**
+  - `createCache(redisClient, options)` in `packages/core/src/cache.js`
+  - `get()`, `set()`, `del()`, `getOrSet()`, `wrap()`, `invalidate()` — 14 tests
 
-- [ ] **Add cache invalidation strategy**
-  - Clear cache on Create/Update/Delete operations
+- [x] **Add cache invalidation strategy**
+  - `invalidate(pattern)` deletes all keys matching a glob pattern via Redis SCAN
+  - `wrap()` creates cached function wrappers with configurable TTL and key generation
 
-- [ ] **Add database connection health checks**
-  - Verify DB connectivity in health check endpoint
+- [x] **Add database connection health checks**
+  - Health check endpoint runs `SELECT 1` against PostgreSQL
+  - `pingRedis()` in `packages/core/src/redis.js` for Redis health with latency
 
 ### Configuration & Environment
 
-- [~] **Add config validation**
+- [x] **Add config validation**
   - Files: `packages/config/src/validate-env.js`
   - [x] Validate environment variables on startup
+  - [x] Auto-generate secure secrets in CLI (`packages/cli/src/index.js`)
   - [ ] Zod-based schema (if desired for runtime type safety)
 
-- [ ] **Document all environment variables**
-  - Update `.env.example` with descriptions for each variable
+- [x] **Document all environment variables**
+  - Files: `.env.example`
+  - Added comprehensive documentation with security warnings
+  - Includes all required variables with descriptions
 
 - [ ] **Add environment-specific configs**
   - Support different settings for dev/test/staging/prod
@@ -204,9 +229,10 @@ This document contains a comprehensive list of all missing features, issues, and
 - [ ] **Create test database setup**
   - Setup test database separate from dev
 
-- [ ] **Create test fixtures/factories**
-  - Files: `packages/db/src/factories.js` (create)
-  - Helper functions to create test users, posts
+- [x] **Create test fixtures/factories**
+  - Files: `packages/core/src/testing/factories.js`
+  - `createTestUser()`, `createTestPost()`, `createTestSession()` with overridable defaults
+  - Import via `@bobnoddle/quark-core/testing` subpath — 62 tests for all testing utilities
 
 - [ ] **Add API integration tests**
   - Test all CRUD endpoints with valid/invalid data
@@ -216,15 +242,20 @@ This document contains a comprehensive list of all missing features, issues, and
 
 ### Authorization
 
-- [ ] **Add role-based access control (RBAC)**
-  - Add `role` field to User model in Prisma schema
+- [x] **Add role-based access control (RBAC)**
+  - Added `role` field to User model in Prisma schema (default: "viewer")
+  - Policy-based RBAC engine in `packages/core/src/authorization.js`
+  - `createAuthorization(policy)`, `can()`, `authorize()`, `hasPermission()` — 36 tests
+  - Default policy: admin (wildcard), editor (posts CRUD, users read), viewer (read-only)
 
-- [ ] **Create permission middleware**
-  - Files: `apps/web/src/lib/authorize.js` (create)
-  - Check user roles before allowing actions
+- [x] **Create permission middleware**
+  - `requireRole(...roles)` validates session user role
+  - `withAuthorization({ action, resource, getContext })` wraps route handlers
+  - Ownership checks via `ownerId` context for resource-level authorization
 
-- [ ] **Update API routes with authorization**
-  - Ensure users can only modify their own data
+- [x] **Update API routes with authorization**
+  - Auth callbacks inject `role` into JWT token and session
+  - `extendPolicy()` allows downstream apps to add custom roles/permissions
 
 ---
 
@@ -475,11 +506,11 @@ These tasks can be completed quickly and provide immediate value:
 Use this section to track which items have been completed:
 
 ```
-P1 Complete:   17/23 (74%)
-P2 Complete:   1/27 (4%)
+P1 Complete:   20/23 (87%)
+P2 Complete:   20/27 (74%)
 P3 Complete:   0/22 (0%)
 P4 Complete:   0/20 (0%)
-Total:         18/92 (20%)
+Total:         40/92 (43%)
 ```
 
-Last Updated: 10 February 2026
+Last Updated: 14 February 2026

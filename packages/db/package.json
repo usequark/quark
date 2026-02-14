@@ -10,8 +10,11 @@
 		"db:generate": "prisma generate",
 		"db:migrate": "prisma migrate dev",
 		"db:push": "prisma db push",
-		"db:seed": "node scripts/seed.js",
+		"db:seed": "prisma db seed",
 		"db:studio": "prisma studio"
+	},
+	"prisma": {
+		"seed": "node scripts/seed.js"
 	},
 	"keywords": [],
 	"author": "",

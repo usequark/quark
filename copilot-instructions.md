@@ -136,8 +136,8 @@ Create `.env` from `.env.example`:
 ```bash
 DATABASE_URL=postgresql://quark:development@localhost:5432/quark_dev
 REDIS_URL=redis://localhost:6379
+APP_URL=http://localhost:3000
 NEXTAUTH_SECRET=your-secret-here
-NEXTAUTH_URL=http://localhost:3000
 ```
 
 Generate secret: `openssl rand -base64 32`

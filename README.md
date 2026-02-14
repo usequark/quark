@@ -51,6 +51,22 @@ pnpm dev
 
 ---
 
+## Security Features
+
+Quark includes production-ready security features:
+
+- 🔒 **CSRF Protection** - Token-based protection for state-changing requests
+- 🚦 **Rate Limiting** - In-memory (dev) & Redis-based (production)
+- 📏 **Request Size Limits** - Configurable payload restrictions (2MB API, 10MB uploads)
+- 🛡️ **Security Headers** - HSTS, X-Frame-Options, CSP, X-XSS-Protection
+- 🌐 **CORS** - Environment-based origin control
+- 🔐 **Bcrypt** - Password hashing with 12 rounds
+- ✅ **Zod** - Input validation on all endpoints
+
+📖 **Read more**: [Security Guide](./docs/SECURITY.md)
+
+---
+
 ## Using Quark Packages (CLI and Local Packages)
 
 Quark ships infrastructure through the registry and keeps business logic local:
@@ -120,5 +136,7 @@ Employee projects will get core updates via `pnpm update @bobnoddle/quark-core`.
 - **[Developer Guide](./copilot-instructions.md)** - Setup, conventions, and workflows
 - **[Architecture](./docs/ARCHITECTURE.md)** - Core design patterns and inheritance model
 - **[API Reference](./docs/API.md)** - API documentation and endpoints
+- **[Security Guide](./docs/SECURITY.md)** - Security features, checklists, and incident response
+- **[Usage Guide](./docs/QUARK_USAGE.md)** - Full development and CLI workflow
 - **[Maintainability Guide](./docs/MAINTAINABILITY.md)** - Code style and best practices
 - **[Roadmap](./docs/ROADMAP.md)** - Long-term vision and strategic direction

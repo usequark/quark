@@ -30,11 +30,10 @@ Each package in the monorepo should follow a consistent structure:
 ```
 packages/example/
 ├── package.json          # Package manifest
-├── tsconfig.json         # TypeScript configuration (extends base)
 ├── src/
-│   ├── index.ts          # Public API exports
-│   ├── feature.ts        # Feature implementation
-│   └── feature.test.ts   # Co-located tests
+│   ├── index.js          # Public API exports
+│   ├── feature.js        # Feature implementation
+│   └── feature.test.js   # Co-located tests
 └── coverage/             # Test coverage reports
 ```
 
@@ -49,7 +48,7 @@ packages/example/
 
 ### Import Guidelines
 
-```typescript
+```javascript
 // ✅ Good - Import from package public API
 import { Button } from "@bobnoddle/quark-ui";
 import { prisma, user } from "@bobnoddle/quark-db";
@@ -61,16 +60,15 @@ import { prisma } from "@bobnoddle/quark-db/src/client";
 
 ### Barrel Exports
 
-Each package should have an `index.ts` that exports its public API:
+Each package should have an `index.js` that exports its public API:
 
-```typescript
-// packages/ui/src/index.ts
-export { Button } from "./button";
-export type { ButtonProps } from "./button";
+```javascript
+// packages/ui/src/index.js
+export { Button } from "./button.js";
 
 // Future exports
-// export { Input } from "./input";
-// export { Card } from "./card";
+// export { Input } from "./input.js";
+// export { Card } from "./card.js";
 ```
 
 ---
@@ -96,8 +94,7 @@ Use workspace protocol for internal packages:
 
 Place shared dependencies in the root `package.json`:
 
-- TypeScript
-- Testing frameworks (Vitest)
+- Testing (node:test, built-in)
 - Linting tools (Biome)
 - Build tools
 
@@ -168,9 +165,9 @@ Co-locate tests with source files:
 
 ```
 src/
-├── button.tsx
-├── button.test.tsx     # Unit tests
-└── button.stories.tsx  # Storybook (visual testing)
+├── button.js
+├── button.test.js      # Unit tests
+└── button.stories.js   # Storybook (visual testing)
 ```
 
 ### Coverage Requirements
@@ -199,7 +196,7 @@ pnpm test --filter @bobnoddle/quark-ui
 
 ### Test Naming Conventions
 
-```typescript
+```javascript
 describe("Button", () => {
   it("renders with default variant", () => {});
   it("applies secondary variant styles", () => {});
@@ -231,53 +228,53 @@ pnpm format
 
 The `biome.json` at the root applies to all packages. Package-specific overrides can extend it.
 
-### TypeScript Best Practices
+### Type Safety (JSDoc)
 
-#### Strict Mode
+#### JSDoc Annotations
 
-All packages extend `tsconfig.base.json` with strict settings:
+All packages use JSDoc comments for type annotations instead of TypeScript:
+
+```javascript
+/**
+ * @typedef {{ variant?: "primary" | "secondary", children: import("react").ReactNode }} ButtonProps
+ */
+
+/**
+ * @param {ButtonProps} props
+ */
+export function Button({ variant = "primary", children }) {
+  // ...
+}
+```
+
+#### Leveraging Editor Support
+
+Use `jsconfig.json` with `checkJs` to enable type checking without TypeScript:
 
 ```json
 {
   "compilerOptions": {
+    "checkJs": true,
     "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true
+    "module": "nodenext",
+    "moduleResolution": "nodenext"
   }
 }
 ```
 
-#### Type Exports
+#### Avoid Untyped Code
 
-Always export types alongside implementations:
+```javascript
+// ❌ Bad - No type information
+function process(data) {}
 
-```typescript
-// ✅ Good
-export interface ButtonProps {
-  variant?: "primary" | "secondary";
-  children: React.ReactNode;
-}
-
-export function Button({ variant = "primary", children }: ButtonProps) {
-  // ...
-}
-
-// Re-export in index.ts
-export { Button } from "./button";
-export type { ButtonProps } from "./button";
-```
-
-#### Avoid `any`
-
-```typescript
-// ❌ Bad
-function process(data: any) {}
-
-// ✅ Good
-function process(data: unknown) {
+// ✅ Good - JSDoc provides type info
+/**
+ * @param {unknown} data
+ */
+function process(data) {
   if (isValidData(data)) {
-    // Now TypeScript knows the shape
+    // Editor now knows the shape
   }
 }
 ```
@@ -285,7 +282,7 @@ function process(data: unknown) {
 ### Code Review Checklist
 
 - [ ] Tests added/updated for changes
-- [ ] TypeScript types are correct (no `any`)
+- [ ] JSDoc annotations are present
 - [ ] No console.log statements (use proper logging)
 - [ ] Error handling is appropriate
 - [ ] Documentation updated if needed
@@ -302,23 +299,23 @@ function process(data: unknown) {
 
 Document public APIs with JSDoc:
 
-```typescript
+```javascript
 /**
  * Creates a new user in the database.
  * 
- * @param data - The user data to create
- * @returns The created user object
+ * @param {import("@prisma/client").Prisma.UserCreateInput} data - The user data to create
+ * @returns {Promise<import("@prisma/client").User>} The created user object
  * @throws {PrismaClientKnownRequestError} If email already exists
  * 
  * @example
- * ```ts
+ * ```js
  * const user = await user.create({
  *   email: "john@example.com",
  *   name: "John Doe"
  * });
  * ```
  */
-export async function create(data: Prisma.UserCreateInput): Promise<User> {
+export async function create(data) {
   return prisma.user.create({ data });
 }
 ```
@@ -410,7 +407,7 @@ chore(deps): update prisma to v6.2.0
 
 ### Logging Standards
 
-```typescript
+```javascript
 // Use structured logging
 import { logger } from "@bobnoddle/quark-config";
 
@@ -432,10 +429,14 @@ console.log("User created: " + user.id);
 
 ### Error Handling
 
-```typescript
+```javascript
 // Define custom errors
 export class NotFoundError extends Error {
-  constructor(resource: string, id: string) {
+  /**
+   * @param {string} resource
+   * @param {string} id
+   */
+  constructor(resource, id) {
     super(`${resource} not found: ${id}`);
     this.name = "NotFoundError";
   }
@@ -461,8 +462,8 @@ try {
 
 Implement health check endpoints for all services:
 
-```typescript
-// apps/web/src/app/api/health/route.ts
+```javascript
+// apps/web/src/app/api/health/route.js
 export async function GET() {
   const checks = {
     database: await checkDatabase(),
@@ -512,9 +513,12 @@ export async function GET() {
 
 ### Example: Extracting Shared Logic
 
-```typescript
+```javascript
 // Before: Duplicated in multiple files
-async function getUserPosts(userId: string) {
+/**
+ * @param {string} userId
+ */
+async function getUserPosts(userId) {
   const posts = await prisma.post.findMany({
     where: { authorId: userId },
     orderBy: { createdAt: "desc" },
@@ -523,9 +527,10 @@ async function getUserPosts(userId: string) {
 }
 
 // After: Centralized in @bobnoddle/quark-db
-// packages/db/src/queries.ts
+// packages/db/src/queries.js
 export const post = {
-  findByAuthor: (authorId: string) =>
+  /** @param {string} authorId */
+  findByAuthor: (authorId) =>
     prisma.post.findMany({
       where: { authorId },
       orderBy: { createdAt: "desc" },
@@ -541,7 +546,7 @@ export const post = {
 
 Use `TODO`, `FIXME`, and `HACK` comments with ticket references:
 
-```typescript
+```javascript
 // TODO(ABC-123): Add pagination support
 // FIXME(ABC-456): Race condition in concurrent updates
 // HACK(ABC-789): Workaround for library bug, remove after v2.0
@@ -617,11 +622,12 @@ When deprecating code:
 
 1. **Mark as deprecated** with JSDoc
 
-```typescript
+```javascript
 /**
  * @deprecated Use `user.findById()` instead. Will be removed in v2.0.
+ * @param {string} id
  */
-export function getUserById(id: string) {
+export function getUserById(id) {
   console.warn("getUserById is deprecated, use user.findById instead");
   return user.findById(id);
 }
@@ -648,25 +654,16 @@ export function getUserById(id: string) {
      "name": "@quark/new-package",
      "version": "0.0.0",
      "private": true,
-     "main": "./src/index.ts",
-     "types": "./src/index.ts",
+     "type": "module",
+     "main": "./src/index.js",
      "scripts": {
-       "test": "vitest run",
-       "test:coverage": "vitest run --coverage"
+       "test": "node --test src/**/*.test.js",
+       "test:coverage": "node --test --experimental-test-coverage src/**/*.test.js"
      }
    }
    ```
 
-3. Create `tsconfig.json`:
-   ```json
-   {
-     "extends": "../../tsconfig.base.json",
-     "include": ["src/**/*"],
-     "exclude": ["node_modules"]
-   }
-   ```
-
-4. Install dependencies and update lockfile:
+3. Install dependencies and update lockfile:
    ```bash
    pnpm install
    ```
@@ -741,9 +738,7 @@ pnpm dedupe
 |------|---------|
 | `turbo.json` | Turborepo task configuration |
 | `pnpm-workspace.yaml` | Workspace packages definition |
-| `tsconfig.base.json` | Shared TypeScript config |
 | `biome.json` | Linting/formatting rules |
-| `vitest.config.ts` | Test configuration |
 
 ---
 

@@ -1,3 +1,5 @@
+import { syncNextAuthUrl } from "./app-url.js";
+
 /**
  * Environment variable validation schema
  * Validates all required and optional environment variables on startup
@@ -31,9 +33,17 @@ const envSchema = {
 		required: true,
 		description: "NextAuth secret for JWT signing",
 	},
-	NEXTAUTH_URL: { required: false, description: "NextAuth callback URL" },
+	NEXTAUTH_URL: {
+		required: false,
+		description: "NextAuth callback URL (derived from APP_URL if not set)",
+	},
 
 	// Application
+	APP_URL: {
+		required: false,
+		description:
+			"Canonical application URL — derives NEXTAUTH_URL and CORS origins",
+	},
 	NODE_ENV: {
 		required: false,
 		description: "Environment (development, test, production)",
@@ -67,6 +77,14 @@ export function validateEnv() {
 	if (errors.length > 0) {
 		const errorMessage = `Environment Validation Failed:\n${errors.join("\n")}`;
 		throw new Error(errorMessage);
+	}
+
+	// Ensure NEXTAUTH_URL is derived from APP_URL when not explicitly set
+	syncNextAuthUrl();
+
+	// Include the (possibly derived) NEXTAUTH_URL in the validated object
+	if (process.env.NEXTAUTH_URL && !validated.NEXTAUTH_URL) {
+		validated.NEXTAUTH_URL = process.env.NEXTAUTH_URL;
 	}
 
 	return validated;

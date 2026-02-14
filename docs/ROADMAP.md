@@ -459,7 +459,7 @@ const envSchema = z.object({
   DATABASE_URL: z.string().url(),
   REDIS_URL: z.string().url().optional(),
   NEXTAUTH_SECRET: z.string().min(32),
-  NEXTAUTH_URL: z.string().url(),
+  APP_URL: z.string().url(),
   
   // OAuth Providers
   GITHUB_CLIENT_ID: z.string().optional(),
@@ -482,7 +482,7 @@ export const env = envSchema.parse(process.env);
 // Application config
 export const config = {
   appName: "Quark",
-  appUrl: env.NEXTAUTH_URL,
+  appUrl: env.APP_URL,
   
   features: {
     emailVerification: true,

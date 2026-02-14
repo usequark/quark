@@ -47,13 +47,17 @@ export const createAuthConfig = (options = {}) => {
 					token.id = user.id;
 					token.email = user.email;
 					token.name = user.name;
+					token.role = user.role || "viewer";
 				}
 				return token;
 			},
 			async session({ session, token }) {
 				if (session.user) {
 					session.user.id = token.id;
+					session.user.role = token.role;
 				}
+				// Note: NextAuth v5+ includes CSRF token in session automatically
+				// For older versions, you can add: session.csrfToken = token.csrfToken;
 				return session;
 			},
 			...callbacks,

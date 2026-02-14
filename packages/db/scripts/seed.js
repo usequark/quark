@@ -1,6 +1,11 @@
-import { PrismaClient } from "../src/generated/prisma/client.js";
+import { resolve } from "node:path";
+import { config } from "dotenv";
 
-const prisma = new PrismaClient();
+// Load .env from monorepo root (mirrors prisma.config.ts)
+config({ path: resolve(import.meta.dirname, "../../../.env") });
+
+// Import after env is loaded so client.js picks up the correct values
+const { prisma } = await import("../src/index.js");
 
 async function main() {
 	console.log("Seeding database...");
