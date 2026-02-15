@@ -12,14 +12,12 @@ const host = process.env.POSTGRES_HOST || "localhost";
 const port = process.env.POSTGRES_PORT || "5432";
 const db = process.env.POSTGRES_DB;
 
-if (!user || !password || !db) {
-	throw new Error(
-		"Missing required Postgres env vars: POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB. " +
-			"Copy .env.example to .env and fill in the values.",
-	);
-}
-
-const databaseUrl = `postgresql://${user}:${password}@${host}:${port}/${db}?schema=public`;
+// Use a placeholder URL when env vars are missing (e.g. during `prisma generate` in CI).
+// Commands that need a real connection (migrate, push, studio) will fail at connect time.
+const hasCredentials = user && password && db;
+const databaseUrl = hasCredentials
+	? `postgresql://${user}:${password}@${host}:${port}/${db}?schema=public`
+	: "postgresql://placeholder:placeholder@localhost:5432/placeholder?schema=public";
 
 export default defineConfig({
 	schema: "prisma/schema.prisma",
