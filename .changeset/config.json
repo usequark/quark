@@ -1,0 +1,11 @@
+{
+	"$schema": "https://unpkg.com/@changesets/config@3.1.2/schema.json",
+	"changelog": ["@changesets/changelog-github", { "repo": "Bobnoddle/quark" }],
+	"commit": false,
+	"fixed": [],
+	"linked": [["@techstream/quark-create-app", "@techstream/quark-core"]],
+	"access": "public",
+	"baseBranch": "main",
+	"updateInternalDependencies": "patch",
+	"ignore": []
+}

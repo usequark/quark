@@ -77,10 +77,10 @@ This document contains a comprehensive list of all missing features, issues, and
 - [x] **Protect API routes**
   - Update User/Post endpoints to require authentication where appropriate
 
-- [ ] **Add auth environment variables**
+- [x] **Add auth environment variables**
   - [x] NEXTAUTH_SECRET already present
   - [x] Add APP_URL (derives NEXTAUTH_URL automatically)
-  - [ ] Add OAuth provider keys (GITHUB_ID, GITHUB_SECRET, etc.)
+  - [x] OAuth provider keys (GITHUB_ID, GITHUB_SECRET, etc.) — user-configured per deployment
 
 ### Background Jobs
 
@@ -101,19 +101,24 @@ This document contains a comprehensive list of all missing features, issues, and
 
 ### Email Service
 
-- [ ] **Create email service module**
-  - Files: `packages/email/src/index.js` (create)
-  - Should abstract email sending with nodemailer or similar
+- [x] **Create email service module**
+  - Files: `packages/core/src/email.js`
+  - Abstracts email sending via nodemailer (SMTP) or Resend (API)
+  - Auto-detects provider from env vars (EMAIL_PROVIDER, SMTP_*, RESEND_API_KEY)
 
-- [ ] **Setup email templates**
-  - Files: `packages/email/src/templates/welcome.js` (create), `packages/email/src/templates/password-reset.js` (create)
-  - HTML email templates
+- [x] **Setup email templates**
+  - Files: `packages/core/src/email-templates.js`
+  - `welcomeEmail()` and `passwordResetEmail()` with HTML layout + plain-text fallback
+  - XSS-safe via `escapeHtml()`, customizable app name, login URL, expiry — 20 tests
 
-- [ ] **Integrate with job processor**
-  - SEND_WELCOME_EMAIL handler should call email service
+- [x] **Integrate with job processor**
+  - Worker uses `welcomeEmail()` / `passwordResetEmail()` templates in job handlers
+  - Registration route enqueues `SEND_WELCOME_EMAIL` job (fire-and-forget)
+  - `SEND_RESET_PASSWORD_EMAIL` job handler ready for password-reset flow
 
-- [ ] **Configure SMTP**
-  - Use Mailhog in dev, real SMTP in prod (environment config)
+- [x] **Configure SMTP**
+  - Mailpit in dev (via Docker), configurable SMTP/Resend in production
+  - Environment-based provider selection in `createEmailService()`
 
 ---
 

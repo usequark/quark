@@ -9,6 +9,8 @@ export * from "./cache.js";
 export * from "./csrf.js";
 // Email service exports
 export * from "./email.js";
+// Email template exports
+export * from "./email-templates.js";
 // Error Reporter exports
 export * from "./error-reporter.js";
 // Error exports

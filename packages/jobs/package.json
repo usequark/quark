@@ -1,6 +1,7 @@
 {
 	"name": "@techstream/quark-jobs",
 	"version": "1.0.0",
+	"private": true,
 	"type": "module",
 	"description": "",
 	"main": "src/index.js",

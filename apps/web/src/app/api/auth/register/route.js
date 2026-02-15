@@ -1,5 +1,10 @@
-import { hashPassword, validateBody } from "@techstream/quark-core";
+import {
+	createQueue,
+	hashPassword,
+	validateBody,
+} from "@techstream/quark-core";
 import { user, userRegisterSchema } from "@techstream/quark-db";
+import { JOB_NAMES, JOB_QUEUES } from "@techstream/quark-jobs";
 import { NextResponse } from "next/server";
 import { handleError } from "../../error-handler";
 
@@ -31,6 +36,16 @@ export async function POST(request) {
 
 		// Don't return the password
 		const { password: _, ...safeUser } = newUser;
+
+		// Enqueue welcome email (fire-and-forget — don't block the response)
+		try {
+			const emailQueue = createQueue(JOB_QUEUES.EMAIL);
+			await emailQueue.add(JOB_NAMES.SEND_WELCOME_EMAIL, {
+				userId: newUser.id,
+			});
+		} catch {
+			// Non-critical — user is created even if email fails to enqueue
+		}
 
 		return NextResponse.json(safeUser, { status: 201 });
 	} catch (error) {

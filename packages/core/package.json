@@ -22,6 +22,10 @@
 		"test": "node --test $(find src -name '*.test.js')",
 		"lint": "biome format --write && biome check --write"
 	},
+	"files": [
+		"src",
+		"README.md"
+	],
 	"publishConfig": {
 		"registry": "https://registry.npmjs.org",
 		"access": "public"

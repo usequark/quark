@@ -1,5 +1,10 @@
-import { hashPassword, validateBody } from "@techstream/quark-core";
+import {
+	createQueue,
+	hashPassword,
+	validateBody,
+} from "@techstream/quark-core";
 import { user, userRegisterSchema } from "@techstream/quark-db";
+import { JOB_NAMES, JOB_QUEUES } from "@techstream/quark-jobs";
 import { NextResponse } from "next/server";
 import { handleError } from "../../error-handler";
 
@@ -28,6 +33,17 @@ export async function POST(request) {
 			name: data.name,
 			password: hashedPassword,
 		});
+
+		// Enqueue welcome email (fire-and-forget)
+		try {
+			const emailQueue = createQueue(JOB_QUEUES.EMAIL);
+			await emailQueue.add(JOB_NAMES.SEND_WELCOME_EMAIL, {
+				userId: newUser.id,
+			});
+		} catch (emailError) {
+			// Don't fail registration if email enqueue fails
+			console.error("Failed to enqueue welcome email:", emailError);
+		}
 
 		// Don't return the password
 		const { password: _, ...safeUser } = newUser;
