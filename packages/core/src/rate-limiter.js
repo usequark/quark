@@ -143,7 +143,7 @@ class RedisRateLimiter {
 				remaining: maxRequests - currentCount,
 				resetTime,
 			};
-		} catch (error) {
+		} catch (_error) {
 			// Configurable fail-open / fail-closed behaviour
 			if (this.failOpen) {
 				return {

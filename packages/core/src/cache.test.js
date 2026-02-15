@@ -31,7 +31,7 @@ function createMockRedis() {
 			expires.delete(key);
 		},
 
-		async scan(cursor, ...args) {
+		async scan(_cursor, ...args) {
 			// Simple mock: return all matching keys in one batch
 			const matchIdx = args.indexOf("MATCH");
 			const pattern = matchIdx !== -1 ? args[matchIdx + 1] : "*";

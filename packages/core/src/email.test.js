@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { mock, test } from "node:test";
+import { test } from "node:test";
 import { createEmailService } from "./email.js";
 
 test("Email Service", async (t) => {
@@ -25,8 +25,8 @@ test("Email Service", async (t) => {
 				const service = createEmailService({ provider: "smtp" });
 
 				// Mock nodemailer at the transport level
-				const capturedConfig = null;
-				const mockTransport = {
+				const _capturedConfig = null;
+				const _mockTransport = {
 					sendMail: async (opts) => {
 						return { messageId: "test-id-123", ...opts };
 					},
@@ -221,7 +221,7 @@ test("Email Service", async (t) => {
 		const originalFetch = globalThis.fetch;
 		let capturedBody = null;
 
-		globalThis.fetch = async (url, opts) => {
+		globalThis.fetch = async (_url, opts) => {
 			capturedBody = JSON.parse(opts.body);
 			return { ok: true, json: async () => ({ id: "msg-1" }) };
 		};

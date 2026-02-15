@@ -396,7 +396,7 @@ program
 				if (await fs.pathExists(pkgPath)) {
 					const pkg = await fs.readJSON(pkgPath);
 					// Rename package name if it uses @quark/ prefix
-					if (pkg.name && pkg.name.startsWith("@quark/")) {
+					if (pkg.name?.startsWith("@quark/")) {
 						const shortName = pkg.name.replace("@quark/", "");
 						pkg.name = `@${scope}/${shortName}`;
 					}

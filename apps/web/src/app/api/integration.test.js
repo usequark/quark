@@ -10,7 +10,7 @@
  */
 
 import assert from "node:assert";
-import { after, before, describe, it } from "node:test";
+import { describe, it } from "node:test";
 
 const BASE_URL = process.env.TEST_BASE_URL || "http://localhost:3000";
 
