@@ -1,5 +1,12 @@
 # @quark/web
 
+## 0.1.2
+
+### Patch Changes
+
+- Updated dependencies [[`590592d`](https://github.com/Bobnoddle/quark/commit/590592d87c8dc796fc8025643997b0b0d31cceef)]:
+  - @techstream/quark-core@1.5.0
+
 ## 0.1.1
 
 ### Patch Changes
