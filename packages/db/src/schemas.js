@@ -34,3 +34,9 @@ export const postUpdateSchema = z.object({
 	content: z.string().optional(),
 	published: z.boolean().optional(),
 });
+
+export const fileUploadSchema = z.object({
+	filename: z.string().min(1, "Filename is required"),
+	mimeType: z.string().min(1, "MIME type is required"),
+	size: z.number().int().positive("File size must be positive"),
+});

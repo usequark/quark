@@ -51,11 +51,16 @@ Quark takes a hybrid approach:
 - BullMQ queue factory
 - Standardized error types
 - Common utility functions (password hashing, etc.)
+- File storage adapters (local filesystem, S3/Cloudflare R2)
+- File validation with magic-byte detection
+- Multipart form parsing (busboy)
+- Email service and templates
 
 ✅ **Provider-Agnostic Patterns**
 - Error handling conventions
 - Validation middleware
 - Job queue abstractions
+- Storage adapter abstraction (swap local ↔ S3 via env var)
 
 ✅ **Type Definitions**
 - JSDoc for IDE support
@@ -221,43 +226,53 @@ export const createQueue = (name, options = {}) => {
 // packages/jobs/src/definitions.js - YOUR domain jobs
 export const JOB_QUEUES = {
   EMAIL: "email-queue",
+  FILES: "files-queue",
   VIDEO_PROCESSING: "video-queue", // Your custom queue
 };
 
 export const JOB_NAMES = {
   SEND_WELCOME_EMAIL: "send-welcome-email",
+  SEND_RESET_PASSWORD_EMAIL: "send-reset-password-email",
+  CLEANUP_ORPHANED_FILES: "cleanup-orphaned-files",
   TRANSCODE_VIDEO: "transcode-video", // Your custom job
 };
 ```
 
 **In Your Worker App:**
+
+Handlers are extracted to separate files and registered in a handler map.
+The worker dispatches jobs to the correct handler automatically.
+
 ```javascript
-// apps/worker/src/index.js
-import { createQueue, createWorker } from "@techstream/quark-core";
-import { JOB_QUEUES, JOB_NAMES } from "@yourapp/jobs";
+// apps/worker/src/handlers/video.js — YOUR custom handler
+export async function handleTranscodeVideo(bullJob, logger) {
+  logger.info(`Transcoding video ${bullJob.data.videoId}`);
+  await transcodeVideo(bullJob.data);
+  return { success: true };
+}
 
-const videoQueue = createQueue(JOB_QUEUES.VIDEO_PROCESSING, {
-  defaultJobOptions: {
-    attempts: 2,
-    timeout: 300000, // 5 min for video processing
-  }
-});
+// apps/worker/src/handlers/index.js — handler registry
+import { JOB_NAMES } from "@yourapp/jobs";
+import { handleSendWelcomeEmail, handleSendResetPasswordEmail } from "./email.js";
+import { handleCleanupOrphanedFiles } from "./files.js";
+import { handleTranscodeVideo } from "./video.js";
 
-const worker = createWorker(
-  JOB_QUEUES.VIDEO_PROCESSING,
-  async (job) => {
-    // YOUR business logic
-    if (job.name === JOB_NAMES.TRANSCODE_VIDEO) {
-      await transcodeVideo(job.data);
-    }
-  }
-);
+export const jobHandlers = {
+  [JOB_NAMES.SEND_WELCOME_EMAIL]: handleSendWelcomeEmail,
+  [JOB_NAMES.SEND_RESET_PASSWORD_EMAIL]: handleSendResetPasswordEmail,
+  [JOB_NAMES.CLEANUP_ORPHANED_FILES]: handleCleanupOrphanedFiles,
+  [JOB_NAMES.TRANSCODE_VIDEO]: handleTranscodeVideo, // Your custom job
+};
+
+// apps/worker/src/index.js — generic dispatch (no changes needed)
+// The worker loops over JOB_QUEUES and dispatches to jobHandlers automatically.
 ```
 
 **Key Points:**
 - Core provides queue infrastructure (createQueue, createWorker)
 - Your jobs package defines domain-specific queues and job types
-- Worker contains your business logic
+- Worker contains your business logic in handler files
+- Add a new job: create a handler function, register it, add the queue/name to definitions
 - No need to rewrite queue setup
 
 ### Example 4: Database Client

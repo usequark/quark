@@ -278,3 +278,58 @@ export const auditLog = {
 		});
 	},
 };
+
+// File queries
+export const file = {
+	create: (data) => {
+		return prisma.file.create({ data });
+	},
+	findById: (id) => {
+		return prisma.file.findUnique({
+			where: { id },
+			include: {
+				uploadedBy: { select: { id: true, email: true, name: true } },
+			},
+		});
+	},
+	findByStorageKey: (storageKey) => {
+		return prisma.file.findUnique({ where: { storageKey } });
+	},
+	findByUploader: (uploadedById, options = {}) => {
+		const { skip = 0, take = 50 } = options;
+		return prisma.file.findMany({
+			where: { uploadedById },
+			skip,
+			take,
+			orderBy: { createdAt: "desc" },
+		});
+	},
+	findOrphaned: (options = {}) => {
+		const { take = 100 } = options;
+		return prisma.file.findMany({
+			where: { uploadedById: null },
+			take,
+			orderBy: { createdAt: "asc" },
+		});
+	},
+	findOlderThan: (date, options = {}) => {
+		const { take = 100 } = options;
+		return prisma.file.findMany({
+			where: {
+				uploadedById: null,
+				createdAt: { lt: date },
+			},
+			take,
+			orderBy: { createdAt: "asc" },
+		});
+	},
+	delete: (id) => {
+		return prisma.file.delete({ where: { id } });
+	},
+	deleteMany: (ids) => {
+		return prisma.file.deleteMany({ where: { id: { in: ids } } });
+	},
+	count: (where = {}) => {
+		return prisma.file.count({ where });
+	},
+};

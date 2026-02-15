@@ -475,6 +475,24 @@ PORT=3000
 
 # --- Worker Configuration ---
 WORKER_CONCURRENCY=5
+
+# --- File Storage Configuration ---
+# Storage provider: "local" (default) or "s3" (S3-compatible, e.g. Cloudflare R2)
+STORAGE_PROVIDER=local
+# Local storage directory (only used when STORAGE_PROVIDER=local)
+# STORAGE_LOCAL_DIR=./uploads
+
+# S3 / Cloudflare R2 Configuration (only used when STORAGE_PROVIDER=s3)
+# S3_BUCKET=your-bucket-name
+# S3_REGION=auto
+# S3_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
+# S3_ACCESS_KEY_ID=your-access-key
+# S3_SECRET_ACCESS_KEY=your-secret-key
+# S3_PUBLIC_URL=https://your-public-bucket-domain.com
+
+# --- Upload Limits ---
+# UPLOAD_MAX_SIZE=10485760
+# UPLOAD_ALLOWED_TYPES=image/jpeg,image/png,image/gif,image/webp,image/avif,image/svg+xml,application/pdf
 `;
 			await fs.writeFile(
 				path.join(targetDir, ".env.example"),
@@ -540,6 +558,9 @@ PORT=${webPort}
 
 # --- Worker Configuration ---
 WORKER_CONCURRENCY=5
+
+# --- File Storage ---
+STORAGE_PROVIDER=local
 `;
 			await fs.writeFile(path.join(targetDir, ".env"), envContent);
 			console.log(

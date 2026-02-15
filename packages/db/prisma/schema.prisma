@@ -28,6 +28,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   auditLogs     AuditLog[]
+  files         File[]
 
   @@index([email])
   @@index([createdAt])
@@ -125,6 +126,25 @@ enum JobStatus {
   COMPLETED
   FAILED
   CANCELLED
+}
+
+// File Upload Model
+model File {
+  id              String   @id @default(cuid())
+  filename        String
+  originalName    String
+  mimeType        String
+  size            Int
+  storageKey      String   @unique
+  storageProvider String   @default("local")
+  uploadedById    String?
+  uploadedBy      User?    @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([uploadedById])
+  @@index([mimeType])
+  @@index([createdAt])
 }
 
 // Audit Log Model

@@ -88,11 +88,11 @@ This document contains a comprehensive list of all missing features, issues, and
   - Files: `apps/worker/src/index.js`
   - Initializes BullMQ, connects to Redis, starts consuming jobs
 
-- [~] **Implement job handlers**
-  - Files: `apps/worker/src/index.js`
+- [x] **Implement job handlers**
+  - Files: `apps/worker/src/handlers/email.js`, `apps/worker/src/handlers/files.js`, `apps/worker/src/handlers/index.js`
   - [x] Basic handler structure with job dispatcher
-  - [ ] Extract handlers to separate files for maintainability
-  - [ ] Connect to email service when ready
+  - [x] Extract handlers to separate files for maintainability
+  - [x] Connect to email service when ready
 
 - [x] **Add job retry logic**
   - Configured in `createQueue` defaultJobOptions (3 attempts, exponential backoff)
@@ -283,20 +283,27 @@ This document contains a comprehensive list of all missing features, issues, and
 
 ### File Handling
 
-- [ ] **Setup file upload endpoint**
-  - Files: `apps/web/src/app/api/upload/route.js` (create)
+- [x] **Setup file upload endpoint**
+  - Files: `apps/web/src/app/api/files/route.js`, `apps/web/src/app/api/files/[id]/route.js`
+  - POST multipart upload with auth, GET list with pagination, GET download, DELETE with ownership check
 
-- [ ] **Add multipart form parsing**
-  - Install `formidable` or `busboy`
+- [x] **Add multipart form parsing**
+  - Files: `packages/core/src/multipart.js`
+  - Streaming parser using `busboy`, supports max file size / count limits
 
-- [ ] **Implement file validation**
-  - Validate file size, type, virus scan
+- [x] **Implement file validation**
+  - Files: `packages/core/src/file-validation.js`
+  - Magic-byte detection, MIME allow-list with wildcards, size limits, spoofing prevention
 
-- [ ] **Setup file storage**
-  - Choose: local filesystem, AWS S3, or Cloudinary
+- [x] **Setup file storage**
+  - Files: `packages/core/src/storage.js`
+  - Adapter-based: local filesystem + S3-compatible (AWS S3, Cloudflare R2, MinIO)
+  - Factory via `createStorage()`, reads `STORAGE_PROVIDER` env var
+  - Prisma `File` model in schema with queries in `packages/db/src/queries.js`
 
-- [ ] **Add file cleanup**
-  - Delete old/orphaned files periodically
+- [x] **Add file cleanup**
+  - Files: `apps/worker/src/handlers/files.js`, `packages/jobs/src/definitions.js`
+  - BullMQ repeating job (24h) deletes orphaned files from storage + DB
 
 ### Documentation
 
