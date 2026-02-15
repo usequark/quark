@@ -100,23 +100,38 @@ pnpm dev
 
 ### Publishing Updates
 
-When you update the framework:
+This project uses [Changesets](https://github.com/changesets/changesets) for automated versioning, changelogs, and npm publishing.
+
+#### Adding a changeset
+
+After making changes to publishable packages (`@techstream/quark-core`, `@techstream/quark-create-app`):
 
 ```bash
-# Publish core infrastructure
-cd packages/core
-npm version patch  # or minor/major
-npm publish
-
-# Publish CLI
-cd packages/cli
-npm version patch
-npm publish
+pnpm changeset
 ```
 
-> **Note:** Both the CLI and `quark-core` publish to **npmjs.org** (public, no auth to install).
+This creates a `.changeset/<hash>.md` file describing the change and bump type (patch/minor/major). Commit it with your code.
 
-Projects get core updates via `pnpm update @techstream/quark-core`.
+#### Release flow
+
+1. Push to `main` with a changeset → the Release workflow opens a **"Version Packages"** PR that bumps versions and updates `CHANGELOG.md`
+2. Merge the PR → packages are published to npm, git tags and GitHub Releases are created automatically
+
+#### No-release changes
+
+For changes that don't need a release (docs, CI, tests):
+
+```bash
+pnpm changeset --empty
+```
+
+#### Available scripts
+
+- `pnpm changeset` — add a changeset
+- `pnpm version-packages` — bump versions & update changelogs (local)
+- `pnpm release` — publish changed packages to npm (local)
+
+> **Note:** Publishing is handled automatically by CI. The local scripts are for debugging only.
 
 ## Documentation
 
