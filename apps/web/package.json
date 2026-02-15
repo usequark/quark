@@ -1,6 +1,6 @@
 {
-	"name": "@quark/web",
-	"version": "0.1.2",
+	"name": "@techstream/quark-web",
+	"version": "1.0.0",
 	"type": "module",
 	"private": true,
 	"scripts": {

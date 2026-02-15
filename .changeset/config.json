@@ -3,9 +3,17 @@
 	"changelog": ["@changesets/changelog-github", { "repo": "Bobnoddle/quark" }],
 	"commit": false,
 	"fixed": [],
-	"linked": [["@techstream/quark-create-app", "@techstream/quark-core"]],
+	"linked": [],
 	"access": "public",
 	"baseBranch": "main",
 	"updateInternalDependencies": "patch",
-	"ignore": []
+	"ignore": [
+		"@techstream/quark-root",
+		"@techstream/quark-web",
+		"@techstream/quark-worker",
+		"@techstream/quark-config",
+		"@techstream/quark-db",
+		"@techstream/quark-jobs",
+		"@techstream/quark-ui"
+	]
 }

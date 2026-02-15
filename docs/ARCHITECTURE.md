@@ -294,7 +294,7 @@ export const createDbClient = (options = {}) => {
 
 **In Your App:**
 ```javascript
-// @quark/web/lib/db.js
+// @techstream/quark-web/lib/db.js
 import { createDbClient } from "@techstream/quark-core";
 
 // Use with defaults - zero configuration!

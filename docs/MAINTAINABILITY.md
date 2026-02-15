@@ -588,7 +588,7 @@ Maintain a list of known technical debt:
 git checkout -b chore/upgrade-next-16
 
 # 2. Update package versions
-pnpm update next@latest --filter @quark/web
+pnpm update next@latest --filter @techstream/quark-web
 
 # 3. Run tests
 pnpm test
@@ -710,7 +710,7 @@ turbo run build --dry-run
 
 ```bash
 # Analyze web bundle
-pnpm --filter @quark/web analyze
+pnpm --filter @techstream/quark-web analyze
 
 # Check for duplicate dependencies
 pnpm dedupe

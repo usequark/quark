@@ -891,9 +891,9 @@ Input.displayName = "Input";
 #### 5.1 Install Dependencies
 
 ```bash
-pnpm add next-auth @auth/prisma-adapter --filter @quark/web
-pnpm add bcryptjs --filter @quark/web
-pnpm add -D @types/bcryptjs --filter @quark/web
+pnpm add next-auth @auth/prisma-adapter --filter @techstream/quark-web
+pnpm add bcryptjs --filter @techstream/quark-web
+pnpm add -D @types/bcryptjs --filter @techstream/quark-web
 ```
 
 #### 5.2 Create Auth Package

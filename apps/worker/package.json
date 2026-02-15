@@ -1,6 +1,6 @@
 {
-	"name": "@quark/worker",
-	"version": "1.0.2",
+	"name": "@techstream/quark-worker",
+	"version": "1.0.0",
 	"private": true,
 	"type": "module",
 	"description": "",
