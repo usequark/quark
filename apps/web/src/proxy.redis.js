@@ -1,16 +1,22 @@
 /**
- * Next.js Middleware - Redis-based Rate Limiting
+ * Next.js Proxy - Redis-based Rate Limiting
  * Use this version for production deployments with multiple instances
  *
  * To enable Redis-based rate limiting:
  * 1. Install ioredis: pnpm add ioredis
  * 2. Set REDIS_URL environment variable
- * 3. Replace middleware.js with this file (or use the hybrid approach below)
+ * 3. Replace proxy.js with this file (or use the hybrid approach below)
  */
 
-import { getAllowedOrigins } from "@bobnoddle/quark-config/app-url";
-import { createRateLimiter, RATE_LIMIT_PRESETS } from "@bobnoddle/quark-core";
+import { getAllowedOrigins } from "@techstream/quark-config/app-url";
+import {
+	createLogger,
+	createRateLimiter,
+	RATE_LIMIT_PRESETS,
+} from "@techstream/quark-core";
 import { NextResponse } from "next/server";
+
+const logger = createLogger("proxy");
 
 // Initialize Redis client (lazy initialization)
 let redisClient = null;
@@ -38,14 +44,16 @@ async function getRateLimiter() {
 				redisClient,
 			});
 
-			console.log("✓ Redis-based rate limiting enabled");
+			logger.info("Redis-based rate limiting enabled");
 		} catch (error) {
-			console.error("Failed to initialize Redis rate limiter:", error);
-			console.log("⚠ Falling back to in-memory rate limiting");
+			logger.error("Failed to initialize Redis rate limiter", {
+				error: error.message,
+			});
+			logger.warn("Falling back to in-memory rate limiting");
 			rateLimiter = createRateLimiter({ type: "memory" });
 		}
 	} else {
-		console.log("⚠ REDIS_URL not set, using in-memory rate limiting");
+		logger.warn("REDIS_URL not set, using in-memory rate limiting");
 		rateLimiter = createRateLimiter({ type: "memory" });
 	}
 
@@ -92,9 +100,10 @@ const SECURITY_HEADERS = {
 	"Strict-Transport-Security": "max-age=63072000; includeSubDomains",
 	"X-Frame-Options": "SAMEORIGIN",
 	"X-Content-Type-Options": "nosniff",
-	"X-XSS-Protection": "1; mode=block",
 	"Referrer-Policy": "strict-origin-when-cross-origin",
 	"Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+	"Content-Security-Policy":
+		"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self';",
 };
 
 /**
@@ -105,7 +114,7 @@ const REQUEST_SIZE_LIMITS = {
 	upload: parseInt(process.env.UPLOAD_SIZE_LIMIT || "10485760", 10), // 10MB for uploads
 };
 
-export async function middleware(request) {
+export async function proxy(request) {
 	const { pathname } = request.nextUrl;
 	const origin = request.headers.get("origin") || "";
 
@@ -243,7 +252,7 @@ export async function middleware(request) {
 	return response;
 }
 
-// Configure which routes the middleware runs on
+// Configure which routes the proxy runs on
 export const config = {
 	matcher: [
 		/*

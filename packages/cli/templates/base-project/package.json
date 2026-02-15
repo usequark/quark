@@ -6,7 +6,7 @@
 	"main": "index.js",
 	"scripts": {
 		"build": "turbo run build",
-		"dev": "turbo run dev",
+		"dev": "dotenv -- turbo run dev",
 		"lint": "turbo run lint",
 		"test": "turbo run test",
 		"docker:up": "docker compose up -d",
@@ -17,9 +17,24 @@
 	"author": "",
 	"license": "ISC",
 	"packageManager": "pnpm@10.12.1",
+	"pnpm": {
+		"onlyBuiltDependencies": [
+			"@prisma/engines",
+			"esbuild",
+			"msgpackr-extract",
+			"prisma",
+			"sharp"
+		],
+		"peerDependencyRules": {
+			"allowedVersions": {
+				"nodemailer": "*"
+			}
+		}
+	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.3.13",
 		"@types/node": "^24.10.9",
+		"dotenv-cli": "^11.0.0",
 		"tsx": "^4.21.0",
 		"turbo": "^2.8.1"
 	}

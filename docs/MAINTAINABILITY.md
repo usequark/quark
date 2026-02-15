@@ -41,21 +41,21 @@ packages/example/
 
 | Package | Responsibility | Should NOT Contain |
 |---------|---------------|-------------------|
-| `@bobnoddle/quark-config` | App configuration, environment variables | Business logic, UI code |
-| `@bobnoddle/quark-db` | Database client, queries, Prisma schema | HTTP handlers, UI code |
-| `@bobnoddle/quark-jobs` | Job queue definitions, worker logic | Database queries, UI code |
-| `@bobnoddle/quark-ui` | Reusable UI components | Business logic, API calls |
+| `@techstream/quark-config` | App configuration, environment variables | Business logic, UI code |
+| `@techstream/quark-db` | Database client, queries, Prisma schema | HTTP handlers, UI code |
+| `@techstream/quark-jobs` | Job queue definitions, worker logic | Database queries, UI code |
+| `@techstream/quark-ui` | Reusable UI components | Business logic, API calls |
 
 ### Import Guidelines
 
 ```javascript
 // ✅ Good - Import from package public API
-import { Button } from "@bobnoddle/quark-ui";
-import { prisma, user } from "@bobnoddle/quark-db";
+import { Button } from "@techstream/quark-ui";
+import { prisma, user } from "@techstream/quark-db";
 
 // ❌ Bad - Deep imports bypass the public API
-import { Button } from "@bobnoddle/quark-ui/src/button";
-import { prisma } from "@bobnoddle/quark-db/src/client";
+import { Button } from "@techstream/quark-ui/src/button";
+import { prisma } from "@techstream/quark-db/src/client";
 ```
 
 ### Barrel Exports
@@ -82,8 +82,8 @@ Use workspace protocol for internal packages:
 ```json
 {
   "dependencies": {
-    "@bobnoddle/quark-ui": "workspace:*",
-    "@bobnoddle/quark-db": "workspace:*"
+    "@techstream/quark-ui": "workspace:*",
+    "@techstream/quark-db": "workspace:*"
   }
 }
 ```
@@ -191,7 +191,7 @@ pnpm test:coverage
 pnpm test:watch
 
 # Run tests for specific package
-pnpm test --filter @bobnoddle/quark-ui
+pnpm test --filter @techstream/quark-ui
 ```
 
 ### Test Naming Conventions
@@ -409,7 +409,7 @@ chore(deps): update prisma to v6.2.0
 
 ```javascript
 // Use structured logging
-import { logger } from "@bobnoddle/quark-config";
+import { logger } from "@techstream/quark-config";
 
 // ✅ Good - Structured with context
 logger.info("User created", { 
@@ -526,7 +526,7 @@ async function getUserPosts(userId) {
   return posts;
 }
 
-// After: Centralized in @bobnoddle/quark-db
+// After: Centralized in @techstream/quark-db
 // packages/db/src/queries.js
 export const post = {
   /** @param {string} authorId */

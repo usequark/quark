@@ -7,7 +7,7 @@ on:
 
 jobs:
   publish:
-    name: Publish @bobnoddle/quark-create-app
+    name: Publish @techstream/quark-create-app
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -21,7 +21,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           registry-url: "https://registry.npmjs.org"
 
       - name: Publish to npmjs

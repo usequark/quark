@@ -2,11 +2,16 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "./generated/prisma/client.ts";
 
 // Construct DATABASE_URL from individual env vars (mirrors prisma.config.ts)
-const user = process.env.POSTGRES_USER || "quark_user";
-const password = process.env.POSTGRES_PASSWORD || "quark_password";
+// POSTGRES_USER, POSTGRES_PASSWORD, and POSTGRES_DB are required — no silent fallbacks.
+const user = process.env.POSTGRES_USER;
+if (!user) throw new Error("POSTGRES_USER environment variable is required");
+const password = process.env.POSTGRES_PASSWORD;
+if (!password)
+	throw new Error("POSTGRES_PASSWORD environment variable is required");
 const host = process.env.POSTGRES_HOST || "localhost";
 const port = process.env.POSTGRES_PORT || "5432";
-const db = process.env.POSTGRES_DB || "quark_dev";
+const db = process.env.POSTGRES_DB;
+if (!db) throw new Error("POSTGRES_DB environment variable is required");
 const connectionString = `postgresql://${user}:${password}@${host}:${port}/${db}?schema=public`;
 
 const isProduction = process.env.NODE_ENV === "production";

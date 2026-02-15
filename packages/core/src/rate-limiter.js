@@ -1,5 +1,5 @@
 /**
- * @bobnoddle/quark-core - Rate Limiting Module
+ * @techstream/quark-core - Rate Limiting Module
  * Provides both in-memory and Redis-based rate limiting
  */
 
@@ -94,34 +94,43 @@ class MemoryRateLimiter {
 
 /**
  * Redis-based rate limiter (for multi-instance deployments)
+ * Uses Lua scripting for atomic check-and-increment.
  */
 class RedisRateLimiter {
-	constructor(redisClient) {
+	constructor(redisClient, options = {}) {
 		this.redis = redisClient;
+		this.failOpen = options.failOpen ?? true;
 	}
 
 	/**
-	 * Check and increment rate limit using Redis
+	 * Check and increment rate limit using an atomic Lua script.
+	 * Prevents TOCTOU race conditions by doing INCR + PEXPIRE in one round-trip.
 	 */
 	async checkLimit(key, maxRequests, windowMs) {
 		const now = Date.now();
 		const windowKey = `ratelimit:${key}`;
 
 		try {
-			// Use Redis pipeline for atomic operations
-			const pipeline = this.redis.pipeline();
+			// Atomic Lua: INCR the key, set PEXPIRE on first request, return [count, pttl]
+			const luaScript = `
+				local count = redis.call('INCR', KEYS[1])
+				if count == 1 then
+					redis.call('PEXPIRE', KEYS[1], ARGV[1])
+				end
+				local ttl = redis.call('PTTL', KEYS[1])
+				return {count, ttl}
+			`;
 
-			// Get current count and TTL
-			pipeline.get(windowKey);
-			pipeline.pttl(windowKey);
+			const [currentCount, ttl] = await this.redis.eval(
+				luaScript,
+				1,
+				windowKey,
+				windowMs,
+			);
 
-			const [[, count], [, ttl]] = await pipeline.exec();
-
-			const currentCount = count ? parseInt(count, 10) : 0;
 			const resetTime = ttl > 0 ? now + ttl : now + windowMs;
 
-			// Check if limit exceeded
-			if (currentCount >= maxRequests) {
+			if (currentCount > maxRequests) {
 				return {
 					limited: true,
 					remaining: 0,
@@ -129,29 +138,23 @@ class RedisRateLimiter {
 				};
 			}
 
-			// Increment counter
-			const incrPipeline = this.redis.pipeline();
-			incrPipeline.incr(windowKey);
-
-			// Set expiry only if this is the first request in the window
-			if (currentCount === 0) {
-				incrPipeline.pexpire(windowKey, windowMs);
-			}
-
-			await incrPipeline.exec();
-
 			return {
 				limited: false,
-				remaining: maxRequests - currentCount - 1,
+				remaining: maxRequests - currentCount,
 				resetTime,
 			};
 		} catch (error) {
-			console.error("Redis rate limiter error:", error);
-			// Fail open - allow request if Redis is down
-			// In production, you might want to fail closed (deny request)
+			// Configurable fail-open / fail-closed behaviour
+			if (this.failOpen) {
+				return {
+					limited: false,
+					remaining: maxRequests,
+					resetTime: now + windowMs,
+				};
+			}
 			return {
-				limited: false,
-				remaining: maxRequests,
+				limited: true,
+				remaining: 0,
 				resetTime: now + windowMs,
 			};
 		}
@@ -165,13 +168,23 @@ class RedisRateLimiter {
 	}
 
 	/**
-	 * Clear all rate limit keys (use with caution)
+	 * Clear all rate limit keys using SCAN (non-blocking, production-safe)
 	 */
 	async clear() {
-		const keys = await this.redis.keys("ratelimit:*");
-		if (keys.length > 0) {
-			await this.redis.del(...keys);
-		}
+		let cursor = "0";
+		do {
+			const [nextCursor, keys] = await this.redis.scan(
+				cursor,
+				"MATCH",
+				"ratelimit:*",
+				"COUNT",
+				100,
+			);
+			cursor = nextCursor;
+			if (keys.length > 0) {
+				await this.redis.del(...keys);
+			}
+		} while (cursor !== "0");
 	}
 }
 
@@ -189,7 +202,7 @@ export function createRateLimiter(options = {}) {
 		if (!redisClient) {
 			throw new Error("Redis client is required for Redis-based rate limiting");
 		}
-		return new RedisRateLimiter(redisClient);
+		return new RedisRateLimiter(redisClient, { failOpen: options.failOpen });
 	}
 
 	const limiter = new MemoryRateLimiter();

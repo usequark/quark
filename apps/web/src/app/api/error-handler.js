@@ -1,8 +1,10 @@
-import { AppError } from "@bobnoddle/quark-core";
+import { AppError, createLogger } from "@techstream/quark-core";
 import { NextResponse } from "next/server";
 
+const logger = createLogger("api");
+
 export function handleError(error) {
-	console.error("API Error:", error);
+	logger.error("API Error", { error: error.message, stack: error.stack });
 
 	if (error instanceof AppError) {
 		return NextResponse.json(error.toJSON(), { status: error.statusCode });

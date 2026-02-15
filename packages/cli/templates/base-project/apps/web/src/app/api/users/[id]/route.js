@@ -1,12 +1,12 @@
-import { validateBody } from "@bobnoddle/quark-core";
-import { user, userUpdateSchema } from "@bobnoddle/quark-db";
+import { validateBody, withCsrfProtection } from "@techstream/quark-core";
+import { user, userUpdateSchema } from "@techstream/quark-db";
 import { NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth-middleware";
+import { requireRole } from "@/lib/auth-middleware";
 import { handleError } from "../../error-handler";
 
 export async function GET(_request, { params }) {
 	try {
-		await requireAuth();
+		await requireRole("admin");
 		const { id } = await params;
 		const foundUser = await user.findById(id);
 		if (!foundUser) {
@@ -18,9 +18,9 @@ export async function GET(_request, { params }) {
 	}
 }
 
-export async function PATCH(request, { params }) {
+export const PATCH = withCsrfProtection(async (request, { params }) => {
 	try {
-		await requireAuth();
+		await requireRole("admin");
 		const { id } = await params;
 
 		const existingUser = await user.findById(id);
@@ -34,11 +34,11 @@ export async function PATCH(request, { params }) {
 	} catch (error) {
 		return handleError(error);
 	}
-}
+});
 
-export async function DELETE(_request, { params }) {
+export const DELETE = withCsrfProtection(async (_request, { params }) => {
 	try {
-		await requireAuth();
+		await requireRole("admin");
 		const { id } = await params;
 
 		const existingUser = await user.findById(id);
@@ -51,4 +51,4 @@ export async function DELETE(_request, { params }) {
 	} catch (error) {
 		return handleError(error);
 	}
-}
+});

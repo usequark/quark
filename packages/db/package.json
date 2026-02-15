@@ -1,5 +1,5 @@
 {
-	"name": "@bobnoddle/quark-db",
+	"name": "@techstream/quark-db",
 	"version": "1.0.0",
 	"type": "module",
 	"description": "",
@@ -21,7 +21,8 @@
 	"license": "ISC",
 	"packageManager": "pnpm@10.12.1",
 	"devDependencies": {
-		"@bobnoddle/quark-config": "workspace:*",
+		"@techstream/quark-config": "workspace:*",
+		"bcryptjs": "^3.0.3",
 		"prisma": "^7.3.0"
 	},
 	"dependencies": {
@@ -30,8 +31,5 @@
 		"dotenv": "^17.2.4",
 		"pg": "^8.18.0",
 		"zod": "^4.3.6"
-	},
-	"publishConfig": {
-		"registry": "https://npm.pkg.github.com"
 	}
 }

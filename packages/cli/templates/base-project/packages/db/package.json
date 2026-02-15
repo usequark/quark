@@ -1,5 +1,5 @@
 {
-	"name": "@bobnoddle/quark-db",
+	"name": "@techstream/quark-db",
 	"version": "1.0.0",
 	"type": "module",
 	"description": "",
@@ -10,20 +10,26 @@
 		"db:generate": "prisma generate",
 		"db:migrate": "prisma migrate dev",
 		"db:push": "prisma db push",
-		"db:seed": "node scripts/seed.js",
+		"db:seed": "prisma db seed",
 		"db:studio": "prisma studio"
+	},
+	"prisma": {
+		"seed": "node scripts/seed.js"
 	},
 	"keywords": [],
 	"author": "",
 	"license": "ISC",
 	"packageManager": "pnpm@10.12.1",
 	"devDependencies": {
-		"@bobnoddle/quark-config": "workspace:*",
-		"prisma": "^7.0.0"
+		"@techstream/quark-config": "workspace:*",
+		"bcryptjs": "^3.0.3",
+		"prisma": "^7.3.0"
 	},
 	"dependencies": {
-		"@prisma/client": "^7.0.0",
-		"dotenv": "^17.2.3",
+		"@prisma/adapter-pg": "^7.3.0",
+		"@prisma/client": "^7.3.0",
+		"dotenv": "^17.2.4",
+		"pg": "^8.18.0",
 		"zod": "^4.3.6"
 	}
 }

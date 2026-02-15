@@ -1,5 +1,5 @@
 /**
- * @bobnoddle/quark-core - Authorization Module
+ * @techstream/quark-core - Authorization Module
  * Policy-based, schema-agnostic RBAC engine
  */
 

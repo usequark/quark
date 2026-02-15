@@ -1,46 +1,36 @@
 # Quark
 
-> A full-stack TypeScript framework with centralized infrastructure updates and local business logic control.
+> A full-stack JavaScript framework with centralized infrastructure updates and local business logic control.
 
 ## Overview
 
 Quark is a **Core-Only Registry** framework that provides:
-- **Centralized infrastructure** via `@bobnoddle/quark-core` (auth, queues, validation, errors)
+- **Centralized infrastructure** via `@techstream/quark-core` (auth, queues, validation, errors)
 - **Local business logic** (database schema, UI components, job handlers)
-- **Zero-config scaffolding** via `@bobnoddle/quark-create-app`
+- **Zero-config scaffolding** via `@techstream/quark-create-app`
 - **Monorepo structure** with Turborepo, Next.js 16, Prisma 7, and BullMQ
 
 ---
 
 ## Quick Start
 
-The CLI (`@bobnoddle/quark-create-app`) is published on **npmjs.org** — no auth needed.  
-`@bobnoddle/quark-core` is on **GitHub Packages** and requires a GitHub PAT during install.
+All Quark packages are published on **npmjs.org** — no authentication required.
 
 ### 1. Create a project
 
 ```bash
-# No login or token required — the CLI is on the public npm registry
-npx @bobnoddle/quark-create-app@latest my-project
+npx @techstream/quark-create-app@latest my-project
 ```
 
 The CLI will:
 - Scaffold the project
-- Prompt you for a GitHub PAT (with `read:packages` scope)
-- Create `.env` (with your token as `GH_TOKEN`) and `.npmrc` automatically
+- Generate secure `.env` secrets automatically
+- Run `pnpm install`
 
-> **Need a token?** Go to https://github.com/settings/tokens → Generate new token (classic) → select **`read:packages`** → copy the token (starts with `ghp_`).
-
-### 2. Install dependencies
+### 2. Run development
 
 ```bash
 cd my-project
-npx dotenv-cli -e .env -- pnpm install
-```
-
-### 3. Run development
-
-```bash
 docker compose up -d
 pnpm db:generate
 pnpm db:migrate
@@ -71,20 +61,20 @@ Quark includes production-ready security features:
 
 Quark ships infrastructure through the registry and keeps business logic local:
 
-- **Registry:** `@bobnoddle/quark-core` (auth, queues, validation, errors)
+- **Registry:** `@techstream/quark-core` (auth, queues, validation, errors)
 - **Local packages:** `packages/db`, `packages/ui`, `packages/jobs`, `packages/config`
 
 Example usage in your app:
 
 ```javascript
-import { authOptions } from "@bobnoddle/quark-core";
+import { authOptions } from "@techstream/quark-core";
 import { prisma } from "@yourapp/db";
 ```
 
 To update infrastructure in a project:
 
 ```bash
-pnpm update @bobnoddle/quark-core
+pnpm update @techstream/quark-core
 ```
 
 ---
@@ -93,10 +83,9 @@ pnpm update @bobnoddle/quark-core
 
 ```bash
 cp .env.example .env
-# Add GH_TOKEN to .env (repo-local)
 
-# Install dependencies (cross-platform)
-npx dotenv-cli -e .env -- pnpm install
+# Install dependencies
+pnpm install
 
 docker compose up -d
 pnpm db:generate
@@ -114,21 +103,20 @@ pnpm dev
 When you update the framework:
 
 ```bash
-# Publish core infrastructure (GitHub Packages)
+# Publish core infrastructure
 cd packages/core
 npm version patch  # or minor/major
 npm publish
 
-# Publish CLI (npmjs.org — different registry)
+# Publish CLI
 cd packages/cli
 npm version patch
-npm publish  # publishConfig in package.json targets npmjs.org
+npm publish
 ```
 
-> **Note:** The CLI publishes to **npmjs.org** (public, no auth to install).  
-> `quark-core` publishes to **GitHub Packages** (requires PAT to install).
+> **Note:** Both the CLI and `quark-core` publish to **npmjs.org** (public, no auth to install).
 
-Employee projects will get core updates via `pnpm update @bobnoddle/quark-core`.
+Projects get core updates via `pnpm update @techstream/quark-core`.
 
 ## Documentation
 

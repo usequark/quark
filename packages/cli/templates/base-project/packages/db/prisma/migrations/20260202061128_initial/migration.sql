@@ -7,7 +7,9 @@ CREATE TABLE "User" (
     "email" TEXT NOT NULL,
     "emailVerified" TIMESTAMP(3),
     "name" TEXT,
+    "password" TEXT,
     "image" TEXT,
+    "role" TEXT NOT NULL DEFAULT 'viewer',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 

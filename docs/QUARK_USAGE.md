@@ -55,7 +55,7 @@ git tag v1.2.0
 git push origin main --tags
 ```
 
-**The GitHub Actions workflow will automatically publish to GitHub Packages when you push a tag.**
+**The GitHub Actions workflow will automatically publish to npmjs.org when you push a tag.**
 
 ---
 
@@ -78,7 +78,7 @@ pnpm new my-awesome-app
 
 ```bash
 # Install the CLI globally
-pnpm add -g @bobnoddle/quark-create-app
+pnpm add -g @techstream/quark-create-app
 
 # Scaffold from anywhere
 quark-create-app my-awesome-app
@@ -90,8 +90,8 @@ The CLI creates a complete project structure with:
 
 ```
 my-awesome-app/
-├── .npmrc                    ← Auto-generated GitHub Packages config
 ├── .env.example              ← Environment variables template
+├── .env                      ← Auto-generated secure secrets
 ├── .quark-link.json          ← Tracks Quark version & packages
 ├── .gitignore
 ├── package.json
@@ -110,99 +110,46 @@ my-awesome-app/
 
 ### Post-Scaffolding Setup
 
+The CLI automatically generates secure secrets and runs `pnpm install`. After scaffolding:
+
 ```bash
 cd my-awesome-app
 
-# 1. Create .env from template
-cp .env.example .env
-
-# 2. Edit .env and add your GitHub Personal Access Token
-# Change: GH_TOKEN=YOUR_PAT_HERE
-# To:     GH_TOKEN=github_pat_xxxxxxxxxxxx
-
-# 3. Load environment variables
-source .env
-
-# 4. Install dependencies (downloads Quark packages from GitHub)
-pnpm install
-
-# 5. Start services
+# 1. Start services
 docker compose up -d
 
-# 6. Run development server
+# 2. Run development server
 pnpm dev
 ```
 
 ---
 
-## Authentication: GH_TOKEN Setup
+## Package Installation
 
 ### How It Works
 
-Quark uses **GitHub Packages** as a private package registry. To install Quark packages, `pnpm` needs an authentication token stored in your project's `.env` file.
-
-**Key Points:**
-- Each project has its own `.npmrc` (committed) that references `${GH_TOKEN}`
-- Each project has its own `.env` (gitignored) that contains the actual token
-- Run `source .env` before `pnpm install` to load the token
-- Fully portable—clone the repo anywhere, add token to `.env`, it works
-
-### Setup for New Projects
-
-When you scaffold a project, the CLI generates:
-- `.npmrc` — Registry configuration (safe to commit)
-- `.env.example` — Template with `GH_TOKEN=YOUR_PAT_HERE`
-
-**Your workflow:**
+All Quark packages (`@techstream/quark-core`, `@techstream/quark-create-app`) are published to **npmjs.org** as public packages. No authentication is required to install or update them.
 
 ```bash
-# After scaffolding
-cd my-awesome-app
-cp .env.example .env
+# Install/update Quark core
+pnpm update @techstream/quark-core
 
-# Edit .env and replace YOUR_PAT_HERE with your actual GitHub token
-# GH_TOKEN=github_pat_xxxxxxxxxxxx
-
-# Load the token and install
-source .env
-pnpm install
+# Or use the built-in update command
+quark-update
 ```
-
-### Generating a GitHub Personal Access Token
-
-1. Go to https://github.com/settings/tokens
-2. Click **Generate new token (classic)**
-3. Give it a descriptive name: `Quark Packages`
-4. Select scopes:
-   - ✅ `read:packages` — to download Quark packages
-   - ✅ `write:packages` — (optional) if publishing
-5. Copy the token
-6. Add to `.env` as `GH_TOKEN=github_pat_...`
-
-**⚠️ Security:**
-- `.env` is gitignored—never commit your token
-- `.npmrc` only has `${GH_TOKEN}` reference—safe to commit
-- Each team member uses their own GitHub PAT
 
 ### Common Scenarios
 
 #### Local Development
 
 ```bash
-# Every time you open a new terminal:
 cd my-app
-source .env
-pnpm install  # or pnpm dev, pnpm build, etc.
-```
-
-**Tip:** Add this to your shell alias:
-```bash
-alias pnpm='source .env 2>/dev/null; pnpm'
+pnpm dev
 ```
 
 #### CI/CD (GitHub Actions)
 
-GitHub automatically provides tokens in workflows. Update your workflow:
+No authentication tokens needed — all packages are public:
 
 ```yaml
 # .github/workflows/ci.yml
@@ -210,33 +157,23 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v3
-      
-      - name: Install dependencies
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Auto-provided by GitHub
-        run: pnpm install
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: pnpm install
+      - run: pnpm test
 ```
 
 #### Docker
 
-Pass the token at build time:
-
 ```dockerfile
-FROM node:20-alpine
-ARG GH_TOKEN
-ENV GH_TOKEN=$GH_TOKEN
+FROM node:24-alpine
 
 WORKDIR /app
 COPY . .
 RUN pnpm install
-```
-
-Build:
-```bash
-source .env
-docker build --build-arg GH_TOKEN=$GH_TOKEN -t my-app .
 ```
 
 #### Cloning Repo to New Environment
@@ -249,11 +186,7 @@ cd my-app
 # 2. Create .env from template
 cp .env.example .env
 
-# 3. Add your GitHub PAT to .env
-# Edit: GH_TOKEN=github_pat_...
-
-# 4. Install
-source .env
+# 3. Install
 pnpm install
 ```
 
@@ -265,7 +198,7 @@ pnpm install
 
 Quark uses a **Core-Only Registry** architecture:
 
-- **`@bobnoddle/quark-core`** is published to GitHub Packages (you consume it like any npm package)
+- **`@techstream/quark-core`** is published to npmjs.org (you consume it like any npm package)
 - **All other packages** (`db`, `ui`, `jobs`, `config`) are scaffolded locally in your project
 
 This gives you:
@@ -274,9 +207,9 @@ This gives you:
 
 ### Core Infrastructure Package
 
-#### `@bobnoddle/quark-core`
+#### `@techstream/quark-core`
 
-Infrastructure provided via GitHub Packages registry. Includes authentication, password hashing, validation, error handling, and job queue infrastructure.
+Infrastructure provided via npmjs.org. Includes authentication, password hashing, validation, error handling, and job queue infrastructure.
 
 ```javascript
 // In your application
@@ -288,7 +221,7 @@ import {
   createWorker,
   validateBody,
   AppError,
-} from "@bobnoddle/quark-core";
+} from "@techstream/quark-core";
 
 // Example: Set up authentication
 const authConfig = createAuthConfig({
@@ -369,7 +302,7 @@ React components and UI primitives for your application.
 ---
 
 **Key Distinction:**
-- **Core infrastructure** (`@bobnoddle/quark-core`) → You receive updates via `pnpm update`
+- **Core infrastructure** (`@techstream/quark-core`) → You receive updates via `pnpm update`
 - **Business logic** (`@yourscope/db`, `@yourscope/ui`, etc.) → You own and evolve these
 
 ---
@@ -388,7 +321,7 @@ quark-update --check
 
 The CLI will:
 - Check for uncommitted changes (warn you if found)
-- Run `pnpm update @bobnoddle/quark-core`
+- Run `pnpm update @techstream/quark-core`
 - Update `.quark-link.json`
 - Provide next steps
 
@@ -398,7 +331,7 @@ The CLI will:
 
 ```bash
 # Update core infrastructure
-pnpm update @bobnoddle/quark-core
+pnpm update @techstream/quark-core
 
 # Test your app still works
 pnpm lint
@@ -423,7 +356,7 @@ Example breaking change workflow:
 
 ```bash
 # Update fails or tests fail
-pnpm update @bobnoddle/quark-core
+pnpm update @techstream/quark-core
 pnpm test  # ❌ Tests fail
 
 # Read the error and migration guide
@@ -437,18 +370,7 @@ git commit -am "chore: migrate to Quark v2.0"
 
 ---
 
-## Understanding `.npmrc` and `.quark-link.json`
-
-### `.npmrc` (Auto-Generated)
-
-Tells `pnpm` where to download Quark packages:
-
-```properties
-@bobnoddle:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=${GH_TOKEN}
-```
-
-**Don't edit this manually.** It's auto-generated and committed to git.
+## Understanding `.quark-link.json`
 
 ### `.quark-link.json` (Auto-Generated)
 
@@ -501,7 +423,6 @@ my-app/
 │   ├── ui/               # Your UI components (ejected)
 │   ├── jobs/             # Your job handlers (ejected)
 │   └── config/           # Your config (if ejected)
-├── .npmrc                # GitHub Packages config (auto-generated)
 ├── .quark-link.json      # Version tracking (auto-generated)
 ├── docker-compose.yml    # Local development services
 └── package.json
@@ -534,43 +455,18 @@ NODE_ENV=development
 DATABASE_URL=postgresql://quark:development@localhost:5432/my_app_dev
 REDIS_URL=redis://localhost:6379
 
-# GitHub Packages Authentication
-# Generate at https://github.com/settings/tokens with read:packages and write:packages scopes
-# Required for pnpm install to download Quark packages
-GH_TOKEN=YOUR_PAT
 ```
-
-**Important:** Set `GH_TOKEN` environment variable before running `pnpm install`.
 
 ---
 
 ## Troubleshooting
 
-### `Error: Cannot find module '@bobnoddle/quark-core'`
+### `Error: Cannot find module '@techstream/quark-core'`
 
-**Problem:** GH_TOKEN not loaded from `.env`.
+**Problem:** Dependencies not installed.
 
 ```bash
-# Make sure .env has your token:
-# GH_TOKEN=github_pat_xxxxxxxxxxxx
-
-# Load it and install:
-source .env
 pnpm install
-```
-
-### `Cannot find .npmrc in .gitignore`
-
-**The `.npmrc` should be committed.** It's safe because it references `${GH_TOKEN}` (a variable, not the token itself).
-
-Your `.env` should `.gitignore`:
-
-```bash
-# .gitignore
-.env              # ← Don't commit (has actual token)
-.env.local
-node_modules/
-.next/
 ```
 
 ### Update command says "uncommitted changes"
@@ -593,18 +489,11 @@ quark-update --force
 
 ### Quark package not updating
 
-Verify your PAT has correct permissions:
+Clear the cache and reinstall:
 
 ```bash
-# Required scopes: read:packages, write:packages, repo
-# Generate at https://github.com/settings/tokens with classic token
-```
-
-Verify token is loaded:
-
-```bash
-echo $GH_TOKEN
-# Should output your token
+pnpm store prune
+pnpm install
 ```
 
 ### Next.js build fails after Quark update
@@ -615,10 +504,10 @@ Make sure `next.config.js` includes Quark packages in `transpilePackages`:
 // apps/web/next.config.js
 const nextConfig = {
   transpilePackages: [
-    "@bobnoddle/quark-core",
-    "@bobnoddle/quark-db",
-    "@bobnoddle/quark-ui",
-    "@bobnoddle/quark-jobs",
+    "@techstream/quark-core",
+    "@techstream/quark-db",
+    "@techstream/quark-ui",
+    "@techstream/quark-jobs",
   ],
 };
 ```
@@ -630,8 +519,8 @@ const nextConfig = {
 | Task | Command |
 |------|---------|
 | Create new project | `pnpm new my-app` (from Quark root) or `quark-create-app my-app` |
-| Install dependencies | `source .env && pnpm install` |
-| Update Quark packages | `quark-update` or `pnpm update @bobnoddle/quark-*` |
+| Install dependencies | `pnpm install` |
+| Update Quark packages | `quark-update` or `pnpm update @techstream/quark-*` |
 | Check for updates | `quark-update --check` |
 | Start development | `pnpm dev` |
 | Run tests | `pnpm test` |

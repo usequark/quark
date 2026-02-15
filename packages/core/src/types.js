@@ -1,5 +1,5 @@
 /**
- * @bobnoddle/quark-core - Type Definitions
+ * @techstream/quark-core - Type Definitions
  * TypeScript types and JSDoc type definitions for better IDE support
  */
 

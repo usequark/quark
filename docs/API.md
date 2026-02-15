@@ -97,12 +97,12 @@ interface EmailJobData {
 
 ## Packages
 
-### @bobnoddle/quark-db
+### @techstream/quark-db
 
 Database client and query helpers.
 
 ```typescript
-import { prisma, user, post } from "@bobnoddle/quark-db";
+import { prisma, user, post } from "@techstream/quark-db";
 
 // Find user by ID
 const foundUser = await user.findById("cuid123");
@@ -120,12 +120,12 @@ const newPost = await post.create({ title: "My Post", authorId: "cuid123" });
 const publishedPosts = await post.findPublished();
 ```
 
-### @bobnoddle/quark-ui
+### @techstream/quark-ui
 
 Shared UI components.
 
 ```tsx
-import { Button } from "@bobnoddle/quark-ui";
+import { Button } from "@techstream/quark-ui";
 
 // Primary button (default)
 <Button>Click me</Button>
@@ -137,12 +137,12 @@ import { Button } from "@bobnoddle/quark-ui";
 <Button disabled onClick={() => {}}>Submit</Button>
 ```
 
-### @bobnoddle/quark-jobs
+### @techstream/quark-jobs
 
 Job queue definitions.
 
 ```typescript
-import { JOB_QUEUES, JOB_NAMES, EmailJobData } from "@bobnoddle/quark-jobs";
+import { JOB_QUEUES, JOB_NAMES, EmailJobData } from "@techstream/quark-jobs";
 
 // Queue names
 JOB_QUEUES.EMAIL // "email-queue"
@@ -151,12 +151,12 @@ JOB_QUEUES.EMAIL // "email-queue"
 JOB_NAMES.SEND_WELCOME_EMAIL // "send-welcome-email"
 ```
 
-### @bobnoddle/quark-config
+### @techstream/quark-config
 
 Shared configuration.
 
 ```typescript
-import { config } from "@bobnoddle/quark-config";
+import { config } from "@techstream/quark-config";
 
 config.appName // "Quark"
 ```
@@ -171,4 +171,4 @@ config.appName // "Quark"
 | REDIS_URL         | Redis connection string        | redis://localhost:6379                     |
 | NEXTAUTH_SECRET   | NextAuth.js secret key         | your_very_long_secure_secret_here          |
 | MAILHOG_SMTP_URL  | SMTP server URL                | smtp://localhost:1025                      |
-| WEB_PORT          | Web app port                   | 3000                                       |
+| PORT              | Web app port                   | 3000                                       |

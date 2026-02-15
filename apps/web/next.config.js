@@ -1,17 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-	// Support workspace package resolution (including @bobnoddle/quark-db which uses
+	// Support workspace package resolution (including @techstream/quark-db which uses
 	// the Prisma driver-adapter pattern — pure JS, no native engine binary)
 	transpilePackages: [
-		"@bobnoddle/quark-core",
-		"@bobnoddle/quark-db",
-		"@bobnoddle/quark-ui",
-		"@bobnoddle/quark-jobs",
+		"@techstream/quark-core",
+		"@techstream/quark-db",
+		"@techstream/quark-ui",
+		"@techstream/quark-jobs",
 	],
 
 	// Security headers
-	// NOTE: These are also applied by middleware.js for middleware-matched routes.
-	// Keeping them here as a fallback for routes the middleware doesn't match.
+	// NOTE: These are also applied by proxy.js for proxy-matched routes.
+	// Keeping them here as a fallback for routes the proxy doesn't match.
 	async headers() {
 		return [
 			{
@@ -30,16 +30,17 @@ const nextConfig = {
 						value: "nosniff",
 					},
 					{
-						key: "X-XSS-Protection",
-						value: "1; mode=block",
-					},
-					{
 						key: "Referrer-Policy",
 						value: "strict-origin-when-cross-origin",
 					},
 					{
 						key: "Permissions-Policy",
 						value: "camera=(), microphone=(), geolocation=()",
+					},
+					{
+						key: "Content-Security-Policy",
+						value:
+							"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self';",
 					},
 				],
 			},

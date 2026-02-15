@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * End-to-end test for @bobnoddle/quark-create-app CLI
+ * End-to-end test for @techstream/quark-create-app CLI
  * This manually walks through creating a project
  */
 
@@ -78,12 +78,12 @@ const webPackageJsonPath = path.join(
 if (await fs.pathExists(webPackageJsonPath)) {
 	const webPackageJson = await fs.readJSON(webPackageJsonPath);
 
-	// Replace @bobnoddle/quark-* with @scope/* for local packages
+	// Replace @techstream/quark-* with @scope/* for local packages
 	const replaceScope = (deps) => {
 		if (!deps) return;
 		for (const [key, value] of Object.entries(deps)) {
-			if (key.startsWith("@bobnoddle/quark-") && value === "workspace:*") {
-				const packageName = key.replace("@bobnoddle/quark-", "");
+			if (key.startsWith("@techstream/quark-") && value === "workspace:*") {
+				const packageName = key.replace("@techstream/quark-", "");
 				delete deps[key];
 				deps[`@${scope}/${packageName}`] = value;
 			}
@@ -109,8 +109,8 @@ if (await fs.pathExists(workerPackageJsonPath)) {
 	const replaceScope = (deps) => {
 		if (!deps) return;
 		for (const [key, value] of Object.entries(deps)) {
-			if (key.startsWith("@bobnoddle/quark-") && value === "workspace:*") {
-				const packageName = key.replace("@bobnoddle/quark-", "");
+			if (key.startsWith("@techstream/quark-") && value === "workspace:*") {
+				const packageName = key.replace("@techstream/quark-", "");
 				delete deps[key];
 				deps[`@${scope}/${packageName}`] = value;
 			}
@@ -145,12 +145,6 @@ DATABASE_URL=postgresql://quark:development@localhost:5432/${scope}_dev
 REDIS_URL=redis://localhost:6379
 EMAIL_FROM=noreply@${scope}.com
 
-# GitHub Packages Authentication (required for Quark package installation)
-# Generate Personal Access Token at https://github.com/settings/tokens with:
-#   - read:packages (to download packages)
-#   - write:packages (if publishing)
-# Set this BEFORE running pnpm install
-GH_TOKEN=YOUR_PAT_HERE
 `;
 await fs.writeFile(path.join(projectPath, ".env.example"), envExample);
 
@@ -229,13 +223,13 @@ const hasCorrectDbDep = webPkg.dependencies[`@${scope}/db`] === "workspace:*";
 const hasCorrectUiDep = webPkg.dependencies[`@${scope}/ui`] === "workspace:*";
 const hasCorrectJobsDep =
 	webPkg.dependencies[`@${scope}/jobs`] === "workspace:*";
-const hasCore = webPkg.dependencies["@bobnoddle/quark-core"] === "^1.0.0";
+const hasCore = webPkg.dependencies["@techstream/quark-core"] === "^1.0.0";
 
 console.log(`  ${hasCorrectDbDep ? "✓" : "✗"} Web app has @${scope}/db`);
 console.log(`  ${hasCorrectUiDep ? "✓" : "✗"} Web app has @${scope}/ui`);
 console.log(`  ${hasCorrectJobsDep ? "✓" : "✗"} Web app has @${scope}/jobs`);
 console.log(
-	`  ${hasCore ? "✓" : "✗"} Web app has @bobnoddle/quark-core (from registry)`,
+	`  ${hasCore ? "✓" : "✗"} Web app has @techstream/quark-core (from registry)`,
 );
 
 // List the project structure

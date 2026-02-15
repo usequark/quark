@@ -1,4 +1,5 @@
 import { resolve } from "node:path";
+import bcrypt from "bcryptjs";
 import { config } from "dotenv";
 
 // Load .env from monorepo root (mirrors prisma.config.ts)
@@ -11,6 +12,7 @@ async function main() {
 	console.log("Seeding database...");
 
 	const email = "test@example.com";
+	const password = await bcrypt.hash("Password1", 12);
 
 	const user = await prisma.user.upsert({
 		where: { email },
@@ -18,6 +20,7 @@ async function main() {
 		create: {
 			email,
 			name: "Test User",
+			password,
 			image: "https://api.dicebear.com/7.x/avataaars/svg?seed=test",
 			posts: {
 				create: [

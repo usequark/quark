@@ -10,11 +10,24 @@ import {
 
 test("Auth Module", async (t) => {
 	await t.test("createAuthConfig returns valid config", () => {
-		const config = createAuthConfig();
+		const config = createAuthConfig({ secret: "test-secret" });
 		assert(config.session);
 		assert(config.session.strategy === "jwt");
 		assert(config.session.maxAge === 30 * 24 * 60 * 60);
 		assert.deepStrictEqual(config.providers, []);
+	});
+
+	await t.test("createAuthConfig throws when secret is missing", () => {
+		const orig = process.env.NEXTAUTH_SECRET;
+		delete process.env.NEXTAUTH_SECRET;
+		try {
+			assert.throws(
+				() => createAuthConfig(),
+				(err) => err instanceof Error && /NEXTAUTH_SECRET/.test(err.message),
+			);
+		} finally {
+			if (orig !== undefined) process.env.NEXTAUTH_SECRET = orig;
+		}
 	});
 
 	await t.test("createAuthConfig with custom options", () => {

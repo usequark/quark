@@ -4,9 +4,11 @@
  * Times out after 5 seconds to prevent hanging.
  */
 
-import { pingRedis } from "@bobnoddle/quark-core";
-import { prisma } from "@bobnoddle/quark-db";
+import { createLogger, pingRedis } from "@techstream/quark-core";
+import { prisma } from "@techstream/quark-db";
 import { NextResponse } from "next/server";
+
+const logger = createLogger("health");
 
 /** Overall timeout for the health check (ms). */
 const HEALTH_CHECK_TIMEOUT = 5000;
@@ -27,12 +29,15 @@ export async function GET() {
 			status: result.status === "ok" ? 200 : 503,
 		});
 	} catch (error) {
-		console.error("Health check failed:", error);
+		logger.error("Health check failed", {
+			error: error.message,
+			stack: error.stack,
+		});
 		return NextResponse.json(
 			{
 				status: "error",
 				timestamp: new Date().toISOString(),
-				message: error.message,
+				message: "Service health check failed",
 			},
 			{ status: 500 },
 		);

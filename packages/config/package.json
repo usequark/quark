@@ -1,5 +1,5 @@
 {
-	"name": "@bobnoddle/quark-config",
+	"name": "@techstream/quark-config",
 	"version": "1.0.0",
 	"type": "module",
 	"description": "",
@@ -16,8 +16,5 @@
 	"keywords": [],
 	"author": "",
 	"license": "ISC",
-	"packageManager": "pnpm@10.12.1",
-	"publishConfig": {
-		"registry": "https://npm.pkg.github.com"
-	}
+	"packageManager": "pnpm@10.12.1"
 }

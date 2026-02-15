@@ -1,5 +1,7 @@
+import crypto from "node:crypto";
+
 /**
- * @bobnoddle/quark-core - Utility Functions
+ * @techstream/quark-core - Utility Functions
  * Common utility functions used across the platform
  */
 
@@ -80,6 +82,10 @@ export const deepMerge = (target, source) => {
 
 	if (isObject(target) && isObject(source)) {
 		Object.keys(source).forEach((key) => {
+			// Guard against prototype pollution
+			if (key === "__proto__" || key === "constructor" || key === "prototype") {
+				return;
+			}
 			if (isObject(source[key])) {
 				if (!(key in target)) {
 					Object.assign(output, { [key]: source[key] });
@@ -105,7 +111,7 @@ export const isObject = (item) => {
 };
 
 /**
- * @deprecated Use `getErrorMessage` from `@bobnoddle/quark-core/errors` instead.
+ * @deprecated Use `getErrorMessage` from `@techstream/quark-core/errors` instead.
  * Normalizes error messages for consistency
  * @param {Error|string} error - Error to normalize
  * @returns {string} Normalized error message
@@ -113,7 +119,8 @@ export const isObject = (item) => {
 export { getErrorMessage as normalizeErrorMessage } from "./errors.js";
 
 /**
- * Generates a random string of specified length
+ * Generates a cryptographically secure random string of specified length.
+ * Uses crypto.randomBytes for secure randomness — safe for tokens and IDs.
  * @param {number} length - String length
  * @param {string} chars - Characters to use (default: alphanumeric)
  * @returns {string} Random string
@@ -122,9 +129,10 @@ export const randomString = (
 	length = 16,
 	chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
 ) => {
+	const bytes = crypto.randomBytes(length);
 	let result = "";
 	for (let i = 0; i < length; i++) {
-		result += chars.charAt(Math.floor(Math.random() * chars.length));
+		result += chars.charAt(bytes[i] % chars.length);
 	}
 	return result;
 };

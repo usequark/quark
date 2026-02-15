@@ -1,5 +1,5 @@
 /**
- * @bobnoddle/quark-core - Authentication Module
+ * @techstream/quark-core - Authentication Module
  * Provides next-auth initialization and session management helpers
  */
 
@@ -26,10 +26,8 @@ export const createAuthConfig = (options = {}) => {
 		...rest
 	} = options;
 
-	if (!secret && process.env.NODE_ENV === "production") {
-		throw new Error(
-			"NEXTAUTH_SECRET must be set in production or passed via options",
-		);
+	if (!secret) {
+		throw new Error("NEXTAUTH_SECRET must be set (env var or options.secret)");
 	}
 
 	return {

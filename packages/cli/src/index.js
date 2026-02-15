@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import crypto from "node:crypto";
+import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import chalk from "chalk";
@@ -48,6 +49,48 @@ function generateSecurePassword(length = 24) {
 }
 
 /**
+ * Check if a TCP port is available on localhost.
+ * Uses a connect test (not bind) to reliably detect Docker-bound ports on macOS.
+ * @param {number} port
+ * @returns {Promise<boolean>}
+ */
+function isPortAvailable(port) {
+	return new Promise((resolve) => {
+		const socket = new net.Socket();
+		socket.setTimeout(500);
+		socket.once("connect", () => {
+			socket.destroy();
+			resolve(false); // something is listening — port is in use
+		});
+		socket.once("error", () => {
+			socket.destroy();
+			resolve(true); // ECONNREFUSED — port is free
+		});
+		socket.once("timeout", () => {
+			socket.destroy();
+			resolve(true); // no response — port is free
+		});
+		socket.connect(port, "127.0.0.1");
+	});
+}
+
+/**
+ * Find the next available port starting from a given port
+ * @param {number} startPort
+ * @param {number} [maxAttempts=20]
+ * @returns {Promise<number>}
+ */
+async function findAvailablePort(startPort, maxAttempts = 20) {
+	for (let i = 0; i < maxAttempts; i++) {
+		const port = startPort + i;
+		if (await isPortAvailable(port)) {
+			return port;
+		}
+	}
+	return startPort; // fallback to default if all checked ports are busy
+}
+
+/**
  * Copy a template directory to the target location, with variable substitution
  */
 async function copyTemplate(templateName, targetDir, variables = {}) {
@@ -61,15 +104,21 @@ async function copyTemplate(templateName, targetDir, variables = {}) {
 	await fs.copy(templatePath, targetDir);
 
 	// Replace variables in package.json files
-	const packageJsonPath = path.join(targetDir, "package.json");
-	if (await fs.pathExists(packageJsonPath)) {
-		let content = await fs.readFile(packageJsonPath, "utf-8");
+	if (Object.keys(variables).length > 0) {
+		const packageJsonPath = path.join(targetDir, "package.json");
+		if (await fs.pathExists(packageJsonPath)) {
+			let content = await fs.readFile(packageJsonPath, "utf-8");
 
-		for (const [_key, value] of Object.entries(variables)) {
-			content = content.replace(/@myquark/g, value);
+			for (const [key, value] of Object.entries(variables)) {
+				const pattern = new RegExp(
+					key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+					"g",
+				);
+				content = content.replace(pattern, value);
+			}
+
+			await fs.writeFile(packageJsonPath, content);
 		}
-
-		await fs.writeFile(packageJsonPath, content);
 	}
 }
 
@@ -119,33 +168,128 @@ async function updatePackageJsonName(filePath, scope) {
 }
 
 /**
- * Replace @bobnoddle/quark-* workspace deps with @scope/* for local packages
+ * Replace @techstream/quark-* workspace deps with @scope/* for local packages.
+ * Also removes deps for packages that were not selected.
  */
-function replaceDepsScope(deps, scope) {
+function replaceDepsScope(deps, scope, selectedPackages) {
 	if (!deps) return;
 	for (const [key, value] of Object.entries(deps)) {
-		if (key.startsWith("@bobnoddle/quark-") && value === "workspace:*") {
-			const packageName = key.replace("@bobnoddle/quark-", "");
+		if (key.startsWith("@techstream/quark-") && value === "workspace:*") {
+			const packageName = key.replace("@techstream/quark-", "");
 			delete deps[key];
-			deps[`@${scope}/${packageName}`] = value;
+			// Only keep the dep if the package was selected (or is always required)
+			if (
+				packageName === "db" ||
+				packageName === "config" ||
+				selectedPackages.includes(packageName)
+			) {
+				deps[`@${scope}/${packageName}`] = value;
+			}
 		}
 	}
+}
+
+/**
+ * Replace @techstream/quark-* import paths in all .js source files
+ * for workspace packages (db, jobs, ui, config) with @scope/* equivalents.
+ * Registry packages (@techstream/quark-core) are left untouched.
+ */
+async function replaceImportsInSourceFiles(dir, scope) {
+	const workspacePackages = ["db", "jobs", "ui", "config"];
+	const entries = await fs.readdir(dir, { withFileTypes: true });
+
+	for (const entry of entries) {
+		const fullPath = path.join(dir, entry.name);
+
+		if (
+			entry.isDirectory() &&
+			entry.name !== "node_modules" &&
+			entry.name !== ".next"
+		) {
+			await replaceImportsInSourceFiles(fullPath, scope);
+		} else if (entry.isFile() && /\.(js|ts|jsx|tsx|mjs)$/.test(entry.name)) {
+			let content = await fs.readFile(fullPath, "utf-8");
+			let changed = false;
+
+			for (const pkg of workspacePackages) {
+				const pattern = new RegExp(`@techstream/quark-${pkg}`, "g");
+				if (pattern.test(content)) {
+					content = content.replace(pattern, `@${scope}/${pkg}`);
+					changed = true;
+				}
+			}
+
+			if (changed) {
+				await fs.writeFile(fullPath, content);
+			}
+		}
+	}
+}
+
+/**
+ * Validate project name to prevent path traversal and ensure safe directory creation
+ */
+function validateProjectName(name) {
+	if (!name || typeof name !== "string") {
+		throw new Error("Project name is required");
+	}
+	// Only allow safe characters: alphanumeric, hyphens, underscores, dots
+	if (!/^[a-zA-Z0-9._-]+$/.test(name)) {
+		throw new Error(
+			"Project name may only contain letters, numbers, hyphens, underscores, and dots",
+		);
+	}
+	// Block path traversal patterns
+	if (name.startsWith(".") || name.includes("..")) {
+		throw new Error("Project name must not start with '.' or contain '..'");
+	}
+
+	const resolved = path.resolve(process.cwd(), name);
+	if (!resolved.startsWith(process.cwd())) {
+		throw new Error("Project name must not escape the current directory");
+	}
+
+	return resolved;
 }
 
 program
 	.argument("<project-name>", "Name of the project to create")
 	.action(async (projectName) => {
 		console.log(
-			chalk.blue.bold(`\n🚀 Creating your new Quark project: ${projectName}\n`),
+			chalk.blue.bold(
+				`\n\uD83D\uDE80 Creating your new Quark project: ${projectName}\n`,
+			),
 		);
 
-		const targetDir = path.join(process.cwd(), projectName);
+		const targetDir = validateProjectName(projectName);
 		const scope = projectName.toLowerCase().replace(/[^a-z0-9-]/g, "");
 
 		// Check if directory already exists
 		if (await fs.pathExists(targetDir)) {
-			console.error(chalk.red(`✗ Directory already exists: ${targetDir}`));
-			process.exit(1);
+			const { overwrite } = await prompts({
+				type: "confirm",
+				name: "overwrite",
+				message: `Directory "${projectName}" already exists. Remove it and recreate?`,
+				initial: false,
+			});
+
+			if (!overwrite) {
+				console.log(chalk.yellow("Aborted."));
+				process.exit(1);
+			}
+
+			// Clean up Docker resources (volumes hold old credentials)
+			try {
+				await execa("docker", ["compose", "down", "-v"], {
+					cwd: targetDir,
+					stdio: "ignore",
+				});
+				console.log(chalk.green("  ✓ Cleaned up Docker volumes"));
+			} catch {
+				// No docker-compose file or Docker not running — fine
+			}
+
+			await fs.remove(targetDir);
 		}
 
 		try {
@@ -167,25 +311,33 @@ program
 			// Step 4: Copy required packages (always included)
 			console.log(chalk.cyan("\n  📦 Setting up required packages..."));
 
-			// Database package is always required (already copied from base-project)
-			// Just update its package.json name
-			const dbPackageDir = path.join(targetDir, "packages", "db");
-			const dbPackageJsonPath = path.join(dbPackageDir, "package.json");
-			const dbPackageJson = await fs.readJSON(dbPackageJsonPath);
-			dbPackageJson.name = `@${scope}/db`;
-			await fs.writeFile(
-				dbPackageJsonPath,
-				`${JSON.stringify(dbPackageJson, null, 2)}\n`,
-			);
-			console.log(chalk.green(`    ✓ db (required)`));
+			// Database and config packages are always required
+			const requiredPackages = ["db", "config"];
+			for (const reqPkg of requiredPackages) {
+				const pkgDir = path.join(targetDir, "packages", reqPkg);
+				// db is already copied from base-project; config needs to be copied from its template
+				if (!(await fs.pathExists(pkgDir))) {
+					await fs.ensureDir(pkgDir);
+					await copyTemplate(reqPkg, pkgDir);
+				}
+				const pkgJsonPath = path.join(pkgDir, "package.json");
+				const pkgJson = await fs.readJSON(pkgJsonPath);
+				pkgJson.name = `@${scope}/${reqPkg}`;
+				await fs.writeFile(
+					pkgJsonPath,
+					`${JSON.stringify(pkgJson, null, 2)}\n`,
+				);
+				console.log(chalk.green(`    ✓ ${reqPkg} (required)`));
+			}
 
 			// Step 5: Ask which optional features to eject
-			console.log(chalk.cyan("\n  🎯 Configuring optional features..."));
+			console.log(chalk.cyan("\n  🎯 Configuring optional features...\n"));
 			const response = await prompts([
 				{
 					type: "multiselect",
 					name: "features",
 					message: "Which optional packages would you like to include?",
+					instructions: false,
 					choices: [
 						{
 							title: "UI Components (packages/ui)",
@@ -197,16 +349,18 @@ program
 							value: "jobs",
 							selected: true,
 						},
-						{
-							title: "Configuration (packages/config)",
-							value: "config",
-							selected: false,
-						},
 					],
 				},
 			]);
 
 			const { features } = response;
+
+			// Handle prompt cancellation (Ctrl+C)
+			if (!features) {
+				console.log(chalk.yellow("\n\u26A0\uFE0F  Setup cancelled."));
+				await fs.remove(targetDir);
+				process.exit(0);
+			}
 
 			// Step 6: Copy selected optional packages
 			if (features.length > 0) {
@@ -225,41 +379,53 @@ program
 				}
 			}
 
-			// Step 7: Update app dependencies to use correct scope
+			// Step 7: Update all package.json dependencies to use correct scope
 			console.log(chalk.cyan("\n  🔧 Updating app dependencies..."));
 
-			// Update app package.json files to use correct scope
-			const appPaths = [
+			// Collect all package.json files that need scope replacement (apps + packages)
+			const allPkgPaths = [
 				path.join(targetDir, "apps", "web", "package.json"),
 				path.join(targetDir, "apps", "worker", "package.json"),
+				// Also update cross-dependencies in scaffolded packages (e.g. db → config)
+				...["db", ...features].map((pkg) =>
+					path.join(targetDir, "packages", pkg, "package.json"),
+				),
 			];
 
-			for (const appPkgPath of appPaths) {
-				if (await fs.pathExists(appPkgPath)) {
-					const appPkg = await fs.readJSON(appPkgPath);
-					replaceDepsScope(appPkg.dependencies, scope);
-					replaceDepsScope(appPkg.devDependencies, scope);
-					await fs.writeFile(
-						appPkgPath,
-						`${JSON.stringify(appPkg, null, 2)}\n`,
-					);
+			for (const pkgPath of allPkgPaths) {
+				if (await fs.pathExists(pkgPath)) {
+					const pkg = await fs.readJSON(pkgPath);
+					// Rename package name if it uses @quark/ prefix
+					if (pkg.name && pkg.name.startsWith("@quark/")) {
+						const shortName = pkg.name.replace("@quark/", "");
+						pkg.name = `@${scope}/${shortName}`;
+					}
+					replaceDepsScope(pkg.dependencies, scope, features);
+					replaceDepsScope(pkg.devDependencies, scope, features);
+					await fs.writeFile(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
 				}
+			}
+
+			// Also rename root package.json
+			const rootPkgPath = path.join(targetDir, "package.json");
+			if (await fs.pathExists(rootPkgPath)) {
+				const rootPkg = await fs.readJSON(rootPkgPath);
+				rootPkg.name = `@${scope}/root`;
+				await fs.writeFile(
+					rootPkgPath,
+					`${JSON.stringify(rootPkg, null, 2)}\n`,
+				);
 			}
 
 			console.log(chalk.green(`    ✓ App dependencies updated`));
 
-			// Step 8: Create .npmrc for GitHub Packages (repo-local)
-			console.log(
-				chalk.cyan("\n  🔐 Creating GitHub Packages configuration..."),
-			);
-			const npmrc = `@bobnoddle:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=\${GH_TOKEN}
-`;
-			await fs.writeFile(path.join(targetDir, ".npmrc"), npmrc);
-			console.log(chalk.green(`    ✓ .npmrc`));
+			// Step 7b: Replace workspace package imports in source files
+			console.log(chalk.cyan("\n  🔄 Updating import paths..."));
+			await replaceImportsInSourceFiles(targetDir, scope);
+			console.log(chalk.green(`    ✓ Import paths updated`));
 
-			// Step 9: Create .env.example file
-			console.log(chalk.cyan("\n  🔐 Creating environment configuration..."));
+			// Step 8: Create .env.example file
+			console.log(chalk.cyan("\n  📋 Creating environment configuration..."));
 			const envExampleTemplate = `# --- Database Configuration ---
 # These map to the service names in docker-compose.yml
 # ⚠️  SECURITY WARNING: Change these default passwords in production!
@@ -286,11 +452,9 @@ MAILHOG_UI_PORT=8025
 # MAILHOG_SMTP_URL="smtp://localhost:1025"
 
 # --- Application URL ---
-# The canonical URL of your application.
-# NEXTAUTH_URL, CORS origins, and other URL-dependent settings are derived from this.
-# Development: http://localhost:3000
-# Production: https://yourdomain.com
-APP_URL=http://localhost:3000
+# In development, APP_URL is derived automatically from PORT — no need to set it.
+# In production, set this to your real domain:
+# APP_URL=https://yourdomain.com
 
 # --- NextAuth Configuration ---
 # ⚠️  CRITICAL: Generate a secure secret with: openssl rand -base64 32
@@ -307,16 +471,10 @@ NEXTAUTH_SECRET=CHANGE_ME_TO_STRONG_SECRET
 # GOOGLE_CLIENT_SECRET=your_google_client_secret
 
 # --- Web App Configuration ---
-WEB_PORT=3000
+PORT=3000
 
 # --- Worker Configuration ---
 WORKER_CONCURRENCY=5
-
-# --- GitHub Packages Authentication ---
-# Required for installing and updating Quark packages from GitHub Packages
-# (and for publishing if you're maintaining the Quark framework)
-# Generate token at https://github.com/settings/tokens with read:packages scope (and write:packages for publishing)
-# GH_TOKEN=github_pat_YOUR_TOKEN_HERE
 `;
 			await fs.writeFile(
 				path.join(targetDir, ".env.example"),
@@ -324,14 +482,32 @@ WORKER_CONCURRENCY=5
 			);
 			console.log(chalk.green(`    ✓ .env.example`));
 
-			// Step 10: Prompt for GH_TOKEN and generate .env with secure defaults
+			// Step 9: Find available ports and generate .env
+			console.log(chalk.cyan("\n  🔌 Checking port availability..."));
+			const postgresPort = await findAvailablePort(5432);
+			const redisPort = await findAvailablePort(6379);
+			const mailSmtpPort = await findAvailablePort(1025);
+			const mailUiPort = await findAvailablePort(8025);
+			const webPort = await findAvailablePort(3000);
+
+			const portChanges = [];
+			if (postgresPort !== 5432)
+				portChanges.push(`PostgreSQL: ${postgresPort}`);
+			if (redisPort !== 6379) portChanges.push(`Redis: ${redisPort}`);
+			if (mailSmtpPort !== 1025) portChanges.push(`Mail SMTP: ${mailSmtpPort}`);
+			if (mailUiPort !== 8025) portChanges.push(`Mail UI: ${mailUiPort}`);
+			if (webPort !== 3000) portChanges.push(`Web: ${webPort}`);
+
+			if (portChanges.length > 0) {
+				console.log(chalk.yellow(`    ⚡ Ports adjusted to avoid conflicts:`));
+				for (const change of portChanges) {
+					console.log(chalk.yellow(`      • ${change}`));
+				}
+			} else {
+				console.log(chalk.green(`    ✓ All default ports available`));
+			}
+
 			console.log(chalk.cyan("\n  🔑 Generating secure environment file..."));
-			const tokenResponse = await prompts({
-				type: "password",
-				name: "githubPat",
-				message: "GitHub PAT (read:packages scope, leave blank to skip)",
-			});
-			const githubPat = (tokenResponse.githubPat || "").trim();
 
 			// Generate secure random values
 			const dbPassword = generateSecurePassword(24);
@@ -340,34 +516,30 @@ WORKER_CONCURRENCY=5
 			// Create .env with auto-generated secure values
 			const envContent = `# --- Database Configuration ---
 POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
+POSTGRES_PORT=${postgresPort}
 POSTGRES_USER=quark_user
 POSTGRES_PASSWORD=${dbPassword}
 POSTGRES_DB=${scope}_dev
 
 # --- Redis Configuration ---
 REDIS_HOST=localhost
-REDIS_PORT=6379
+REDIS_PORT=${redisPort}
 
-# --- Mailhog Configuration ---
+# --- Mail Configuration ---
 MAILHOG_HOST=localhost
-MAILHOG_SMTP_PORT=1025
-MAILHOG_UI_PORT=8025
+MAILHOG_SMTP_PORT=${mailSmtpPort}
+MAILHOG_UI_PORT=${mailUiPort}
 
 # --- NextAuth Configuration ---
 NEXTAUTH_SECRET=${nextAuthSecret}
 
-# --- Application URL ---
-APP_URL=http://localhost:3000
-
 # --- Web App Configuration ---
-WEB_PORT=3000
+# APP_URL is derived from PORT automatically in development.
+# In production, set APP_URL explicitly in your environment.
+PORT=${webPort}
 
 # --- Worker Configuration ---
 WORKER_CONCURRENCY=5
-
-# --- GitHub Packages Authentication ---
-${githubPat ? `GH_TOKEN=${githubPat}` : "# GH_TOKEN=github_pat_YOUR_TOKEN_HERE"}
 `;
 			await fs.writeFile(path.join(targetDir, ".env"), envContent);
 			console.log(
@@ -379,7 +551,7 @@ ${githubPat ? `GH_TOKEN=${githubPat}` : "# GH_TOKEN=github_pat_YOUR_TOKEN_HERE"}
 				quarkVersion: process.env.QUARK_VERSION || "latest",
 				quarkSourcePath: process.env.QUARK_SOURCE_PATH || "../../quark",
 				scaffoldedDate: new Date().toISOString(),
-				requiredPackages: ["db"],
+				requiredPackages: ["db", "config"],
 				packages: features,
 			};
 			await fs.writeFile(
@@ -388,11 +560,49 @@ ${githubPat ? `GH_TOKEN=${githubPat}` : "# GH_TOKEN=github_pat_YOUR_TOKEN_HERE"}
 			);
 			console.log(chalk.green(`    ✓ .quark-link.json`));
 
-			// Step 12: Initialize git repository
+			// Step 11: Initialize git repository
 			console.log(chalk.cyan("\n  📝 Initializing git repository..."));
 			const gitInitialized = await initializeGit(targetDir);
 			if (gitInitialized) {
 				console.log(chalk.green(`    ✓ Git initialized with initial commit`));
+			}
+
+			// Step 12: Run pnpm install
+			console.log(chalk.cyan("\n  📦 Installing dependencies..."));
+			try {
+				await execa("pnpm", ["install"], {
+					cwd: targetDir,
+					stdio: "inherit",
+				});
+				console.log(chalk.green(`\n    ✓ Dependencies installed`));
+			} catch (installError) {
+				console.warn(
+					chalk.yellow(`\n    ⚠️  pnpm install failed: ${installError.message}`),
+				);
+				console.warn(
+					chalk.yellow(
+						`    Run 'pnpm install' manually after resolving the issue.`,
+					),
+				);
+			}
+
+			// Step 13: Generate Prisma client
+			console.log(chalk.cyan("\n  🗄️  Generating Prisma client..."));
+			try {
+				await execa("pnpm", ["--filter", "db", "db:generate"], {
+					cwd: targetDir,
+					stdio: "inherit",
+				});
+				console.log(chalk.green(`    ✓ Prisma client generated`));
+			} catch (generateError) {
+				console.warn(
+					chalk.yellow(
+						`\n    ⚠️  Prisma generate failed: ${generateError.message}`,
+					),
+				);
+				console.warn(
+					chalk.yellow(`    Run 'pnpm --filter db db:generate' manually.`),
+				);
 			}
 
 			// Success message
@@ -405,28 +615,15 @@ ${githubPat ? `GH_TOKEN=${githubPat}` : "# GH_TOKEN=github_pat_YOUR_TOKEN_HERE"}
 			console.log(chalk.white(`📂 Project location: ${targetDir}\n`));
 			console.log(chalk.cyan("Next steps:"));
 			console.log(chalk.white(`  1. cd ${projectName}`));
-			console.log(
-				chalk.white(
-					`  2. If you skipped the token prompt, add GH_TOKEN to .env`,
-				),
-			);
-			console.log(chalk.white(`  3. npx dotenv-cli -e .env -- pnpm install`));
-			console.log(chalk.white(`  4. docker compose up -d`));
-			console.log(chalk.white(`  5. pnpm dev\n`));
+			console.log(chalk.white(`  2. docker compose up -d`));
+			console.log(chalk.white(`  3. pnpm --filter db db:push`));
+			console.log(chalk.white(`  4. pnpm dev\n`));
 
 			console.log(chalk.cyan("Important:"));
 			console.log(
 				chalk.white(
-					`  • .npmrc and .quark-link.json are auto-generated for GitHub Packages`,
+					`  • Update Quark core with: pnpm update @techstream/quark-core`,
 				),
-			);
-			console.log(
-				chalk.white(
-					`  • If you skipped the token prompt, add GH_TOKEN to .env before installing`,
-				),
-			);
-			console.log(
-				chalk.white(`  • Run 'npx dotenv-cli -e .env -- pnpm install'`),
 			);
 			console.log(
 				chalk.white(`  • Use 'quark-update' to upgrade Quark packages\n`),
@@ -478,7 +675,7 @@ program
 		if (options.check) {
 			console.log(chalk.yellow("Checking for updates..."));
 			console.log(
-				chalk.white("Run 'pnpm update @bobnoddle/quark-*' to apply updates."),
+				chalk.white("Run 'pnpm update @techstream/quark-*' to apply updates."),
 			);
 			return;
 		}
@@ -506,20 +703,7 @@ program
 
 			// Run pnpm update
 			console.log(chalk.cyan("\n📦 Updating Quark core infrastructure...\n"));
-			console.log(
-				chalk.yellow("💡 Tip: Make sure GH_TOKEN is set in environment\n"),
-			);
-			console.log(
-				chalk.gray(
-					"   macOS/Linux: source .env && pnpm update @bobnoddle/quark-core",
-				),
-			);
-			console.log(
-				chalk.gray(
-					"   Windows: npx dotenv-cli -e .env -- pnpm update @bobnoddle/quark-core\n",
-				),
-			);
-			await execa("pnpm", ["update", "@bobnoddle/quark-core"], {
+			await execa("pnpm", ["update", "@techstream/quark-core"], {
 				cwd: process.cwd(),
 				stdio: "inherit",
 			});
@@ -531,7 +715,7 @@ program
 					path.join(
 						process.cwd(),
 						"node_modules",
-						"@bobnoddle",
+						"@techstream",
 						"quark-core",
 						"package.json",
 					),
@@ -546,7 +730,7 @@ program
 				chalk.green("\n✅ Quark core infrastructure updated successfully!\n"),
 			);
 			console.log(
-				chalk.cyan("Note: This updates @bobnoddle/quark-core only.\n"),
+				chalk.cyan("Note: This updates @techstream/quark-core only.\n"),
 			);
 			console.log(chalk.cyan("Next steps:"));
 			console.log(chalk.white(`  1. pnpm install (if prompted)`));

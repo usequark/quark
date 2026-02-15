@@ -11,7 +11,7 @@ This document outlines the security features, best practices, and recommendation
 Quark includes several security features out of the box:
 
 #### 1. **Rate Limiting**
-- **Location**: [apps/web/src/middleware.js](../apps/web/src/middleware.js)
+- **Location**: [apps/web/src/proxy.js](../apps/web/src/proxy.js)
 - **Protection**: Prevents brute force attacks and API abuse
 - **Configuration**:
   - General API endpoints: 100 requests per 15 minutes
@@ -20,7 +20,7 @@ Quark includes several security features out of the box:
 - **Production Note**: Current implementation uses in-memory storage. For production deployments with multiple instances, migrate to Redis-based rate limiting.
 
 #### 2. **Security Headers**
-- **Location**: [apps/web/src/middleware.js](../apps/web/src/middleware.js), [apps/web/next.config.js](../apps/web/next.config.js)
+- **Location**: [apps/web/src/proxy.js](../apps/web/src/proxy.js), [apps/web/next.config.js](../apps/web/next.config.js)
 - **Headers Applied**:
   - `X-Frame-Options: SAMEORIGIN` - Prevent clickjacking
   - `X-Content-Type-Options: nosniff` - Prevent MIME sniffing
@@ -31,7 +31,7 @@ Quark includes several security features out of the box:
   - `X-DNS-Prefetch-Control: on` - Performance optimization
 
 #### 3. **CORS Configuration**
-- **Location**: [apps/web/src/middleware.js](../apps/web/src/middleware.js)
+- **Location**: [apps/web/src/proxy.js](../apps/web/src/proxy.js)
 - **Environment-based**: CORS origins are derived from `APP_URL`; use `ALLOWED_ORIGINS` to add extra origins
 - **Default**: `APP_URL` + `http://localhost:3000,http://localhost:3001` in development
 - **Credentials**: Enabled by default for authenticated requests
@@ -88,13 +88,6 @@ The following environment variables contain sensitive data and must be kept secu
 - **Storage**: Environment variables only
 - **Rotation**: Follow provider recommendations
 
-#### **GitHub PAT**
-- **Variables**: `GH_TOKEN`
-- **Purpose**: Access GitHub Packages for Quark core
-- **Scopes**: `read:packages` (minimum required)
-- **Storage**: `.env` file (gitignored)
-- **Expiration**: Set expiration, rotate before expiry
-
 ### Environment File Security
 
 ```bash
@@ -121,7 +114,6 @@ The following environment variables contain sensitive data and must be kept secu
 - [x] ✅ Auto-generated secrets on project creation
 - [x] ✅ Database passwords are unique per project
 - [x] ✅ NEXTAUTH_SECRET is random and secure
-- [ ] ⚠️ GitHub PAT has minimal required scopes
 - [ ] ⚠️ Local database is not exposed to internet
 
 ### Production Deployment
@@ -157,7 +149,7 @@ All high-priority security tasks have been completed! ✅
 
 2. **Request Size Limits** ✅
    - Status: ✅ Configured
-   - Location: [middleware.js](../apps/web/src/middleware.js), [next.config.js](../apps/web/next.config.js)
+   - Location: [proxy.js](../apps/web/src/proxy.js), [next.config.js](../apps/web/next.config.js)
    - Default API: 2MB (env: `API_BODY_SIZE_LIMIT`)
    - Upload: 10MB (env: `UPLOAD_SIZE_LIMIT`)
    - Response: 413 Payload Too Large when exceeded
@@ -167,7 +159,7 @@ All high-priority security tasks have been completed! ✅
    - Location: [packages/core/src/rate-limiter.js](../packages/core/src/rate-limiter.js)
    - In-memory: Default for single-instance deployments
    - Redis: Set `REDIS_URL` to enable (recommended for production)
-   - Alternative: Use [middleware.redis.js](../apps/web/src/middleware.redis.js)
+   - Alternative: Use [proxy.redis.js](../apps/web/src/proxy.redis.js)
 
 ### Medium Priority
 
@@ -221,14 +213,6 @@ All high-priority security tasks have been completed! ✅
    # 4. Restart all services
    ```
 
-4. **GitHub PAT Rotation**:
-   ```bash
-   # 1. Generate new PAT at https://github.com/settings/tokens
-   # 2. Update .env: GH_TOKEN=<new_token>
-   # 3. Revoke old token
-   # 4. Reinstall if needed: pnpm install
-   ```
-
 ### Reporting Security Issues
 
 If you discover a security vulnerability:
@@ -264,8 +248,8 @@ The middleware will automatically detect `REDIS_URL` and use Redis for rate limi
 # Install ioredis
 pnpm add ioredis
 
-# Replace middleware.js with middleware.redis.js
-mv apps/web/src/middleware.redis.js apps/web/src/middleware.js
+# Replace proxy.js with proxy.redis.js
+mv apps/web/src/proxy.redis.js apps/web/src/proxy.js
 ```
 
 **Testing Redis Rate Limiting**:

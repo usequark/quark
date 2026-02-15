@@ -1,9 +1,9 @@
 /**
- * Next.js Middleware
+ * Next.js Proxy
  * Handles rate limiting, CORS, and security headers
  */
 
-import { getAllowedOrigins } from "@bobnoddle/quark-config/app-url";
+import { getAllowedOrigins } from "@techstream/quark-config/app-url";
 import { NextResponse } from "next/server";
 
 // Simple in-memory rate limiter (use Redis for production)
@@ -98,9 +98,10 @@ const SECURITY_HEADERS = {
 	"Strict-Transport-Security": "max-age=63072000; includeSubDomains",
 	"X-Frame-Options": "SAMEORIGIN",
 	"X-Content-Type-Options": "nosniff",
-	"X-XSS-Protection": "1; mode=block",
 	"Referrer-Policy": "strict-origin-when-cross-origin",
 	"Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+	"Content-Security-Policy":
+		"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self';",
 };
 
 /**
@@ -111,7 +112,7 @@ const REQUEST_SIZE_LIMITS = {
 	upload: parseInt(process.env.UPLOAD_SIZE_LIMIT || "10485760", 10), // 10MB for uploads
 };
 
-export function middleware(request) {
+export function proxy(request) {
 	const { pathname } = request.nextUrl;
 	const origin = request.headers.get("origin") || "";
 
@@ -249,7 +250,7 @@ export function middleware(request) {
 	return response;
 }
 
-// Configure which routes the middleware runs on
+// Configure which routes the proxy runs on
 export const config = {
 	matcher: [
 		/*

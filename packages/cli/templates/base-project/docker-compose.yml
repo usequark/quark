@@ -2,7 +2,6 @@ services:
   # --- 1. PostgreSQL Database ---
   postgres:
     image: postgres:16-alpine
-    container_name: postgres
     restart: always
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
@@ -16,7 +15,6 @@ services:
   # --- 2. Redis Cache & Job Queue ---
   redis:
     image: redis:7-alpine
-    container_name: redis
     restart: always
     ports:
       - "${REDIS_PORT:-6379}:6379"
@@ -24,10 +22,9 @@ services:
     volumes:
       - redis_data:/data
 
-  # --- 3. Mailhog (Local SMTP Server) ---
-  mailhog:
-    image: mailhog/mailhog
-    container_name: mailhog
+  # --- 3. Mailpit (Local SMTP Server) ---
+  mailpit:
+    image: ghcr.io/axllent/mailpit
     restart: always
     ports:
       # SMTP port (used by application to send mail)

@@ -126,16 +126,16 @@ This document contains a comprehensive list of all missing features, issues, and
   - Solution: Add `"!**/coverage/**"` to Biome `files.includes` in `biome.json`
 
 - [x] **Add CORS configuration**
-  - Files: `apps/web/src/middleware.js`, `apps/web/next.config.js`
+  - Files: `apps/web/src/proxy.js`, `apps/web/next.config.js`
   - Configured in middleware with environment-based allowed origins
   - Handles preflight requests and CORS headers
 
 - [x] **Add helmet/security headers**
-  - Files: `apps/web/src/middleware.js`, `apps/web/next.config.js`
+  - Files: `apps/web/src/proxy.js`, `apps/web/next.config.js`
   - Configured: X-Frame-Options, X-Content-Type-Options, X-XSS-Protection, CSP, HSTS, Referrer-Policy
 
 - [x] **Implement rate limiting**
-  - Files: `apps/web/src/middleware.js`
+  - Files: `apps/web/src/proxy.js`
   - In-memory rate limiter (100 req/15min for API, 5 req/15min for auth endpoints)
   - NOTE: Use Redis-based rate limiting for production multi-instance deployments
 
@@ -146,7 +146,7 @@ This document contains a comprehensive list of all missing features, issues, and
   - Note: NextAuth already handles CSRF for /api/auth/* routes
 
 - [x] **Add request size limits**
-  - Files: `apps/web/src/middleware.js`, `apps/web/next.config.js`
+  - Files: `apps/web/src/proxy.js`, `apps/web/next.config.js`
   - Default API limit: 2MB (configurable via API_BODY_SIZE_LIMIT)
   - Upload limit: 10MB (configurable via UPLOAD_SIZE_LIMIT)
   - Returns 413 Payload Too Large when exceeded
@@ -232,7 +232,7 @@ This document contains a comprehensive list of all missing features, issues, and
 - [x] **Create test fixtures/factories**
   - Files: `packages/core/src/testing/factories.js`
   - `createTestUser()`, `createTestPost()`, `createTestSession()` with overridable defaults
-  - Import via `@bobnoddle/quark-core/testing` subpath — 62 tests for all testing utilities
+  - Import via `@techstream/quark-core/testing` subpath — 62 tests for all testing utilities
 
 - [ ] **Add API integration tests**
   - Test all CRUD endpoints with valid/invalid data

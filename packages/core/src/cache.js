@@ -45,7 +45,7 @@ export function createCache(redisClient, options = {}) {
 		},
 
 		/**
-		 * Set a cached value with optional TTL.
+		 * Set a cached value with optional TTL (atomic SET + EX).
 		 *
 		 * @param {string} key
 		 * @param {any} value — will be JSON.stringified
@@ -54,8 +54,7 @@ export function createCache(redisClient, options = {}) {
 		async set(key, value, ttl) {
 			const prefixedKey = `${prefix}${key}`;
 			const serialized = JSON.stringify(value);
-			await redisClient.set(prefixedKey, serialized);
-			await redisClient.expire(prefixedKey, ttl ?? defaultTTL);
+			await redisClient.set(prefixedKey, serialized, "EX", ttl ?? defaultTTL);
 		},
 
 		/**
@@ -68,15 +67,26 @@ export function createCache(redisClient, options = {}) {
 		},
 
 		/**
-		 * Delete all keys matching a pattern (e.g., invalidate all user cache).
+		 * Delete all keys matching a pattern using SCAN (non-blocking, production-safe).
 		 *
 		 * @param {string} pattern — e.g., "user:*"
 		 */
 		async invalidate(pattern) {
-			const keys = await redisClient.keys(`${prefix}${pattern}`);
-			if (keys.length > 0) {
-				await Promise.all(keys.map((k) => redisClient.del(k)));
-			}
+			const matchPattern = `${prefix}${pattern}`;
+			let cursor = "0";
+			do {
+				const [nextCursor, keys] = await redisClient.scan(
+					cursor,
+					"MATCH",
+					matchPattern,
+					"COUNT",
+					100,
+				);
+				cursor = nextCursor;
+				if (keys.length > 0) {
+					await Promise.all(keys.map((k) => redisClient.del(k)));
+				}
+			} while (cursor !== "0");
 		},
 
 		/**

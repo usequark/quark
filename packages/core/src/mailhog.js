@@ -29,13 +29,9 @@ function getMailhogUiUrl() {
  */
 export const getMailhogSmtpConfig = () => {
 	const url = getMailhogSmtpUrl();
-	const [, hostPort] = url.match(/smtp:\/\/([^:]+):(\d+)/) || [];
-	const [host, port] = hostPort
-		? hostPort.split(":")
-		: [
-				process.env.MAILHOG_HOST || "localhost",
-				process.env.MAILHOG_SMTP_PORT || "1025",
-			];
+	const match = url.match(/smtp:\/\/([^:]+):(\d+)/);
+	const host = match ? match[1] : process.env.MAILHOG_HOST || "localhost";
+	const port = match ? match[2] : process.env.MAILHOG_SMTP_PORT || "1025";
 
 	return {
 		host,

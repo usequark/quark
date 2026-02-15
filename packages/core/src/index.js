@@ -7,6 +7,8 @@ export * from "./authorization.js";
 export * from "./cache.js";
 // CSRF protection exports
 export * from "./csrf.js";
+// Email service exports
+export * from "./email.js";
 // Error Reporter exports
 export * from "./error-reporter.js";
 // Error exports
@@ -26,5 +28,5 @@ export * from "./redis.js";
 export * from "./utils.js";
 export * from "./validation.js";
 
-// Testing utilities (import from "@bobnoddle/quark-core/testing" in test files)
+// Testing utilities (import from "@techstream/quark-core/testing" in test files)
 // Not re-exported from main to avoid polluting production imports

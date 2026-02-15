@@ -27,7 +27,6 @@ const proc = spawn("node", [cliPath, projectName], {
 
 let _output = "";
 let started = false;
-let tokenPrompted = false;
 
 proc.stdout.on("data", (data) => {
 	const str = data.toString();
@@ -38,10 +37,6 @@ proc.stdout.on("data", (data) => {
 	if (!started && str.includes("Which optional packages")) {
 		started = true;
 		proc.stdin.write("\n"); // Accept defaults (ui and jobs selected)
-	}
-	if (!tokenPrompted && str.includes("GitHub PAT (read:packages")) {
-		tokenPrompted = true;
-		proc.stdin.write("\n"); // Skip token entry for test
 	}
 });
 

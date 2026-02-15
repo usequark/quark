@@ -18,8 +18,12 @@ function createMockRedis() {
 			return store.has(key) ? store.get(key) : null;
 		},
 
-		async set(key, value) {
+		async set(key, value, ...args) {
 			store.set(key, value);
+			// Support atomic SET key value EX seconds
+			if (args[0] === "EX" && args[1] != null) {
+				expires.set(key, args[1]);
+			}
 		},
 
 		async del(key) {
@@ -27,11 +31,15 @@ function createMockRedis() {
 			expires.delete(key);
 		},
 
-		async keys(pattern) {
+		async scan(cursor, ...args) {
+			// Simple mock: return all matching keys in one batch
+			const matchIdx = args.indexOf("MATCH");
+			const pattern = matchIdx !== -1 ? args[matchIdx + 1] : "*";
 			const regex = new RegExp(
 				`^${pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\\\*/g, ".*")}$`,
 			);
-			return [...store.keys()].filter((k) => regex.test(k));
+			const keys = [...store.keys()].filter((k) => regex.test(k));
+			return ["0", keys];
 		},
 
 		async expire(key, seconds) {

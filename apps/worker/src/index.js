@@ -4,15 +4,33 @@
  * Handles job execution, retries, and error tracking
  */
 
-import { createWorker } from "@bobnoddle/quark-core";
-import { JOB_NAMES, JOB_QUEUES } from "@bobnoddle/quark-jobs";
-import dotenv from "dotenv";
+import {
+	createEmailService,
+	createLogger,
+	createWorker,
+} from "@techstream/quark-core";
+import { prisma } from "@techstream/quark-db";
+import { JOB_NAMES, JOB_QUEUES } from "@techstream/quark-jobs";
 
-// Load environment variables
-dotenv.config();
+const logger = createLogger("worker");
 
 // Store workers for graceful shutdown
 const workers = [];
+
+// Initialize email service
+const emailService = createEmailService();
+
+/**
+ * Escape HTML entities to prevent XSS in email body
+ */
+function escapeHtml(str) {
+	return str
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#039;");
+}
 
 /**
  * Job handler for SEND_WELCOME_EMAIL
@@ -25,15 +43,34 @@ async function handleSendWelcomeEmail(bullJob) {
 		throw new Error("userId is required for SEND_WELCOME_EMAIL job");
 	}
 
-	// TODO: Implement actual email sending when email service is ready
-	console.log(
-		`[${JOB_NAMES.SEND_WELCOME_EMAIL}] Processing for user ${userId}`,
+	logger.info(`Sending welcome email for user ${userId}`, {
+		job: JOB_NAMES.SEND_WELCOME_EMAIL,
+		userId,
+	});
+
+	// Look up the user's email
+	const userRecord = await prisma.user.findUnique({
+		where: { id: userId },
+		select: { email: true, name: true },
+	});
+
+	if (!userRecord?.email) {
+		throw new Error(`User ${userId} not found or has no email`);
+	}
+
+	const displayName = userRecord.name || "there";
+	const safeDisplayName = escapeHtml(displayName);
+
+	await emailService.sendEmail(
+		userRecord.email,
+		"Welcome to Quark!",
+		`<h1>Welcome, ${safeDisplayName}!</h1>
+<p>Your account has been created successfully.</p>
+<p>You can now sign in and start using the application.</p>`,
+		`Welcome, ${displayName}!\n\nYour account has been created successfully.\nYou can now sign in and start using the application.`,
 	);
 
-	// Simulate email sending
-	await new Promise((resolve) => setTimeout(resolve, 1000));
-
-	return { success: true, userId };
+	return { success: true, userId, email: userRecord.email };
 }
 
 /**
@@ -49,7 +86,7 @@ const jobHandlers = {
  * Creates workers for all queues and registers handlers
  */
 async function startWorker() {
-	console.log("🚀 Starting Quark Worker Service...");
+	logger.info("Starting Quark Worker Service");
 
 	try {
 		// Create worker for email queue
@@ -72,24 +109,31 @@ async function startWorker() {
 		workers.push(emailQueueWorker);
 
 		emailQueueWorker.on("completed", (job, result) => {
-			console.log(`✅ Job ${job.id} (${job.name}) completed:`, result);
+			logger.info(`Job ${job.id} (${job.name}) completed`, { result });
 		});
 
 		emailQueueWorker.on("failed", (job, error) => {
-			console.error(
-				`❌ Job ${job.id} (${job.name}) failed after ${job.attemptsMade} attempts:`,
-				error.message,
+			logger.error(
+				`Job ${job.id} (${job.name}) failed after ${job.attemptsMade} attempts`,
+				{
+					error: error.message,
+					jobName: job.name,
+					attemptsMade: job.attemptsMade,
+				},
 			);
 		});
 
-		console.log(
-			`✓ Email queue worker started (concurrency: ${emailQueueWorker.opts.concurrency})`,
+		logger.info(
+			`Email queue worker started (concurrency: ${emailQueueWorker.opts.concurrency})`,
 		);
 
 		// Ready to process jobs
-		console.log("✓ Worker service ready");
+		logger.info("Worker service ready");
 	} catch (error) {
-		console.error("Failed to start worker service:", error);
+		logger.error("Failed to start worker service", {
+			error: error.message,
+			stack: error.stack,
+		});
 		process.exit(1);
 	}
 }
@@ -98,7 +142,7 @@ async function startWorker() {
  * Graceful shutdown handler
  */
 async function shutdown() {
-	console.log("\n🛑 Shutting down worker service...");
+	logger.info("Shutting down worker service");
 
 	try {
 		// Close all workers
@@ -106,10 +150,16 @@ async function shutdown() {
 			await worker.close();
 		}
 
-		console.log("✓ All workers closed");
+		// Disconnect Prisma client
+		await prisma.$disconnect();
+
+		logger.info("All workers closed");
 		process.exit(0);
 	} catch (error) {
-		console.error("Error during shutdown:", error);
+		logger.error("Error during shutdown", {
+			error: error.message,
+			stack: error.stack,
+		});
 		process.exit(1);
 	}
 }

@@ -1,5 +1,9 @@
-import { UnauthorizedError, validateBody } from "@bobnoddle/quark-core";
-import { post, postUpdateSchema } from "@bobnoddle/quark-db";
+import {
+	UnauthorizedError,
+	validateBody,
+	withCsrfProtection,
+} from "@techstream/quark-core";
+import { post, postUpdateSchema } from "@techstream/quark-db";
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth-middleware";
 import { handleError } from "../../error-handler";
@@ -17,7 +21,7 @@ export async function GET(_request, { params }) {
 	}
 }
 
-export async function PATCH(request, { params }) {
+export const PATCH = withCsrfProtection(async (request, { params }) => {
 	try {
 		const session = await requireAuth();
 		const { id } = await params;
@@ -37,9 +41,9 @@ export async function PATCH(request, { params }) {
 	} catch (error) {
 		return handleError(error);
 	}
-}
+});
 
-export async function DELETE(_request, { params }) {
+export const DELETE = withCsrfProtection(async (_request, { params }) => {
 	try {
 		const session = await requireAuth();
 		const { id } = await params;
@@ -58,4 +62,4 @@ export async function DELETE(_request, { params }) {
 	} catch (error) {
 		return handleError(error);
 	}
-}
+});

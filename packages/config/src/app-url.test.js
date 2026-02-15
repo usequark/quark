@@ -8,7 +8,7 @@ describe("app-url", () => {
 	const envKeys = [
 		"APP_URL",
 		"NEXTAUTH_URL",
-		"WEB_PORT",
+		"PORT",
 		"ALLOWED_ORIGINS",
 		"NODE_ENV",
 	];
@@ -56,9 +56,9 @@ describe("app-url", () => {
 			assert.equal(getAppUrl(), "https://primary.com");
 		});
 
-		it("falls back to localhost with WEB_PORT", () => {
+		it("falls back to localhost with PORT", () => {
 			clearEnvKeys();
-			process.env.WEB_PORT = "4000";
+			process.env.PORT = "4000";
 			assert.equal(getAppUrl(), "http://localhost:4000");
 		});
 

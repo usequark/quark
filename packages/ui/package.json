@@ -1,5 +1,5 @@
 {
-	"name": "@bobnoddle/quark-ui",
+	"name": "@techstream/quark-ui",
 	"version": "1.0.0",
 	"type": "module",
 	"description": "",
@@ -13,13 +13,10 @@
 	"license": "ISC",
 	"packageManager": "pnpm@10.12.1",
 	"devDependencies": {
-		"@bobnoddle/quark-config": "workspace:*",
+		"@techstream/quark-config": "workspace:*",
 		"@types/react": "^19.2.13",
 		"@types/react-dom": "^19.2.3",
 		"react": "19.2.0",
 		"react-dom": "19.2.0"
-	},
-	"publishConfig": {
-		"registry": "https://npm.pkg.github.com"
 	}
 }

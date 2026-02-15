@@ -1,13 +1,38 @@
 import { prisma } from "./client.js";
 
+/**
+ * Safe select for user queries — excludes sensitive fields (password).
+ * Use this on any query whose result is returned to the client.
+ */
+const USER_SAFE_SELECT = {
+	id: true,
+	email: true,
+	emailVerified: true,
+	name: true,
+	image: true,
+	role: true,
+	createdAt: true,
+	updatedAt: true,
+};
+
 // User queries
 export const user = {
 	findById: (id) => {
 		return prisma.user.findUnique({
 			where: { id },
-			include: { posts: true },
+			select: USER_SAFE_SELECT,
 		});
 	},
+	findByIdWithPosts: (id) => {
+		return prisma.user.findUnique({
+			where: { id },
+			select: { ...USER_SAFE_SELECT, posts: true },
+		});
+	},
+	/**
+	 * findByEmail returns ALL fields including password.
+	 * Only use for internal auth — never expose the result directly to clients.
+	 */
 	findByEmail: (email) => {
 		return prisma.user.findUnique({
 			where: { email },
@@ -18,19 +43,21 @@ export const user = {
 		return prisma.user.findMany({
 			skip,
 			take,
-			include: { posts: true },
+			select: USER_SAFE_SELECT,
 			orderBy: { createdAt: "desc" },
 		});
 	},
 	create: (data) => {
 		return prisma.user.create({
 			data,
+			select: USER_SAFE_SELECT,
 		});
 	},
 	update: (id, data) => {
 		return prisma.user.update({
 			where: { id },
 			data,
+			select: USER_SAFE_SELECT,
 		});
 	},
 	delete: (id) => {
@@ -40,12 +67,17 @@ export const user = {
 	},
 };
 
+/**
+ * Safe author include — returns author without sensitive fields.
+ */
+const AUTHOR_SAFE_INCLUDE = { author: { select: USER_SAFE_SELECT } };
+
 // Post queries
 export const post = {
 	findById: (id) => {
 		return prisma.post.findUnique({
 			where: { id },
-			include: { author: true },
+			include: AUTHOR_SAFE_INCLUDE,
 		});
 	},
 	findAll: (options = {}) => {
@@ -53,7 +85,7 @@ export const post = {
 		return prisma.post.findMany({
 			skip,
 			take,
-			include: { author: true },
+			include: AUTHOR_SAFE_INCLUDE,
 			orderBy: { createdAt: "desc" },
 		});
 	},
@@ -63,7 +95,7 @@ export const post = {
 			where: { published: true },
 			skip,
 			take,
-			include: { author: true },
+			include: AUTHOR_SAFE_INCLUDE,
 			orderBy: { createdAt: "desc" },
 		});
 	},
@@ -73,21 +105,21 @@ export const post = {
 			where: { authorId },
 			skip,
 			take,
-			include: { author: true },
+			include: AUTHOR_SAFE_INCLUDE,
 			orderBy: { createdAt: "desc" },
 		});
 	},
 	create: (data) => {
 		return prisma.post.create({
 			data,
-			include: { author: true },
+			include: AUTHOR_SAFE_INCLUDE,
 		});
 	},
 	update: (id, data) => {
 		return prisma.post.update({
 			where: { id },
 			data,
-			include: { author: true },
+			include: AUTHOR_SAFE_INCLUDE,
 		});
 	},
 	delete: (id) => {
@@ -97,90 +129,11 @@ export const post = {
 	},
 };
 
-// Job queries
-export const job = {
-	findById: (id) => {
-		return prisma.job.findUnique({
-			where: { id },
-		});
-	},
-	findAll: (options = {}) => {
-		const { skip = 0, take = 20 } = options;
-		return prisma.job.findMany({
-			skip,
-			take,
-			orderBy: { createdAt: "desc" },
-		});
-	},
-	findPending: () => {
-		return prisma.job.findMany({
-			where: {
-				status: "PENDING",
-				runAt: { lte: new Date() },
-			},
-			orderBy: { runAt: "asc" },
-		});
-	},
-	findByQueue: (queue, options = {}) => {
-		const { skip = 0, take = 20 } = options;
-		return prisma.job.findMany({
-			where: { queue },
-			skip,
-			take,
-			orderBy: { createdAt: "desc" },
-		});
-	},
-	create: (data) => {
-		return prisma.job.create({
-			data: {
-				queue: data.queue,
-				name: data.name,
-				data: data.data || {},
-				status: "PENDING",
-				...data,
-			},
-		});
-	},
-	update: (id, data) => {
-		return prisma.job.update({
-			where: { id },
-			data,
-		});
-	},
-	delete: (id) => {
-		return prisma.job.delete({
-			where: { id },
-		});
-	},
-	markInProgress: (id) => {
-		return prisma.job.update({
-			where: { id },
-			data: {
-				status: "IN_PROGRESS",
-				startedAt: new Date(),
-				attempts: { increment: 1 },
-			},
-		});
-	},
-	markCompleted: (id) => {
-		return prisma.job.update({
-			where: { id },
-			data: {
-				status: "COMPLETED",
-				completedAt: new Date(),
-			},
-		});
-	},
-	markFailed: (id, error) => {
-		return prisma.job.update({
-			where: { id },
-			data: {
-				status: "FAILED",
-				error,
-			},
-		});
-	},
-};
+// Note: Job tracking is handled by BullMQ's built-in Redis persistence.
+// The Prisma Job model is retained in the schema for optional audit/reporting
+// but these query helpers have been removed to avoid confusion with BullMQ.
+// If you need database-backed job auditing, re-add job queries here and wire
+// the worker to write status updates to the Job table.
 
 // Account queries (NextAuth)
 export const account = {
@@ -216,7 +169,7 @@ export const session = {
 	findByToken: (sessionToken) => {
 		return prisma.session.findUnique({
 			where: { sessionToken },
-			include: { user: true },
+			include: { user: { select: USER_SAFE_SELECT } },
 		});
 	},
 	findByUserId: (userId) => {
@@ -227,7 +180,7 @@ export const session = {
 	create: (data) => {
 		return prisma.session.create({
 			data,
-			include: { user: true },
+			include: { user: { select: USER_SAFE_SELECT } },
 		});
 	},
 	update: (sessionToken, data) => {

@@ -2,8 +2,8 @@ import { resolve } from "node:path";
 import { config } from "dotenv";
 import { defineConfig } from "prisma/config";
 
-// Load .env from monorepo root
-config({ path: resolve(__dirname, "../../.env") });
+// Load .env from monorepo root (needed for standalone commands like db:push, db:seed)
+config({ path: resolve(__dirname, "../../.env"), quiet: true });
 
 // Construct DATABASE_URL from individual env vars - single source of truth
 const user = process.env.POSTGRES_USER || "quark_user";

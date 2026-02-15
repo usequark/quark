@@ -1,12 +1,12 @@
-import { validateBody } from "@bobnoddle/quark-core";
-import { user, userCreateSchema } from "@bobnoddle/quark-db";
+import { validateBody, withCsrfProtection } from "@techstream/quark-core";
+import { user, userCreateSchema } from "@techstream/quark-db";
 import { NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth-middleware";
+import { requireRole } from "@/lib/auth-middleware";
 import { handleError } from "../error-handler";
 
 export async function GET(_request) {
 	try {
-		await requireAuth();
+		await requireRole("admin");
 		const users = await user.findAll();
 		return NextResponse.json(users);
 	} catch (error) {
@@ -14,9 +14,9 @@ export async function GET(_request) {
 	}
 }
 
-export async function POST(request) {
+export const POST = withCsrfProtection(async (request) => {
 	try {
-		await requireAuth();
+		await requireRole("admin");
 		const data = await validateBody(request, userCreateSchema);
 
 		// Check if email already exists
@@ -33,4 +33,4 @@ export async function POST(request) {
 	} catch (error) {
 		return handleError(error);
 	}
-}
+});

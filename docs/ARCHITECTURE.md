@@ -19,10 +19,10 @@ Quark takes a hybrid approach:
 ```
 ┌─────────────────────────────────────────────────────┐
 │  Your Application (@yourapp/web, @yourapp/worker)   │
-│  ├─ imports @bobnoddle/quark-core (from registry)   │
+│  ├─ imports @techstream/quark-core (from registry)   │
 │  └─ imports @yourapp/db, @yourapp/jobs (local)      │
 ├─────────────────────────────────────────────────────┤
-│  @bobnoddle/quark-core (GitHub Packages)            │
+│  @techstream/quark-core (npmjs.org)                  │
 │  - createAuthConfig()                               │
 │  - createQueue(), createWorker()                    │
 │  - AppError, ValidationError                        │
@@ -119,8 +119,8 @@ Quark takes a hybrid approach:
 
 **In Core (Registry):**
 ```javascript
-// @bobnoddle/quark-core - Provides defaults
-import { createAuthConfig } from "@bobnoddle/quark-core";
+// @techstream/quark-core - Provides defaults
+import { createAuthConfig } from "@techstream/quark-core";
 
 export const createAuthConfig = (options = {}) => {
   return {
@@ -135,7 +135,7 @@ export const createAuthConfig = (options = {}) => {
 **In Your App (Local):**
 ```javascript
 // apps/web/lib/auth.js - Your customizations
-import { createAuthConfig } from "@bobnoddle/quark-core";
+import { createAuthConfig } from "@techstream/quark-core";
 import GitHubProvider from "next-auth/providers/github";
 
 export const authConfig = createAuthConfig({
@@ -167,9 +167,9 @@ export const authConfig = createAuthConfig({
 **Before (Old Architecture - Circular Dependency):**
 ```javascript
 // ❌ REMOVED: Core had database client
-// @bobnoddle/quark-core/src/db/index.js
+// @techstream/quark-core/src/db/index.js
 export const createDbClient = () => {
-  // Problem: Core depended on @bobnoddle/quark-db
+  // Problem: Core depended on @techstream/quark-db
   // But db depended on core → circular!
 };
 ```
@@ -177,7 +177,7 @@ export const createDbClient = () => {
 **Now (Core-Only Registry - Clean):**
 ```javascript
 // ✅ Core has NO database code
-// @bobnoddle/quark-core exports: auth, queues, validation, errors ONLY
+// @techstream/quark-core exports: auth, queues, validation, errors ONLY
 ```
 
 **In Your Local DB Package:**
@@ -203,7 +203,7 @@ export const prisma = new PrismaClient({
 
 **In Core (Registry):**
 ```javascript
-// @bobnoddle/quark-core/src/queue/index.js
+// @techstream/quark-core/src/queue/index.js
 export const createQueue = (name, options = {}) => {
   return new Queue(name, {
     connection: {
@@ -233,7 +233,7 @@ export const JOB_NAMES = {
 **In Your Worker App:**
 ```javascript
 // apps/worker/src/index.js
-import { createQueue, createWorker } from "@bobnoddle/quark-core";
+import { createQueue, createWorker } from "@techstream/quark-core";
 import { JOB_QUEUES, JOB_NAMES } from "@yourapp/jobs";
 
 const videoQueue = createQueue(JOB_QUEUES.VIDEO_PROCESSING, {
@@ -264,7 +264,7 @@ const worker = createWorker(
 
 **In Core:**
 ```javascript
-// @bobnoddle/quark-core/src/db/index.js
+// @techstream/quark-core/src/db/index.js
 export const createDbClient = (options = {}) => {
   const globalForPrisma = globalThis;
   const prisma = globalForPrisma.prisma || new PrismaClient(options);
@@ -280,7 +280,7 @@ export const createDbClient = (options = {}) => {
 **In Your App:**
 ```javascript
 // @quark/web/lib/db.js
-import { createDbClient } from "@bobnoddle/quark-core";
+import { createDbClient } from "@techstream/quark-core";
 
 // Use with defaults - zero configuration!
 const db = createDbClient();
@@ -317,7 +317,7 @@ Use core for some things, replace others:
 
 ```javascript
 // Keep core auth
-import { createAuthConfig } from "@bobnoddle/quark-core";
+import { createAuthConfig } from "@techstream/quark-core";
 
 // Use custom queue setup
 import Queue from "bullmq";
@@ -331,7 +331,7 @@ const customQueue = new Queue("special", { custom: "options" });
 Add behavior without changing core:
 
 ```javascript
-import { createDbClient } from "@bobnoddle/quark-core";
+import { createDbClient } from "@techstream/quark-core";
 
 const db = createDbClient({
   middleware: [
@@ -351,7 +351,7 @@ Create application-specific wrappers around core:
 
 ```javascript
 // lib/api-utils.js
-import { requireAuth, UnauthorizedError } from "@bobnoddle/quark-core";
+import { requireAuth, UnauthorizedError } from "@techstream/quark-core";
 
 export const withAuth = (handler) => {
   return async (req, res) => {
@@ -400,7 +400,7 @@ class AppApiError extends AppError {
 pnpm create quark my-app
 
 # 2. Inherit core automatically
-import { createDbClient } from "@bobnoddle/quark-core";
+import { createDbClient } from "@techstream/quark-core";
 
 # 3. Start using core utilities
 const db = createDbClient(); // Works immediately
@@ -415,7 +415,7 @@ export const config = { providers: [...], ... };
 
 // After: use core, eject what you need
 // app/lib/auth.js
-import { createAuthConfig } from "@bobnoddle/quark-core";
+import { createAuthConfig } from "@techstream/quark-core";
 
 export const config = createAuthConfig({
   providers: [...],
@@ -443,7 +443,7 @@ export const config = createAuthConfig({
 
 ```javascript
 // ✅ Good: Extend core
-import { createAuthConfig } from "@bobnoddle/quark-core";
+import { createAuthConfig } from "@techstream/quark-core";
 
 export const authConfig = createAuthConfig({
   providers: [CustomProvider()],
@@ -462,7 +462,7 @@ Core should work standalone:
 
 ```javascript
 // ✅ Good: Core works in any app
-import { createQueue } from "@bobnoddle/quark-core";
+import { createQueue } from "@techstream/quark-core";
 const q = createQueue("jobs");
 
 // ❌ Bad: Core depends on app setup
@@ -477,12 +477,12 @@ import { db } from "./db";         // App-specific
 /**
  * Authentication config for MyApp
  * 
- * Extends @bobnoddle/quark-core with:
+ * Extends @techstream/quark-core with:
  * - GitHub OAuth provider
  * - Custom role field in JWT
  * - Email domain validation
  */
-import { createAuthConfig } from "@bobnoddle/quark-core";
+import { createAuthConfig } from "@techstream/quark-core";
 
 export const authConfig = createAuthConfig({
   // Our customizations here...
