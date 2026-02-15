@@ -1,5 +1,15 @@
 # @techstream/quark-create-app
 
+## 1.5.1
+
+### Patch Changes
+
+- [`39a99c2`](https://github.com/Bobnoddle/quark/commit/39a99c2c2723cc533126531ced2d610ea10353a8) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - chore: normalize package scopes to @techstream in CLI templates
+
+  - Rename `@quark/web` → `@techstream/quark-web` in scaffolded projects
+  - Rename `@quark/worker` → `@techstream/quark-worker` in scaffolded projects
+  - Normalize template versions to 1.0.0
+
 ## 1.5.0
 
 ### Minor Changes
