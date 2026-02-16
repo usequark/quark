@@ -56,6 +56,20 @@ function createQueueWorker(queueName) {
 		);
 	});
 
+	queueWorker.on("stalled", (jobId) => {
+		logger.warn(`Job ${jobId} in queue "${queueName}" has stalled`, {
+			queueName,
+			jobId,
+		});
+	});
+
+	queueWorker.on("error", (error) => {
+		logger.error(`Worker error in queue "${queueName}"`, {
+			error: error.message,
+			queueName,
+		});
+	});
+
 	logger.info(
 		`Queue "${queueName}" worker started (concurrency: ${queueWorker.opts.concurrency})`,
 	);

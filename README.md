@@ -1,6 +1,22 @@
-# Quark
+<p align="center">
+  <img src=".github/assets/quark_no_text.png" alt="Quark" width="200" />
+</p>
 
-> A full-stack JavaScript framework with centralized infrastructure updates and local business logic control.
+<h1 align="center">Quark</h1>
+
+<p align="center">
+  A full-stack JavaScript framework with centralized infrastructure updates and local business logic control.
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/@techstream/quark-core"><img src="https://img.shields.io/npm/v/@techstream/quark-core?label=quark-core" alt="npm quark-core" /></a>
+  <a href="https://www.npmjs.com/package/@techstream/quark-create-app"><img src="https://img.shields.io/npm/v/@techstream/quark-create-app?label=create-app" alt="npm create-app" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-ISC-blue.svg" alt="License" /></a>
+  <a href="https://nodejs.org"><img src="https://img.shields.io/badge/node-24-brightgreen" alt="Node.js" /></a>
+  <a href="https://pnpm.io"><img src="https://img.shields.io/badge/pnpm-10-F69220?logo=pnpm&logoColor=white" alt="pnpm" /></a>
+</p>
+
+---
 
 ## Overview
 

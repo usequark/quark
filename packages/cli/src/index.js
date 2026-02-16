@@ -264,6 +264,54 @@ program
 		const targetDir = validateProjectName(projectName);
 		const scope = projectName.toLowerCase().replace(/[^a-z0-9-]/g, "");
 
+		// Clean up orphaned Docker volumes from a previous project with the same name.
+		// Docker Compose names volumes as "<project>_postgres_data", "<project>_redis_data".
+		// These persist even if the project directory is manually deleted, causing
+		// authentication failures when the new project generates different credentials.
+		// We also need to stop any running containers that reference these volumes.
+		try {
+			const volumePrefix = `${projectName}_`;
+			const { stdout } = await execa("docker", [
+				"volume",
+				"ls",
+				"--filter",
+				`name=${volumePrefix}`,
+				"--format",
+				"{{.Name}}",
+			]);
+			const orphanedVolumes = stdout
+				.split("\n")
+				.filter((v) => v.startsWith(volumePrefix));
+			if (orphanedVolumes.length > 0) {
+				// Stop and remove any containers using these volumes first
+				const { stdout: containerOut } = await execa("docker", [
+					"ps",
+					"-a",
+					"--filter",
+					`name=${projectName}`,
+					"--format",
+					"{{.ID}}",
+				]);
+				const containers = containerOut.split("\n").filter(Boolean);
+				if (containers.length > 0) {
+					await execa("docker", ["rm", "-f", ...containers]);
+				}
+				// Remove the Docker network if it exists
+				try {
+					await execa("docker", ["network", "rm", `${projectName}_default`]);
+				} catch {
+					// Network may not exist — fine
+				}
+				// Now remove the orphaned volumes
+				for (const vol of orphanedVolumes) {
+					await execa("docker", ["volume", "rm", "-f", vol]);
+				}
+				console.log(chalk.green("  ✓ Cleaned up orphaned Docker volumes"));
+			}
+		} catch {
+			// Docker not available — fine
+		}
+
 		// Check if directory already exists
 		if (await fs.pathExists(targetDir)) {
 			const { overwrite } = await prompts({
@@ -278,13 +326,13 @@ program
 				process.exit(1);
 			}
 
-			// Clean up Docker resources (volumes hold old credentials)
+			// Stop any running Docker containers for this project
 			try {
-				await execa("docker", ["compose", "down", "-v"], {
+				await execa("docker", ["compose", "down"], {
 					cwd: targetDir,
 					stdio: "ignore",
 				});
-				console.log(chalk.green("  ✓ Cleaned up Docker volumes"));
+				console.log(chalk.green("  ✓ Stopped existing Docker containers"));
 			} catch {
 				// No docker-compose file or Docker not running — fine
 			}
