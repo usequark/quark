@@ -5,7 +5,7 @@
 <h1 align="center">Quark</h1>
 
 <p align="center">
-  A full-stack JavaScript framework with centralized infrastructure updates and local business logic control.
+  A full-stack JavaScript framework with centralized infrastructure updates. 
 </p>
 
 <p align="center">
