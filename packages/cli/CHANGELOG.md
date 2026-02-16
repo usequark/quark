@@ -1,5 +1,22 @@
 # @techstream/quark-create-app
 
+## 1.5.3
+
+### Patch Changes
+
+- [`5069069`](https://github.com/Bobnoddle/quark/commit/50690698d4fe1daeaa7f5b49bfb20a97074a2744) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add query builder utilities with search/sort support and introduce request/response logging middleware. Improve CLI docs and add optional build verification test, plus checklist updates.
+
+- [`f142e9c`](https://github.com/Bobnoddle/quark/commit/f142e9c57dcac93bfe90bae757ed4126f989a888) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - fix: complete file upload template, fix migration drift, and clean up orphaned Docker volumes
+
+  - **Docker volume cleanup:** Automatically remove orphaned Docker volumes from previous projects with the same name, preventing `P1000: Authentication failed` errors when re-scaffolding
+  - Add missing `File` model to template `schema.prisma` with `User` relation
+  - Add `file` query builder to template `queries.js` (create, findById, findByUploader, findOrphaned, delete, etc.)
+  - Add `fileUploadSchema` Zod schema to template `schemas.js`
+  - Add `File` table, indexes, and foreign key to template initial migration SQL
+  - Fix migration SQL drift: add `Account.createdAt`/`updatedAt` columns, `Session.expires` index, `VerificationToken.expires` index, and `Job(status, runAt)` compound index
+  - Register `quark-update` as a bin alias so `npx quark-update` works
+  - Fix post-scaffolding output to show `npx @techstream/quark-create-app update`
+
 ## 1.5.2
 
 ### Patch Changes

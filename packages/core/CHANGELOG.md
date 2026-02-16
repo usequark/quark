@@ -1,5 +1,11 @@
 # @techstream/quark-core
 
+## 2.1.0
+
+### Minor Changes
+
+- [`5069069`](https://github.com/Bobnoddle/quark/commit/50690698d4fe1daeaa7f5b49bfb20a97074a2744) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add query builder utilities with search/sort support and introduce request/response logging middleware. Improve CLI docs and add optional build verification test, plus checklist updates.
+
 ## 2.0.0
 
 ### Major Changes
