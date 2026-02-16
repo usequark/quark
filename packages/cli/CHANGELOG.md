@@ -1,5 +1,14 @@
 # @techstream/quark-create-app
 
+## 1.5.2
+
+### Patch Changes
+
+- [`399e7da`](https://github.com/Bobnoddle/quark/commit/399e7da083f26cb1d0196a467e78500129eba4ce) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - fix: update CLI output and add `quark-update` bin alias
+
+  - Register `quark-update` as a bin alias so `npx quark-update` works
+  - Fix post-scaffolding output to show `npx @techstream/quark-create-app update`
+
 ## 1.5.1
 
 ### Patch Changes
