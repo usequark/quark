@@ -647,7 +647,7 @@ STORAGE_PROVIDER=local
 				),
 			);
 			console.log(
-				chalk.white(`  • Use 'quark-update' to upgrade Quark packages\n`),
+				chalk.white(`  • Or run: npx @techstream/quark-create-app update\n`),
 			);
 
 			console.log(chalk.cyan("Learn more:"));

@@ -4,7 +4,8 @@
 	"type": "module",
 	"bin": {
 		"quark-create-app": "src/index.js",
-		"create-quark-app": "src/index.js"
+		"create-quark-app": "src/index.js",
+		"quark-update": "src/index.js"
 	},
 	"files": [
 		"src",
