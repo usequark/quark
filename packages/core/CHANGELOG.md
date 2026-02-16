@@ -1,5 +1,26 @@
 # @techstream/quark-core
 
+## 2.0.0
+
+### Major Changes
+
+- [`0817b68`](https://github.com/Bobnoddle/quark/commit/0817b6841f29e5b3144a9475a592b7fc93b6c4e1) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - refactor: replace Mailhog-specific configuration with generic mail service support
+
+  **BREAKING CHANGES:**
+
+  - Renamed `getMailhogSmtpConfig()` to `getMailSmtpConfig()`
+  - Renamed `getMailhogSmtpUrl()` to `getMailSmtpUrl()`
+  - Renamed `getMailhogUiUrl()` to `getMailUiUrl()`
+  - Renamed environment variables:
+    - `MAILHOG_SMTP_URL` → `MAIL_SMTP_URL`
+    - `MAILHOG_HOST` → `MAIL_HOST`
+    - `MAILHOG_SMTP_PORT` → `MAIL_SMTP_PORT`
+    - `MAILHOG_UI_PORT` → `MAIL_UI_PORT`
+  - Deleted `packages/core/src/mailhog.js` module
+  - Added `packages/core/src/mail.js` with provider-agnostic API
+
+  This change makes the mail service configuration generic and compatible with multiple SMTP providers (Mailpit, Mailhog, etc.) instead of being Mailhog-specific.
+
 ## 1.5.0
 
 ### Minor Changes
