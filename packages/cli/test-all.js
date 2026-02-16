@@ -26,6 +26,13 @@ const tests = [
 		description: "Simulate creating a project and verify structure",
 	},
 	{
+		name: "Build Test - Scaffold, Install, Build",
+		command: "node test-build.js",
+		description: "Runs full scaffold -> install -> build verification",
+		skip: !process.env.QUARK_CLI_BUILD_TEST,
+		skipReason: "Set QUARK_CLI_BUILD_TEST=1 to run (requires network and pnpm)",
+	},
+	{
 		name: "Integration Test - Real CLI",
 		command: "node test-integration.js",
 		description:

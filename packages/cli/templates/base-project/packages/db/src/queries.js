@@ -81,12 +81,13 @@ export const post = {
 		});
 	},
 	findAll: (options = {}) => {
-		const { skip = 0, take = 10 } = options;
+		const { skip = 0, take = 10, where, orderBy } = options;
 		return prisma.post.findMany({
+			where,
 			skip,
 			take,
 			include: AUTHOR_SAFE_INCLUDE,
-			orderBy: { createdAt: "desc" },
+			orderBy: orderBy || { createdAt: "desc" },
 		});
 	},
 	findPublished: (options = {}) => {

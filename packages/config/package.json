@@ -8,6 +8,8 @@
 	"exports": {
 		".": "./src/index.js",
 		"./app-url": "./src/app-url.js",
+		"./environment": "./src/environment.js",
+		"./load-config": "./src/load-config.js",
 		"./validate-env": "./src/validate-env.js"
 	},
 	"scripts": {

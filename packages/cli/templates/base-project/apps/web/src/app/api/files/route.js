@@ -9,6 +9,7 @@ import {
 	generateStorageKey,
 	parseMultipart,
 	validateFile,
+	withCsrfProtection,
 } from "@techstream/quark-core";
 import { file } from "@techstream/quark-db";
 import { NextResponse } from "next/server";
@@ -26,7 +27,7 @@ const paginationSchema = z.object({
  * Upload one or more files via multipart/form-data.
  * Requires authentication.
  */
-export async function POST(request) {
+export const POST = withCsrfProtection(async (request) => {
 	try {
 		const session = await requireAuth();
 
@@ -94,7 +95,7 @@ export async function POST(request) {
 	} catch (error) {
 		return handleError(error);
 	}
-}
+});
 
 /**
  * GET /api/files

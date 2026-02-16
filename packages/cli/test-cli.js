@@ -14,6 +14,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const testDir = path.join(__dirname, "../../tmp-test-project");
 const projectName = "my-test-quark-app";
 const _projectPath = path.join(testDir, projectName);
+const cliPackageJson = await fs.readJSON(path.join(__dirname, "package.json"));
 
 console.log("🧪 Testing @techstream/quark-create-app CLI\n");
 
@@ -137,7 +138,7 @@ try {
 			path.join(__dirname, "src/index.js"),
 			"--version",
 		]);
-		if (stdout.includes("1.0.0")) {
+		if (stdout.includes(cliPackageJson.version)) {
 			console.log("  ✓ CLI version command works");
 			passed++;
 		}

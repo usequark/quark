@@ -155,6 +155,74 @@ test("Storage - createLocalStorage provider is 'local'", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Path traversal protection
+// ---------------------------------------------------------------------------
+
+test("Storage - put rejects path traversal via ../", async () => {
+	const dir = await mkdtemp(join(tmpdir(), "storage-"));
+	try {
+		const storage = createLocalStorage({ directory: dir });
+		await assert.rejects(
+			() => storage.put("../../etc/passwd", "evil"),
+			/Path traversal detected/,
+		);
+	} finally {
+		await rm(dir, { recursive: true });
+	}
+});
+
+test("Storage - get rejects path traversal via ../", async () => {
+	const dir = await mkdtemp(join(tmpdir(), "storage-"));
+	try {
+		const storage = createLocalStorage({ directory: dir });
+		await assert.rejects(
+			() => storage.get("../../../etc/shadow"),
+			/Path traversal detected/,
+		);
+	} finally {
+		await rm(dir, { recursive: true });
+	}
+});
+
+test("Storage - delete rejects path traversal via ../", async () => {
+	const dir = await mkdtemp(join(tmpdir(), "storage-"));
+	try {
+		const storage = createLocalStorage({ directory: dir });
+		await assert.rejects(
+			() => storage.delete("../../etc/hosts"),
+			/Path traversal detected/,
+		);
+	} finally {
+		await rm(dir, { recursive: true });
+	}
+});
+
+test("Storage - exists rejects path traversal via ../", async () => {
+	const dir = await mkdtemp(join(tmpdir(), "storage-"));
+	try {
+		const storage = createLocalStorage({ directory: dir });
+		await assert.rejects(
+			() => storage.exists("../../etc/passwd"),
+			/Path traversal detected/,
+		);
+	} finally {
+		await rm(dir, { recursive: true });
+	}
+});
+
+test("Storage - allows nested subdirectories within baseDir", async () => {
+	const dir = await mkdtemp(join(tmpdir(), "storage-"));
+	try {
+		const storage = createLocalStorage({ directory: dir });
+		await storage.put("uploads/2026/02/file.txt", "safe");
+		const result = await storage.get("uploads/2026/02/file.txt");
+		assert.strictEqual(result.body.toString(), "safe");
+	} finally {
+		await rm(dir, { recursive: true });
+	}
+});
+
+// ---------------------------------------------------------------------------
 // createStorage factory
 // ---------------------------------------------------------------------------
 

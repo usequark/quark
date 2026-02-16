@@ -13,8 +13,24 @@
 
 import { createWriteStream } from "node:fs";
 import { mkdir, readFile, stat, unlink } from "node:fs/promises";
-import { dirname, join, resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 import { pipeline } from "node:stream/promises";
+
+/**
+ * Resolves a storage key against the base directory and guards against
+ * path-traversal attacks.  Throws if the resolved path escapes baseDir.
+ *
+ * @param {string} baseDir - Absolute base directory
+ * @param {string} key     - Caller-supplied storage key
+ * @returns {string} Absolute, validated file path
+ */
+function safePath(baseDir, key) {
+	const resolved = resolve(baseDir, key);
+	if (!resolved.startsWith(`${baseDir}/`) && resolved !== baseDir) {
+		throw new Error("Path traversal detected — key escapes storage directory");
+	}
+	return resolved;
+}
 
 // ---------------------------------------------------------------------------
 // Local Storage Adapter
@@ -35,7 +51,7 @@ export function createLocalStorage(options = {}) {
 		provider: "local",
 
 		async put(key, data, _meta = {}) {
-			const filePath = join(baseDir, key);
+			const filePath = safePath(baseDir, key);
 			await mkdir(dirname(filePath), { recursive: true });
 
 			if (Buffer.isBuffer(data) || typeof data === "string") {
@@ -55,13 +71,13 @@ export function createLocalStorage(options = {}) {
 		},
 
 		async get(key) {
-			const filePath = join(baseDir, key);
+			const filePath = safePath(baseDir, key);
 			const buffer = await readFile(filePath);
 			return { body: buffer, contentType: null };
 		},
 
 		async delete(key) {
-			const filePath = join(baseDir, key);
+			const filePath = safePath(baseDir, key);
 			try {
 				await unlink(filePath);
 			} catch (err) {
@@ -70,8 +86,9 @@ export function createLocalStorage(options = {}) {
 		},
 
 		async exists(key) {
+			const filePath = safePath(baseDir, key);
 			try {
-				await stat(join(baseDir, key));
+				await stat(filePath);
 				return true;
 			} catch {
 				return false;

@@ -1,0 +1,850 @@
+openapi: '3.1.0'
+info:
+  title: Quark API
+  version: 2.0.0
+  description: |
+    Full-stack JavaScript framework API. All endpoints are served under `/api/`.
+
+    **Authentication:** Most endpoints require a valid NextAuth session.
+    State-changing endpoints also require a CSRF token obtained from `GET /api/csrf`.
+
+    **Error format:** All errors return:
+    ```json
+    { "name": "ErrorName", "message": "…", "statusCode": 4xx, "code": "ERROR_CODE" }
+    ```
+  license:
+    name: ISC
+    url: https://opensource.org/licenses/ISC
+
+servers:
+  - url: http://localhost:3000
+    description: Local development
+
+tags:
+  - name: Auth
+    description: Registration & CSRF tokens
+  - name: Users
+    description: User management (admin only)
+  - name: Posts
+    description: Blog posts (public read, authenticated write)
+  - name: Files
+    description: File uploads & downloads
+  - name: Health
+    description: Service health checks
+  - name: Metrics
+    description: Application metrics (Prometheus format)
+
+# ─── Paths ──────────────────────────────────────────────
+
+paths:
+  /api/auth/register:
+    post:
+      operationId: registerUser
+      tags: [Auth]
+      summary: Register a new user
+      description: Public endpoint. Creates a user with hashed password and enqueues a welcome email.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegisterInput'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '409':
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/csrf:
+    get:
+      operationId: getCsrfToken
+      tags: [Auth]
+      summary: Get a CSRF token
+      description: |
+        Returns a CSRF token and sets an `httpOnly` cookie.
+        Requires an active session (401 if unauthenticated).
+        Include the token in the `x-csrf-token` header for state-changing requests.
+      security:
+        - session: []
+      responses:
+        '200':
+          description: CSRF token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  csrfToken:
+                    type: string
+                    example: 'a1b2c3d4e5f6…'
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: 'csrf_token=abc123; HttpOnly; SameSite=Strict; Path=/; Max-Age=3600'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ── Users ───────────────────────────────────────────────
+
+  /api/users:
+    get:
+      operationId: listUsers
+      tags: [Users]
+      summary: List all users
+      security:
+        - session: []
+      description: Admin-only. Returns all users without password fields.
+      responses:
+        '200':
+          description: User list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      operationId: createUser
+      tags: [Users]
+      summary: Create a user (admin)
+      security:
+        - session: []
+      description: Admin-only. Requires CSRF token.
+      parameters:
+        - $ref: '#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreateInput'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '409':
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/users/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ResourceId'
+
+    get:
+      operationId: getUser
+      tags: [Users]
+      summary: Get a user by ID
+      security:
+        - session: []
+      description: Admin-only.
+      responses:
+        '200':
+          description: User object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    patch:
+      operationId: updateUser
+      tags: [Users]
+      summary: Update a user (admin)
+      security:
+        - session: []
+      parameters:
+        - $ref: '#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateInput'
+      responses:
+        '200':
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+    delete:
+      operationId: deleteUser
+      tags: [Users]
+      summary: Delete a user (admin)
+      security:
+        - session: []
+      parameters:
+        - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '200':
+          description: Deletion confirmed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # ── Posts ───────────────────────────────────────────────
+
+  /api/posts:
+    get:
+      operationId: listPosts
+      tags: [Posts]
+      summary: List posts (paginated)
+      description: Public endpoint. Returns paginated posts.
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          description: Items per page
+      responses:
+        '200':
+          description: Paginated post list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Post'
+
+    post:
+      operationId: createPost
+      tags: [Posts]
+      summary: Create a post
+      security:
+        - session: []
+      description: Requires authentication. Author is set from session. Requires CSRF token.
+      parameters:
+        - $ref: '#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostCreateInput'
+      responses:
+        '201':
+          description: Post created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/posts/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ResourceId'
+
+    get:
+      operationId: getPost
+      tags: [Posts]
+      summary: Get a post by ID
+      description: Public endpoint.
+      responses:
+        '200':
+          description: Post object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      operationId: updatePost
+      tags: [Posts]
+      summary: Update a post (owner only)
+      security:
+        - session: []
+      description: Requires authentication + ownership. Requires CSRF token.
+      parameters:
+        - $ref: '#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostUpdateInput'
+      responses:
+        '200':
+          description: Updated post
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+    delete:
+      operationId: deletePost
+      tags: [Posts]
+      summary: Delete a post (owner only)
+      security:
+        - session: []
+      description: Requires authentication + ownership. Requires CSRF token.
+      parameters:
+        - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '200':
+          description: Deletion confirmed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ── Files ──────────────────────────────────────────────
+
+  /api/files:
+    get:
+      operationId: listFiles
+      tags: [Files]
+      summary: List uploaded files
+      security:
+        - session: []
+      description: Returns the authenticated user's uploaded files (paginated).
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: File list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/File'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      operationId: uploadFile
+      tags: [Files]
+      summary: Upload file(s)
+      security:
+        - session: []
+      description: |
+        Accepts `multipart/form-data`. Validates file type via magic bytes and MIME allow-list.
+        Single file returns 201; multiple files return 200 with an array.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: One or more files to upload
+      responses:
+        '201':
+          description: Single file uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/File'
+        '200':
+          description: Multiple files uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  files:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/File'
+        '400':
+          description: No files provided
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: File validation failure
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  filename:
+                    type: string
+
+  /api/files/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ResourceId'
+
+    get:
+      operationId: downloadFile
+      tags: [Files]
+      summary: Download a file
+      description: |
+        Public endpoint (access by knowledge of file ID).
+        Returns the raw binary with appropriate Content-Type and Content-Disposition headers.
+      responses:
+        '200':
+          description: File binary
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                example: 'attachment; filename="photo.jpg"'
+            Cache-Control:
+              schema:
+                type: string
+                example: 'public, max-age=31536000, immutable'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      operationId: deleteFile
+      tags: [Files]
+      summary: Delete a file (owner or admin)
+      security:
+        - session: []
+      description: Requires authentication. Only the uploader or an admin can delete. Requires CSRF token.
+      parameters:
+        - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '200':
+          description: File deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: File deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ── Health & Metrics ───────────────────────────────────
+
+  /api/health:
+    get:
+      operationId: healthCheck
+      tags: [Health]
+      summary: Service health check
+      description: |
+        Public endpoint. Verifies database and Redis connectivity.
+        Times out after 5 seconds. Returns 503 if any dependency is down.
+      responses:
+        '200':
+          description: All services healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: One or more services degraded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '500':
+          description: Health check timed out or failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  timestamp:
+                    type: string
+                    format: date-time
+                  message:
+                    type: string
+                    example: Service health check failed
+
+  /api/metrics:
+    get:
+      operationId: getMetrics
+      tags: [Metrics]
+      summary: Application metrics (Prometheus format)
+      description: |
+        Returns all registered application metrics in Prometheus exposition format.
+        Includes HTTP request counts, durations, in-flight requests, and error counts.
+      responses:
+        '200':
+          description: Prometheus metrics
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: |
+                  # HELP http_requests_total Total number of HTTP requests
+                  # TYPE http_requests_total counter
+                  http_requests_total{method="GET",path="/api/health",status="200"} 42
+        '500':
+          description: Failed to collect metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+# ─── Components ─────────────────────────────────────────
+
+components:
+  securitySchemes:
+    session:
+      type: apiKey
+      in: cookie
+      name: next-auth.session-token
+      description: NextAuth session cookie (set automatically after login)
+
+  parameters:
+    ResourceId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Resource CUID
+
+    CsrfToken:
+      name: x-csrf-token
+      in: header
+      required: true
+      schema:
+        type: string
+      description: CSRF token obtained from `GET /api/csrf`
+
+  responses:
+    Unauthorized:
+      description: Not authenticated
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    # ── Error ─────────────────────
+
+    Error:
+      type: object
+      required: [name, message, statusCode, code]
+      properties:
+        name:
+          type: string
+          example: NotFoundError
+        message:
+          type: string
+          example: Resource not found
+        statusCode:
+          type: integer
+          example: 404
+        code:
+          type: string
+          example: NOT_FOUND
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+
+    # ── User ──────────────────────
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          description: CUID
+          example: clx1234567890abcdef
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        emailVerified:
+          type: string
+          format: date-time
+          nullable: true
+        name:
+          type: string
+          nullable: true
+          example: Jane Doe
+        image:
+          type: string
+          format: uri
+          nullable: true
+        role:
+          type: string
+          default: viewer
+          example: viewer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    UserCreateInput:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        image:
+          type: string
+          format: uri
+
+    UserRegisterInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+          description: Must contain uppercase, lowercase, and a digit
+        name:
+          type: string
+          minLength: 2
+
+    UserUpdateInput:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        image:
+          type: string
+          format: uri
+
+    # ── Post ──────────────────────
+
+    Post:
+      type: object
+      properties:
+        id:
+          type: string
+          example: clx1234567890abcdef
+        title:
+          type: string
+          example: My First Post
+        content:
+          type: string
+          nullable: true
+        published:
+          type: boolean
+          default: false
+        authorId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PostCreateInput:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+          minLength: 1
+        content:
+          type: string
+        published:
+          type: boolean
+
+    PostUpdateInput:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+        content:
+          type: string
+        published:
+          type: boolean
+
+    # ── File ──────────────────────
+
+    File:
+      type: object
+      properties:
+        id:
+          type: string
+        originalName:
+          type: string
+          example: photo.jpg
+        mimeType:
+          type: string
+          example: image/jpeg
+        size:
+          type: integer
+          example: 204800
+        url:
+          type: string
+          format: uri
+        createdAt:
+          type: string
+          format: date-time
+
+    # ── Health ────────────────────
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded]
+          example: ok
+        timestamp:
+          type: string
+          format: date-time
+        checks:
+          type: object
+          properties:
+            database:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [ok, error]
+            redis:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [ok, error]
+                latencyMs:
+                  type: number
+                  example: 1.23

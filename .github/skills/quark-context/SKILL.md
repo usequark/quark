@@ -13,7 +13,7 @@ Two packages are published to npm; everything else is scaffolded locally into us
 | Published package | Purpose |
 |---|---|
 | `@techstream/quark-create-app` | CLI — scaffolds new projects, provides `update` command |
-| `@techstream/quark-core` | Runtime library — auth, queues, errors, validation, email, storage |
+| `@techstream/quark-core` | Runtime library — auth, queues, errors, validation, email, storage, metrics, logging |
 
 Scaffolded (local-only) packages: `@<app>/db`, `@<app>/config`, `@<app>/jobs`, `@<app>/ui`, `@<app>/web`, `@<app>/worker`.
 
@@ -42,8 +42,11 @@ Scaffolded (local-only) packages: `@<app>/db`, `@<app>/config`, `@<app>/jobs`, `
 - **UI:** Tailwind CSS + Shadcn. Keep components atomic.
 - **Validation:** Zod is mandatory for all Server Actions and API routes.
 - **Errors:** Use `AppError` / `ValidationError` from `@techstream/quark-core/errors`.
-- **Environment:** All env vars validated via `validate-env.js` in the config package.
+- **Environment:** All env vars validated via `validate-env.js` in the config package. Environment-specific defaults managed by `environment.js`. Centralized config loading via `loadConfig()` from `load-config.js`.
 - **Mail env vars:** Use `MAIL_HOST`, `MAIL_PORT`, `MAIL_FROM` (not MAILHOG_*).
+- **Metrics:** Use `metrics` singleton from `@techstream/quark-core` for counters, gauges, histograms. Pre-registered HTTP metrics: `httpRequestsTotal`, `httpRequestDuration`, `httpRequestsInFlight`, `appErrorsTotal`. Prometheus format exported at `/api/metrics`.
+- **Logging:** Use `createLogger(name)` from `@techstream/quark-core`. Never use `console.log/error` in production code.
+- **Config:** Use `loadConfig()` from `@<app>/config` for centralized configuration. Supports per-environment defaults (dev/test/staging/prod) with env-var overrides.
 
 ## CI/CD Pipeline
 
@@ -129,11 +132,36 @@ quark/
 ├── packages/
 │   ├── cli/          # @techstream/quark-create-app (published)
 │   ├── core/         # @techstream/quark-core (published)
-│   ├── config/       # Environment validation
-│   ├── db/           # Prisma schema + client
+│   │   └── src/
+│   │       ├── auth/            # NextAuth config + helpers
+│   │       ├── authorization.js # RBAC policy engine
+│   │       ├── cache.js         # Redis-backed cache with getOrSet/wrap
+│   │       ├── csrf.js          # CSRF token generation/validation
+│   │       ├── email.js         # SMTP/Resend email service
+│   │       ├── email-templates.js # HTML email templates
+│   │       ├── error-reporter.js  # Adapter-based error tracking
+│   │       ├── errors.js        # AppError, ValidationError, etc.
+│   │       ├── file-validation.js # Magic-byte + MIME validation
+│   │       ├── logger.js        # Structured logger (zero-dep)
+│   │       ├── metrics.js       # Counters, gauges, histograms (Prometheus)
+│   │       ├── multipart.js     # Streaming multipart parser
+│   │       ├── queue/           # BullMQ queue helpers
+│   │       ├── rate-limiter.js  # In-memory + Redis rate limiting
+│   │       ├── redis.js         # Redis client + ping
+│   │       ├── storage.js       # Local/S3 file storage adapter
+│   │       ├── testing/         # Test factories + utilities
+│   │       ├── utils.js         # Shared utilities
+│   │       └── validation.js    # Zod body validation helper
+│   ├── config/       # Environment validation + config loading
+│   │   └── src/
+│   │       ├── app-url.js       # APP_URL resolution + CORS origins
+│   │       ├── environment.js   # Per-environment defaults (dev/test/staging/prod)
+│   │       ├── load-config.js   # Centralized config loader with caching
+│   │       └── validate-env.js  # Environment variable validation
+│   ├── db/           # Prisma schema + client + query helpers
 │   ├── jobs/         # Job type definitions
 │   └── ui/           # Shared UI components
-├── docs/             # Architecture, API, roadmap docs
+├── docs/             # Architecture, API, roadmap, OpenAPI, DB schema docs
 ├── .changeset/       # Changeset config + pending changesets
 └── .github/workflows/  # CI, release, changeset-check
 ```

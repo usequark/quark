@@ -21,14 +21,20 @@ export * from "./file-validation.js";
 export * from "./logger.js";
 // Mail exports
 export * from "./mail.js";
+// Metrics exports
+export * from "./metrics.js";
 // Multipart parsing exports
 export * from "./multipart.js";
+// Query builder exports
+export * from "./query-builder.js";
 // Queue exports
 export * from "./queue/index.js";
 // Rate limiting exports
 export * from "./rate-limiter.js";
 // Redis exports
 export * from "./redis.js";
+// Request logger exports
+export * from "./request-logger.js";
 // Storage exports
 export * from "./storage.js";
 

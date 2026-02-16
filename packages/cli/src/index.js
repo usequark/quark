@@ -629,6 +629,45 @@ STORAGE_PROVIDER=local
 			);
 			console.log(chalk.green(`    ✓ .quark-link.json`));
 
+			// Step 10b: Generate project-context skill with actual values
+			console.log(chalk.cyan("\n  🤖 Generating project-context skill..."));
+			const skillPath = path.join(
+				targetDir,
+				".github",
+				"skills",
+				"project-context",
+				"SKILL.md",
+			);
+			if (await fs.pathExists(skillPath)) {
+				let skillContent = await fs.readFile(skillPath, "utf-8");
+
+				// Build optional packages section
+				const optionalLines = features
+					.map((f) => {
+						const labels = {
+							ui: "Shared UI components",
+							jobs: "Job queue definitions",
+						};
+						return `│   ├── ${f}/           # ${labels[f] || f}`;
+					})
+					.join("\n");
+				const optionalBlock = optionalLines ? `${optionalLines}\n` : "";
+
+				skillContent = skillContent
+					.replace(/__QUARK_SCOPE__/g, scope)
+					.replace(/__QUARK_PROJECT_NAME__/g, projectName)
+					.replace(
+						/__QUARK_SCAFFOLD_DATE__/g,
+						new Date().toISOString().split("T")[0],
+					)
+					.replace(/__QUARK_OPTIONAL_PACKAGES__/g, optionalBlock);
+
+				await fs.writeFile(skillPath, skillContent);
+				console.log(
+					chalk.green(`    ✓ .github/skills/project-context/SKILL.md`),
+				);
+			}
+
 			// Step 11: Initialize git repository
 			console.log(chalk.cyan("\n  📝 Initializing git repository..."));
 			const gitInitialized = await initializeGit(targetDir);

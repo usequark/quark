@@ -32,6 +32,7 @@ const envSchema = {
 	NEXTAUTH_SECRET: {
 		required: true,
 		description: "NextAuth secret for JWT signing",
+		minLength: 32,
 	},
 	NEXTAUTH_URL: {
 		required: false,
@@ -66,6 +67,12 @@ export function validateEnv() {
 		if (config.required && !value) {
 			errors.push(
 				`Missing required environment variable: ${key} (${config.description})`,
+			);
+		}
+
+		if (value && config.minLength && value.length < config.minLength) {
+			errors.push(
+				`${key} must be at least ${config.minLength} characters (${config.description})`,
 			);
 		}
 

@@ -1,0 +1,297 @@
+# Database Schema Documentation
+
+> Quark uses **PostgreSQL 16** with **Prisma 7** as the ORM.
+> Schema: [`packages/db/prisma/schema.prisma`](../packages/db/prisma/schema.prisma)
+> Query helpers: [`packages/db/src/queries.js`](../packages/db/src/queries.js)
+
+---
+
+## Overview
+
+| Models | Enums | Relations | Indexes |
+|--------|-------|-----------|---------|
+| 8 | 1 | 5 | 24 |
+
+```
+User ─┬── Post       (1:many, cascade delete)
+      ├── Account    (1:many, cascade delete)
+      ├── Session    (1:many, cascade delete)
+      ├── AuditLog   (1:many, cascade delete)
+      └── File       (1:many, set null on delete)
+
+Job           (standalone — BullMQ audit trail)
+VerificationToken (standalone — NextAuth email verification)
+```
+
+---
+
+## Models
+
+### User
+
+The central identity model. Used by NextAuth for authentication and by the application for authorization.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | `String` | PK, CUID | Unique identifier |
+| `email` | `String` | Unique | Login email |
+| `emailVerified` | `DateTime?` | — | Set when email is confirmed |
+| `name` | `String?` | — | Display name |
+| `password` | `String?` | — | Bcrypt hash (12 rounds). Null for OAuth-only users |
+| `image` | `String?` | — | Avatar URL |
+| `role` | `String` | Default: `"viewer"` | RBAC role (`admin`, `editor`, `viewer`) |
+| `createdAt` | `DateTime` | Default: `now()` | — |
+| `updatedAt` | `DateTime` | `@updatedAt` | — |
+
+**Indexes:** `email`, `createdAt`
+
+**Security:** The `password` field is **never** returned to clients. All query helpers use `USER_SAFE_SELECT` which explicitly excludes it. Only `user.findByEmail()` returns the full record (for internal auth use only).
+
+**Relations:**
+- `posts` → `Post[]`
+- `accounts` → `Account[]` (OAuth providers)
+- `sessions` → `Session[]`
+- `auditLogs` → `AuditLog[]`
+- `files` → `File[]`
+
+---
+
+### Post
+
+Blog post content authored by a user.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | `String` | PK, CUID | — |
+| `title` | `String` | Required | Post title |
+| `content` | `String?` | `@db.Text` | Full post body (unlimited length) |
+| `published` | `Boolean` | Default: `false` | Draft vs. published |
+| `authorId` | `String` | FK → User | — |
+| `createdAt` | `DateTime` | Default: `now()` | — |
+| `updatedAt` | `DateTime` | `@updatedAt` | — |
+
+**Indexes:** `authorId`, `published`, `createdAt`
+
+**Cascade:** Deleting a user deletes all their posts.
+
+**Query helpers:** `post.findById()`, `post.findAll()`, `post.findPublished()`, `post.findByAuthor()`, `post.create()`, `post.update()`, `post.delete()`. All include `author` with safe-select (no password).
+
+---
+
+### Account (NextAuth)
+
+OAuth provider accounts linked to users.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | `String` | PK, CUID | — |
+| `userId` | `String` | FK → User | — |
+| `type` | `String` | — | Account type (e.g. `"oauth"`) |
+| `provider` | `String` | — | Provider name (e.g. `"github"`, `"google"`) |
+| `providerAccountId` | `String` | — | External account ID |
+| `refresh_token` | `String?` | `@db.Text` | OAuth refresh token |
+| `access_token` | `String?` | `@db.Text` | OAuth access token |
+| `expires_at` | `Int?` | — | Token expiry (epoch seconds) |
+| `token_type` | `String?` | — | e.g. `"bearer"` |
+| `scope` | `String?` | — | OAuth scopes granted |
+| `id_token` | `String?` | `@db.Text` | OIDC ID token |
+| `session_state` | `String?` | — | Provider session state |
+| `createdAt` | `DateTime` | Default: `now()` | — |
+| `updatedAt` | `DateTime` | `@updatedAt` | — |
+
+**Unique:** `(provider, providerAccountId)` — one account per provider per external ID.
+
+**Indexes:** `userId`
+
+**Cascade:** Deleting a user deletes all linked accounts.
+
+---
+
+### Session (NextAuth)
+
+Active user sessions for database-backed session strategy.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | `String` | PK, CUID | — |
+| `sessionToken` | `String` | Unique | The session cookie value |
+| `userId` | `String` | FK → User | — |
+| `expires` | `DateTime` | — | Session expiry |
+| `createdAt` | `DateTime` | Default: `now()` | — |
+| `updatedAt` | `DateTime` | `@updatedAt` | — |
+
+**Indexes:** `userId`, `expires`
+
+**Performance note:** The `expires` index enables efficient cleanup of expired sessions.
+
+---
+
+### VerificationToken (NextAuth)
+
+Email verification and magic-link tokens.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `identifier` | `String` | — | Usually the user's email |
+| `token` | `String` | Unique | The verification token value |
+| `expires` | `DateTime` | — | Token expiry |
+| `createdAt` | `DateTime` | Default: `now()` | — |
+
+**Unique:** `(identifier, token)`
+
+**Indexes:** `token`, `expires`
+
+**Note:** No `id` primary key — uses the composite `(identifier, token)` unique constraint. The `expires` index supports efficient cleanup via `verificationToken.deleteExpired()`.
+
+---
+
+### Job
+
+Database-side audit trail for background jobs. **Not actively used by the BullMQ worker** — job lifecycle is managed entirely in Redis. This model exists for optional reporting/auditing.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | `String` | PK, CUID | — |
+| `queue` | `String` | — | Queue name (e.g. `"default"`) |
+| `name` | `String` | — | Job type (e.g. `"SEND_WELCOME_EMAIL"`) |
+| `data` | `Json?` | — | Job payload |
+| `status` | `JobStatus` | Default: `PENDING` | Current state |
+| `error` | `String?` | — | Error message on failure |
+| `attempts` | `Int` | Default: `0` | Number of attempts made |
+| `maxRetries` | `Int` | Default: `3` | Maximum retry count |
+| `runAt` | `DateTime` | Default: `now()` | Scheduled execution time |
+| `startedAt` | `DateTime?` | — | When processing began |
+| `completedAt` | `DateTime?` | — | When processing finished |
+| `createdAt` | `DateTime` | Default: `now()` | — |
+| `updatedAt` | `DateTime` | `@updatedAt` | — |
+
+**Indexes:** `queue`, `status`, `runAt`, `(status, runAt)` (compound), `createdAt`
+
+**Enum `JobStatus`:** `PENDING` | `IN_PROGRESS` | `COMPLETED` | `FAILED` | `CANCELLED`
+
+---
+
+### File
+
+Uploaded file metadata. Actual file data lives in storage (local filesystem or S3/R2).
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | `String` | PK, CUID | — |
+| `filename` | `String` | — | Stored filename (may differ from original) |
+| `originalName` | `String` | — | User-provided filename |
+| `mimeType` | `String` | — | Detected MIME type |
+| `size` | `Int` | — | File size in bytes |
+| `storageKey` | `String` | Unique | Path/key in storage backend |
+| `storageProvider` | `String` | Default: `"local"` | `"local"` or `"s3"` |
+| `uploadedById` | `String?` | FK → User | Uploader (null = orphaned) |
+| `createdAt` | `DateTime` | Default: `now()` | — |
+| `updatedAt` | `DateTime` | `@updatedAt` | — |
+
+**Indexes:** `uploadedById`, `mimeType`, `createdAt`
+
+**Cascade:** Deleting a user sets `uploadedById` to null (file is preserved but orphaned). A background job (`FILE_CLEANUP`) runs every 24h to remove orphaned files from both storage and database.
+
+**Query helpers:** `file.create()`, `file.findById()`, `file.findByStorageKey()`, `file.findByUploader()`, `file.findOrphaned()`, `file.findOlderThan()`, `file.delete()`, `file.deleteMany()`, `file.count()`
+
+---
+
+### AuditLog
+
+Immutable audit trail for user actions. Append-only — no update or delete queries exist.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | `String` | PK, CUID | — |
+| `userId` | `String` | FK → User | Who performed the action |
+| `action` | `String` | — | Action name (e.g. `"create"`, `"delete"`) |
+| `entity` | `String` | — | Entity type (e.g. `"post"`, `"user"`) |
+| `entityId` | `String` | — | ID of the affected entity |
+| `changes` | `Json?` | — | Before/after field values |
+| `metadata` | `Json?` | — | Additional context (IP, user agent, etc.) |
+| `createdAt` | `DateTime` | Default: `now()` | — |
+
+**Indexes:** `userId`, `action`, `entity`, `createdAt`
+
+**Query helpers:** `auditLog.findAll()`, `auditLog.findByUserId()`, `auditLog.findByEntity()`, `auditLog.findByAction()`, `auditLog.create()`
+
+---
+
+## Migration History
+
+| Migration | Date | Description |
+|-----------|------|-------------|
+| `0_init` | Initial | Base schema: User, Post, Account, Session, VerificationToken |
+| `20260214_add_jobs_*` | 2026-02-14 | Add Job model with JobStatus enum |
+| `20260214_add_files_*` | 2026-02-14 | Add File model |
+| `20260214_add_audit_log_*` | 2026-02-14 | Add AuditLog model |
+| `20260215_add_account_timestamps` | 2026-02-15 | Add createdAt/updatedAt to Account |
+| `20260215_add_indexes` | 2026-02-15 | Add expires index on Session/VerificationToken, compound index on Job |
+
+---
+
+## Best Practices
+
+### Extending the Schema
+
+1. Add the model to `packages/db/prisma/schema.prisma`
+2. Mirror changes in `packages/cli/templates/base-project/packages/db/prisma/schema.prisma`
+3. Create a migration: `pnpm db:migrate --name describe_change`
+4. Add query helpers in `packages/db/src/queries.js`
+5. Always include `createdAt`/`updatedAt` on new models
+6. Add appropriate indexes for query patterns
+
+### Query Patterns
+
+- **Always use `USER_SAFE_SELECT`** when returning user data to clients
+- **Never expose `password`** — only `user.findByEmail()` returns it for auth
+- **Use pagination** — all `findAll()` and `findMany()` helpers accept `{ skip, take }`
+- **Default ordering** — all list queries order by `createdAt: "desc"`
+- **Cascade deletes** — understand which relations cascade before deleting parent records
+
+### Adding a New Entity
+
+```javascript
+// 1. Add Prisma model (schema.prisma)
+model Widget {
+  id        String   @id @default(cuid())
+  name      String
+  createdBy String
+  creator   User     @relation(fields: [createdBy], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdBy])
+  @@index([createdAt])
+}
+
+// 2. Add query helpers (queries.js)
+export const widget = {
+  findById: (id) => prisma.widget.findUnique({ where: { id } }),
+  findAll: (options = {}) => {
+    const { skip = 0, take = 10 } = options;
+    return prisma.widget.findMany({ skip, take, orderBy: { createdAt: "desc" } });
+  },
+  create: (data) => prisma.widget.create({ data }),
+  update: (id, data) => prisma.widget.update({ where: { id }, data }),
+  delete: (id) => prisma.widget.delete({ where: { id } }),
+};
+
+// 3. Add Zod schema (schemas.js)
+export const widgetCreateSchema = z.object({
+  name: z.string().min(1),
+});
+```
+
+---
+
+## Index Strategy
+
+| Pattern | Index Type | Purpose |
+|---------|-----------|---------|
+| FK lookups | Single column | `authorId`, `userId`, `uploadedById` |
+| Unique constraints | Unique | `email`, `sessionToken`, `storageKey` |
+| Filtering | Single column | `published`, `status`, `mimeType`, `action`, `entity` |
+| Sorting/pagination | Single column | `createdAt` on all models |
+| Expiry cleanup | Single column | `expires` on Session, VerificationToken |
+| Composite query | Compound | `(status, runAt)` on Job for queue polling |

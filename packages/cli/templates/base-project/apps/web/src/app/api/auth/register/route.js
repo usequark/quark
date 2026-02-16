@@ -2,13 +2,14 @@ import {
 	createQueue,
 	hashPassword,
 	validateBody,
+	withCsrfProtection,
 } from "@techstream/quark-core";
 import { user, userRegisterSchema } from "@techstream/quark-db";
 import { JOB_NAMES, JOB_QUEUES } from "@techstream/quark-jobs";
 import { NextResponse } from "next/server";
 import { handleError } from "../../error-handler";
 
-export async function POST(request) {
+export const POST = withCsrfProtection(async (request) => {
 	try {
 		const data = await validateBody(request, userRegisterSchema);
 
@@ -52,4 +53,4 @@ export async function POST(request) {
 	} catch (error) {
 		return handleError(error);
 	}
-}
+});

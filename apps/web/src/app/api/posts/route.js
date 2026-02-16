@@ -1,4 +1,8 @@
-import { validateBody, withCsrfProtection } from "@techstream/quark-core";
+import {
+	createQueryBuilder,
+	validateBody,
+	withCsrfProtection,
+} from "@techstream/quark-core";
 import { post, postCreateSchema } from "@techstream/quark-db";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -10,16 +14,65 @@ const paginationSchema = z.object({
 	limit: z.coerce.number().int().min(1).max(100).default(10),
 });
 
+const querySchema = paginationSchema.extend({
+	search: z.string().optional(),
+	status: z.enum(["draft", "published"]).optional(),
+	authorId: z.string().optional(),
+	sort: z.enum(["createdAt", "updatedAt", "title"]).optional(),
+	order: z.enum(["asc", "desc"]).default("desc"),
+});
+
 export async function GET(request) {
 	try {
 		const { searchParams } = new URL(request.url);
-		const { page, limit } = paginationSchema.parse({
-			page: searchParams.get("page") ?? undefined,
-			limit: searchParams.get("limit") ?? undefined,
-		});
+		const { page, limit, search, status, authorId, sort, order } =
+			querySchema.parse({
+				page: searchParams.get("page") ?? undefined,
+				limit: searchParams.get("limit") ?? undefined,
+				search: searchParams.get("search") ?? undefined,
+				status: searchParams.get("status") ?? undefined,
+				authorId: searchParams.get("authorId") ?? undefined,
+				sort: searchParams.get("sort") ?? undefined,
+				order: searchParams.get("order") ?? undefined,
+			});
+
 		const skip = (page - 1) * limit;
 
-		const posts = await post.findAll({ skip, take: limit });
+		// Build query with filters, search, and sort
+		const qb = createQueryBuilder({
+			filterableFields: ["published", "authorId"],
+			searchFields: ["title", "content"],
+			sortableFields: ["createdAt", "updatedAt", "title"],
+		});
+
+		// Apply filters
+		if (status === "published") {
+			qb.filter("published", "eq", true);
+		} else if (status === "draft") {
+			qb.filter("published", "eq", false);
+		}
+
+		if (authorId) {
+			qb.filter("authorId", "eq", authorId);
+		}
+
+		// Apply search
+		if (search) {
+			qb.search(search);
+		}
+
+		// Apply sort
+		if (sort) {
+			qb.sort(sort, order);
+		}
+
+		const posts = await post.findAll({
+			skip,
+			take: limit,
+			where: qb.toWhere(),
+			orderBy: qb.toOrderBy(),
+		});
+
 		return NextResponse.json(posts);
 	} catch (error) {
 		return handleError(error);
