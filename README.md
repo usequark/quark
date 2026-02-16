@@ -32,7 +32,6 @@ The CLI will:
 ```bash
 cd my-project
 docker compose up -d
-pnpm db:generate
 pnpm db:migrate
 pnpm dev
 ```

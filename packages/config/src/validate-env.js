@@ -22,11 +22,11 @@ const envSchema = {
 	REDIS_HOST: { required: false, description: "Redis host" },
 	REDIS_PORT: { required: false, description: "Redis port" },
 
-	// Mailhog
-	MAILHOG_SMTP_URL: { required: false, description: "Mailhog SMTP URL" },
-	MAILHOG_HOST: { required: false, description: "Mailhog host" },
-	MAILHOG_SMTP_PORT: { required: false, description: "Mailhog SMTP port" },
-	MAILHOG_UI_PORT: { required: false, description: "Mailhog UI port" },
+	// Mail (local SMTP server)
+	MAIL_SMTP_URL: { required: false, description: "Mail SMTP URL" },
+	MAIL_HOST: { required: false, description: "Mail host" },
+	MAIL_SMTP_PORT: { required: false, description: "Mail SMTP port" },
+	MAIL_UI_PORT: { required: false, description: "Mail UI port" },
 
 	// NextAuth
 	NEXTAUTH_SECRET: {

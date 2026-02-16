@@ -52,7 +52,7 @@ Replaced 4-line stub in `packages/cli/templates/base-project/apps/worker/src/ind
 ### 2.6 Add email service tests ✅
 Created `packages/core/src/email.test.js` with 9 tests covering:
 - Service creation and method shape
-- SMTP provider defaults (Mailhog) and explicit config
+- SMTP provider defaults (Mailpit) and explicit config
 - Resend provider: fetch calls, headers, body validation
 - Error handling: missing API key, non-ok responses, non-JSON errors
 - Options override (custom `from` address)

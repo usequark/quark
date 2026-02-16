@@ -3,7 +3,7 @@
  * Supports SMTP (Nodemailer) and Resend providers
  */
 
-import { getMailhogSmtpConfig } from "./mailhog.js";
+import { getMailSmtpConfig } from "./mail.js";
 
 /**
  * Create an SMTP-based email sender using Nodemailer
@@ -11,7 +11,7 @@ import { getMailhogSmtpConfig } from "./mailhog.js";
 async function createSmtpTransport() {
 	const nodemailer = await import("nodemailer");
 
-	// Use explicit SMTP config if provided, otherwise fall back to Mailhog
+	// Use explicit SMTP config if provided, otherwise fall back to local mail server
 	const host = process.env.SMTP_HOST;
 	const port = process.env.SMTP_PORT;
 
@@ -34,11 +34,11 @@ async function createSmtpTransport() {
 			}),
 		};
 	} else {
-		// Development: use Mailhog
-		const mailhogConfig = getMailhogSmtpConfig();
+		// Development: use local mail server (Mailpit)
+		const mailConfig = getMailSmtpConfig();
 		transportConfig = {
-			host: mailhogConfig.host,
-			port: mailhogConfig.port,
+			host: mailConfig.host,
+			port: mailConfig.port,
 			secure: false,
 			connectionTimeout: 10_000,
 			greetingTimeout: 10_000,

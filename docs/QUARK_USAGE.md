@@ -97,7 +97,7 @@ my-awesome-app/
 ├── package.json
 ├── pnpm-workspace.yaml
 ├── turbo.json
-├── docker-compose.yml        ← PostgreSQL, Redis, Mailhog
+├── docker-compose.yml        ← PostgreSQL, Redis, Mailpit
 ├── README.md
 ├── apps/
 │   └── web/                  ← Next.js application
@@ -446,9 +446,9 @@ POSTGRES_PORT=5432
 # Redis
 REDIS_PORT=6379
 
-# Email (Mailhog for local testing)
-MAILHOG_SMTP_PORT=1025
-MAILHOG_UI_PORT=8025
+# Email (Mailpit for local testing)
+MAIL_SMTP_PORT=1025
+MAIL_UI_PORT=8025
 
 # Application
 NODE_ENV=development

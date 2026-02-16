@@ -11,6 +11,11 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-quark_user}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   # --- 2. Redis Cache & Job Queue ---
   redis:
@@ -21,6 +26,11 @@ services:
     command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   # --- 3. Mailpit (Local SMTP Server) ---
   mailpit:
@@ -28,9 +38,14 @@ services:
     restart: always
     ports:
       # SMTP port (used by application to send mail)
-      - "${MAILHOG_SMTP_PORT:-1025}:1025"
+      - "${MAIL_SMTP_PORT:-1025}:1025"
       # Web UI port (to view sent emails)
-      - "${MAILHOG_UI_PORT:-8025}:8025"
+      - "${MAIL_UI_PORT:-8025}:8025"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8025"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
 volumes:
   postgres_data:

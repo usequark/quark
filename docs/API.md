@@ -312,7 +312,7 @@ config.appName // "Quark"
 | DATABASE_URL         | PostgreSQL connection string            | `postgresql://user:pass@localhost:5432/db` |
 | REDIS_URL            | Redis connection string                 | `redis://localhost:6379`                   |
 | NEXTAUTH_SECRET      | NextAuth.js secret key                  | `openssl rand -base64 32`                 |
-| MAILHOG_SMTP_URL     | SMTP server URL                         | `smtp://localhost:1025`                    |
+| MAIL_SMTP_URL        | SMTP server URL                         | `smtp://localhost:1025`                    |
 | PORT                 | Web app port                            | `3000`                                     |
 | APP_URL              | Application URL (auto-derived in dev)   | `https://yourdomain.com`                  |
 | WORKER_CONCURRENCY   | Worker job concurrency                  | `5`                                        |

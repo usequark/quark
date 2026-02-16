@@ -41,9 +41,9 @@ services:
     restart: always
     ports:
       # SMTP port (used by application to send mail)
-      - "${MAILHOG_SMTP_PORT:-1025}:1025"
+      - "${MAIL_SMTP_PORT:-1025}:1025"
       # Web UI port (to view sent emails)
-      - "${MAILHOG_UI_PORT:-8025}:8025"
+      - "${MAIL_UI_PORT:-8025}:8025"
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8025"]
       interval: 10s

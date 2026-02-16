@@ -12,7 +12,7 @@ The CLI scaffolds a complete project structure with:
 - **Next.js** web application
 - **Prisma** database schema and migrations
 - **BullMQ** job queues
-- **Docker Compose** setup (PostgreSQL, Redis, Mailhog)
+- **Docker Compose** setup (PostgreSQL, Redis, Mailpit)
 - **JavaScript** monorepo with `pnpm` workspaces
 
 ## Quick Setup
@@ -20,7 +20,6 @@ The CLI scaffolds a complete project structure with:
 ```bash
 cd my-awesome-app
 docker compose up -d
-pnpm db:generate
 pnpm db:migrate
 pnpm dev
 ```

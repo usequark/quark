@@ -14,7 +14,7 @@ export const config = {
 	},
 	email: {
 		from: process.env.EMAIL_FROM || "noreply@myquarkapp.com",
-		provider: process.env.EMAIL_PROVIDER || "mailhog",
+		provider: process.env.EMAIL_PROVIDER || "smtp",
 	},
 };
 

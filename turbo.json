@@ -17,6 +17,15 @@
 			"cache": false,
 			"outputs": ["node_modules/.prisma/client"]
 		},
+		"db:migrate": {
+			"cache": false
+		},
+		"db:push": {
+			"cache": false
+		},
+		"db:seed": {
+			"cache": false
+		},
 		"dev": {
 			"cache": false,
 			"persistent": true,
@@ -29,9 +38,9 @@
 				"POSTGRES_DB",
 				"REDIS_HOST",
 				"REDIS_PORT",
-				"MAILHOG_HOST",
-				"MAILHOG_SMTP_PORT",
-				"MAILHOG_UI_PORT",
+				"MAIL_HOST",
+				"MAIL_SMTP_PORT",
+				"MAIL_UI_PORT",
 				"NEXTAUTH_SECRET",
 				"APP_URL",
 				"WORKER_CONCURRENCY",

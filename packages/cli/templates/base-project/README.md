@@ -6,15 +6,19 @@ A modern, scalable monorepo built with Quark.
 
 ```bash
 pnpm install
+docker compose up -d
+pnpm db:migrate
 pnpm dev
 ```
+
+Open http://localhost:3000
 
 ## Services
 
 - **Docker**: `docker compose up -d`
-- **Database**: PostgreSQL on port 5432
-- **Cache**: Redis on port 6379
-- **Email**: Mailhog UI on port 8025
+- **Database**: PostgreSQL
+- **Cache**: Redis
+- **Email**: Mailpit
 
 ## Development
 
@@ -28,6 +32,16 @@ pnpm test
 # Lint
 pnpm lint
 ```
+
+## Database
+
+| Task | Command |
+|------|--------|
+| Run migrations | `pnpm db:migrate` |
+| Push schema (no migration) | `pnpm db:push` |
+| Generate Prisma client | `pnpm db:generate` |
+| Seed database | `pnpm db:seed` |
+| Open Prisma Studio | `pnpm db:studio` |
 
 ## Structure
 

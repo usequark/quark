@@ -19,8 +19,8 @@ export * from "./errors.js";
 export * from "./file-validation.js";
 // Logger exports
 export * from "./logger.js";
-// Mailhog exports
-export * from "./mailhog.js";
+// Mail exports
+export * from "./mail.js";
 // Multipart parsing exports
 export * from "./multipart.js";
 // Queue exports

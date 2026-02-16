@@ -44,7 +44,7 @@ quark/
 
 - ✅ PostgreSQL 16
 - ✅ Redis 7
-- ✅ Mailhog (SMTP testing)
+- ✅ Mailpit (SMTP testing)
 
 ---
 

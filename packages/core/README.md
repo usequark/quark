@@ -9,7 +9,7 @@ Shared infrastructure for the Quark platform — authentication, job queues, err
 - **Errors** — Standardized error types (`ValidationError`, `NotFoundError`, `UnauthorizedError`, etc.)
 - **Utilities** — `retryAsync`, `deepMerge`, `randomString`, `sanitizeId`, `measureTime`, `memoize`
 - **Validation** — Zod-based request body validation
-- **Redis / Mailhog** — Connection helpers for Redis and Mailhog
+- **Redis / Mail** — Connection helpers for Redis and local mail (Mailpit)
 
 ## Usage
 

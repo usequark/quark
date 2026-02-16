@@ -444,12 +444,12 @@ REDIS_PORT=6379
 # Optional: Set REDIS_URL to override the dynamic construction above
 # REDIS_URL="redis://localhost:6379"
 
-# --- Mailhog Configuration ---
-MAILHOG_HOST=localhost
-MAILHOG_SMTP_PORT=1025
-MAILHOG_UI_PORT=8025
-# Optional: Set MAILHOG_SMTP_URL to override the dynamic construction above
-# MAILHOG_SMTP_URL="smtp://localhost:1025"
+# --- Mail Configuration (Mailpit in development) ---
+MAIL_HOST=localhost
+MAIL_SMTP_PORT=1025
+MAIL_UI_PORT=8025
+# Optional: Set MAIL_SMTP_URL to override the dynamic construction above
+# MAIL_SMTP_URL="smtp://localhost:1025"
 
 # --- Application URL ---
 # In development, APP_URL is derived automatically from PORT — no need to set it.
@@ -544,9 +544,9 @@ REDIS_HOST=localhost
 REDIS_PORT=${redisPort}
 
 # --- Mail Configuration ---
-MAILHOG_HOST=localhost
-MAILHOG_SMTP_PORT=${mailSmtpPort}
-MAILHOG_UI_PORT=${mailUiPort}
+MAIL_HOST=localhost
+MAIL_SMTP_PORT=${mailSmtpPort}
+MAIL_UI_PORT=${mailUiPort}
 
 # --- NextAuth Configuration ---
 NEXTAUTH_SECRET=${nextAuthSecret}
@@ -637,7 +637,7 @@ STORAGE_PROVIDER=local
 			console.log(chalk.cyan("Next steps:"));
 			console.log(chalk.white(`  1. cd ${projectName}`));
 			console.log(chalk.white(`  2. docker compose up -d`));
-			console.log(chalk.white(`  3. pnpm --filter db db:push`));
+			console.log(chalk.white(`  3. pnpm db:migrate`));
 			console.log(chalk.white(`  4. pnpm dev\n`));
 
 			console.log(chalk.cyan("Important:"));

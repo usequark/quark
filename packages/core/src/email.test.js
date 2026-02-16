@@ -13,7 +13,7 @@ test("Email Service", async (t) => {
 	);
 
 	await t.test(
-		"SMTP provider: uses Mailhog defaults when no SMTP_HOST set",
+		"SMTP provider: uses mail defaults when no SMTP_HOST set",
 		async () => {
 			// Clear any explicit SMTP env vars
 			const origHost = process.env.SMTP_HOST;
