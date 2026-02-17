@@ -22,20 +22,6 @@ async function main() {
 			name: "Test User",
 			password,
 			image: "https://api.dicebear.com/7.x/avataaars/svg?seed=test",
-			posts: {
-				create: [
-					{
-						title: "Hello World",
-						content: "This is a seeded post. Welcome to Quark!",
-						published: true,
-					},
-					{
-						title: "Draft Post",
-						content: "This is a draft post. It is not published yet.",
-						published: false,
-					},
-				],
-			},
 		},
 	});
 

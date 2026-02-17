@@ -35,19 +35,18 @@ export const POST = withCsrfProtection(async (request) => {
 			password: hashedPassword,
 		});
 
-		// Enqueue welcome email (fire-and-forget)
+		// Don't return the password
+		const { password: _, ...safeUser } = newUser;
+
+		// Enqueue welcome email (fire-and-forget — don't block the response)
 		try {
 			const emailQueue = createQueue(JOB_QUEUES.EMAIL);
 			await emailQueue.add(JOB_NAMES.SEND_WELCOME_EMAIL, {
 				userId: newUser.id,
 			});
-		} catch (emailError) {
-			// Don't fail registration if email enqueue fails
-			console.error("Failed to enqueue welcome email:", emailError);
+		} catch {
+			// Non-critical — user is created even if email fails to enqueue
 		}
-
-		// Don't return the password
-		const { password: _, ...safeUser } = newUser;
 
 		return NextResponse.json(safeUser, { status: 201 });
 	} catch (error) {

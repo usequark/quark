@@ -23,18 +23,6 @@ export const userUpdateSchema = z.object({
 	image: z.string().url().optional(),
 });
 
-export const postCreateSchema = z.object({
-	title: z.string().min(1, "Title is required"),
-	content: z.string().optional(),
-	published: z.boolean().optional(),
-});
-
-export const postUpdateSchema = z.object({
-	title: z.string().min(1, "Title is required").optional(),
-	content: z.string().optional(),
-	published: z.boolean().optional(),
-});
-
 export const fileUploadSchema = z.object({
 	filename: z.string().min(1, "Filename is required"),
 	mimeType: z.string().min(1, "MIME type is required"),

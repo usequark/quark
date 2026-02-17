@@ -1,21 +1,13 @@
 export const config = {
-	appName: "My Quark App",
-	environment: process.env.NODE_ENV || "development",
-	api: {
-		baseUrl: process.env.API_BASE_URL || "http://localhost:3000",
-	},
-	database: {
-		url:
-			process.env.DATABASE_URL ||
-			"postgresql://user:password@localhost:5432/myapp",
-	},
-	redis: {
-		url: process.env.REDIS_URL || "redis://localhost:6379",
-	},
-	email: {
-		from: process.env.EMAIL_FROM || "noreply@myquarkapp.com",
-		provider: process.env.EMAIL_PROVIDER || "smtp",
-	},
+	appName: "Quark",
+	appDescription: "A modern monorepo with Next.js, React, and Prisma",
 };
 
-export default config;
+export { getAllowedOrigins, getAppUrl, syncNextAuthUrl } from "./app-url.js";
+export {
+	ENVIRONMENTS,
+	getEnvironmentConfig,
+	mergeConfig,
+	resolveEnvironment,
+} from "./environment.js";
+export { getConfig, loadConfig, resetConfig } from "./load-config.js";

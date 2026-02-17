@@ -191,7 +191,7 @@ await queue.add("cleanup-orphaned-files", { retentionHours: 24 });
 Database client and query helpers.
 
 ```js
-import { prisma, user, post, file } from "@techstream/quark-db";
+import { prisma, user, file } from "@techstream/quark-db";
 
 // Find user by ID
 const foundUser = await user.findById("cuid123");
@@ -201,12 +201,6 @@ const userByEmail = await user.findByEmail("test@example.com");
 
 // Create user
 const newUser = await user.create({ email: "new@example.com", name: "New User" });
-
-// Create post
-const newPost = await post.create({ title: "My Post", authorId: "cuid123" });
-
-// Get published posts
-const publishedPosts = await post.findPublished();
 
 // File queries
 const myFiles = await file.findByUploader("cuid123");

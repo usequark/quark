@@ -79,6 +79,10 @@ Quark ships infrastructure through the registry and keeps business logic local:
 - **Registry:** `@techstream/quark-core` (auth, queues, validation, errors)
 - **Local packages:** `packages/db`, `packages/ui`, `packages/jobs`, `packages/config`
 
+**Database:** Quark provides core models (User, Account, Session, VerificationToken, Job, File, AuditLog) but **does not include domain models**. You define your own: products (ecommerce), posts (CMS), contact forms (brochure sites), workspaces (SaaS), etc.
+
+📖 **See [Domain Model Examples](./docs/EXAMPLES.md)** for reference patterns (blog posts, products, contact forms, workspaces)
+
 Example usage in your app:
 
 ```javascript

@@ -1,8 +1,8 @@
 {
 	"name": "@techstream/quark-worker",
 	"version": "1.0.0",
-	"type": "module",
 	"private": true,
+	"type": "module",
 	"description": "",
 	"main": "index.js",
 	"scripts": {
@@ -18,11 +18,11 @@
 		"@techstream/quark-core": "^1.0.0",
 		"@techstream/quark-db": "workspace:*",
 		"@techstream/quark-jobs": "workspace:*",
-		"bullmq": "^5.64.1"
+		"bullmq": "^5.67.3"
 	},
 	"devDependencies": {
 		"@techstream/quark-config": "workspace:*",
-		"@types/node": "^24.10.1",
-		"tsx": "^4.20.6"
+		"@types/node": "^24.10.12",
+		"tsx": "^4.21.0"
 	}
 }

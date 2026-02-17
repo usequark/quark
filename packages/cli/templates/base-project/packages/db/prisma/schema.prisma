@@ -24,28 +24,12 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  posts         Post[]
   accounts      Account[]
   sessions      Session[]
   auditLogs     AuditLog[]
   files         File[]
 
   @@index([email])
-  @@index([createdAt])
-}
-
-model Post {
-  id        String   @id @default(cuid())
-  title     String
-  content   String?  @db.Text
-  published Boolean  @default(false)
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([authorId])
-  @@index([published])
   @@index([createdAt])
 }
 
@@ -128,7 +112,7 @@ enum JobStatus {
   CANCELLED
 }
 
-// File Model
+// File Upload Model
 model File {
   id              String   @id @default(cuid())
   filename        String

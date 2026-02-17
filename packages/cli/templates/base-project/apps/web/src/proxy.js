@@ -151,8 +151,7 @@ export function proxy(request) {
 
 	// Apply rate limiting to API routes only
 	if (pathname.startsWith("/api/")) {
-		const ip =
-			request.ip || request.headers.get("x-forwarded-for") || "unknown";
+		const ip = request.ip || "unknown";
 		const rateLimitResult = checkRateLimit(ip, pathname);
 
 		if (rateLimitResult.limited) {

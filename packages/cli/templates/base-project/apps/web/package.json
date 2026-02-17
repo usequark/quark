@@ -25,9 +25,9 @@
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {
-		"@techstream/quark-config": "workspace:*",
-		"@tailwindcss/postcss": "^4",
-		"@types/node": "^20",
-		"tailwindcss": "^4"
+		"@tailwindcss/postcss": "^4.1.18",
+		"@types/node": "^20.19.33",
+		"tailwindcss": "^4.1.18",
+		"@techstream/quark-config": "workspace:*"
 	}
 }

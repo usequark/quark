@@ -5,6 +5,8 @@ Entry point: [../README.md](../README.md)
 | Document | Purpose |
 |----------|---------|
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Core-Only Registry model, distribution philosophy |
+| [DATABASE.md](./DATABASE.md) | Database schema, models, query helpers, best practices |
+| [EXAMPLES.md](./EXAMPLES.md) | Domain model examples (blog posts, products, contacts, teams) |
 | [API.md](./API.md) | REST endpoint reference |
 | [SECURITY.md](./SECURITY.md) | Security features, checklists, incident response |
 | [QUARK_USAGE.md](./QUARK_USAGE.md) | Full usage guide (dev, CLI, updates) |

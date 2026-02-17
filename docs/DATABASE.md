@@ -10,11 +10,10 @@
 
 | Models | Enums | Relations | Indexes |
 |--------|-------|-----------|---------|
-| 8 | 1 | 5 | 24 |
+| 7 | 1 | 4 | 20 |
 
 ```
-User ─┬── Post       (1:many, cascade delete)
-      ├── Account    (1:many, cascade delete)
+User ─┬── Account    (1:many, cascade delete)
       ├── Session    (1:many, cascade delete)
       ├── AuditLog   (1:many, cascade delete)
       └── File       (1:many, set null on delete)
@@ -48,33 +47,10 @@ The central identity model. Used by NextAuth for authentication and by the appli
 **Security:** The `password` field is **never** returned to clients. All query helpers use `USER_SAFE_SELECT` which explicitly excludes it. Only `user.findByEmail()` returns the full record (for internal auth use only).
 
 **Relations:**
-- `posts` → `Post[]`
 - `accounts` → `Account[]` (OAuth providers)
 - `sessions` → `Session[]`
 - `auditLogs` → `AuditLog[]`
 - `files` → `File[]`
-
----
-
-### Post
-
-Blog post content authored by a user.
-
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| `id` | `String` | PK, CUID | — |
-| `title` | `String` | Required | Post title |
-| `content` | `String?` | `@db.Text` | Full post body (unlimited length) |
-| `published` | `Boolean` | Default: `false` | Draft vs. published |
-| `authorId` | `String` | FK → User | — |
-| `createdAt` | `DateTime` | Default: `now()` | — |
-| `updatedAt` | `DateTime` | `@updatedAt` | — |
-
-**Indexes:** `authorId`, `published`, `createdAt`
-
-**Cascade:** Deleting a user deletes all their posts.
-
-**Query helpers:** `post.findById()`, `post.findAll()`, `post.findPublished()`, `post.findByAuthor()`, `post.create()`, `post.update()`, `post.delete()`. All include `author` with safe-select (no password).
 
 ---
 
@@ -221,12 +197,13 @@ Immutable audit trail for user actions. Append-only — no update or delete quer
 
 | Migration | Date | Description |
 |-----------|------|-------------|
-| `0_init` | Initial | Base schema: User, Post, Account, Session, VerificationToken |
+| `0_init` | Initial | Base schema: User, Account, Session, VerificationToken |
 | `20260214_add_jobs_*` | 2026-02-14 | Add Job model with JobStatus enum |
 | `20260214_add_files_*` | 2026-02-14 | Add File model |
 | `20260214_add_audit_log_*` | 2026-02-14 | Add AuditLog model |
 | `20260215_add_account_timestamps` | 2026-02-15 | Add createdAt/updatedAt to Account |
 | `20260215_add_indexes` | 2026-02-15 | Add expires index on Session/VerificationToken, compound index on Job |
+| `20260218_remove_post` | 2026-02-18 | Remove Post model — use domain-specific models per project |
 
 ---
 
@@ -235,11 +212,12 @@ Immutable audit trail for user actions. Append-only — no update or delete quer
 ### Extending the Schema
 
 1. Add the model to `packages/db/prisma/schema.prisma`
-2. Mirror changes in `packages/cli/templates/base-project/packages/db/prisma/schema.prisma`
-3. Create a migration: `pnpm db:migrate --name describe_change`
-4. Add query helpers in `packages/db/src/queries.js`
-5. Always include `createdAt`/`updatedAt` on new models
-6. Add appropriate indexes for query patterns
+2. Create a migration: `pnpm db:migrate --name describe_change`
+3. Add query helpers in `packages/db/src/queries.js`
+4. Always include `createdAt`/`updatedAt` on new models
+5. Add appropriate indexes for query patterns
+6. Run `pnpm --filter @techstream/quark-create-app sync-templates` to update scaffold templates
+7. If the schema changed, regenerate the template's initial migration
 
 ### Query Patterns
 

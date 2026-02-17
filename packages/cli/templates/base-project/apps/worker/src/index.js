@@ -17,6 +17,7 @@ const logger = createLogger("worker");
 
 // Store workers for graceful shutdown
 const workers = [];
+let isShuttingDown = false;
 
 /**
  * Generic queue processor — dispatches jobs to registered handlers
@@ -113,15 +114,31 @@ async function startWorker() {
 /**
  * Graceful shutdown handler
  */
-async function shutdown() {
-	logger.info("Shutting down worker service");
+async function shutdown(signal = "unknown") {
+	if (isShuttingDown) {
+		logger.warn("Shutdown already in progress", { signal });
+		return;
+	}
+
+	isShuttingDown = true;
+	logger.info("Shutting down worker service", { signal });
 
 	try {
 		for (const worker of workers) {
 			await worker.close();
 		}
 
-		await prisma.$disconnect();
+		try {
+			await prisma.$disconnect();
+		} catch (error) {
+			if (error.message?.includes("environment variable is required")) {
+				logger.warn("Skipping Prisma disconnect due missing database env", {
+					error: error.message,
+				});
+			} else {
+				throw error;
+			}
+		}
 
 		logger.info("All workers closed");
 		process.exit(0);
@@ -134,14 +151,11 @@ async function shutdown() {
 	}
 }
 
-process.on("SIGTERM", shutdown);
-process.on("SIGINT", shutdown);
+process.on("SIGTERM", () => {
+	void shutdown("SIGTERM");
+});
+process.on("SIGINT", () => {
+	void shutdown("SIGINT");
+});
 
-startWorker();
-
-// Register shutdown handlers
-process.on("SIGTERM", shutdown);
-process.on("SIGINT", shutdown);
-
-// Start the worker service
 startWorker();

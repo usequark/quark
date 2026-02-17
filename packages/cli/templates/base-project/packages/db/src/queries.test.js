@@ -7,10 +7,6 @@ const _mockPrisma = {
 		findUnique: async (params) => params,
 		create: async (params) => params,
 	},
-	post: {
-		create: async (params) => params,
-		findMany: async (params) => params,
-	},
 };
 
 // Mock module for queries
@@ -30,15 +26,6 @@ const mockQueries = {
 			id: "1",
 			...data,
 		}),
-	},
-	post: {
-		create: async (data) => ({
-			id: "1",
-			...data,
-		}),
-		findPublished: async () => [
-			{ id: "1", title: "Published", published: true },
-		],
 	},
 };
 
@@ -60,20 +47,4 @@ test("User Queries - create calls prisma with correct params", async () => {
 	});
 	assert.strictEqual(result.email, "new@example.com");
 	assert.strictEqual(result.name, "New User");
-});
-
-test("Post Queries - create calls prisma with correct params", async () => {
-	const result = await mockQueries.post.create({
-		title: "Test Post",
-		authorId: "1",
-	});
-	assert.strictEqual(result.title, "Test Post");
-	assert.strictEqual(result.authorId, "1");
-});
-
-test("Post Queries - findPublished returns only published posts", async () => {
-	const result = await mockQueries.post.findPublished();
-	assert.ok(Array.isArray(result));
-	assert.strictEqual(result.length, 1);
-	assert.strictEqual(result[0].published, true);
 });

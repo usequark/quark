@@ -2,9 +2,8 @@
  * Test data factories for creating realistic test objects with sensible defaults.
  *
  * Usage:
- *   import { createTestUser, createTestPost, createTestSession } from "@techstream/quark-core/testing";
+ *   import { createTestUser, createTestSession } from "@techstream/quark-core/testing";
  *   const user = createTestUser({ name: "Custom Name" });
- *   const post = createTestPost({ authorId: user.id, published: true });
  *   const session = createTestSession({ user: { role: "admin" } });
  *
  * @module testing/factories
@@ -44,28 +43,6 @@ export function createTestUser(overrides = {}) {
 }
 
 /**
- * Create a test Post object matching the Prisma Post model shape.
- *
- * @param {Object} [overrides={}]
- * @returns {Object}
- *
- * @example
- * const post = createTestPost({ title: "My Post", published: true });
- */
-export function createTestPost(overrides = {}) {
-	return {
-		id: overrides.id || `post_${randomId()}`,
-		title: overrides.title || "Test Post",
-		content: overrides.content || "Test content",
-		published: overrides.published ?? false,
-		authorId: overrides.authorId || `user_${randomId()}`,
-		createdAt: overrides.createdAt || new Date(),
-		updatedAt: overrides.updatedAt || new Date(),
-		...overrides,
-	};
-}
-
-/**
  * Create a test session object compatible with NextAuth session shape.
  * Optionally pass user overrides to customize the embedded user.
  *
@@ -88,6 +65,25 @@ export function createTestSession(overrides = {}) {
 		expires:
 			overrides.expires ||
 			new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+		...overrides,
+	};
+}
+
+/**
+ * Create a test Post object with realistic defaults.
+ *
+ * @param {Object} [overrides={}]
+ * @returns {Object}
+ */
+export function createTestPost(overrides = {}) {
+	return {
+		id: overrides.id || `post_${randomId()}`,
+		title: overrides.title || "Test Post",
+		content: overrides.content || "Test content",
+		published: overrides.published ?? false,
+		authorId: overrides.authorId || `user_${randomId()}`,
+		createdAt: overrides.createdAt || new Date(),
+		updatedAt: overrides.updatedAt || new Date(),
 		...overrides,
 	};
 }

@@ -2,7 +2,7 @@
 	"name": "@myquark/jobs",
 	"version": "1.0.0",
 	"type": "module",
-	"exports": {
-		".": "./src/index.js"
+	"dependencies": {
+		"bullmq": "^5.67.3"
 	}
 }

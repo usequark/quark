@@ -178,3 +178,18 @@ quark/
 | `pnpm db:generate` | Generate Prisma client |
 | `pnpm db:studio` | Open Prisma Studio |
 | `pnpm changeset` | Create a new changeset (interactive) |
+| `pnpm --filter @techstream/quark-create-app sync-templates` | Sync CLI scaffold templates from monorepo source |
+| `pnpm --filter @techstream/quark-create-app sync-templates:check` | Check for template drift without modifying files |
+
+## Template Sync
+
+CLI scaffold templates (`packages/cli/templates/`) are **generated from monorepo source**, not manually maintained. This prevents drift between the monorepo reference implementation and what new projects receive.
+
+**How it works:**
+- `packages/cli/scripts/sync-templates.js` copies files from monorepo → templates, applying exclusions and transforms
+- CI runs a template-drift check on every push/PR — fails if templates are stale
+- Template-only files (generation templates with `__PLACEHOLDER__` variables, scaffold README, `.gitignore`) are preserved and never overwritten
+
+**When to sync:** After changing any file in `apps/web/`, `apps/worker/`, `packages/db/`, `packages/config/`, `packages/ui/`, `packages/jobs/`, or root config files (`turbo.json`, `docker-compose.yml`, `pnpm-workspace.yaml`).
+
+**What's excluded from sync:** `.next/`, `node_modules/`, `coverage/`, Prisma generated code (`src/generated/`), monorepo-only files (metrics, SEO, redis proxy, integration tests), and DB migrations (template maintains its own squashed initial migration).

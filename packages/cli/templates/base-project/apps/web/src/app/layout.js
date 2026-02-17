@@ -1,7 +1,6 @@
-export const metadata = {
-	title: "Quark",
-	description: "A modern monorepo with Next.js, React, and Prisma",
-};
+import { getSiteMetadata } from "../lib/seo/site-metadata.js";
+
+export const metadata = getSiteMetadata();
 
 export default function RootLayout({ children }) {
 	return (
