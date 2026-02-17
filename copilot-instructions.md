@@ -7,7 +7,7 @@
 # Install dependencies
 pnpm install
 
-# Start infrastructure (PostgreSQL, Redis, Mailhog)
+# Start infrastructure (PostgreSQL, Redis, Mailpit)
 docker compose up -d
 
 # Generate Prisma client
