@@ -8,6 +8,7 @@ jobs:
   changeset-check:
     name: Changeset Status
     runs-on: ubuntu-latest
+    if: github.actor != 'dependabot[bot]'
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -25,6 +26,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Fetch main branch
+        run: git fetch origin main --depth=1
 
       - name: Check for changesets
         run: pnpm changeset status
