@@ -22,11 +22,26 @@ const envSchema = {
 	REDIS_HOST: { required: false, description: "Redis host" },
 	REDIS_PORT: { required: false, description: "Redis port" },
 
-	// Mail (local SMTP server)
+	// Mail (local SMTP — Mailpit in dev)
 	MAIL_SMTP_URL: { required: false, description: "Mail SMTP URL" },
 	MAIL_HOST: { required: false, description: "Mail host" },
 	MAIL_SMTP_PORT: { required: false, description: "Mail SMTP port" },
 	MAIL_UI_PORT: { required: false, description: "Mail UI port" },
+
+	// Production SMTP (used when SMTP_HOST is set)
+	SMTP_HOST: { required: false, description: "Production SMTP host" },
+	SMTP_PORT: { required: false, description: "Production SMTP port" },
+	SMTP_SECURE: { required: false, description: "Use TLS for SMTP" },
+	SMTP_USER: { required: false, description: "SMTP username" },
+	SMTP_PASSWORD: { required: false, description: "SMTP password" },
+
+	// Email provider
+	EMAIL_PROVIDER: {
+		required: false,
+		description: 'Email provider — "smtp" (default) or "resend"',
+	},
+	EMAIL_FROM: { required: false, description: "Sender email address" },
+	RESEND_API_KEY: { required: false, description: "Resend API key" },
 
 	// NextAuth
 	NEXTAUTH_SECRET: {
@@ -47,9 +62,25 @@ const envSchema = {
 	},
 	NODE_ENV: {
 		required: false,
-		description: "Environment (development, test, production)",
+		description: "Environment (development, test, staging, production)",
 	},
 	PORT: { required: false, description: "Web server port" },
+
+	// Storage
+	STORAGE_PROVIDER: {
+		required: false,
+		description: 'Storage provider — "local" (default) or "s3"',
+	},
+	STORAGE_LOCAL_DIR: {
+		required: false,
+		description: "Local storage directory",
+	},
+	S3_BUCKET: { required: false, description: "S3 bucket name" },
+	S3_REGION: { required: false, description: "S3 region" },
+	S3_ENDPOINT: { required: false, description: "S3-compatible endpoint URL" },
+	S3_ACCESS_KEY_ID: { required: false, description: "S3 access key" },
+	S3_SECRET_ACCESS_KEY: { required: false, description: "S3 secret key" },
+	S3_PUBLIC_URL: { required: false, description: "S3 public URL prefix" },
 };
 
 /**
@@ -79,6 +110,26 @@ export function validateEnv() {
 		if (value) {
 			validated[key] = value;
 		}
+	}
+
+	// Conditional: S3 storage requires bucket + credentials
+	if (process.env.STORAGE_PROVIDER === "s3") {
+		for (const key of [
+			"S3_BUCKET",
+			"S3_ACCESS_KEY_ID",
+			"S3_SECRET_ACCESS_KEY",
+		]) {
+			if (!process.env[key]) {
+				errors.push(
+					`Missing ${key} — required when STORAGE_PROVIDER=s3 (${envSchema[key].description})`,
+				);
+			}
+		}
+	}
+
+	// Conditional: Resend provider requires API key
+	if (process.env.EMAIL_PROVIDER === "resend" && !process.env.RESEND_API_KEY) {
+		errors.push("Missing RESEND_API_KEY — required when EMAIL_PROVIDER=resend");
 	}
 
 	if (errors.length > 0) {

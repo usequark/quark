@@ -91,8 +91,6 @@ const EXCLUDE_PATTERNS = [
 
 	// DB: migrations are template-managed (single squashed initial migration)
 	/^packages\/db\/prisma\/migrations\//,
-	// DB: dotenv is a monorepo dev dependency for seed.js path resolution
-	// (template seed.js uses direct PrismaClient import instead)
 
 	// Config: test files and coverage (config tests are monorepo-specific)
 	/^packages\/config\/coverage\//,
@@ -109,12 +107,21 @@ const TEMPLATE_ONLY = new Set([
 	"base-project/.github/skills/project-context/SKILL.md",
 	// Template-specific copilot instructions
 	"base-project/.github/copilot-instructions.md",
+	// GitHub CI/CD workflows — scaffolded projects have their own pipelines
+	"base-project/.github/workflows/ci.yml",
+	"base-project/.github/workflows/release.yml",
+	"base-project/.github/workflows/dependabot-auto-merge.yml",
+	// Dependabot config — scaffolded projects have a simpler version
+	"base-project/.github/dependabot.yml",
 	// Scaffold starter README (different from monorepo README)
 	"base-project/README.md",
 	// Template .gitignore (includes .env, .next, etc.)
 	"base-project/.gitignore",
 	// Root package.json with @myquark scope placeholder
 	"base-project/package.json",
+	// Biome config — template has Tailwind CSS support and scoped file includes
+	"base-project/biome.json",
+	"base-project/apps/web/biome.json",
 	// Migrations: template maintains its own squashed initial migration
 	"base-project/packages/db/prisma/migrations",
 ]);
@@ -133,11 +140,8 @@ const TRANSFORMS = {
 	// Apps: adjust dependency references for scaffold context
 	"base-project/apps/web/package.json": transformWebPackageJson,
 	"base-project/apps/worker/package.json": transformWorkerPackageJson,
-	// DB: remove private flag, adjust for scaffold context
+	// DB: remove private flag for scaffold context
 	"base-project/packages/db/package.json": transformDbPackageJson,
-	// DB: seed.js uses direct PrismaClient import in templates
-	// (no dotenv needed — prisma.config.ts handles env loading)
-	"base-project/packages/db/scripts/seed.js": transformSeedJs,
 	// DB: prisma.config.ts uses simple defaults for new projects
 	"base-project/packages/db/prisma.config.ts": transformPrismaConfig,
 	// Optional packages: use @myquark placeholder scope
@@ -187,58 +191,7 @@ function transformDbPackageJson(content) {
 	// Remove private flag — scaffolded packages use custom scope
 	delete pkg.private;
 
-	// dotenv is a monorepo concern (seed.js in template uses direct import)
-	if (pkg.dependencies?.dotenv) {
-		delete pkg.dependencies.dotenv;
-	}
-
 	return `${JSON.stringify(pkg, null, "\t")}\n`;
-}
-
-function transformSeedJs(content) {
-	// Template seed.js uses direct PrismaClient import instead of the monorepo's
-	// dotenv + dynamic import pattern (simpler for new projects).
-	const lines = content.split("\n");
-	const transformed = [];
-	let skipImportBlock = false;
-
-	for (const line of lines) {
-		// Replace dotenv/dynamic import block with direct PrismaClient import
-		if (
-			line.includes("import { resolve }") ||
-			line.includes("import { config }") ||
-			line.includes('from "dotenv"')
-		) {
-			skipImportBlock = true;
-			continue;
-		}
-		if (line.includes("config({ path:") || line.includes("// Load .env")) {
-			skipImportBlock = true;
-			continue;
-		}
-		if (line.includes("// Import after env")) {
-			continue;
-		}
-		if (line.includes("await import(")) {
-			// Replace dynamic import with direct PrismaClient import
-			transformed.unshift(
-				'import { PrismaClient } from "../src/generated/prisma/client.js";',
-			);
-			transformed.push("");
-			transformed.push("const prisma = new PrismaClient();");
-			continue;
-		}
-
-		if (skipImportBlock && line.trim() === "") {
-			skipImportBlock = false;
-			continue;
-		}
-		skipImportBlock = false;
-
-		transformed.push(line);
-	}
-
-	return transformed.join("\n");
 }
 
 function transformPrismaConfig(content) {

@@ -1,0 +1,38 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      notes:
+        description: "Release notes (optional — auto-generated if blank)"
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Tag & Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate date-based tag
+        id: tag
+        run: |
+          BASE="v$(date +%Y.%m.%d)"
+          EXISTING=$(git tag -l "${BASE}*" | wc -l | tr -d ' ')
+          if [ "$EXISTING" -eq "0" ]; then
+            echo "tag=${BASE}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${BASE}.${EXISTING}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          generate_release_notes: ${{ github.event.inputs.notes == '' }}
+          body: ${{ github.event.inputs.notes }}

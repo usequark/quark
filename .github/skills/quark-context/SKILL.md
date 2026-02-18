@@ -122,6 +122,52 @@ Bump types: `patch` (bug fixes), `minor` (new features), `major` (breaking chang
 | `GITHUB_TOKEN` | Automatic — used by changesets/action for PRs |
 | `NPM_PUBLISH_TOKEN` | npm publish authentication |
 
+### 4. Dependabot Auto-merge (`dependabot-auto-merge.yml`) — runs on PRs
+
+Automatically squash-merges Dependabot PRs that are **patch** updates once CI passes. Minor and major updates require manual review.
+
+**Prerequisites:** Requires "Allow auto-merge" enabled in repo settings AND branch protection rules with required status checks on `main`. Without branch protection, `gh pr merge --auto` won't wait for CI.
+
+### 5. Dependabot (`dependabot.yml`)
+
+Grouped weekly dependency updates (Monday) for both npm and GitHub Actions ecosystems. Production and development dependencies are grouped separately to keep PRs focused.
+
+## Scaffolded Project CI/CD
+
+Scaffolded projects (created by `quark-create-app`) receive their own GitHub Actions workflows, separate from the Quark monorepo's Changesets-based release pipeline.
+
+### Scaffolded Workflows
+
+| Workflow | Trigger | Purpose |
+|---|---|---|
+| `ci.yml` | Push to `main`, PRs | Lint + Test (Postgres/Redis services) + Build |
+| `release.yml` | `workflow_dispatch` (manual) | Creates a date-based tag + GitHub Release |
+| `dependabot-auto-merge.yml` | PRs from Dependabot | Auto-merge passing patch updates |
+
+### Scaffolded Release Workflow — Developer Steps
+
+```
+1. Work on a feature branch, open PR
+2. CI runs lint + test + build automatically
+3. Merge PR to main
+4. Railway staging auto-deploys (triggered by push to main)
+5. When ready for production:
+   → GitHub Actions → Release → "Run workflow" (or: gh workflow run release.yml)
+   → Creates date-based tag (v2026.02.18) + GitHub Release
+   → Railway production deploys from the new tag
+```
+
+### Railway Deployment Model
+
+Scaffolded projects are designed for Railway with two services:
+
+| Railway Service | Start Command | Deploy Trigger |
+|---|---|---|
+| **web** | `node apps/web/.next/standalone/server.js` | Push to `main` (staging) or tag (production) |
+| **worker** | `node apps/worker/src/index.js` | Push to `main` (staging) or tag (production) |
+
+Railway-managed services: PostgreSQL, Redis. Environment variables (`DATABASE_URL`, `REDIS_URL`) are auto-injected by Railway.
+
 ## Workspace Structure
 
 ```
@@ -188,7 +234,7 @@ CLI scaffold templates (`packages/cli/templates/`) are **generated from monorepo
 **How it works:**
 - `packages/cli/scripts/sync-templates.js` copies files from monorepo → templates, applying exclusions and transforms
 - CI runs a template-drift check on every push/PR — fails if templates are stale
-- Template-only files (generation templates with `__PLACEHOLDER__` variables, scaffold README, `.gitignore`) are preserved and never overwritten
+- Template-only files (generation templates with `__PLACEHOLDER__` variables, scaffold README, `.gitignore`, GitHub workflows, dependabot config) are preserved and never overwritten
 
 **When to sync:** After changing any file in `apps/web/`, `apps/worker/`, `packages/db/`, `packages/config/`, `packages/ui/`, `packages/jobs/`, or root config files (`turbo.json`, `docker-compose.yml`, `pnpm-workspace.yaml`).
 

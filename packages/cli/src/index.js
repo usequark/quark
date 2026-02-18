@@ -474,7 +474,11 @@ program
 
 			// Step 8: Create .env.example file
 			console.log(chalk.cyan("\n  📋 Creating environment configuration..."));
-			const envExampleTemplate = `# --- Database Configuration ---
+			const envExampleTemplate = `# --- Environment ---
+# Supported: development, test, staging, production (default: development)
+# NODE_ENV=development
+
+# --- Database Configuration ---
 # These map to the service names in docker-compose.yml
 # ⚠️  SECURITY WARNING: Change these default passwords in production!
 # Generate strong passwords with: openssl rand -base64 32
@@ -492,12 +496,29 @@ REDIS_PORT=6379
 # Optional: Set REDIS_URL to override the dynamic construction above
 # REDIS_URL="redis://localhost:6379"
 
-# --- Mail Configuration (Mailpit in development) ---
+# --- Mail Configuration ---
+# Development: Mailpit local SMTP (defaults below work with docker-compose)
 MAIL_HOST=localhost
 MAIL_SMTP_PORT=1025
 MAIL_UI_PORT=8025
 # Optional: Set MAIL_SMTP_URL to override the dynamic construction above
 # MAIL_SMTP_URL="smtp://localhost:1025"
+
+# Production SMTP: Set these instead of MAIL_* when using a real SMTP relay
+# SMTP_HOST=smtp.example.com
+# SMTP_PORT=587
+# SMTP_SECURE=true
+# SMTP_USER=your_smtp_user
+# SMTP_PASSWORD=your_smtp_password
+
+# --- Email Provider ---
+# Provider: "smtp" (default) or "resend"
+# EMAIL_PROVIDER=smtp
+# EMAIL_FROM=App Name <noreply@yourdomain.com>
+
+# Resend (only when EMAIL_PROVIDER=resend)
+# Get your API key at: https://resend.com/api-keys
+# RESEND_API_KEY=re_xxxxxxxxxxxxx
 
 # --- Application URL ---
 # In development, APP_URL is derived automatically from PORT — no need to set it.
@@ -524,23 +545,36 @@ PORT=3000
 # --- Worker Configuration ---
 WORKER_CONCURRENCY=5
 
-# --- File Storage Configuration ---
-# Storage provider: "local" (default) or "s3" (S3-compatible, e.g. Cloudflare R2)
+# --- File Storage ---
+# Provider: "local" (default) or "s3" (S3-compatible: AWS S3, Cloudflare R2, MinIO)
 STORAGE_PROVIDER=local
-# Local storage directory (only used when STORAGE_PROVIDER=local)
+# Local storage directory (only when STORAGE_PROVIDER=local)
 # STORAGE_LOCAL_DIR=./uploads
 
-# S3 / Cloudflare R2 Configuration (only used when STORAGE_PROVIDER=s3)
+# S3 / Cloudflare R2 (only when STORAGE_PROVIDER=s3)
 # S3_BUCKET=your-bucket-name
-# S3_REGION=auto
+# S3_REGION=auto                  # Use "auto" for Cloudflare R2
 # S3_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
 # S3_ACCESS_KEY_ID=your-access-key
 # S3_SECRET_ACCESS_KEY=your-secret-key
 # S3_PUBLIC_URL=https://your-public-bucket-domain.com
 
 # --- Upload Limits ---
-# UPLOAD_MAX_SIZE=10485760
+# UPLOAD_MAX_SIZE=10485760   # Max file size in bytes (default: 10MB)
 # UPLOAD_ALLOWED_TYPES=image/jpeg,image/png,image/gif,image/webp,image/avif,image/svg+xml,application/pdf
+
+# --- Rate Limiting & Security ---
+# RATE_LIMIT_MAX=100           # Max requests per window (default: 1000 dev, 100 prod)
+# RATE_LIMIT_WINDOW_MS=900000  # Window in ms (default: 15 minutes)
+# API_BODY_SIZE_LIMIT=2097152  # 2MB (default)
+# UPLOAD_SIZE_LIMIT=10485760   # 10MB proxy-level limit (default)
+
+# --- Logging & Cache ---
+# LOG_LEVEL=debug              # debug, info, warn, error (default: debug dev, info prod)
+# CACHE_TTL=60                 # Default cache TTL in seconds (default: 60 dev, 600 prod)
+
+# --- Database Seeding ---
+# SEED_PROFILE=dev             # Options: dev (default, includes audit logs + sample job), minimal (users only)
 `;
 			await fs.writeFile(
 				path.join(targetDir, ".env.example"),
@@ -609,6 +643,9 @@ WORKER_CONCURRENCY=5
 
 # --- File Storage ---
 STORAGE_PROVIDER=local
+
+# --- Database Seeding ---
+# SEED_PROFILE=dev             # Options: dev (default), minimal (users only — use for production initial seed)
 `;
 			await fs.writeFile(path.join(targetDir, ".env"), envContent);
 			console.log(
@@ -725,7 +762,13 @@ STORAGE_PROVIDER=local
 			console.log(chalk.white(`  1. cd ${projectName}`));
 			console.log(chalk.white(`  2. docker compose up -d`));
 			console.log(chalk.white(`  3. pnpm db:migrate`));
-			console.log(chalk.white(`  4. pnpm dev\n`));
+			console.log(chalk.white(`  4. pnpm db:seed`));
+			console.log(chalk.white(`  5. pnpm dev\n`));
+			console.log(
+				chalk.dim(
+					`  Tip: set SEED_PROFILE=minimal in .env for a lean seed (admin user only)\n`,
+				),
+			);
 
 			console.log(chalk.cyan("Important:"));
 			console.log(
