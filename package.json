@@ -65,7 +65,8 @@
 		"pre-push": "pnpm test"
 	},
 	"nano-staged": {
-		"*.{js,mjs,ts,tsx,json,css}": [
+		"packages/cli/templates/**": [],
+		"**/*.{js,mjs,ts,tsx,json,css}": [
 			"biome format --write",
 			"biome check --write"
 		]

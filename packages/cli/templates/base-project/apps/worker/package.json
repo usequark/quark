@@ -18,11 +18,11 @@
 		"@techstream/quark-core": "^1.0.0",
 		"@techstream/quark-db": "workspace:*",
 		"@techstream/quark-jobs": "workspace:*",
-		"bullmq": "^5.67.3"
+		"bullmq": "^5.69.3"
 	},
 	"devDependencies": {
 		"@techstream/quark-config": "workspace:*",
-		"@types/node": "^24.10.12",
+		"@types/node": "^25.2.3",
 		"tsx": "^4.21.0"
 	}
 }
