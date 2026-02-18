@@ -37,9 +37,16 @@ async function seedUsers() {
 
 	const seeded = [];
 	for (const userData of users) {
-		const hashed = await bcrypt.hash(userData.password, 12);
+		// Skip hashing if the user already exists — upsert update:{} won't use it anyway.
+		const existing = await prisma.user.findUnique({
+			where: { email: userData.email },
+		});
+		const hashed =
+			existing?.password ?? (await bcrypt.hash(userData.password, 12));
 		const user = await prisma.user.upsert({
 			where: { email: userData.email },
+			// update:{} intentionally leaves existing users unchanged on re-seed.
+			// To reset a user's password or role, delete the row first or update the create block.
 			update: {},
 			create: {
 				email: userData.email,
@@ -58,7 +65,11 @@ async function seedUsers() {
 async function seedDevData(users) {
 	// Audit logs — representative actions per user
 	const actions = ["user.login", "user.update", "file.upload"];
-	await prisma.auditLog.deleteMany({ where: { action: { in: actions } } });
+	const userIds = users.map((u) => u.id);
+	// Scoped to seeded user IDs so real audit entries in a shared dev DB are not wiped.
+	await prisma.auditLog.deleteMany({
+		where: { userId: { in: userIds }, action: { in: actions } },
+	});
 	for (const user of users) {
 		for (const action of actions) {
 			await prisma.auditLog.create({
@@ -68,7 +79,7 @@ async function seedDevData(users) {
 					entity: "User",
 					entityId: user.id,
 					metadata: {
-						ip: faker.internet.ipv4(),
+						ip: faker.internet.ip(),
 						userAgent: faker.internet.userAgent(),
 					},
 				},
