@@ -516,6 +516,92 @@ cd apps/web
 pnpm test
 ```
 
+## Testing Strategy
+
+Quark includes a comprehensive E2E testing approach to validate the entire project creation and startup workflow.
+
+### CLI Testing Levels
+
+**1. Unit Tests** — Template and scaffold validation
+```bash
+pnpm test
+```
+Fast validation (~5 seconds) that templates are valid and dependencies are correct.
+
+**2. E2E Scaffolding Test** — Full project creation
+```bash
+pnpm test:e2e
+```
+Validates project scaffolding process (file creation, replacements, structure).
+
+**3. Full Lifecycle Test** — Create → Install → Deploy → Startup (Optional)
+```bash
+pnpm test:e2e:full
+```
+Runs the complete workflow:
+- Phase 1: Create project with `--no-prompts` flag
+- Phase 2: Verify project structure
+- Phase 3: Start Docker services (PostgreSQL, Redis, Mailpit)
+- Phase 4: Run database migrations
+- Phase 5: Seed database
+- Phase 6: Start the application
+- Phase 7: Verify application health
+
+Takes ~40 seconds, requires Docker and available system resources.
+
+### Running Tests Locally
+
+```bash
+# Quick validation
+pnpm test
+
+# Scaffolding only
+pnpm test:e2e
+
+# Full lifecycle (requires Docker)
+pnpm test:e2e:full
+
+# With build verification
+QUARK_CLI_BUILD_TEST=1 pnpm test:build
+```
+
+### CI/CD Integration
+
+For continuous integration pipelines:
+
+```yaml
+# Example: GitHub Actions
+- name: Test CLI Creation
+  run: |
+    cd packages/cli
+    pnpm test              # Always fast unit tests
+    pnpm test:e2e          # Scaffolding validation
+    # pnpm test:e2e:full   # Optional: full lifecycle (slow, needs Docker)
+```
+
+### Non-Interactive Testing
+
+All tests use the `--no-prompts` flag to run without user input:
+
+```javascript
+// test-e2e-full.js
+await execute(`${cliPath} ${projectName} --no-prompts --features ui,jobs`, {
+  cwd: E2E_TEST_DIR,
+  timeout: 60000,
+});
+```
+
+This enables:
+- Automated CI/CD pipelines
+- Reliable test results without user interaction
+- Validation of default feature selection
+- End-to-end verification of project templates
+
+For manual testing with prompts, simply run without the flags:
+```bash
+npx @techstream/quark-create-app my-test-app
+```
+
 ## The Future
 
 As your app grows:

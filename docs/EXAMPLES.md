@@ -6,6 +6,90 @@ This document provides reference patterns for common Quark use cases.
 
 ---
 
+## Getting Started: Non-Interactive Project Creation
+
+For development, CI/CD pipelines, or testing, you can create projects without interactive prompts:
+
+### Basic Non-Interactive Setup
+
+```bash
+# Create project with defaults (includes ui, jobs packages)
+npx @techstream/quark-create-app my-app --no-prompts
+
+# Navigate and set up
+cd my-app
+docker compose up -d
+pnpm db:migrate
+pnpm dev
+```
+
+### Automated Full Startup
+
+```bash
+# Create, install, and start everything
+npx @techstream/quark-create-app my-app --no-prompts && \
+cd my-app && \
+docker compose up -d && \
+pnpm db:migrate && \
+pnpm dev
+```
+
+### Custom Feature Selection
+
+```bash
+# Create with only UI package (no jobs)
+npx @techstream/quark-create-app my-app --no-prompts --features ui
+
+# Create with only Jobs package (no UI)
+npx @techstream/quark-create-app my-app --no-prompts --features jobs
+
+# Minimal setup (no optional packages)
+npx @techstream/quark-create-app my-app --no-prompts --features ""
+```
+
+### CI/CD Pipeline Example
+
+```bash
+#!/bin/bash
+# Create project without installation (install separately in CI)
+npx @techstream/quark-create-app my-app \
+  --no-prompts \
+  --features ui,jobs \
+  --skip-install
+
+cd my-app
+pnpm install          # Separate dependency installation
+pnpm lint             # Run linters
+pnpm test             # Run tests
+docker compose up -d  # Start services
+pnpm db:migrate       # Apply migrations
+pnpm db:seed          # Optional: seed database
+```
+
+### Troubleshooting Non-Interactive Mode
+
+If features don't install correctly:
+
+```bash
+# Verify feature names - valid options: ui, jobs
+npx @techstream/quark-create-app my-app --no-prompts --features ui,jobs
+
+# Check that paths are created
+ls -la my-app/packages/
+
+# Manually install if needed
+cd my-app
+pnpm install
+```
+
+For interactive mode with prompts, simply omit the `--no-prompts` flag:
+
+```bash
+npx @techstream/quark-create-app my-app
+```
+
+---
+
 ## Pattern: Generic User-Generated Content
 
 **Best for:** Blogs, CMS platforms, review sites, Q&A forums

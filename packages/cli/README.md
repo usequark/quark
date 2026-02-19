@@ -42,6 +42,67 @@ Aliases:
 - `create-quark-app`
 - `quark-update`
 
+## Usage with Flags
+
+The CLI supports non-interactive mode with custom options for automation and CI/CD workflows.
+
+### Non-Interactive Mode
+
+Skip all interactive prompts and use defaults:
+
+```bash
+# Create project without prompts
+npx @techstream/quark-create-app my-app --no-prompts
+```
+
+### Custom Features
+
+Specify which optional packages to include (default: `ui,jobs`):
+
+```bash
+# Only include UI package
+npx @techstream/quark-create-app my-app --no-prompts --features ui
+
+# Include both UI and Jobs
+npx @techstream/quark-create-app my-app --no-prompts --features ui,jobs
+
+# Minimal setup (no optional packages)
+npx @techstream/quark-create-app my-app --no-prompts --features ""
+```
+
+### Skip Installation Steps
+
+Create the project structure without running package installation:
+
+```bash
+# Create project but skip pnpm install
+npx @techstream/quark-create-app my-app --no-prompts --skip-install
+
+# Useful for CI/CD where you'll install dependencies separately
+```
+
+### Docker Cleanup
+
+Control whether to remove Docker volumes from previous cleanup:
+
+```bash
+# Keep Docker working directories (useful in CI/CD)
+npx @techstream/quark-create-app my-app --no-prompts --skip-docker
+```
+
+### Complete Example: Full Automation
+
+```bash
+# Create, install, and setup everything automatically
+npx @techstream/quark-create-app my-app \
+  --no-prompts \
+  --features ui,jobs \
+  && cd my-app \
+  && docker compose up -d \
+  && pnpm db:migrate \
+  && pnpm dev
+```
+
 ## Common Tasks
 
 - **Update Quark packages**: `quark-update` or `pnpm update @techstream/quark-*`

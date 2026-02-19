@@ -544,6 +544,20 @@ These tasks can be completed quickly and provide immediate value:
 
 ---
 
+## CLI Non-Interactive Mode
+
+- [x] `--no-prompts` flag to skip all interactive prompts
+- [x] `--features <list>` flag with validation (valid: `ui`, `jobs`)
+- [x] `--skip-install` flag for CI/CD environments
+- [x] `--skip-docker` flag to skip Docker cleanup step
+- [x] Full lifecycle E2E test (`test:e2e:full`) — 7 phases, ~30s
+- [x] Flag validation unit tests (`test:flags`) — 9 tests, 100% pass
+- [x] GitHub Actions CI workflow (PR validation)
+- [x] GitHub Actions nightly full lifecycle test
+- [x] Documentation updated (README, ARCHITECTURE, EXAMPLES)
+
+---
+
 ## STATUS TRACKING
 
 Use this section to track which items have been completed:

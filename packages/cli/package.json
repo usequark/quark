@@ -18,8 +18,11 @@
 		"test": "node test-cli.js",
 		"test:build": "node test-build.js",
 		"test:e2e": "node test-e2e.js",
+		"test:e2e:full": "node test-e2e-full.js",
 		"test:integration": "node test-integration.js",
-		"test:all": "node test-all.js"
+		"test:flags": "node --test test-flags.js",
+		"test:all": "node test-all.js",
+		"check:perf": "node scripts/check-e2e-perf.js"
 	},
 	"dependencies": {
 		"chalk": "^5.6.2",

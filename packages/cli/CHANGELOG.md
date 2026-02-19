@@ -1,5 +1,28 @@
 # @techstream/quark-create-app
 
+## [Unreleased]
+
+### Added
+
+- `--no-prompts` flag for non-interactive project creation (CI/CD and automation use)
+- `--features <list>` flag to specify optional packages to scaffold (default: `ui,jobs`; valid values: `ui`, `jobs`)
+- `--skip-install` flag to skip `pnpm install` step during scaffolding
+- `--skip-docker` flag to skip Docker volume cleanup step
+- Full lifecycle E2E test (`test:e2e:full`) covering 7 phases: project creation → Docker startup → database migration → HTTP health check (~30-41s)
+- Flag validation unit tests (`test:flags`) with 9 automated test cases (100% pass rate)
+- GitHub Actions workflow (`cli-e2e-full.yml`) for full lifecycle testing on CLI changes
+- Performance monitoring script (`check:perf`) with structured JSON output and threshold checks
+
+### Improved
+
+- HTTP health check timeout increased from 10s to 30s for better reliability in slow environments
+- Docker service readiness now runs in parallel with `--wait` flag support, reducing startup time
+
+### Fixed
+
+- Removed unused internal variables (`_TEST_TIMEOUT`, `_currentPhase`, `_isPortInUse`)
+- Log output typo corrected (`"porta"` → `"port"`)
+
 ## 1.7.0
 
 ### Minor Changes
@@ -14,6 +37,29 @@
   - **refactor:** Update mail configuration for local development (Mailpit) with cleaner env var handling
   - **test:** Add comprehensive unit tests for PostgreSQL connection string builder covering all scenarios
   - **chore:** Update Biome schema to 2.4.2
+=======
+## [Unreleased]
+
+### Added
+
+- `--no-prompts` flag for non-interactive project creation (CI/CD and automation use)
+- `--features <list>` flag to specify optional packages to scaffold (default: `ui,jobs`; valid values: `ui`, `jobs`)
+- `--skip-install` flag to skip `pnpm install` step during scaffolding
+- `--skip-docker` flag to skip Docker volume cleanup step
+- Full lifecycle E2E test (`test:e2e:full`) covering 7 phases: project creation → Docker startup → database migration → HTTP health check (~30-41s)
+- Flag validation unit tests (`test:flags`) with 9 automated test cases (100% pass rate)
+- GitHub Actions CI workflow (`cli-test.yml`) for PR validation
+- GitHub Actions nightly workflow (`cli-e2e-full.yml`) for full lifecycle testing
+
+### Improved
+
+- HTTP health check timeout increased from 10s to 30s for better reliability in slow environments
+- Docker service readiness now runs in parallel with `--wait` flag support, reducing startup time
+
+### Fixed
+
+- Removed unused internal variables (`_TEST_TIMEOUT`, `_currentPhase`, `_isPortInUse`)
+- Log output typo corrected (`"porta"` → `"port"`)
 
 ## 1.6.0
 

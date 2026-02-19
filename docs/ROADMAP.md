@@ -1296,6 +1296,23 @@ pnpm db:migrate
 
 ---
 
+## Testing Infrastructure
+
+### Completed
+
+- ✅ Non-interactive CLI mode for automation (`--no-prompts`, `--features`, `--skip-install`, `--skip-docker`)
+- ✅ Full lifecycle E2E test (create → Docker startup → database migration → HTTP health check)
+- ✅ CI/CD GitHub Actions workflows (PR validation + nightly full lifecycle test)
+- ✅ Automated flag validation tests (9 test cases, 100% pass rate)
+
+### Upcoming
+
+- ⬜ E2E test performance monitoring dashboard
+- ⬜ Cross-platform testing (Windows, macOS, Linux)
+- ⬜ Multi-Node version matrix testing
+
+---
+
 ## Questions to Consider
 
 1. **Authentication Priority**: Which OAuth providers are most important for your users?

@@ -1,0 +1,59 @@
+name: CLI Full Lifecycle E2E
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch or tag to run against"
+        required: false
+        default: "main"
+
+jobs:
+  cli-e2e-full:
+    name: Full Docker Lifecycle E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CI: "true"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify Docker is available
+        run: docker --version && docker compose version
+
+      - name: Run full E2E
+        run: pnpm --filter @techstream/quark-create-app test:e2e:full
+
+      - name: Check E2E Performance
+        if: always()
+        run: pnpm --filter @techstream/quark-create-app check:perf
+
+      - name: Upload E2E Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-results-${{ github.run_id }}
+          path: /tmp/e2e-test-results-latest.json
+          if-no-files-found: ignore
+
+      - name: Upload debug artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-debug-${{ github.run_id }}
+          path: /tmp/e2e-test-*/
+          if-no-files-found: ignore

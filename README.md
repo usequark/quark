@@ -9,11 +9,17 @@
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/@techstream/quark-core"><img src="https://img.shields.io/npm/v/@techstream/quark-core?label=quark-core" alt="npm quark-core" /></a>
-  <a href="https://www.npmjs.com/package/@techstream/quark-create-app"><img src="https://img.shields.io/npm/v/@techstream/quark-create-app?label=create-app" alt="npm create-app" /></a>
+  <a href="https://www.npmjs.com/package/@techstream/quark-core"><img src="https://img.shields.io/npm/v/@techstream/quark-core?label=Quark%20Core" alt="Quark Core version" /></a>
+  &nbsp;
+  <a href="https://www.npmjs.com/package/@techstream/quark-create-app"><img src="https://img.shields.io/npm/v/@techstream/quark-create-app?label=Quark%20Create" alt="Quark Create version" /></a>
+  &nbsp;
+  <a href="https://nodejs.org"><img src="https://img.shields.io/badge/Node.js-22-brightgreen?logo=node.js&logoColor=white" alt="Node.js 22" /></a>
+  &nbsp;
+  <a href="https://nextjs.org"><img src="https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white" alt="Next.js 16" /></a>
+  &nbsp;
+  <a href="https://www.prisma.io"><img src="https://img.shields.io/badge/Prisma-7-4B60E2?logo=prisma&logoColor=white" alt="Prisma 7" /></a>
+  &nbsp;
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-ISC-blue.svg" alt="License" /></a>
-  <a href="https://nodejs.org"><img src="https://img.shields.io/badge/node-24-brightgreen" alt="Node.js" /></a>
-  <a href="https://pnpm.io"><img src="https://img.shields.io/badge/pnpm-10-F69220?logo=pnpm&logoColor=white" alt="pnpm" /></a>
 </p>
 
 ---
