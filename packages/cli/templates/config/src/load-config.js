@@ -36,7 +36,7 @@ export function loadConfig(overrides = {}, options = {}) {
 	}
 
 	// Step 1: Validate environment variables
-	const validated = validateEnv();
+	const { validated } = validateEnv();
 
 	// Step 2: Resolve environment and get defaults
 	const envConfig = getEnvironmentConfig();

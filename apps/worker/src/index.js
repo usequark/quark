@@ -4,6 +4,7 @@
  * Handles job execution, retries, and error tracking
  */
 
+import { loadEnv } from "@techstream/quark-config";
 import {
 	createLogger,
 	createQueue,
@@ -12,6 +13,9 @@ import {
 import { prisma } from "@techstream/quark-db";
 import { JOB_NAMES, JOB_QUEUES } from "@techstream/quark-jobs";
 import { jobHandlers } from "./handlers/index.js";
+
+// Validate environment variables (worker-scoped — skips web-only checks)
+loadEnv("worker");
 
 const logger = createLogger("worker");
 

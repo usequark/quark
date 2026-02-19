@@ -2,6 +2,7 @@
 
 > Generated from the production-readiness review on 2026-02-14.
 > Ordered by severity and dependency. Each phase can be a single PR.
+> Phase 5 added 2026-02-19: Railway deployment, env config hardening, and template cleanup.
 
 ---
 
@@ -155,16 +156,108 @@ Phase 4 (anytime):
   4.1-4.5 ── all independent
 ```
 
-## Estimated Effort
+## Phase 5 — Railway Deployment & Environment Hardening ✅ COMPLETE
 
-| Phase | Items | Estimated Time |
-|-------|-------|---------------|
-| Phase 1 — Critical | 3 | ~1 hour |
-| Phase 2 — High | 6 | ~3 hours |
-| Phase 3 — Medium | 8 | ~3 hours |
-| Phase 4 — Low | 5 | ~1 hour |
-| **Total** | **22** | **~8 hours** |
+> Added 2026-02-19. Completed 2026-02-19. All 10 turbo tasks pass (build + tests). Depends on Phases 1-4.
+
+### 5A — Railway Deployment Files ✅
+
+#### 5A.1 — Create per-service `railway.json` files ✅
+Railway's config-as-code schema is **per-service** (no `services` key). Created one `railway.json` per app directory:
+- `apps/web/railway.json` — Railpack builder, `output: "standalone"`, health check at `/api/health`
+- `apps/worker/railway.json` — Railpack builder, process-level health only
+- `packages/cli/templates/base-project/apps/web/railway.json` — Template mirror
+- `packages/cli/templates/base-project/apps/worker/railway.json` — Template mirror
+
+Each uses `watchPatterns` for monorepo selective deploys and `restartPolicyType: "ON_FAILURE"`.
+
+#### 5A.2 — Add `output: "standalone"` to `next.config.js` ✅
+Added to both `apps/web/next.config.js` and template `next.config.js`. Required for Railway's `node .next/standalone/server.js` start command.
 
 ---
 
-Plan finalized. Ready for `expert-developer`.
+### 5B — Environment Configuration Fixes ✅
+
+#### 5B.1 — Make config object env-driven (Issue 1) ✅
+`config.appName` reads `APP_NAME` env var (defaults "Quark"), `config.appDescription` reads `APP_DESCRIPTION`. Added `APP_NAME` to `envSchema`, `.env.example`, and CLI-generated `.env`. Updated both main and template `config/src/index.js`.
+
+#### 5B.2 — Extract shared `getConnectionString()` (Issue 2) ✅
+Created `packages/db/src/connection.js` exporting `getConnectionString({ throwOnMissing })`:
+- Returns `DATABASE_URL` if set, else assembles from `POSTGRES_*` vars.
+- `throwOnMissing: true` (runtime) throws on missing vars.
+- `throwOnMissing: false` (prisma.config.ts) returns placeholder with `console.warn`.
+Updated `client.js` and `prisma.config.ts` (both main + template). 10 unit tests in `connection.test.js`.
+
+#### 5B.3 — Add cross-field validation (Issue 3) ✅
+`validateEnv()` now accepts `service = "web"` parameter:
+- DB check: errors if neither `DATABASE_URL` nor `POSTGRES_USER` set (skipped in test env).
+- Redis check: warns in production if neither `REDIS_URL` nor `REDIS_HOST` set.
+- Worker service skips web-only required checks (`NEXTAUTH_SECRET`).
+- Returns `{ validated, warnings }` (breaking change — callers updated).
+
+#### 5B.4 — Remove MAIL_SMTP_URL foot-gun (Issue 4) ✅
+Removed `MAIL_SMTP_URL` from `envSchema` and `.env.example`. Renamed exports to `getDevMailConfig`/`getDevMailUrl`/`getDevMailUiUrl` with backwards-compat aliases. Updated `email.js` import.
+
+#### 5B.5 — Replace hardcoded placeholder strings (Issue 5) ✅
+CLI `.env.example` template: `quark_user` → `${scope}_user`. Template `prisma.config.ts` uses shared `connection.js` (no more hardcoded `quark_user`/`quark_password`/`quark_dev`).
+
+### 5C — Template .env Improvements ✅
+
+#### 5C.1 — Service-scoped validation in worker ✅
+Worker startup now calls `loadEnv("worker")` — skips web-only checks like `NEXTAUTH_SECRET`. Moved `@techstream/quark-config` from `devDependencies` to `dependencies` in worker `package.json`.
+
+---
+
+## Phase 5 Files Changed
+
+| File | Change |
+|---|---|
+| `apps/web/railway.json` | **NEW** — Railpack config for web service |
+| `apps/worker/railway.json` | **NEW** — Railpack config for worker service |
+| `packages/cli/templates/base-project/apps/web/railway.json` | **NEW** — Template mirror |
+| `packages/cli/templates/base-project/apps/worker/railway.json` | **NEW** — Template mirror |
+| `apps/web/next.config.js` | Added `output: "standalone"` |
+| `packages/cli/templates/base-project/apps/web/next.config.js` | Added `output: "standalone"` |
+| `packages/db/src/connection.js` | **NEW** — shared connection string builder |
+| `packages/db/src/connection.test.js` | **NEW** — 10 tests |
+| `packages/cli/templates/base-project/packages/db/src/connection.js` | **NEW** — template mirror |
+| `packages/db/src/client.js` | Import from connection.js |
+| `packages/db/prisma.config.ts` | Import from connection.js |
+| `packages/cli/templates/base-project/packages/db/src/client.js` | Import from connection.js |
+| `packages/cli/templates/base-project/packages/db/prisma.config.ts` | Import from connection.js |
+| `packages/config/src/index.js` | Env-driven config (APP_NAME) |
+| `packages/config/src/index.test.js` | Updated assertions |
+| `packages/cli/templates/config/src/index.js` | Mirror |
+| `packages/config/src/validate-env.js` | Service param, cross-field checks, APP_NAME, return shape change |
+| `packages/cli/templates/config/src/validate-env.js` | Mirror |
+| `packages/config/src/load-config.js` | Destructure `{ validated }` |
+| `packages/config/src/load-config.test.js` | Added POSTGRES_* vars to test setup |
+| `packages/cli/templates/config/src/load-config.js` | Mirror |
+| `packages/core/src/mail.js` | Removed MAIL_SMTP_URL, renamed exports, added compat aliases |
+| `packages/core/src/email.js` | Updated import to getDevMailConfig |
+| `.env.example` | Removed MAIL_SMTP_URL, added APP_NAME |
+| `packages/cli/src/index.js` | scope_user placeholders, APP_NAME, removed MAIL_SMTP_URL |
+| `packages/cli/scripts/sync-templates.js` | Simplified transformPrismaConfig |
+| `apps/worker/src/index.js` | Added loadEnv("worker") |
+| `apps/worker/package.json` | Moved quark-config to deps |
+| `packages/cli/templates/base-project/apps/worker/src/index.js` | Mirror |
+| `packages/cli/templates/base-project/apps/worker/package.json` | Mirror |
+
+---
+
+## Estimated Effort
+
+| Phase | Items | Status |
+|-------|-------|--------|
+| Phase 1 — Critical | 3 | ✅ Complete |
+| Phase 2 — High | 6 | ✅ Complete |
+| Phase 3 — Medium | 8 | ✅ Complete |
+| Phase 4 — Low | 5 | ✅ Complete |
+| Phase 5A — Railway | 2 | ✅ Complete |
+| Phase 5B — Env Config | 5 | ✅ Complete |
+| Phase 5C — Template .env | 1 | ✅ Complete |
+| **Total** | **30** | **All phases complete** |
+
+---
+
+Plan finalized. All phases complete.

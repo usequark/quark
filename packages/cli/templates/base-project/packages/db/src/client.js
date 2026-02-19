@@ -1,23 +1,6 @@
 import { PrismaPg } from "@prisma/adapter-pg";
+import { getConnectionString } from "./connection.js";
 import { PrismaClient } from "./generated/prisma/client.ts";
-
-/**
- * Builds a Postgres connection string from individual env vars (mirrors prisma.config.ts).
- * Throws if any required variable is missing — but only when actually called,
- * so the module can be safely imported at build time (e.g. during `next build`).
- */
-function getConnectionString() {
-	const user = process.env.POSTGRES_USER;
-	if (!user) throw new Error("POSTGRES_USER environment variable is required");
-	const password = process.env.POSTGRES_PASSWORD;
-	if (!password)
-		throw new Error("POSTGRES_PASSWORD environment variable is required");
-	const host = process.env.POSTGRES_HOST || "localhost";
-	const port = process.env.POSTGRES_PORT || "5432";
-	const db = process.env.POSTGRES_DB;
-	if (!db) throw new Error("POSTGRES_DB environment variable is required");
-	return `postgresql://${user}:${password}@${host}:${port}/${db}?schema=public`;
-}
 
 /**
  * Returns the connection pool configuration for the `pg` driver.

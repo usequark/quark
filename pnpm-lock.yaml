@@ -104,6 +104,9 @@ importers:
 
   apps/worker:
     dependencies:
+      '@techstream/quark-config':
+        specifier: workspace:*
+        version: link:../../packages/config
       '@techstream/quark-core':
         specifier: workspace:*
         version: link:../../packages/core
@@ -117,9 +120,6 @@ importers:
         specifier: ^5.69.3
         version: 5.69.3
     devDependencies:
-      '@techstream/quark-config':
-        specifier: workspace:*
-        version: link:../../packages/config
       '@types/node':
         specifier: ^25.2.3
         version: 25.2.3

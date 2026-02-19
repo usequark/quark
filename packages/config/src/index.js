@@ -1,6 +1,8 @@
 export const config = {
-	appName: "Quark",
-	appDescription: "A modern monorepo with Next.js, React, and Prisma",
+	appName: process.env.APP_NAME || "Quark",
+	appDescription:
+		process.env.APP_DESCRIPTION ||
+		"A modern monorepo with Next.js, React, and Prisma",
 };
 
 export { getAllowedOrigins, getAppUrl, syncNextAuthUrl } from "./app-url.js";

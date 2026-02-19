@@ -195,29 +195,9 @@ function transformDbPackageJson(content) {
 }
 
 function transformPrismaConfig(content) {
-	// Template version uses simple defaults (hardcoded fallback credentials)
-	// instead of the monorepo's placeholder URL pattern for CI.
-	return (
-		content
-			// Restore simple defaults for new projects
-			.replace(
-				/const user = process\.env\.POSTGRES_USER;/,
-				'const user = process.env.POSTGRES_USER || "quark_user";',
-			)
-			.replace(
-				/const password = process\.env\.POSTGRES_PASSWORD;/,
-				'const password = process.env.POSTGRES_PASSWORD || "quark_password";',
-			)
-			.replace(
-				/const db = process\.env\.POSTGRES_DB;/,
-				'const db = process.env.POSTGRES_DB || "quark_dev";',
-			)
-			// Remove CI placeholder URL logic and replace with simple template literal
-			.replace(
-				/\/\/ Use a placeholder URL[\s\S]*?const databaseUrl = hasCredentials\n\t\? (`[^`]+`)\n\t: "[^"]+";/,
-				"const databaseUrl = $1;",
-			)
-	);
+	// Template now uses the shared getConnectionString() import (same as monorepo).
+	// No transformation needed — both versions use identical code.
+	return content;
 }
 
 function transformOptionalPackageJson(content) {

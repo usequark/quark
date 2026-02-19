@@ -23,7 +23,6 @@ const envSchema = {
 	REDIS_PORT: { required: false, description: "Redis port" },
 
 	// Mail (local SMTP — Mailpit in dev)
-	MAIL_SMTP_URL: { required: false, description: "Mail SMTP URL" },
 	MAIL_HOST: { required: false, description: "Mail host" },
 	MAIL_SMTP_PORT: { required: false, description: "Mail SMTP port" },
 	MAIL_UI_PORT: { required: false, description: "Mail UI port" },
@@ -55,6 +54,10 @@ const envSchema = {
 	},
 
 	// Application
+	APP_NAME: {
+		required: false,
+		description: "Application name — used in metadata, emails, and page titles",
+	},
 	APP_URL: {
 		required: false,
 		description:
@@ -84,18 +87,30 @@ const envSchema = {
 };
 
 /**
- * Validates environment variables against schema
+ * Validates environment variables against schema.
+ *
+ * @param {"web" | "worker"} [service="web"] — The service being validated.
+ *   Worker skips web-only checks (e.g. NEXTAUTH_SECRET).
  * @throws {Error} If required environment variables are missing
- * @returns {Object} Validated environment object
+ * @returns {{ validated: Object, warnings: string[] }}
  */
-export function validateEnv() {
+export function validateEnv(service = "web") {
 	const errors = [];
+	const warnings = [];
 	const validated = {};
+	const isTest = process.env.NODE_ENV === "test";
+
+	// Web-only required fields that workers can skip
+	const webOnlyRequired = new Set(["NEXTAUTH_SECRET"]);
 
 	for (const [key, config] of Object.entries(envSchema)) {
 		const value = process.env[key];
 
-		if (config.required && !value) {
+		// Skip web-only required checks for worker service
+		const isRequired =
+			config.required && !(service === "worker" && webOnlyRequired.has(key));
+
+		if (isRequired && !value) {
 			errors.push(
 				`Missing required environment variable: ${key} (${config.description})`,
 			);
@@ -110,6 +125,30 @@ export function validateEnv() {
 		if (value) {
 			validated[key] = value;
 		}
+	}
+
+	// --- Cross-field validation ---
+
+	// Database: either DATABASE_URL or POSTGRES_USER must be set (skip in test)
+	if (!isTest) {
+		const hasDbUrl = !!process.env.DATABASE_URL;
+		const hasPostgresUser = !!process.env.POSTGRES_USER;
+		if (!hasDbUrl && !hasPostgresUser) {
+			errors.push(
+				"Database not configured: set DATABASE_URL or POSTGRES_USER + POSTGRES_PASSWORD + POSTGRES_DB",
+			);
+		}
+	}
+
+	// Redis: warn if not configured (defaults to localhost in dev, will fail in prod)
+	if (
+		!process.env.REDIS_URL &&
+		!process.env.REDIS_HOST &&
+		process.env.NODE_ENV === "production"
+	) {
+		warnings.push(
+			"Redis not configured: set REDIS_URL or REDIS_HOST (defaults to localhost)",
+		);
 	}
 
 	// Conditional: S3 storage requires bucket + credentials
@@ -132,29 +171,39 @@ export function validateEnv() {
 		errors.push("Missing RESEND_API_KEY — required when EMAIL_PROVIDER=resend");
 	}
 
+	// Log warnings (non-fatal)
+	for (const warning of warnings) {
+		console.warn(`[env] ⚠️  ${warning}`);
+	}
+
 	if (errors.length > 0) {
 		const errorMessage = `Environment Validation Failed:\n${errors.join("\n")}`;
 		throw new Error(errorMessage);
 	}
 
 	// Ensure NEXTAUTH_URL is derived from APP_URL when not explicitly set
-	syncNextAuthUrl();
+	if (service === "web") {
+		syncNextAuthUrl();
 
-	// Include the (possibly derived) NEXTAUTH_URL in the validated object
-	if (process.env.NEXTAUTH_URL && !validated.NEXTAUTH_URL) {
-		validated.NEXTAUTH_URL = process.env.NEXTAUTH_URL;
+		// Include the (possibly derived) NEXTAUTH_URL in the validated object
+		if (process.env.NEXTAUTH_URL && !validated.NEXTAUTH_URL) {
+			validated.NEXTAUTH_URL = process.env.NEXTAUTH_URL;
+		}
 	}
 
-	return validated;
+	return { validated, warnings };
 }
 
 /**
- * Loads and validates environment variables
- * Call this function at application startup
+ * Loads and validates environment variables.
+ * Call this function at application startup.
+ *
+ * @param {"web" | "worker"} [service="web"]
  */
-export function loadEnv() {
+export function loadEnv(service = "web") {
 	try {
-		return validateEnv();
+		const { validated } = validateEnv(service);
+		return validated;
 	} catch (error) {
 		console.error(error.message);
 		process.exit(1);

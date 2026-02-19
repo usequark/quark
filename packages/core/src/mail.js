@@ -1,12 +1,11 @@
 /**
- * Builds MAIL_SMTP_URL from individual environment variables if not explicitly provided.
- * Allows configuration via individual MAIL_* vars instead of a single MAIL_SMTP_URL.
+ * Builds the dev mail SMTP URL from individual MAIL_* environment variables.
+ * Used only for local development (Mailpit). Production email uses SMTP_HOST/SMTP_PORT
+ * configured in email.js.
+ *
+ * @returns {string} SMTP URL (e.g. "smtp://localhost:1025")
  */
-function getMailSmtpUrl() {
-	if (process.env.MAIL_SMTP_URL) {
-		return process.env.MAIL_SMTP_URL;
-	}
-
+function getDevMailUrl() {
 	const host = process.env.MAIL_HOST || "localhost";
 	const port = process.env.MAIL_SMTP_PORT || "1025";
 
@@ -15,9 +14,11 @@ function getMailSmtpUrl() {
 
 /**
  * Builds mail Web UI URL from individual environment variables.
- * Useful for displaying the URL in logs or configuration.
+ * Useful for displaying the Mailpit URL in logs or configuration.
+ *
+ * @returns {string} Mail UI URL (e.g. "http://localhost:8025")
  */
-function getMailUiUrl() {
+function getDevMailUiUrl() {
 	const host = process.env.MAIL_HOST || "localhost";
 	const port = process.env.MAIL_UI_PORT || "8025";
 
@@ -25,19 +26,25 @@ function getMailUiUrl() {
 }
 
 /**
- * Gets mail SMTP configuration for email clients.
+ * Gets dev mail SMTP configuration for the Nodemailer transport.
+ * Reads from MAIL_HOST and MAIL_SMTP_PORT environment variables.
+ *
+ * @returns {{ host: string, port: number, url: string }}
  */
-export const getMailSmtpConfig = () => {
-	const url = getMailSmtpUrl();
-	const match = url.match(/smtp:\/\/([^:]+):(\d+)/);
-	const host = match ? match[1] : process.env.MAIL_HOST || "localhost";
-	const port = match ? match[2] : process.env.MAIL_SMTP_PORT || "1025";
+export const getDevMailConfig = () => {
+	const host = process.env.MAIL_HOST || "localhost";
+	const port = process.env.MAIL_SMTP_PORT || "1025";
 
 	return {
 		host,
 		port: parseInt(port, 10),
-		url,
+		url: getDevMailUrl(),
 	};
 };
 
-export { getMailSmtpUrl, getMailUiUrl };
+// Backwards-compatible aliases (deprecated — use getDevMailConfig, getDevMailUrl, getDevMailUiUrl)
+export const getMailSmtpConfig = getDevMailConfig;
+export const getMailSmtpUrl = getDevMailUrl;
+export const getMailUiUrl = getDevMailUiUrl;
+
+export { getDevMailUrl, getDevMailUiUrl };

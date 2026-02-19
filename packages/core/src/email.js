@@ -3,7 +3,7 @@
  * Supports SMTP (Nodemailer) and Resend providers
  */
 
-import { getMailSmtpConfig } from "./mail.js";
+import { getDevMailConfig } from "./mail.js";
 
 /**
  * Create an SMTP-based email sender using Nodemailer
@@ -35,7 +35,7 @@ async function createSmtpTransport() {
 		};
 	} else {
 		// Development: use local mail server (Mailpit)
-		const mailConfig = getMailSmtpConfig();
+		const mailConfig = getDevMailConfig();
 		transportConfig = {
 			host: mailConfig.host,
 			port: mailConfig.port,

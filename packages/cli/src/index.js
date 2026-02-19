@@ -484,11 +484,11 @@ program
 # Generate strong passwords with: openssl rand -base64 32
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
-POSTGRES_USER=quark_user
+POSTGRES_USER=${scope}_user
 POSTGRES_PASSWORD=CHANGE_ME_TO_STRONG_PASSWORD
 POSTGRES_DB=${scope}_dev
 # Optional: Set DATABASE_URL to override the dynamic construction above
-# DATABASE_URL="postgresql://quark_user:CHANGE_ME_TO_STRONG_PASSWORD@localhost:5432/${scope}_dev?schema=public"
+# DATABASE_URL="postgresql://${scope}_user:CHANGE_ME_TO_STRONG_PASSWORD@localhost:5432/${scope}_dev?schema=public"
 
 # --- Redis Configuration ---
 REDIS_HOST=localhost
@@ -501,8 +501,6 @@ REDIS_PORT=6379
 MAIL_HOST=localhost
 MAIL_SMTP_PORT=1025
 MAIL_UI_PORT=8025
-# Optional: Set MAIL_SMTP_URL to override the dynamic construction above
-# MAIL_SMTP_URL="smtp://localhost:1025"
 
 # Production SMTP: Set these instead of MAIL_* when using a real SMTP relay
 # SMTP_HOST=smtp.example.com
@@ -524,6 +522,10 @@ MAIL_UI_PORT=8025
 # In development, APP_URL is derived automatically from PORT — no need to set it.
 # In production, set this to your real domain:
 # APP_URL=https://yourdomain.com
+
+# --- Application Identity ---
+# APP_NAME is used in metadata, emails, and page titles.
+APP_NAME=${projectName}
 
 # --- NextAuth Configuration ---
 # ⚠️  CRITICAL: Generate a secure secret with: openssl rand -base64 32
@@ -617,7 +619,7 @@ STORAGE_PROVIDER=local
 			const envContent = `# --- Database Configuration ---
 POSTGRES_HOST=localhost
 POSTGRES_PORT=${postgresPort}
-POSTGRES_USER=quark_user
+POSTGRES_USER=${scope}_user
 POSTGRES_PASSWORD=${dbPassword}
 POSTGRES_DB=${scope}_dev
 
@@ -629,6 +631,9 @@ REDIS_PORT=${redisPort}
 MAIL_HOST=localhost
 MAIL_SMTP_PORT=${mailSmtpPort}
 MAIL_UI_PORT=${mailUiPort}
+
+# --- Application Identity ---
+APP_NAME=${projectName}
 
 # --- NextAuth Configuration ---
 NEXTAUTH_SECRET=${nextAuthSecret}

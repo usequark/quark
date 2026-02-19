@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+	// Required for Railway deployment — produces a self-contained build
+	// at .next/standalone that can run without node_modules.
+	output: "standalone",
+
 	// Support workspace package resolution (including @techstream/quark-db which uses
 	// the Prisma driver-adapter pattern — pure JS, no native engine binary)
 	transpilePackages: [

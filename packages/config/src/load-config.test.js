@@ -10,6 +10,9 @@ describe("Configuration Loader - loadConfig", () => {
 		savedEnv = { ...process.env };
 		// Ensure required env vars are present
 		process.env.NEXTAUTH_SECRET = "test-secret-at-least-32-characters-long";
+		process.env.POSTGRES_USER = "test_user";
+		process.env.POSTGRES_PASSWORD = "test_pass";
+		process.env.POSTGRES_DB = "test_db";
 		resetConfig();
 	});
 
@@ -137,6 +140,9 @@ describe("Configuration Loader - loadConfig", () => {
 describe("Configuration Loader - resetConfig", () => {
 	beforeEach(() => {
 		process.env.NEXTAUTH_SECRET = "test-secret-at-least-32-characters-long";
+		process.env.POSTGRES_USER = "test_user";
+		process.env.POSTGRES_PASSWORD = "test_pass";
+		process.env.POSTGRES_DB = "test_db";
 		resetConfig();
 	});
 
@@ -155,6 +161,9 @@ describe("Configuration Loader - resetConfig", () => {
 describe("Configuration Loader - getConfig", () => {
 	beforeEach(() => {
 		process.env.NEXTAUTH_SECRET = "test-secret-at-least-32-characters-long";
+		process.env.POSTGRES_USER = "test_user";
+		process.env.POSTGRES_PASSWORD = "test_pass";
+		process.env.POSTGRES_DB = "test_db";
 		resetConfig();
 	});
 
@@ -192,11 +201,17 @@ describe("Environment Validation - NEXTAUTH_SECRET strength", () => {
 
 	test("rejects NEXTAUTH_SECRET shorter than 32 characters", () => {
 		process.env.NEXTAUTH_SECRET = "too-short";
+		process.env.POSTGRES_USER = "test_user";
+		process.env.POSTGRES_PASSWORD = "test_pass";
+		process.env.POSTGRES_DB = "test_db";
 		assert.throws(() => validateEnv(), /at least 32 characters/);
 	});
 
 	test("accepts NEXTAUTH_SECRET of 32+ characters", () => {
 		process.env.NEXTAUTH_SECRET = "a".repeat(32);
+		process.env.POSTGRES_USER = "test_user";
+		process.env.POSTGRES_PASSWORD = "test_pass";
+		process.env.POSTGRES_DB = "test_db";
 		assert.doesNotThrow(() => validateEnv());
 	});
 });

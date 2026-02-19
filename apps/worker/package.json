@@ -15,13 +15,13 @@
 	"license": "ISC",
 	"packageManager": "pnpm@10.12.1",
 	"dependencies": {
+		"@techstream/quark-config": "workspace:*",
 		"@techstream/quark-core": "workspace:*",
 		"@techstream/quark-db": "workspace:*",
 		"@techstream/quark-jobs": "workspace:*",
 		"bullmq": "^5.69.3"
 	},
 	"devDependencies": {
-		"@techstream/quark-config": "workspace:*",
 		"@types/node": "^25.2.3",
 		"tsx": "^4.21.0"
 	}
