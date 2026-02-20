@@ -1,8 +1,10 @@
 name: CLI Full Lifecycle E2E
 
 on:
-  schedule:
-    - cron: "0 2 * * *"
+  push:
+    branches: [main]
+    paths:
+      - "packages/cli/**"
   workflow_dispatch:
     inputs:
       ref:
