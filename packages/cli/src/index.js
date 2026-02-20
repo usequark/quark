@@ -254,35 +254,12 @@ function validateProjectName(name) {
 
 program
 	.argument("<project-name>", "Name of the project to create")
-	.option("--no-prompts", "Skip all interactive prompts and use default values")
-	.option(
-		"--features <list>",
-		"Comma-separated list of optional packages (ui,jobs)",
-		"ui,jobs",
-	)
-	.option("--skip-install", "Skip pnpm install step")
-	.option("--skip-docker", "Skip Docker volume cleanup")
-	.action(async (projectName, options) => {
+	.action(async (projectName) => {
 		console.log(
 			chalk.blue.bold(
 				`\n\uD83D\uDE80 Creating your new Quark project: ${projectName}\n`,
 			),
 		);
-
-		// Log CLI options if any were provided
-		if (!options.prompts) {
-			console.log(chalk.dim(`  Running in non-interactive mode`));
-		}
-		if (options.features) {
-			console.log(chalk.dim(`  Features: ${options.features}`));
-		}
-		if (options.skipInstall) {
-			console.log(chalk.dim(`  Skipping pnpm install`));
-		}
-		if (options.skipDocker) {
-			console.log(chalk.dim(`  Skipping Docker cleanup`));
-		}
-		console.log("");
 
 		const targetDir = validateProjectName(projectName);
 		const scope = projectName.toLowerCase().replace(/[^a-z0-9-]/g, "");
@@ -292,49 +269,47 @@ program
 		// These persist even if the project directory is manually deleted, causing
 		// authentication failures when the new project generates different credentials.
 		// We also need to stop any running containers that reference these volumes.
-		if (!options.skipDocker) {
-			try {
-				const volumePrefix = `${projectName}_`;
-				const { stdout } = await execa("docker", [
-					"volume",
-					"ls",
+		try {
+			const volumePrefix = `${projectName}_`;
+			const { stdout } = await execa("docker", [
+				"volume",
+				"ls",
+				"--filter",
+				`name=${volumePrefix}`,
+				"--format",
+				"{{.Name}}",
+			]);
+			const orphanedVolumes = stdout
+				.split("\n")
+				.filter((v) => v.startsWith(volumePrefix));
+			if (orphanedVolumes.length > 0) {
+				// Stop and remove any containers using these volumes first
+				const { stdout: containerOut } = await execa("docker", [
+					"ps",
+					"-a",
 					"--filter",
-					`name=${volumePrefix}`,
+					`name=${projectName}`,
 					"--format",
-					"{{.Name}}",
+					"{{.ID}}",
 				]);
-				const orphanedVolumes = stdout
-					.split("\n")
-					.filter((v) => v.startsWith(volumePrefix));
-				if (orphanedVolumes.length > 0) {
-					// Stop and remove any containers using these volumes first
-					const { stdout: containerOut } = await execa("docker", [
-						"ps",
-						"-a",
-						"--filter",
-						`name=${projectName}`,
-						"--format",
-						"{{.ID}}",
-					]);
-					const containers = containerOut.split("\n").filter(Boolean);
-					if (containers.length > 0) {
-						await execa("docker", ["rm", "-f", ...containers]);
-					}
-					// Remove the Docker network if it exists
-					try {
-						await execa("docker", ["network", "rm", `${projectName}_default`]);
-					} catch {
-						// Network may not exist — fine
-					}
-					// Now remove the orphaned volumes
-					for (const vol of orphanedVolumes) {
-						await execa("docker", ["volume", "rm", "-f", vol]);
-					}
-					console.log(chalk.green("  ✓ Cleaned up orphaned Docker volumes"));
+				const containers = containerOut.split("\n").filter(Boolean);
+				if (containers.length > 0) {
+					await execa("docker", ["rm", "-f", ...containers]);
 				}
-			} catch {
-				// Docker not available — fine
+				// Remove the Docker network if it exists
+				try {
+					await execa("docker", ["network", "rm", `${projectName}_default`]);
+				} catch {
+					// Network may not exist — fine
+				}
+				// Now remove the orphaned volumes
+				for (const vol of orphanedVolumes) {
+					await execa("docker", ["volume", "rm", "-f", vol]);
+				}
+				console.log(chalk.green("  ✓ Cleaned up orphaned Docker volumes"));
 			}
+		} catch {
+			// Docker not available — fine
 		}
 
 		// Check if directory already exists
@@ -403,62 +378,36 @@ program
 				console.log(chalk.green(`    ✓ ${reqPkg} (required)`));
 			}
 
-			// Step 5: Configure optional features
+			// Step 5: Ask which optional features to eject
 			console.log(chalk.cyan("\n  🎯 Configuring optional features...\n"));
+			const response = await prompts([
+				{
+					type: "multiselect",
+					name: "features",
+					message: "Which optional packages would you like to include?",
+					instructions: false,
+					choices: [
+						{
+							title: "UI Components (packages/ui)",
+							value: "ui",
+							selected: true,
+						},
+						{
+							title: "Job Definitions (packages/jobs)",
+							value: "jobs",
+							selected: true,
+						},
+					],
+				},
+			]);
 
-			let features;
-			if (!options.prompts) {
-				// --no-prompts was passed: use defaults from --features flag
-				features = options.features
-					.split(",")
-					.map((f) => f.trim())
-					.filter((f) => f.length > 0);
-				// Validate feature names
-				const validFeatures = ["ui", "jobs"];
-				const invalidFeatures = features.filter(
-					(f) => !validFeatures.includes(f),
-				);
-				if (invalidFeatures.length > 0) {
-					console.log(
-						chalk.red(`\n❌ Invalid features: ${invalidFeatures.join(", ")}`),
-					);
-					console.log(
-						chalk.dim(`Valid options are: ${validFeatures.join(", ")}\n`),
-					);
-					process.exit(1);
-				}
-				console.log(`Using default features: ${features.join(", ")}`);
-			} else {
-				// Interactive prompt
-				const response = await prompts([
-					{
-						type: "multiselect",
-						name: "features",
-						message: "Which optional packages would you like to include?",
-						instructions: false,
-						choices: [
-							{
-								title: "UI Components (packages/ui)",
-								value: "ui",
-								selected: true,
-							},
-							{
-								title: "Job Definitions (packages/jobs)",
-								value: "jobs",
-								selected: true,
-							},
-						],
-					},
-				]);
+			const { features } = response;
 
-				// Handle prompt cancellation (Ctrl+C)
-				if (!response.features) {
-					console.log(chalk.yellow("\n\u26A0\uFE0F  Setup cancelled."));
-					await fs.remove(targetDir);
-					process.exit(0);
-				}
-
-				features = response.features;
+			// Handle prompt cancellation (Ctrl+C)
+			if (!features) {
+				console.log(chalk.yellow("\n\u26A0\uFE0F  Setup cancelled."));
+				await fs.remove(targetDir);
+				process.exit(0);
 			}
 
 			// Step 6: Copy selected optional packages
@@ -768,54 +717,42 @@ STORAGE_PROVIDER=local
 				console.log(chalk.green(`    ✓ Git initialized with initial commit`));
 			}
 
-			// Step 12: Run pnpm install (unless --skip-install)
-			if (!options.skipInstall) {
-				console.log(chalk.cyan("\n  📦 Installing dependencies..."));
-				try {
-					await execa("pnpm", ["install"], {
-						cwd: targetDir,
-						stdio: "inherit",
-					});
-					console.log(chalk.green(`\n    ✓ Dependencies installed`));
-				} catch (installError) {
-					console.warn(
-						chalk.yellow(
-							`\n    ⚠️  pnpm install failed: ${installError.message}`,
-						),
-					);
-					console.warn(
-						chalk.yellow(
-							`    Run 'pnpm install' manually after resolving the issue.`,
-						),
-					);
-				}
-			} else {
-				console.log(
-					chalk.cyan(
-						"\n  📦 Skipping dependency installation (--skip-install)",
+			// Step 12: Run pnpm install
+			console.log(chalk.cyan("\n  📦 Installing dependencies..."));
+			try {
+				await execa("pnpm", ["install"], {
+					cwd: targetDir,
+					stdio: "inherit",
+				});
+				console.log(chalk.green(`\n    ✓ Dependencies installed`));
+			} catch (installError) {
+				console.warn(
+					chalk.yellow(`\n    ⚠️  pnpm install failed: ${installError.message}`),
+				);
+				console.warn(
+					chalk.yellow(
+						`    Run 'pnpm install' manually after resolving the issue.`,
 					),
 				);
 			}
 
-			// Step 13: Generate Prisma client (unless --skip-install)
-			if (!options.skipInstall) {
-				console.log(chalk.cyan("\n  🗄️  Generating Prisma client..."));
-				try {
-					await execa("pnpm", ["--filter", "db", "db:generate"], {
-						cwd: targetDir,
-						stdio: "inherit",
-					});
-					console.log(chalk.green(`    ✓ Prisma client generated`));
-				} catch (generateError) {
-					console.warn(
-						chalk.yellow(
-							`\n    ⚠️  Prisma generate failed: ${generateError.message}`,
-						),
-					);
-					console.warn(
-						chalk.yellow(`    Run 'pnpm --filter db db:generate' manually.`),
-					);
-				}
+			// Step 13: Generate Prisma client
+			console.log(chalk.cyan("\n  🗄️  Generating Prisma client..."));
+			try {
+				await execa("pnpm", ["--filter", "db", "db:generate"], {
+					cwd: targetDir,
+					stdio: "inherit",
+				});
+				console.log(chalk.green(`    ✓ Prisma client generated`));
+			} catch (generateError) {
+				console.warn(
+					chalk.yellow(
+						`\n    ⚠️  Prisma generate failed: ${generateError.message}`,
+					),
+				);
+				console.warn(
+					chalk.yellow(`    Run 'pnpm --filter db db:generate' manually.`),
+				);
 			}
 
 			// Success message
