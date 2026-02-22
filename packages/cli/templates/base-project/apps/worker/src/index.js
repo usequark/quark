@@ -4,8 +4,8 @@
  * Handles job execution, retries, and error tracking
  */
 
-import { loadEnv } from "@techstream/quark-config";
 import {
+	checkQueueHealth,
 	createLogger,
 	createQueue,
 	createWorker,
@@ -14,14 +14,175 @@ import { prisma } from "@techstream/quark-db";
 import { JOB_NAMES, JOB_QUEUES } from "@techstream/quark-jobs";
 import { jobHandlers } from "./handlers/index.js";
 
-// Validate environment variables (worker-scoped — skips web-only checks)
-loadEnv("worker");
-
 const logger = createLogger("worker");
 
 // Store workers for graceful shutdown
 const workers = [];
 let isShuttingDown = false;
+
+// ============================================================================
+// RESILIENCE UTILITIES
+// ============================================================================
+
+/**
+ * Detects if error is a connection/network error
+ * @param {Error} error
+ * @returns {boolean}
+ */
+export function isConnectionError(error) {
+	if (!error) return false;
+	const message = (error.message || "") + (error.code || "");
+	const connectionErrors = [
+		"ECONNREFUSED", // Connection refused
+		"ECONNRESET", // Connection reset
+		"ENOTFOUND", // DNS lookup failure
+		"ETIMEDOUT", // Connection timeout
+		"EHOSTUNREACH", // Host unreachable
+		"ENETUNREACH", // Network unreachable
+		"Error: Redis connection failed", // Generic redis failure
+		"Ready status is false", // BullMQ readiness
+	];
+	return connectionErrors.some((err) => message.includes(err));
+}
+
+/**
+ * Creates a throttled error logger
+ * Suppresses duplicate errors within a time window
+ * @param {Object} logger
+ * @param {number} windowMs - Throttle window in milliseconds
+ * @returns {Function} throttle function
+ */
+export function throttledError(logger, windowMs = 5000) {
+	let lastErrorTime = 0;
+	let lastErrorMsg = "";
+
+	return (error) => {
+		const now = Date.now();
+		const msg = error.message || String(error);
+
+		// Log if new error type or window expired
+		if (msg !== lastErrorMsg || now - lastErrorTime > windowMs) {
+			logger.error(`Connection error (will retry)`, {
+				error: msg,
+				code: error.code,
+				timestamp: new Date().toISOString(),
+			});
+			lastErrorTime = now;
+			lastErrorMsg = msg;
+		}
+	};
+}
+
+/**
+ * Waits for Redis to be ready with retries
+ * @param {Function} healthCheck - Async function that returns boolean or throws
+ * @param {Object} config
+ * @param {number} config.maxRetries - Maximum retry attempts
+ * @param {number} config.intervalMs - Delay between retries
+ * @returns {Promise<boolean>}
+ */
+export async function waitForRedis(
+	healthCheck = checkQueueHealth,
+	config = {},
+) {
+	const {
+		maxRetries = parseInt(process.env.WORKER_HEALTH_RETRIES || "10", 10),
+		intervalMs = parseInt(process.env.WORKER_HEALTH_INTERVAL_MS || "1000", 10),
+	} = config;
+
+	const reportThrottledError = throttledError(logger, 3000);
+	let lastError;
+
+	for (let attempt = 1; attempt <= maxRetries; attempt++) {
+		try {
+			const isReady = await healthCheck();
+			if (isReady) {
+				logger.info(
+					`Redis health check passed (attempt ${attempt}/${maxRetries})`,
+				);
+				return true;
+			}
+		} catch (error) {
+			lastError = error;
+			if (isConnectionError(error)) {
+				reportThrottledError(error);
+				if (attempt < maxRetries) {
+					// Wait before retrying
+					await new Promise((resolve) => setTimeout(resolve, intervalMs));
+				}
+			} else {
+				// Non-connection error; don't retry
+				logger.error("Health check failed with non-network error", {
+					error: error.message,
+				});
+				throw error;
+			}
+		}
+	}
+
+	// All retries exhausted
+	logger.error("Redis health check failed after all retries", {
+		attempts: maxRetries,
+		lastError: lastError?.message,
+	});
+	throw new Error(
+		`Failed to connect to Redis after ${maxRetries} attempts: ${lastError?.message}`,
+	);
+}
+
+// ============================================================================
+// PREFLIGHT MODE
+// ============================================================================
+
+/**
+ * Runs pre-flight health checks and exits
+ * Used for deployment readiness probes
+ */
+async function preflight() {
+	// Load and validate environment variables
+	const { loadEnv } = await import("@techstream/quark-config");
+	loadEnv("worker");
+
+	logger.info("Running preflight health checks");
+
+	try {
+		// Check Redis
+		logger.info("Checking Redis connectivity...");
+		const redisReady = await checkQueueHealth();
+		if (!redisReady) {
+			throw new Error("Redis health check returned false");
+		}
+		logger.info("✓ Redis connected");
+
+		// Check Database
+		logger.info("Checking database connectivity...");
+		await prisma.$queryRaw`SELECT 1`;
+		logger.info("✓ Database connected");
+
+		// Validate handlers are registered
+		logger.info("Checking job handler registration...");
+		let handlerCount = 0;
+		for (const queueName of Object.values(JOB_QUEUES)) {
+			const queue = createQueue(queueName);
+			for (const jobName of Object.values(JOB_NAMES)) {
+				if (jobHandlers[jobName]) {
+					handlerCount++;
+				}
+			}
+			await queue.close();
+		}
+		logger.info(`✓ ${handlerCount} job handlers registered`);
+
+		logger.info("✓ All preflight checks passed");
+		process.exit(0);
+	} catch (error) {
+		logger.error("Preflight check failed", {
+			error: error.message,
+			stack: error.stack,
+		});
+		process.exit(1);
+	}
+}
 
 /**
  * Generic queue processor — dispatches jobs to registered handlers
@@ -86,9 +247,17 @@ function createQueueWorker(queueName) {
  * Start the worker service
  */
 async function startWorker() {
+	// Load and validate environment variables
+	const { loadEnv } = await import("@techstream/quark-config");
+	loadEnv("worker");
+
 	logger.info("Starting Quark Worker Service");
 
 	try {
+		// Pre-flight: Wait for Redis with health checks and retries
+		logger.info("Performing health checks...");
+		await waitForRedis();
+
 		// Register a worker for each queue
 		for (const queueName of Object.values(JOB_QUEUES)) {
 			createQueueWorker(queueName);
@@ -162,4 +331,20 @@ process.on("SIGINT", () => {
 	void shutdown("SIGINT");
 });
 
-startWorker();
+// ============================================================================
+// ENTRY POINT
+// ============================================================================
+
+// Only start the worker if this file is being run directly
+// Convert file:// URL to path for comparison
+const currentFile = new URL(import.meta.url).pathname;
+const mainModule = process.argv[1];
+const isMainModule = currentFile === mainModule;
+
+if (isMainModule) {
+	if (process.argv.includes("--preflight")) {
+		void preflight();
+	} else {
+		void startWorker();
+	}
+}

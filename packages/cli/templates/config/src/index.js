@@ -13,3 +13,4 @@ export {
 	resolveEnvironment,
 } from "./environment.js";
 export { getConfig, loadConfig, resetConfig } from "./load-config.js";
+export { loadEnv } from "./validate-env.js";

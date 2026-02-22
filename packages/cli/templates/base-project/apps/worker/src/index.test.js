@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import { describe, mock, test } from "node:test";
+import { isConnectionError, throttledError, waitForRedis } from "./index.js";
 
 // ---------------------------------------------------------------------------
 // Helpers: lightweight fakes for Prisma, emailService, and storage
@@ -296,5 +297,282 @@ describe("jobHandlers registry", () => {
 		await assert.rejects(() => dispatch(makeBullJob("unknown-job", {})), {
 			message: "No handler registered for job: unknown-job",
 		});
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Resilience Utilities: isConnectionError
+// ---------------------------------------------------------------------------
+
+describe("isConnectionError", () => {
+	test("detects ECONNREFUSED (connection refused)", () => {
+		const error = new Error("connect ECONNREFUSED 127.0.0.1:6379");
+		assert.strictEqual(isConnectionError(error), true);
+	});
+
+	test("detects ECONNRESET (connection reset)", () => {
+		const error = new Error("read ECONNRESET");
+		assert.strictEqual(isConnectionError(error), true);
+	});
+
+	test("detects ENOTFOUND (DNS lookup failure)", () => {
+		const error = new Error("getaddrinfo ENOTFOUND redis.example.com");
+		assert.strictEqual(isConnectionError(error), true);
+	});
+
+	test("detects ETIMEDOUT (connection timeout)", () => {
+		const error = new Error("connect ETIMEDOUT");
+		assert.strictEqual(isConnectionError(error), true);
+	});
+
+	test("detects EHOSTUNREACH (host unreachable)", () => {
+		const error = new Error("EHOSTUNREACH 10.0.0.1");
+		assert.strictEqual(isConnectionError(error), true);
+	});
+
+	test("detects ENETUNREACH (network unreachable)", () => {
+		const error = new Error("ENETUNREACH 10.0.0.1");
+		assert.strictEqual(isConnectionError(error), true);
+	});
+
+	test("returns false for non-connection errors", () => {
+		const error = new Error("Invalid queue configuration");
+		assert.strictEqual(isConnectionError(error), false);
+	});
+
+	test("returns false for null or undefined", () => {
+		assert.strictEqual(isConnectionError(null), false);
+		assert.strictEqual(isConnectionError(undefined), false);
+	});
+
+	test("handles error objects with code property", () => {
+		const error = { code: "ECONNREFUSED", message: "refused" };
+		assert.strictEqual(isConnectionError(error), true);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Resilience Utilities: throttledError
+// ---------------------------------------------------------------------------
+
+describe("throttledError", () => {
+	test("logs first error immediately", () => {
+		const logger = createMockLogger();
+		const throttle = throttledError(logger, 100);
+
+		throttle(new Error("Redis unavailable"));
+
+		assert.strictEqual(logger.error.mock.callCount(), 1);
+		const call = logger.error.mock.calls[0];
+		assert.ok(call.arguments[0].includes("Connection error"));
+	});
+
+	test("suppresses duplicate errors within window", () => {
+		const logger = createMockLogger();
+		const throttle = throttledError(logger, 100);
+
+		throttle(new Error("Redis unavailable"));
+		assert.strictEqual(logger.error.mock.callCount(), 1);
+
+		// Same error within window — should be suppressed
+		throttle(new Error("Redis unavailable"));
+		assert.strictEqual(logger.error.mock.callCount(), 1);
+
+		// Different error within window — should log
+		throttle(new Error("Redis timeout"));
+		assert.strictEqual(logger.error.mock.callCount(), 2);
+	});
+
+	test("logs error again after window expires", async () => {
+		const logger = createMockLogger();
+		const throttle = throttledError(logger, 50); // 50ms window
+
+		throttle(new Error("Redis unavailable"));
+		assert.strictEqual(logger.error.mock.callCount(), 1);
+
+		// Same error within window — suppressed
+		throttle(new Error("Redis unavailable"));
+		assert.strictEqual(logger.error.mock.callCount(), 1);
+
+		// Wait for window to expire
+		await new Promise((resolve) => setTimeout(resolve, 60));
+
+		// Same error after window — logged again
+		throttle(new Error("Redis unavailable"));
+		assert.strictEqual(logger.error.mock.callCount(), 2);
+	});
+
+	test("includes error details in log", () => {
+		const logger = createMockLogger();
+		const throttle = throttledError(logger, 100);
+
+		const error = new Error("ECONNREFUSED");
+		error.code = "ECONNREFUSED";
+		throttle(error);
+
+		const call = logger.error.mock.calls[0];
+		const args = call.arguments;
+		assert.strictEqual(args[0], "Connection error (will retry)");
+		assert.ok(args[1].error.includes("ECONNREFUSED"));
+		assert.ok(args[1].timestamp); // Should have timestamp
+	});
+
+	test("uses default 5 second window if not specified", async () => {
+		const logger = createMockLogger();
+		const throttle = throttledError(logger); // No window specified
+
+		throttle(new Error("Test"));
+		assert.strictEqual(logger.error.mock.callCount(), 1);
+
+		throttle(new Error("Test"));
+		assert.strictEqual(logger.error.mock.callCount(), 1); // Suppressed
+
+		// 5 second default window hasn't expired
+		throttle(new Error("Test"));
+		assert.strictEqual(logger.error.mock.callCount(), 1); // Still suppressed
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Resilience Utilities: waitForRedis
+// ---------------------------------------------------------------------------
+
+describe("waitForRedis", () => {
+	test("returns true when health check succeeds immediately", async () => {
+		const healthCheck = mock.fn(async () => true);
+		const result = await waitForRedis(healthCheck, {
+			maxRetries: 3,
+			intervalMs: 10,
+		});
+
+		assert.strictEqual(result, true);
+		assert.strictEqual(healthCheck.mock.callCount(), 1);
+	});
+
+	test("retries and succeeds on second attempt", async () => {
+		let attempts = 0;
+		const healthCheck = mock.fn(async () => {
+			attempts++;
+			if (attempts < 2) {
+				throw new Error("ECONNREFUSED 127.0.0.1:6379");
+			}
+			return true;
+		});
+
+		const result = await waitForRedis(healthCheck, {
+			maxRetries: 3,
+			intervalMs: 10,
+		});
+
+		assert.strictEqual(result, true);
+		assert.strictEqual(healthCheck.mock.callCount(), 2);
+	});
+
+	test("fails after max retries exhausted", async () => {
+		const healthCheck = mock.fn(async () => {
+			throw new Error("ECONNREFUSED");
+		});
+
+		await assert.rejects(
+			() =>
+				waitForRedis(healthCheck, {
+					maxRetries: 2,
+					intervalMs: 10,
+				}),
+			{ message: /Failed to connect to Redis after 2 attempts/ },
+		);
+
+		assert.strictEqual(healthCheck.mock.callCount(), 2);
+	});
+
+	test("stops retrying on non-connection errors", async () => {
+		const healthCheck = mock.fn(async () => {
+			throw new Error("Invalid configuration");
+		});
+
+		await assert.rejects(
+			() =>
+				waitForRedis(healthCheck, {
+					maxRetries: 5,
+					intervalMs: 10,
+				}),
+			{ message: "Invalid configuration" },
+		);
+
+		// Should fail immediately, not retry 5 times
+		assert.strictEqual(healthCheck.mock.callCount(), 1);
+	});
+
+	test("respects maxRetries from config", async () => {
+		const healthCheck = mock.fn(async () => {
+			throw new Error("ETIMEDOUT");
+		});
+
+		await assert.rejects(
+			() =>
+				waitForRedis(healthCheck, {
+					maxRetries: 4,
+					intervalMs: 10,
+				}),
+			/Failed to connect to Redis after 4 attempts/,
+		);
+
+		assert.strictEqual(healthCheck.mock.callCount(), 4);
+	});
+
+	test("respects intervalMs delay between retries", async () => {
+		let attempts = 0;
+		const startTime = Date.now();
+		const healthCheck = mock.fn(async () => {
+			attempts++;
+			if (attempts < 3) {
+				throw new Error("ECONNREFUSED");
+			}
+			return true;
+		});
+
+		const result = await waitForRedis(healthCheck, {
+			maxRetries: 3,
+			intervalMs: 30,
+		});
+
+		const duration = Date.now() - startTime;
+
+		assert.strictEqual(result, true);
+		// Should have ~60ms delay (2 retries × 30ms)
+		// Allow some variance for test execution
+		assert.ok(
+			duration >= 50,
+			`Expected at least 50ms delay, got ${duration}ms`,
+		);
+	});
+
+	test("reads environment variables for config defaults", async () => {
+		// Save original env
+		const originalRetries = process.env.WORKER_HEALTH_RETRIES;
+		const originalInterval = process.env.WORKER_HEALTH_INTERVAL_MS;
+
+		try {
+			process.env.WORKER_HEALTH_RETRIES = "2";
+			process.env.WORKER_HEALTH_INTERVAL_MS = "20";
+
+			let _attempts = 0;
+			const healthCheck = mock.fn(async () => {
+				_attempts++;
+				throw new Error("ECONNREFUSED");
+			});
+
+			// Call without explicit config — should use env defaults
+			await assert.rejects(
+				() => waitForRedis(healthCheck),
+				/Failed to connect to Redis after 2 attempts/,
+			);
+
+			assert.strictEqual(healthCheck.mock.callCount(), 2);
+		} finally {
+			// Restore env
+			process.env.WORKER_HEALTH_RETRIES = originalRetries;
+			process.env.WORKER_HEALTH_INTERVAL_MS = originalInterval;
+		}
 	});
 });
