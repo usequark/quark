@@ -13,9 +13,6 @@
 		"db:seed": "prisma db seed",
 		"db:studio": "prisma studio"
 	},
-	"prisma": {
-		"seed": "node scripts/seed.js"
-	},
 	"keywords": [],
 	"author": "",
 	"license": "ISC",

@@ -254,7 +254,15 @@ function validateProjectName(name) {
 
 program
 	.argument("<project-name>", "Name of the project to create")
-	.action(async (projectName) => {
+	.option(
+		"--no-prompts",
+		"Skip interactive prompts and use default/provided values",
+	)
+	.option(
+		"--features <features>",
+		"Comma-separated list of optional features to include (ui,jobs)",
+	)
+	.action(async (projectName, options) => {
 		console.log(
 			chalk.blue.bold(
 				`\n\uD83D\uDE80 Creating your new Quark project: ${projectName}\n`,
@@ -314,16 +322,25 @@ program
 
 		// Check if directory already exists
 		if (await fs.pathExists(targetDir)) {
-			const { overwrite } = await prompts({
-				type: "confirm",
-				name: "overwrite",
-				message: `Directory "${projectName}" already exists. Remove it and recreate?`,
-				initial: false,
-			});
+			if (!options.prompts) {
+				// In non-interactive mode, automatically remove existing directory
+				console.log(
+					chalk.yellow(
+						`  Directory "${projectName}" already exists. Removing... (non-interactive mode)`,
+					),
+				);
+			} else {
+				const { overwrite } = await prompts({
+					type: "confirm",
+					name: "overwrite",
+					message: `Directory "${projectName}" already exists. Remove it and recreate?`,
+					initial: false,
+				});
 
-			if (!overwrite) {
-				console.log(chalk.yellow("Aborted."));
-				process.exit(1);
+				if (!overwrite) {
+					console.log(chalk.yellow("Aborted."));
+					process.exit(1);
+				}
 			}
 
 			// Stop any running Docker containers for this project
@@ -379,35 +396,72 @@ program
 			}
 
 			// Step 5: Ask which optional features to eject
-			console.log(chalk.cyan("\n  🎯 Configuring optional features...\n"));
-			const response = await prompts([
-				{
-					type: "multiselect",
-					name: "features",
-					message: "Which optional packages would you like to include?",
-					instructions: false,
-					choices: [
-						{
-							title: "UI Components (packages/ui)",
-							value: "ui",
-							selected: true,
-						},
-						{
-							title: "Job Definitions (packages/jobs)",
-							value: "jobs",
-							selected: true,
-						},
-					],
-				},
-			]);
+			let features;
+			if (!options.prompts && options.features) {
+				// Parse features from CLI flag
+				console.log(chalk.cyan("\n  🎯 Configuring optional features..."));
+				const validFeatures = ["ui", "jobs"];
+				features = options.features
+					.split(",")
+					.map((f) => f.trim())
+					.filter((f) => f.length > 0);
 
-			const { features } = response;
+				// Validate features
+				const invalidFeatures = features.filter(
+					(f) => !validFeatures.includes(f),
+				);
+				if (invalidFeatures.length > 0) {
+					throw new Error(
+						`Invalid features: ${invalidFeatures.join(", ")}. Valid options are: ${validFeatures.join(", ")}`,
+					);
+				}
 
-			// Handle prompt cancellation (Ctrl+C)
-			if (!features) {
-				console.log(chalk.yellow("\n\u26A0\uFE0F  Setup cancelled."));
-				await fs.remove(targetDir);
-				process.exit(0);
+				console.log(
+					chalk.green(
+						`  Selected features: ${features.join(", ") || "none"} (non-interactive mode)`,
+					),
+				);
+			} else if (!options.prompts) {
+				// Use defaults when --no-prompts is set without --features
+				console.log(chalk.cyan("\n  🎯 Configuring optional features..."));
+				features = ["ui", "jobs"]; // Default to both
+				console.log(
+					chalk.green(
+						`  Using default features: ${features.join(", ")} (non-interactive mode)`,
+					),
+				);
+			} else {
+				// Interactive prompt
+				console.log(chalk.cyan("\n  🎯 Configuring optional features...\n"));
+				const response = await prompts([
+					{
+						type: "multiselect",
+						name: "features",
+						message: "Which optional packages would you like to include?",
+						instructions: false,
+						choices: [
+							{
+								title: "UI Components (packages/ui)",
+								value: "ui",
+								selected: true,
+							},
+							{
+								title: "Job Definitions (packages/jobs)",
+								value: "jobs",
+								selected: true,
+							},
+						],
+					},
+				]);
+
+				features = response.features;
+
+				// Handle prompt cancellation (Ctrl+C)
+				if (!features) {
+					console.log(chalk.yellow("\n\u26A0\uFE0F  Setup cancelled."));
+					await fs.remove(targetDir);
+					process.exit(0);
+				}
 			}
 
 			// Step 6: Copy selected optional packages

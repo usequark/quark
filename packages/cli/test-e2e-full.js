@@ -332,6 +332,19 @@ async function runE2ETest() {
 				);
 				log.success("Database migrations completed");
 			} catch (err) {
+				// Check for authentication failures (critical issue)
+				if (
+					err.message.includes("P1000") ||
+					err.message.includes("Authentication failed")
+				) {
+					log.error(
+						`Database authentication failed - credentials mismatch between .env and Docker`,
+					);
+					log.error(
+						`This typically means the database container used different credentials than generated in .env`,
+					);
+					throw err; // Fail the test - this is a critical error
+				}
 				// migrate deploy returns error if no migrations to apply (which is ok)
 				if (err.message.includes("No pending migrations")) {
 					log.success("No pending migrations (schema current)");
@@ -378,8 +391,10 @@ async function runE2ETest() {
 				stdio: ["ignore", "pipe", "pipe"],
 			});
 
-			// Wait for app to start
+			// Wait for app to start — allow it time to boot before checking
 			log.info("Waiting for application to be ready...");
+			await new Promise((r) => setTimeout(r, 2000)); // Let the dev server initialize
+
 			let appReady = false;
 			const startWaitTime = Date.now();
 			while (Date.now() - startWaitTime < 60000) {
@@ -394,8 +409,8 @@ async function runE2ETest() {
 					break;
 				}
 
-				// Check if port is open
-				if (await waitForPort(appPort, "Web App", 1000)) {
+				// Check if port is open — use longer timeout for port availability check
+				if (await waitForPort(appPort, "Web App", 3000)) {
 					appReady = true;
 					break;
 				}

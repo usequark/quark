@@ -212,6 +212,24 @@ quark/
 └── .github/workflows/  # CI, release, changeset-check
 ```
 
+## Database Seeding
+
+Seed file: `packages/db/prisma/seed.js` (scaffolded template: `packages/cli/templates/base-project/packages/db/prisma/seed.js`).
+Run via `pnpm db:seed`, configured in `prisma.config.ts` as `tsx prisma/seed.js`.
+
+| `SEED_PROFILE` | Records created | Use case |
+|---|---|---|
+| `minimal` | Admin user only | Production first deploy |
+| `dev` *(default)* | Admin + sample viewer + audit log + job | Staging, local, E2E |
+
+**Critical:** `SEED_PROFILE` must NOT be derived from `NODE_ENV`. Railway sets `NODE_ENV=production` on all deployed services (including staging) for performance reasons. Use `SEED_PROFILE` explicitly:
+- Production: `SEED_PROFILE=minimal pnpm --filter @techstream/quark-db db:seed`
+- Staging: `pnpm --filter @techstream/quark-db db:seed`
+
+Both profiles are idempotent (safe to re-run). Staging full wipe: `prisma migrate reset --force` (calls seed automatically).
+
+**Migrations on deploy** are automated via `releaseCommand` in `apps/web/railway.json`: `prisma migrate deploy` runs before traffic switches on every Railway deploy.
+
 ## Key Commands
 
 | Command | Purpose |

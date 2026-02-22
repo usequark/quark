@@ -6,6 +6,48 @@
 
 ---
 
+## Database Seeding
+
+Seeding is driven by `packages/db/prisma/seed.js` via `pnpm db:seed`. Two profiles are available, selected by `SEED_PROFILE`.
+
+| `SEED_PROFILE` | Created records | When to use |
+|---|---|---|
+| `minimal` | Admin user only (`admin@example.com`) | Production: first deploy only |
+| `dev` *(default)* | Admin + sample viewer + audit log + sample job | Staging, local dev, E2E tests |
+
+Both profiles are **idempotent** — re-running when data already exists is safe and exits cleanly.
+
+### Commands
+
+```bash
+# Production (first deploy only)
+SEED_PROFILE=minimal pnpm --filter @techstream/quark-db db:seed
+
+# Staging / local dev
+pnpm --filter @techstream/quark-db db:seed
+
+# Wipe staging + reseed from scratch
+pnpm --filter @techstream/quark-db exec prisma migrate reset --force
+# migrate reset automatically calls db:seed at the end
+```
+
+### Why SEED_PROFILE, not NODE_ENV
+
+`SEED_PROFILE` is intentionally separate from `NODE_ENV`. Railway sets `NODE_ENV=production` on **all** deployed services — including staging — for Next.js build/performance reasons. Deriving the seed profile from `NODE_ENV` would silently give staging the minimal seed instead of the full dev dataset.
+
+This project does support `NODE_ENV=staging` via `resolveEnvironment()` in `packages/config/src/environment.js`, but that only works if Railway is explicitly configured with that value — an error-prone manual step. `SEED_PROFILE` makes intent explicit and visible in deploy commands and CI logs.
+
+### Seed credentials (dev data only)
+
+| Email | Password | Role |
+|---|---|---|
+| `admin@example.com` | `admin123` | admin |
+| `user@example.com` | *(OAuth only — no password set)* | viewer |
+
+> These are scaffolded placeholder credentials. Change `admin@example.com`'s password immediately after first login on any deployed environment.
+
+---
+
 ## Overview
 
 | Models | Enums | Relations | Indexes |
