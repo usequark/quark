@@ -18,7 +18,7 @@
 		"@techstream/quark-db": "workspace:*",
 		"@techstream/quark-jobs": "workspace:*",
 		"@techstream/quark-ui": "workspace:*",
-		"@prisma/client": "^7.4.0",
+		"@prisma/client": "^7.4.1",
 		"next": "16.1.6",
 		"next-auth": "5.0.0-beta.30",
 		"pg": "^8.18.0",

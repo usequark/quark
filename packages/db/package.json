@@ -25,8 +25,8 @@
 		"prisma": "^7.4.0"
 	},
 	"dependencies": {
-		"@prisma/adapter-pg": "^7.4.0",
-		"@prisma/client": "^7.4.0",
+		"@prisma/adapter-pg": "^7.4.1",
+		"@prisma/client": "^7.4.1",
 		"pg": "^8.18.0",
 		"zod": "^4.3.6"
 	}
