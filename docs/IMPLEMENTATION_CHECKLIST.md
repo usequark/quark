@@ -104,8 +104,12 @@ This document contains a comprehensive list of all missing features, issues, and
 
 - [x] **Create email service module**
   - Files: `packages/core/src/email.js`
-  - Abstracts email sending via nodemailer (SMTP) or Resend (API)
-  - Auto-detects provider from env vars (EMAIL_PROVIDER, SMTP_*, RESEND_API_KEY)
+  - Strategy Pattern: providers implement a common `EmailProvider` base class
+  - Built-in providers: `smtp` (Nodemailer), `resend`, `zeptomail`
+  - Provider selected via `EMAIL_PROVIDER` env var (defaults to `smtp`)
+  - Config validated at service-creation time (`validateConfig()`) — fails fast at startup
+  - Consistent `{ id }` return shape across all providers
+  - Custom providers: extend `EmailProvider`, call `registerEmailProvider(name, Class)`
 
 - [x] **Setup email templates**
   - Files: `packages/core/src/email-templates.js`
@@ -117,9 +121,10 @@ This document contains a comprehensive list of all missing features, issues, and
   - Registration route enqueues `SEND_WELCOME_EMAIL` job (fire-and-forget)
   - `SEND_RESET_PASSWORD_EMAIL` job handler ready for password-reset flow
 
-- [x] **Configure SMTP**
-  - Mailpit in dev (via Docker), configurable SMTP/Resend in production
-  - Environment-based provider selection in `createEmailService()`
+- [x] **Configure providers**
+  - Mailpit in dev (via Docker), any provider configurable for production
+  - `EMAIL_PROVIDER=zeptomail` (recommended), `resend`, or `smtp`
+  - Custom providers registered at app startup via `registerEmailProvider()`
 
 ---
 

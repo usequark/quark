@@ -307,6 +307,81 @@ React components and UI primitives for your application.
 
 ---
 
+## Email Service
+
+Quark's email service uses a **Strategy Pattern** — swap providers without changing any call sites.
+
+### Sending Email
+
+```javascript
+import { createEmailService } from "@techstream/quark-core";
+
+const email = createEmailService({
+  from: process.env.EMAIL_FROM,
+  provider: process.env.EMAIL_PROVIDER, // "smtp" | "resend" | "zeptomail"
+});
+
+await email.sendEmail(
+  "user@example.com",
+  "Welcome!",
+  "<p>Thanks for signing up.</p>",
+  "Thanks for signing up.",
+);
+```
+
+### Choosing a Provider
+
+Set `EMAIL_PROVIDER` in your `.env`:
+
+| Value        | Required vars                               |
+|--------------|---------------------------------------------|
+| `smtp`       | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` |
+| `resend`     | `RESEND_API_KEY`                            |
+| `zeptomail`  | `ZEPTOMAIL_TOKEN`, `ZEPTOMAIL_URL`          |
+
+All providers return `{ id, ...providerData }` from `sendEmail()`.
+
+Provider config is validated at **service-creation time** — misconfigured providers fail immediately at app startup rather than silently at send time.
+
+### Registering a Custom Provider
+
+```javascript
+import { EmailProvider, registerEmailProvider, createEmailService } from "@techstream/quark-core";
+
+class MyProvider extends EmailProvider {
+  validateConfig() {
+    if (!process.env.MY_API_KEY) {
+      throw new Error("MY_API_KEY is required for MyProvider");
+    }
+  }
+
+  async sendEmail(to, subject, html, text) {
+    const res = await fetch("https://api.myprovider.io/send", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${process.env.MY_API_KEY}` },
+      body: JSON.stringify({ to, subject, html, text }),
+    });
+    const data = await res.json();
+    return { id: data.messageId, ...data };
+  }
+}
+
+// Register once at app startup (e.g., in server.js / app.js)
+registerEmailProvider("myprovider", MyProvider);
+
+// Then use it like any built-in provider
+const email = createEmailService({
+  from: process.env.EMAIL_FROM,
+  provider: "myprovider",
+});
+```
+
+### Local Development (Mailpit)
+
+Mailpit is included in `docker-compose.yml` as a local SMTP sink. All outbound email is captured and viewable at `http://localhost:8025`. No `.env` changes needed for the default `smtp` provider in dev.
+
+---
+
 ## Updating Quark
 
 ### Method 1: Using `quark-update` Command (Recommended)

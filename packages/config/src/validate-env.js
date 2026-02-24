@@ -37,10 +37,16 @@ const envSchema = {
 	// Email provider
 	EMAIL_PROVIDER: {
 		required: false,
-		description: 'Email provider — "smtp" (default) or "resend"',
+		description: 'Email provider — "smtp" (default), "resend", or "zeptomail"',
 	},
 	EMAIL_FROM: { required: false, description: "Sender email address" },
 	RESEND_API_KEY: { required: false, description: "Resend API key" },
+	ZEPTOMAIL_TOKEN: { required: false, description: "Zeptomail API token" },
+	ZEPTOMAIL_URL: { required: false, description: "Zeptomail API base URL" },
+	ZEPTOMAIL_BOUNCE_EMAIL: {
+		required: false,
+		description: "Zeptomail bounce email address",
+	},
 
 	// NextAuth
 	NEXTAUTH_SECRET: {
@@ -68,6 +74,12 @@ const envSchema = {
 		description: "Environment (development, test, staging, production)",
 	},
 	PORT: { required: false, description: "Web server port" },
+
+	// Worker
+	WORKER_CONCURRENCY: {
+		required: false,
+		description: "Number of concurrent jobs per queue (default: 5)",
+	},
 
 	// Storage
 	STORAGE_PROVIDER: {
@@ -129,6 +141,25 @@ export function validateEnv(service = "web") {
 
 	// --- Cross-field validation ---
 
+	// Placeholder value security check
+	const placeholderPattern = /^CHANGE_ME_/i;
+	const criticalKeys = [
+		"NEXTAUTH_SECRET",
+		"POSTGRES_PASSWORD",
+		"RESEND_API_KEY",
+		"ZEPTOMAIL_TOKEN",
+		"S3_SECRET_ACCESS_KEY",
+		"SMTP_PASSWORD",
+	];
+	for (const key of criticalKeys) {
+		const value = process.env[key];
+		if (value && placeholderPattern.test(value)) {
+			errors.push(
+				`${key} contains a placeholder value — replace with a real secret (${envSchema[key]?.description || ""})`,
+			);
+		}
+	}
+
 	// Database: either DATABASE_URL or POSTGRES_USER must be set (skip in test)
 	if (!isTest) {
 		const hasDbUrl = !!process.env.DATABASE_URL;
@@ -169,6 +200,20 @@ export function validateEnv(service = "web") {
 	// Conditional: Resend provider requires API key
 	if (process.env.EMAIL_PROVIDER === "resend" && !process.env.RESEND_API_KEY) {
 		errors.push("Missing RESEND_API_KEY — required when EMAIL_PROVIDER=resend");
+	}
+
+	// Conditional: Zeptomail provider requires token and URL
+	if (process.env.EMAIL_PROVIDER === "zeptomail") {
+		if (!process.env.ZEPTOMAIL_TOKEN) {
+			errors.push(
+				"Missing ZEPTOMAIL_TOKEN — required when EMAIL_PROVIDER=zeptomail",
+			);
+		}
+		if (!process.env.ZEPTOMAIL_URL) {
+			errors.push(
+				"Missing ZEPTOMAIL_URL — required when EMAIL_PROVIDER=zeptomail",
+			);
+		}
 	}
 
 	// Log warnings (non-fatal)

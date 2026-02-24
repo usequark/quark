@@ -301,24 +301,36 @@ config.appName // "Quark"
 
 ## Environment Variables
 
-| Variable             | Description                             | Example                                   |
-|----------------------|-----------------------------------------|-------------------------------------------|
-| DATABASE_URL         | PostgreSQL connection string            | `postgresql://user:pass@localhost:5432/db` |
-| REDIS_URL            | Redis connection string                 | `redis://localhost:6379`                   |
-| NEXTAUTH_SECRET      | NextAuth.js secret key                  | `openssl rand -base64 32`                 |
-| MAIL_SMTP_URL        | SMTP server URL                         | `smtp://localhost:1025`                    |
-| PORT                 | Web app port                            | `3000`                                     |
-| APP_URL              | Application URL (auto-derived in dev)   | `https://yourdomain.com`                  |
-| WORKER_CONCURRENCY   | Worker job concurrency                  | `5`                                        |
-| **Storage**          |                                         |                                           |
-| STORAGE_PROVIDER     | `"local"` (default) or `"s3"`           | `local`                                    |
-| STORAGE_LOCAL_DIR    | Local storage directory                 | `./uploads`                                |
-| S3_BUCKET            | S3/R2 bucket name                       | `my-app-uploads`                           |
-| S3_REGION            | S3 region (`"auto"` for Cloudflare R2)  | `auto`                                     |
-| S3_ENDPOINT          | Custom S3 endpoint (required for R2)    | `https://<id>.r2.cloudflarestorage.com`    |
-| S3_ACCESS_KEY_ID     | S3 access key                           | —                                          |
-| S3_SECRET_ACCESS_KEY | S3 secret key                           | —                                          |
-| S3_PUBLIC_URL        | Optional CDN URL for public file access | `https://cdn.example.com`                  |
-| **Upload Limits**    |                                         |                                           |
-| UPLOAD_MAX_SIZE      | Max file size in bytes (default: 10 MB) | `10485760`                                 |
-| UPLOAD_ALLOWED_TYPES | Comma-separated MIME types              | `image/jpeg,image/png,application/pdf`     |
+| Variable             | Description                                            | Example                                    |
+|----------------------|--------------------------------------------------------|--------------------------------------------|
+| DATABASE_URL         | PostgreSQL connection string                           | `postgresql://user:pass@localhost:5432/db` |
+| REDIS_URL            | Redis connection string                                | `redis://localhost:6379`                   |
+| NEXTAUTH_SECRET      | NextAuth.js secret key (min 32 chars)                  | `openssl rand -base64 32`                  |
+| PORT                 | Web app port                                           | `3000`                                     |
+| APP_URL              | Application URL (auto-derived in dev)                  | `https://yourdomain.com`                   |
+| WORKER_CONCURRENCY   | Worker job concurrency                                 | `5`                                        |
+| **Email**            |                                                        |                                            |
+| EMAIL_PROVIDER       | `"smtp"` (default), `"resend"`, `"zeptomail"`, or custom | `zeptomail`                              |
+| EMAIL_FROM           | Sender address                                         | `App <noreply@yourdomain.com>`             |
+| MAIL_HOST            | Dev SMTP host (Mailpit)                                | `localhost`                                |
+| MAIL_SMTP_PORT       | Dev SMTP port (Mailpit)                                | `1025`                                     |
+| SMTP_HOST            | Production SMTP relay host                             | `smtp.example.com`                         |
+| SMTP_PORT            | Production SMTP relay port                             | `587`                                      |
+| SMTP_USER            | Production SMTP username                               | —                                          |
+| SMTP_PASSWORD        | Production SMTP password                               | —                                          |
+| RESEND_API_KEY       | Resend API key (when `EMAIL_PROVIDER=resend`)           | `re_xxxxxxxxxxxxx`                         |
+| ZEPTOMAIL_TOKEN      | Zeptomail API token (when `EMAIL_PROVIDER=zeptomail`)  | —                                          |
+| ZEPTOMAIL_URL        | Zeptomail API base URL                                 | `https://api.zeptomail.com`                |
+| ZEPTOMAIL_BOUNCE_EMAIL | Bounce address for Zeptomail                         | `bounce@yourdomain.com`                    |
+| **Storage**          |                                                        |                                            |
+| STORAGE_PROVIDER     | `"local"` (default) or `"s3"`                          | `local`                                    |
+| STORAGE_LOCAL_DIR    | Local storage directory                                | `./uploads`                                |
+| S3_BUCKET            | S3/R2 bucket name                                      | `my-app-uploads`                           |
+| S3_REGION            | S3 region (`"auto"` for Cloudflare R2)                 | `auto`                                     |
+| S3_ENDPOINT          | Custom S3 endpoint (required for R2)                   | `https://<id>.r2.cloudflarestorage.com`    |
+| S3_ACCESS_KEY_ID     | S3 access key                                          | —                                          |
+| S3_SECRET_ACCESS_KEY | S3 secret key                                          | —                                          |
+| S3_PUBLIC_URL        | Optional CDN URL for public file access                | `https://cdn.example.com`                  |
+| **Upload Limits**    |                                                        |                                            |
+| UPLOAD_MAX_SIZE      | Max file size in bytes (default: 10 MB)                | `10485760`                                 |
+| UPLOAD_ALLOWED_TYPES | Comma-separated MIME types                             | `image/jpeg,image/png,application/pdf`     |

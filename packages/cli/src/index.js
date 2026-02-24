@@ -528,7 +528,11 @@ program
 
 			// Step 8: Create .env.example file
 			console.log(chalk.cyan("\n  📋 Creating environment configuration..."));
-			const envExampleTemplate = `# --- Environment ---
+			const envExampleTemplate = `# ⚠️  IMPORTANT: Copy this file to .env and fill in the values for your environment.
+# NEVER commit the .env file to version control — it contains secrets!
+# $ cp .env.example .env
+
+# --- Environment ---
 # Supported: development, test, staging, production (default: development)
 # NODE_ENV=development
 
@@ -544,6 +548,10 @@ POSTGRES_DB=${scope}_dev
 # Optional: Set DATABASE_URL to override the dynamic construction above
 # DATABASE_URL="postgresql://${scope}_user:CHANGE_ME_TO_STRONG_PASSWORD@localhost:5432/${scope}_dev?schema=public"
 
+# --- Database Pool Configuration ---
+# Connection pool settings are managed automatically. Customize if needed:
+# For advanced tuning, see Prisma connection pool documentation.
+
 # --- Redis Configuration ---
 REDIS_HOST=localhost
 REDIS_PORT=6379
@@ -551,6 +559,9 @@ REDIS_PORT=6379
 # REDIS_URL="redis://localhost:6379"
 
 # --- Mail Configuration ---
+# Email can be sent via SMTP (local or production), Resend, or Zeptomail.
+# Choose one provider below based on your needs.
+
 # Development: Mailpit local SMTP (defaults below work with docker-compose)
 MAIL_HOST=localhost
 MAIL_SMTP_PORT=1025
@@ -563,12 +574,20 @@ MAIL_UI_PORT=8025
 # SMTP_USER=your_smtp_user
 # SMTP_PASSWORD=your_smtp_password
 
-# --- Email Provider ---
-# Provider: "smtp" (default) or "resend"
+# --- Email Provider Selection ---
+# Choose one: "smtp" (default), "resend", or "zeptomail"
 # EMAIL_PROVIDER=smtp
 # EMAIL_FROM=App Name <noreply@yourdomain.com>
 
-# Resend (only when EMAIL_PROVIDER=resend)
+# Zeptomail (recommended for production)
+# Get started at: https://www.zoho.com/zeptomail/
+# Your token is shown in Zeptomail console and includes the "Zoho-enczapikey" prefix:
+# e.g. ZEPTOMAIL_TOKEN=Zoho-enczapikey <your_key_here>
+# ZEPTOMAIL_TOKEN=Zoho-enczapikey your_zeptomail_api_key
+# ZEPTOMAIL_URL=https://api.zeptomail.com  # Base URL; /v1.1/email is appended in code
+# ZEPTOMAIL_BOUNCE_EMAIL=bounce@yourdomain.com  # optional
+
+# Resend (alternative provider)
 # Get your API key at: https://resend.com/api-keys
 # RESEND_API_KEY=re_xxxxxxxxxxxxx
 
@@ -586,7 +605,12 @@ APP_NAME=${projectName}
 # This secret is used to encrypt JWT tokens and session data
 NEXTAUTH_SECRET=CHANGE_ME_TO_STRONG_SECRET
 
-# --- OAuth Providers (Optional) ---
+# NextAuth callback URL (auto-derived from APP_URL in development)
+# In production, explicitly set this to your domain:
+# NEXTAUTH_URL=https://yourdomain.com/api/auth
+
+# --- OAuth Providers (Not Yet Implemented) ---
+# OAuth support is planned for a future release.
 # GitHub OAuth - Get credentials at: https://github.com/settings/developers
 # GITHUB_ID=your_github_client_id
 # GITHUB_SECRET=your_github_client_secret

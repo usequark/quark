@@ -1,6 +1,10 @@
 import assert from "node:assert";
 import { test } from "node:test";
-import { createEmailService } from "./email.js";
+import {
+	createEmailService,
+	EmailProvider,
+	registerEmailProvider,
+} from "./email.js";
 
 test("Email Service", async (t) => {
 	await t.test(
@@ -67,16 +71,14 @@ test("Email Service", async (t) => {
 	);
 
 	await t.test(
-		"Resend provider: throws if RESEND_API_KEY missing",
+		"Resend provider: throws at creation if RESEND_API_KEY missing",
 		async () => {
 			const origKey = process.env.RESEND_API_KEY;
 			delete process.env.RESEND_API_KEY;
 
 			try {
-				const service = createEmailService({ provider: "resend" });
-
-				await assert.rejects(
-					() => service.sendEmail("test@example.com", "Subject", "<p>body</p>"),
+				assert.throws(
+					() => createEmailService({ provider: "resend" }),
 					(err) => err instanceof Error && /RESEND_API_KEY/.test(err.message),
 				);
 			} finally {
@@ -241,6 +243,114 @@ test("Email Service", async (t) => {
 		}
 	});
 
+	await t.test(
+		"Zeptomail provider: throws at creation if ZEPTOMAIL_TOKEN missing",
+		async () => {
+			const origToken = process.env.ZEPTOMAIL_TOKEN;
+			const origUrl = process.env.ZEPTOMAIL_URL;
+			delete process.env.ZEPTOMAIL_TOKEN;
+			process.env.ZEPTOMAIL_URL = "https://api.zeptomail.com";
+
+			try {
+				assert.throws(
+					() => createEmailService({ provider: "zeptomail" }),
+					(err) => err instanceof Error && /ZEPTOMAIL_TOKEN/.test(err.message),
+				);
+			} finally {
+				if (origToken !== undefined) process.env.ZEPTOMAIL_TOKEN = origToken;
+				else delete process.env.ZEPTOMAIL_TOKEN;
+				if (origUrl !== undefined) process.env.ZEPTOMAIL_URL = origUrl;
+				else delete process.env.ZEPTOMAIL_URL;
+			}
+		},
+	);
+
+	await t.test(
+		"Zeptomail provider: throws at creation if ZEPTOMAIL_URL missing",
+		async () => {
+			const origToken = process.env.ZEPTOMAIL_TOKEN;
+			const origUrl = process.env.ZEPTOMAIL_URL;
+			process.env.ZEPTOMAIL_TOKEN = "zep_test_token_123";
+			delete process.env.ZEPTOMAIL_URL;
+
+			try {
+				assert.throws(
+					() => createEmailService({ provider: "zeptomail" }),
+					(err) => err instanceof Error && /ZEPTOMAIL_URL/.test(err.message),
+				);
+			} finally {
+				if (origToken !== undefined) process.env.ZEPTOMAIL_TOKEN = origToken;
+				else delete process.env.ZEPTOMAIL_TOKEN;
+				if (origUrl !== undefined) process.env.ZEPTOMAIL_URL = origUrl;
+				else delete process.env.ZEPTOMAIL_URL;
+			}
+		},
+	);
+
+	await t.test(
+		"Zeptomail provider: calls fetch with correct URL, headers, and body",
+		async () => {
+			const origToken = process.env.ZEPTOMAIL_TOKEN;
+			const origUrl = process.env.ZEPTOMAIL_URL;
+			process.env.ZEPTOMAIL_TOKEN = "zep_test_token_123";
+			process.env.ZEPTOMAIL_URL = "https://api.zeptomail.com";
+
+			const originalFetch = globalThis.fetch;
+			let capturedUrl = null;
+			let capturedOptions = null;
+
+			globalThis.fetch = async (url, opts) => {
+				capturedUrl = url;
+				capturedOptions = opts;
+				return {
+					ok: true,
+					json: async () => ({ request_id: "zep-request-id" }),
+				};
+			};
+
+			try {
+				const service = createEmailService({
+					provider: "zeptomail",
+					from: "Test <test@example.com>",
+				});
+
+				const result = await service.sendEmail(
+					"recipient@example.com",
+					"Test Subject",
+					"<p>Hello</p>",
+					"Hello",
+				);
+
+				assert.strictEqual(capturedUrl, "https://api.zeptomail.com/v1.1/email");
+				assert.strictEqual(capturedOptions.method, "POST");
+
+				const headers = capturedOptions.headers;
+				// Token is used as-is; it already carries the "Zoho-enczapikey" scheme
+				assert.strictEqual(headers.Authorization, "zep_test_token_123");
+				assert.strictEqual(headers["Content-Type"], "application/json");
+
+				const body = JSON.parse(capturedOptions.body);
+				assert.deepStrictEqual(body.from, {
+					name: "Test",
+					address: "test@example.com",
+				});
+				assert.strictEqual(body.subject, "Test Subject");
+				assert.strictEqual(body.htmlbody, "<p>Hello</p>");
+				assert.strictEqual(body.textbody, "Hello");
+
+				assert.strictEqual(result.request_id, "zep-request-id");
+				// Normalized: id should equal request_id
+				assert.strictEqual(result.id, "zep-request-id");
+			} finally {
+				globalThis.fetch = originalFetch;
+				if (origToken !== undefined) process.env.ZEPTOMAIL_TOKEN = origToken;
+				else delete process.env.ZEPTOMAIL_TOKEN;
+				if (origUrl !== undefined) process.env.ZEPTOMAIL_URL = origUrl;
+				else delete process.env.ZEPTOMAIL_URL;
+			}
+		},
+	);
+
 	await t.test("input validation: rejects empty 'to'", async () => {
 		const service = createEmailService();
 		await assert.rejects(
@@ -268,4 +378,121 @@ test("Email Service", async (t) => {
 			(err) => err instanceof Error && /html/.test(err.message),
 		);
 	});
+
+	// --- Strategy Pattern ---
+
+	await t.test("EmailProvider base class is exported", () => {
+		assert.strictEqual(typeof EmailProvider, "function");
+		const provider = new EmailProvider("test@example.com");
+		assert.strictEqual(provider.from, "test@example.com");
+		// validateConfig() is a no-op on base class — must not throw
+		assert.doesNotThrow(() => provider.validateConfig());
+	});
+
+	await t.test(
+		"EmailProvider base class sendEmail throws not-implemented",
+		async () => {
+			const provider = new EmailProvider("test@example.com");
+			await assert.rejects(
+				() => provider.sendEmail("to@example.com", "Subject", "<p>Hi</p>"),
+				(err) =>
+					err instanceof Error && /must implement sendEmail/.test(err.message),
+			);
+		},
+	);
+
+	await t.test("createEmailService throws for unknown provider", () => {
+		assert.throws(
+			() => createEmailService({ provider: "unknown-provider" }),
+			(err) =>
+				err instanceof Error &&
+				/Unknown email provider/.test(err.message) &&
+				/unknown-provider/.test(err.message),
+		);
+	});
+
+	await t.test(
+		"registerEmailProvider: validateConfig() is called at service creation",
+		() => {
+			class BrokenProvider extends EmailProvider {
+				validateConfig() {
+					throw new Error("missing MY_API_KEY");
+				}
+				async sendEmail() {
+					return { id: "x" };
+				}
+			}
+			registerEmailProvider("test-broken", BrokenProvider);
+
+			assert.throws(
+				() => createEmailService({ provider: "test-broken" }),
+				(err) => err instanceof Error && /MY_API_KEY/.test(err.message),
+			);
+		},
+	);
+
+	await t.test("registerEmailProvider: rejects non-subclass", () => {
+		class NotAProvider {
+			async sendEmail() {}
+		}
+		assert.throws(
+			() => registerEmailProvider("not-valid", NotAProvider),
+			(err) =>
+				err instanceof Error && /must extend EmailProvider/.test(err.message),
+		);
+	});
+
+	await t.test(
+		"registerEmailProvider: custom provider is used by createEmailService",
+		async () => {
+			let capturedArgs = null;
+
+			class TestProvider extends EmailProvider {
+				async sendEmail(to, subject, html, text) {
+					capturedArgs = { to, subject, html, text, from: this.from };
+					return { id: "custom-provider-id" };
+				}
+			}
+
+			registerEmailProvider("test-custom", TestProvider);
+
+			const service = createEmailService({
+				provider: "test-custom",
+				from: "Custom <custom@example.com>",
+			});
+
+			const result = await service.sendEmail(
+				"to@example.com",
+				"Custom Subject",
+				"<p>Custom Body</p>",
+				"Custom Body",
+			);
+
+			assert.strictEqual(result.id, "custom-provider-id");
+			assert.strictEqual(capturedArgs.to, "to@example.com");
+			assert.strictEqual(capturedArgs.subject, "Custom Subject");
+			assert.strictEqual(capturedArgs.html, "<p>Custom Body</p>");
+			assert.strictEqual(capturedArgs.text, "Custom Body");
+			assert.strictEqual(capturedArgs.from, "Custom <custom@example.com>");
+		},
+	);
+
+	await t.test(
+		"registerEmailProvider: custom provider still runs input validation",
+		async () => {
+			class NoopProvider extends EmailProvider {
+				async sendEmail() {
+					return { id: "noop" };
+				}
+			}
+
+			registerEmailProvider("test-noop", NoopProvider);
+			const service = createEmailService({ provider: "test-noop" });
+
+			await assert.rejects(
+				() => service.sendEmail("", "Subject", "<p>body</p>"),
+				(err) => err instanceof Error && /to/.test(err.message),
+			);
+		},
+	);
 });
