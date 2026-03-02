@@ -15,6 +15,6 @@
 	"license": "ISC",
 	"packageManager": "pnpm@10.12.1",
 	"dependencies": {
-		"bullmq": "^5.69.3"
+		"bullmq": "^5.70.1"
 	}
 }
