@@ -22,7 +22,7 @@
 		"@faker-js/faker": "^10.3.0",
 		"@techstream/quark-config": "workspace:*",
 		"bcryptjs": "^3.0.3",
-		"prisma": "^7.4.0"
+		"prisma": "^7.4.2"
 	},
 	"dependencies": {
 		"@prisma/adapter-pg": "^7.4.0",
