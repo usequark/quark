@@ -59,7 +59,7 @@ importers:
         specifier: ^3.1002.0
         version: 3.1002.0
       '@aws-sdk/s3-request-presigner':
-        specifier: ^3.992.0
+        specifier: ^3.1002.0
         version: 3.1002.0
       '@prisma/client':
         specifier: ^7.4.2
@@ -159,7 +159,7 @@ importers:
         specifier: ^3.1002.0
         version: 3.1002.0
       '@aws-sdk/s3-request-presigner':
-        specifier: ^3.992.0
+        specifier: ^3.1002.0
         version: 3.1002.0
       bcryptjs:
         specifier: ^3.0.3
