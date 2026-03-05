@@ -66,7 +66,8 @@ const envSchema = {
 	},
 	APP_DESCRIPTION: {
 		required: false,
-		description: "Application description — used for SEO metadata and social previews",
+		description:
+			"Application description — used for SEO metadata and social previews",
 	},
 	APP_URL: {
 		required: false,
@@ -96,13 +97,18 @@ const envSchema = {
 	},
 	S3_BUCKET: { required: false, description: "S3 bucket name" },
 	S3_REGION: { required: false, description: "S3 region" },
-	S3_ENDPOINT: { required: false, description: "S3-compatible endpoint URL (required for non-AWS providers: R2, MinIO, etc.)" },
+	S3_ENDPOINT: {
+		required: false,
+		description:
+			"S3-compatible endpoint URL (required for non-AWS providers: R2, MinIO, etc.)",
+	},
 	S3_ACCESS_KEY_ID: { required: false, description: "S3 access key" },
 	S3_SECRET_ACCESS_KEY: { required: false, description: "S3 secret key" },
 	S3_PUBLIC_URL: { required: false, description: "S3 public URL prefix" },
 	ASSET_CDN_URL: {
 		required: false,
-		description: "Public CDN base URL for asset delivery — provider-agnostic (CloudFront, Cloudflare, Bunny, etc.). Falls back to /api/files when unset.",
+		description:
+			"Public CDN base URL for asset delivery — provider-agnostic (CloudFront, Cloudflare, Bunny, etc.). Falls back to /api/files when unset.",
 	},
 };
 
@@ -192,7 +198,8 @@ export function validateEnv(service = "web") {
 	}
 
 	// SEO metadata: APP_DESCRIPTION should be explicitly set before production
-	const isProductionLike = currentEnv === "production" || currentEnv === "staging";
+	const isProductionLike =
+		currentEnv === "production" || currentEnv === "staging";
 	if (!isTest && isProductionLike) {
 		const appDescription = process.env.APP_DESCRIPTION;
 		if (!appDescription) {

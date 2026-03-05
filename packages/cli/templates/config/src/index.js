@@ -1,8 +1,6 @@
 export const config = {
 	appName: process.env.APP_NAME || "Quark",
-	appDescription:
-		process.env.APP_DESCRIPTION ||
-		"A Quark-powered application",
+	appDescription: process.env.APP_DESCRIPTION || "A Quark-powered application",
 };
 
 export { getAllowedOrigins, getAppUrl, syncNextAuthUrl } from "./app-url.js";
