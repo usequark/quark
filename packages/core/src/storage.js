@@ -99,6 +99,13 @@ export function createLocalStorage(options = {}) {
 			// Local files are served via the API route, not a public URL
 			return `/api/files/${encodeURIComponent(key)}`;
 		},
+
+		async getSignedUploadUrl(_key, _options = {}) {
+			throw new Error(
+				"getSignedUploadUrl() requires STORAGE_PROVIDER=s3. " +
+					"For local development, upload files via POST /api/files instead.",
+			);
+		},
 	};
 }
 
@@ -237,6 +244,35 @@ export function createS3Storage(options = {}) {
 			// Fall back to API route
 			return `/api/files/${encodeURIComponent(key)}`;
 		},
+
+		/**
+		 * Generate a pre-signed URL that allows a client (e.g. the browser) to
+		 * upload directly to S3/R2 without routing the binary through the server.
+		 *
+		 * @param {string} key - Storage key for the object to be uploaded
+		 * @param {Object} [options]
+		 * @param {number} [options.expiresIn=300] - URL validity in seconds (default: 5 min)
+		 * @param {string} [options.contentType] - Expected Content-Type; enforced by S3
+		 * @returns {Promise<{ url: string, key: string, expiresAt: string }>}
+		 */
+		async getSignedUploadUrl(key, options = {}) {
+			const { getSignedUrl } = await import("@aws-sdk/s3-request-presigner");
+			const { PutObjectCommand } = await import("@aws-sdk/client-s3");
+			const client = await getClient();
+
+			const expiresIn = options.expiresIn ?? 300;
+
+			const command = new PutObjectCommand({
+				Bucket: bucket,
+				Key: key,
+				...(options.contentType ? { ContentType: options.contentType } : {}),
+			});
+
+			const url = await getSignedUrl(client, command, { expiresIn });
+			const expiresAt = new Date(Date.now() + expiresIn * 1000).toISOString();
+
+			return { url, key, expiresAt };
+		},
 	};
 }
 
@@ -291,6 +327,35 @@ export function generateStorageKey(originalFilename, options = {}) {
 }
 
 /**
+ * Returns the public URL for a stored asset.
+ *
+ * Checks `ASSET_CDN_URL` first — if set, prepends it to the key.
+ * This is provider-agnostic: works with any CDN (CloudFront, Cloudflare,
+ * Bunny, Fastly, etc.) as long as the CDN is pointed at the same bucket.
+ *
+ * Falls back to the local API route (`/api/files/<key>`) when no CDN is
+ * configured — covers local development and any environment where
+ * `STORAGE_PROVIDER=local` is used.
+ *
+ * @param {string} key - Storage key (e.g. "uploads/2026/02/abc-photo.jpg")
+ * @returns {string} Full CDN URL or local API route
+ *
+ * @example
+ * // With ASSET_CDN_URL=https://assets.example.com
+ * getAssetUrl("uploads/2026/02/abc-photo.jpg")
+ * // → "https://assets.example.com/uploads/2026/02/abc-photo.jpg"
+ *
+ * // Without ASSET_CDN_URL (dev / local storage)
+ * getAssetUrl("uploads/2026/02/abc-photo.jpg")
+ * // → "/api/files/uploads%2F2026%2F02%2Fabc-photo.jpg"
+ */
+export function getAssetUrl(key) {
+	const cdnBase = process.env.ASSET_CDN_URL;
+	if (cdnBase) return `${cdnBase.replace(/\/$/, "")}/${key}`;
+	return `/api/files/${encodeURIComponent(key)}`;
+}
+
+/**
  * @typedef {Object} StorageAdapter
  * @property {"local" | "s3"} provider
  * @property {(key: string, data: Buffer | Readable | string, meta?: { contentType?: string, cacheControl?: string }) => Promise<{ key: string, provider: string }>} put
@@ -298,4 +363,5 @@ export function generateStorageKey(originalFilename, options = {}) {
  * @property {(key: string) => Promise<void>} delete
  * @property {(key: string) => Promise<boolean>} exists
  * @property {(key: string) => string} getPublicUrl
+ * @property {(key: string, options?: { expiresIn?: number, contentType?: string }) => Promise<{ url: string, key: string, expiresAt: string }>} getSignedUploadUrl
  */

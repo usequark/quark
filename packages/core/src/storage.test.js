@@ -8,6 +8,7 @@ import {
 	createLocalStorage,
 	createStorage,
 	generateStorageKey,
+	getAssetUrl,
 } from "../src/storage.js";
 
 // ---------------------------------------------------------------------------
@@ -295,4 +296,73 @@ test("Storage - createS3Storage getPublicUrl without publicUrl falls back to API
 	});
 	const url = storage.getPublicUrl("uploads/file.png");
 	assert(url.startsWith("/api/files/"));
+});
+
+// ---------------------------------------------------------------------------
+// getAssetUrl
+// ---------------------------------------------------------------------------
+
+test("getAssetUrl - returns CDN URL when ASSET_CDN_URL is set", () => {
+	process.env.ASSET_CDN_URL = "https://assets.example.com";
+	try {
+		const url = getAssetUrl("uploads/2026/02/abc-photo.jpg");
+		assert.strictEqual(
+			url,
+			"https://assets.example.com/uploads/2026/02/abc-photo.jpg",
+		);
+	} finally {
+		delete process.env.ASSET_CDN_URL;
+	}
+});
+
+test("getAssetUrl - strips trailing slash from ASSET_CDN_URL", () => {
+	process.env.ASSET_CDN_URL = "https://assets.example.com/";
+	try {
+		const url = getAssetUrl("uploads/file.png");
+		assert.strictEqual(url, "https://assets.example.com/uploads/file.png");
+	} finally {
+		delete process.env.ASSET_CDN_URL;
+	}
+});
+
+test("getAssetUrl - falls back to /api/files when ASSET_CDN_URL is not set", () => {
+	delete process.env.ASSET_CDN_URL;
+	const url = getAssetUrl("uploads/2026/02/abc-photo.jpg");
+	assert.strictEqual(url, "/api/files/uploads%2F2026%2F02%2Fabc-photo.jpg");
+});
+
+test("getAssetUrl - percent-encodes key in fallback URL", () => {
+	delete process.env.ASSET_CDN_URL;
+	const url = getAssetUrl("uploads/file with spaces.jpg");
+	assert.strictEqual(url, "/api/files/uploads%2Ffile%20with%20spaces.jpg");
+});
+
+// ---------------------------------------------------------------------------
+// getSignedUploadUrl
+// ---------------------------------------------------------------------------
+
+test("getSignedUploadUrl - local adapter throws a clear error", async () => {
+	const storage = createLocalStorage();
+	await assert.rejects(
+		() => storage.getSignedUploadUrl("uploads/file.png"),
+		/getSignedUploadUrl\(\) requires STORAGE_PROVIDER=s3/,
+	);
+});
+
+test("getSignedUploadUrl - local adapter error message mentions POST /api/files", async () => {
+	const storage = createLocalStorage();
+	await assert.rejects(
+		() => storage.getSignedUploadUrl("uploads/file.png"),
+		/POST \/api\/files/,
+	);
+});
+
+test("getSignedUploadUrl - S3 adapter exposes the method as a function", () => {
+	const storage = createStorage({
+		provider: "s3",
+		bucket: "test-bucket",
+		accessKeyId: "key",
+		secretAccessKey: "secret",
+	});
+	assert.strictEqual(typeof storage.getSignedUploadUrl, "function");
 });

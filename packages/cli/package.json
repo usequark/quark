@@ -15,7 +15,7 @@
 	"scripts": {
 		"sync-templates": "node scripts/sync-templates.js",
 		"sync-templates:check": "node scripts/sync-templates.js --check",
-		"test": "node test-cli.js",
+		"test": "node test-cli.js && node --test src/utils.test.js",
 		"test:build": "node test-build.js",
 		"test:e2e": "node test-e2e.js",
 		"test:e2e:full": "node test-e2e-full.js",

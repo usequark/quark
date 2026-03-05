@@ -4,7 +4,7 @@
  * Times out after 5 seconds to prevent hanging.
  */
 
-import { createLogger, pingRedis } from "@techstream/quark-core";
+import { createLogger, createStorage, pingRedis } from "@techstream/quark-core";
 import { prisma } from "@techstream/quark-db";
 import { NextResponse } from "next/server";
 
@@ -79,5 +79,33 @@ async function runHealthChecks() {
 		health.status = "degraded";
 	}
 
+	// Check storage connectivity
+	const storageResult = await checkStorage();
+	health.checks.storage = storageResult;
+	if (storageResult.status === "error") {
+		health.status = "degraded";
+	}
+
 	return health;
+}
+
+/**
+ * Verifies storage is reachable and writable by writing then deleting a
+ * small sentinel object. Uses whichever provider is configured via
+ * STORAGE_PROVIDER (defaults to "local" when unset).
+ * @returns {Promise<{ status: string, provider: string, message?: string }>}
+ */
+async function checkStorage() {
+	const provider = process.env.STORAGE_PROVIDER || "local";
+	try {
+		const storage = createStorage();
+		const sentinelKey = ".health-check-sentinel";
+		await storage.put(sentinelKey, Buffer.from("ok"), {
+			contentType: "text/plain",
+		});
+		await storage.delete(sentinelKey);
+		return { status: "ok", provider };
+	} catch (error) {
+		return { status: "error", provider, message: error.message };
+	}
 }

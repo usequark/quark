@@ -64,6 +64,11 @@ const envSchema = {
 		required: false,
 		description: "Application name — used in metadata, emails, and page titles",
 	},
+	APP_DESCRIPTION: {
+		required: false,
+		description:
+			"Application description — used for SEO metadata and social previews",
+	},
 	APP_URL: {
 		required: false,
 		description:
@@ -92,10 +97,19 @@ const envSchema = {
 	},
 	S3_BUCKET: { required: false, description: "S3 bucket name" },
 	S3_REGION: { required: false, description: "S3 region" },
-	S3_ENDPOINT: { required: false, description: "S3-compatible endpoint URL" },
+	S3_ENDPOINT: {
+		required: false,
+		description:
+			"S3-compatible endpoint URL (required for non-AWS providers: R2, MinIO, etc.)",
+	},
 	S3_ACCESS_KEY_ID: { required: false, description: "S3 access key" },
 	S3_SECRET_ACCESS_KEY: { required: false, description: "S3 secret key" },
 	S3_PUBLIC_URL: { required: false, description: "S3 public URL prefix" },
+	ASSET_CDN_URL: {
+		required: false,
+		description:
+			"Public CDN base URL for asset delivery — provider-agnostic (CloudFront, Cloudflare, Bunny, etc.). Falls back to /api/files when unset.",
+	},
 };
 
 /**
@@ -172,14 +186,31 @@ export function validateEnv(service = "web") {
 	}
 
 	// Redis: warn if not configured (defaults to localhost in dev, will fail in prod)
+	const currentEnv = (process.env.NODE_ENV || "").toLowerCase();
 	if (
 		!process.env.REDIS_URL &&
 		!process.env.REDIS_HOST &&
-		process.env.NODE_ENV === "production"
+		(currentEnv === "production" || currentEnv === "staging")
 	) {
 		warnings.push(
 			"Redis not configured: set REDIS_URL or REDIS_HOST (defaults to localhost)",
 		);
+	}
+
+	// SEO metadata: APP_DESCRIPTION should be explicitly set before production
+	const isProductionLike =
+		currentEnv === "production" || currentEnv === "staging";
+	if (!isTest && isProductionLike) {
+		const appDescription = process.env.APP_DESCRIPTION;
+		if (!appDescription) {
+			warnings.push(
+				"APP_DESCRIPTION not set: metadata description will fall back to a generic value. Set APP_DESCRIPTION before production.",
+			);
+		} else if (/^CHANGE_ME_|^TODO_/i.test(appDescription)) {
+			warnings.push(
+				"APP_DESCRIPTION appears to be a placeholder value. Update it before production.",
+			);
+		}
 	}
 
 	// Conditional: S3 storage requires bucket + credentials

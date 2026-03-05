@@ -8,6 +8,7 @@ import { Command } from "commander";
 import { execa } from "execa";
 import fs from "fs-extra";
 import prompts from "prompts";
+import { formatProjectDisplayName } from "./utils.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const templatesDir = path.join(__dirname, "../templates");
@@ -271,6 +272,8 @@ program
 
 		const targetDir = validateProjectName(projectName);
 		const scope = projectName.toLowerCase().replace(/[^a-z0-9-]/g, "");
+		const appDisplayName = formatProjectDisplayName(projectName);
+		const appDescription = `${appDisplayName} application`;
 
 		// Clean up orphaned Docker volumes from a previous project with the same name.
 		// Docker Compose names volumes as "<project>_postgres_data", "<project>_redis_data".
@@ -598,7 +601,9 @@ MAIL_UI_PORT=8025
 
 # --- Application Identity ---
 # APP_NAME is used in metadata, emails, and page titles.
-APP_NAME=${projectName}
+# ⚠️  APP_DESCRIPTION affects SEO snippets — update before production.
+APP_NAME=${appDisplayName}
+APP_DESCRIPTION=${appDescription}
 
 # --- NextAuth Configuration ---
 # ⚠️  CRITICAL: Generate a secure secret with: openssl rand -base64 32
@@ -711,7 +716,10 @@ MAIL_SMTP_PORT=${mailSmtpPort}
 MAIL_UI_PORT=${mailUiPort}
 
 # --- Application Identity ---
-APP_NAME=${projectName}
+# APP_NAME is used in metadata, emails, and page titles.
+# ⚠️  APP_DESCRIPTION affects SEO snippets — update before production.
+APP_NAME=${appDisplayName}
+APP_DESCRIPTION=${appDescription}
 
 # --- NextAuth Configuration ---
 NEXTAUTH_SECRET=${nextAuthSecret}

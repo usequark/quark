@@ -43,7 +43,10 @@ const envSchema = {
 	RESEND_API_KEY: { required: false, description: "Resend API key" },
 	ZEPTOMAIL_TOKEN: { required: false, description: "Zeptomail API token" },
 	ZEPTOMAIL_URL: { required: false, description: "Zeptomail API base URL" },
-	ZEPTOMAIL_BOUNCE_EMAIL: { required: false, description: "Zeptomail bounce email address" },
+	ZEPTOMAIL_BOUNCE_EMAIL: {
+		required: false,
+		description: "Zeptomail bounce email address",
+	},
 
 	// NextAuth
 	NEXTAUTH_SECRET: {
@@ -60,6 +63,10 @@ const envSchema = {
 	APP_NAME: {
 		required: false,
 		description: "Application name — used in metadata, emails, and page titles",
+	},
+	APP_DESCRIPTION: {
+		required: false,
+		description: "Application description — used for SEO metadata and social previews",
 	},
 	APP_URL: {
 		required: false,
@@ -89,10 +96,14 @@ const envSchema = {
 	},
 	S3_BUCKET: { required: false, description: "S3 bucket name" },
 	S3_REGION: { required: false, description: "S3 region" },
-	S3_ENDPOINT: { required: false, description: "S3-compatible endpoint URL" },
+	S3_ENDPOINT: { required: false, description: "S3-compatible endpoint URL (required for non-AWS providers: R2, MinIO, etc.)" },
 	S3_ACCESS_KEY_ID: { required: false, description: "S3 access key" },
 	S3_SECRET_ACCESS_KEY: { required: false, description: "S3 secret key" },
 	S3_PUBLIC_URL: { required: false, description: "S3 public URL prefix" },
+	ASSET_CDN_URL: {
+		required: false,
+		description: "Public CDN base URL for asset delivery — provider-agnostic (CloudFront, Cloudflare, Bunny, etc.). Falls back to /api/files when unset.",
+	},
 };
 
 /**
@@ -140,7 +151,14 @@ export function validateEnv(service = "web") {
 
 	// Placeholder value security check
 	const placeholderPattern = /^CHANGE_ME_/i;
-	const criticalKeys = ["NEXTAUTH_SECRET", "POSTGRES_PASSWORD", "RESEND_API_KEY", "ZEPTOMAIL_TOKEN", "S3_SECRET_ACCESS_KEY", "SMTP_PASSWORD"];
+	const criticalKeys = [
+		"NEXTAUTH_SECRET",
+		"POSTGRES_PASSWORD",
+		"RESEND_API_KEY",
+		"ZEPTOMAIL_TOKEN",
+		"S3_SECRET_ACCESS_KEY",
+		"SMTP_PASSWORD",
+	];
 	for (const key of criticalKeys) {
 		const value = process.env[key];
 		if (value && placeholderPattern.test(value)) {
@@ -162,14 +180,30 @@ export function validateEnv(service = "web") {
 	}
 
 	// Redis: warn if not configured (defaults to localhost in dev, will fail in prod)
+	const currentEnv = (process.env.NODE_ENV || "").toLowerCase();
 	if (
 		!process.env.REDIS_URL &&
 		!process.env.REDIS_HOST &&
-		process.env.NODE_ENV === "production"
+		(currentEnv === "production" || currentEnv === "staging")
 	) {
 		warnings.push(
 			"Redis not configured: set REDIS_URL or REDIS_HOST (defaults to localhost)",
 		);
+	}
+
+	// SEO metadata: APP_DESCRIPTION should be explicitly set before production
+	const isProductionLike = currentEnv === "production" || currentEnv === "staging";
+	if (!isTest && isProductionLike) {
+		const appDescription = process.env.APP_DESCRIPTION;
+		if (!appDescription) {
+			warnings.push(
+				"APP_DESCRIPTION not set: metadata description will fall back to a generic value. Set APP_DESCRIPTION before production.",
+			);
+		} else if (/^CHANGE_ME_|^TODO_/i.test(appDescription)) {
+			warnings.push(
+				"APP_DESCRIPTION appears to be a placeholder value. Update it before production.",
+			);
+		}
 	}
 
 	// Conditional: S3 storage requires bucket + credentials
@@ -195,10 +229,14 @@ export function validateEnv(service = "web") {
 	// Conditional: Zeptomail provider requires token and URL
 	if (process.env.EMAIL_PROVIDER === "zeptomail") {
 		if (!process.env.ZEPTOMAIL_TOKEN) {
-			errors.push("Missing ZEPTOMAIL_TOKEN — required when EMAIL_PROVIDER=zeptomail");
+			errors.push(
+				"Missing ZEPTOMAIL_TOKEN — required when EMAIL_PROVIDER=zeptomail",
+			);
 		}
 		if (!process.env.ZEPTOMAIL_URL) {
-			errors.push("Missing ZEPTOMAIL_URL — required when EMAIL_PROVIDER=zeptomail");
+			errors.push(
+				"Missing ZEPTOMAIL_URL — required when EMAIL_PROVIDER=zeptomail",
+			);
 		}
 	}
 
