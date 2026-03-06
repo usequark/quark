@@ -362,9 +362,9 @@ describe("throttledError", () => {
 
 		throttle(new Error("Redis unavailable"));
 
-		assert.strictEqual(logger.error.mock.callCount(), 1);
-		const call = logger.error.mock.calls[0];
-		assert.ok(call.arguments[0].includes("Connection error"));
+		assert.strictEqual(logger.warn.mock.callCount(), 1);
+		const call = logger.warn.mock.calls[0];
+		assert.ok(call.arguments[0].includes("Waiting for Redis"));
 	});
 
 	test("suppresses duplicate errors within window", () => {
@@ -372,15 +372,15 @@ describe("throttledError", () => {
 		const throttle = throttledError(logger, 100);
 
 		throttle(new Error("Redis unavailable"));
-		assert.strictEqual(logger.error.mock.callCount(), 1);
+		assert.strictEqual(logger.warn.mock.callCount(), 1);
 
 		// Same error within window — should be suppressed
 		throttle(new Error("Redis unavailable"));
-		assert.strictEqual(logger.error.mock.callCount(), 1);
+		assert.strictEqual(logger.warn.mock.callCount(), 1);
 
 		// Different error within window — should log
 		throttle(new Error("Redis timeout"));
-		assert.strictEqual(logger.error.mock.callCount(), 2);
+		assert.strictEqual(logger.warn.mock.callCount(), 2);
 	});
 
 	test("logs error again after window expires", async () => {
@@ -388,18 +388,18 @@ describe("throttledError", () => {
 		const throttle = throttledError(logger, 50); // 50ms window
 
 		throttle(new Error("Redis unavailable"));
-		assert.strictEqual(logger.error.mock.callCount(), 1);
+		assert.strictEqual(logger.warn.mock.callCount(), 1);
 
 		// Same error within window — suppressed
 		throttle(new Error("Redis unavailable"));
-		assert.strictEqual(logger.error.mock.callCount(), 1);
+		assert.strictEqual(logger.warn.mock.callCount(), 1);
 
 		// Wait for window to expire
 		await new Promise((resolve) => setTimeout(resolve, 60));
 
 		// Same error after window — logged again
 		throttle(new Error("Redis unavailable"));
-		assert.strictEqual(logger.error.mock.callCount(), 2);
+		assert.strictEqual(logger.warn.mock.callCount(), 2);
 	});
 
 	test("includes error details in log", () => {
@@ -410,11 +410,10 @@ describe("throttledError", () => {
 		error.code = "ECONNREFUSED";
 		throttle(error);
 
-		const call = logger.error.mock.calls[0];
+		const call = logger.warn.mock.calls[0];
 		const args = call.arguments;
-		assert.strictEqual(args[0], "Connection error (will retry)");
-		assert.ok(args[1].error.includes("ECONNREFUSED"));
-		assert.ok(args[1].timestamp); // Should have timestamp
+		assert.strictEqual(args[0], "Waiting for Redis");
+		assert.ok(args[1].reason.includes("ECONNREFUSED"));
 	});
 
 	test("uses default 5 second window if not specified", async () => {
@@ -422,14 +421,14 @@ describe("throttledError", () => {
 		const throttle = throttledError(logger); // No window specified
 
 		throttle(new Error("Test"));
-		assert.strictEqual(logger.error.mock.callCount(), 1);
+		assert.strictEqual(logger.warn.mock.callCount(), 1);
 
 		throttle(new Error("Test"));
-		assert.strictEqual(logger.error.mock.callCount(), 1); // Suppressed
+		assert.strictEqual(logger.warn.mock.callCount(), 1); // Suppressed
 
 		// 5 second default window hasn't expired
 		throttle(new Error("Test"));
-		assert.strictEqual(logger.error.mock.callCount(), 1); // Still suppressed
+		assert.strictEqual(logger.warn.mock.callCount(), 1); // Still suppressed
 	});
 });
 
@@ -479,7 +478,7 @@ describe("waitForRedis", () => {
 					maxRetries: 2,
 					intervalMs: 10,
 				}),
-			{ message: /Failed to connect to Redis after 2 attempts/ },
+			{ message: /Redis unavailable at .+ after 2 attempts/ },
 		);
 
 		assert.strictEqual(healthCheck.mock.callCount(), 2);
@@ -496,7 +495,7 @@ describe("waitForRedis", () => {
 					maxRetries: 5,
 					intervalMs: 10,
 				}),
-			{ message: "Invalid configuration" },
+			{ message: "Redis health check failed: Invalid configuration" },
 		);
 
 		// Should fail immediately, not retry 5 times
@@ -514,7 +513,7 @@ describe("waitForRedis", () => {
 					maxRetries: 4,
 					intervalMs: 10,
 				}),
-			/Failed to connect to Redis after 4 attempts/,
+			/Redis unavailable at .+ after 4 attempts/,
 		);
 
 		assert.strictEqual(healthCheck.mock.callCount(), 4);
@@ -565,7 +564,7 @@ describe("waitForRedis", () => {
 			// Call without explicit config — should use env defaults
 			await assert.rejects(
 				() => waitForRedis(healthCheck),
-				/Failed to connect to Redis after 2 attempts/,
+				/Redis unavailable at .+ after 2 attempts/,
 			);
 
 			assert.strictEqual(healthCheck.mock.callCount(), 2);
