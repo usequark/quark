@@ -1,26 +1,45 @@
 @import "tailwindcss";
+@source "../../../../packages/ui/src/**/*.{js,jsx}";
 
-:root {
-	--background: #ffffff;
-	--foreground: #171717;
+/* Native dialog — browser default positions it at the top; force viewport-center */
+dialog {
+	position: fixed;
+	inset: 0;
+	margin: auto;
 }
 
-@theme inline {
-	--color-background: var(--background);
-	--color-foreground: var(--foreground);
-	--font-sans: var(--font-geist-sans);
-	--font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-	:root {
-		--background: #0a0a0a;
-		--foreground: #ededed;
+@keyframes quark-dialog-in {
+	from {
+		opacity: 0;
+		transform: scale(0.95) translateY(-8px);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1) translateY(0);
 	}
 }
 
-body {
-	background: var(--background);
-	color: var(--foreground);
-	font-family: Arial, Helvetica, sans-serif;
+@keyframes quark-dialog-out {
+	from {
+		opacity: 1;
+		transform: scale(1) translateY(0);
+	}
+	to {
+		opacity: 0;
+		transform: scale(0.95) translateY(-8px);
+	}
+}
+
+@theme {
+	--color-background: #ffffff;
+	--color-foreground: #171717;
+}
+
+@supports (color: oklch(0 0 0)) {
+	@media (prefers-color-scheme: dark) {
+		@theme {
+			--color-background: #0a0a0a;
+			--color-foreground: #ededed;
+		}
+	}
 }

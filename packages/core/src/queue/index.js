@@ -5,6 +5,9 @@
 
 import { Queue, QueueEvents, Worker } from "bullmq";
 import { ServiceError } from "../errors.js";
+import { createLogger } from "../logger.js";
+
+const logger = createLogger("queue");
 
 /**
  * Default Redis configuration
@@ -20,9 +23,38 @@ const DEFAULT_REDIS_CONFIG = {
 };
 
 /**
+ * Redis config for health checks only.
+ * Disables the offline queue so commands fail immediately if not connected,
+ * and sets a short connect timeout so we don't hang indefinitely.
+ */
+const HEALTH_CHECK_REDIS_CONFIG = {
+	...DEFAULT_REDIS_CONFIG,
+	enableOfflineQueue: false,
+	connectTimeout: 3000,
+	maxRetriesPerRequest: 0,
+	retryStrategy: () => null, // don't auto-retry — let waitForRedis control the loop
+};
+
+/**
  * Map to store singleton queue instances
  */
 const queues = new Map();
+const queueConnections = new Map();
+
+const getRedisAddress = (redisConfig = DEFAULT_REDIS_CONFIG) => {
+	if (redisConfig?.url) {
+		try {
+			const url = new URL(redisConfig.url);
+			return `${url.hostname}:${url.port || "6379"}`;
+		} catch {
+			return redisConfig.url;
+		}
+	}
+
+	const host = redisConfig?.host || DEFAULT_REDIS_CONFIG.host;
+	const port = redisConfig?.port || DEFAULT_REDIS_CONFIG.port;
+	return `${host}:${port}`;
+};
 
 /**
  * Creates or retrieves a singleton BullMQ queue
@@ -57,10 +89,14 @@ export const createQueue = (name, options = {}) => {
 	});
 
 	queues.set(name, queue);
+	queueConnections.set(name, redis);
 
 	// Clean up on graceful shutdown
 	queue.on("error", (error) => {
-		console.error(`Queue "${name}" error:`, error);
+		logger.error(`Queue "${name}" encountered an error`, {
+			error: error.message,
+			code: error.code,
+		});
 	});
 
 	return queue;
@@ -89,14 +125,19 @@ export const createWorker = (queueName, handler, options = {}) => {
 	});
 
 	worker.on("error", (error) => {
-		console.error(`Worker for queue "${queueName}" error:`, error);
+		logger.error(`Worker for queue "${queueName}" encountered an error`, {
+			error: error.message,
+			code: error.code,
+		});
 	});
 
 	worker.on("failed", (job, error) => {
-		console.error(
-			`Job ${job.id} in queue "${queueName}" failed:`,
-			error.message,
-		);
+		logger.error(`Job ${job?.id} in queue "${queueName}" failed`, {
+			jobId: job?.id,
+			queue: queueName,
+			error: error.message,
+			attempts: job?.attemptsMade,
+		});
 	});
 
 	return worker;
@@ -165,7 +206,9 @@ export const clearQueue = async (queue, options = {}) => {
 	try {
 		await queue.clean(grace, 100);
 	} catch (error) {
-		console.error(`Failed to clear queue "${queue.name}":`, error);
+		logger.error(`Failed to clear queue "${queue.name}"`, {
+			error: error.message,
+		});
 		throw error;
 	}
 };
@@ -179,11 +222,14 @@ export const closeAllQueues = async () => {
 	try {
 		for (const [name, queue] of queues) {
 			await queue.close();
-			console.log(`Queue "${name}" closed`);
+			logger.info(`Queue "${name}" closed`);
 		}
 		queues.clear();
+		queueConnections.clear();
 	} catch (error) {
-		console.error("Failed to close queues:", error);
+		logger.error("Failed to close queues during shutdown", {
+			error: error.message,
+		});
 		throw error;
 	}
 };
@@ -191,24 +237,59 @@ export const closeAllQueues = async () => {
 /**
  * Health check for Redis connectivity
  * @returns {Promise<boolean>} True if Redis is accessible
+ * @throws {ServiceError} When Redis is unreachable or misconfigured
  */
 export const checkQueueHealth = async () => {
-	try {
-		if (queues.size === 0) {
-			// Create a temporary queue to test connectivity
-			const testQueue = new Queue("_health_check", {
-				connection: DEFAULT_REDIS_CONFIG,
-			});
-			await testQueue.client.ping();
-			await testQueue.close();
-			return true;
-		}
+	const defaultRedisAddr = getRedisAddress(DEFAULT_REDIS_CONFIG);
 
-		const [firstQueue] = queues.values();
-		await firstQueue.client.ping();
+	if (queues.size === 0) {
+		// Create a temporary queue to test connectivity.
+		// Attach a no-op error listener so ioredis connection errors don't
+		// leak as unhandled 'error' events and print raw stack traces to stderr.
+		const testQueue = new Queue("_health_check", {
+			connection: HEALTH_CHECK_REDIS_CONFIG,
+		});
+		testQueue.on("error", () => {});
+		try {
+			// BullMQ v5: queue.client is an async getter — must be awaited
+			const client = await testQueue.client;
+			await client.ping();
+			return true;
+		} catch (error) {
+			const code = error.code ?? null;
+			const detail = error.message || error.code || "connection failed";
+			const suffix = code ? ` (${code})` : "";
+			const summary = detail === code ? "" : `: ${detail}`;
+			throw new ServiceError(
+				"Redis",
+				`Redis unavailable at ${defaultRedisAddr}${suffix}${summary}`,
+				503,
+			);
+		} finally {
+			// Always clean up the temporary queue
+			await testQueue.close().catch(() => {});
+		}
+	}
+
+	const [firstQueue] = queues.values();
+	const redisAddr = getRedisAddress(
+		queueConnections.get(firstQueue.name) || DEFAULT_REDIS_CONFIG,
+	);
+
+	try {
+		// BullMQ v5: queue.client is an async getter — must be awaited
+		const client = await firstQueue.client;
+		await client.ping();
 		return true;
 	} catch (error) {
-		console.error("Queue health check failed:", error);
-		return false;
+		const code = error.code ?? null;
+		const detail = error.message || error.code || "connection failed";
+		const suffix = code ? ` (${code})` : "";
+		const summary = detail === code ? "" : `: ${detail}`;
+		throw new ServiceError(
+			"Redis",
+			`Redis unavailable at ${redisAddr}${suffix}${summary}`,
+			503,
+		);
 	}
 };

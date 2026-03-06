@@ -29,7 +29,7 @@ Scaffolded (local-only) packages: `@<app>/db`, `@<app>/config`, `@<app>/jobs`, `
 | Queue | BullMQ + Redis 7 |
 | Auth | NextAuth v5 (beta) |
 | Validation | Zod 4 |
-| UI | Tailwind CSS + Shadcn |
+| UI | Tailwind CSS + custom primitives (`packages/ui`) |
 | Email | Nodemailer (Mailpit for dev, Resend for prod) |
 | Storage | Local filesystem or S3/R2 (pluggable) |
 | Linting | Biome |
@@ -39,7 +39,7 @@ Scaffolded (local-only) packages: `@<app>/db`, `@<app>/config`, `@<app>/jobs`, `
 
 - **Imports:** Use `@techstream/` scope for published packages. Scaffolded packages use project scope (`@<app>/`).
 - **Database:** Prisma + Postgres. Always include `createdAt`/`updatedAt` on models.
-- **UI:** Tailwind CSS + Shadcn. Keep components atomic.
+- **UI:** Tailwind CSS. Keep components atomic. When the `ui` package is selected, use components from `@<app>/ui`. Available exports: `Button`, `Input`, `Label`, `Textarea`, `Select`, `Checkbox`, `Badge`, `Card`/`CardHeader`/`CardTitle`/`CardContent`/`CardFooter`, `Table`/`TableHeader`/`TableBody`/`TableRow`/`TableHead`/`TableCell`, `Skeleton`, `Dialog` (client), `Toast`/`useToast` (client). All accept `className` for overrides. Do **not** import from `@/components/ui/*` — that Shadcn path convention is not used.
 - **Validation:** Zod is mandatory for all Server Actions and API routes.
 - **Errors:** Use `AppError` / `ValidationError` from `@techstream/quark-core/errors`.
 - **Environment:** All env vars validated via `validate-env.js` in the config package. Environment-specific defaults managed by `environment.js`. Centralized config loading via `loadConfig()` from `load-config.js`.

@@ -95,6 +95,9 @@ const EXCLUDE_PATTERNS = [
 	// Config: test files and coverage (config tests are monorepo-specific)
 	/^packages\/config\/coverage\//,
 	/^packages\/config\/src\/.*\.test\.js$/,
+
+	// Playground: monorepo reference only — scaffolded conditionally via CLI when ui is selected
+	/^apps\/web\/src\/app\/playground\//,
 ];
 
 /**

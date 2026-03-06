@@ -109,11 +109,13 @@ Admin scaffolds its UI components separately in `packages/admin/src/components/`
 - Visual inconsistency between admin and the rest of the app unless deliberately synced
 - More code to maintain per project
 
-#### Recommendation: **Option A — Expand the UI template**
+#### Recommendation: **Option A — Expand `packages/ui/`**
 
 This is architecturally consistent: the same pattern Quark uses for all other scaffolded packages. Admin selecting UI as a required dependency is handled by the CLI — selecting `admin` automatically includes `ui` (the prompt locks it).
 
-The one known tradeoff of this model: if a bug is found in a scaffolded UI component, existing projects don't receive the fix automatically. This is intentional and acceptable — projects own the code and can apply the fix manually from the updated template. It should be documented explicitly in the architecture docs.
+The CLI template for `ui` is auto-generated from the monorepo source via `sync-templates.js`. No manual mirroring is required. When a new component is added to `packages/ui/`, running `pnpm sync-templates` updates the CLI template.
+
+The one known tradeoff of this model: if a bug is found in a scaffolded UI component, existing projects don't receive the fix automatically. This is intentional and acceptable — projects own the code and can apply the fix manually from the updated template. It should be documented explicitly in `packages/ui/README.md`.
 
 ---
 
@@ -243,7 +245,7 @@ No dependency. No runtime. Pure HTML + Tailwind. Works as Server Component. Full
 
 ### Effort: ~1 week
 
-~12 components, co-located tests, barrel export. This is not complex work — it's well-understood patterns. Components are added to `packages/cli/templates/ui/` so that every project scaffolded with the `ui` feature (or `admin`, which requires it) gets the full set.
+~12 components, co-located tests, barrel export, and a `README.md` documenting the component API. All work happens in `packages/ui/src/`. Running `pnpm --filter @techstream/quark-create-app sync-templates` snapshots the result into `packages/cli/templates/ui/` — the template that gets dropped into user projects during scaffolding. The playground page lives in `apps/web/src/app/playground/` (monorepo reference) and is also stored as a standalone `packages/cli/templates/playground/` entry, copied conditionally into user projects only when `ui` is selected.
 
 ---
 
@@ -364,7 +366,7 @@ When `admin` is selected, the CLI generates:
 
 ```
 packages/admin/           ← full workspace package (copied from templates/admin/)
-packages/ui/              ← expanded template (~12 components, copied from templates/ui/)
+packages/ui/              ← ~12 components (copied from templates/ui/, auto-generated from packages/ui/ source)
 apps/web/src/app/admin/   ← two route files
 ```
 
@@ -451,9 +453,9 @@ A single-page decision document (not an implementation plan) that records:
 
 | Phase | What | Touches | Effort | New Deps | Prerequisite |
 |-------|------|---------|--------|----------|--------------|
-| **0** | **Expand UI template to ~12 primitives** | `templates/ui/` in `quark-create-app` | **1 week** | None (native HTML + Tailwind) | None |
+| **0** | **Expand UI package to ~12 primitives + home page + playground** | `packages/ui/`, `apps/web/`, `packages/cli/` | **1 week** | None (native HTML + Tailwind) | None |
 | **1** | Queue metrics + auto-instrumentation + queue health | `quark-core` | 3 days | None | None |
-| **2** | Scaffold `packages/admin/` + CLI `admin` feature prompt | `templates/admin/` in `quark-create-app` | **2–3 weeks** | None (uses `prisma._dmmf`) | Phase 0 |
+| **2** | Scaffold `packages/admin/` + CLI `admin` feature prompt | `packages/admin/`, `packages/cli/` | **2–3 weeks** | None (uses `prisma._dmmf`) | Phase 0 |
 | **3** | Alerting engine + adapters; scaffolded config | `quark-core` + `quark-create-app` | 2 weeks | None | Phase 1 |
 | **4** | Quark Observe (separate repo) | `quark-observe` (new repo) | TBD after Phase 3 in production | Separate repo deps | Phases 1–3 live |
 
@@ -475,40 +477,105 @@ Phases 0 and 1 can run in parallel. Phase 2 depends on Phase 0. Phase 3 depends 
 
 | Claim in previous docs | Reality | Correction |
 |------------------------|---------|------------|
-| "Tailwind CSS + Shadcn as the base component library in `packages/ui`" | `packages/ui` has one Button. Zero Shadcn components exist. | Phase 0 expands the UI template to ~12 real components. |
+| "Tailwind CSS + Shadcn as the base component library in `packages/ui`" | `packages/ui` has one Button. Zero Shadcn components exist. | Phase 0 expands the UI package to ~12 real components. |
 | "`@techstream/quark-admin` published to npm" | Admin should be scaffolded via CLI like all other non-core packages. | `packages/admin/` scaffolded template; `@yourapp/admin` workspace dep. |
 | "`@prisma/internals` for DMMF; build-time only" | `@prisma/internals` is ~50MB, unstable API, breaks between versions. | Use `prisma._dmmf` from the instantiated client. Zero new deps. |
 | "Phase 1 Template Baseline: 1–2 weeks" | Metrics infrastructure already exists. Only 3 additions needed. | 3 days. |
 | Quark Observe with detailed Fastify schema, SDK, SaaS pricing | Viable vision but no production usage data to validate design decisions yet. | Lock in vision; defer detailed planning until Phases 1–3 are live. |
 | "Recharts as optional peer dep for charts" | Adds a significant dep to admin for one page. | Use `<table>` or `<svg>` for simple metric display in MVP. |
 | Admin imports `from '@/components/ui/table'` (Shadcn path) | This Shadcn path convention doesn't exist in Quark. | Admin imports `from '@yourapp/ui'` (workspace dep). |
+| "Sync all files to `packages/cli/templates/ui/src/` manually" | CLI templates are **generated** from monorepo source via `sync-templates.js`. There is no manual mirroring step. | Build components in `packages/ui/`. Run `pnpm sync-templates`. CI drift check enforces parity. |
+| Home page and playground can import from `@yourapp/ui` freely | `apps/web/` syncs to base-project template used by **all** scaffolded projects, including those without `ui`. | Home page uses no UI package imports. Playground is conditionally scaffolded only when `ui` is selected (excluded from base-project sync; added as a separate CLI template). |
+| "`next.config.js` `transpilePackages` is handled by the CLI" | The existing `replaceDepsScope` strips optional deps from `package.json` but never touches `next.config.js`. `@techstream/quark-ui` and `@techstream/quark-jobs` remain in `transpilePackages` even when those features are not selected. | Add `patchNextConfig()` to the CLI scaffold step to remove unselected feature entries from `transpilePackages`. |
+
+### Documentation gap (not covered in any previous document)
+
+No existing doc describes the UI component API or usage patterns:
+- `docs/ARCHITECTURE.md` — no mention of `packages/ui`
+- `docs/QUARK_USAGE.md` — mentions `@yourscope/ui` as optional, gives no component list or import examples
+- `.github/skills/quark-context/SKILL.md` — lists "Tailwind CSS + Shadcn" which is aspirational, not actual; no listing of available components
+
+**Phase 0 deliverable must include:** a `packages/ui/README.md` that lists every exported component with its props and an import example. The quark-context SKILL.md "Tech Stack" row for UI must be updated from "Tailwind CSS + Shadcn" to "Tailwind CSS + custom primitives (`packages/ui`)" and the component list added to the coding standards section.
 
 ---
 
-## Part 10: UI Template Expansion Impact
+## Part 10: Phase 0 — Implementation Detail
 
-### For the Quark monorepo (CLI templates)
+### How CLI templates actually work (critical context)
 
-| Current | After Phase 0 |
-|---------|---------------|
-| `packages/cli/templates/ui/` → 1 Button component | Expanded to ~12 components |
-| `packages/ui/src/index.js` → exports Button only | Exports all ~12 components via barrel |
-| No `templates/admin/` directory | New `packages/cli/templates/admin/` added |
-| Valid CLI features: `["ui", "jobs"]` | Valid CLI features: `["ui", "jobs", "admin"]` |
-| Feature validation: select any combination | Feature validation: selecting `admin` forces `ui` to be included |
+There are two distinct tiers, and confusing them breaks the plan.
 
-### For newly scaffolded projects
+**Tier 1 — Quark monorepo development cycle:**
+`packages/ui/src/` is the source of truth. `packages/cli/scripts/sync-templates.js` copies it to `packages/cli/templates/ui/`, applying naming transforms. This runs before every CLI release — either manually by the Quark maintainer or automatically via the pre-commit hook. `packages/cli/templates/ui/` is a committed snapshot of the current component set, included in the published `quark-create-app` package.
 
-| Without admin | With admin selected |
-|---------------|---------------------|
-| `packages/ui/` with 1 Button | `packages/ui/` with ~12 components |
-| No admin package | `packages/admin/` with full self-scaling CRUD |
-| `apps/web/` has no admin routes | `apps/web/src/app/admin/` scaffolded with layout + catch-all |
-| `apps/web/package.json` has no admin dep | Adds `@yourapp/admin: workspace:*` dep |
+**Tier 2 — User project scaffolding:**
+When a user runs `quark-create-app` and selects `ui`, the CLI copies `packages/cli/templates/ui/` into their project as `packages/ui/`. From that moment the copy is **entirely theirs**. There is no connection back to Quark — no auto-sync, no version drift checks. They can modify, delete, or replace any component freely. This is the intentional Quark philosophy: scaffolded packages are owned by the project.
+
+**Implication for Phase 0:** Build all components in `packages/ui/src/`. Run `pnpm --filter @techstream/quark-create-app sync-templates` to update `packages/cli/templates/ui/`. The CI drift check enforces that the template snapshot stays current with the monorepo source before any CLI release. User projects are unaffected.
+
+### Three implementation constraints the original plan missed
+
+#### 1. `transpilePackages` gap in `next.config.js`
+
+The monorepo `apps/web/next.config.js` hardcodes `@techstream/quark-ui` (and `@techstream/quark-jobs`) in `transpilePackages` unconditionally. When the CLI scaffolds a project without `ui`, `replaceDepsScope` correctly strips the dep from `package.json` — but `next.config.js` is never patched. The resulting project references a package that doesn't exist.
+
+**Fix required in Phase 0:** Add a post-scaffold step to the CLI (alongside the existing `replaceDepsScope` function) that rewrites `transpilePackages` in `next.config.js` to only include entries matching the selected features. This is a CLI change, not a template change.
+
+```javascript
+// packages/cli/src/index.js — new helper (alongside replaceDepsScope)
+async function patchNextConfig(webDir, selectedFeatures) {
+  const configPath = path.join(webDir, 'next.config.js');
+  if (!(await fs.pathExists(configPath))) return;
+  const optionalPackages = { ui: '@myquark/ui', jobs: '@myquark/jobs' };
+  let content = await fs.readFile(configPath, 'utf-8');
+  for (const [feature, pkg] of Object.entries(optionalPackages)) {
+    if (!selectedFeatures.includes(feature)) {
+      // Remove the entry from the transpilePackages array
+      content = content.replace(new RegExp(`\\s*"${pkg.replace('/', '\\/')}",?\\n?`, 'g'), '\n');
+    }
+  }
+  await fs.writeFile(configPath, content);
+}
+```
+
+#### 2. Home page must not import from `@yourapp/ui`
+
+`apps/web/src/app/page.js` syncs directly into the base-project template — it will appear in **every** scaffolded project, including those that chose not to include `ui`. The home page cannot import from `@yourapp/ui`.
+
+**Resolution:** The home page is designed with no UI package imports. It uses plain JSX + Tailwind classes directly. A comment in the file directs developers who have `ui` selected to refactor using their components.
+
+```javascript
+// apps/web/src/app/page.js
+// No @yourapp/ui imports — this page is part of the base template.
+// If you scaffolded the ui package, feel free to replace these with your components.
+```
+
+#### 3. The playground page is `ui`-conditional
+
+`apps/web/src/app/playground/page.js` imports from `@yourapp/ui` and is nonsensical in a project without the package. It cannot live in the base-project template.
+
+**Resolution:** The playground is excluded from the base-project sync via `EXCLUDE_PATTERNS` in `sync-templates.js`. The CLI scaffolds it conditionally — copied from a standalone template entry (`packages/cli/templates/playground/`) only when `ui` is selected.
+
+This requires two additions:
+- `packages/cli/templates/playground/` directory containing the playground page
+- A new entry in the CLI's feature-conditional copy step (alongside where `ui` and `jobs` templates are copied into `packages/`)
+
+### Updated impact table
+
+| | Current | After Phase 0 |
+|---|---|---|
+| `packages/ui/src/` | 1 Button via `React.createElement` | ~12 components via JSX |
+| `packages/ui/src/index.js` | exports `Button` only | barrel for all ~12 |
+| CLI feature list | `["ui", "jobs"]` | `["ui", "jobs"]` (unchanged; `admin` is Phase 2) |
+| `next.config.js` scaffolding | hardcodes all optional packages | patched at scaffold time based on selected features |
+| `apps/web/src/app/page.js` | 3-line placeholder | clean home page, no UI package imports |
+| `apps/web/src/app/playground/` | does not exist | new; excluded from base template, scaffolded conditionally with `ui` |
+| `packages/cli/templates/playground/` | does not exist | new conditional template |
+| CI template drift check | passes | must pass after sync-templates run |
 
 ### For existing projects
 
-Existing projects are unaffected by default. If a developer wants to add admin to an existing project, the CLI `update` command should offer to scaffold the admin package. This is no different from manually copying the template files.
+Existing projects are unaffected. If a developer wants to add `ui` to an existing project, the CLI `update` command should offer to scaffold the package — same pattern used for `jobs`.
 
 ---
 
@@ -519,8 +586,10 @@ Existing projects are unaffected by default. If a developer wants to add admin t
 | `prisma._dmmf` is not public API; may change | Medium | Pin `@prisma/client` version range in admin's package.json; add integration test that reads DMMF; review on each Prisma major |
 | Admin dynamic routing (`[[...segments]]`) conflicts with project routes | Low | Admin namespaced under `/admin/*`; catch-all is scoped to that prefix |
 | Alert engine in-memory state lost on process restart | Low (by design) | Alerts re-evaluate next cycle. Persistent history is Observe's job. |
-| UI template expansion is a one-time scaffold — no auto-updates | Low (known tradeoff) | Document the tradeoff clearly. Bug fixes in the template are applied manually by developers. |
+| UI package is a one-time scaffold — no auto-updates | Low (known tradeoff) | Document the tradeoff clearly. Bug fixes in the template are applied manually by developers. |
 | Charting in admin adds a heavy dependency | Low | MVP uses `<table>` and simple `<svg>`. Add a charting library in a later iteration. |
+| `transpilePackages` lists unselected packages in scaffolded `next.config.js` | **Medium (existing gap)** | `patchNextConfig()` in CLI scaffold step removes unselected entries. Must be covered by a CLI scaffolding integration test. |
+| Playground page in `apps/web/` syncing to base-project template | Low | Playground added to `EXCLUDE_PATTERNS` in `sync-templates.js`. Stored as a standalone CLI template copied conditionally. Verified by sync-templates dry-run in CI. |
 
 ---
 
@@ -544,7 +613,7 @@ Existing projects are unaffected by default. If a developer wants to add admin t
 
 Four things, in order:
 
-1. **An expanded UI component template** — the neglected foundation. ~12 Tailwind-styled primitives scaffolded into `packages/ui/` when `admin` is selected. Locally owned by each project.
+1. **An expanded UI package** (`packages/ui/`) — ~12 Tailwind-styled primitives with JSX, tests, and a `README.md` documenting the component API. Source-of-truth in the monorepo; snapshotted into `packages/cli/templates/ui/` via `sync-templates.js` for distribution. Once scaffolded into a user project, the copy is theirs — no connection back to Quark. The playground page in `apps/web/` is scaffolded conditionally only when `ui` is selected.
 
 2. **A self-scaling admin package** (`packages/admin/` via CLI) — reads Prisma models at runtime, generates CRUD pages automatically. Scaffolded locally; fully modifiable. Requires `ui`.
 
@@ -556,9 +625,9 @@ Four things, in order:
 
 | Phase | Name | Effort | New Deps | Deliverable |
 |-------|------|--------|----------|-------------|
-| 0 | UI Template Expansion | 1 week | None | `templates/ui/` in `quark-create-app` |
+| 0 | UI Package Expansion | 1 week | None | `packages/ui/` (~12 components + README); conditional playground template; `patchNextConfig()` in CLI; quark-context SKILL.md updated |
 | 1 | Queue Metrics | 3 days | None | `@techstream/quark-core` (minor bump) |
-| 2 | Admin Package | 2–3 weeks | None | `templates/admin/` in `quark-create-app` |
+| 2 | Admin Package | 2–3 weeks | None | `packages/admin/` in monorepo; CLI `admin` feature; `pnpm sync-templates` generates template |
 | 3 | Alerting | 2 weeks | None | `@techstream/quark-core` (minor bump) |
 | 4 | Quark Observe | TBD | Separate repo | `quark-observe` (new repo) |
 
@@ -566,12 +635,17 @@ Four things, in order:
 
 | Decision | Answer |
 |----------|--------|
-| Should admin/observe use the UI package? | **Yes. The UI template is expanded in Phase 0. Admin depends on it as a workspace package.** |
+| Should admin/observe use the UI package? | **Yes. `packages/ui/` is expanded in Phase 0. Admin depends on it as a workspace package.** |
 | Is admin a published npm package? | **No.** Scaffolded via CLI, same as `ui`, `config`, `jobs`. Locally owned. |
 | How does admin discover models? | `prisma._dmmf` at runtime. No `@prisma/internals`. Zero new deps. |
 | Where does alerting live? | Inside `quark-core`. Adapter pattern. Zero new deps. |
 | When is Quark Observe planned in detail? | After Phases 0–3 are in production. The vision is correct; the timing for detailed design is not yet right. |
 | What was wrong with the previous proposals? | Proposed publishing admin as an npm package (should be scaffolded). Assumed Observe needed full detail before any production usage. Ignored the empty UI template. |
+| How do CLI templates stay in sync with UI changes? | **Automated snapshot.** `sync-templates.js` generates `packages/cli/templates/ui/` from `packages/ui/` source before each CLI release. Once a user scaffolds, their copy is disconnected — they own it entirely. No auto-updates, by design. |
+| Can the home page use `@yourapp/ui`? | **No.** `apps/web/page.js` syncs to the base-project template used by all projects, including those without `ui`. Plain JSX + Tailwind only. |
+| How does the playground get scaffolded? | **Conditionally.** Excluded from base-project sync. Stored in `packages/cli/templates/playground/`. CLI copies it only when `ui` is selected. |
+| What about `transpilePackages` for unselected features? | **CLI patch step required.** A new `patchNextConfig()` helper removes unselected feature entries from `transpilePackages` in `next.config.js` at scaffold time. |
+| Is the UI component API documented? | **Not yet — this is a Phase 0 deliverable.** `packages/ui/README.md` documents all exported components with props and import examples. The quark-context SKILL.md is updated to reflect actual components. |
 
 ---
 

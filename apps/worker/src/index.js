@@ -15,9 +15,13 @@ import { JOB_NAMES, JOB_QUEUES } from "@techstream/quark-jobs";
 import { jobHandlers } from "./handlers/index.js";
 
 const logger = createLogger("worker");
+const isDevMode =
+	process.env.NODE_ENV !== "production" &&
+	process.env.npm_lifecycle_event === "dev";
 
 // Store workers for graceful shutdown
 const workers = [];
+let devDisabledKeepAlive = null;
 let isShuttingDown = false;
 
 // ============================================================================
@@ -40,6 +44,7 @@ export function isConnectionError(error) {
 		"EHOSTUNREACH", // Host unreachable
 		"ENETUNREACH", // Network unreachable
 		"Error: Redis connection failed", // Generic redis failure
+		"Redis unavailable at", // Final wrapped startup error
 		"Ready status is false", // BullMQ readiness
 	];
 	return connectionErrors.some((err) => message.includes(err));
@@ -62,15 +67,21 @@ export function throttledError(logger, windowMs = 5000) {
 
 		// Log if new error type or window expired
 		if (msg !== lastErrorMsg || now - lastErrorTime > windowMs) {
-			logger.error(`Connection error (will retry)`, {
-				error: msg,
-				code: error.code,
-				timestamp: new Date().toISOString(),
+			logger.warn("Waiting for Redis", {
+				reason: msg,
 			});
 			lastErrorTime = now;
 			lastErrorMsg = msg;
 		}
 	};
+}
+
+function disableWorkerInDev() {
+	if (!devDisabledKeepAlive) {
+		// Keep the process alive so the dev session stays healthy even when the
+		// worker is intentionally disabled due to missing Redis.
+		devDisabledKeepAlive = setInterval(() => {}, 60_000);
+	}
 }
 
 /**
@@ -91,7 +102,7 @@ export async function waitForRedis(
 	} = config;
 
 	const reportThrottledError = throttledError(logger, 3000);
-	let lastError;
+	let _lastError;
 
 	for (let attempt = 1; attempt <= maxRetries; attempt++) {
 		try {
@@ -103,30 +114,23 @@ export async function waitForRedis(
 				return true;
 			}
 		} catch (error) {
-			lastError = error;
+			_lastError = error;
 			if (isConnectionError(error)) {
 				reportThrottledError(error);
 				if (attempt < maxRetries) {
-					// Wait before retrying
 					await new Promise((resolve) => setTimeout(resolve, intervalMs));
 				}
 			} else {
-				// Non-connection error; don't retry
-				logger.error("Health check failed with non-network error", {
-					error: error.message,
-				});
-				throw error;
+				throw new Error(`Redis health check failed: ${error.message}`);
 			}
 		}
 	}
 
 	// All retries exhausted
-	logger.error("Redis health check failed after all retries", {
-		attempts: maxRetries,
-		lastError: lastError?.message,
-	});
+	const redisHost = process.env.REDIS_HOST || "localhost";
+	const redisPort = process.env.REDIS_PORT || "6379";
 	throw new Error(
-		`Failed to connect to Redis after ${maxRetries} attempts: ${lastError?.message}`,
+		`Redis unavailable at ${redisHost}:${redisPort} after ${maxRetries} attempts. Start Redis or check REDIS_URL/REDIS_HOST/REDIS_PORT.`,
 	);
 }
 
@@ -148,10 +152,7 @@ async function preflight() {
 	try {
 		// Check Redis
 		logger.info("Checking Redis connectivity...");
-		const redisReady = await checkQueueHealth();
-		if (!redisReady) {
-			throw new Error("Redis health check returned false");
-		}
+		await checkQueueHealth();
 		logger.info("✓ Redis connected");
 
 		// Check Database
@@ -256,8 +257,14 @@ async function startWorker() {
 	try {
 		// Pre-flight: Wait for Redis with health checks and retries
 		logger.info("Performing health checks...");
-		await waitForRedis();
+		await waitForRedis(
+			checkQueueHealth,
+			isDevMode ? { maxRetries: 3, intervalMs: 500 } : {},
+		);
 
+		const redisHost = process.env.REDIS_HOST || "localhost";
+		const redisPort = process.env.REDIS_PORT || "6379";
+		logger.info("Redis connected", { address: `${redisHost}:${redisPort}` });
 		// Register a worker for each queue
 		for (const queueName of Object.values(JOB_QUEUES)) {
 			createQueueWorker(queueName);
@@ -276,9 +283,17 @@ async function startWorker() {
 
 		logger.info("Worker service ready");
 	} catch (error) {
+		if (isDevMode && isConnectionError(error)) {
+			logger.warn("Redis unavailable — worker disabled in dev", {
+				action:
+					"Start Redis and restart the worker when background jobs are needed.",
+			});
+			disableWorkerInDev();
+			return;
+		}
+
 		logger.error("Failed to start worker service", {
 			error: error.message,
-			stack: error.stack,
 		});
 		process.exit(1);
 	}
@@ -297,6 +312,11 @@ async function shutdown(signal = "unknown") {
 	logger.info("Shutting down worker service", { signal });
 
 	try {
+		if (devDisabledKeepAlive) {
+			clearInterval(devDisabledKeepAlive);
+			devDisabledKeepAlive = null;
+		}
+
 		for (const worker of workers) {
 			await worker.close();
 		}

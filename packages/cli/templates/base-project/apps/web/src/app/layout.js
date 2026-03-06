@@ -1,3 +1,4 @@
+import "./globals.css";
 import { getSiteMetadata } from "../lib/seo/site-metadata.js";
 
 export const metadata = getSiteMetadata();

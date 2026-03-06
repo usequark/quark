@@ -48,8 +48,7 @@ export class EmailProvider {
 	 * @param {string} [text]
 	 * @returns {Promise<{ id: string, [key: string]: any }>}
 	 */
-	// biome-ignore lint/correctness/noUnusedVariables: intentional provider interface
-	async sendEmail(to, subject, html, text) {
+	async sendEmail(_to, _subject, _html, _text) {
 		throw new Error(`${this.constructor.name} must implement sendEmail()`);
 	}
 }

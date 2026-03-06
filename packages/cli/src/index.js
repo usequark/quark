@@ -191,6 +191,34 @@ function replaceDepsScope(deps, scope, selectedPackages) {
 }
 
 /**
+ * Remove unselected optional feature entries from next.config.js transpilePackages.
+ * Must run AFTER replaceImportsInSourceFiles so package names are already scoped.
+ */
+async function patchNextConfig(webDir, scope, selectedFeatures) {
+	const configPath = path.join(webDir, "next.config.js");
+	if (!(await fs.pathExists(configPath))) return;
+
+	let content = await fs.readFile(configPath, "utf-8");
+
+	const optionalEntries = {
+		ui: `@${scope}/ui`,
+		jobs: `@${scope}/jobs`,
+	};
+
+	for (const [feature, pkg] of Object.entries(optionalEntries)) {
+		if (!selectedFeatures.includes(feature)) {
+			// Remove the line containing this package from transpilePackages
+			content = content.replace(
+				new RegExp(`[ \\t]*"${pkg.replace("/", "\\/")}",?\\n`, "g"),
+				"",
+			);
+		}
+	}
+
+	await fs.writeFile(configPath, content);
+}
+
+/**
  * Replace @techstream/quark-* import paths in all .js source files
  * for workspace packages (db, jobs, ui, config) with @scope/* equivalents.
  * Registry packages (@techstream/quark-core) are left untouched.
@@ -528,6 +556,14 @@ program
 			console.log(chalk.cyan("\n  🔄 Updating import paths..."));
 			await replaceImportsInSourceFiles(targetDir, scope);
 			console.log(chalk.green(`    ✓ Import paths updated`));
+
+			// Step 7c: Patch next.config.js to remove unselected feature transpilePackages entries
+			await patchNextConfig(
+				path.join(targetDir, "apps", "web"),
+				scope,
+				features,
+			);
+			console.log(chalk.green(`    ✓ next.config.js patched`));
 
 			// Step 8: Create .env.example file
 			console.log(chalk.cyan("\n  📋 Creating environment configuration..."));
