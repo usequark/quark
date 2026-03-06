@@ -58,7 +58,7 @@
 		"prisma": "^7.4.2",
 		"simple-git-hooks": "^2.13.1",
 		"tsx": "^4.21.0",
-		"turbo": "^2.8.13"
+		"turbo": "^2.8.14"
 	},
 	"simple-git-hooks": {
 		"pre-commit": "node packages/cli/scripts/sync-templates.js --pre-commit && pnpm nano-staged",
