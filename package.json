@@ -48,10 +48,10 @@
 		"node": ">=22"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.4.5",
+		"@biomejs/biome": "^2.4.6",
 		"@changesets/changelog-github": "^0.6.0",
 		"@changesets/cli": "^2.30.0",
-		"@types/node": "^25.3.3",
+		"@types/node": "^25.3.5",
 		"baseline-browser-mapping": "^2.10.0",
 		"dotenv-cli": "^11.0.0",
 		"nano-staged": "^0.9.0",
