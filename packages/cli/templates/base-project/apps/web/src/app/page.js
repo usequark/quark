@@ -19,7 +19,7 @@ export default function Home() {
 				</div>
 
 				{/* Quick links */}
-				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-4">
+				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4">
 					<a
 						href="/api/health"
 						className="group block rounded-xl border border-gray-200 bg-white p-5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md active:translate-y-0 active:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30"
@@ -37,6 +37,15 @@ export default function Home() {
 							Sign in
 						</div>
 						<div className="mt-1 text-xs text-gray-500">/api/auth/signin</div>
+					</a>
+					<a
+						href="/playground"
+						className="group block rounded-xl border border-gray-200 bg-white p-5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md active:translate-y-0 active:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30"
+					>
+						<div className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+							UI Playground
+						</div>
+						<div className="mt-1 text-xs text-gray-500">/playground</div>
 					</a>
 					<a
 						href="https://github.com/Bobnoddle/quark"

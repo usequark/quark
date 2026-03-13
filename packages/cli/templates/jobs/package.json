@@ -3,6 +3,6 @@
 	"version": "1.0.0",
 	"type": "module",
 	"dependencies": {
-		"bullmq": "^5.70.2"
+		"bullmq": "^5.70.4"
 	}
 }

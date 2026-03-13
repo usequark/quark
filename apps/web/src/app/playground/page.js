@@ -1,11 +1,4 @@
 "use client";
-/**
- * UI Component Playground — monorepo reference implementation.
- * Shows every exported component from @techstream/quark-ui.
- *
- * In a scaffolded project (if ui was selected), this lives at
- * apps/web/src/app/playground/page.js and imports from @yourscope/ui.
- */
 import {
 	Badge,
 	Button,
@@ -30,6 +23,14 @@ import {
 	Toast,
 	useToast,
 } from "@techstream/quark-ui";
+/**
+ * UI Component Playground — monorepo reference implementation.
+ * Shows every exported component from @techstream/quark-ui.
+ *
+ * In a scaffolded project (if ui was selected), this lives at
+ * apps/web/src/app/playground/page.js and imports from @yourscope/ui.
+ */
+import Link from "next/link";
 import { useState } from "react";
 
 function Section({ title, children }) {
@@ -62,11 +63,17 @@ export default function PlaygroundPage() {
 		<main className="min-h-screen bg-gradient-to-b from-gray-50 to-white p-6 sm:p-8">
 			<div className="mx-auto max-w-4xl space-y-8">
 				<div>
+					<Link
+						href="/"
+						className="mb-4 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900"
+					>
+						&#8592; Home
+					</Link>
 					<h1 className="text-3xl font-bold text-gray-900">UI Playground</h1>
 					<p className="mt-2 text-gray-600">
 						All components from{" "}
 						<code className="rounded bg-gray-100 px-1.5 py-0.5 text-sm">
-							@yourscope/ui
+							@techstream/quark-ui
 						</code>
 					</p>
 				</div>
