@@ -55,9 +55,9 @@ function Group({ label, theme, children }) {
 			<p
 				className="font-mono uppercase"
 				style={{
-					fontSize: "9px",
+					fontSize: "11px",
 					letterSpacing: "0.2em",
-					color: theme === "dark" ? "#2a3550" : "#c0cad8",
+					color: theme === "dark" ? "#4a6080" : "#9ca3af",
 				}}
 			>
 				{label}
@@ -72,17 +72,17 @@ function ComponentSection({ id, index, title, theme, children }) {
 	return (
 		<section
 			id={id}
-			className="scroll-mt-16 space-y-5 py-5"
+			className="scroll-mt-6 space-y-5 py-5"
 			style={{
-				borderTop: `0.5px solid ${theme === "dark" ? "#0d1120" : "#e5e7eb"}`,
+				borderTop: `1px solid ${theme === "dark" ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.18)"}`,
 			}}
 		>
 			<h2
 				className="font-mono uppercase"
 				style={{
-					fontSize: "10px",
+					fontSize: "12px",
 					letterSpacing: "0.2em",
-					color: theme === "dark" ? "#3a3a4a" : "#9ca3af",
+					color: theme === "dark" ? "#5c5c72" : "#9ca3af",
 				}}
 			>
 				§ {num} — {title}
@@ -94,14 +94,14 @@ function ComponentSection({ id, index, title, theme, children }) {
 
 function NavItem({ id, label, index, theme }) {
 	const num = String(index).padStart(2, "0");
-	const dimColor = theme === "dark" ? "#2a3550" : "#c0cad8";
+	const dimColor = theme === "dark" ? "#7c8fa0" : "#9ca3af";
 	const activeColor = theme === "dark" ? "#377dff" : "#2563eb";
 	return (
 		<a
 			href={`#${id}`}
 			className="block font-mono uppercase"
 			style={{
-				fontSize: "9px",
+				fontSize: "13px",
 				letterSpacing: "0.15em",
 				color: dimColor,
 				textDecoration: "none",
@@ -152,7 +152,7 @@ function PlaygroundInner() {
 	}
 
 	const bg = isDark ? "#05070a" : "#f7f8fa";
-	const labelColor = isDark ? "#3a3a4a" : "#9ca3af";
+	const labelColor = isDark ? "#5c5c72" : "#9ca3af";
 	const gridColor = isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.07)";
 	const gridBg = `linear-gradient(${gridColor} 1px, transparent 1px), linear-gradient(90deg, ${gridColor} 1px, transparent 1px)`;
 
@@ -166,40 +166,32 @@ function PlaygroundInner() {
 				transition: "background-color 0.25s ease",
 			}}
 		>
-			{/* Structural header strip */}
-			<header
-				className="sticky top-0 z-20"
-				style={{
-					borderBottom: `0.5px solid ${isDark ? "#0d1120" : "#e5e7eb"}`,
-					background: isDark ? "rgba(5,7,10,0.88)" : "rgba(247,248,250,0.88)",
-					backdropFilter: "blur(8px)",
-					WebkitBackdropFilter: "blur(8px)",
-				}}
-			>
-				<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 h-12 flex items-center justify-between">
-					<Link
-						href="/"
-						className="quark-home-link"
-						style={{ fontSize: "11px", fontFamily: "monospace" }}
-					>
-						← home
-					</Link>
-					<ThemeToggle />
-				</div>
-			</header>
-
 			<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-10">
 				{/* Body: sticky left nav + content */}
 				<div className="flex gap-12">
 					{/* Left nav */}
 					<nav className="hidden lg:block w-32 shrink-0">
-						<div className="sticky top-16">
+						<div className="sticky top-8">
+							<div className="flex items-center justify-between mb-4">
+								<Link
+									href="/"
+									className="quark-home-link"
+									style={{
+										fontSize: "13px",
+										fontFamily: "monospace",
+										color: isDark ? "#7c8fa0" : "#9ca3af",
+									}}
+								>
+									← home
+								</Link>
+								<ThemeToggle />
+							</div>
 							<p
 								className="font-mono uppercase mb-3"
 								style={{
-									fontSize: "8px",
+									fontSize: "13px",
 									letterSpacing: "0.2em",
-									color: isDark ? "#1a2035" : "#d1d5db",
+									color: isDark ? "#7c8fa0" : "#9ca3af",
 								}}
 							>
 								index
@@ -223,7 +215,7 @@ function PlaygroundInner() {
 							className="font-mono uppercase mb-2"
 							style={{
 								color: labelColor,
-								fontSize: "11px",
+								fontSize: "12px",
 								letterSpacing: "0.15em",
 							}}
 						>
