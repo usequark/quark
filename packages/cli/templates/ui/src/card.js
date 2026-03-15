@@ -1,38 +1,58 @@
 import React from "react";
 
-export function Card({ className = "", ...props }) {
+const THEMES = {
+	light: {
+		card: "rounded border border-gray-200 bg-white/95 shadow-sm transition-shadow duration-200 hover:shadow-md",
+		header: "flex flex-col space-y-1.5 p-6",
+		title: "text-lg font-semibold leading-none tracking-tight text-gray-900",
+		content: "p-6 pt-0",
+		footer: "flex items-center p-6 pt-0",
+	},
+	dark: {
+		card: "rounded border border-[#1e2535] bg-[#0d1117] transition-all duration-200 hover:border-[#377dff]/30",
+		header: "flex flex-col space-y-1.5 p-6",
+		title: "text-lg font-semibold leading-none tracking-tight text-[#e0e0e0]",
+		content: "p-6 pt-0",
+		footer: "flex items-center p-6 pt-0",
+	},
+};
+
+export function Card({ theme = "light", className = "", ...props }) {
+	const t = THEMES[theme] ?? THEMES.light;
 	return React.createElement("div", {
-		className:
-			`rounded-xl border border-gray-200 bg-white/95 shadow-sm transition-shadow duration-200 hover:shadow-md ${className}`.trim(),
+		className: `${t.card} ${className}`.trim(),
 		...props,
 	});
 }
 
-export function CardHeader({ className = "", ...props }) {
+export function CardHeader({ theme = "light", className = "", ...props }) {
+	const t = THEMES[theme] ?? THEMES.light;
 	return React.createElement("div", {
-		className: `flex flex-col space-y-1.5 p-6 ${className}`.trim(),
+		className: `${t.header} ${className}`.trim(),
 		...props,
 	});
 }
 
-export function CardTitle({ className = "", ...props }) {
+export function CardTitle({ theme = "light", className = "", ...props }) {
+	const t = THEMES[theme] ?? THEMES.light;
 	return React.createElement("h3", {
-		className:
-			`text-lg font-semibold leading-none tracking-tight text-gray-900 ${className}`.trim(),
+		className: `${t.title} ${className}`.trim(),
 		...props,
 	});
 }
 
-export function CardContent({ className = "", ...props }) {
+export function CardContent({ theme = "light", className = "", ...props }) {
+	const t = THEMES[theme] ?? THEMES.light;
 	return React.createElement("div", {
-		className: `p-6 pt-0 ${className}`.trim(),
+		className: `${t.content} ${className}`.trim(),
 		...props,
 	});
 }
 
-export function CardFooter({ className = "", ...props }) {
+export function CardFooter({ theme = "light", className = "", ...props }) {
+	const t = THEMES[theme] ?? THEMES.light;
 	return React.createElement("div", {
-		className: `flex items-center p-6 pt-0 ${className}`.trim(),
+		className: `${t.footer} ${className}`.trim(),
 		...props,
 	});
 }

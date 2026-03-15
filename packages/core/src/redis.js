@@ -57,15 +57,31 @@ export async function pingRedis({ timeout = 3000 } = {}) {
 			enableReadyCheck: false,
 		});
 
+		// Suppress the "Unhandled error event" stderr noise that ioredis emits
+		// when a connection attempt fails. The error is still caught by the
+		// try/catch below — this listener just prevents Node from treating it
+		// as an unhandled EventEmitter error.
+		client.on("error", () => {});
+
 		await client.connect();
 
 		const start = performance.now();
-		const result = await Promise.race([
-			client.ping(),
-			new Promise((_, reject) =>
-				setTimeout(() => reject(new Error("PING timed out")), timeout),
-			),
-		]);
+		const result = await new Promise((resolve, reject) => {
+			const timer = setTimeout(
+				() => reject(new Error("PING timed out")),
+				timeout,
+			);
+			client.ping().then(
+				(val) => {
+					clearTimeout(timer);
+					resolve(val);
+				},
+				(err) => {
+					clearTimeout(timer);
+					reject(err);
+				},
+			);
+		});
 
 		const latencyMs = Math.round(performance.now() - start);
 
@@ -78,11 +94,20 @@ export async function pingRedis({ timeout = 3000 } = {}) {
 
 		return { status: "ok", latencyMs };
 	} catch (/** @type {any} */ error) {
-		const message =
+		let message;
+		if (
 			error?.code === "MODULE_NOT_FOUND" ||
 			error?.code === "ERR_MODULE_NOT_FOUND"
-				? "ioredis is not installed"
-				: (error?.message ?? String(error));
+		) {
+			message = "ioredis is not installed";
+		} else if (
+			error?.code === "ECONNREFUSED" ||
+			/connection is closed|ECONNREFUSED/i.test(error?.message ?? "")
+		) {
+			message = `Redis unreachable at ${getRedisUrl()}`;
+		} else {
+			message = error?.message ?? String(error);
+		}
 		return { status: "error", message };
 	} finally {
 		try {

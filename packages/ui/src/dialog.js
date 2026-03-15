@@ -9,6 +9,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
  *   onClose   (fn)      — called when the dialog should close
  *   title     (string)  — header text
  *   children            — dialog body content
+ *   theme     (string)  — 'light' (default) | 'dark'
  *   className (string)  — merged onto the <dialog> element
  *
  * Architecture:
@@ -17,10 +18,42 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
  *     animation + el.close() call. handleClose() just calls onClose().
  *   • isClosingRef (ref, not state) prevents the effect from double-firing.
  */
-export function Dialog({ open, onClose, title, children, className = "" }) {
+
+const THEMES = {
+	light: {
+		dialog:
+			"backdrop:bg-black/50 rounded border border-gray-200 bg-white p-0 shadow-2xl w-full max-w-lg",
+		header:
+			"flex items-center justify-between border-b border-gray-200 px-5 py-4",
+		title: "text-base font-semibold text-gray-900",
+		close:
+			"flex h-8 w-8 cursor-pointer items-center justify-center rounded-sm text-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 active:bg-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300",
+		body: "px-5 py-4 text-gray-700",
+	},
+	dark: {
+		dialog:
+			"backdrop:bg-black/70 rounded border border-[#1e2535] bg-[#0d1117] p-0 shadow-2xl w-full max-w-lg",
+		header:
+			"flex items-center justify-between border-b border-[#1e2535] px-5 py-4",
+		title: "text-base font-semibold text-[#e0e0e0]",
+		close:
+			"flex h-8 w-8 cursor-pointer items-center justify-center rounded-sm text-lg text-[#4a4a6a] transition-colors hover:bg-[#1e2535] hover:text-[#e0e0e0] active:bg-[#1e2535] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#377dff]/40",
+		body: "px-5 py-4 text-[#6b7a99]",
+	},
+};
+
+export function Dialog({
+	open,
+	onClose,
+	title,
+	children,
+	theme = "light",
+	className = "",
+}) {
 	const ref = useRef(null);
 	const [isClosing, setIsClosing] = useState(false);
 	const isClosingRef = useRef(false);
+	const t = THEMES[theme] ?? THEMES.light;
 
 	// Single source of truth for open/close — drives both animation and native element
 	useEffect(() => {
@@ -82,38 +115,25 @@ export function Dialog({ open, onClose, title, children, className = "" }) {
 			onClick: handleDialogClick,
 			onCancel: handleCancel,
 			style: animStyle,
-			className:
-				`backdrop:bg-black/50 rounded-xl border border-gray-200 bg-white p-0 shadow-2xl w-full max-w-lg ${className}`.trim(),
+			className: `${t.dialog} ${className}`.trim(),
 		},
 		// Header
 		React.createElement(
 			"div",
-			{
-				className:
-					"flex items-center justify-between border-b border-gray-200 px-5 py-4",
-			},
-			React.createElement(
-				"h2",
-				{ className: "text-base font-semibold text-gray-900" },
-				title,
-			),
+			{ className: t.header },
+			React.createElement("h2", { className: t.title }, title),
 			React.createElement(
 				"button",
 				{
 					type: "button",
 					"aria-label": "Close dialog",
 					onClick: handleClose,
-					className:
-						"flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 active:bg-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300",
+					className: t.close,
 				},
 				"\u00d7",
 			),
 		),
 		// Body
-		React.createElement(
-			"div",
-			{ className: "px-5 py-4 text-gray-700" },
-			children,
-		),
+		React.createElement("div", { className: t.body }, children),
 	);
 }

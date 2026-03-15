@@ -11,4 +11,7 @@ export * from "./select.js";
 export * from "./skeleton.js";
 export * from "./table.js";
 export * from "./textarea.js";
+export * from "./theme.js";
+// Theme context
+export * from "./theme-constants.js";
 export * from "./toast.js";

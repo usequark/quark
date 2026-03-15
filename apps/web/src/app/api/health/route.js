@@ -5,7 +5,7 @@
  */
 
 import { createLogger, createStorage, pingRedis } from "@techstream/quark-core";
-import { prisma } from "@techstream/quark-db";
+import { pingDatabase } from "@techstream/quark-db";
 import { NextResponse } from "next/server";
 
 const logger = createLogger("health");
@@ -15,15 +15,22 @@ const HEALTH_CHECK_TIMEOUT = 5000;
 
 export async function GET() {
 	try {
-		const result = await Promise.race([
-			runHealthChecks(),
-			new Promise((_, reject) =>
-				setTimeout(
-					() => reject(new Error("Health check timed out")),
-					HEALTH_CHECK_TIMEOUT,
-				),
-			),
-		]);
+		const result = await new Promise((resolve, reject) => {
+			const timer = setTimeout(
+				() => reject(new Error("Health check timed out")),
+				HEALTH_CHECK_TIMEOUT,
+			);
+			runHealthChecks().then(
+				(val) => {
+					clearTimeout(timer);
+					resolve(val);
+				},
+				(err) => {
+					clearTimeout(timer);
+					reject(err);
+				},
+			);
+		});
 
 		return NextResponse.json(result, {
 			status: result.status === "ok" ? 200 : 503,
@@ -56,13 +63,13 @@ async function runHealthChecks() {
 	};
 
 	// Check database connectivity
-	try {
-		await prisma.$queryRaw`SELECT 1`;
-		health.checks.database = { status: "ok" };
-	} catch (error) {
+	const dbResult = await pingDatabase();
+	if (dbResult.status === "ok") {
+		health.checks.database = { status: "ok", latencyMs: dbResult.latencyMs };
+	} else {
 		health.checks.database = {
 			status: "error",
-			message: error.message,
+			message: dbResult.message,
 		};
 		health.status = "degraded";
 	}
@@ -106,6 +113,10 @@ async function checkStorage() {
 		await storage.delete(sentinelKey);
 		return { status: "ok", provider };
 	} catch (error) {
-		return { status: "error", provider, message: error.message };
+		const message =
+			process.env.NODE_ENV === "production"
+				? "Storage unavailable"
+				: error.message;
+		return { status: "error", provider, message };
 	}
 }

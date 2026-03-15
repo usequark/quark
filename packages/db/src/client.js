@@ -41,10 +41,15 @@ function getPrismaClient() {
 /**
  * Prisma client singleton. Lazily initialized on first use so the module
  * can be imported safely at build time (no DB env vars needed).
+ *
+ * Methods are bound to the real client so `this` inside Prisma internals is
+ * always the PrismaClient instance, never the Proxy wrapper.
  */
 export const prisma = new Proxy(/** @type {PrismaClient} */ ({}), {
 	get(_target, prop) {
-		return getPrismaClient()[prop];
+		const client = getPrismaClient();
+		const value = client[prop];
+		return typeof value === "function" ? value.bind(client) : value;
 	},
 });
 

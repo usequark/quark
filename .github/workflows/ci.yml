@@ -32,10 +32,12 @@ jobs:
   template-drift:
     name: Template Drift Check
     runs-on: ubuntu-latest
-    if: github.actor != 'dependabot[bot]'
+    if: github.actor != 'dependabot[bot]' || github.event_name == 'push'
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -54,13 +56,23 @@ jobs:
 
       - name: Check for drift
         run: |
-          if ! git diff --exit-code packages/cli/templates/; then
-            echo ""
-            echo "❌ Template drift detected!"
-            echo "Run 'pnpm --filter @techstream/quark-create-app sync-templates' locally and commit the changes."
-            exit 1
+          if ! git diff --quiet packages/cli/templates/; then
+            if [ "${{ github.event_name }}" = "push" ]; then
+              git config user.name "github-actions[bot]"
+              git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+              git add packages/cli/templates/
+              git commit -m "chore: sync CLI templates"
+              git push
+              echo "✅ Template drift detected and auto-fixed on main."
+            else
+              echo ""
+              echo "❌ Template drift detected!"
+              echo "Run 'pnpm --filter @techstream/quark-create-app sync-templates' locally and commit the changes."
+              exit 1
+            fi
+          else
+            echo "✅ Templates are in sync."
           fi
-          echo "✅ Templates are in sync."
 
   test:
     name: Test

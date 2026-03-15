@@ -16,6 +16,8 @@
 		"db:push": "turbo run db:push",
 		"db:seed": "turbo run db:seed",
 		"db:studio": "turbo run db:studio",
+		"doctor": "node scripts/doctor.js",
+		"doctor:fix": "node scripts/doctor.js --fix",
 		"prepare": "simple-git-hooks"
 	},
 	"simple-git-hooks": {

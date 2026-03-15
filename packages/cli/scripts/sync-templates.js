@@ -127,6 +127,9 @@ const TEMPLATE_ONLY = new Set([
 	"base-project/apps/web/biome.json",
 	// Migrations: template maintains its own squashed initial migration
 	"base-project/packages/db/prisma/migrations",
+	// Doctor script is hand-authored for scaffolded projects — not synced from monorepo
+	"base-project/scripts/",
+	"base-project/scripts/doctor.js",
 ]);
 
 // ─── Transforms ────────────────────────────────────────────────────────────────

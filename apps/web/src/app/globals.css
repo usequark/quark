@@ -1,11 +1,112 @@
 @import "tailwindcss";
 @source "../../../../packages/ui/src/**/*.{js,jsx}";
 
+/*
+ * CSS custom properties for the home page shell.
+ * Automatically responds to the OS colour preference via prefers-color-scheme —
+ * no JavaScript required. Override these in your own stylesheet as needed.
+ */
+:root {
+	--quark-page-bg: #05070a;
+	--quark-home-muted: #3a3a4a;
+	--quark-home-sep: #2a2a3a;
+	--quark-home-link-idle: #4a4a6a;
+	--quark-home-link-hover: #377dff;
+	--quark-health-text: #4a4a6a;
+	--quark-health-sep: #2a2a3a;
+	--quark-health-dot-idle: #2a2a3a;
+	--quark-grid-line: rgba(255, 255, 255, 0.05);
+}
+
+@media (prefers-color-scheme: light) {
+	/* OS says light AND the user hasn't explicitly pinned dark via the toggle */
+	:root:not([data-theme="dark"]) {
+		--quark-page-bg: #f7f8fa;
+		--quark-home-muted: #9ca3af;
+		--quark-home-sep: #d1d5db;
+		--quark-home-link-idle: #6b7280;
+		--quark-home-link-hover: #1a56db;
+		--quark-health-text: #9ca3af;
+		--quark-health-sep: #d1d5db;
+		--quark-health-dot-idle: #d1d5db;
+		--quark-grid-line: rgba(0, 0, 0, 0.07);
+	}
+}
+
+/* User explicitly toggled to light (overrides OS dark preference) */
+:root[data-theme="light"] {
+	--quark-page-bg: #f7f8fa;
+	--quark-home-muted: #9ca3af;
+	--quark-home-sep: #d1d5db;
+	--quark-home-link-idle: #6b7280;
+	--quark-home-link-hover: #1a56db;
+	--quark-health-text: #9ca3af;
+	--quark-health-sep: #d1d5db;
+	--quark-health-dot-idle: #d1d5db;
+	--quark-grid-line: rgba(0, 0, 0, 0.07);
+}
+
+/* Pin the document background to match the app shell — prevents overscroll flash */
+html,
+body {
+	background-color: var(--quark-page-bg);
+}
+
+.quark-home-main {
+	background-color: var(--quark-page-bg);
+	background-image:
+		linear-gradient(var(--quark-grid-line) 1px, transparent 1px),
+		linear-gradient(90deg, var(--quark-grid-line) 1px, transparent 1px);
+	background-size: 40px 40px;
+}
+
 /* Native dialog — browser default positions it at the top; force viewport-center */
 dialog {
 	position: fixed;
 	inset: 0;
 	margin: auto;
+}
+
+/* Home page - footer fades in after animation takes the stage */
+@keyframes quark-home-fade-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+.quark-home-footer {
+	animation: quark-home-fade-in 0.6s ease-out 1.2s both;
+}
+
+.quark-home-label {
+	color: var(--quark-home-muted);
+	font-size: 11px;
+	letter-spacing: 0.15em;
+}
+
+.quark-home-sep {
+	color: var(--quark-home-sep);
+	font-family: monospace;
+}
+
+.quark-home-link {
+	color: var(--quark-home-link-idle);
+	text-decoration: none;
+	font-family: monospace;
+	transition: color 0.15s ease;
+}
+
+.quark-home-link:hover {
+	color: var(--quark-home-link-hover);
+}
+
+.quark-home-link:focus-visible {
+	outline: 1px solid var(--quark-home-link-hover);
+	outline-offset: 2px;
+	border-radius: 2px;
 }
 
 @keyframes quark-dialog-in {
@@ -27,19 +128,5 @@ dialog {
 	to {
 		opacity: 0;
 		transform: scale(0.95) translateY(-8px);
-	}
-}
-
-@theme {
-	--color-background: #ffffff;
-	--color-foreground: #171717;
-}
-
-@supports (color: oklch(0 0 0)) {
-	@media (prefers-color-scheme: dark) {
-		@theme {
-			--color-background: #0a0a0a;
-			--color-foreground: #ededed;
-		}
 	}
 }

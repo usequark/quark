@@ -92,7 +92,16 @@ const CORS_CONFIG = {
 
 /**
  * Security headers configuration
+ *
+ * In development, Turbopack's hot-reload runtime uses eval() for module
+ * evaluation. 'unsafe-eval' is therefore added to script-src only when
+ * NODE_ENV is not 'production' — it must never reach a production build.
  */
+const _scriptSrc =
+	process.env.NODE_ENV !== "production"
+		? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+		: "script-src 'self' 'unsafe-inline'";
+
 const SECURITY_HEADERS = {
 	"X-DNS-Prefetch-Control": "on",
 	"Strict-Transport-Security": "max-age=63072000; includeSubDomains",
@@ -100,8 +109,7 @@ const SECURITY_HEADERS = {
 	"X-Content-Type-Options": "nosniff",
 	"Referrer-Policy": "strict-origin-when-cross-origin",
 	"Permissions-Policy": "camera=(), microphone=(), geolocation=()",
-	"Content-Security-Policy":
-		"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self';",
+	"Content-Security-Policy": `default-src 'self'; ${_scriptSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self';`,
 };
 
 /**

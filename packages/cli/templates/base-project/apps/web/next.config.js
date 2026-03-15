@@ -43,8 +43,12 @@ const nextConfig = {
 					},
 					{
 						key: "Content-Security-Policy",
+						// unsafe-eval is required by Turbopack in development only.
+						// It is deliberately excluded from the production directive.
 						value:
-							"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self';",
+							process.env.NODE_ENV !== "production"
+								? "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self';"
+								: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self';",
 					},
 				],
 			},
