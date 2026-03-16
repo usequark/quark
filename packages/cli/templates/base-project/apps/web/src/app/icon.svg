@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <!--
+    Quark logo — SVG master
+    Geometry mirrors QuarkAnimation.js constants (ring/dash thickness ratio ~0.20)
+
+    Ring: center (100,100), centerline radius 65, stroke-width 26
+    Gap:  centred at 45.8° (dashAngle=0.8 rad), half-width 27.1° (0.472 rad)
+    Dash: radial at 45.8°, from radius 23.4 → 103.4 (proportional to animation dL)
+         stroke-width 28 (= dashThickness/ringThickness × 26 = 2.8/2.6 × 26)
+
+    Colors: #2d3436 (dark/top) · #377dff (blue/bottom-left) · #ff4757 (red/tail)
+  -->
+
+  <!-- Dark arc — upper semicircle: left (180°) → top (270°) → right (360°) -->
+  <path
+    d="M 35,100 A 65,65 0 0,1 165,100"
+    stroke="#2d3436"
+    stroke-width="26"
+    stroke-linecap="butt"
+  />
+
+  <!-- Blue arc — bottom-left: gap-end (72.9°) → left (180°) -->
+  <path
+    d="M 119.1,162.1 A 65,65 0 0,1 35,100"
+    stroke="#377dff"
+    stroke-width="26"
+    stroke-linecap="butt"
+  />
+
+  <!-- Red arc — tiny pre-gap sliver: right (0°) → gap-start (18.8°) -->
+  <path
+    d="M 165,100 A 65,65 0 0,1 161.5,121"
+    stroke="#ff4757"
+    stroke-width="26"
+    stroke-linecap="butt"
+  />
+
+  <!-- Red dash — radial tail through the gap -->
+  <line
+    x1="116.3" y1="116.8"
+    x2="172"   y2="174.2"
+    stroke="#ff4757"
+    stroke-width="28"
+    stroke-linecap="butt"
+  />
+</svg>

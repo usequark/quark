@@ -1,5 +1,5 @@
 <p align="center">
-  <img src=".github/assets/quark_no_text_cropped.png" alt="Quark" width="200" />
+  <img src=".github/assets/quark.svg" alt="Quark" width="200" />
 </p>
 
 <h1 align="center">Quark</h1>
