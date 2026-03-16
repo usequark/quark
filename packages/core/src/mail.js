@@ -47,4 +47,4 @@ export const getMailSmtpConfig = getDevMailConfig;
 export const getMailSmtpUrl = getDevMailUrl;
 export const getMailUiUrl = getDevMailUiUrl;
 
-export { getDevMailUrl, getDevMailUiUrl };
+export { getDevMailUiUrl, getDevMailUrl };
