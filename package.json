@@ -48,17 +48,17 @@
 		"node": ">=22"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.4.6",
+		"@biomejs/biome": "^2.4.7",
 		"@changesets/changelog-github": "^0.6.0",
 		"@changesets/cli": "^2.30.0",
-		"@types/node": "^25.3.5",
-		"baseline-browser-mapping": "^2.10.0",
+		"@types/node": "^25.5.0",
+		"baseline-browser-mapping": "^2.10.8",
 		"dotenv-cli": "^11.0.0",
 		"nano-staged": "^0.9.0",
-		"prisma": "^7.4.2",
+		"prisma": "^7.5.0",
 		"simple-git-hooks": "^2.13.1",
 		"tsx": "^4.21.0",
-		"turbo": "^2.8.14"
+		"turbo": "^2.8.17"
 	},
 	"simple-git-hooks": {
 		"pre-commit": "node packages/cli/scripts/sync-templates.js --pre-commit && pnpm nano-staged",
@@ -72,6 +72,6 @@
 		]
 	},
 	"dependencies": {
-		"@prisma/client": "^7.4.2"
+		"@prisma/client": "^7.5.0"
 	}
 }
