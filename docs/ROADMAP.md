@@ -1,5 +1,26 @@
 # Quark Monorepo Expansion Roadmap
 
+> **⚠️ Partially Superseded** — This document predates the V2 MVP and the business strategy. For the current authoritative plans, see:
+>
+> - **[../PLAN.md](../PLAN.md)** — Consolidated build plan (Phases 0–6: UI, Admin, Alerting, AI, Observe, Cloud)
+> - **[../PLAN_SUMMARY.md](../PLAN_SUMMARY.md)** — Executive summary of the build plan
+> - **[BUSINESS_PITCH.md](BUSINESS_PITCH.md)** — Monetization strategy, pricing, and go-to-market
+>
+> This roadmap remains useful for **implementation details** (Prisma schema options, config expansion, NextAuth setup) that are referenced by the consolidated plan. The phase numbers and timelines below are outdated — defer to PLAN.md for current sequencing.
+>
+> **Current package distribution model:**
+> | Package | Type | Optional? | Requires |
+> |---|---|---|---|
+> | `@techstream/quark-core` | Published (npm) | No | — |
+> | `@techstream/quark-create-app` | Published (npm) | No | — |
+> | `@techstream/quark-ai` | Published (npm) | Yes | `quark-core` |
+> | `@yourapp/ui` | Scaffolded (CLI) | Yes | — |
+> | `@yourapp/admin` | Scaffolded (CLI) | Yes | `ui` |
+> | `@yourapp/config` | Scaffolded (CLI) | No | — |
+> | `@yourapp/db` | Scaffolded (CLI) | No | — |
+> | `@yourapp/jobs` | Scaffolded (CLI) | Yes | — |
+> | `@yourapp/worker` | Scaffolded (CLI) | No | — |
+
 ## Executive Summary
 
 This document outlines a comprehensive plan to expand the Quark monorepo based on the current architecture analysis and the following requirements:

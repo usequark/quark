@@ -427,11 +427,22 @@ Three days of work. Additive. No breaking changes.
 
 ---
 
-## Part 7: Quark Observe — Defer Detailed Planning
+## Part 7: Quark Observe — Revised Vision (Umami Model)
 
 ### What was planned too early
 
-The previous plan included a Fastify server architecture, Prisma schema, SDK packages, and SaaS pricing tiers for Observe. This is a viable long-term vision. The issue is timing: there are currently zero Quark projects in production. The detailed design decisions (storage schema, pull vs push, alert history retention) will be better informed by real usage patterns once Phases 1–3 are live. Don't design the schema for data that doesn't exist yet.
+The previous plan included a Fastify server architecture, Prisma schema, SDK packages, and SaaS pricing tiers for Observe. This is a viable long-term vision. The issue is timing: there are currently zero Quark projects in production. The detailed design decisions (storage schema, pull vs push, alert history retention) will be better informed by real usage patterns once Phases 0–3 are live. Don't design the schema for data that doesn't exist yet.
+
+### Revised positioning: The Umami Model
+
+Quark Observe follows the Umami playbook: open-source first, self-hostable, clean UI, affordable. It does not aim to replace Sentry or compete with Datadog. It aims to be **good enough for 90% of teams**, in one place, with a clean UI and an honest price.
+
+**Key principles:**
+- Same codebase for self-hosted and SaaS
+- Self-hosted deployable with a single `docker compose up`
+- SaaS adds: multi-project aggregation, longer retention, multi-region uptime checks, team management, zero-ops
+- Modules ship incrementally: error tracking first, then metrics, then analytics
+- Priced for indie devs and small teams ($19/mo flat)
 
 ### What should exist today
 
@@ -441,11 +452,12 @@ A single-page decision document (not an implementation plan) that records:
 |----------|--------|
 | Separate repo? | Yes — `Bobnoddle/quark-observe` |
 | Uses Quark itself? | Yes — dogfood the framework |
-| Integration model? | Pull (scrape `/api/metrics` and `/api/health`) |
-| Projects opt-in how? | `QUARK_OBSERVE_URL` env var |
-| When to build? | After at least 2 Quark projects are deployed with metrics + alerting running |
+| Integration model? | Push (SDK sends events to Observe ingest API) + Pull (optional scrape `/api/metrics` and `/api/health`) |
+| Projects opt-in how? | `QUARK_OBSERVE_URL` env var (self-hosted) or `QUARK_OBSERVE_KEY` (SaaS) |
+| Self-hostable? | Yes — same codebase as SaaS — single `docker compose up` |
+| When to build? | Phase 5 — after AI package ships and at least 2 Quark projects are deployed |
 
-**Detailed Observe planning should resume after Phases 1–3 are live and real projects are generating metrics.** At that point the data shapes, query patterns, and alert history requirements will be clear from actual usage.
+**Detailed Observe planning should resume after Phases 0–3 are live and real projects are generating metrics.** Module rollout: error tracking + app metrics (Month 3), uptime monitoring + alerting (Month 4), web analytics + AI metrics (Month 5).
 
 ---
 
@@ -457,19 +469,38 @@ A single-page decision document (not an implementation plan) that records:
 | **1** | Queue metrics + auto-instrumentation + queue health | `quark-core` | 3 days | None | None |
 | **2** | Scaffold `packages/admin/` + CLI `admin` feature prompt | `packages/admin/`, `packages/cli/` | **2–3 weeks** | None (uses `prisma._dmmf`) | Phase 0 |
 | **3** | Alerting engine + adapters; scaffolded config | `quark-core` + `quark-create-app` | 2 weeks | None | Phase 1 |
-| **4** | Quark Observe (separate repo) | `quark-observe` (new repo) | TBD after Phase 3 in production | Separate repo deps | Phases 1–3 live |
+| **4** | **`@techstream/quark-ai` — AI provider abstraction (published npm)** | New npm package | **2 weeks** | `ai` SDK (optional peer) | None |
+| **5** | **Quark Observe (separate repo, Umami model)** | `quark-observe` (new repo) | **6–8 weeks** (phased modules) | Separate repo deps | Phases 1–3 live |
+| **6** | **Quark Cloud — managed infra + compute** | `quark-cloud` (new repo/service) | **8–12 weeks** | Partner APIs (Neon, Upstash, R2) | Phase 5 MVP live |
+
+### Package distribution alignment
+
+| Package | Type | Optional? | Requires | Notes |
+|---|---|---|---|---|
+| `@techstream/quark-core` | Published (npm) | No | — | Core framework runtime |
+| `@techstream/quark-create-app` | Published (npm) | No | — | CLI scaffolder |
+| `@techstream/quark-ai` | **Published (npm)** | **Yes** | `quark-core` | AI provider abstraction — thin, no lock-in |
+| `@yourapp/ui` | Scaffolded (CLI) | **Yes** | — | ~12 Tailwind primitives when selected |
+| `@yourapp/admin` | Scaffolded (CLI) | **Yes** | **`ui`** | Self-scaling CRUD admin UI |
+| `@yourapp/config` | Scaffolded (CLI) | No | — | Environment config |
+| `@yourapp/db` | Scaffolded (CLI) | No | — | Prisma schema + client |
+| `@yourapp/jobs` | Scaffolded (CLI) | Yes | — | BullMQ job definitions |
+| `@yourapp/worker` | Scaffolded (CLI) | No* | — | BullMQ worker process (*always scaffolded, can be removed) |
 
 ### Critical path
 
 ```
-Phase 0 (UI primitives) ─┬─→ Phase 2 (Admin UI) ─→ Phase 4 (Observe)
-                          │
-Phase 1 (Queue metrics)  ─┴─→ Phase 3 (Alerting)  ─→ Phase 4 (Observe)
+Phase 0 (UI primitives) ─┬─→ Phase 2 (Admin UI)
+                          │                       ╲
+Phase 1 (Queue metrics)  ─┴─→ Phase 3 (Alerting)  ─→ Phase 5 (Observe) → Phase 6 (Cloud)
+                                                    ╱
+Phase 4 (AI package) ─────────────────────────────╱
 ```
 
-Phases 0 and 1 can run in parallel. Phase 2 depends on Phase 0. Phase 3 depends on Phase 1. Phase 4 depends on everything else.
+Phases 0 and 1 can run in parallel. Phase 4 (AI package) can run in parallel with Phases 0–3. Phase 5 depends on Phases 1–3 (metrics and alerting must be live). Phase 6 depends on Phase 5 MVP.
 
-**Total estimated effort for Phases 0–3: ~7 weeks.**
+**Total estimated effort for Phases 0–4: ~8–9 weeks (pre-monetization)**
+**Total estimated effort for Phases 5–6: ~14–20 weeks (monetization products)**
 
 ---
 
@@ -619,7 +650,11 @@ Four things, in order:
 
 3. **An alerting framework** (inside `@techstream/quark-core`) — adapter-based, mirrors error-reporter pattern, zero new dependencies. Email, webhook, Slack, PagerDuty adapters built-in.
 
-4. **Quark Observe** (separate repo, deferred) — viable multi-project observability hub. Detailed planning deferred until Phases 0–3 are in production.
+4. **Quark Observe** (separate repo, Umami model) — open-source observability platform, self-hostable with `docker compose up`. SaaS version adds multi-project aggregation, longer retention, and zero-ops. Modules ship incrementally: error tracking → metrics → uptime → analytics → AI metrics.
+
+5. **`@techstream/quark-ai`** (published npm package) — thin AI provider abstraction. Unified API for OpenAI, Anthropic, Google, Ollama. Streaming, token counting, structured outputs, embeddings, prompt versioning. Free and optional.
+
+6. **Quark Cloud** (managed infrastructure + compute) — one-click deploy of web, worker, Postgres, Redis, and storage. Convenience product, not a necessity — the CLI shows Railway, Docker, and self-hosted as equally prominent options.
 
 ### Summary table
 
@@ -629,7 +664,9 @@ Four things, in order:
 | 1 | Queue Metrics | 3 days | None | `@techstream/quark-core` (minor bump) |
 | 2 | Admin Package | 2–3 weeks | None | `packages/admin/` in monorepo; CLI `admin` feature; `pnpm sync-templates` generates template |
 | 3 | Alerting | 2 weeks | None | `@techstream/quark-core` (minor bump) |
-| 4 | Quark Observe | TBD | Separate repo | `quark-observe` (new repo) |
+| 4 | AI Package | 2 weeks | `ai` SDK (optional peer) | `@techstream/quark-ai` published to npm |
+| 5 | Quark Observe | 6–8 weeks | Separate repo | `quark-observe` (new repo, Umami model, self-hostable + SaaS) |
+| 6 | Quark Cloud | 8–12 weeks | Partner APIs | `quark-cloud` (managed infra + compute platform) |
 
 ### Key decisions
 
@@ -637,9 +674,11 @@ Four things, in order:
 |----------|--------|
 | Should admin/observe use the UI package? | **Yes. `packages/ui/` is expanded in Phase 0. Admin depends on it as a workspace package.** |
 | Is admin a published npm package? | **No.** Scaffolded via CLI, same as `ui`, `config`, `jobs`. Locally owned. |
+| Is `@techstream/quark-ai` published to npm? | **Yes.** Published, optional. Teams install it when they want AI features. Free. |
 | How does admin discover models? | `prisma._dmmf` at runtime. No `@prisma/internals`. Zero new deps. |
 | Where does alerting live? | Inside `quark-core`. Adapter pattern. Zero new deps. |
-| When is Quark Observe planned in detail? | After Phases 0–3 are in production. The vision is correct; the timing for detailed design is not yet right. |
+| When is Quark Observe planned in detail? | Phase 5 — after AI package ships and Phases 1–3 are live. Umami model: self-hostable, open-source first. |
+| When is Quark Cloud planned in detail? | Phase 6 — after Observe MVP is live. Convenience product, not necessity. |
 | What was wrong with the previous proposals? | Proposed publishing admin as an npm package (should be scaffolded). Assumed Observe needed full detail before any production usage. Ignored the empty UI template. |
 | How do CLI templates stay in sync with UI changes? | **Automated snapshot.** `sync-templates.js` generates `packages/cli/templates/ui/` from `packages/ui/` source before each CLI release. Once a user scaffolds, their copy is disconnected — they own it entirely. No auto-updates, by design. |
 | Can the home page use `@yourapp/ui`? | **No.** `apps/web/page.js` syncs to the base-project template used by all projects, including those without `ui`. Plain JSX + Tailwind only. |

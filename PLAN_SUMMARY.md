@@ -8,7 +8,7 @@ Quark's `packages/ui` template was never built out properly. It contains one `Bu
 
 ---
 
-## Four-Phase Build Plan
+## Seven-Phase Build Plan
 
 | Phase | Work | Effort | New Deps | Status |
 |-------|------|--------|----------|--------|
@@ -16,9 +16,28 @@ Quark's `packages/ui` template was never built out properly. It contains one `Bu
 | **1** | Queue metrics + health checks in `@techstream/quark-core` | 3 days | None | Planning |
 | **2** | Scaffold `packages/admin/` via CLI — self-scaling CRUD UI | 2–3 weeks | None | Planning |
 | **3** | Alerting engine + adapters in `@techstream/quark-core` | 2 weeks | None | Planning |
-| **4** | Quark Observe (separate repo) | TBD | Separate | After Phase 3 in production |
+| **4** | `@techstream/quark-ai` — AI provider abstraction (published npm) | 2 weeks | `ai` SDK (optional peer) | Planning |
+| **5** | Quark Observe — open-source observability (Umami model) | 6–8 weeks | Separate repo | Planning |
+| **6** | Quark Cloud — managed infra + compute | 8–12 weeks | Partner APIs | Planning |
 
-**Total effort for Phase 0–3: ~6–7 weeks**
+**Phases 0–4: ~8–9 weeks (pre-monetization framework work)**
+**Phases 5–6: ~14–20 weeks (monetization products)**
+
+---
+
+## Package Distribution
+
+| Package | Type | Optional? | Requires |
+|---|---|---|---|
+| `@techstream/quark-core` | Published (npm) | No | — |
+| `@techstream/quark-create-app` | Published (npm) | No | — |
+| `@techstream/quark-ai` | Published (npm) | **Yes** | `quark-core` |
+| `@yourapp/ui` | Scaffolded (CLI) | **Yes** | — |
+| `@yourapp/admin` | Scaffolded (CLI) | **Yes** | **`ui`** |
+| `@yourapp/config` | Scaffolded (CLI) | No | — |
+| `@yourapp/db` | Scaffolded (CLI) | No | — |
+| `@yourapp/jobs` | Scaffolded (CLI) | Yes | — |
+| `@yourapp/worker` | Scaffolded (CLI) | No | — |
 
 ---
 
@@ -73,9 +92,13 @@ alerting.addRule({
 });
 ```
 
-### Phase 4: Quark Observe (Deferred)
+### Phase 4: Quark Observe (Deferred → Phase 5–6)
 
-The vision is viable: Fastify hub, multi-project aggregation, pull-based scraping of `/api/metrics` and `/api/health`. Detailed design deferred until Phases 0–3 are in production and generating real telemetry. Build it after real usage patterns emerge.
+**Quark Observe (Phase 5):** Open-source observability platform following the Umami model — self-hostable with `docker compose up`, SaaS for zero-ops. Modules ship incrementally: error tracking → metrics → uptime → analytics → AI metrics. Priced at $19/mo flat (Pro) for indie devs.
+
+**Quark Cloud (Phase 6):** Managed full-stack infrastructure — web, worker, Postgres, Redis, storage. One-click deploy via CLI. Convenience product, not necessity. $39/mo flat bundle.
+
+**`@techstream/quark-ai` (Phase 4):** Published npm package. Thin AI provider abstraction — unified API for OpenAI, Anthropic, Google, Ollama. Streaming, token counting, structured outputs, embeddings. Free and optional.
 
 ---
 
@@ -85,19 +108,22 @@ The vision is viable: Fastify hub, multi-project aggregation, pull-based scrapin
 |---|---|
 | Should admin/observe use the UI package? | **Yes.** The UI template is expanded in Phase 0. Admin depends on it as a workspace package. |
 | Is `quark-admin` published to npm? | **No.** Scaffolded via CLI, same model as `ui`, `config`, `jobs`. Project owns the code. |
+| Is `@techstream/quark-ai` published? | **Yes.** Published to npm, optional. Free. |
 | How does admin discover models? | Reads `prisma._dmmf` from the instantiated client at runtime. Zero new dependencies. |
 | What was wrong with previous proposals? | Proposed publishing admin to npm (should be scaffolded). Assumed Observe needed full detail now. Ignored the empty UI template. |
-| When is Observe planned in detail? | After Phases 0–3 ship to real projects. Vision is correct; timing for detailed design is not yet right. |
+| When is Observe planned in detail? | Phase 5 — after AI package ships and Phases 1–3 are live. Umami model: self-hostable first. |
+| When is Cloud planned in detail? | Phase 6 — after Observe MVP is live. |
 
 ---
 
 ## What Changes For Quark
 
-**Distribution model: unchanged.** All packages except `quark-core` and `quark-create-app` are scaffolded locally via the CLI. Admin follows the same pattern.
+**Distribution model: unchanged.** All packages except `quark-core`, `quark-create-app`, and `quark-ai` are scaffolded locally via the CLI. Admin follows the same pattern.
 
-**Published packages (unchanged count — still 2):**
+**Published packages (now 3):**
 - `@techstream/quark-core` — add queue metrics + alerting
 - `@techstream/quark-create-app` — add `admin` feature prompt + expanded UI template
+- `@techstream/quark-ai` — AI provider abstraction (new, optional)
 
 **Scaffolded features (increases from 2 to 3):**
 - Old: `jobs`, `ui`
