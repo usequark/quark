@@ -103,7 +103,6 @@ export async function waitForRedis(
 	} = config;
 
 	const reportThrottledError = throttledError(logger, 3000);
-	let _lastError;
 
 	for (let attempt = 1; attempt <= maxRetries; attempt++) {
 		try {
@@ -115,7 +114,6 @@ export async function waitForRedis(
 				return true;
 			}
 		} catch (error) {
-			_lastError = error;
 			if (isConnectionError(error)) {
 				reportThrottledError(error);
 				if (attempt < maxRetries) {
@@ -128,10 +126,8 @@ export async function waitForRedis(
 	}
 
 	// All retries exhausted
-	const redisHost = process.env.REDIS_HOST || "localhost";
-	const redisPort = process.env.REDIS_PORT || "6379";
 	throw new Error(
-		`Redis unavailable at ${redisHost}:${redisPort} after ${maxRetries} attempts. Start Redis or check REDIS_URL/REDIS_HOST/REDIS_PORT.`,
+		`Redis unavailable at ${getRedisUrl()} after ${maxRetries} attempts. Start Redis or check REDIS_URL/REDIS_HOST/REDIS_PORT.`,
 	);
 }
 

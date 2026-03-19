@@ -628,10 +628,10 @@ program
 					);
 					// Remove createQueue from the core import if present
 					content = content.replace(/\tcreateQueue,\n/, "");
-					// Remove the welcome email enqueue try/catch block
+					// Remove the @quark:start:jobs ... @quark:end:jobs block (inclusive)
 					content = content.replace(
-						/\n\t\t\/\/ Enqueue welcome email[\s\S]*?\/\/ Non-critical[^\n]*\n\t\t\}\n/,
-						"\n",
+						/[ \t]*\/\/ @quark:start:jobs[\s\S]*?\/\/ @quark:end:jobs\n?/,
+						"",
 					);
 					await fs.writeFile(registerPath, content);
 				}

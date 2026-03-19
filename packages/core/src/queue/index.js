@@ -49,14 +49,6 @@ const queueConnections = new Map();
 
 const getRedisAddress = (redisConfig) => {
 	const cfg = redisConfig || getDefaultRedisConfig();
-	if (cfg.url) {
-		try {
-			const url = new URL(cfg.url);
-			return `${url.hostname}:${url.port || "6379"}`;
-		} catch {
-			return cfg.url;
-		}
-	}
 	return `${cfg.host}:${cfg.port}`;
 };
 
