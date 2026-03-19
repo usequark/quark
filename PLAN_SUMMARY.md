@@ -17,7 +17,7 @@ Quark's `packages/ui` template was never built out properly. It contains one `Bu
 | **2** | Scaffold `packages/admin/` via CLI — self-scaling CRUD UI | 2–3 weeks | None | Planning |
 | **3** | Alerting engine + adapters in `@techstream/quark-core` | 2 weeks | None | Planning |
 | **4** | `@techstream/quark-ai` — AI provider abstraction (published npm) | 2 weeks | `ai` SDK (optional peer) | Planning |
-| **5** | Quark Observe — open-source observability (Umami model) | 6–8 weeks | Separate repo | Planning |
+| **5** | Quark Observe — open-source observability (self-hostable) | 6–8 weeks | Separate repo | Planning |
 | **6** | Quark Cloud — managed infra + compute | 8–12 weeks | Partner APIs | Planning |
 
 **Phases 0–4: ~8–9 weeks (pre-monetization framework work)**
@@ -94,7 +94,7 @@ alerting.addRule({
 
 ### Phase 4: Quark Observe (Deferred → Phase 5–6)
 
-**Quark Observe (Phase 5):** Open-source observability platform following the Umami model — self-hostable with `docker compose up`, SaaS for zero-ops. Modules ship incrementally: error tracking → metrics → uptime → analytics → AI metrics. Priced at $19/mo flat (Pro) for indie devs.
+**Quark Observe (Phase 5):** Open-source observability platform — self-hostable with `docker compose up`, SaaS for zero-ops. Modules ship incrementally: error tracking → metrics → uptime → analytics → AI metrics. Priced at $19/mo flat (Pro) for indie devs.
 
 **Quark Cloud (Phase 6):** Managed full-stack infrastructure — web, worker, Postgres, Redis, storage. One-click deploy via CLI. Convenience product, not necessity. $39/mo flat bundle.
 
@@ -111,7 +111,7 @@ alerting.addRule({
 | Is `@techstream/quark-ai` published? | **Yes.** Published to npm, optional. Free. |
 | How does admin discover models? | Reads `prisma._dmmf` from the instantiated client at runtime. Zero new dependencies. |
 | What was wrong with previous proposals? | Proposed publishing admin to npm (should be scaffolded). Assumed Observe needed full detail now. Ignored the empty UI template. |
-| When is Observe planned in detail? | Phase 5 — after AI package ships and Phases 1–3 are live. Umami model: self-hostable first. |
+| When is Observe planned in detail? | Phase 5 — after AI package ships and Phases 1–3 are live. Open-source first, self-hostable. |
 | When is Cloud planned in detail? | Phase 6 — after Observe MVP is live. |
 
 ---

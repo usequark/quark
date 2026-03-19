@@ -222,7 +222,6 @@ function transformOptionalPackageJson(content) {
 	delete pkg.author;
 	delete pkg.license;
 	delete pkg.packageManager;
-	delete pkg.main;
 	delete pkg.types;
 
 	// Remove scripts (optional packages in templates are minimal)

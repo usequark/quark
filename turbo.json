@@ -18,7 +18,8 @@
 			"outputs": ["node_modules/.prisma/client"]
 		},
 		"db:migrate": {
-			"cache": false
+			"cache": false,
+			"interactive": true
 		},
 		"db:push": {
 			"cache": false

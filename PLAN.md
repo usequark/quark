@@ -427,15 +427,15 @@ Three days of work. Additive. No breaking changes.
 
 ---
 
-## Part 7: Quark Observe — Revised Vision (Umami Model)
+## Part 7: Quark Observe — Revised Vision
 
 ### What was planned too early
 
 The previous plan included a Fastify server architecture, Prisma schema, SDK packages, and SaaS pricing tiers for Observe. This is a viable long-term vision. The issue is timing: there are currently zero Quark projects in production. The detailed design decisions (storage schema, pull vs push, alert history retention) will be better informed by real usage patterns once Phases 0–3 are live. Don't design the schema for data that doesn't exist yet.
 
-### Revised positioning: The Umami Model
+### Revised positioning: Open-Source First
 
-Quark Observe follows the Umami playbook: open-source first, self-hostable, clean UI, affordable. It does not aim to replace Sentry or compete with Datadog. It aims to be **good enough for 90% of teams**, in one place, with a clean UI and an honest price.
+Quark Observe is open-source first, self-hostable, with a clean UI at an affordable price. It does not aim to replace Sentry or compete with Datadog. It aims to be **good enough for 90% of teams**, in one place, with a clean UI and an honest price.
 
 **Key principles:**
 - Same codebase for self-hosted and SaaS
@@ -470,7 +470,7 @@ A single-page decision document (not an implementation plan) that records:
 | **2** | Scaffold `packages/admin/` + CLI `admin` feature prompt | `packages/admin/`, `packages/cli/` | **2–3 weeks** | None (uses `prisma._dmmf`) | Phase 0 |
 | **3** | Alerting engine + adapters; scaffolded config | `quark-core` + `quark-create-app` | 2 weeks | None | Phase 1 |
 | **4** | **`@techstream/quark-ai` — AI provider abstraction (published npm)** | New npm package | **2 weeks** | `ai` SDK (optional peer) | None |
-| **5** | **Quark Observe (separate repo, Umami model)** | `quark-observe` (new repo) | **6–8 weeks** (phased modules) | Separate repo deps | Phases 1–3 live |
+| **5** | **Quark Observe (separate repo, open-source first)** | `quark-observe` (new repo) | **6–8 weeks** (phased modules) | Separate repo deps | Phases 1–3 live |
 | **6** | **Quark Cloud — managed infra + compute** | `quark-cloud` (new repo/service) | **8–12 weeks** | Partner APIs (Neon, Upstash, R2) | Phase 5 MVP live |
 
 ### Package distribution alignment
@@ -650,7 +650,7 @@ Four things, in order:
 
 3. **An alerting framework** (inside `@techstream/quark-core`) — adapter-based, mirrors error-reporter pattern, zero new dependencies. Email, webhook, Slack, PagerDuty adapters built-in.
 
-4. **Quark Observe** (separate repo, Umami model) — open-source observability platform, self-hostable with `docker compose up`. SaaS version adds multi-project aggregation, longer retention, and zero-ops. Modules ship incrementally: error tracking → metrics → uptime → analytics → AI metrics.
+4. **Quark Observe** (separate repo, open-source first) — open-source observability platform, self-hostable with `docker compose up`. SaaS version adds multi-project aggregation, longer retention, and zero-ops. Modules ship incrementally: error tracking → metrics → uptime → analytics → AI metrics.
 
 5. **`@techstream/quark-ai`** (published npm package) — thin AI provider abstraction. Unified API for OpenAI, Anthropic, Google, Ollama. Streaming, token counting, structured outputs, embeddings, prompt versioning. Free and optional.
 
@@ -665,7 +665,7 @@ Four things, in order:
 | 2 | Admin Package | 2–3 weeks | None | `packages/admin/` in monorepo; CLI `admin` feature; `pnpm sync-templates` generates template |
 | 3 | Alerting | 2 weeks | None | `@techstream/quark-core` (minor bump) |
 | 4 | AI Package | 2 weeks | `ai` SDK (optional peer) | `@techstream/quark-ai` published to npm |
-| 5 | Quark Observe | 6–8 weeks | Separate repo | `quark-observe` (new repo, Umami model, self-hostable + SaaS) |
+| 5 | Quark Observe | 6–8 weeks | Separate repo | `quark-observe` (new repo, open-source first, self-hostable + SaaS) |
 | 6 | Quark Cloud | 8–12 weeks | Partner APIs | `quark-cloud` (managed infra + compute platform) |
 
 ### Key decisions
@@ -677,7 +677,7 @@ Four things, in order:
 | Is `@techstream/quark-ai` published to npm? | **Yes.** Published, optional. Teams install it when they want AI features. Free. |
 | How does admin discover models? | `prisma._dmmf` at runtime. No `@prisma/internals`. Zero new deps. |
 | Where does alerting live? | Inside `quark-core`. Adapter pattern. Zero new deps. |
-| When is Quark Observe planned in detail? | Phase 5 — after AI package ships and Phases 1–3 are live. Umami model: self-hostable, open-source first. |
+| When is Quark Observe planned in detail? | Phase 5 — after AI package ships and Phases 1–3 are live. Open-source first, self-hostable. |
 | When is Quark Cloud planned in detail? | Phase 6 — after Observe MVP is live. Convenience product, not necessity. |
 | What was wrong with the previous proposals? | Proposed publishing admin as an npm package (should be scaffolded). Assumed Observe needed full detail before any production usage. Ignored the empty UI template. |
 | How do CLI templates stay in sync with UI changes? | **Automated snapshot.** `sync-templates.js` generates `packages/cli/templates/ui/` from `packages/ui/` source before each CLI release. Once a user scaffolds, their copy is disconnected — they own it entirely. No auto-updates, by design. |

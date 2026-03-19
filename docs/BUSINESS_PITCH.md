@@ -16,7 +16,7 @@ Quark is a **full-stack JavaScript framework** that solves the most painful prob
 
 **The business model:** Quark is fully open-source (MIT). Revenue comes from two self-serve products, launched sequentially:
 
-1. **Quark Observe** — Open-source observability platform (self-hostable). SaaS version for teams that want zero-ops monitoring. Think Umami for observability: clean, affordable, does 90% of what you need.
+1. **Quark Observe** — Open-source observability platform (self-hostable). SaaS version for teams that want zero-ops monitoring. Clean, affordable, does 90% of what you need — in one dashboard.
 2. **Quark Cloud** — Managed full-stack infrastructure (web, worker, Postgres, Redis, storage). One-click deploy via CLI.
 
 **Launch sequence:**
@@ -319,7 +319,7 @@ Quark Observe aims to consolidate the functionality teams currently need 4–5 s
 | **Helicone** | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | $88–$120/mo |
 | **Quark Observe** | **✅** | **✅** | **✅** | **✅** | **✅** | **✅** | **$19/mo** |
 
-**Key insight:** Today, a team running a Quark app with AI features typically uses Sentry ($26) + Better Stack ($25) + Grafana ($29) + Umami ($9) + Langfuse ($59) = **$148/mo across 5 dashboards**. Quark Observe doesn't claim feature parity with Sentry or Datadog. Instead, it follows the **Umami model**: open-source first, self-hostable, clean UI, does 90% of what you need, in one place, at a fraction of the cost. Good enough for most — and that's a feature, not a limitation.
+**Key insight:** Today, a team running a Quark app with AI features typically uses Sentry ($26) + Better Stack ($25) + Grafana ($29) + Plausible ($9) + Langfuse ($59) = **$148/mo across 5 dashboards**. Quark Observe doesn't claim feature parity with Sentry or Datadog. The positioning is deliberate: open-source first, self-hostable, clean UI, does 90% of what you need, in one place, at a fraction of the cost. Good enough for most — and that's a feature, not a limitation.
 
 ---
 
@@ -458,11 +458,11 @@ quark deploy cloud        # Quark Cloud (managed hosting)
 
 #### Product 1: Quark Observe — Open-Source Observability Platform
 
-**Positioning:** *"Umami for observability. Open-source, self-hostable, clean, affordable. One dashboard for errors, uptime, metrics, analytics, and AI costs."*
+**Positioning:** *"Open-source observability for full-stack teams. Self-hostable, clean, affordable. One dashboard for errors, uptime, metrics, analytics, and AI costs."*
 
 Quark Observe does not aim to replace Sentry or compete with Datadog. It aims to be **good enough for 90% of teams**, in one place, with a clean UI and an honest price. Teams that outgrow it can export data and move to specialized tools — no lock-in.
 
-**The Umami model:**
+**The open-source-first model:**
 - Open-source (MIT). Self-host with a single `docker compose up`.
 - SaaS version for teams that want zero-ops: managed hosting, longer retention, multi-region uptime checks.
 - Priced for indie developers and small teams, not enterprises with six-figure budgets.
@@ -1173,7 +1173,7 @@ Each module is independently useful. Don't ship everything at once.
 | **Quark Cloud runs compute (web + worker)** | ⚠️ Moderate | Adds operational complexity. Must ensure "deploy anywhere" remains true — Cloud is explicitly positioned as the path of least resistance, not the only path. CLI wizard shows Railway, Docker, and self-hosted as equally prominent options. |
 | **Email is provider-agnostic** | ✅ Strong | SMTP, Zeptomail, Resend, or custom — adapter pattern, no vendor lock-in. |
 | **Worker adapter for Vercel (serverless)** | ✅ Strong | Meets developers where they are. Doesn't force platform choice. |
-| **Observe follows the Umami model** | ✅ Strong | Open-source first, self-hostable, priced for indie devs. SaaS is convenience. Self-hosted uses same codebase. |
+| **Observe is open-source first** | ✅ Strong | Self-hostable, priced for indie devs. SaaS is convenience. Self-hosted uses same codebase. |
 
 ### What's Missing?
 
@@ -1197,4 +1197,4 @@ Each module is independently useful. Don't ship everything at once.
 | **"Quark Cloud becomes the default and we accidentally create lock-in"** | Mitigate by: always showing `quark deploy railway` and `quark deploy docker` as equal options in the CLI wizard. Never make Cloud the only path. Docs should show self-hosted deployment first. |
 | **"Observe SaaS becomes required because self-hosted is poorly maintained"** | Mitigate by: self-hosted Observe uses the same codebase as SaaS. If the open-source version works, the SaaS version works. Dogfood the self-hosted version internally. |
 | **"AI positioning overshadows the core value"** | Mitigate by: AI is an optional feature, not the identity. Quark is "a full-stack framework" first. "AI-ready" is a differentiator, not the tagline. Teams building non-AI apps should feel equally at home. |
-| **"Feature creep in Observe (Sentry + Umami + Uptime + Prometheus + Langfuse)"** | Mitigate by: phased rollout. Launch with error tracking + metrics (Month 3). Add uptime monitoring (Month 4). Add web analytics + AI metrics (Month 5). Don't ship everything at once. Each module should be independently useful. |
+| **"Feature creep in Observe (errors + analytics + uptime + metrics + AI)"** | Mitigate by: phased rollout. Launch with error tracking + metrics (Month 3). Add uptime monitoring (Month 4). Add web analytics + AI metrics (Month 5). Don't ship everything at once. Each module should be independently useful. |

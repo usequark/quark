@@ -2,6 +2,7 @@
 	"name": "@myquark/ui",
 	"version": "1.0.0",
 	"type": "module",
+	"main": "src/index.js",
 	"devDependencies": {
 		"@types/react": "^19.2.14",
 		"@types/react-dom": "^19.2.3",
