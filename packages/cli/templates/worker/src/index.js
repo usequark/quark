@@ -9,6 +9,7 @@ import {
 	createLogger,
 	createQueue,
 	createWorker,
+	getRedisUrl,
 } from "@techstream/quark-core";
 import { prisma } from "@techstream/quark-db";
 import { JOB_NAMES, JOB_QUEUES } from "@techstream/quark-jobs";
@@ -262,9 +263,7 @@ async function startWorker() {
 			isDevMode ? { maxRetries: 3, intervalMs: 500 } : {},
 		);
 
-		const redisHost = process.env.REDIS_HOST || "localhost";
-		const redisPort = process.env.REDIS_PORT || "6379";
-		logger.info("Redis connected", { address: `${redisHost}:${redisPort}` });
+		logger.info("Redis connected", { address: getRedisUrl() });
 		// Register a worker for each queue
 		for (const queueName of Object.values(JOB_QUEUES)) {
 			createQueueWorker(queueName);

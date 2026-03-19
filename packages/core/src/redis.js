@@ -17,6 +17,8 @@ function getRedisUrl() {
  * Creates a Redis configuration object from environment variables.
  * Returns the URL and any additional options — does not create an actual connection.
  * Pass the URL to your Redis library of choice (e.g., ioredis).
+ *
+ * @deprecated Use `resolveRedisConnection` for ioredis/BullMQ configs, or `getRedisUrl` for URL strings.
  */
 export const createRedisConfig = (options = {}) => {
 	const redisUrl = getRedisUrl();
@@ -28,7 +30,7 @@ export const createRedisConfig = (options = {}) => {
 };
 
 /**
- * @deprecated Use `createRedisConfig` instead.
+ * @deprecated Use `resolveRedisConnection` instead.
  */
 export const createRedisClient = createRedisConfig;
 
@@ -116,6 +118,36 @@ export async function pingRedis({ timeout = 3000 } = {}) {
 			// ignore disconnect errors
 		}
 	}
+}
+
+/**
+ * Resolves Redis connection config as an ioredis-compatible options object.
+ * Precedence: explicit override > REDIS_URL > REDIS_HOST/REDIS_PORT > localhost defaults.
+ *
+ * @param {object} [override] — if provided, returned as-is (pass-through for caller-supplied config)
+ * @returns {{ host: string, port: number, password?: string, tls?: object }}
+ */
+export function resolveRedisConnection(override) {
+	if (override) return override;
+
+	if (process.env.REDIS_URL) {
+		try {
+			const u = new URL(process.env.REDIS_URL);
+			return {
+				host: u.hostname,
+				port: parseInt(u.port || "6379", 10),
+				...(u.password && { password: decodeURIComponent(u.password) }),
+				...(u.protocol === "rediss:" && { tls: {} }),
+			};
+		} catch {
+			// Malformed REDIS_URL — fall through to host/port env vars
+		}
+	}
+
+	return {
+		host: process.env.REDIS_HOST || "localhost",
+		port: parseInt(process.env.REDIS_PORT || "6379", 10),
+	};
 }
 
 export { getRedisUrl };

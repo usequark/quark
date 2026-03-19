@@ -43,7 +43,7 @@ const PRE_COMMIT_MODE = process.argv.includes("--pre-commit");
  */
 const SYNC_DIRS = [
 	{ src: "apps/web", dest: "base-project/apps/web" },
-	{ src: "apps/worker", dest: "base-project/apps/worker" },
+	{ src: "apps/worker", dest: "worker" },
 	{ src: "packages/db", dest: "base-project/packages/db" },
 	{ src: "packages/config", dest: "config" },
 	{ src: "packages/ui", dest: "ui" },
@@ -145,7 +145,7 @@ const TEMPLATE_ONLY = new Set([
 const TRANSFORMS = {
 	// Apps: adjust dependency references for scaffold context
 	"base-project/apps/web/package.json": transformWebPackageJson,
-	"base-project/apps/worker/package.json": transformWorkerPackageJson,
+	"worker/package.json": transformWorkerPackageJson,
 	// DB: remove private flag for scaffold context
 	"base-project/packages/db/package.json": transformDbPackageJson,
 	// DB: prisma.config.ts uses simple defaults for new projects

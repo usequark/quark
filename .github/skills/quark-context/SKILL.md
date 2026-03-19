@@ -8,14 +8,24 @@ description: Specific technical context for the Quark Monorepo. Load this alongs
 ## Repository Overview
 
 Quark is a full-stack JS application framework distributed as a monorepo (`Bobnoddle/quark`).  
-Two packages are published to npm; everything else is scaffolded locally into user projects.
+Two packages are published to npm (with a third planned); everything else is scaffolded locally into user projects.
 
 | Published package | Purpose |
 |---|---|
 | `@techstream/quark-create-app` | CLI — scaffolds new projects, provides `update` command |
 | `@techstream/quark-core` | Runtime library — auth, queues, errors, validation, email, storage, metrics, logging |
+| `@techstream/quark-ai` (planned) | AI provider abstraction — unified API for OpenAI, Anthropic, Google, Ollama |
 
-Scaffolded (local-only) packages: `@<app>/db`, `@<app>/config`, `@<app>/jobs`, `@<app>/ui`, `@<app>/web`, `@<app>/worker`.
+Scaffolded (local-only) packages:
+
+| Package | Required? | Notes |
+|---|---|---|
+| `@<app>/config` | Yes | Environment config |
+| `@<app>/db` | Yes | Prisma schema + client |
+| `@<app>/web` | Yes | Next.js application |
+| `@<app>/ui` | Optional | Tailwind UI primitives |
+| `@<app>/jobs` + `@<app>/worker` | Optional (paired) | BullMQ job definitions + worker process |
+| `@<app>/admin` | Optional | Auto-generated CRUD admin UI (requires `db` + `ui`) |
 
 ## Tech Stack
 

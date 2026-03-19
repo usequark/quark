@@ -6,34 +6,40 @@
 import { Queue, QueueEvents, Worker } from "bullmq";
 import { ServiceError } from "../errors.js";
 import { createLogger } from "../logger.js";
+import { resolveRedisConnection } from "../redis.js";
 
 const logger = createLogger("queue");
 
 /**
- * Default Redis configuration
+ * Returns the default Redis config for BullMQ connections.
+ * Evaluated lazily so env vars set after module load (e.g. via dotenv) are respected.
+ * Uses resolveRedisConnection() — supports REDIS_URL, REDIS_HOST/REDIS_PORT, and localhost fallback.
  */
-const DEFAULT_REDIS_CONFIG = {
-	host: process.env.REDIS_HOST || "localhost",
-	port: parseInt(process.env.REDIS_PORT || "6379", 10),
-	db: parseInt(process.env.REDIS_DB || "0", 10),
-	retryStrategy: (times) => {
-		const delay = Math.min(times * 50, 2000);
-		return delay;
-	},
-};
+function getDefaultRedisConfig() {
+	return {
+		...resolveRedisConnection(),
+		db: parseInt(process.env.REDIS_DB || "0", 10),
+		retryStrategy: (times) => {
+			const delay = Math.min(times * 50, 2000);
+			return delay;
+		},
+	};
+}
 
 /**
  * Redis config for health checks only.
  * Disables the offline queue so commands fail immediately if not connected,
  * and sets a short connect timeout so we don't hang indefinitely.
  */
-const HEALTH_CHECK_REDIS_CONFIG = {
-	...DEFAULT_REDIS_CONFIG,
-	enableOfflineQueue: false,
-	connectTimeout: 3000,
-	maxRetriesPerRequest: 0,
-	retryStrategy: () => null, // don't auto-retry — let waitForRedis control the loop
-};
+function getHealthCheckRedisConfig() {
+	return {
+		...getDefaultRedisConfig(),
+		enableOfflineQueue: false,
+		connectTimeout: 3000,
+		maxRetriesPerRequest: 0,
+		retryStrategy: () => null, // don't auto-retry — let waitForRedis control the loop
+	};
+}
 
 /**
  * Map to store singleton queue instances
@@ -41,19 +47,17 @@ const HEALTH_CHECK_REDIS_CONFIG = {
 const queues = new Map();
 const queueConnections = new Map();
 
-const getRedisAddress = (redisConfig = DEFAULT_REDIS_CONFIG) => {
-	if (redisConfig?.url) {
+const getRedisAddress = (redisConfig) => {
+	const cfg = redisConfig || getDefaultRedisConfig();
+	if (cfg.url) {
 		try {
-			const url = new URL(redisConfig.url);
+			const url = new URL(cfg.url);
 			return `${url.hostname}:${url.port || "6379"}`;
 		} catch {
-			return redisConfig.url;
+			return cfg.url;
 		}
 	}
-
-	const host = redisConfig?.host || DEFAULT_REDIS_CONFIG.host;
-	const port = redisConfig?.port || DEFAULT_REDIS_CONFIG.port;
-	return `${host}:${port}`;
+	return `${cfg.host}:${cfg.port}`;
 };
 
 /**
@@ -70,7 +74,7 @@ export const createQueue = (name, options = {}) => {
 	}
 
 	const {
-		redis = DEFAULT_REDIS_CONFIG,
+		redis = getDefaultRedisConfig(),
 		defaultJobOptions = {
 			attempts: 3,
 			backoff: {
@@ -113,7 +117,7 @@ export const createQueue = (name, options = {}) => {
  */
 export const createWorker = (queueName, handler, options = {}) => {
 	const {
-		redis = DEFAULT_REDIS_CONFIG,
+		redis = getDefaultRedisConfig(),
 		concurrency = 1,
 		...workerOptions
 	} = options;
@@ -150,7 +154,7 @@ export const createWorker = (queueName, handler, options = {}) => {
  * @returns {QueueEvents} BullMQ QueueEvents instance
  */
 export const createQueueEvents = (queueName, options = {}) => {
-	const { redis = DEFAULT_REDIS_CONFIG, ...eventsOptions } = options;
+	const { redis = getDefaultRedisConfig(), ...eventsOptions } = options;
 
 	return new QueueEvents(queueName, {
 		connection: redis,
@@ -240,14 +244,14 @@ export const closeAllQueues = async () => {
  * @throws {ServiceError} When Redis is unreachable or misconfigured
  */
 export const checkQueueHealth = async () => {
-	const defaultRedisAddr = getRedisAddress(DEFAULT_REDIS_CONFIG);
+	const defaultRedisAddr = getRedisAddress();
 
 	if (queues.size === 0) {
 		// Create a temporary queue to test connectivity.
 		// Attach a no-op error listener so ioredis connection errors don't
 		// leak as unhandled 'error' events and print raw stack traces to stderr.
 		const testQueue = new Queue("_health_check", {
-			connection: HEALTH_CHECK_REDIS_CONFIG,
+			connection: getHealthCheckRedisConfig(),
 		});
 		testQueue.on("error", () => {});
 		try {
@@ -272,9 +276,7 @@ export const checkQueueHealth = async () => {
 	}
 
 	const [firstQueue] = queues.values();
-	const redisAddr = getRedisAddress(
-		queueConnections.get(firstQueue.name) || DEFAULT_REDIS_CONFIG,
-	);
+	const redisAddr = getRedisAddress(queueConnections.get(firstQueue.name));
 
 	try {
 		// BullMQ v5: queue.client is an async getter — must be awaited

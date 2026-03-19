@@ -14,12 +14,11 @@
 > | `@techstream/quark-core` | Published (npm) | No | — |
 > | `@techstream/quark-create-app` | Published (npm) | No | — |
 > | `@techstream/quark-ai` | Published (npm) | Yes | `quark-core` |
-> | `@yourapp/ui` | Scaffolded (CLI) | Yes | — |
-> | `@yourapp/admin` | Scaffolded (CLI) | Yes | `ui` |
 > | `@yourapp/config` | Scaffolded (CLI) | No | — |
 > | `@yourapp/db` | Scaffolded (CLI) | No | — |
-> | `@yourapp/jobs` | Scaffolded (CLI) | Yes | — |
-> | `@yourapp/worker` | Scaffolded (CLI) | No | — |
+> | `@yourapp/ui` | Scaffolded (CLI) | Yes | — |
+> | `@yourapp/jobs` + `@yourapp/worker` | Scaffolded (CLI) | Yes | — |
+> | `@yourapp/admin` | Scaffolded (CLI) | Yes | `db`, `ui` |
 
 ## Executive Summary
 

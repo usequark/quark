@@ -141,7 +141,7 @@ This matches the model used by `create-t3-app`, `create-remix-app`, and similar 
 | Package | State | Change |
 |---------|-------|--------|
 | `@techstream/quark-core` | Published ✅ | Add `alerting.js` + alert adapters + queue metrics |
-| `@techstream/quark-create-app` | Published ✅ | Add `admin` feature prompt (requires `ui`); add alerting scaffold |
+| `@techstream/quark-create-app` | Published ✅ | Add `admin` feature prompt (requires `db` + `ui`); pair `worker` with `jobs`; add alerting scaffold |
 | `packages/ui` template | Scaffolded (1 component) | **Expand to ~12 primitives** when `admin` feature selected |
 | `packages/admin` template | Does not exist | **New scaffolded package.** Self-scaling admin UI. |
 
@@ -152,10 +152,11 @@ Scaffolded project
 ├── @techstream/quark-core     (npm — auth, queues, metrics, email, errors, alerting)
 ├── @yourapp/db                (local — Prisma schema + client)
 ├── @yourapp/config            (local — environment, validation)
-├── @yourapp/ui                (local — UI primitives, ~12 components if admin selected)
+├── @yourapp/ui                (local, optional — UI primitives, ~12 components)
 ├── @yourapp/jobs              (local, optional — background job definitions)
+├── @yourapp/worker            (local, optional — BullMQ worker process, paired with jobs)
 └── @yourapp/admin             (local, optional — self-scaling admin UI)
-    └── depends on @yourapp/ui (workspace:*)
+    └── depends on @yourapp/ui + @yourapp/db (workspace:*)
 ```
 
 ### What changes for scaffolded project architecture
@@ -165,7 +166,7 @@ Scaffolded project
 | `packages/ui/` scaffolded with 1 Button component | `packages/ui/` scaffolded with ~12 components when admin is selected |
 | No admin package | `packages/admin/` scaffolded with self-scaling CRUD UI |
 | Admin requires manual route setup | Admin routes scaffolded automatically (2 files in `apps/web/`) |
-| `jobs` and `ui` are the two optional CLI features | `jobs`, `ui`, and `admin` are the three optional features; `admin` auto-requires `ui` |
+| `jobs` and `ui` are the two optional CLI features | `jobs` (paired with `worker`), `ui`, and `admin` are the three optional features; `admin` auto-requires `ui`; selecting `jobs` also scaffolds `apps/worker/` |
 
 ---
 
@@ -480,12 +481,11 @@ A single-page decision document (not an implementation plan) that records:
 | `@techstream/quark-core` | Published (npm) | No | — | Core framework runtime |
 | `@techstream/quark-create-app` | Published (npm) | No | — | CLI scaffolder |
 | `@techstream/quark-ai` | **Published (npm)** | **Yes** | `quark-core` | AI provider abstraction — thin, no lock-in |
-| `@yourapp/ui` | Scaffolded (CLI) | **Yes** | — | ~12 Tailwind primitives when selected |
-| `@yourapp/admin` | Scaffolded (CLI) | **Yes** | **`ui`** | Self-scaling CRUD admin UI |
 | `@yourapp/config` | Scaffolded (CLI) | No | — | Environment config |
 | `@yourapp/db` | Scaffolded (CLI) | No | — | Prisma schema + client |
-| `@yourapp/jobs` | Scaffolded (CLI) | Yes | — | BullMQ job definitions |
-| `@yourapp/worker` | Scaffolded (CLI) | No* | — | BullMQ worker process (*always scaffolded, can be removed) |
+| `@yourapp/ui` | Scaffolded (CLI) | **Yes** | — | ~12 Tailwind primitives when selected |
+| `@yourapp/jobs` + `@yourapp/worker` | Scaffolded (CLI) | **Yes** | — | BullMQ job definitions + worker process (paired) |
+| `@yourapp/admin` | Scaffolded (CLI) | **Yes** | **`db`, `ui`** | Self-scaling CRUD admin UI |
 
 ### Critical path
 
@@ -646,7 +646,7 @@ Four things, in order:
 
 1. **An expanded UI package** (`packages/ui/`) — ~12 Tailwind-styled primitives with JSX, tests, and a `README.md` documenting the component API. Source-of-truth in the monorepo; snapshotted into `packages/cli/templates/ui/` via `sync-templates.js` for distribution. Once scaffolded into a user project, the copy is theirs — no connection back to Quark. The playground page in `apps/web/` is scaffolded conditionally only when `ui` is selected.
 
-2. **A self-scaling admin package** (`packages/admin/` via CLI) — reads Prisma models at runtime, generates CRUD pages automatically. Scaffolded locally; fully modifiable. Requires `ui`.
+2. **A self-scaling admin package** (`packages/admin/` via CLI) — reads Prisma models at runtime, generates CRUD pages automatically. Scaffolded locally; fully modifiable. Requires `db` + `ui`.
 
 3. **An alerting framework** (inside `@techstream/quark-core`) — adapter-based, mirrors error-reporter pattern, zero new dependencies. Email, webhook, Slack, PagerDuty adapters built-in.
 
@@ -661,6 +661,7 @@ Four things, in order:
 | Phase | Name | Effort | New Deps | Deliverable |
 |-------|------|--------|----------|-------------|
 | 0 | UI Package Expansion | 1 week | None | `packages/ui/` (~12 components + README); conditional playground template; `patchNextConfig()` in CLI; quark-context SKILL.md updated |
+| 0.5 | Worker/Jobs Pairing | 2 days | None | Extract `apps/worker/` from base-project; pair with `jobs` in CLI; update `sync-templates.js` |
 | 1 | Queue Metrics | 3 days | None | `@techstream/quark-core` (minor bump) |
 | 2 | Admin Package | 2–3 weeks | None | `packages/admin/` in monorepo; CLI `admin` feature; `pnpm sync-templates` generates template |
 | 3 | Alerting | 2 weeks | None | `@techstream/quark-core` (minor bump) |
@@ -673,9 +674,10 @@ Four things, in order:
 | Decision | Answer |
 |----------|--------|
 | Should admin/observe use the UI package? | **Yes. `packages/ui/` is expanded in Phase 0. Admin depends on it as a workspace package.** |
-| Is admin a published npm package? | **No.** Scaffolded via CLI, same as `ui`, `config`, `jobs`. Locally owned. |
+| Is admin a published npm package? | **No.** Scaffolded via CLI, same as `ui`, `config`, `jobs`. Locally owned. Requires `db` + `ui`. |
 | Is `@techstream/quark-ai` published to npm? | **Yes.** Published, optional. Teams install it when they want AI features. Free. |
 | How does admin discover models? | `prisma._dmmf` at runtime. No `@prisma/internals`. Zero new deps. |
+| Is `worker` always scaffolded? | **No.** `apps/worker/` is extracted from base-project and paired with `jobs`. Selecting `jobs` scaffolds both `packages/jobs/` and `apps/worker/`. |
 | Where does alerting live? | Inside `quark-core`. Adapter pattern. Zero new deps. |
 | When is Quark Observe planned in detail? | Phase 5 — after AI package ships and Phases 1–3 are live. Open-source first, self-hostable. |
 | When is Quark Cloud planned in detail? | Phase 6 — after Observe MVP is live. Convenience product, not necessity. |

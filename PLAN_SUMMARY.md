@@ -32,12 +32,11 @@ Quark's `packages/ui` template was never built out properly. It contains one `Bu
 | `@techstream/quark-core` | Published (npm) | No | — |
 | `@techstream/quark-create-app` | Published (npm) | No | — |
 | `@techstream/quark-ai` | Published (npm) | **Yes** | `quark-core` |
-| `@yourapp/ui` | Scaffolded (CLI) | **Yes** | — |
-| `@yourapp/admin` | Scaffolded (CLI) | **Yes** | **`ui`** |
 | `@yourapp/config` | Scaffolded (CLI) | No | — |
 | `@yourapp/db` | Scaffolded (CLI) | No | — |
-| `@yourapp/jobs` | Scaffolded (CLI) | Yes | — |
-| `@yourapp/worker` | Scaffolded (CLI) | No | — |
+| `@yourapp/ui` | Scaffolded (CLI) | **Yes** | — |
+| `@yourapp/jobs` + `@yourapp/worker` | Scaffolded (CLI) | **Yes** | — |
+| `@yourapp/admin` | Scaffolded (CLI) | **Yes** | **`db`, `ui`** |
 
 ---
 
@@ -126,13 +125,14 @@ alerting.addRule({
 - `@techstream/quark-ai` — AI provider abstraction (new, optional)
 
 **Scaffolded features (increases from 2 to 3):**
-- Old: `jobs`, `ui`
-- New: `jobs`, `ui`, `admin` (all optional; `admin` requires `ui` and forces it on)
+- Old: `jobs`, `ui` (optional); `worker` always scaffolded
+- New: `jobs` + `worker` (paired optional), `ui`, `admin` — selecting `admin` requires and auto-enables `db` + `ui`
 
 **CLI template changes:**
 - `templates/ui/` expanded from 1 to ~12 components
 - New `templates/admin/` directory added
-- Selecting `admin` auto-selects and locks `ui`
+- `apps/worker/` extracted from base-project into `templates/worker/` — scaffolded only when `jobs` selected
+- Selecting `admin` auto-selects and locks `ui` (cannot be deselected)
 - Two admin route files scaffolded into `apps/web/src/app/admin/`
 
 ---

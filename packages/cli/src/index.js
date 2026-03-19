@@ -203,6 +203,7 @@ async function patchNextConfig(webDir, scope, selectedFeatures) {
 	const optionalEntries = {
 		ui: `@${scope}/ui`,
 		jobs: `@${scope}/jobs`,
+		admin: `@${scope}/admin`,
 	};
 
 	for (const [feature, pkg] of Object.entries(optionalEntries)) {
@@ -224,7 +225,7 @@ async function patchNextConfig(webDir, scope, selectedFeatures) {
  * Registry packages (@techstream/quark-core) are left untouched.
  */
 async function replaceImportsInSourceFiles(dir, scope) {
-	const workspacePackages = ["db", "jobs", "ui", "config"];
+	const workspacePackages = ["db", "jobs", "ui", "config", "admin"];
 	const entries = await fs.readdir(dir, { withFileTypes: true });
 
 	for (const entry of entries) {
@@ -289,7 +290,7 @@ program
 	)
 	.option(
 		"--features <features>",
-		"Comma-separated list of optional features to include (ui,jobs)",
+		"Comma-separated list of optional features to include (ui,jobs,admin)",
 	)
 	.action(async (projectName, options) => {
 		console.log(
@@ -431,7 +432,7 @@ program
 			if (!options.prompts && options.features) {
 				// Parse features from CLI flag
 				console.log(chalk.cyan("\n  🎯 Configuring optional features..."));
-				const validFeatures = ["ui", "jobs"];
+				const validFeatures = ["ui", "jobs", "admin"];
 				features = options.features
 					.split(",")
 					.map((f) => f.trim())
@@ -447,6 +448,11 @@ program
 					);
 				}
 
+				// Enforce admin dependencies: admin requires ui
+				if (features.includes("admin") && !features.includes("ui")) {
+					features.push("ui");
+				}
+
 				console.log(
 					chalk.green(
 						`  Selected features: ${features.join(", ") || "none"} (non-interactive mode)`,
@@ -455,7 +461,7 @@ program
 			} else if (!options.prompts) {
 				// Use defaults when --no-prompts is set without --features
 				console.log(chalk.cyan("\n  🎯 Configuring optional features..."));
-				features = ["ui", "jobs"]; // Default to both
+				features = ["ui", "jobs"]; // Default to ui + jobs (not admin)
 				console.log(
 					chalk.green(
 						`  Using default features: ${features.join(", ")} (non-interactive mode)`,
@@ -477,9 +483,14 @@ program
 								selected: true,
 							},
 							{
-								title: "Job Definitions (packages/jobs)",
+								title: "Background Jobs (packages/jobs + apps/worker)",
 								value: "jobs",
 								selected: true,
+							},
+							{
+								title: "Admin Dashboard (packages/admin) [requires: ui]",
+								value: "admin",
+								selected: false,
 							},
 						],
 					},
@@ -493,6 +504,14 @@ program
 					await fs.remove(targetDir);
 					process.exit(0);
 				}
+
+				// Enforce admin dependencies: admin requires ui
+				if (features.includes("admin") && !features.includes("ui")) {
+					features.push("ui");
+					console.log(
+						chalk.yellow("    ℹ  Admin requires UI — automatically included."),
+					);
+				}
 			}
 
 			// Step 6: Copy selected optional packages
@@ -500,6 +519,17 @@ program
 				console.log(chalk.cyan("\n  📋 Setting up optional packages..."));
 
 				for (const feature of features) {
+					// admin is a package template — skip if no template exists yet
+					const templatePath = path.join(templatesDir, feature);
+					if (!(await fs.pathExists(templatePath))) {
+						console.log(
+							chalk.yellow(
+								`    ⚠ ${feature} (template not yet available — skipped)`,
+							),
+						);
+						continue;
+					}
+
 					const packageDir = path.join(targetDir, "packages", feature);
 					await fs.ensureDir(packageDir);
 					await copyTemplate(feature, packageDir);
@@ -510,6 +540,14 @@ program
 
 					console.log(chalk.green(`    ✓ ${feature}`));
 				}
+
+				// If jobs selected, also scaffold apps/worker from its template
+				if (features.includes("jobs")) {
+					const workerDir = path.join(targetDir, "apps", "worker");
+					await fs.ensureDir(workerDir);
+					await copyTemplate("worker", workerDir);
+					console.log(chalk.green(`    ✓ worker (paired with jobs)`));
+				}
 			}
 
 			// Step 7: Update all package.json dependencies to use correct scope
@@ -518,7 +556,10 @@ program
 			// Collect all package.json files that need scope replacement (apps + packages)
 			const allPkgPaths = [
 				path.join(targetDir, "apps", "web", "package.json"),
-				path.join(targetDir, "apps", "worker", "package.json"),
+				// Worker is only present when jobs is selected
+				...(features.includes("jobs")
+					? [path.join(targetDir, "apps", "worker", "package.json")]
+					: []),
 				// Also update cross-dependencies in scaffolded packages (e.g. db → config)
 				...["db", ...features].map((pkg) =>
 					path.join(targetDir, "packages", pkg, "package.json"),
@@ -564,6 +605,37 @@ program
 				features,
 			);
 			console.log(chalk.green(`    ✓ next.config.js patched`));
+
+			// Step 7d: Strip jobs-related code from register route when jobs not selected
+			if (!features.includes("jobs")) {
+				const registerPath = path.join(
+					targetDir,
+					"apps",
+					"web",
+					"src",
+					"app",
+					"api",
+					"auth",
+					"register",
+					"route.js",
+				);
+				if (await fs.pathExists(registerPath)) {
+					let content = await fs.readFile(registerPath, "utf-8");
+					// Remove the jobs import line
+					content = content.replace(
+						/import\s*\{[^}]*\}\s*from\s*["']@[^/]+\/jobs["'];?\n/,
+						"",
+					);
+					// Remove createQueue from the core import if present
+					content = content.replace(/\tcreateQueue,\n/, "");
+					// Remove the welcome email enqueue try/catch block
+					content = content.replace(
+						/\n\t\t\/\/ Enqueue welcome email[\s\S]*?\/\/ Non-critical[^\n]*\n\t\t\}\n/,
+						"\n",
+					);
+					await fs.writeFile(registerPath, content);
+				}
+			}
 
 			// Step 8: Create .env.example file
 			console.log(chalk.cyan("\n  📋 Creating environment configuration..."));
@@ -786,6 +858,8 @@ STORAGE_PROVIDER=local
 				scaffoldedDate: new Date().toISOString(),
 				requiredPackages: ["db", "config"],
 				packages: features,
+				// Track that worker is paired with jobs (not independently selectable)
+				hasWorker: features.includes("jobs"),
 			};
 			await fs.writeFile(
 				path.join(targetDir, ".quark-link.json"),
@@ -811,6 +885,7 @@ STORAGE_PROVIDER=local
 						const labels = {
 							ui: "Shared UI components",
 							jobs: "Job queue definitions",
+							admin: "Auto-generated admin dashboard",
 						};
 						return `│   ├── ${f}/           # ${labels[f] || f}`;
 					})

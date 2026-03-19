@@ -33,7 +33,7 @@ export async function GET() {
 		});
 
 		return NextResponse.json(result, {
-			status: result.status === "ok" ? 200 : 503,
+			status: result.status === "error" ? 503 : 200,
 		});
 	} catch (error) {
 		logger.error("Health check failed", {
