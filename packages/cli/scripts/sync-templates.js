@@ -108,8 +108,12 @@ const EXCLUDE_PATTERNS = [
 const TEMPLATE_ONLY = new Set([
 	// Copilot skill with __QUARK_SCOPE__ placeholders — generation template
 	"base-project/.github/skills/project-context/SKILL.md",
-	// Template-specific copilot instructions
+	// Template-specific copilot instructions (with __QUARK_*__ placeholders + inline conventions)
 	"base-project/.github/copilot-instructions.md",
+	// Claude Code context file (with __QUARK_*__ placeholders) — generation template
+	"base-project/CLAUDE.md",
+	// Cursor rules (with __QUARK_*__ placeholders) — generation template
+	"base-project/.cursor/rules/quark.mdc",
 	// GitHub CI/CD workflows — scaffolded projects have their own pipelines
 	"base-project/.github/workflows/ci.yml",
 	"base-project/.github/workflows/release.yml",
@@ -118,6 +122,8 @@ const TEMPLATE_ONLY = new Set([
 	"base-project/.github/dependabot.yml",
 	// Scaffold starter README (different from monorepo README)
 	"base-project/README.md",
+	// Web railway.json — scaffold uses a path filter for migrations; monorepo uses the package name
+	"base-project/apps/web/railway.json",
 	// Template .gitignore (includes .env, .next, etc.)
 	"base-project/.gitignore",
 	// Root package.json with @myquark scope placeholder

@@ -48,14 +48,18 @@ Quark uses `pnpm workspaces` for monorepo development. Changes are live across a
 pnpm test
 pnpm lint
 
-# Commit and tag a release
+# Create a changeset describing your change (interactive)
+pnpm changeset
+
+# Commit code + the generated .changeset/*.md file
 git add .
 git commit -m "feat: add new feature"
-git tag v1.2.0
-git push origin main --tags
+git push origin your-branch
 ```
 
-**The GitHub Actions workflow will automatically publish to npmjs.org when you push a tag.**
+Then open a PR. Once merged to `main`, CI automatically opens a **"chore: version packages"** PR. Merge that PR to publish to npm and create a GitHub Release.
+
+> **Never run `git tag` manually** and never run `pnpm changeset version` locally — CI owns both steps.
 
 ---
 

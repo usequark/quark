@@ -1,20 +1,15 @@
-```instructions
-# Quark Monorepo - Developer Guide
+# Quark Monorepo — Contributor Guide
+
+> For app developers building with Quark: see `CLAUDE.md` in your scaffolded project.
+> For the full contributor reference: see `CLAUDE.md` at the monorepo root.
 
 ## Quick Setup
 
 ```bash
-# Install dependencies
 pnpm install
-
-# Start infrastructure (PostgreSQL, Redis, Mailpit)
-docker compose up -d
-
-# Generate Prisma client
-pnpm db:generate
-
-# Run development servers
-pnpm dev
+docker compose up -d     # PostgreSQL, Redis, Mailpit
+pnpm db:generate         # Generate Prisma client
+pnpm dev                 # Start web + worker
 ```
 
 ## Project Structure
@@ -22,157 +17,64 @@ pnpm dev
 ```
 quark/
 ├── apps/
-│   ├── web/          # Next.js 16 (React 19)
+│   ├── web/          # Next.js 16 reference app (App Router, Server Actions)
 │   └── worker/       # BullMQ background worker
 ├── packages/
-│   ├── core/         # Shared utilities (DB, Auth, Queue, Errors)
-│   ├── db/           # Prisma schema and queries
-│   ├── jobs/         # Job queue definitions
-│   ├── ui/           # Shared UI components
-│   ├── config/       # Shared configuration
-│   └── cli/          # Project scaffolding tool
-└── docs/             # Documentation
+│   ├── cli/          # @techstream/quark-create-app (published to npm)
+│   ├── core/         # @techstream/quark-core (published to npm)
+│   ├── db/           # Prisma schema + client + queries
+│   ├── config/       # Environment validation + config loading
+│   ├── ui/           # Shared UI components (scaffold template)
+│   └── jobs/         # BullMQ job type definitions (scaffold template)
+└── docs/             # Architecture, API, roadmap docs
 ```
 
-## Tech Stack
+**Published:** `@techstream/quark-core`, `@techstream/quark-create-app`
+**Scaffolded (never published):** `config`, `db`, `ui`, `jobs`
 
-- **Runtime:** Node.js (ESM only)
-- **Language:** JavaScript (no TypeScript)
-- **Framework:** Next.js 16 (App Router)
-- **Database:** PostgreSQL + Prisma
-- **Cache/Queue:** Redis + BullMQ
-- **Testing:** Node.js native `node:test`
-- **Linting:** Biome (single config)
-- **Monorepo:** Turborepo + pnpm
+## Non-Negotiable Rules
 
-## Common Commands
+- **ESM only** — `import`/`export`. Never `require()` or `module.exports`.
+- **No TypeScript** — `.js` and `.jsx` files only.
+- **Biome** — all formatting and linting. No ESLint, no Prettier.
+- **Zod** — all Server Actions and API routes. No exceptions.
+- **AppError / ValidationError** from `@techstream/quark-core/errors`. Never `throw new Error()`.
+- **createLogger(name)** from `@techstream/quark-core`. No `console.log` or `console.error`.
+- **DB models** — always include `createdAt` and `updatedAt`.
+- **Tests** — co-located `*.test.js`, `node --test`. Postgres + Redis required.
+
+## Commands
 
 ```bash
-# Development
-pnpm dev              # Run all apps in dev mode
-pnpm build            # Build all packages
-pnpm test             # Run all tests
-pnpm lint             # Lint all code
-
-# Database
-pnpm db:generate      # Generate Prisma client
-pnpm db:push          # Push schema changes
-pnpm db:seed          # Seed test data
-
-# Create new project (from CLI)
-pnpm new my-app       # Scaffold new Quark project
+pnpm dev                          # Start web + worker
+pnpm build                        # Build all packages
+pnpm test                         # Run all tests (requires Docker)
+pnpm lint                         # Biome lint + format check
+pnpm db:generate                  # Regenerate Prisma client
+pnpm db:migrate                   # Apply migrations
+pnpm db:studio                    # Open Prisma Studio
+pnpm changeset                    # Create a changeset (interactive)
+pnpm --filter @techstream/quark-create-app sync-templates        # Sync scaffold templates
+pnpm --filter @techstream/quark-create-app sync-templates:check  # Check for drift
 ```
 
-## Conventions
+## Template Sync (CRITICAL)
 
-### Code Style
-- Pure ESM modules (`import`/`export` only)
-- Files use `.js` and `.jsx` extensions
-- Tests live next to sources: `*.test.js`
-- Biome for all formatting/linting
-
-### Package Structure
-```
-packages/example/
-├── package.json
-├── src/
-│   ├── index.js       # Public API exports
-│   ├── feature.js     # Implementation
-│   └── feature.test.js # Tests
-└── coverage/          # Test coverage reports
-```
-
-### Import Guidelines
-```javascript
-// ✅ Use package public API
-import { Button } from "@techstream/quark-ui";
-import { prisma, user } from "@techstream/quark-db";
-
-// ❌ No deep imports
-import { Button } from "@techstream/quark-ui/src/button";
-```
-
-## Core Package (@techstream/quark-core)
-
-Provides infrastructure utilities for all apps:
-
-```javascript
-// Database (from local package, not core)
-import { prisma, user, post, session } from "@techstream/quark-db";
-
-// Authentication
-import { createAuthConfig, getCurrentSession } from "@techstream/quark-core";
-
-// Job Queue
-import { createQueue, createWorker, addJob } from "@techstream/quark-core";
-
-// Error Handling
-import { ValidationError, UnauthorizedError, NotFoundError } from "@techstream/quark-core";
-
-// Utilities
-import { retryAsync, validateEnv, sanitizeId } from "@techstream/quark-core";
-```
-
-## Testing
-
-Use Node.js built-in test runner:
-
-```javascript
-import { test } from "node:test";
-import assert from "node:assert";
-
-test("example test", () => {
-  assert.strictEqual(1 + 1, 2);
-});
-```
-
-Run tests: `pnpm test`
-
-## Environment Variables
-
-Create `.env` from `.env.example`:
+`packages/cli/templates/` is generated from monorepo source — never edit manually (except `TEMPLATE_ONLY` files). After changing any source file in `apps/web/`, `apps/worker/`, `packages/db/`, `packages/config/`, `packages/ui/`, or `packages/jobs/`:
 
 ```bash
-DATABASE_URL=postgresql://quark:development@localhost:5432/quark_dev
-REDIS_URL=redis://localhost:6379
-APP_URL=http://localhost:3000
-NEXTAUTH_SECRET=your-secret-here
+pnpm --filter @techstream/quark-create-app sync-templates
 ```
 
-Generate secret: `openssl rand -base64 32`
+## Release Workflow
 
-## Documentation
+1. `pnpm changeset` — create a changeset file (interactive)
+2. Commit code + changeset file, open PR
+3. CI runs lint + test + build + changeset-check
+4. Merge to `main` → CI auto-opens a "chore: version packages" PR
+5. Review + merge → publishes to npm + creates GitHub Release
 
-- **[/docs/INDEX.md](./docs/INDEX.md)** - Documentation navigation
-- **[/docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)** - Design patterns
-- **[/docs/API.md](./docs/API.md)** - API reference
-- **[/docs/MAINTAINABILITY.md](./docs/MAINTAINABILITY.md)** - Code guidelines
-- **[/docs/ROADMAP.md](./docs/ROADMAP.md)** - Future plans
-- **[packages/cli/README.md](./packages/cli/README.md)** - CLI tool guide
-- **[packages/core/README.md](./packages/core/README.md)** - Core utilities API
+**Never run `pnpm changeset version` locally.** CI does this automatically.
 
-## Troubleshooting
-
-**Prisma client not found:**
-```bash
-pnpm db:generate
-```
-
-**Port conflicts:**
-```bash
-lsof -i :3000        # Check what's using port
-docker compose down  # Stop all services
-```
-
-**Redis connection issues:**
-```bash
-docker compose up -d redis
-```
-
-**Tests failing:**
-```bash
-pnpm test -- --watch  # Watch mode for specific test
-```
-
-```
+**Published packages only:** `@techstream/quark-core` and `@techstream/quark-create-app`.
 

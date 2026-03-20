@@ -292,6 +292,8 @@ program
 		"--features <features>",
 		"Comma-separated list of optional features to include (ui,jobs,admin)",
 	)
+	.option("--skip-install", "Skip pnpm install and Prisma generate steps")
+	.option("--skip-docker", "Skip Docker orphan-volume cleanup")
 	.action(async (projectName, options) => {
 		console.log(
 			chalk.blue.bold(
@@ -309,48 +311,49 @@ program
 		// These persist even if the project directory is manually deleted, causing
 		// authentication failures when the new project generates different credentials.
 		// We also need to stop any running containers that reference these volumes.
-		try {
-			const volumePrefix = `${projectName}_`;
-			const { stdout } = await execa("docker", [
-				"volume",
-				"ls",
-				"--filter",
-				`name=${volumePrefix}`,
-				"--format",
-				"{{.Name}}",
-			]);
-			const orphanedVolumes = stdout
-				.split("\n")
-				.filter((v) => v.startsWith(volumePrefix));
-			if (orphanedVolumes.length > 0) {
-				// Stop and remove any containers using these volumes first
-				const { stdout: containerOut } = await execa("docker", [
-					"ps",
-					"-a",
+		if (!options.skipDocker)
+			try {
+				const volumePrefix = `${projectName}_`;
+				const { stdout } = await execa("docker", [
+					"volume",
+					"ls",
 					"--filter",
-					`name=${projectName}`,
+					`name=${volumePrefix}`,
 					"--format",
-					"{{.ID}}",
+					"{{.Name}}",
 				]);
-				const containers = containerOut.split("\n").filter(Boolean);
-				if (containers.length > 0) {
-					await execa("docker", ["rm", "-f", ...containers]);
+				const orphanedVolumes = stdout
+					.split("\n")
+					.filter((v) => v.startsWith(volumePrefix));
+				if (orphanedVolumes.length > 0) {
+					// Stop and remove any containers using these volumes first
+					const { stdout: containerOut } = await execa("docker", [
+						"ps",
+						"-a",
+						"--filter",
+						`name=${projectName}`,
+						"--format",
+						"{{.ID}}",
+					]);
+					const containers = containerOut.split("\n").filter(Boolean);
+					if (containers.length > 0) {
+						await execa("docker", ["rm", "-f", ...containers]);
+					}
+					// Remove the Docker network if it exists
+					try {
+						await execa("docker", ["network", "rm", `${projectName}_default`]);
+					} catch {
+						// Network may not exist — fine
+					}
+					// Now remove the orphaned volumes
+					for (const vol of orphanedVolumes) {
+						await execa("docker", ["volume", "rm", "-f", vol]);
+					}
+					console.log(chalk.green("  ✓ Cleaned up orphaned Docker volumes"));
 				}
-				// Remove the Docker network if it exists
-				try {
-					await execa("docker", ["network", "rm", `${projectName}_default`]);
-				} catch {
-					// Network may not exist — fine
-				}
-				// Now remove the orphaned volumes
-				for (const vol of orphanedVolumes) {
-					await execa("docker", ["volume", "rm", "-f", vol]);
-				}
-				console.log(chalk.green("  ✓ Cleaned up orphaned Docker volumes"));
+			} catch {
+				// Docker not available — fine
 			}
-		} catch {
-			// Docker not available — fine
-		}
 
 		// Check if directory already exists
 		if (await fs.pathExists(targetDir)) {
@@ -867,8 +870,24 @@ STORAGE_PROVIDER=local
 			);
 			console.log(chalk.green(`    ✓ .quark-link.json`));
 
-			// Step 10b: Generate project-context skill with actual values
-			console.log(chalk.cyan("\n  🤖 Generating project-context skill..."));
+			// Step 10b + 10c: Generate all AI coding tool context files
+			console.log(chalk.cyan("\n  🤖 Generating AI context files..."));
+
+			// Build shared variable map (used by SKILL.md, CLAUDE.md, .cursor/rules, copilot-instructions)
+			const scaffoldDate = new Date().toISOString().split("T")[0];
+			const optionalLines = features
+				.map((f) => {
+					const labels = {
+						ui: "Shared UI components",
+						jobs: "Job queue definitions",
+						admin: "Auto-generated admin dashboard",
+					};
+					return `│   ├── ${f}/           # ${labels[f] || f}`;
+				})
+				.join("\n");
+			const optionalBlock = optionalLines ? `${optionalLines}\n` : "";
+
+			// Step 10b: Substitute variables in project-context SKILL.md
 			const skillPath = path.join(
 				targetDir,
 				".github",
@@ -878,33 +897,36 @@ STORAGE_PROVIDER=local
 			);
 			if (await fs.pathExists(skillPath)) {
 				let skillContent = await fs.readFile(skillPath, "utf-8");
-
-				// Build optional packages section
-				const optionalLines = features
-					.map((f) => {
-						const labels = {
-							ui: "Shared UI components",
-							jobs: "Job queue definitions",
-							admin: "Auto-generated admin dashboard",
-						};
-						return `│   ├── ${f}/           # ${labels[f] || f}`;
-					})
-					.join("\n");
-				const optionalBlock = optionalLines ? `${optionalLines}\n` : "";
-
 				skillContent = skillContent
 					.replace(/__QUARK_SCOPE__/g, scope)
 					.replace(/__QUARK_PROJECT_NAME__/g, projectName)
-					.replace(
-						/__QUARK_SCAFFOLD_DATE__/g,
-						new Date().toISOString().split("T")[0],
-					)
+					.replace(/__QUARK_SCAFFOLD_DATE__/g, scaffoldDate)
 					.replace(/__QUARK_OPTIONAL_PACKAGES__/g, optionalBlock);
-
 				await fs.writeFile(skillPath, skillContent);
 				console.log(
 					chalk.green(`    ✓ .github/skills/project-context/SKILL.md`),
 				);
+			}
+
+			// Step 10c: Substitute variables in all AI coding tool context files
+			const aiContextFiles = [
+				"README.md",
+				"CLAUDE.md",
+				".cursor/rules/quark.mdc",
+				".github/copilot-instructions.md",
+			];
+			for (const relPath of aiContextFiles) {
+				const filePath = path.join(targetDir, relPath);
+				if (await fs.pathExists(filePath)) {
+					let content = await fs.readFile(filePath, "utf-8");
+					content = content
+						.replace(/__QUARK_SCOPE__/g, scope)
+						.replace(/__QUARK_PROJECT_NAME__/g, projectName)
+						.replace(/__QUARK_SCAFFOLD_DATE__/g, scaffoldDate)
+						.replace(/__QUARK_OPTIONAL_PACKAGES__/g, optionalBlock);
+					await fs.writeFile(filePath, content);
+					console.log(chalk.green(`    ✓ ${relPath}`));
+				}
 			}
 
 			// Step 11: Initialize git repository
@@ -915,41 +937,45 @@ STORAGE_PROVIDER=local
 			}
 
 			// Step 12: Run pnpm install
-			console.log(chalk.cyan("\n  📦 Installing dependencies..."));
-			try {
-				await execa("pnpm", ["install"], {
-					cwd: targetDir,
-					stdio: "inherit",
-				});
-				console.log(chalk.green(`\n    ✓ Dependencies installed`));
-			} catch (installError) {
-				console.warn(
-					chalk.yellow(`\n    ⚠️  pnpm install failed: ${installError.message}`),
-				);
-				console.warn(
-					chalk.yellow(
-						`    Run 'pnpm install' manually after resolving the issue.`,
-					),
-				);
-			}
+			if (!options.skipInstall) {
+				console.log(chalk.cyan("\n  📦 Installing dependencies..."));
+				try {
+					await execa("pnpm", ["install"], {
+						cwd: targetDir,
+						stdio: "inherit",
+					});
+					console.log(chalk.green(`\n    ✓ Dependencies installed`));
+				} catch (installError) {
+					console.warn(
+						chalk.yellow(
+							`\n    ⚠️  pnpm install failed: ${installError.message}`,
+						),
+					);
+					console.warn(
+						chalk.yellow(
+							`    Run 'pnpm install' manually after resolving the issue.`,
+						),
+					);
+				}
 
-			// Step 13: Generate Prisma client
-			console.log(chalk.cyan("\n  🗄️  Generating Prisma client..."));
-			try {
-				await execa("pnpm", ["--filter", "db", "db:generate"], {
-					cwd: targetDir,
-					stdio: "inherit",
-				});
-				console.log(chalk.green(`    ✓ Prisma client generated`));
-			} catch (generateError) {
-				console.warn(
-					chalk.yellow(
-						`\n    ⚠️  Prisma generate failed: ${generateError.message}`,
-					),
-				);
-				console.warn(
-					chalk.yellow(`    Run 'pnpm --filter db db:generate' manually.`),
-				);
+				// Step 13: Generate Prisma client
+				console.log(chalk.cyan("\n  🗄️  Generating Prisma client..."));
+				try {
+					await execa("pnpm", ["--filter", "db", "db:generate"], {
+						cwd: targetDir,
+						stdio: "inherit",
+					});
+					console.log(chalk.green(`    ✓ Prisma client generated`));
+				} catch (generateError) {
+					console.warn(
+						chalk.yellow(
+							`\n    ⚠️  Prisma generate failed: ${generateError.message}`,
+						),
+					);
+					console.warn(
+						chalk.yellow(`    Run 'pnpm --filter db db:generate' manually.`),
+					);
+				}
 			}
 
 			// Success message
@@ -960,7 +986,7 @@ STORAGE_PROVIDER=local
 			);
 
 			console.log(chalk.white(`📂 Project location: ${targetDir}\n`));
-			console.log(chalk.cyan("Next steps:"));
+			console.log(chalk.cyan("Start here:"));
 			console.log(chalk.white(`  1. cd ${projectName}`));
 			console.log(chalk.white(`  2. docker compose up -d`));
 			console.log(chalk.white(`  3. pnpm db:migrate`));
@@ -972,20 +998,20 @@ STORAGE_PROVIDER=local
 				),
 			);
 
-			console.log(chalk.cyan("Important:"));
+			console.log(chalk.cyan("Build with AI:"));
+			console.log(
+				chalk.white(`  Open CLAUDE.md in your AI tool, then tell it:`),
+			);
 			console.log(
 				chalk.white(
-					`  • Update Quark core with: pnpm update @techstream/quark-core`,
+					`  "I'm building ${projectName} — [what it does]. Review CLAUDE.md and let's start."\n`,
 				),
 			);
-			console.log(
-				chalk.white(`  • Or run: npx @techstream/quark-create-app update\n`),
-			);
 
-			console.log(chalk.cyan("Learn more:"));
-			console.log(chalk.white(`  📖 Docs: https://github.com/Bobnoddle/quark`));
 			console.log(
-				chalk.white(`  💬 Issues: https://github.com/Bobnoddle/quark/issues\n`),
+				chalk.dim(
+					`  📖 github.com/Bobnoddle/quark  •  Updates: npx @techstream/quark-create-app update\n`,
+				),
 			);
 		} catch (error) {
 			console.error(chalk.red(`\n✗ Error creating project: ${error.message}`));
@@ -1001,12 +1027,54 @@ STORAGE_PROVIDER=local
 	});
 
 /**
+ * Read the installed version of a package from node_modules.
+ * Returns null if the package is not installed.
+ * @param {string} cwd - Project root
+ * @param {string} packageName - e.g. "@techstream/quark-core"
+ * @returns {Promise<string|null>}
+ */
+async function getInstalledVersion(cwd, packageName) {
+	try {
+		const pkgPath = path.join(
+			cwd,
+			"node_modules",
+			...packageName.split("/"),
+			"package.json",
+		);
+		const { version } = await fs.readJSON(pkgPath);
+		return version ?? null;
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * Fetch the latest published version of a package from the npm registry.
+ * Returns null on network failure so the caller can degrade gracefully.
+ * @param {string} packageName
+ * @returns {Promise<string|null>}
+ */
+async function getLatestNpmVersion(packageName) {
+	try {
+		const { stdout } = await execa("npm", [
+			"view",
+			packageName,
+			"version",
+			"--json",
+		]);
+		return JSON.parse(stdout);
+	} catch {
+		return null;
+	}
+}
+
+/**
  * quark-update command
  * Updates Quark core infrastructure in a scaffolded project
  */
 program
 	.command("update")
-	.description("Update Quark core infrastructure in the current project")
+	.description("Update Quark packages in the current project")
 	.option("--check", "Check for updates without applying")
 	.option("--force", "Skip safety checks")
 	.action(async (options) => {
@@ -1022,23 +1090,60 @@ program
 		}
 
 		const quarkLink = await fs.readJSON(quarkLinkPath);
-		console.log(chalk.cyan(`Current Quark version: ${quarkLink.quarkVersion}`));
-		console.log(chalk.cyan(`Scaffolded: ${quarkLink.scaffoldedDate}\n`));
+
+		// The packages this command manages
+		const MANAGED_PACKAGES = [
+			"@techstream/quark-core",
+			"@techstream/quark-create-app",
+		];
+
+		// Snapshot installed versions before any update
+		const before = {};
+		for (const name of MANAGED_PACKAGES) {
+			before[name] = await getInstalledVersion(process.cwd(), name);
+		}
+
+		console.log(chalk.cyan(`Scaffolded:      ${quarkLink.scaffoldedDate}`));
+		console.log(
+			chalk.cyan(
+				`Installed core:  ${before["@techstream/quark-core"] ?? quarkLink.quarkVersion ?? "unknown"}\n`,
+			),
+		);
 
 		if (options.check) {
-			console.log(chalk.yellow("Checking for updates..."));
-			console.log(
-				chalk.white("Run 'pnpm update @techstream/quark-*' to apply updates."),
-			);
+			// Query npm for latest versions and report the delta
+			console.log(chalk.yellow("Checking npm registry for updates...\n"));
+			let anyUpdates = false;
+			for (const name of MANAGED_PACKAGES) {
+				const installed = before[name];
+				const latest = await getLatestNpmVersion(name);
+				if (!latest) {
+					console.log(chalk.dim(`  ${name}: registry unreachable`));
+					continue;
+				}
+				if (!installed || installed === latest) {
+					console.log(chalk.green(`  ✓ ${name} ${latest} — up to date`));
+				} else {
+					console.log(
+						chalk.yellow(`  ↑ ${name}: ${installed} → ${chalk.bold(latest)}`),
+					);
+					anyUpdates = true;
+				}
+			}
+			if (anyUpdates) {
+				console.log(chalk.white("\n  Run without --check to apply updates.\n"));
+			} else {
+				console.log(chalk.dim("\n  Nothing to update.\n"));
+			}
 			return;
 		}
 
 		try {
-			// Warn if git has uncommitted changes
+			// Guard: check for both unstaged and staged changes
 			if (!options.force) {
-				console.log(chalk.yellow("⚠️  Checking for uncommitted changes..."));
 				try {
-					await execa("git", ["diff", "--exit-code"], {
+					await execa("git", ["diff", "--exit-code"], { cwd: process.cwd() });
+					await execa("git", ["diff", "--cached", "--exit-code"], {
 						cwd: process.cwd(),
 					});
 				} catch {
@@ -1054,43 +1159,60 @@ program
 				}
 			}
 
-			// Run pnpm update
-			console.log(chalk.cyan("\n📦 Updating Quark core infrastructure...\n"));
-			await execa("pnpm", ["update", "@techstream/quark-core"], {
+			// Run pnpm update for all managed packages
+			console.log(chalk.cyan("📦 Updating Quark packages...\n"));
+			await execa("pnpm", ["update", ...MANAGED_PACKAGES], {
 				cwd: process.cwd(),
 				stdio: "inherit",
 			});
 
-			// Update .quark-link.json
-			let updatedVersion = "updated";
-			try {
-				const corePkg = await fs.readJSON(
-					path.join(
-						process.cwd(),
-						"node_modules",
-						"@techstream",
-						"quark-core",
-						"package.json",
-					),
-				);
-				updatedVersion = corePkg.version;
-			} catch {}
-			quarkLink.quarkVersion = updatedVersion;
+			// Snapshot installed versions after update
+			const after = {};
+			for (const name of MANAGED_PACKAGES) {
+				after[name] = await getInstalledVersion(process.cwd(), name);
+			}
+
+			// Report the delta
+			console.log(chalk.cyan("\n📋 Update summary:\n"));
+			for (const name of MANAGED_PACKAGES) {
+				const was = before[name];
+				const now = after[name];
+				if (!now) continue;
+				if (was && was !== now) {
+					console.log(chalk.green(`  ✓ ${name}: ${was} → ${chalk.bold(now)}`));
+				} else {
+					console.log(chalk.dim(`  · ${name}: ${now} (already current)`));
+				}
+			}
+
+			// Persist the new core version — keep previous on failure, never write garbage
+			const newCoreVersion =
+				after["@techstream/quark-core"] ?? quarkLink.quarkVersion;
+			quarkLink.quarkVersion = newCoreVersion;
 			quarkLink.updatedDate = new Date().toISOString();
 			await fs.writeFile(quarkLinkPath, JSON.stringify(quarkLink, null, 2));
 
-			console.log(
-				chalk.green("\n✅ Quark core infrastructure updated successfully!\n"),
-			);
-			console.log(
-				chalk.cyan("Note: This updates @techstream/quark-core only.\n"),
-			);
+			// Run lint to surface any API breakage from the update
+			console.log(chalk.cyan("\n🔍 Running lint to check for breakage...\n"));
+			try {
+				await execa("pnpm", ["lint"], {
+					cwd: process.cwd(),
+					stdio: "inherit",
+				});
+				console.log(chalk.green("\n  ✓ Lint passed\n"));
+			} catch {
+				console.log(
+					chalk.yellow(
+						"\n  ⚠️  Lint reported issues — review before committing.\n",
+					),
+				);
+			}
+
+			console.log(chalk.green("✅ Quark updated successfully!\n"));
 			console.log(chalk.cyan("Next steps:"));
-			console.log(chalk.white(`  1. pnpm install (if prompted)`));
-			console.log(chalk.white(`  2. pnpm lint`));
-			console.log(chalk.white(`  3. pnpm test`));
+			console.log(chalk.white(`  1. pnpm test`));
 			console.log(
-				chalk.white(`  4. git add . && git commit -m "chore: update Quark"\n`),
+				chalk.white(`  2. git add . && git commit -m "chore: update Quark"\n`),
 			);
 		} catch (error) {
 			console.error(chalk.red(`\n✗ Update failed: ${error.message}\n`));

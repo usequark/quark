@@ -914,15 +914,15 @@ If framework adoption is slower than the base case (e.g., 250 scaffolded project
 |---|---|---|---|
 | Infrastructure (Observe SaaS hosting) | $3,000 | $12,000 | $36,000 |
 | Infrastructure (Cloud compute + resell) | $6,000 | $32,000 | $72,000 |
-| Engineering (2 FTE) | $0* | $200,000 | $250,000 |
-| DevRel / Marketing | $0* | $30,000 | $60,000 |
-| **Total Costs** | **$9,000** | **$274,000** | **$418,000** |
-| **Net Margin (Base)** | **$22,500** | **-$113,980** | **-$12,760** |
-| **Net Margin (Optimistic)** | **$85,000** | **$206,000** | **$798,000** |
+| AI tooling (Copilot, API costs for AI support system) | $2,400 | $3,600 | $4,800 |
+| DevRel / Content (contractor, when MRR > $5K) | $0 | $30,000 | $60,000 |
+| **Total Costs** | **$11,400** | **$77,600** | **$172,800** |
+| **Net Margin (Base)** | **$20,100** | **$82,420** | **$232,440** |
+| **Net Margin (Optimistic)** | **$82,600** | **$402,400** | **$1,043,200** |
 
-*Y1: Founder-led engineering and marketing (sweat equity). Costs scale with revenue — infra grows with paying customers, not free users.*
+*Y1: Solo founder + AI system (no FTEs). AI handles client interactions, triage, small fixes, and documentation PRs. Costs scale with revenue — infra grows with paying customers, not free users.*
 
-**Note:** The base case requires external funding or revenue from consulting/contracting to cover Y2 headcount. The optimistic case is self-sustaining by mid-Y2. A realistic path for a bootstrapped founder: stay solo through Y1, hire the first engineer only when MRR exceeds $5K.
+**Note:** No external funding required. The solo + AI model keeps fixed costs minimal. Contractor DevRel/Content is added only when revenue justifies it (MRR > $5K). The base case is profitable from Y1.
 
 ### Gross Margins
 
@@ -941,17 +941,25 @@ If framework adoption is slower than the base case (e.g., 250 scaffolded project
 
 ### Phase 1: Official Open-Source Launch (Month 1–2)
 
-**Goal:** Establish public positioning, build initial community, ship `@techstream/quark-ai`.
+**Goal:** Establish public positioning, build initial community, ship `@techstream/quark-ai`. Close the onboarding gap with a first-feature guide and an incremental adoption path.
 
 | Action | Effort | Impact |
 |---|---|---|
 | License change: ISC → MIT | 1 day | Enterprise trust |
 | Publish `@techstream/quark-ai` to npm | 2 weeks | AI positioning |
 | Ship AI context files in scaffold (`.cursorrules`, `CLAUDE.md`, etc.) | 3 days | AI-agent differentiation |
+| **"First Feature" guide** — scaffold to working feature in 20 min | 3 days | Onboarding conversion |
+| **Incremental adoption guide** — add `quark-core` to existing Next.js app | 3 days | Addressable market expansion |
 | Landing page (quark.dev or similar) | 1 week | Lead capture |
 | Documentation refresh (AI patterns, "build a chatbot in 30 min") | 1 week | SEO, developer trust |
 | HN launch post + Indie Hackers | 1 day | Initial traffic |
 | Discord community | 1 day | Engagement loop |
+
+**Two acquisition funnels:**
+1. **Greenfield** — `npx @techstream/quark-create-app` → full scaffold → first feature guide
+2. **Incremental** — `pnpm add @techstream/quark-core` into an existing Next.js project → progressively adopt auth, email, jobs, error reporting
+
+The incremental path is the highest-leverage addition. The largest pool of potential users already has a Next.js app they won't restart from scratch. This doesn't compete with the scaffold — it's additive, and expands the addressable audience significantly. It also strengthens the AI-agent story: an agent can add Quark features to an existing codebase, not just build greenfield.
 
 **Target (base):** 50 scaffolded projects, 200 GitHub stars, 100 npm weekly downloads.
 **Target (optimistic):** 150 scaffolded projects, 500 GitHub stars, 300 npm weekly downloads.
@@ -979,6 +987,8 @@ If framework adoption is slower than the base case (e.g., 250 scaffolded project
 - Month 5: Web analytics + AI metrics
 
 Each module is independently useful. Don't ship everything at once.
+
+**Agency / consultancy note:** The Admin UI (Phase 2 of the build plan) and multi-tenant patterns are the two features that push agencies from "evaluating" to "standardizing." Agencies standardize on frameworks that reduce per-project setup time. Quark's auto-generated Admin UI and scaffolded multi-tenant patterns make it the default starting point for client projects. Both should be live and documented before Phase 3.
 
 ### Phase 3: Quark Cloud MVP (Month 6–9)
 
@@ -1020,14 +1030,15 @@ Each module is independently useful. Don't ship everything at once.
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
 | **Low adoption** — developers don't discover Quark | Medium | High | Invest in content marketing, HN launches, Discord. Framework adoption is slow but sticky. Note: Observe and Cloud are independently marketable to any Node.js team, even without framework adoption. |
-| **Slow adoption** — growth is 50% of base case | Medium | Medium | The business still works: costs are near-zero in Y1 (founder-led), infra scales with customers. Stay solo longer, hire only when MRR exceeds $5K. |
+| **Slow adoption** — growth is 50% of base case | Medium | Medium | The business still works: costs are near-zero in Y1 (no FTEs — solo founder + AI system), infra scales with customers. No hiring pressure. |
 | **Observe SaaS competition** — Datadog/Grafana add AI metrics | Medium | Medium | Our advantage is simplicity and price, not feature depth. Datadog adding a feature doesn't make it cheaper or simpler. Observe targets indie devs, not enterprises. |
 | **Vercel platform expansion** — Vercel ships queues, cron, storage, full-stack primitives | **High** | **Medium** | Vercel adding full-stack features increases lock-in to their platform. Quark's "deploy anywhere" story becomes *more* valuable, not less. The more Vercel locks in, the more developers want an escape hatch. Quark runs on Railway, Fly, Docker, VPS — and Vercel too. |
 | **Infra margin compression** — providers raise wholesale prices | Low | Medium | Multi-provider strategy (Neon + Supabase, Upstash + Dragonfly). Can operate own infra if margins require it. |
 | **Next.js breaking changes** — major version breaks scaffold | Medium | Low | Already handled by `quark-core` update mechanism. Monorepo structure isolates breaking changes. |
 | **AI hype cycle** — market correction reduces AI app demand | Low | Medium | Quark is a full-stack framework first. AI features are additive, not the entire value prop. Teams building non-AI apps should feel equally at home. |
 | **Fork competition** — someone forks and competes | Low | Low | MIT license allows this. Differentiate via Observe SaaS + Cloud (managed services can't be forked). |
-| **Team burnout** — too few people, too much scope | Medium | High | Strict scope: 2 products only (Observe + Cloud). Sequential launch, not parallel. Everything else is free and community-driven. |
+| **Team burnout** — too few people, too much scope | Medium | High | Strict scope: 2 products only (Observe + Cloud). Sequential launch, not parallel. AI system handles client interactions, triage, and routine fixes — founder focuses on architecture and features. Everything else is free and community-driven. |
+| **Execution speed** — solo founder shipping on projected timeline | Medium | Medium | The product thesis is validated — the risk is entirely execution speed. Mitigated by: AI-assisted development (AI handles client interactions, triage, and small fixes; founder focuses on architecture and major features), sequential launch plan, and near-zero fixed costs in Y1. |
 
 ---
 
@@ -1092,25 +1103,28 @@ Each module is independently useful. Don't ship everything at once.
 
 ---
 
-## Appendix B: Team Requirements
+## Appendix B: Team & Operating Model
 
-### Year 1: Solo Founder
+### Year 1–2: Solo Founder + AI System
 
-| Role | Count | Focus |
+| Role | Who | Focus |
 |---|---|---|
-| Founder/Lead Engineer | 1 | Framework + CLI + Observe MVP + Cloud MVP |
-| **Total** | **1** | |
+| Founder/Lead Engineer | 1 (human) | Architecture, major features, Observe MVP, Cloud MVP |
+| AI System | Automated | Client interactions, triage, small fixes, PR reviews, documentation updates |
+| **Total headcount** | **1** | |
 
-*Y1 is founder-led. The framework is already at V2 — the work is building Observe and Cloud, not the framework itself. Hire the first engineer when MRR exceeds $5K.*
+*No FTEs planned. The operating model is solo founder + AI system. AI handles client-facing interactions (issue triage, support responses, small bug fixes, documentation PRs) while the founder focuses on large features and architectural decisions. AI-raised issues feed directly into the development backlog.*
 
-### Year 2: Growth Team (contingent on revenue)
+*The framework is already at V2 — the work is building Observe and Cloud, not the framework itself. Consider hiring a part-time contractor (DevRel/Content) only when MRR exceeds $5K.*
+
+### Year 2+: Growth (contingent on revenue exceeding $5K MRR)
 
 | Role | Count | Focus |
 |---|---|---|
 | Founder/Lead Engineer | 1 | Strategy + Architecture |
-| Backend Engineer | 1 | Observe SaaS + Cloud provisioning |
+| AI System | Automated | Client interactions, triage, small fixes, PR reviews |
 | DevRel / Content | 1 (part-time/contractor) | Docs, blog, YouTube, community |
-| **Total** | **2–3** | |
+| **Total headcount** | **1–2** | |
 
 ---
 
@@ -1181,7 +1195,8 @@ Each module is independently useful. Don't ship everything at once.
 |---|---|---|
 | **Documentation for AI patterns** | High | Teams want to see "build a chatbot in 30 minutes" docs before committing. Ship before or alongside `quark-ai`. |
 | **AI compliance / agent-friendliness** | Medium | Quark's consistent structure already helps AI tools. Formalize this: publish `.cursorrules`, `.github/copilot-instructions.md`, and context files per project. Market it: "AI builds features faster on Quark because the structure is predictable." |
-| **Migration guides** | Medium | Teams with existing Next.js apps need a path to adopt Quark incrementally. "Add Quark Core to your existing project" guide. |
+| **Incremental adoption guide** | High | The largest untapped audience already has Next.js apps they won't restart from scratch. "Add `quark-core` to an existing project in 20 minutes" is an additive pitch that expands the addressable market significantly. Ship in Phase 1. |
+| **First-feature guide** | High | The scaffold works, but the "now what?" moment needs a task-oriented walkthrough, not architecture docs. A 20-minute guide from scaffold to working feature (CRUD + auth + email + job). Ship in Phase 1. |
 | **Self-hosted Observe deployment guide** | High | If Observe is self-hostable, the docs and Docker setup must be excellent on day one. Otherwise the "no lock-in" promise rings hollow. |
 | **Vercel serverless worker adapter** | High | Must ship before or alongside `quark deploy vercel`. The Vercel audience is large and expects everything to work on their platform. |
 | **Status page for Quark Cloud** | Medium | If we run infrastructure for customers, they need visibility into our uptime. Build with Quark Observe (dogfooding). |

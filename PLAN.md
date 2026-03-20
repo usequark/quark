@@ -1,12 +1,201 @@
-# Quark Admin UI, Observability & Alerting — Consolidated Review
+# PLAN: AI Tools Integration Layer
 
-**Date:** February 25, 2026  
-**Type:** Final architectural review (harsh pass)  
-**Supersedes:** `ADMIN_UI_PROPOSAL.md`, `ADMIN_UI_SUMMARY.md`, `ADMIN_UI_VISUAL_GUIDE.md`, `OBSERVABILITY_PLAN.md`, `OBSERVABILITY_SUMMARY.md`
+**Date:** March 20, 2026
+**Goal:** Make every Quark-scaffolded project immediately productive with any AI coding tool — Claude Code, GitHub Copilot, Cursor, Continue.dev, Cody, etc. — from the first `pnpm dev`, with zero developer configuration.
+
+**Design principle:** AI tools must understand the *whole system* — not just code style, but UI/UX patterns, DB conventions, auth flow, DevOps topology, testing approach, and the relationships between all layers. An AI that knows the scope and ESM rules but doesn't know how Server Actions, Zod, the ui package, and Prisma compose together will still produce inconsistent code.
 
 ---
 
-## Part 0: Honest Assessment of Previous Documents
+## The Problem
+
+When a developer opens a fresh Quark project in their AI tool of choice, the tool has no context:
+- It doesn't know the scope (`@myscope/*`), what optional packages were selected, or the project's conventions.
+- Claude Code (`CLAUDE.md`) and Cursor (`.cursor/rules/`) get no project-specific instructions at all.
+- The existing `.github/copilot-instructions.md` template just points to a skill file — no inline fallback for non-Copilot tools.
+- The monorepo itself has no `CLAUDE.md` for contributors using Claude Code.
+- Critically: no tool knows the full design system — which components exist, how DB queries compose with Server Actions, how auth intersects with API routes, or how the deployment model affects environment handling.
+
+This plan adds a zero-config AI context layer into the scaffold and into the monorepo itself. **This is NOT `@techstream/quark-ai`** — that is a separate published package for AI app integration. This is about the developer experience with AI *coding tools*.
+
+---
+
+## Deliverables
+
+### A — Monorepo `CLAUDE.md` *(for Quark contributors)*
+
+New file: `/CLAUDE.md`
+
+Targets developers contributing to Quark itself. Contains:
+- Setup commands (install, docker, dev, test, lint, build)
+- Workspace architecture (apps, packages, what's published vs. scaffolded)
+- Coding conventions (ESM, no TypeScript, Biome, Zod, AppError/ValidationError, createLogger)
+- Template sync workflow (`sync-templates` must run after source changes)
+- Release workflow (changesets — never run `pnpm changeset version` locally)
+- Testing requirements (Postgres + Redis required via docker compose)
+
+---
+
+### B — Scaffold: `CLAUDE.md` template *(for app developers)*
+
+New template: `packages/cli/templates/base-project/CLAUDE.md`
+
+Generated at scaffold time with real values substituted inline. Reuses the existing `__QUARK_*__` placeholder system already used by `SKILL.md`.
+
+**Placeholders used:**
+
+| Placeholder | Example output |
+|---|---|
+| `__QUARK_PROJECT_NAME__` | `my-app` |
+| `__QUARK_SCOPE__` | `myapp` |
+| `__QUARK_SCAFFOLD_DATE__` | `2026-03-20` |
+| `__QUARK_OPTIONAL_PACKAGES__` | multiline package tree block (reused from SKILL.md) |
+
+**Content:** commands, project structure (conditional on selected packages), key files table, coding conventions, database workflow, environment notes.
+
+Added to `TEMPLATE_ONLY` in `sync-templates.js` — never overwritten by template drift sync.
+
+---
+
+### C — Scaffold: `.cursor/rules/quark.mdc` template *(for Cursor users)*
+
+New template: `packages/cli/templates/base-project/.cursor/rules/quark.mdc`
+
+Cursor's modern project rules format (`.cursor/rules/*.mdc` with YAML frontmatter). `alwaysApply: true` so it fires on every file in the project.
+
+**Placeholders used:** `__QUARK_PROJECT_NAME__`, `__QUARK_SCOPE__`
+
+**Content:**
+- Tech stack summary
+- 8 critical rules (ESM, no TS, Zod validation, AppError, createLogger, DB model fields, local package import scope, test format)
+- Import pattern examples with correct `@__QUARK_SCOPE__/*` paths
+- Server Action pattern with Zod
+- API route pattern
+
+Added to `TEMPLATE_ONLY` in `sync-templates.js`.
+
+---
+
+### D — Enhanced `.github/copilot-instructions.md` template
+
+Update existing: `packages/cli/templates/base-project/.github/copilot-instructions.md`
+
+Currently just declares the VS Code skill pointer. Expand to include inline Quark conventions so tools that read this file as raw markdown (Continue.dev, Cody, Zed, Windsurf) get useful context without needing the VS Code skill system.
+
+New structure:
+```
+<skills> ... existing skill declaration ... </skills>
+
+## Quark Project: __QUARK_PROJECT_NAME__
+(inline conventions with __QUARK_SCOPE__ substituted at scaffold time)
+```
+
+---
+
+### E — CLI variable substitution for new AI files
+
+Update: `packages/cli/src/index.js`
+
+The existing step 10b already builds the variable map and substitutes `SKILL.md`. The new logic:
+
+1. Extract the variable map construction into the same block
+2. After the SKILL.md substitution (step 10b), add a new **step 10c** that applies the same map to all AI context files:
+
+```js
+// Step 10c: Substitute variables in AI context files
+const aiContextFiles = [
+  "CLAUDE.md",
+  ".cursor/rules/quark.mdc",
+  ".github/copilot-instructions.md",
+];
+for (const relPath of aiContextFiles) {
+  const filePath = path.join(targetDir, relPath);
+  if (await fs.pathExists(filePath)) {
+    let content = await fs.readFile(filePath, "utf-8");
+    content = content
+      .replace(/__QUARK_SCOPE__/g, scope)
+      .replace(/__QUARK_PROJECT_NAME__/g, projectName)
+      .replace(/__QUARK_SCAFFOLD_DATE__/g, scaffoldDate)
+      .replace(/__QUARK_OPTIONAL_PACKAGES__/g, optionalBlock);
+    await fs.writeFile(filePath, content);
+  }
+}
+```
+
+The `optionalBlock` variable is already constructed in step 10b — it needs to be hoisted to be accessible in step 10c.
+
+---
+
+### F — `sync-templates.js` TEMPLATE_ONLY additions
+
+> **Note:** `sync-templates.js` is a **Quark contributor tool** — it runs inside the monorepo, not in scaffolded projects. Its job is to regenerate `packages/cli/templates/` from the canonical monorepo source so they never drift. The `TEMPLATE_ONLY` set tells it which template files contain `__QUARK_*__` placeholders or scaffold-specific content that should never be overwritten by real monorepo source files.
+
+Update: `packages/cli/scripts/sync-templates.js`
+
+Add to the `TEMPLATE_ONLY` set:
+```js
+"base-project/CLAUDE.md",
+"base-project/.cursor/rules/quark.mdc",
+```
+
+These contain `__QUARK_*__` placeholders that would be destroyed if overwritten by real monorepo source files.
+
+---
+
+### G — Documentation: `docs/AI_TOOLS.md`
+
+New file: `docs/AI_TOOLS.md`
+
+A concise developer guide:
+- What is auto-generated and why (CLAUDE.md, .cursor/rules/, copilot-instructions)
+- What each file does for each tool
+- How to keep context current as the project evolves (update SKILL.md and CLAUDE.md together)
+- Tool-specific notes
+- How to add custom rules on top of the generated baseline
+
+---
+
+## File Change Summary
+
+| File | Action | Notes |
+|---|---|---|
+| `CLAUDE.md` | **Create** | Monorepo contributor context |
+| `packages/cli/templates/base-project/CLAUDE.md` | **Create** | Scaffold template with placeholders |
+| `packages/cli/templates/base-project/.cursor/rules/quark.mdc` | **Create** | Cursor rules template with placeholders |
+| `packages/cli/templates/base-project/.github/copilot-instructions.md` | **Update** | Add inline conventions |
+| `packages/cli/src/index.js` | **Update** | Add step 10c for AI file substitution |
+| `packages/cli/scripts/sync-templates.js` | **Update** | Add 2 entries to TEMPLATE_ONLY |
+| `docs/AI_TOOLS.md` | **Create** | Developer guide |
+
+---
+
+## Implementation Order
+
+```
+A (monorepo CLAUDE.md)
+B (scaffold CLAUDE.md template)
+C (scaffold .cursor/rules/quark.mdc template)
+D (update copilot-instructions.md template)
+E (CLI index.js — depends on B, C, D existing)
+F (sync-templates.js — depends on B, C existing)
+G (docs/AI_TOOLS.md)
+```
+
+---
+
+## Out of Scope
+
+- `@techstream/quark-ai` package — separate effort, separate plan
+- `.windsurfrc`, `.agentrc`, or other niche tool-specific configs — add reactively as usage warrants
+- AI context validation in CI — future enhancement
+
+---
+
+*[STATUS: HANDOFF → expert-developer]*
+
+---
+
+## Previous Work (Superseded)
 
 Five documents were produced across two sessions. Before combining them into a single plan, here's what was wrong with each:
 
@@ -499,6 +688,10 @@ Phase 4 (AI package) ───────────────────�
 
 Phases 0 and 1 can run in parallel. Phase 4 (AI package) can run in parallel with Phases 0–3. Phase 5 depends on Phases 1–3 (metrics and alerting must be live). Phase 6 depends on Phase 5 MVP.
 
+**Documentation deliverables (parallel with Phases 0–4):**
+- **First-feature guide** — 20-minute walkthrough from `npx @techstream/quark-create-app` to a working feature (contacts CRUD + auth + email notification + background job). Task-oriented, not architecture-oriented. Ship before open-source launch.
+- **Incremental adoption guide** — how to install `@techstream/quark-core` into an existing Next.js project and progressively adopt auth, email, jobs, error reporting. This is the highest-leverage documentation addition — it expands the addressable audience from greenfield-only to every Next.js developer.
+
 **Total estimated effort for Phases 0–4: ~8–9 weeks (pre-monetization)**
 **Total estimated effort for Phases 5–6: ~14–20 weeks (monetization products)**
 
@@ -646,7 +839,7 @@ Four things, in order:
 
 1. **An expanded UI package** (`packages/ui/`) — ~12 Tailwind-styled primitives with JSX, tests, and a `README.md` documenting the component API. Source-of-truth in the monorepo; snapshotted into `packages/cli/templates/ui/` via `sync-templates.js` for distribution. Once scaffolded into a user project, the copy is theirs — no connection back to Quark. The playground page in `apps/web/` is scaffolded conditionally only when `ui` is selected.
 
-2. **A self-scaling admin package** (`packages/admin/` via CLI) — reads Prisma models at runtime, generates CRUD pages automatically. Scaffolded locally; fully modifiable. Requires `db` + `ui`.
+2. **A self-scaling admin package** (`packages/admin/` via CLI) — reads Prisma models at runtime, generates CRUD pages automatically. Scaffolded locally; fully modifiable. Requires `db` + `ui`. A lightweight multi-tenant scaffold option (tenant column on key models, middleware for tenant scoping) should ship alongside or shortly after — these two features together are what push agencies from "evaluating" to "standardizing" on Quark.
 
 3. **An alerting framework** (inside `@techstream/quark-core`) — adapter-based, mirrors error-reporter pattern, zero new dependencies. Email, webhook, Slack, PagerDuty adapters built-in.
 
@@ -687,6 +880,8 @@ Four things, in order:
 | How does the playground get scaffolded? | **Conditionally.** Excluded from base-project sync. Stored in `packages/cli/templates/playground/`. CLI copies it only when `ui` is selected. |
 | What about `transpilePackages` for unselected features? | **CLI patch step required.** A new `patchNextConfig()` helper removes unselected feature entries from `transpilePackages` in `next.config.js` at scaffold time. |
 | Is the UI component API documented? | **Not yet — this is a Phase 0 deliverable.** `packages/ui/README.md` documents all exported components with props and import examples. The quark-context SKILL.md is updated to reflect actual components. |
+| Should multi-tenant scaffolding be included? | **Yes, as a lightweight CLI option alongside Admin (Phase 2).** A `--multi-tenant` flag that scaffolds a tenant column on key models + tenant-scoping middleware. Low effort, high impact for agencies. |
+| Is there an incremental adoption path? | **Yes — documentation deliverable.** "Add `quark-core` to an existing Next.js project in 20 minutes" guide. Ships before open-source launch. Expands addressable audience beyond greenfield. |
 
 ---
 

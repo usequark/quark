@@ -6,7 +6,7 @@
 		"watchPatterns": ["apps/web/**", "packages/**"]
 	},
 	"deploy": {
-		"releaseCommand": "pnpm --filter @techstream/quark-db exec prisma migrate deploy",
+		"releaseCommand": "pnpm --filter './packages/db' exec prisma migrate deploy",
 		"startCommand": "node apps/web/.next/standalone/server.js",
 		"healthcheckPath": "/api/health",
 		"healthcheckTimeout": 120,

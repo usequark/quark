@@ -23,6 +23,10 @@ Quark's `packages/ui` template was never built out properly. It contains one `Bu
 **Phases 0–4: ~8–9 weeks (pre-monetization framework work)**
 **Phases 5–6: ~14–20 weeks (monetization products)**
 
+**Documentation deliverables (parallel with Phases 0–4):**
+- **First-feature guide** — 20-min walkthrough from scaffold to working feature
+- **Incremental adoption guide** — add `quark-core` to an existing Next.js app in 20 min
+
 ---
 
 ## Package Distribution
@@ -112,6 +116,8 @@ alerting.addRule({
 | What was wrong with previous proposals? | Proposed publishing admin to npm (should be scaffolded). Assumed Observe needed full detail now. Ignored the empty UI template. |
 | When is Observe planned in detail? | Phase 5 — after AI package ships and Phases 1–3 are live. Open-source first, self-hostable. |
 | When is Cloud planned in detail? | Phase 6 — after Observe MVP is live. |
+| Is there an incremental adoption path? | **Yes.** "Add `quark-core` to an existing Next.js project in 20 minutes" guide. Ships before open-source launch. |
+| Should multi-tenant scaffolding be included? | **Yes, as a lightweight CLI option alongside Admin (Phase 2).** `--multi-tenant` flag. |
 
 ---
 

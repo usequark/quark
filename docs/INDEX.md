@@ -13,4 +13,7 @@ Entry point: [../README.md](../README.md)
 | [MAINTAINABILITY.md](./MAINTAINABILITY.md) | Code style, testing, dependency management |
 | [ROADMAP.md](./ROADMAP.md) | Long-term vision and expansion plans |
 | [IMPLEMENTATION_CHECKLIST.md](./IMPLEMENTATION_CHECKLIST.md) | Task tracker with progress percentages |
-| [copilot-instructions.md](../copilot-instructions.md) | AI assistant context |
+| [AI_TOOLS.md](./AI_TOOLS.md) | AI coding tools guide (Claude Code, Cursor, Copilot) |
+| [copilot-instructions.md](../copilot-instructions.md) | Monorepo Copilot contributor context |
+| [CLAUDE.md](../CLAUDE.md) | Monorepo Claude Code contributor context |
+| [.cursor/rules/quark.mdc](../.cursor/rules/quark.mdc) | Monorepo Cursor contributor rules |

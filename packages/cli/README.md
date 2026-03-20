@@ -30,10 +30,10 @@ pnpm dev
 # Create a new project
 npx @techstream/quark-create-app@latest my-awesome-app
 
-# Update Quark core in an existing project
+# Update Quark packages in an existing project
 npx @techstream/quark-create-app update
 
-# Check for updates without applying
+# Check for available updates without applying them
 npx @techstream/quark-create-app update --check
 ```
 

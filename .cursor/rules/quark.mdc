@@ -1,0 +1,83 @@
+---
+description: Quark monorepo contributor conventions. Covers coding standards, template sync, release workflow, and testing requirements.
+alwaysApply: true
+---
+
+# Quark Monorepo — Contributor Rules
+
+> For app developers building WITH Quark: see `CLAUDE.md` in your scaffolded project.
+> For the full contributor reference: see `CLAUDE.md` at the monorepo root.
+
+---
+
+## Non-Negotiable Rules
+
+1. **ESM only.** Always `import`/`export`. Never `require()` or `module.exports`.
+2. **No TypeScript.** Plain `.js` and `.jsx` files only — no `.ts`, `.tsx`, or type annotations.
+3. **Biome for everything.** No ESLint, no Prettier. Run `pnpm lint` to check.
+4. **Validate at boundaries.** Zod schemas on all Server Actions and API routes. No exceptions.
+5. **Use AppError — not Error.** Throw `AppError` / `ValidationError` from `@techstream/quark-core/errors`. Never `throw new Error()` in application code.
+6. **Log — never console.** `createLogger(name)` from `@techstream/quark-core`. Zero `console.log` / `console.error` in non-test code.
+7. **DB models always have timestamps.** Every Prisma model: `createdAt DateTime @default(now())` + `updatedAt DateTime @updatedAt`.
+8. **Co-located tests.** `feature.test.js` next to `feature.js`. `node --test` — no Jest, no Vitest.
+
+---
+
+## Published vs Scaffolded
+
+| Package | Distributed as | Import path |
+|---|---|---|
+| `packages/core` | Published to npm | `@techstream/quark-core` |
+| `packages/cli` | Published to npm | `@techstream/quark-create-app` |
+| `packages/db`, `config`, `ui`, `jobs` | Scaffolded locally | `@<scope>/db` etc. in user projects |
+
+Never add `packages/db`, `config`, `ui`, or `jobs` as dependencies of `quark-core` or `quark-create-app`. They are scaffolded into user projects — not published.
+
+---
+
+## Template Sync (CRITICAL)
+
+`packages/cli/templates/` is **generated from monorepo source** — never edit it manually (except `TEMPLATE_ONLY` files like `CLAUDE.md`, `.cursor/rules/quark.mdc`, `SKILL.md`, and workflow files).
+
+After changing any file in `apps/web/`, `apps/worker/`, `packages/db/`, `packages/config/`, `packages/ui/`, or `packages/jobs/`:
+
+```bash
+pnpm --filter @techstream/quark-create-app sync-templates
+```
+
+CI fails if templates are stale. Always sync before committing.
+
+---
+
+## Release Workflow
+
+```bash
+pnpm changeset        # Create a changeset (interactive) — do this after your changes
+# Never run: pnpm changeset version   ← CI handles this automatically
+```
+
+Only `@techstream/quark-core` and `@techstream/quark-create-app` are versioned and published. All scaffolded packages are excluded from changesets.
+
+---
+
+## Commands
+
+```bash
+pnpm dev                          # Start web + worker
+pnpm test                         # Run all tests (requires Docker: postgres + redis)
+pnpm lint                         # Biome lint + format check
+pnpm build                        # Build all packages
+pnpm db:generate                  # Regenerate Prisma client
+pnpm db:migrate                   # Apply migrations
+pnpm --filter <pkg> <script>      # Run script in a specific package
+pnpm --filter @techstream/quark-create-app sync-templates        # Sync templates
+pnpm --filter @techstream/quark-create-app sync-templates:check  # Check for drift
+```
+
+---
+
+## Testing
+
+Requires Postgres 16 + Redis 7. Start both with `docker compose up -d` before running `pnpm test`.
+
+Test utilities and model factories: `packages/core/src/testing/`.

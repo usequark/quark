@@ -1,0 +1,172 @@
+---
+description: Quark project conventions for __QUARK_PROJECT_NAME__. Covers all layers: UI, backend, database, auth, jobs, testing, and deployment.
+alwaysApply: true
+---
+
+# Quark Project: __QUARK_PROJECT_NAME__
+
+Package scope: `@__QUARK_SCOPE__` — use this for ALL workspace packages.
+Scaffolded: __QUARK_SCAFFOLD_DATE__
+
+---
+
+## Non-Negotiable Rules
+
+1. **ESM only.** Always `import`/`export`. Never `require()` or `module.exports`.
+2. **No TypeScript.** Plain `.js` and `.jsx` files only — no `.ts`, `.tsx`, or type annotations.
+3. **Validate everything at boundaries.** Server Actions and API routes must use Zod. No raw `req.body` access without parsing.
+4. **Use AppError — not Error.** Throw `AppError` / `ValidationError` / `NotFoundError` from `@techstream/quark-core/errors`. Never `throw new Error()` in application code.
+5. **Log — never console.** Use `createLogger(name)` from `@techstream/quark-core`. Zero `console.log` / `console.error` in non-test code.
+6. **DB models always have timestamps.** Every Prisma model: `createdAt DateTime @default(now())` + `updatedAt DateTime @updatedAt`.
+7. **Workspace import scope.** Use `@__QUARK_SCOPE__/*` for local packages. Never `@techstream/quark-db`, `@techstream/quark-config`, etc.
+8. **Co-located tests.** `feature.test.js` lives next to `feature.js`. Tests use `node --test` — no Jest, no Vitest.
+
+---
+
+## Import Reference
+
+```javascript
+// ✅ Workspace packages — always @__QUARK_SCOPE__/*:
+import { prisma, user, post }    from "@__QUARK_SCOPE__/db";
+import { loadConfig }            from "@__QUARK_SCOPE__/config";
+import { Button, Card, Input }   from "@__QUARK_SCOPE__/ui";
+import { JOB_TYPES }             from "@__QUARK_SCOPE__/jobs";
+
+// ✅ Published runtime — @techstream/quark-core:
+import { AppError, ValidationError, NotFoundError } from "@techstream/quark-core/errors";
+import { createLogger, getCurrentSession }          from "@techstream/quark-core";
+import { createQueue, addJob }                      from "@techstream/quark-core";
+import { metrics, cache, storage }                  from "@techstream/quark-core";
+
+// ❌ Never:
+import { Button } from "@/components/ui/button";     // wrong path convention
+import { prisma } from "@techstream/quark-db";        // wrong scope for workspace pkg
+import something  from "@techstream/quark-config";    // wrong scope for workspace pkg
+```
+
+---
+
+## UI & Design System
+
+- Styling: **Tailwind CSS utility classes only**. No inline styles, no CSS modules.
+- Components from `@__QUARK_SCOPE__/ui`. All accept `className` for overrides.
+- Available: `Button`, `Input`, `Label`, `Textarea`, `Select`, `Checkbox`, `Badge`, `Card`/`CardHeader`/`CardTitle`/`CardContent`/`CardFooter`, `Table`/`TableHeader`/`TableBody`/`TableRow`/`TableHead`/`TableCell`, `Skeleton`, `Dialog` *(client)*, `Toast`/`useToast` *(client)*.
+- Loading states → `<Skeleton>` + `<Suspense>` boundaries.
+- User feedback → `useToast()` (mark component `"use client"`).
+- Modals → `<Dialog>` (mark parent `"use client"`).
+- Default to **Server Components**. Only add `"use client"` when necessary.
+
+---
+
+## Server Action Pattern
+
+```javascript
+"use server";
+import { z } from "zod";
+import { ValidationError, AppError } from "@techstream/quark-core/errors";
+import { getCurrentSession, createLogger } from "@techstream/quark-core";
+import { prisma } from "@__QUARK_SCOPE__/db";
+
+const log = createLogger("action:example");
+const schema = z.object({ title: z.string().min(1).max(255) });
+
+export async function createExample(formData) {
+  const session = await getCurrentSession();
+  if (!session) throw new AppError("Unauthorized", 401);
+
+  const parsed = schema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) throw new ValidationError(parsed.error.flatten());
+
+  const result = await prisma.example.create({ data: parsed.data });
+  log.info("created", { id: result.id });
+  return result;
+}
+```
+
+---
+
+## API Route Pattern
+
+```javascript
+import { NextResponse } from "next/server";
+import { AppError } from "@techstream/quark-core/errors";
+import { createLogger } from "@techstream/quark-core";
+
+const log = createLogger("api:example");
+
+export async function GET(request) {
+  try {
+    return NextResponse.json({ data });
+  } catch (error) {
+    log.error("request failed", { error });
+    if (error instanceof AppError)
+      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+```
+
+---
+
+## Database
+
+- Schema: `packages/db/prisma/schema.prisma`
+- Query helpers: `packages/db/src/queries.js` — add functions here, don't call `prisma.*` directly in components or actions.
+- Always run `pnpm db:generate` after schema changes, then `pnpm db:migrate`.
+
+---
+
+## Auth
+
+```javascript
+import { getCurrentSession } from "@techstream/quark-core";
+
+const session = await getCurrentSession();       // null if unauthenticated
+if (!session) redirect("/login");                // Server Component
+if (!session) throw new AppError("Unauthorized", 401);  // Server Action / API
+if (session.user.role !== "ADMIN") throw new AppError("Forbidden", 403);
+```
+
+---
+
+## Background Jobs
+
+```javascript
+// Dispatch (from Server Action or API route):
+import { createQueue, addJob } from "@techstream/quark-core";
+import { JOB_TYPES } from "@__QUARK_SCOPE__/jobs";
+const queue = createQueue("default");
+await addJob(queue, JOB_TYPES.MY_JOB, { userId });
+
+// Handle (apps/worker/src/handlers/):
+import { createLogger } from "@techstream/quark-core";
+const log = createLogger("job:my-job");
+export async function handleMyJob({ data }) { log.info("processing", data); }
+```
+
+---
+
+## Testing
+
+```javascript
+import { test } from "node:test";
+import assert from "node:assert";
+
+test("feature", async (t) => {
+  await t.test("does X", async () => {
+    assert.strictEqual(actual, expected);
+  });
+});
+```
+
+---
+
+## Environment
+
+New env vars must be registered in `packages/config/src/validate-env.js` before use. Load config via `loadConfig()` from `@__QUARK_SCOPE__/config`.
+
+---
+
+## Deployment
+
+Railway: two services (`web` + `worker`). Migrations auto-run on deploy via `releaseCommand` in `apps/web/railway.json`. Env vars managed in Railway dashboard — never committed.
