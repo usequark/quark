@@ -1,4 +1,5 @@
 import { getModels, modelToSlug } from "@techstream/quark-admin";
+import SignOutButton from "./SignOutButton";
 
 export default function Sidebar() {
 	const models = getModels();
@@ -13,7 +14,7 @@ export default function Sidebar() {
 					Admin
 				</a>
 			</div>
-			<nav className="flex flex-col gap-1">
+			<nav className="flex-1 flex flex-col gap-1">
 				{models.map((model) => {
 					const slug = modelToSlug(model.name);
 					return (
@@ -27,6 +28,9 @@ export default function Sidebar() {
 					);
 				})}
 			</nav>
+			<div className="border-t border-gray-200 pt-3 mt-3">
+				<SignOutButton />
+			</div>
 		</aside>
 	);
 }

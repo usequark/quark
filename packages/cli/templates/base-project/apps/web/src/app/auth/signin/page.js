@@ -12,7 +12,7 @@ import {
 } from "@techstream/quark-ui";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 const ERROR_MESSAGES = {
 	CredentialsSignin: "Invalid email or password.",
@@ -25,6 +25,14 @@ const ERROR_MESSAGES = {
 };
 
 export default function SignInPage() {
+	return (
+		<Suspense>
+			<SignInForm />
+		</Suspense>
+	);
+}
+
+function SignInForm() {
 	const searchParams = useSearchParams();
 	const callbackUrl = searchParams.get("callbackUrl") || "/";
 	const errorCode = searchParams.get("error");
@@ -32,9 +40,17 @@ export default function SignInPage() {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [loading, setLoading] = useState(false);
+	const [providers, setProviders] = useState(null);
 	const [error, setError] = useState(
 		errorCode ? (ERROR_MESSAGES[errorCode] ?? ERROR_MESSAGES.Default) : "",
 	);
+
+	useEffect(() => {
+		fetch("/api/auth/providers")
+			.then((r) => r.json())
+			.then(setProviders)
+			.catch(() => {});
+	}, []);
 
 	async function handleSubmit(e) {
 		e.preventDefault();
@@ -54,8 +70,8 @@ export default function SignInPage() {
 			return;
 		}
 
-		// Successful — redirect manually (redirect: false above)
-		window.location.href = result?.url || callbackUrl;
+		// Successful — use the server-validated URL from NextAuth (safe against open redirects)
+		window.location.href = result?.url || "/";
 	}
 
 	function handleOAuth(provider) {
@@ -119,33 +135,50 @@ export default function SignInPage() {
 						</Button>
 					</form>
 
-					<div className="mt-4 flex items-center gap-3">
-						<hr className="flex-1 border-gray-200" />
-						<span className="text-xs text-gray-400 uppercase tracking-wide">
-							or
-						</span>
-						<hr className="flex-1 border-gray-200" />
-					</div>
+					{providers?.github || providers?.google ? (
+						<>
+							<div className="mt-4 flex items-center gap-3">
+								<hr className="flex-1 border-gray-200" />
+								<span className="text-xs text-gray-400 uppercase tracking-wide">
+									or
+								</span>
+								<hr className="flex-1 border-gray-200" />
+							</div>
 
-					<div className="mt-4 flex flex-col gap-2">
-						<Button
-							variant="secondary"
-							className="w-full"
-							onClick={() => handleOAuth("github")}
-						>
-							Continue with GitHub
-						</Button>
-						<Button
-							variant="secondary"
-							className="w-full"
-							onClick={() => handleOAuth("google")}
-						>
-							Continue with Google
-						</Button>
-					</div>
+							<div className="mt-4 flex flex-col gap-2">
+								{providers.github && (
+									<Button
+										variant="secondary"
+										className="w-full"
+										onClick={() => handleOAuth("github")}
+									>
+										Continue with GitHub
+									</Button>
+								)}
+								{providers.google && (
+									<Button
+										variant="secondary"
+										className="w-full"
+										onClick={() => handleOAuth("google")}
+									>
+										Continue with Google
+									</Button>
+								)}
+							</div>
+						</>
+					) : null}
 				</CardContent>
 
-				<CardFooter className="justify-center">
+				<CardFooter className="flex-col gap-2">
+					<p className="text-sm text-gray-500">
+						Don&apos;t have an account?{" "}
+						<a
+							href="/auth/register"
+							className="text-blue-600 hover:text-blue-800 transition-colors"
+						>
+							Sign up
+						</a>
+					</p>
 					<a
 						href="/"
 						className="text-sm text-gray-500 hover:text-gray-700 transition-colors"

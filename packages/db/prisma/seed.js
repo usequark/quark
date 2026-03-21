@@ -1,15 +1,7 @@
-import crypto from "node:crypto";
 import { PrismaPg } from "@prisma/adapter-pg";
+import bcrypt from "bcryptjs";
 import { getConnectionString } from "../src/connection.js";
 import { PrismaClient } from "../src/generated/prisma/client.ts";
-
-/**
- * Deterministic hash for dev seed users only.
- * The app uses bcrypt for real user passwords — do not use this elsewhere.
- */
-function devHash(password) {
-	return crypto.createHash("sha256").update(`${password}salt`).digest("hex");
-}
 
 /**
  * Minimal seed: creates a single admin user.
@@ -31,7 +23,7 @@ async function seedMinimal(prisma) {
 			email: "admin@example.com",
 			name: "Admin User",
 			role: "admin",
-			password: devHash("admin123"),
+			password: await bcrypt.hash("admin123", 12),
 		},
 	});
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { getInputType } from "@techstream/quark-admin";
+import { getInputType } from "@techstream/quark-admin/field-map";
 import { Checkbox, Input, Label, Select, Textarea } from "@techstream/quark-ui";
 
 /**

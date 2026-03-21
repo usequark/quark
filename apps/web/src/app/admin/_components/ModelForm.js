@@ -1,6 +1,6 @@
 "use client";
 
-import { hasIdField, isEditable } from "@techstream/quark-admin";
+import { isEditable } from "@techstream/quark-admin/field-map";
 import { Button } from "@techstream/quark-ui";
 import { useActionState } from "react";
 import { adminCreate, adminDelete, adminUpdate } from "../_actions/crud";
@@ -70,7 +70,7 @@ export default function ModelForm({ model, slug, record, readOnly = false }) {
 				)}
 			</form>
 
-			{isEdit && !readOnly && hasIdField(model) && (
+			{isEdit && !readOnly && model.fields.some((f) => f.isId) && (
 				<form
 					action={adminDelete.bind(null, slug, record.id)}
 					className="mt-8 pt-6 border-t border-gray-200"

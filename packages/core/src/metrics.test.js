@@ -219,8 +219,8 @@ describe("Metrics - Histogram", () => {
 		});
 
 		const stop = hist.startTimer({ path: "/test" });
-		// Small delay to ensure measurable time
-		await new Promise((resolve) => setTimeout(resolve, 5));
+		// 50ms delay ensures measurable time across all system loads
+		await new Promise((resolve) => setTimeout(resolve, 50));
 		const elapsed = stop();
 
 		assert.ok(elapsed > 0, "Elapsed time should be positive");
