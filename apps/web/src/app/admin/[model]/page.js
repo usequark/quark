@@ -32,8 +32,10 @@ export default async function ModelListPage({ params, searchParams }) {
 		<div>
 			<div className="flex items-center justify-between mb-6">
 				<div>
-					<h1 className="text-2xl font-bold">{model.name}</h1>
-					<p className="text-sm text-gray-500 mt-1">
+					<h1 className="text-2xl font-bold dark:text-[#e0e0e0]">
+						{model.name}
+					</h1>
+					<p className="text-sm text-gray-500 dark:text-[#4a4a6a] mt-1">
 						{total} record{total !== 1 ? "s" : ""}
 					</p>
 				</div>
@@ -52,11 +54,11 @@ export default async function ModelListPage({ params, searchParams }) {
 			/>
 
 			{totalPages > 1 && (
-				<div className="flex items-center gap-3 mt-4 text-sm text-gray-600">
+				<div className="flex items-center gap-3 mt-4 text-sm text-gray-600 dark:text-[#6b7a99]">
 					{currentPage > 1 && (
 						<a
 							href={`/admin/${slug}?page=${currentPage - 1}`}
-							className="hover:text-gray-900"
+							className="hover:text-gray-900 dark:hover:text-[#e0e0e0]"
 						>
 							← Previous
 						</a>
@@ -67,7 +69,7 @@ export default async function ModelListPage({ params, searchParams }) {
 					{currentPage < totalPages && (
 						<a
 							href={`/admin/${slug}?page=${currentPage + 1}`}
-							className="hover:text-gray-900"
+							className="hover:text-gray-900 dark:hover:text-[#e0e0e0]"
 						>
 							Next →
 						</a>

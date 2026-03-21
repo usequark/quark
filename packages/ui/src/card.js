@@ -1,58 +1,48 @@
 import React from "react";
 
-const THEMES = {
-	light: {
-		card: "rounded border border-gray-200 bg-white/95 shadow-sm transition-shadow duration-200 hover:shadow-md",
-		header: "flex flex-col space-y-1.5 p-6",
-		title: "text-lg font-semibold leading-none tracking-tight text-gray-900",
-		content: "p-6 pt-0",
-		footer: "flex items-center p-6 pt-0",
-	},
-	dark: {
-		card: "rounded border border-[#1e2535] bg-[#0d1117] transition-all duration-200 hover:border-[#377dff]/30",
-		header: "flex flex-col space-y-1.5 p-6",
-		title: "text-lg font-semibold leading-none tracking-tight text-[#e0e0e0]",
-		content: "p-6 pt-0",
-		footer: "flex items-center p-6 pt-0",
-	},
-};
+const cardCls =
+	"rounded border border-gray-200 dark:border-[#1e2535] bg-white/95 dark:bg-[#0d1117] shadow-sm dark:shadow-none transition-shadow dark:transition-all duration-200 hover:shadow-md dark:hover:shadow-none dark:hover:border-[#377dff]/30";
 
-export function Card({ theme = "light", className = "", ...props }) {
-	const t = THEMES[theme] ?? THEMES.light;
+const headerCls = "flex flex-col space-y-1.5 p-6";
+
+const titleCls =
+	"text-lg font-semibold leading-none tracking-tight text-gray-900 dark:text-[#e0e0e0]";
+
+const contentCls = "p-6 pt-0";
+
+const footerCls = "flex items-center p-6 pt-0";
+
+export function Card({ className = "", ...props }) {
 	return React.createElement("div", {
-		className: `${t.card} ${className}`.trim(),
+		className: `${cardCls} ${className}`.trim(),
 		...props,
 	});
 }
 
-export function CardHeader({ theme = "light", className = "", ...props }) {
-	const t = THEMES[theme] ?? THEMES.light;
+export function CardHeader({ className = "", ...props }) {
 	return React.createElement("div", {
-		className: `${t.header} ${className}`.trim(),
+		className: `${headerCls} ${className}`.trim(),
 		...props,
 	});
 }
 
-export function CardTitle({ theme = "light", className = "", ...props }) {
-	const t = THEMES[theme] ?? THEMES.light;
+export function CardTitle({ className = "", ...props }) {
 	return React.createElement("h3", {
-		className: `${t.title} ${className}`.trim(),
+		className: `${titleCls} ${className}`.trim(),
 		...props,
 	});
 }
 
-export function CardContent({ theme = "light", className = "", ...props }) {
-	const t = THEMES[theme] ?? THEMES.light;
+export function CardContent({ className = "", ...props }) {
 	return React.createElement("div", {
-		className: `${t.content} ${className}`.trim(),
+		className: `${contentCls} ${className}`.trim(),
 		...props,
 	});
 }
 
-export function CardFooter({ theme = "light", className = "", ...props }) {
-	const t = THEMES[theme] ?? THEMES.light;
+export function CardFooter({ className = "", ...props }) {
 	return React.createElement("div", {
-		className: `${t.footer} ${className}`.trim(),
+		className: `${footerCls} ${className}`.trim(),
 		...props,
 	});
 }

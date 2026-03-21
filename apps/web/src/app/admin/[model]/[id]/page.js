@@ -25,11 +25,13 @@ export default async function EditRecordPage({ params }) {
 			<div className="mb-6">
 				<a
 					href={`/admin/${slug}`}
-					className="text-sm text-gray-500 hover:text-gray-700"
+					className="text-sm text-gray-500 dark:text-[#4a4a6a] hover:text-gray-700 dark:hover:text-[#e0e0e0]"
 				>
 					← {model.name}
 				</a>
-				<h1 className="text-2xl font-bold mt-1">Edit {model.name}</h1>
+				<h1 className="text-2xl font-bold mt-1 dark:text-[#e0e0e0]">
+					Edit {model.name}
+				</h1>
 			</div>
 			<ModelForm
 				model={model}

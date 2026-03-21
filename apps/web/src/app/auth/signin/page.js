@@ -9,6 +9,7 @@ import {
 	CardTitle,
 	Input,
 	Label,
+	QuarkLogo,
 } from "@techstream/quark-ui";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
@@ -79,114 +80,109 @@ function SignInForm() {
 	}
 
 	return (
-		<main
-			className="min-h-screen flex items-center justify-center px-4"
-			style={{
-				backgroundColor: "#f7f8fa",
-				backgroundImage:
-					"linear-gradient(rgba(0,0,0,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.07) 1px, transparent 1px)",
-				backgroundSize: "40px 40px",
-			}}
-		>
-			<Card className="w-full max-w-sm">
-				<CardHeader>
-					<CardTitle>Sign in</CardTitle>
-				</CardHeader>
+		<main className="quark-page-grid min-h-screen flex items-center justify-center px-4">
+			<div className="w-full max-w-sm flex flex-col items-center gap-6">
+				<QuarkLogo size={48} />
+				<Card className="w-full">
+					<CardHeader>
+						<CardTitle>Sign in</CardTitle>
+					</CardHeader>
 
-				<CardContent>
-					{error && (
-						<div className="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-							{error}
-						</div>
-					)}
+					<CardContent>
+						{error && (
+							<div className="mb-4 rounded border border-red-200 dark:border-[#ff4757]/30 bg-red-50 dark:bg-[#ff4757]/10 px-3 py-2 text-sm text-red-700 dark:text-[#ff4757]">
+								{error}
+							</div>
+						)}
 
-					<form onSubmit={handleSubmit} className="space-y-4">
-						<div className="space-y-1.5">
-							<Label htmlFor="email">Email</Label>
-							<Input
-								id="email"
-								type="email"
-								autoComplete="email"
-								required
-								value={email}
-								onChange={(e) => setEmail(e.target.value)}
-							/>
-						</div>
-
-						<div className="space-y-1.5">
-							<Label htmlFor="password">Password</Label>
-							<Input
-								id="password"
-								type="password"
-								autoComplete="current-password"
-								required
-								value={password}
-								onChange={(e) => setPassword(e.target.value)}
-							/>
-						</div>
-
-						<Button
-							type="submit"
-							variant="primary"
-							className="w-full"
-							disabled={loading}
-						>
-							{loading ? "Signing in…" : "Sign in"}
-						</Button>
-					</form>
-
-					{providers?.github || providers?.google ? (
-						<>
-							<div className="mt-4 flex items-center gap-3">
-								<hr className="flex-1 border-gray-200" />
-								<span className="text-xs text-gray-400 uppercase tracking-wide">
-									or
-								</span>
-								<hr className="flex-1 border-gray-200" />
+						<form onSubmit={handleSubmit} className="space-y-4">
+							<div className="space-y-1.5">
+								<Label htmlFor="email">Email</Label>
+								<Input
+									id="email"
+									type="email"
+									autoComplete="email"
+									required
+									value={email}
+									onChange={(e) => setEmail(e.target.value)}
+								/>
 							</div>
 
-							<div className="mt-4 flex flex-col gap-2">
-								{providers.github && (
-									<Button
-										variant="secondary"
-										className="w-full"
-										onClick={() => handleOAuth("github")}
-									>
-										Continue with GitHub
-									</Button>
-								)}
-								{providers.google && (
-									<Button
-										variant="secondary"
-										className="w-full"
-										onClick={() => handleOAuth("google")}
-									>
-										Continue with Google
-									</Button>
-								)}
+							<div className="space-y-1.5">
+								<Label htmlFor="password">Password</Label>
+								<Input
+									id="password"
+									type="password"
+									autoComplete="current-password"
+									required
+									value={password}
+									onChange={(e) => setPassword(e.target.value)}
+								/>
 							</div>
-						</>
-					) : null}
-				</CardContent>
 
-				<CardFooter className="flex-col gap-2">
-					<p className="text-sm text-gray-500">
-						Don&apos;t have an account?{" "}
+							<Button
+								type="submit"
+								variant="primary"
+								className="w-full"
+								disabled={loading}
+							>
+								{loading ? "Signing in…" : "Sign in"}
+							</Button>
+						</form>
+
+						{providers?.github || providers?.google ? (
+							<>
+								<div className="mt-4 flex items-center gap-3">
+									<hr className="flex-1 border-gray-200 dark:border-[#1e2535]" />
+									<span className="text-xs text-gray-400 dark:text-[#4a4a6a] uppercase tracking-wide">
+										or
+									</span>
+									<hr className="flex-1 border-gray-200 dark:border-[#1e2535]" />
+								</div>
+
+								<div className="mt-4 flex flex-col gap-2">
+									{providers.github && (
+										<Button
+											variant="secondary"
+											className="w-full"
+											onClick={() => handleOAuth("github")}
+										>
+											Continue with GitHub
+										</Button>
+									)}
+									{providers.google && (
+										<Button
+											variant="secondary"
+											className="w-full"
+											onClick={() => handleOAuth("google")}
+										>
+											Continue with Google
+										</Button>
+									)}
+								</div>
+							</>
+						) : null}
+					</CardContent>
+
+					<CardFooter className="flex-col gap-2">
+						<p className="text-sm text-gray-500 dark:text-[#6b7a99]">
+							Don&apos;t have an account?{" "}
+							<a
+								href="/auth/register"
+								className="text-blue-600 dark:text-[#377dff] hover:text-blue-800 dark:hover:text-[#377dff]/80 transition-colors"
+							>
+								Sign up
+							</a>
+						</p>
 						<a
-							href="/auth/register"
-							className="text-blue-600 hover:text-blue-800 transition-colors"
+							href="/"
+							className="text-sm text-gray-500 dark:text-[#6b7a99] hover:text-gray-700 dark:hover:text-[#e0e0e0] transition-colors"
 						>
-							Sign up
+							← Back to home
 						</a>
-					</p>
-					<a
-						href="/"
-						className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
-					>
-						← Back to home
-					</a>
-				</CardFooter>
-			</Card>
+					</CardFooter>
+				</Card>
+			</div>
 		</main>
 	);
 }

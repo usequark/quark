@@ -52,13 +52,13 @@ export default function ModelForm({ model, slug, record, readOnly = false }) {
 				))}
 
 				{!readOnly && (
-					<div className="flex items-center gap-3 pt-4 border-t border-gray-200">
+					<div className="flex items-center gap-3 pt-4 border-t border-gray-200 dark:border-[#1e2535]">
 						<Button type="submit" disabled={isPending}>
 							{isPending ? "Saving…" : isEdit ? "Save changes" : "Create"}
 						</Button>
 						<a
 							href={`/admin/${slug}`}
-							className="text-sm text-gray-500 hover:text-gray-700"
+							className="text-sm text-gray-500 dark:text-[#4a4a6a] hover:text-gray-700 dark:hover:text-[#e0e0e0]"
 						>
 							Cancel
 						</a>
@@ -73,12 +73,14 @@ export default function ModelForm({ model, slug, record, readOnly = false }) {
 			{isEdit && !readOnly && model.fields.some((f) => f.isId) && (
 				<form
 					action={adminDelete.bind(null, slug, record.id)}
-					className="mt-8 pt-6 border-t border-gray-200"
+					className="mt-8 pt-6 border-t border-gray-200 dark:border-[#1e2535]"
 				>
-					<p className="text-sm text-gray-500 mb-3">Danger zone</p>
+					<p className="text-sm text-gray-500 dark:text-[#4a4a6a] mb-3">
+						Danger zone
+					</p>
 					<Button
 						type="submit"
-						variant="destructive"
+						variant="danger"
 						onClick={(e) => {
 							if (!confirm(`Delete this ${model.name}? This cannot be undone.`))
 								e.preventDefault();

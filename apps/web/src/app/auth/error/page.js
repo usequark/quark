@@ -4,6 +4,7 @@ import {
 	CardFooter,
 	CardHeader,
 	CardTitle,
+	QuarkLogo,
 } from "@techstream/quark-ui";
 
 const ERROR_MESSAGES = {
@@ -24,35 +25,30 @@ export default async function AuthErrorPage({ searchParams }) {
 	const message = ERROR_MESSAGES[errorCode] ?? ERROR_MESSAGES.Default;
 
 	return (
-		<main
-			className="min-h-screen flex items-center justify-center px-4"
-			style={{
-				backgroundColor: "#f7f8fa",
-				backgroundImage:
-					"linear-gradient(rgba(0,0,0,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.07) 1px, transparent 1px)",
-				backgroundSize: "40px 40px",
-			}}
-		>
-			<Card className="w-full max-w-sm">
-				<CardHeader>
-					<CardTitle>Authentication Error</CardTitle>
-				</CardHeader>
+		<main className="quark-page-grid min-h-screen flex items-center justify-center px-4">
+			<div className="w-full max-w-sm flex flex-col items-center gap-6">
+				<QuarkLogo size={48} />
+				<Card className="w-full">
+					<CardHeader>
+						<CardTitle>Authentication Error</CardTitle>
+					</CardHeader>
 
-				<CardContent>
-					<div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-						{message}
-					</div>
-				</CardContent>
+					<CardContent>
+						<div className="rounded border border-red-200 dark:border-[#ff4757]/30 bg-red-50 dark:bg-[#ff4757]/10 px-3 py-2 text-sm text-red-700 dark:text-[#ff4757]">
+							{message}
+						</div>
+					</CardContent>
 
-				<CardFooter className="justify-center">
-					<a
-						href="/auth/signin"
-						className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
-					>
-						← Back to sign in
-					</a>
-				</CardFooter>
-			</Card>
+					<CardFooter className="justify-center">
+						<a
+							href="/auth/signin"
+							className="text-sm text-gray-500 dark:text-[#6b7a99] hover:text-gray-700 dark:hover:text-[#e0e0e0] transition-colors"
+						>
+							← Back to sign in
+						</a>
+					</CardFooter>
+				</Card>
+			</div>
 		</main>
 	);
 }

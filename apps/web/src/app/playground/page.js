@@ -23,7 +23,6 @@ import {
 	ThemeProvider,
 	ThemeToggle,
 	Toast,
-	useTheme,
 	useToast,
 } from "@techstream/quark-ui";
 import Link from "next/link";
@@ -49,17 +48,10 @@ const SECTIONS = [
 
 // ── Layout helpers ────────────────────────────────────────────────────────────
 
-function Group({ label, theme, children }) {
+function Group({ label, children }) {
 	return (
 		<div className="space-y-2.5">
-			<p
-				className="font-mono uppercase"
-				style={{
-					fontSize: "11px",
-					letterSpacing: "0.2em",
-					color: theme === "dark" ? "#4a6080" : "#9ca3af",
-				}}
-			>
+			<p className="font-mono uppercase text-[11px] tracking-[0.2em] text-[#9ca3af] dark:text-[#4a6080]">
 				{label}
 			</p>
 			<div className="flex flex-wrap items-center gap-2">{children}</div>
@@ -67,24 +59,14 @@ function Group({ label, theme, children }) {
 	);
 }
 
-function ComponentSection({ id, index, title, theme, children }) {
+function ComponentSection({ id, index, title, children }) {
 	const num = String(index).padStart(2, "0");
 	return (
 		<section
 			id={id}
-			className="scroll-mt-6 space-y-5 py-5"
-			style={{
-				borderTop: `1px solid ${theme === "dark" ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.18)"}`,
-			}}
+			className="scroll-mt-6 space-y-5 py-5 border-t border-black/18 dark:border-white/25"
 		>
-			<h2
-				className="font-mono uppercase"
-				style={{
-					fontSize: "12px",
-					letterSpacing: "0.2em",
-					color: theme === "dark" ? "#5c5c72" : "#9ca3af",
-				}}
-			>
+			<h2 className="font-mono uppercase text-xs tracking-[0.2em] text-[#9ca3af] dark:text-[#5c5c72]">
 				§ {num} — {title}
 			</h2>
 			{children}
@@ -92,28 +74,13 @@ function ComponentSection({ id, index, title, theme, children }) {
 	);
 }
 
-function NavItem({ id, label, index, theme }) {
+function NavItem({ id, label, index }) {
 	const num = String(index).padStart(2, "0");
-	const dimColor = theme === "dark" ? "#7c8fa0" : "#9ca3af";
-	const activeColor = theme === "dark" ? "#377dff" : "#2563eb";
 	return (
 		<a
 			href={`#${id}`}
-			className="block font-mono uppercase"
-			style={{
-				fontSize: "13px",
-				letterSpacing: "0.15em",
-				color: dimColor,
-				textDecoration: "none",
-				transition: "color 0.15s linear",
-				padding: "3px 0",
-			}}
-			onMouseEnter={(e) => {
-				e.currentTarget.style.color = activeColor;
-			}}
-			onMouseLeave={(e) => {
-				e.currentTarget.style.color = dimColor;
-			}}
+			className="block font-mono uppercase text-[13px] tracking-[0.15em] text-[#9ca3af] dark:text-[#7c8fa0] hover:text-[#2563eb] dark:hover:text-[#377dff] transition-colors py-[3px]"
+			style={{ textDecoration: "none" }}
 		>
 			{num} · {label}
 		</a>
@@ -136,8 +103,6 @@ function PlaygroundInner() {
 		setMounted(true);
 	}, []);
 
-	const { theme } = useTheme();
-	const isDark = theme === "dark";
 	const [dialogOpen, setDialogOpen] = useState(false);
 	const toast = useToast();
 
@@ -151,19 +116,13 @@ function PlaygroundInner() {
 		);
 	}
 
-	const bg = isDark ? "#05070a" : "#f7f8fa";
-	const labelColor = isDark ? "#5c5c72" : "#9ca3af";
-	const gridColor = isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.07)";
-	const gridBg = `linear-gradient(${gridColor} 1px, transparent 1px), linear-gradient(90deg, ${gridColor} 1px, transparent 1px)`;
-
 	return (
 		<main
-			className="min-h-screen"
+			className="min-h-screen bg-[#f7f8fa] dark:bg-[#05070a] transition-colors duration-200"
 			style={{
-				backgroundColor: bg,
-				backgroundImage: gridBg,
+				backgroundImage:
+					"linear-gradient(var(--quark-grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--quark-grid-line) 1px, transparent 1px)",
 				backgroundSize: "40px 40px",
-				transition: "background-color 0.25s ease",
 			}}
 		>
 			<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-10">
@@ -175,35 +134,17 @@ function PlaygroundInner() {
 							<div className="flex items-center justify-between mb-4">
 								<Link
 									href="/"
-									className="quark-home-link"
-									style={{
-										fontSize: "13px",
-										fontFamily: "monospace",
-										color: isDark ? "#7c8fa0" : "#9ca3af",
-									}}
+									className="quark-home-link text-[13px] font-mono"
 								>
 									← home
 								</Link>
 								<ThemeToggle />
 							</div>
-							<p
-								className="font-mono uppercase mb-3"
-								style={{
-									fontSize: "13px",
-									letterSpacing: "0.2em",
-									color: isDark ? "#7c8fa0" : "#9ca3af",
-								}}
-							>
+							<p className="font-mono uppercase mb-3 text-[13px] tracking-[0.2em] text-[#9ca3af] dark:text-[#7c8fa0]">
 								index
 							</p>
 							{SECTIONS.map((s, i) => (
-								<NavItem
-									key={s.id}
-									id={s.id}
-									label={s.label}
-									index={i + 1}
-									theme={theme}
-								/>
+								<NavItem key={s.id} id={s.id} label={s.label} index={i + 1} />
 							))}
 						</div>
 					</nav>
@@ -211,171 +152,103 @@ function PlaygroundInner() {
 					{/* Main content */}
 					<div className="flex-1 min-w-0">
 						{/* Page label */}
-						<p
-							className="font-mono uppercase mb-2"
-							style={{
-								color: labelColor,
-								fontSize: "12px",
-								letterSpacing: "0.15em",
-							}}
-						>
+						<p className="font-mono uppercase mb-2 text-xs tracking-[0.15em] text-[#9ca3af] dark:text-[#5c5c72]">
 							quark-ui · component reference
 						</p>
 
 						{/* ── 01 Button ── */}
-						<ComponentSection
-							id="button"
-							index={1}
-							title="Button"
-							theme={theme}
-						>
-							<Group label="variant" theme={theme}>
-								<Button variant="primary" theme={theme}>
-									Primary
-								</Button>
-								<Button variant="secondary" theme={theme}>
-									Secondary
-								</Button>
-								<Button variant="danger" theme={theme}>
-									Danger
-								</Button>
-								<Button variant="ghost" theme={theme}>
-									Ghost
-								</Button>
+						<ComponentSection id="button" index={1} title="Button">
+							<Group label="variant">
+								<Button variant="primary">Primary</Button>
+								<Button variant="secondary">Secondary</Button>
+								<Button variant="danger">Danger</Button>
+								<Button variant="ghost">Ghost</Button>
 							</Group>
-							<Group label="themed" theme={theme}>
-								<Button variant="success" theme={theme}>
-									Success
-								</Button>
-								<Button variant="warning" theme={theme}>
-									Warning
-								</Button>
-								<Button variant="info" theme={theme}>
-									Info
-								</Button>
-								<Button variant="outline" theme={theme}>
-									Outline
-								</Button>
-								<Button variant="solid" theme={theme}>
-									Solid
-								</Button>
+							<Group label="themed">
+								<Button variant="success">Success</Button>
+								<Button variant="warning">Warning</Button>
+								<Button variant="info">Info</Button>
+								<Button variant="outline">Outline</Button>
+								<Button variant="solid">Solid</Button>
 							</Group>
-							<Group label="size" theme={theme}>
-								<Button size="sm" theme={theme}>
-									Small
-								</Button>
-								<Button size="md" theme={theme}>
-									Medium
-								</Button>
-								<Button size="lg" theme={theme}>
-									Large
-								</Button>
+							<Group label="size">
+								<Button size="sm">Small</Button>
+								<Button size="md">Medium</Button>
+								<Button size="lg">Large</Button>
 							</Group>
-							<Group label="state" theme={theme}>
-								<Button disabled theme={theme}>
-									Disabled
-								</Button>
+							<Group label="state">
+								<Button disabled>Disabled</Button>
 							</Group>
 						</ComponentSection>
 
 						{/* ── 02 Badge ── */}
-						<ComponentSection id="badge" index={2} title="Badge" theme={theme}>
-							<Group label="variant" theme={theme}>
-								<Badge theme={theme}>Default</Badge>
-								<Badge variant="success" theme={theme}>
-									Success
-								</Badge>
-								<Badge variant="warning" theme={theme}>
-									Warning
-								</Badge>
-								<Badge variant="danger" theme={theme}>
-									Danger
-								</Badge>
-								<Badge variant="info" theme={theme}>
-									Info
-								</Badge>
+						<ComponentSection id="badge" index={2} title="Badge">
+							<Group label="variant">
+								<Badge>Default</Badge>
+								<Badge variant="success">Success</Badge>
+								<Badge variant="warning">Warning</Badge>
+								<Badge variant="danger">Danger</Badge>
+								<Badge variant="info">Info</Badge>
 							</Group>
 						</ComponentSection>
 
 						{/* ── 03 Form ── */}
-						<ComponentSection
-							id="form"
-							index={3}
-							title="Form Controls"
-							theme={theme}
-						>
+						<ComponentSection id="form" index={3} title="Form Controls">
 							<div className="max-w-xs space-y-3">
 								<div>
-									<Label htmlFor="inp" theme={theme}>
-										Input
-									</Label>
-									<Input id="inp" theme={theme} placeholder="Enter text…" />
+									<Label htmlFor="inp">Input</Label>
+									<Input id="inp" placeholder="Enter text…" />
 								</div>
 								<div>
-									<Label htmlFor="ta" theme={theme}>
-										Textarea
-									</Label>
-									<Textarea
-										id="ta"
-										theme={theme}
-										placeholder="Enter text…"
-										rows={3}
-									/>
+									<Label htmlFor="ta">Textarea</Label>
+									<Textarea id="ta" placeholder="Enter text…" rows={3} />
 								</div>
 								<div>
-									<Label htmlFor="sel" theme={theme}>
-										Select
-									</Label>
-									<Select id="sel" theme={theme}>
+									<Label htmlFor="sel">Select</Label>
+									<Select id="sel">
 										<option value="">Choose…</option>
 										<option value="a">Option A</option>
 										<option value="b">Option B</option>
 									</Select>
 								</div>
-								<Checkbox id="chk" label="Accept terms" theme={theme} />
+								<Checkbox id="chk" label="Accept terms" />
 							</div>
 						</ComponentSection>
 
 						{/* ── 04 Card ── */}
-						<ComponentSection id="card" index={4} title="Card" theme={theme}>
-							<Card theme={theme} className="max-w-xs">
-								<CardHeader theme={theme}>
-									<CardTitle theme={theme}>Card Title</CardTitle>
+						<ComponentSection id="card" index={4} title="Card">
+							<Card className="max-w-xs">
+								<CardHeader>
+									<CardTitle>Card Title</CardTitle>
 								</CardHeader>
-								<CardContent theme={theme}>
-									<p
-										className="text-sm"
-										style={{ color: isDark ? "#6b7a99" : "#6b7280" }}
-									>
+								<CardContent>
+									<p className="text-sm text-[#6b7280] dark:text-[#6b7a99]">
 										Card body content goes here.
 									</p>
 								</CardContent>
-								<CardFooter theme={theme}>
-									<Button size="sm" theme={theme}>
-										Action
-									</Button>
+								<CardFooter>
+									<Button size="sm">Action</Button>
 								</CardFooter>
 							</Card>
 						</ComponentSection>
 
 						{/* ── 05 Table ── */}
-						<ComponentSection id="table" index={5} title="Table" theme={theme}>
-							<Table theme={theme}>
-								<TableHeader theme={theme}>
-									<TableRow theme={theme}>
-										<TableHead theme={theme}>Name</TableHead>
-										<TableHead theme={theme}>Role</TableHead>
-										<TableHead theme={theme}>Status</TableHead>
+						<ComponentSection id="table" index={5} title="Table">
+							<Table>
+								<TableHeader>
+									<TableRow>
+										<TableHead>Name</TableHead>
+										<TableHead>Role</TableHead>
+										<TableHead>Status</TableHead>
 									</TableRow>
 								</TableHeader>
-								<TableBody theme={theme}>
+								<TableBody>
 									{TABLE_DATA.map((r) => (
-										<TableRow key={r.name} theme={theme}>
-											<TableCell theme={theme}>{r.name}</TableCell>
-											<TableCell theme={theme}>{r.role}</TableCell>
-											<TableCell theme={theme}>
+										<TableRow key={r.name}>
+											<TableCell>{r.name}</TableCell>
+											<TableCell>{r.role}</TableCell>
+											<TableCell>
 												<Badge
-													theme={theme}
 													variant={
 														r.status === "Active" ? "success" : "default"
 													}
@@ -390,45 +263,29 @@ function PlaygroundInner() {
 						</ComponentSection>
 
 						{/* ── 06 Skeleton ── */}
-						<ComponentSection
-							id="skeleton"
-							index={6}
-							title="Skeleton"
-							theme={theme}
-						>
+						<ComponentSection id="skeleton" index={6} title="Skeleton">
 							<div className="space-y-3 max-w-xs">
-								<Skeleton theme={theme} className="h-4 w-40" />
+								<Skeleton className="h-4 w-40" />
 								<div className="flex items-center gap-3">
-									<Skeleton theme={theme} className="h-9 w-9 rounded-full" />
+									<Skeleton className="h-9 w-9 rounded-full" />
 									<div className="space-y-1.5 flex-1">
-										<Skeleton theme={theme} className="h-3 w-3/4" />
-										<Skeleton theme={theme} className="h-3 w-1/2" />
+										<Skeleton className="h-3 w-3/4" />
+										<Skeleton className="h-3 w-1/2" />
 									</div>
 								</div>
-								<Skeleton theme={theme} className="h-20 w-full" />
+								<Skeleton className="h-20 w-full" />
 							</div>
 						</ComponentSection>
 
 						{/* ── 07 Dialog ── */}
-						<ComponentSection
-							id="dialog"
-							index={7}
-							title="Dialog"
-							theme={theme}
-						>
-							<Button theme={theme} onClick={() => setDialogOpen(true)}>
-								Open Dialog
-							</Button>
+						<ComponentSection id="dialog" index={7} title="Dialog">
+							<Button onClick={() => setDialogOpen(true)}>Open Dialog</Button>
 							<Dialog
 								open={dialogOpen}
 								onClose={() => setDialogOpen(false)}
 								title="Confirm Action"
-								theme={theme}
 							>
-								<p
-									className="text-sm"
-									style={{ color: isDark ? "#6b7a99" : "#6b7280" }}
-								>
+								<p className="text-sm text-[#6b7280] dark:text-[#6b7a99]">
 									Are you sure you want to continue? This action cannot be
 									undone.
 								</p>
@@ -436,16 +293,11 @@ function PlaygroundInner() {
 									<Button
 										variant="secondary"
 										size="sm"
-										theme={theme}
 										onClick={() => setDialogOpen(false)}
 									>
 										Cancel
 									</Button>
-									<Button
-										size="sm"
-										theme={theme}
-										onClick={() => setDialogOpen(false)}
-									>
+									<Button size="sm" onClick={() => setDialogOpen(false)}>
 										Confirm
 									</Button>
 								</div>
@@ -453,11 +305,10 @@ function PlaygroundInner() {
 						</ComponentSection>
 
 						{/* ── 08 Toast ── */}
-						<ComponentSection id="toast" index={8} title="Toast" theme={theme}>
-							<Group label="trigger" theme={theme}>
+						<ComponentSection id="toast" index={8} title="Toast">
+							<Group label="trigger">
 								<Button
 									size="sm"
-									theme={theme}
 									onClick={() => toast.show("Changes saved.", "success")}
 								>
 									Success
@@ -465,7 +316,6 @@ function PlaygroundInner() {
 								<Button
 									size="sm"
 									variant="danger"
-									theme={theme}
 									onClick={() => toast.show("Request failed.", "error")}
 								>
 									Error
@@ -473,13 +323,12 @@ function PlaygroundInner() {
 								<Button
 									size="sm"
 									variant="secondary"
-									theme={theme}
 									onClick={() => toast.show("Notification sent.")}
 								>
 									Default
 								</Button>
 							</Group>
-							<Toast {...toast.toastProps} theme={theme} />
+							<Toast {...toast.toastProps} />
 						</ComponentSection>
 					</div>
 				</div>

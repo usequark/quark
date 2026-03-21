@@ -1,10 +1,12 @@
 @import "tailwindcss";
 @source "../../../../packages/ui/src/**/*.{js,jsx}";
 
+/* Tailwind dark variant — activates when data-theme="dark" is set on <html> */
+@custom-variant dark (&:is([data-theme="dark"] *));
+
 /*
- * CSS custom properties for the home page shell.
- * Automatically responds to the OS colour preference via prefers-color-scheme —
- * no JavaScript required. Override these in your own stylesheet as needed.
+ * CSS custom properties for the app shell.
+ * Dark-first — light values activate via prefers-color-scheme or explicit toggle.
  */
 :root {
 	--quark-page-bg: #05070a;
@@ -16,6 +18,11 @@
 	--quark-health-sep: #2a2a3a;
 	--quark-health-dot-idle: #2a2a3a;
 	--quark-grid-line: rgba(255, 255, 255, 0.05);
+	/* Logo dark arc — lighter in dark mode so it's visible on near-black backgrounds */
+	--quark-logo-dark-arc: #3d4860;
+	/* Toast SVG stroke colours */
+	--quark-toast-track: rgba(255, 255, 255, 0.2);
+	--quark-toast-progress: rgba(255, 255, 255, 0.85);
 }
 
 @media (prefers-color-scheme: light) {
@@ -30,6 +37,7 @@
 		--quark-health-sep: #d1d5db;
 		--quark-health-dot-idle: #d1d5db;
 		--quark-grid-line: rgba(0, 0, 0, 0.07);
+		--quark-logo-dark-arc: #2d3436;
 	}
 }
 
@@ -44,6 +52,39 @@
 	--quark-health-sep: #d1d5db;
 	--quark-health-dot-idle: #d1d5db;
 	--quark-grid-line: rgba(0, 0, 0, 0.07);
+	--quark-logo-dark-arc: #2d3436;
+}
+
+/* Theme toggle pill — CSS-driven so the toggle reflects data-theme
+ * immediately from the blocking script, with no React-state flash. */
+:root,
+:root[data-theme="light"] {
+	--toggle-track-bg: #e5e7eb;
+	--toggle-track-border: #d1d5db;
+	--toggle-knob-bg: #9ca3af;
+	--toggle-knob-x: translateX(0);
+}
+:root[data-theme="dark"] {
+	--toggle-track-bg: #0d1420;
+	--toggle-track-border: #1e2d45;
+	--toggle-knob-bg: #377dff;
+	--toggle-knob-x: translateX(14px);
+}
+
+/* Toast SVG strokes — per-variant dark overrides.
+ * Light uses :root defaults (white strokes on dark toast bg).
+ * The blocking script in layout.js ensures data-theme is always set. */
+[data-theme="dark"] [data-toast-variant="default"] {
+	--quark-toast-track: rgba(55, 125, 255, 0.12);
+	--quark-toast-progress: rgba(55, 125, 255, 0.7);
+}
+[data-theme="dark"] [data-toast-variant="success"] {
+	--quark-toast-track: rgba(52, 211, 153, 0.12);
+	--quark-toast-progress: rgba(52, 211, 153, 0.7);
+}
+[data-theme="dark"] [data-toast-variant="error"] {
+	--quark-toast-track: rgba(255, 71, 87, 0.12);
+	--quark-toast-progress: rgba(255, 71, 87, 0.7);
 }
 
 /* Pin the document background to match the app shell — prevents overscroll flash */
@@ -52,7 +93,8 @@ body {
 	background-color: var(--quark-page-bg);
 }
 
-.quark-home-main {
+.quark-home-main,
+.quark-page-grid {
 	background-color: var(--quark-page-bg);
 	background-image:
 		linear-gradient(var(--quark-grid-line) 1px, transparent 1px),

@@ -7,11 +7,12 @@ export * from "./checkbox.js";
 export * from "./dialog.js";
 export * from "./input.js";
 export * from "./label.js";
+export * from "./logo.js";
 export * from "./select.js";
 export * from "./skeleton.js";
 export * from "./table.js";
 export * from "./textarea.js";
 export * from "./theme.js";
-// Theme context
+// Theme constants
 export * from "./theme-constants.js";
 export * from "./toast.js";

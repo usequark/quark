@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import {
 	THEME_ATTR,
 	THEME_CHANGE_EVENT,
@@ -20,7 +20,7 @@ import {
 export default function HomeThemeToggle() {
 	const [isDark, setIsDark] = useState(true);
 
-	useEffect(() => {
+	useLayoutEffect(() => {
 		const stored = localStorage.getItem(THEME_STORAGE_KEY);
 		if (stored === "light" || stored === "dark") {
 			setIsDark(stored === "dark");

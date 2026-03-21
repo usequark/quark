@@ -20,19 +20,23 @@ export default async function AdminDashboard() {
 
 	return (
 		<div>
-			<h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+			<h1 className="text-2xl font-bold mb-6 dark:text-[#e0e0e0]">Dashboard</h1>
 			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 				{rows.map(({ name, slug, count }) => (
 					<a key={name} href={`/admin/${slug}`} className="block group">
 						<Card className="hover:border-gray-400 transition-colors">
 							<CardHeader className="pb-2">
-								<CardTitle className="text-base font-medium text-gray-600 group-hover:text-gray-900">
+								<CardTitle className="text-base font-medium text-gray-600 dark:text-[#6b7a99] group-hover:text-gray-900 dark:group-hover:text-[#e0e0e0]">
 									{name}
 								</CardTitle>
 							</CardHeader>
 							<CardContent>
-								<p className="text-3xl font-bold tabular-nums">{count}</p>
-								<p className="text-sm text-gray-400 mt-1">records</p>
+								<p className="text-3xl font-bold tabular-nums dark:text-[#e0e0e0]">
+									{count}
+								</p>
+								<p className="text-sm text-gray-400 dark:text-[#4a4a6a] mt-1">
+									records
+								</p>
 							</CardContent>
 						</Card>
 					</a>

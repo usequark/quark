@@ -10,7 +10,6 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
  *   onClose   (fn)                            — called when dismissed / expired
  *   visible   (bool)                          — controlled visibility
  *   duration  (number)                        — ms before auto-dismiss (default 4000)
- *   theme     (string)                        — 'light' (default) | 'dark'
  *   toastId   (number)                        — incremented by useToast on each show()
  *                                               so the timer resets correctly
  *
@@ -22,41 +21,13 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 const RADIUS = 9;
 const CIRC = 2 * Math.PI * RADIUS; // ≈ 56.55
 
-const THEMES = {
-	light: {
-		default: {
-			cls: "border border-gray-700 bg-gray-900 text-white",
-			track: "rgba(255,255,255,0.2)",
-			progress: "rgba(255,255,255,0.85)",
-		},
-		success: {
-			cls: "border border-green-500 bg-green-600 text-white",
-			track: "rgba(255,255,255,0.2)",
-			progress: "rgba(255,255,255,0.85)",
-		},
-		error: {
-			cls: "border border-red-500 bg-red-600 text-white",
-			track: "rgba(255,255,255,0.2)",
-			progress: "rgba(255,255,255,0.85)",
-		},
-	},
-	dark: {
-		default: {
-			cls: "border border-[#1e2535] bg-[#090d14] text-[#e0e0e0]",
-			track: "rgba(55,125,255,0.12)",
-			progress: "rgba(55,125,255,0.7)",
-		},
-		success: {
-			cls: "border border-emerald-800/50 bg-[#090d14] text-emerald-400",
-			track: "rgba(52,211,153,0.12)",
-			progress: "rgba(52,211,153,0.7)",
-		},
-		error: {
-			cls: "border border-[#ff4757]/40 bg-[#090d14] text-[#ff4757]",
-			track: "rgba(255,71,87,0.12)",
-			progress: "rgba(255,71,87,0.7)",
-		},
-	},
+const VARIANTS = {
+	default:
+		"border border-gray-700 dark:border-[#1e2535] bg-gray-900 dark:bg-[#090d14] text-white dark:text-[#e0e0e0]",
+	success:
+		"border border-green-500 dark:border-emerald-800/50 bg-green-600 dark:bg-[#090d14] text-white dark:text-emerald-400",
+	error:
+		"border border-red-500 dark:border-[#ff4757]/40 bg-red-600 dark:bg-[#090d14] text-white dark:text-[#ff4757]",
 };
 
 export function Toast({
@@ -65,14 +36,12 @@ export function Toast({
 	onClose,
 	visible = true,
 	duration = 4000,
-	theme = "light",
 	_toastId,
 }) {
 	const [progress, setProgress] = useState(100); // 100 → 0 as time elapses
 	const [hovered, setHovered] = useState(false);
 
-	const themeMap = THEMES[theme] ?? THEMES.light;
-	const v = themeMap[variant] ?? themeMap.default;
+	const variantCls = VARIANTS[variant] ?? VARIANTS.default;
 
 	// Mutable refs so the interval callback always reads fresh values
 	const remainingRef = useRef(duration);
@@ -107,7 +76,7 @@ export function Toast({
 		setHovered(false);
 		start();
 		return stop;
-	}, [visible, duration, start, stop]); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [visible, duration, start, stop]);
 
 	// Pause on hover, RESET on leave (restart from full duration)
 	useEffect(() => {
@@ -119,7 +88,7 @@ export function Toast({
 			remainingRef.current = duration;
 			start();
 		}
-	}, [hovered, duration, start, stop, visible]); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [hovered, duration, start, stop, visible]);
 
 	if (!visible) return null;
 
@@ -130,9 +99,10 @@ export function Toast({
 		{
 			role: "alert",
 			"aria-live": "assertive",
+			"data-toast-variant": variant,
 			onMouseEnter: () => setHovered(true),
 			onMouseLeave: () => setHovered(false),
-			className: `fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded px-4 py-3 text-sm shadow-xl transition-all duration-200 ${v.cls}`,
+			className: `fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded px-4 py-3 text-sm shadow-xl transition-all duration-200 ${variantCls}`,
 		},
 		React.createElement("span", null, message),
 		// Trailing indicator: × when hovered, progress circle otherwise
@@ -168,7 +138,7 @@ export function Toast({
 							cy: 12,
 							r: RADIUS,
 							fill: "none",
-							stroke: v.track,
+							stroke: "var(--quark-toast-track)",
 							strokeWidth: 2,
 						}),
 						// Progress arc
@@ -177,7 +147,7 @@ export function Toast({
 							cy: 12,
 							r: RADIUS,
 							fill: "none",
-							stroke: v.progress,
+							stroke: "var(--quark-toast-progress)",
 							strokeWidth: 2,
 							strokeLinecap: "round",
 							strokeDasharray: CIRC,

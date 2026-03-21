@@ -1,5 +1,12 @@
 "use client";
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+	createContext,
+	useCallback,
+	useContext,
+	useEffect,
+	useLayoutEffect,
+	useState,
+} from "react";
 import {
 	THEME_ATTR,
 	THEME_CHANGE_EVENT,
@@ -12,40 +19,55 @@ const ThemeCtx = createContext({ theme: "dark", setTheme: () => {} });
  * Wraps a subtree with a shared theme value.
  *
  * Behaviour:
- * - If `defaultTheme` is provided it is used as the initial value (good for
- *   pages that have a deliberate starting theme, e.g. the playground).
- * - If `defaultTheme` is omitted, the initial value is derived from the OS
- *   `prefers-color-scheme` media query on first mount.
- * - In both cases the user's explicit toggle choice is persisted to
+ * - If `defaultTheme` is provided it is used as the fallback when no stored
+ *   preference exists (good for pages with a deliberate starting theme).
+ * - If `defaultTheme` is omitted the fallback is the OS `prefers-color-scheme`
+ *   media query, evaluated after hydration in a layout effect.
+ * - The user's explicit toggle choice is persisted to
  *   `localStorage` under the key `quark-theme` and restored on subsequent
  *   visits so their preference is remembered across sessions.
  *
  * @param {{ defaultTheme?: 'light' | 'dark', children: React.ReactNode }} props
  */
 export function ThemeProvider({ defaultTheme, children }) {
-	// Lazy initialiser — runs synchronously on the client before first paint,
-	// so the correct theme is in place from frame 0 (no flash).
-	// On the server `window` is undefined, so we fall back to defaultTheme ?? 'dark'.
-	const [theme, setTheme] = useState(() => {
-		if (typeof window === "undefined") return defaultTheme ?? "dark";
-		const stored = localStorage.getItem(THEME_STORAGE_KEY);
-		if (stored === "light" || stored === "dark") return stored;
-		if (defaultTheme != null) return defaultTheme;
-		return window.matchMedia("(prefers-color-scheme: dark)").matches
-			? "dark"
-			: "light";
-	});
+	// Always initialize from the server-safe default. The lazy initialiser cannot
+	// run during React hydration (React reuses the server state), so we sync to
+	// the real user preference in a layout effect instead.
+	const [theme, setTheme] = useState(defaultTheme ?? "dark");
 
-	// Keep state in sync when the OS colour scheme changes (only relevant when
-	// no defaultTheme was provided and the user has no stored preference).
+	// useLayoutEffect fires synchronously after DOM mutations but BEFORE the
+	// browser paints, so the toggle snaps to the correct position with no
+	// visible flash. On the server it is a no-op (same as useEffect).
+	useLayoutEffect(() => {
+		const stored = localStorage.getItem(THEME_STORAGE_KEY);
+		const resolved =
+			stored === "light" || stored === "dark"
+				? stored
+				: (defaultTheme ??
+					(window.matchMedia("(prefers-color-scheme: dark)").matches
+						? "dark"
+						: "light"));
+		document.documentElement.setAttribute(THEME_ATTR, resolved);
+		setTheme(resolved);
+	}, [defaultTheme]);
+
+	const persistSetTheme = useCallback((t) => {
+		localStorage.setItem(THEME_STORAGE_KEY, t);
+		document.documentElement.setAttribute(THEME_ATTR, t);
+		setTheme(t);
+	}, []);
+
+	// Keep state and DOM in sync when the OS colour scheme changes (only
+	// relevant when no defaultTheme was provided and the user has no stored
+	// preference). Must call persistSetTheme so data-theme and CSS vars update.
 	useEffect(() => {
 		const stored = localStorage.getItem(THEME_STORAGE_KEY);
 		if (stored || defaultTheme != null) return;
 		const mq = window.matchMedia("(prefers-color-scheme: dark)");
-		const onChange = (e) => setTheme(e.matches ? "dark" : "light");
+		const onChange = (e) => persistSetTheme(e.matches ? "dark" : "light");
 		mq.addEventListener("change", onChange);
 		return () => mq.removeEventListener("change", onChange);
-	}, [defaultTheme]);
+	}, [defaultTheme, persistSetTheme]);
 
 	// Listen for toggles fired by HomeThemeToggle (or any other out-of-tree
 	// component) so React context stays in sync without any import coupling.
@@ -59,12 +81,6 @@ export function ThemeProvider({ defaultTheme, children }) {
 			document.removeEventListener(THEME_CHANGE_EVENT, onExternalChange);
 	}, []);
 
-	function persistSetTheme(t) {
-		localStorage.setItem(THEME_STORAGE_KEY, t);
-		document.documentElement.setAttribute(THEME_ATTR, t);
-		setTheme(t);
-	}
-
 	return React.createElement(
 		ThemeCtx.Provider,
 		{ value: { theme, setTheme: persistSetTheme } },
@@ -74,7 +90,7 @@ export function ThemeProvider({ defaultTheme, children }) {
 
 /**
  * Returns the current theme and a setter from the nearest ThemeProvider.
- * Falls back to `{ theme: 'light' }` when used outside a provider.
+ * Falls back to `{ theme: 'dark' }` when used outside a provider.
  *
  * @returns {{ theme: 'light' | 'dark', setTheme: (t: string) => void }}
  */
@@ -105,8 +121,8 @@ export function ThemeToggle({ className = "", style = {} }) {
 				width: "32px",
 				height: "18px",
 				borderRadius: "9px",
-				border: `1px solid ${isDark ? "#1e2d45" : "#d1d5db"}`,
-				background: isDark ? "#0d1420" : "#e5e7eb",
+				border: "1px solid var(--toggle-track-border)",
+				background: "var(--toggle-track-bg)",
 				cursor: "pointer",
 				padding: "2px",
 				transition: "background 0.2s ease, border-color 0.2s ease",
@@ -122,8 +138,8 @@ export function ThemeToggle({ className = "", style = {} }) {
 				width: "12px",
 				height: "12px",
 				borderRadius: "50%",
-				background: isDark ? "#377dff" : "#9ca3af",
-				transform: isDark ? "translateX(14px)" : "translateX(0)",
+				background: "var(--toggle-knob-bg)",
+				transform: "var(--toggle-knob-x)",
 				transition: "transform 0.2s ease, background 0.2s ease",
 				flexShrink: 0,
 			},
