@@ -22,6 +22,12 @@ export default function Home() {
 					<a href="/playground" className="quark-home-link">
 						playground
 					</a>
+					{/* @quark:start:admin */}
+					<span className="quark-home-sep">·</span>
+					<a href="/admin" className="quark-home-link">
+						admin
+					</a>
+					{/* @quark:end:admin */}
 					<span className="quark-home-sep">·</span>
 					<a
 						href="https://www.npmjs.com/package/@techstream/quark-create-app"

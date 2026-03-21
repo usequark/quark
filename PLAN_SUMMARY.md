@@ -12,8 +12,8 @@ Quark's `packages/ui` template was never built out properly. It contains one `Bu
 
 | Phase | Work | Effort | New Deps | Status |
 |-------|------|--------|----------|--------|
-| **0** | Expand UI template to ~12 primitives | 1 week | None | Planning |
-| **1** | Queue metrics + health checks in `@techstream/quark-core` | 3 days | None | Planning |
+| **0** | Expand UI template to ~12 primitives | 1 week | None | ✅ Complete |
+| **1** | Queue metrics + health checks in `@techstream/quark-core` | 3 days | None | ✅ Complete |
 | **2** | Scaffold `packages/admin/` via CLI — self-scaling CRUD UI | 2–3 weeks | None | Planning |
 | **3** | Alerting engine + adapters in `@techstream/quark-core` | 2 weeks | None | Planning |
 | **4** | `@techstream/quark-ai` — AI provider abstraction (published npm) | 2 weeks | `ai` SDK (optional peer) | Planning |

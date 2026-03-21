@@ -42,12 +42,21 @@ const PRE_COMMIT_MODE = process.argv.includes("--pre-commit");
  * Within each mapping, ALL files are synced unless excluded.
  */
 const SYNC_DIRS = [
-	{ src: "apps/web", dest: "base-project/apps/web" },
+	// localExcludes are checked in addition to global EXCLUDE_PATTERNS, but only for this mapping.
+	{
+		src: "apps/web",
+		dest: "base-project/apps/web",
+		// Admin routes are scaffolded conditionally via admin-routes template — exclude from base project
+		localExcludes: [/^apps\/web\/src\/app\/admin\//],
+	},
 	{ src: "apps/worker", dest: "worker" },
 	{ src: "packages/db", dest: "base-project/packages/db" },
 	{ src: "packages/config", dest: "config" },
 	{ src: "packages/ui", dest: "ui" },
 	{ src: "packages/jobs", dest: "jobs" },
+	{ src: "packages/admin", dest: "admin" },
+	// Admin routes live inside apps/web but are scaffolded separately (conditionally)
+	{ src: "apps/web/src/app/admin", dest: "admin-routes" },
 ];
 
 /**
@@ -160,6 +169,7 @@ const TRANSFORMS = {
 	"config/package.json": transformOptionalPackageJson,
 	"ui/package.json": transformOptionalPackageJson,
 	"jobs/package.json": transformOptionalPackageJson,
+	"admin/package.json": transformOptionalPackageJson,
 };
 
 function transformWebPackageJson(content) {
@@ -394,6 +404,7 @@ function syncDirectory(mapping) {
 		const srcRelativeToRoot = `${mapping.src}/${rel}`;
 
 		if (isExcluded(srcRelativeToRoot)) continue;
+		if (mapping.localExcludes?.some((p) => p.test(srcRelativeToRoot))) continue;
 
 		const destRelative = `${mapping.dest}/${rel}`;
 		if (isTemplateOnly(destRelative)) continue;
@@ -420,6 +431,7 @@ function syncDirectory(mapping) {
 		// If excluded, it's expected to NOT be in source — don't delete from template
 		// (template may have its own version of excluded files, like migrations)
 		if (isExcluded(srcRelativeToRoot)) continue;
+		if (mapping.localExcludes?.some((p) => p.test(srcRelativeToRoot))) continue;
 
 		const srcPath = path.join(srcDir, rel);
 		if (!fs.existsSync(srcPath)) {
@@ -457,7 +469,7 @@ function shouldSyncForPreCommit() {
 			encoding: "utf-8",
 		});
 		const sourceDirPattern =
-			/^(apps\/|packages\/(db|config|ui|jobs)\/|turbo\.json|docker-compose\.yml|pnpm-workspace\.yaml)/;
+			/^(apps\/|packages\/(db|config|ui|jobs|admin)\/|turbo\.json|docker-compose\.yml|pnpm-workspace\.yaml)/;
 		return staged.split("\n").some((f) => sourceDirPattern.test(f));
 	} catch {
 		return false;

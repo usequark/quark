@@ -551,6 +551,27 @@ program
 					await copyTemplate("worker", workerDir);
 					console.log(chalk.green(`    ✓ worker (paired with jobs)`));
 				}
+
+				// If admin selected, also scaffold admin routes into apps/web/src/app/admin
+				if (features.includes("admin")) {
+					const adminRoutesTemplatePath = path.join(
+						templatesDir,
+						"admin-routes",
+					);
+					if (await fs.pathExists(adminRoutesTemplatePath)) {
+						const adminRoutesDir = path.join(
+							targetDir,
+							"apps",
+							"web",
+							"src",
+							"app",
+							"admin",
+						);
+						await fs.ensureDir(adminRoutesDir);
+						await copyTemplate("admin-routes", adminRoutesDir);
+						console.log(chalk.green(`    ✓ admin routes (paired with admin)`));
+					}
+				}
 			}
 
 			// Step 7: Update all package.json dependencies to use correct scope
@@ -637,6 +658,27 @@ program
 						"",
 					);
 					await fs.writeFile(registerPath, content);
+				}
+			}
+
+			// Step 7e: Strip admin link from landing page when admin not selected
+			if (!features.includes("admin")) {
+				const homePath = path.join(
+					targetDir,
+					"apps",
+					"web",
+					"src",
+					"app",
+					"page.js",
+				);
+				if (await fs.pathExists(homePath)) {
+					let content = await fs.readFile(homePath, "utf-8");
+					// Remove the {/* @quark:start:admin */} ... {/* @quark:end:admin */} block
+					content = content.replace(
+						/[ \t]*\{\/\* @quark:start:admin \*\/\}[\s\S]*?\{\/\* @quark:end:admin \*\/\}\n?/,
+						"",
+					);
+					await fs.writeFile(homePath, content);
 				}
 			}
 

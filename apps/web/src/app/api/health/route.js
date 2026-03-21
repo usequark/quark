@@ -4,7 +4,12 @@
  * Times out after 5 seconds to prevent hanging.
  */
 
-import { createLogger, createStorage, pingRedis } from "@techstream/quark-core";
+import {
+	createLogger,
+	createStorage,
+	getRegisteredQueues,
+	pingRedis,
+} from "@techstream/quark-core";
 import { pingDatabase } from "@techstream/quark-db";
 import { NextResponse } from "next/server";
 
@@ -91,6 +96,39 @@ async function runHealthChecks() {
 	health.checks.storage = storageResult;
 	if (storageResult.status === "error") {
 		health.status = "degraded";
+	}
+
+	// Check queue depths (only when queues are registered in this process)
+	const registeredQueues = getRegisteredQueues();
+	if (registeredQueues.size > 0) {
+		const entries = [...registeredQueues.entries()];
+		const results = await Promise.allSettled(
+			entries.map(([, queue]) =>
+				Promise.all([
+					queue.getWaitingCount(),
+					queue.getActiveCount(),
+					queue.getFailedCount(),
+				]),
+			),
+		);
+
+		const queueChecks = {};
+		for (let i = 0; i < entries.length; i++) {
+			const [name] = entries[i];
+			const result = results[i];
+			if (result.status === "fulfilled") {
+				const [waiting, active, failed] = result.value;
+				queueChecks[name] = { status: "ok", waiting, active, failed };
+			} else {
+				const message =
+					process.env.NODE_ENV === "production"
+						? "Queue unavailable"
+						: result.reason?.message;
+				queueChecks[name] = { status: "error", message };
+				health.status = "degraded";
+			}
+		}
+		health.checks.queues = queueChecks;
 	}
 
 	return health;

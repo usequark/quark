@@ -348,5 +348,32 @@ export const appErrorsTotal = metrics.counter({
 	labelNames: ["type"],
 });
 
+// ─── Pre-registered Queue metrics ─────────────────────────────
+
+/** Number of jobs currently waiting in each queue (label: queue) */
+export const jobQueueDepth = metrics.gauge({
+	name: "job_queue_depth",
+	help: "Number of jobs currently waiting in each queue",
+	labelNames: ["queue"],
+});
+
+/**
+ * Total job processing attempts (labels: queue, status — completed | failed).
+ * For jobs with retries > 1, each attempt increments this counter independently.
+ */
+export const jobsProcessedTotal = metrics.counter({
+	name: "jobs_processed_total",
+	help: "Total number of job processing attempts (each retry counts separately)",
+	labelNames: ["queue", "status"],
+});
+
+/** Job processing duration in seconds (labels: queue, name) */
+export const jobDuration = metrics.histogram({
+	name: "job_duration_seconds",
+	help: "Job processing duration in seconds",
+	labelNames: ["queue", "name"],
+	buckets: [0.1, 0.5, 1, 2, 5, 10, 30, 60, 120, 300],
+});
+
 // Re-export classes for advanced usage
 export { Counter, Gauge, Histogram, MetricsRegistry };

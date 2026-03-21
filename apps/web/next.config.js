@@ -7,6 +7,7 @@ const nextConfig = {
 	// Support workspace package resolution (including @techstream/quark-db which uses
 	// the Prisma driver-adapter pattern — pure JS, no native engine binary)
 	transpilePackages: [
+		"@techstream/quark-admin",
 		"@techstream/quark-core",
 		"@techstream/quark-db",
 		"@techstream/quark-ui",

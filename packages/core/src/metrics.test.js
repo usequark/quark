@@ -9,6 +9,9 @@ import {
 	httpRequestDuration,
 	httpRequestsInFlight,
 	httpRequestsTotal,
+	jobDuration,
+	jobQueueDepth,
+	jobsProcessedTotal,
 	MetricsRegistry,
 	metrics,
 } from "./metrics.js";
@@ -338,6 +341,12 @@ describe("Metrics - Default instance", () => {
 		assert.ok(appErrorsTotal instanceof Counter);
 	});
 
+	test("pre-registered queue metrics exist", () => {
+		assert.ok(jobQueueDepth instanceof Gauge);
+		assert.ok(jobsProcessedTotal instanceof Counter);
+		assert.ok(jobDuration instanceof Histogram);
+	});
+
 	test("pre-registered metrics are in the default registry", () => {
 		assert.strictEqual(metrics.get("http_requests_total"), httpRequestsTotal);
 		assert.strictEqual(
@@ -349,5 +358,23 @@ describe("Metrics - Default instance", () => {
 			httpRequestsInFlight,
 		);
 		assert.strictEqual(metrics.get("app_errors_total"), appErrorsTotal);
+	});
+
+	test("pre-registered queue metrics are in the default registry", () => {
+		assert.strictEqual(metrics.get("job_queue_depth"), jobQueueDepth);
+		assert.strictEqual(metrics.get("jobs_processed_total"), jobsProcessedTotal);
+		assert.strictEqual(metrics.get("job_duration_seconds"), jobDuration);
+	});
+
+	test("queue metrics have correct label names", () => {
+		assert.deepStrictEqual(jobQueueDepth.labelNames, ["queue"]);
+		assert.deepStrictEqual(jobsProcessedTotal.labelNames, ["queue", "status"]);
+		assert.deepStrictEqual(jobDuration.labelNames, ["queue", "name"]);
+	});
+
+	test("jobDuration uses job-appropriate buckets", () => {
+		// Buckets should cover sub-second to 5-minute range
+		assert.ok(jobDuration.buckets.includes(0.1));
+		assert.ok(jobDuration.buckets.includes(300));
 	});
 });

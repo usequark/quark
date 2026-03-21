@@ -10,6 +10,7 @@ import {
 	createQueue,
 	createWorker,
 	getRedisUrl,
+	updateQueueDepths,
 } from "@techstream/quark-core";
 import { prisma } from "@techstream/quark-db";
 import { JOB_NAMES, JOB_QUEUES } from "@techstream/quark-jobs";
@@ -23,6 +24,7 @@ const isDevMode =
 // Store workers for graceful shutdown
 const workers = [];
 let devDisabledKeepAlive = null;
+let depthTimer = null;
 let isShuttingDown = false;
 
 // ============================================================================
@@ -276,6 +278,19 @@ async function startWorker() {
 			},
 		);
 
+		// Keep job_queue_depth gauge current for Prometheus scraping.
+		// Seed it immediately so the gauge isn't empty on the first scrape.
+		updateQueueDepths().catch((error) => {
+			logger.warn("Initial queue depth update failed", {
+				error: error.message,
+			});
+		});
+		depthTimer = setInterval(() => {
+			updateQueueDepths().catch((error) => {
+				logger.warn("Queue depth update failed", { error: error.message });
+			});
+		}, 30_000);
+
 		logger.info("Worker service ready");
 	} catch (error) {
 		if (isDevMode && isConnectionError(error)) {
@@ -307,6 +322,11 @@ async function shutdown(signal = "unknown") {
 	logger.info("Shutting down worker service", { signal });
 
 	try {
+		if (depthTimer) {
+			clearInterval(depthTimer);
+			depthTimer = null;
+		}
+
 		if (devDisabledKeepAlive) {
 			clearInterval(devDisabledKeepAlive);
 			devDisabledKeepAlive = null;

@@ -6,6 +6,7 @@
 import { Queue, QueueEvents, Worker } from "bullmq";
 import { ServiceError } from "../errors.js";
 import { createLogger } from "../logger.js";
+import { jobDuration, jobQueueDepth, jobsProcessedTotal } from "../metrics.js";
 import { resolveRedisConnection } from "../redis.js";
 
 const logger = createLogger("queue");
@@ -127,6 +128,16 @@ export const createWorker = (queueName, handler, options = {}) => {
 		});
 	});
 
+	worker.on("completed", (job) => {
+		jobsProcessedTotal.inc({ queue: queueName, status: "completed" });
+		if (job.processedOn != null && job.finishedOn != null) {
+			jobDuration.observe(
+				{ queue: queueName, name: job.name },
+				(job.finishedOn - job.processedOn) / 1000,
+			);
+		}
+	});
+
 	worker.on("failed", (job, error) => {
 		logger.error(`Job ${job?.id} in queue "${queueName}" failed`, {
 			jobId: job?.id,
@@ -134,6 +145,13 @@ export const createWorker = (queueName, handler, options = {}) => {
 			error: error.message,
 			attempts: job?.attemptsMade,
 		});
+		jobsProcessedTotal.inc({ queue: queueName, status: "failed" });
+		if (job?.processedOn != null && job?.finishedOn != null) {
+			jobDuration.observe(
+				{ queue: queueName, name: job.name },
+				(job.finishedOn - job.processedOn) / 1000,
+			);
+		}
 	});
 
 	return worker;
@@ -285,5 +303,30 @@ export const checkQueueHealth = async () => {
 			`Redis unavailable at ${redisAddr}${suffix}${summary}`,
 			503,
 		);
+	}
+};
+
+/**
+ * Returns all registered queue instances.
+ * @returns {Map<string, Queue>}
+ */
+export const getRegisteredQueues = () => queues;
+
+/**
+ * Refreshes the job_queue_depth gauge for all registered queues.
+ * Call periodically (e.g. every 30 s) in the worker to keep the gauge accurate.
+ * @returns {Promise<void>}
+ */
+export const updateQueueDepths = async () => {
+	for (const [name, queue] of queues) {
+		try {
+			const waiting = await queue.getWaitingCount();
+			jobQueueDepth.set({ queue: name }, waiting);
+		} catch (error) {
+			// Non-critical — depth gauge is best-effort
+			logger.warn(`Failed to update depth gauge for queue "${name}"`, {
+				error: error.message,
+			});
+		}
 	}
 };
