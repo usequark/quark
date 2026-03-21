@@ -147,7 +147,7 @@ describe("createWorker — metrics instrumentation", () => {
 
 	test("jobDuration records a histogram observation on completion", async () => {
 		const beforeCount =
-			jobDuration.values.get(`{queue="${TEST_QUEUE}",name="timed-job"}`)
+			jobDuration.values.get(`{name="timed-job",queue="${TEST_QUEUE}"}`)
 				?.count ?? 0;
 
 		const worker = createWorker(TEST_QUEUE, async () => ({ ok: true }), {
@@ -172,7 +172,7 @@ describe("createWorker — metrics instrumentation", () => {
 			});
 
 			const afterCount =
-				jobDuration.values.get(`{queue="${TEST_QUEUE}",name="timed-job"}`)
+				jobDuration.values.get(`{name="timed-job",queue="${TEST_QUEUE}"}`)
 					?.count ?? 0;
 			assert.ok(afterCount > beforeCount, "histogram count should have grown");
 		} finally {
