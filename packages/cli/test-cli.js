@@ -74,7 +74,9 @@ try {
 				const uiSrc = path.join(__dirname, "templates/ui/src");
 				return (
 					fs.existsSync(path.join(uiSrc, "button.js")) &&
-					fs.existsSync(path.join(uiSrc, "index.js"))
+					fs.existsSync(path.join(uiSrc, "index.js")) &&
+					fs.existsSync(path.join(uiSrc, "logo.js")) &&
+					fs.existsSync(path.join(uiSrc, "error-banner.js"))
 				);
 			},
 		},

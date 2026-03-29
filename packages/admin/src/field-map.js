@@ -36,7 +36,7 @@ const SCALAR_TYPE_TO_INPUT = {
 /**
  * Returns the HTML input type for a Prisma field.
  * @param {import('./types.js').Field} field
- * @returns {"text"|"email"|"number"|"checkbox"|"datetime-local"|"select"|"textarea"|"json"|"relation"|"hidden"}
+ * @returns {"text"|"email"|"number"|"checkbox"|"datetime-local"|"select"|"textarea"|"richtext"|"json"|"relation"|"hidden"}
  */
 export function getInputType(field) {
 	// IDs and system fields are never shown in forms
@@ -53,9 +53,9 @@ export function getInputType(field) {
 	// Email heuristic
 	if (field.name === "email" && field.type === "String") return "email";
 
-	// Long text fields → textarea
+	// Long text fields → rich text editor
 	if (field.type === "String" && LONG_TEXT_FIELD_NAMES.has(field.name))
-		return "textarea";
+		return "richtext";
 
 	// JSON → special textarea with formatting
 	if (field.type === "Json") return "json";
@@ -99,4 +99,17 @@ export function isSystemField(field) {
 		SYSTEM_FIELD_NAMES.has(field.name) &&
 		(field.hasDefaultValue || field.isReadOnly)
 	);
+}
+
+/**
+ * Returns true if the field is suitable for text search (Prisma `contains`).
+ * Includes String scalars and enums, excludes IDs, sensitive fields, and system fields.
+ * @param {import('./types.js').Field} field
+ */
+export function isSearchable(field) {
+	if (field.isId) return false;
+	if (SENSITIVE_FIELD_NAMES.has(field.name)) return false;
+	if (isSystemField(field)) return false;
+	if (field.kind === "enum") return true;
+	return field.kind === "scalar" && field.type === "String";
 }

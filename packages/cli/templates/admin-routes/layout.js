@@ -1,3 +1,4 @@
+import { adminConfig, getModels, modelToSlug } from "@techstream/quark-admin";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import Sidebar from "./_components/Sidebar";
@@ -14,10 +15,19 @@ export default async function AdminLayout({ children }) {
 		redirect("/");
 	}
 
+	const models = getModels().map((m) => ({
+		name: m.name,
+		slug: modelToSlug(m.name),
+		label: adminConfig.modelOverrides[m.name]?.label ?? m.name,
+		readOnly: !!adminConfig.modelOverrides[m.name]?.readOnly,
+	}));
+
 	return (
-		<div className="flex min-h-screen bg-white dark:bg-[#05070a]">
-			<Sidebar />
-			<main className="flex-1 p-6 overflow-auto">{children}</main>
+		<div className="flex h-screen bg-bg overflow-hidden">
+			<Sidebar title={adminConfig.title} models={models} />
+			<main className="flex-1 overflow-auto p-4 pt-14 sm:p-6 sm:pt-6">
+				{children}
+			</main>
 		</div>
 	);
 }

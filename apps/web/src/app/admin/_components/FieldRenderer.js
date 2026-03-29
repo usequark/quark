@@ -1,7 +1,14 @@
 "use client";
 
 import { getInputType } from "@techstream/quark-admin/field-map";
-import { Checkbox, Input, Label, Select, Textarea } from "@techstream/quark-ui";
+import {
+	Checkbox,
+	Input,
+	Label,
+	RichText,
+	Select,
+	Textarea,
+} from "@techstream/quark-ui";
 
 /**
  * Format a DateTime value for use in a datetime-local input.
@@ -70,6 +77,24 @@ export default function FieldRenderer({ field, value, disabled = false }) {
 						</option>
 					))}
 				</Select>
+			</div>
+		);
+	}
+
+	if (inputType === "richtext") {
+		return (
+			<div className="flex flex-col gap-1">
+				<Label htmlFor={id}>
+					{label}
+					{required && " *"}
+				</Label>
+				<RichText
+					id={id}
+					name={field.name}
+					defaultValue={value ?? ""}
+					disabled={disabled}
+					required={required}
+				/>
 			</div>
 		);
 	}

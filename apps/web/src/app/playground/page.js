@@ -21,7 +21,6 @@ import {
 	TableRow,
 	Textarea,
 	ThemeProvider,
-	ThemeToggle,
 	Toast,
 	useToast,
 } from "@techstream/quark-ui";
@@ -79,7 +78,7 @@ function NavItem({ id, label, index }) {
 	return (
 		<a
 			href={`#${id}`}
-			className="block font-mono uppercase text-[13px] tracking-[0.15em] text-[#9ca3af] dark:text-[#7c8fa0] hover:text-[#2563eb] dark:hover:text-[#377dff] transition-colors py-[3px]"
+			className="block font-mono uppercase text-[13px] tracking-[0.15em] text-[#9ca3af] dark:text-[#7c8fa0] hover:text-[#2563eb] dark:hover:text-[#377dff] transition-colors py-0.75"
 			style={{ textDecoration: "none" }}
 		>
 			{num} · {label}
@@ -131,14 +130,13 @@ function PlaygroundInner() {
 					{/* Left nav */}
 					<nav className="hidden lg:block w-32 shrink-0">
 						<div className="sticky top-8">
-							<div className="flex items-center justify-between mb-4">
+							<div className="mb-4">
 								<Link
 									href="/"
 									className="quark-home-link text-[13px] font-mono"
 								>
 									← home
 								</Link>
-								<ThemeToggle />
 							</div>
 							<p className="font-mono uppercase mb-3 text-[13px] tracking-[0.2em] text-[#9ca3af] dark:text-[#7c8fa0]">
 								index

@@ -5,21 +5,68 @@
 @custom-variant dark (&:is([data-theme="dark"] *));
 
 /*
- * CSS custom properties for the app shell.
- * Dark-first — light values activate via prefers-color-scheme or explicit toggle.
+ * ─── DESIGN TOKEN LAYER ─────────────────────────────────────────────────────
+ *
+ * All UI component colours, borders, and radii are driven from these CSS vars.
+ * To fully retheme a scaffolded project, override any token in this block —
+ * no component source files need to be edited.
+ *
+ * Dark-first: :root holds dark defaults.
+ * Light values activate via prefers-color-scheme or explicit [data-theme="light"].
  */
 :root {
-	--quark-page-bg: #05070a;
-	--quark-home-muted: #3a3a4a;
-	--quark-home-sep: #2a2a3a;
-	--quark-home-link-idle: #4a4a6a;
-	--quark-home-link-hover: #377dff;
-	--quark-health-text: #4a4a6a;
-	--quark-health-sep: #2a2a3a;
-	--quark-health-dot-idle: #2a2a3a;
-	--quark-grid-line: rgba(255, 255, 255, 0.05);
-	/* Logo dark arc — lighter in dark mode so it's visible on near-black backgrounds */
-	--quark-logo-dark-arc: #3d4860;
+	/* Primary brand colour */
+	--color-primary: #377dff;
+	--color-primary-hover: #5594ff;
+	--color-primary-muted: rgba(55, 125, 255, 0.1);
+
+	/* Surfaces */
+	--color-bg: #09101a;
+	--color-surface: #101827;
+	--color-surface-hover: #1c2642;
+
+	/* Borders */
+	--color-border: #263044;
+	--color-border-hover: rgba(55, 125, 255, 0.4);
+
+	/* Text */
+	--color-text: #e8eaf0;
+	--color-text-muted: #8d9ec0;
+	--color-text-faint: #7886a8;
+
+	/* Semantic: danger */
+	--color-danger: #ff4757;
+	--color-danger-hover: #ff6b78;
+	--color-danger-muted: rgba(255, 71, 87, 0.1);
+
+	/* Semantic: success */
+	--color-success: #34d399;
+	--color-success-muted: rgba(52, 211, 153, 0.1);
+
+	/* Semantic: warning */
+	--color-warning: #fbbf24;
+	--color-warning-muted: rgba(251, 191, 36, 0.1);
+
+	/* Semantic: info */
+	--color-info: #22d3ee;
+	--color-info-muted: rgba(34, 211, 238, 0.1);
+
+	/* Shape — sharp geometry by default (expert-designer spec) */
+	/* Projects that prefer rounded corners set --radius-default: 0.25rem */
+	--radius-default: 0px;
+
+	/* App shell */
+	--quark-page-bg: var(--color-bg);
+	--quark-grid-line: rgba(255, 255, 255, 0.07);
+	--quark-home-muted: #4e5870;
+	--quark-home-sep: #2c3450;
+	--quark-home-link-idle: #7886a8;
+	--quark-home-link-hover: var(--color-primary);
+	--quark-health-text: #7886a8;
+	--quark-health-sep: #2c3450;
+	--quark-health-dot-idle: #2c3450;
+	/* Logo dark arc — visible on lifted dark bg */
+	--quark-logo-dark-arc: #4e5e7a;
 	/* Toast SVG stroke colours */
 	--quark-toast-track: rgba(255, 255, 255, 0.2);
 	--quark-toast-progress: rgba(255, 255, 255, 0.85);
@@ -28,31 +75,124 @@
 @media (prefers-color-scheme: light) {
 	/* OS says light AND the user hasn't explicitly pinned dark via the toggle */
 	:root:not([data-theme="dark"]) {
-		--quark-page-bg: #f7f8fa;
+		--color-primary: #1d4ed8;
+		--color-primary-hover: #1a56db;
+		--color-primary-muted: rgba(29, 78, 216, 0.08);
+
+		--color-bg: #f7f8fa;
+		--color-surface: #ffffff;
+		--color-surface-hover: #f3f4f6;
+
+		--color-border: #e5e7eb;
+		--color-border-hover: #d1d5db;
+
+		--color-text: #111827;
+		--color-text-muted: #6b7280;
+		--color-text-faint: #9ca3af;
+
+		--color-danger: #dc2626;
+		--color-danger-hover: #b91c1c;
+		--color-danger-muted: rgba(220, 38, 38, 0.08);
+
+		--color-success: #059669;
+		--color-success-muted: rgba(5, 150, 105, 0.08);
+
+		--color-warning: #d97706;
+		--color-warning-muted: rgba(217, 119, 6, 0.08);
+
+		--color-info: #0891b2;
+		--color-info-muted: rgba(8, 145, 178, 0.08);
+
+		--quark-page-bg: var(--color-bg);
+		--quark-grid-line: rgba(0, 0, 0, 0.07);
 		--quark-home-muted: #9ca3af;
 		--quark-home-sep: #d1d5db;
 		--quark-home-link-idle: #6b7280;
-		--quark-home-link-hover: #1a56db;
 		--quark-health-text: #9ca3af;
 		--quark-health-sep: #d1d5db;
 		--quark-health-dot-idle: #d1d5db;
-		--quark-grid-line: rgba(0, 0, 0, 0.07);
 		--quark-logo-dark-arc: #2d3436;
 	}
 }
 
 /* User explicitly toggled to light (overrides OS dark preference) */
 :root[data-theme="light"] {
-	--quark-page-bg: #f7f8fa;
+	--color-primary: #1d4ed8;
+	--color-primary-hover: #1a56db;
+	--color-primary-muted: rgba(29, 78, 216, 0.08);
+
+	--color-bg: #f7f8fa;
+	--color-surface: #ffffff;
+	--color-surface-hover: #f3f4f6;
+
+	--color-border: #e5e7eb;
+	--color-border-hover: #d1d5db;
+
+	--color-text: #111827;
+	--color-text-muted: #6b7280;
+	--color-text-faint: #9ca3af;
+
+	--color-danger: #dc2626;
+	--color-danger-hover: #b91c1c;
+	--color-danger-muted: rgba(220, 38, 38, 0.08);
+
+	--color-success: #059669;
+	--color-success-muted: rgba(5, 150, 105, 0.08);
+
+	--color-warning: #d97706;
+	--color-warning-muted: rgba(217, 119, 6, 0.08);
+
+	--color-info: #0891b2;
+	--color-info-muted: rgba(8, 145, 178, 0.08);
+
+	--quark-page-bg: var(--color-bg);
+	--quark-grid-line: rgba(0, 0, 0, 0.07);
 	--quark-home-muted: #9ca3af;
 	--quark-home-sep: #d1d5db;
 	--quark-home-link-idle: #6b7280;
-	--quark-home-link-hover: #1a56db;
 	--quark-health-text: #9ca3af;
 	--quark-health-sep: #d1d5db;
 	--quark-health-dot-idle: #d1d5db;
-	--quark-grid-line: rgba(0, 0, 0, 0.07);
 	--quark-logo-dark-arc: #2d3436;
+}
+
+/*
+ * ─── TAILWIND THEME BRIDGE ───────────────────────────────────────────────────
+ *
+ * Register CSS vars as first-class Tailwind v4 utilities.
+ * Components use bg-primary, text-text-muted, border-border, etc.
+ * No arbitrary [#hex] values needed inside component source files.
+ */
+@theme inline {
+	--color-primary: var(--color-primary);
+	--color-primary-hover: var(--color-primary-hover);
+	--color-primary-muted: var(--color-primary-muted);
+
+	--color-bg: var(--color-bg);
+	--color-surface: var(--color-surface);
+	--color-surface-hover: var(--color-surface-hover);
+
+	--color-border: var(--color-border);
+	--color-border-hover: var(--color-border-hover);
+
+	--color-text: var(--color-text);
+	--color-text-muted: var(--color-text-muted);
+	--color-text-faint: var(--color-text-faint);
+
+	--color-danger: var(--color-danger);
+	--color-danger-hover: var(--color-danger-hover);
+	--color-danger-muted: var(--color-danger-muted);
+
+	--color-success: var(--color-success);
+	--color-success-muted: var(--color-success-muted);
+
+	--color-warning: var(--color-warning);
+	--color-warning-muted: var(--color-warning-muted);
+
+	--color-info: var(--color-info);
+	--color-info-muted: var(--color-info-muted);
+
+	--radius-default: var(--radius-default);
 }
 
 /* Theme toggle pill — CSS-driven so the toggle reflects data-theme
@@ -65,8 +205,8 @@
 	--toggle-knob-x: translateX(0);
 }
 :root[data-theme="dark"] {
-	--toggle-track-bg: #0d1420;
-	--toggle-track-border: #1e2d45;
+	--toggle-track-bg: #131d30;
+	--toggle-track-border: #253650;
 	--toggle-knob-bg: #377dff;
 	--toggle-knob-x: translateX(14px);
 }
@@ -151,6 +291,73 @@ dialog {
 	border-radius: 2px;
 }
 
+.quark-home-external-icon {
+	display: inline-block;
+	width: 0.65em;
+	height: 0.65em;
+	margin-left: 3px;
+	vertical-align: 0.05em;
+	opacity: 0.6;
+	transition: opacity 0.15s ease;
+}
+
+.quark-home-link:hover .quark-home-external-icon {
+	opacity: 1;
+}
+
+/* Floating theme toggle — top-right corner, always visible */
+.floating-theme-toggle {
+	position: fixed;
+	top: 1.5rem;
+	right: 1.5rem;
+	z-index: 50;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 2.5rem;
+	height: 2.5rem;
+	background-color: var(--color-surface);
+	border: 1px solid var(--color-border);
+	border-radius: 50%;
+	cursor: pointer;
+	color: var(--color-text-muted);
+	transition:
+		background-color 0.2s ease,
+		border-color 0.2s ease,
+		transform 0.15s ease;
+	font-size: 1.25rem;
+	line-height: 1;
+	padding: 0;
+}
+
+.floating-theme-toggle:hover {
+	background-color: var(--color-surface-hover);
+	border-color: var(--color-border-hover);
+	color: var(--color-text);
+	transform: scale(1.08);
+}
+
+.floating-theme-toggle:active {
+	transform: scale(0.95);
+}
+
+.floating-theme-toggle:focus-visible {
+	outline: 2px solid var(--color-primary);
+	outline-offset: 2px;
+}
+
+.floating-theme-toggle-icon {
+	display: block;
+	width: 1rem;
+	height: 1rem;
+	transition: transform 0.2s ease;
+}
+
+/* Subtle rotation on toggle */
+.floating-theme-toggle:active .floating-theme-toggle-icon {
+	transform: rotate(180deg);
+}
+
 @keyframes quark-dialog-in {
 	from {
 		opacity: 0;
@@ -170,5 +377,70 @@ dialog {
 	to {
 		opacity: 0;
 		transform: scale(0.95) translateY(-8px);
+	}
+}
+
+/*
+ * ─── AUTH LAYOUT ─────────────────────────────────────────────────────────────
+ *
+ * Split-panel auth layout: authority branding panel (left) + form panel (right).
+ * On mobile the authority panel collapses — only the logo bar is shown.
+ */
+@keyframes quark-auth-enter {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+.quark-auth-layout {
+	display: grid;
+	grid-template-columns: 1fr;
+	min-height: 100dvh;
+}
+
+@media (min-width: 768px) {
+	.quark-auth-layout {
+		grid-template-columns: 2fr 3fr;
+	}
+}
+
+.quark-auth-panel {
+	animation: quark-auth-enter 300ms linear both;
+}
+
+.quark-auth-brand {
+	display: none;
+	background-color: var(--color-bg);
+	background-image:
+		linear-gradient(var(--quark-grid-line) 1px, transparent 1px),
+		linear-gradient(90deg, var(--quark-grid-line) 1px, transparent 1px);
+	background-size: 40px 40px;
+	border-right: 1px solid var(--color-border);
+}
+
+@media (min-width: 768px) {
+	.quark-auth-brand {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		padding: 3rem;
+	}
+}
+
+.quark-auth-form {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	padding: 2rem 1.5rem;
+	background-color: var(--color-surface);
+}
+
+@media (min-width: 768px) {
+	.quark-auth-form {
+		padding: 3rem;
 	}
 }

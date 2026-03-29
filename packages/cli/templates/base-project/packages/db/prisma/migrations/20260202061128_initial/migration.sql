@@ -1,6 +1,9 @@
 -- CreateEnum
 CREATE TYPE "JobStatus" AS ENUM ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'FAILED', 'CANCELLED');
 
+-- CreateEnum
+CREATE TYPE "UserRole" AS ENUM ('admin', 'editor', 'viewer');
+
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
@@ -9,7 +12,7 @@ CREATE TABLE "User" (
     "name" TEXT,
     "password" TEXT,
     "image" TEXT,
-    "role" TEXT NOT NULL DEFAULT 'viewer',
+    "role" "UserRole" NOT NULL DEFAULT 'viewer',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 

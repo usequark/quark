@@ -25,6 +25,8 @@ export * from "./mail.js";
 export * from "./metrics.js";
 // Multipart parsing exports
 export * from "./multipart.js";
+// Pagination exports
+export * from "./pagination.js";
 // Query builder exports
 export * from "./query-builder.js";
 // Queue exports

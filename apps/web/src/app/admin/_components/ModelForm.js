@@ -52,13 +52,13 @@ export default function ModelForm({ model, slug, record, readOnly = false }) {
 				))}
 
 				{!readOnly && (
-					<div className="flex items-center gap-3 pt-4 border-t border-gray-200 dark:border-[#1e2535]">
+					<div className="flex items-center gap-3 pt-4 border-t border-border">
 						<Button type="submit" disabled={isPending}>
 							{isPending ? "Saving…" : isEdit ? "Save changes" : "Create"}
 						</Button>
 						<a
 							href={`/admin/${slug}`}
-							className="text-sm text-gray-500 dark:text-[#4a4a6a] hover:text-gray-700 dark:hover:text-[#e0e0e0]"
+							className="text-sm text-text-faint hover:text-text"
 						>
 							Cancel
 						</a>
@@ -66,18 +66,16 @@ export default function ModelForm({ model, slug, record, readOnly = false }) {
 				)}
 
 				{state?.error && (
-					<p className="text-sm text-red-600 mt-2">{state.error}</p>
+					<p className="text-sm text-danger mt-2">{state.error}</p>
 				)}
 			</form>
 
 			{isEdit && !readOnly && model.fields.some((f) => f.isId) && (
 				<form
 					action={adminDelete.bind(null, slug, record.id)}
-					className="mt-8 pt-6 border-t border-gray-200 dark:border-[#1e2535]"
+					className="mt-8 pt-6 border-t border-border"
 				>
-					<p className="text-sm text-gray-500 dark:text-[#4a4a6a] mb-3">
-						Danger zone
-					</p>
+					<p className="text-sm text-text-faint mb-3">Danger zone</p>
 					<Button
 						type="submit"
 						variant="danger"

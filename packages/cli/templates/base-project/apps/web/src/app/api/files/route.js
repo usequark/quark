@@ -8,19 +8,14 @@ import {
 	createStorage,
 	generateStorageKey,
 	parseMultipart,
+	parsePaginationQuery,
 	validateFile,
 	withCsrfProtection,
 } from "@techstream/quark-core";
 import { file } from "@techstream/quark-db";
 import { NextResponse } from "next/server";
-import { z } from "zod";
 import { requireAuth } from "@/lib/auth-middleware";
 import { handleError } from "../error-handler";
-
-const paginationSchema = z.object({
-	page: z.coerce.number().int().min(1).default(1),
-	limit: z.coerce.number().int().min(1).max(100).default(50),
-});
 
 /**
  * POST /api/files
@@ -106,16 +101,8 @@ export async function GET(request) {
 		const session = await requireAuth();
 
 		const { searchParams } = new URL(request.url);
-		const { page, limit } = paginationSchema.parse({
-			page: searchParams.get("page") ?? undefined,
-			limit: searchParams.get("limit") ?? undefined,
-		});
-
-		const skip = (page - 1) * limit;
-		const files = await file.findByUploader(session.user.id, {
-			skip,
-			take: limit,
-		});
+		const { skip, take } = parsePaginationQuery(searchParams);
+		const files = await file.findByUploader(session.user.id, { skip, take });
 
 		const mapped = files.map((f) => ({
 			id: f.id,

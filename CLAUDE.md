@@ -63,7 +63,7 @@ quark/
 
 The `packages/ui` directory contains Tailwind-only, dependency-free Server Component-safe primitives.
 
-Available exports: `Button`, `Input`, `Label`, `Textarea`, `Select`, `Checkbox`, `Badge`, `Card`/`CardHeader`/`CardTitle`/`CardContent`/`CardFooter`, `Table`/`TableHeader`/`TableBody`/`TableRow`/`TableHead`/`TableCell`, `Skeleton`, `Dialog` (client), `Toast`/`useToast` (client).
+Available exports: `Button`, `Input`, `Label`, `Textarea`, `Select`, `Checkbox`, `Badge`, `Card`/`CardHeader`/`CardTitle`/`CardContent`/`CardFooter`, `Table`/`TableHeader`/`TableBody`/`TableRow`/`TableHead`/`TableCell`, `Skeleton`, `QuarkLogo` (server), `Dialog` (client), `Toast`/`useToast` (client), `ThemeProvider`/`useTheme` (client).
 
 All components accept `className` for Tailwind overrides. Import from `@techstream/quark-ui` (monorepo) or `@<scope>/ui` (scaffolded projects) — never deep-import (`@/components/ui/*`).
 

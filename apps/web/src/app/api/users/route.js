@@ -1,14 +1,23 @@
-import { validateBody, withCsrfProtection } from "@techstream/quark-core";
+import {
+	parsePaginationQuery,
+	validateBody,
+	withCsrfProtection,
+} from "@techstream/quark-core";
 import { user, userCreateSchema } from "@techstream/quark-db";
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth-middleware";
 import { handleError } from "../error-handler";
 
-export async function GET(_request) {
+export async function GET(request) {
 	try {
 		await requireRole("admin");
-		const users = await user.findAll();
-		return NextResponse.json(users);
+		const { searchParams } = new URL(request.url);
+		const { skip, take, meta } = parsePaginationQuery(searchParams);
+		const [users, total] = await Promise.all([
+			user.findAll({ skip, take }),
+			user.count(),
+		]);
+		return NextResponse.json({ data: users, pagination: meta(total) });
 	} catch (error) {
 		return handleError(error);
 	}

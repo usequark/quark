@@ -35,7 +35,15 @@ Quark takes a hybrid approach:
 │  - PrismaClient instantiation                       │
 │  - Query builders for your domain                   │
 ├─────────────────────────────────────────────────────┤
+│  @techstream/quark-admin (npmjs.org, optional)      │
+│  - Prisma DMMF introspection (runtime, no codegen)  │
+│  - Auto-generated CRUD admin UI at /admin           │
+│  - Field-type → input mapping, RBAC enforcement     │
+├─────────────────────────────────────────────────────┤
 │  @yourapp/ui (Local - Optional)                     │
+│  - Full component library with dark mode support    │
+│  - ThemeProvider, QuarkLogo, Badge, Button, Card,   │
+│    Table, Dialog, Toast, Input, Select, Skeleton…   │
 │  @yourapp/jobs (Local - Optional)                   │
 │  @yourapp/config (Local - Optional)                 │
 ├─────────────────────────────────────────────────────┤
@@ -610,7 +618,202 @@ As your app grows:
 2. **Months 3-6**: Start ejecting for domain needs
 3. **Months 6+**: Contribute improvements back to core
 
+---
+
+## Design System & Rebranding
+
+Quark ships with a complete CSS token layer. Every colour, radius, and surface value is defined in one place — change it once and the entire UI updates.
+
+### Token Source of Truth
+
+All design tokens live in `apps/web/src/app/globals.css` inside the `@theme inline` block:
+
+```css
+@theme inline {
+  /* Brand colour — swap this one value to change every button, link, and accent */
+  --color-primary: oklch(0.6 0.15 250);
+  --color-primary-hover: oklch(0.55 0.15 250);
+
+  /* Surfaces */
+  --color-bg: oklch(0.98 0 0);
+  --color-surface: oklch(1 0 0);
+  --color-surface-hover: oklch(0.96 0 0);
+
+  /* Borders */
+  --color-border: oklch(0.88 0 0);
+  --color-border-hover: oklch(0.78 0 0);
+
+  /* Text */
+  --color-text: oklch(0.15 0 0);
+  --color-text-muted: oklch(0.45 0 0);
+  --color-text-faint: oklch(0.6 0 0);
+
+  /* Semantic */
+  --color-danger: oklch(0.6 0.18 25);
+  --color-success: oklch(0.55 0.15 145);
+  --color-warning: oklch(0.65 0.15 80);
+  --color-info: oklch(0.6 0.12 230);
+
+  /* Geometry — 0px for sharp, 0.25rem for rounded, 0.5rem for pill */
+  --radius-default: 0px;
+}
+```
+
+Dark mode overrides follow immediately under `[data-theme="dark"]`. To retheme a scaffolded project, edit **only** this block — no component files need touching.
+
+### Geometry
+
+`--radius-default` controls global border-radius for cards, inputs, buttons, and badges:
+
+| Value | Effect |
+|---|---|
+| `0px` | Sharp, editorial (default) |
+| `0.25rem` | Subtle rounding |
+| `0.5rem` | Modern/rounded |
+| `9999px` | Full pill |
+
+Components reference this via Tailwind's `rounded-[--radius-default]` utility.
+
+### Dark Mode
+
+Quark uses **data-attribute dark mode**, not Tailwind's `dark:` class prefix:
+
+```css
+/* In globals.css */
+@custom-variant dark (&:is([data-theme="dark"] *));
+```
+
+The `ThemeProvider` component (from `@techstream/quark-ui`) sets `data-theme="dark"` on the `<html>` element. This means:
+
+- ✅ `dark:bg-surface` works in component files
+- ✅ CSS variables automatically switch via `[data-theme="dark"]` overrides
+- ❌ The system `prefers-color-scheme` media query is **not** used — theme is always explicit
+
+### Template Sync
+
+The scaffold templates in `packages/cli/templates/` are generated from monorepo source. After editing `globals.css` or any UI file, run:
+
+```bash
+pnpm --filter @techstream/quark-create-app sync-templates
+```
+
+CI checks for drift on every push and fails if templates are stale.
+
+### Rebranding Checklist
+
+To rebrand a scaffolded project:
+
+1. Edit `--color-primary` (and `--color-primary-hover`) in `globals.css`
+2. Edit `--radius-default` for the geometry feel
+3. Update dark-mode overrides in `[data-theme="dark"]` if needed
+4. Replace `QuarkLogo` with your own logo component
+5. Update brand copy in the auth page brand panels (`auth/signin/page.js`, `auth/register/page.js`)
+
 Core evolves based on real usage patterns!
+
+---
+
+## Admin UI (`@techstream/quark-admin`)
+
+An optional published package that auto-generates a complete CRUD admin interface from your Prisma schema using DMMF introspection. No generated code — the admin UI reflects your live schema at runtime.
+
+### What it does
+
+- Reads all Prisma models and fields via `@prisma/client/runtime/library` DMMF
+- Renders a collapsible sidebar of all model names
+- Generates list/detail/create/edit views for every model automatically
+- Maps Prisma field types to appropriate form inputs via `field-map.js`: strings → text, booleans → checkbox, enums → select, DateTime → datetime-local, numbers → number
+- Filters fields by `isListVisible()`, `isEditable()` so internal IDs and timestamps display correctly but aren't editable in forms
+- Enforces `role: "admin"` via the RBAC middleware — every admin route requires an authenticated admin session
+
+### Routes
+
+| Path | Purpose |
+|---|---|
+| `/admin` | Dashboard — lists all models with record counts |
+| `/admin/[model]` | List view with all records |
+| `/admin/[model]/new` | Create form |
+| `/admin/[model]/[id]` | Edit/view form with delete |
+
+### Key components
+
+```
+apps/web/src/app/admin/
+├── layout.js              # Admin shell: sidebar + auth guard
+├── page.js                # Dashboard
+├── [model]/page.js        # List view → ModelTable
+├── [model]/new/page.js    # Create form → ModelForm
+├── [model]/[id]/page.js   # Edit/view → ModelForm
+└── _components/
+    ├── Sidebar.js          # Model navigation (from DMMF)
+    ├── ModelTable.js       # Generic record list
+    ├── ModelForm.js        # Generic create/edit form
+    ├── FieldRenderer.js    # Field type → input mapping
+    └── AdminThemeToggle.js # Compact theme toggle for admin sidebar
+```
+
+### Enabling the admin
+
+Select it during scaffolding (`--features ui,jobs,admin`) or via the interactive CLI prompt. The templates (admin routes + `@techstream/quark-admin` dependency) are copied into your project at scaffold time.
+
+---
+
+## Theme System
+
+Quark ships a **dark-mode-first** theme system built entirely on CSS custom properties and the HTML `data-theme` attribute — no class-flipping, no SSR flicker.
+
+### How it works
+
+1. **`data-theme` attribute** on `<html>` is the single source of truth — `"dark"` or `"light"`.
+2. **Tailwind uses** `@custom-variant dark (&:is([data-theme="dark"] *))` so `dark:` utility classes react to the attribute, not a `dark` class.
+3. **FOUC prevention**: a small blocking `<script>` in `layout.js` reads `localStorage.getItem("quark-theme")` and `prefers-color-scheme` synchronously before the first paint, writing `data-theme` before any React hydration.
+4. **CSS custom properties**: all theme-sensitive colors (`--quark-page-bg`, `--quark-text-primary`, `--quark-border`, etc.) are defined dark-first in `:root` with light overrides in `@media (prefers-color-scheme: light)` and `[data-theme="light"]`.
+
+### Theme API (from `@scope/ui`)
+
+| Export | Type | Purpose |
+|---|---|---|
+| `ThemeProvider` | Client component | React context; provides `theme` and `setTheme` to a subtree |
+| `useTheme()` | Hook | Returns `{ theme, setTheme }` from nearest `ThemeProvider` |
+| `THEME_ATTR` | Constant | HTML attribute name (`"data-theme"`) |
+| `THEME_STORAGE_KEY` | Constant | localStorage key (`"quark-theme"`) |
+| `THEME_CHANGE_EVENT` | Constant | Custom event name for cross-component sync |
+
+### Usage
+
+```jsx
+// Wrap your app (or a subtree) in ThemeProvider:
+import { ThemeProvider } from "@scope/ui";
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      {/* FOUC prevention script goes here (auto-added by Quark) */}
+      <body>
+        <ThemeProvider defaultTheme="dark">
+          {children}
+        </ThemeProvider>
+      </body>
+    </html>
+  );
+}
+
+// Read/set theme in a client component:
+import { useTheme } from "@scope/ui";
+
+function ThemeToggle() {
+  const { theme, setTheme } = useTheme();
+  return (
+    <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+      {theme === "dark" ? "Light" : "Dark"}
+    </button>
+  );
+}
+```
+
+### Design principle
+
+`ThemeProvider` is `"use client"` but all other components (`Card`, `Badge`, `Table`, `QuarkLogo`, etc.) are pure Server Components — theme adaptation happens via CSS variables, not JS. The `QuarkLogo` component specifically uses `var(--quark-logo-dark-arc)` to ensure the dark arc stroke remains visible against both light and dark backgrounds.
 
 ## Resources
 

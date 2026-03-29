@@ -11,6 +11,7 @@ Entry point: [../README.md](../README.md)
 | [SECURITY.md](./SECURITY.md) | Security features, checklists, incident response |
 | [QUARK_USAGE.md](./QUARK_USAGE.md) | Full usage guide (dev, CLI, updates) |
 | [MAINTAINABILITY.md](./MAINTAINABILITY.md) | Code style, testing, dependency management |
+| [TESTING_INFRASTRUCTURE.md](./TESTING_INFRASTRUCTURE.md) | Testing frameworks, organization, CI/CD, utilities, best practices |
 | [ROADMAP.md](./ROADMAP.md) | Long-term vision and expansion plans |
 | [IMPLEMENTATION_CHECKLIST.md](./IMPLEMENTATION_CHECKLIST.md) | Task tracker with progress percentages |
 | [AI_TOOLS.md](./AI_TOOLS.md) | AI coding tools guide (Claude Code, Cursor, Copilot) |

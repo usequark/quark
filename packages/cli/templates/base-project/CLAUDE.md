@@ -91,8 +91,10 @@ All UI components come from `@__QUARK_SCOPE__/ui`. They are Tailwind-only, depen
 - `Card` / `CardHeader` / `CardTitle` / `CardContent` / `CardFooter` — content containers
 - `Table` / `TableHeader` / `TableBody` / `TableRow` / `TableHead` / `TableCell` — data tables
 - `Skeleton` — loading placeholders
+- `QuarkLogo` *(server)* — inline SVG logo, dark-mode aware
 - `Dialog` *(client)* — modal dialogs
 - `Toast` / `useToast` *(client)* — notifications
+- `ThemeProvider` / `useTheme` *(client)* — dark/light mode context
 
 **Rules:**
 - All styling via Tailwind CSS utility classes. No inline styles, no CSS modules.

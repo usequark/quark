@@ -62,6 +62,9 @@ export const user = {
 			where: { id },
 		});
 	},
+	count: () => {
+		return prisma.user.count();
+	},
 };
 
 // Note: Job tracking is handled by BullMQ's built-in Redis persistence.

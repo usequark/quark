@@ -1,22 +1,21 @@
 import React from "react";
 
 const wrapperCls =
-	"w-full overflow-auto rounded border border-gray-200 dark:border-[#1e2535] bg-white dark:bg-[#0d1117]";
+	"w-full overflow-auto rounded-[--radius-default] border border-border bg-surface";
 
 const tableCls = "w-full caption-bottom text-sm";
 
-const headerCls = "border-b bg-gray-50 dark:bg-[#090d14] dark:border-[#1e2535]";
+const headerCls = "border-b border-border bg-surface-hover";
 
 const bodyCls = "[&_tr:last-child]:border-0";
 
 const rowCls =
-	"border-b border-gray-100 dark:border-[#1e2535]/50 transition-colors hover:bg-gray-50/80 dark:hover:bg-[#1e2535]/40 active:bg-gray-100 dark:active:bg-transparent";
+	"border-b border-border/50 transition-colors hover:bg-surface-hover/60 active:bg-surface-hover/40";
 
 const headCls =
-	"h-11 px-3 text-left align-middle font-medium text-gray-600 dark:text-[#4a4a6a] dark:font-mono dark:text-xs dark:uppercase dark:tracking-widest";
+	"h-11 px-3 text-left align-middle font-medium text-text-faint dark:font-mono dark:text-xs dark:uppercase dark:tracking-widest";
 
-const cellCls =
-	"p-3 align-middle text-gray-700 dark:text-[#e0e0e0] dark:font-mono dark:text-sm";
+const cellCls = "p-3 align-middle text-text dark:font-mono dark:text-sm";
 
 export function Table({ className = "", ...props }) {
 	return React.createElement(

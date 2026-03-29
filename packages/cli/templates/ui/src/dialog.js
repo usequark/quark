@@ -19,17 +19,17 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
  */
 
 const dialogCls =
-	"backdrop:bg-black/50 dark:backdrop:bg-black/70 rounded border border-gray-200 dark:border-[#1e2535] bg-white dark:bg-[#0d1117] p-0 shadow-2xl w-full max-w-lg";
+	"backdrop:bg-black/60 border border-border bg-surface p-0 w-full max-w-lg rounded-[--radius-default]";
 
 const headerCls =
-	"flex items-center justify-between border-b border-gray-200 dark:border-[#1e2535] px-5 py-4";
+	"flex items-center justify-between border-b border-border px-5 py-4";
 
-const titleCls = "text-base font-semibold text-gray-900 dark:text-[#e0e0e0]";
+const titleCls = "text-base font-bold tracking-tight text-text";
 
 const closeCls =
-	"flex h-8 w-8 cursor-pointer items-center justify-center rounded-sm text-lg text-gray-400 dark:text-[#4a4a6a] transition-colors hover:bg-gray-100 dark:hover:bg-[#1e2535] hover:text-gray-700 dark:hover:text-[#e0e0e0] active:bg-gray-200 dark:active:bg-[#1e2535] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 dark:focus-visible:ring-[#377dff]/40";
+	"flex h-8 w-8 cursor-pointer items-center justify-center text-lg text-text-faint transition-opacity duration-200 linear hover:text-text hover:bg-surface-hover active:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-hover rounded-[--radius-default]";
 
-const bodyCls = "px-5 py-4 text-gray-700 dark:text-[#6b7a99]";
+const bodyCls = "px-5 py-4 text-text-muted";
 
 export function Dialog({ open, onClose, title, children, className = "" }) {
 	const ref = useRef(null);

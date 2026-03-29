@@ -20,11 +20,11 @@ export default async function NewRecordPage({ params }) {
 			<div className="mb-6">
 				<a
 					href={`/admin/${slug}`}
-					className="text-sm text-gray-500 dark:text-[#4a4a6a] hover:text-gray-700 dark:hover:text-[#e0e0e0]"
+					className="text-sm text-text-faint hover:text-text"
 				>
 					← {model.name}
 				</a>
-				<h1 className="text-2xl font-bold mt-1 dark:text-[#e0e0e0]">
+				<h1 className="text-2xl font-bold mt-1 text-text">
 					Create {model.name}
 				</h1>
 			</div>

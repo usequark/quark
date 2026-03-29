@@ -42,7 +42,8 @@ Components from `@__QUARK_SCOPE__/ui` — Tailwind-only, Server Component safe:
 `Button`, `Input`, `Label`, `Textarea`, `Select`, `Checkbox`, `Badge`,
 `Card`/`CardHeader`/`CardTitle`/`CardContent`/`CardFooter`,
 `Table`/`TableHeader`/`TableBody`/`TableRow`/`TableHead`/`TableCell`,
-`Skeleton`, `Dialog` *(client)*, `Toast`/`useToast` *(client)*.
+`Skeleton`, `QuarkLogo` *(server)*, `Dialog` *(client)*, `Toast`/`useToast` *(client)*,
+`ThemeProvider`/`useTheme` *(client)* — dark/light mode context.
 
 All accept `className`. Never import from `@/components/ui/*`.
 

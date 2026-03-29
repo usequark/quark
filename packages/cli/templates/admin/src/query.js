@@ -9,15 +9,22 @@
  * Fetch paginated records for a model.
  * @param {import('@prisma/client').PrismaClient} prisma
  * @param {string} model - Prisma model name (e.g. "User", "AuditLog")
- * @param {{ skip?: number, take?: number, orderBy?: object }} [options]
+ * @param {{ skip?: number, take?: number, orderBy?: object, where?: object }} [options]
  * @returns {Promise<{ records: object[], total: number, skip: number, take: number }>}
  */
 export async function findMany(prisma, model, options = {}) {
-	const { skip = 0, take = 25, orderBy = { createdAt: "desc" } } = options;
+	const {
+		skip = 0,
+		take = 25,
+		orderBy = { createdAt: "desc" },
+		where,
+	} = options;
 	const delegate = getDelegate(prisma, model);
+	const args = { skip, take, orderBy };
+	if (where) args.where = where;
 	const [records, total] = await Promise.all([
-		delegate.findMany({ skip, take, orderBy }),
-		delegate.count(),
+		delegate.findMany(args),
+		delegate.count(where ? { where } : undefined),
 	]);
 	return { records, total, skip, take };
 }

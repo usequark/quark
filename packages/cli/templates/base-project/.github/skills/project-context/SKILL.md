@@ -42,7 +42,7 @@ __QUARK_OPTIONAL_PACKAGES__├── docker-compose.yml
 | Queue | BullMQ + Redis 7 |
 | Auth | NextAuth v5 |
 | Validation | Zod 4 |
-| UI | Tailwind CSS + Shadcn |
+| UI | Tailwind CSS + `@__QUARK_SCOPE__/ui` components |
 | Email | Nodemailer |
 | Linting | Biome |
 | Testing | Node.js built-in test runner |

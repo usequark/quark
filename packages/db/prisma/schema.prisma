@@ -13,6 +13,12 @@ datasource db {
   provider = "postgresql"
 }
 
+enum UserRole {
+  admin
+  editor
+  viewer
+}
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -20,7 +26,7 @@ model User {
   name          String?
   password      String?
   image         String?
-  role          String    @default("viewer")
+  role          UserRole  @default(viewer)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

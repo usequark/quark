@@ -2,21 +2,19 @@
 
 import {
 	Button,
-	Card,
-	CardContent,
-	CardFooter,
-	CardHeader,
-	CardTitle,
+	ErrorBanner,
 	Input,
 	Label,
 	QuarkLogo,
 } from "@techstream/quark-ui";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Suspense, useEffect, useState } from "react";
 
 const ERROR_MESSAGES = {
 	CredentialsSignin: "Invalid email or password.",
+	CallbackRouteError: "Sign in failed. Check your connection and try again.",
 	OAuthAccountNotLinked:
 		"This email is already registered with a different provider.",
 	OAuthSignin: "Could not start the sign-in flow. Try again.",
@@ -40,6 +38,7 @@ function SignInForm() {
 
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
+	const [rememberMe, setRememberMe] = useState(false);
 	const [loading, setLoading] = useState(false);
 	const [providers, setProviders] = useState(null);
 	const [error, setError] = useState(
@@ -59,20 +58,27 @@ function SignInForm() {
 		setLoading(true);
 
 		const result = await signIn("credentials", {
-			email,
+			email: email.trim(),
 			password,
 			callbackUrl,
 			redirect: false,
 		});
 
 		if (result?.error) {
-			setError(ERROR_MESSAGES.CredentialsSignin);
+			setError(ERROR_MESSAGES[result.error] ?? ERROR_MESSAGES.Default);
+			setLoading(false);
+			return;
+		}
+
+		// Guard against undefined result (can happen with server-side auth errors in v5)
+		if (!result?.url) {
+			setError(ERROR_MESSAGES.Default);
 			setLoading(false);
 			return;
 		}
 
 		// Successful — use the server-validated URL from NextAuth (safe against open redirects)
-		window.location.href = result?.url || "/";
+		window.location.href = result.url;
 	}
 
 	function handleOAuth(provider) {
@@ -80,109 +86,147 @@ function SignInForm() {
 	}
 
 	return (
-		<main className="quark-page-grid min-h-screen flex items-center justify-center px-4">
-			<div className="w-full max-w-sm flex flex-col items-center gap-6">
-				<QuarkLogo size={48} />
-				<Card className="w-full">
-					<CardHeader>
-						<CardTitle>Sign in</CardTitle>
-					</CardHeader>
-
-					<CardContent>
-						{error && (
-							<div className="mb-4 rounded border border-red-200 dark:border-[#ff4757]/30 bg-red-50 dark:bg-[#ff4757]/10 px-3 py-2 text-sm text-red-700 dark:text-[#ff4757]">
-								{error}
-							</div>
-						)}
-
-						<form onSubmit={handleSubmit} className="space-y-4">
-							<div className="space-y-1.5">
-								<Label htmlFor="email">Email</Label>
-								<Input
-									id="email"
-									type="email"
-									autoComplete="email"
-									required
-									value={email}
-									onChange={(e) => setEmail(e.target.value)}
-								/>
-							</div>
-
-							<div className="space-y-1.5">
-								<Label htmlFor="password">Password</Label>
-								<Input
-									id="password"
-									type="password"
-									autoComplete="current-password"
-									required
-									value={password}
-									onChange={(e) => setPassword(e.target.value)}
-								/>
-							</div>
-
-							<Button
-								type="submit"
-								variant="primary"
-								className="w-full"
-								disabled={loading}
-							>
-								{loading ? "Signing in…" : "Sign in"}
-							</Button>
-						</form>
-
-						{providers?.github || providers?.google ? (
-							<>
-								<div className="mt-4 flex items-center gap-3">
-									<hr className="flex-1 border-gray-200 dark:border-[#1e2535]" />
-									<span className="text-xs text-gray-400 dark:text-[#4a4a6a] uppercase tracking-wide">
-										or
-									</span>
-									<hr className="flex-1 border-gray-200 dark:border-[#1e2535]" />
-								</div>
-
-								<div className="mt-4 flex flex-col gap-2">
-									{providers.github && (
-										<Button
-											variant="secondary"
-											className="w-full"
-											onClick={() => handleOAuth("github")}
-										>
-											Continue with GitHub
-										</Button>
-									)}
-									{providers.google && (
-										<Button
-											variant="secondary"
-											className="w-full"
-											onClick={() => handleOAuth("google")}
-										>
-											Continue with Google
-										</Button>
-									)}
-								</div>
-							</>
-						) : null}
-					</CardContent>
-
-					<CardFooter className="flex-col gap-2">
-						<p className="text-sm text-gray-500 dark:text-[#6b7a99]">
-							Don&apos;t have an account?{" "}
-							<a
-								href="/auth/register"
-								className="text-blue-600 dark:text-[#377dff] hover:text-blue-800 dark:hover:text-[#377dff]/80 transition-colors"
-							>
-								Sign up
-							</a>
-						</p>
-						<a
-							href="/"
-							className="text-sm text-gray-500 dark:text-[#6b7a99] hover:text-gray-700 dark:hover:text-[#e0e0e0] transition-colors"
-						>
-							← Back to home
-						</a>
-					</CardFooter>
-				</Card>
+		<div className="quark-auth-layout">
+			{/* ── Authority / branding panel ───────────────────────────── */}
+			<div className="quark-auth-brand">
+				<Link href="/" aria-label="Go to home">
+					<QuarkLogo size={64} className="mb-8" />
+				</Link>
+				<p className="text-xs uppercase tracking-widest text-text-faint mb-3">
+					Welcome back
+				</p>
+				<h2 className="text-3xl font-bold text-text leading-tight mb-4">
+					Your work is waiting.
+				</h2>
+				<p className="text-sm text-text-muted leading-relaxed">
+					Authenticate to access your workspace.
+				</p>
 			</div>
-		</main>
+
+			{/* ── Form panel ───────────────────────────────────────────── */}
+			<div className="quark-auth-form">
+				{/* Mobile-only logo */}
+				<div className="flex md:hidden mb-8">
+					<Link href="/" aria-label="Go to home">
+						<QuarkLogo size={44} />
+					</Link>
+				</div>
+
+				<div className="quark-auth-panel w-full max-w-sm">
+					<div className="mb-8">
+						<h1 className="text-2xl font-bold tracking-tight text-text">
+							Sign in
+						</h1>
+						<p className="text-xs uppercase tracking-widest text-text-muted mt-2">
+							Enter your email and password.
+						</p>
+					</div>
+
+					<ErrorBanner message={error} />
+
+					<form onSubmit={handleSubmit} className="space-y-5">
+						<div className="space-y-2">
+							<Label htmlFor="email">Email</Label>
+							<Input
+								id="email"
+								type="email"
+								autoComplete="email"
+								required
+								value={email}
+								onChange={(e) => setEmail(e.target.value)}
+							/>
+						</div>
+
+						<div className="space-y-2">
+							<div className="flex items-center justify-between">
+								<Label htmlFor="password">Password</Label>
+								<Link
+									href="/auth/forgot-password"
+									className="text-xs text-primary hover:opacity-75 transition-opacity duration-200 linear uppercase tracking-widest"
+								>
+									Forgot?
+								</Link>
+							</div>
+							<Input
+								id="password"
+								type="password"
+								autoComplete="current-password"
+								required
+								value={password}
+								onChange={(e) => setPassword(e.target.value)}
+							/>
+						</div>
+
+						<div className="flex items-center gap-2">
+							<input
+								id="remember-me"
+								type="checkbox"
+								className="h-3.5 w-3.5 border border-border bg-surface accent-primary cursor-pointer"
+								checked={rememberMe}
+								onChange={(e) => setRememberMe(e.target.checked)}
+							/>
+							<label
+								htmlFor="remember-me"
+								className="text-xs uppercase tracking-widest text-text-muted cursor-pointer select-none"
+							>
+								Remember me
+							</label>
+						</div>
+
+						<Button
+							type="submit"
+							variant="primary"
+							className="w-full mt-2"
+							disabled={loading}
+						>
+							{loading ? "Signing in…" : "Continue →"}
+						</Button>
+					</form>
+
+					{providers?.github || providers?.google ? (
+						<>
+							<div className="mt-6 flex items-center gap-3">
+								<hr className="flex-1 border-border" />
+								<span className="text-xs text-text-muted uppercase tracking-widest">
+									or
+								</span>
+								<hr className="flex-1 border-border" />
+							</div>
+
+							<div className="mt-4 flex flex-col gap-2">
+								{providers.github && (
+									<Button
+										variant="secondary"
+										className="w-full"
+										onClick={() => handleOAuth("github")}
+									>
+										Continue with GitHub
+									</Button>
+								)}
+								{providers.google && (
+									<Button
+										variant="secondary"
+										className="w-full"
+										onClick={() => handleOAuth("google")}
+									>
+										Continue with Google
+									</Button>
+								)}
+							</div>
+						</>
+					) : null}
+
+					<p className="mt-8 text-xs text-text-muted uppercase tracking-widest">
+						No account?{" "}
+						<Link
+							href="/auth/register"
+							className="text-primary hover:opacity-75 transition-opacity duration-200 linear"
+						>
+							Sign up
+						</Link>
+					</p>
+				</div>
+			</div>
+		</div>
 	);
 }

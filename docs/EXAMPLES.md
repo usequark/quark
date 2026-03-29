@@ -639,3 +639,315 @@ pnpm db:migrate --name add_blog_comments
 
 Done! Your feature is now fully integrated with Quark's patterns.
 
+---
+
+## Extending Admin for Domain Models
+
+When you add domain models to your Prisma schema, the admin auto-generates full CRUD (list, create, edit, delete) with search, pagination, and status badges. Most models work out of the box. For complex models that need domain-specific UI, you replace individual pages.
+
+### Tier 1: Configuration (No Code)
+
+Use `adminConfig.modelOverrides` for simple per-model customization:
+
+```javascript
+// packages/admin/src/config.js
+export const adminConfig = {
+  title: "Store Admin",
+  pageSize: 25,
+  modelOverrides: {
+    // NextAuth internals (default)
+    Account: { readOnly: true },
+    Session: { readOnly: true },
+    VerificationToken: { readOnly: true },
+    AuditLog: { readOnly: true },
+    // Domain models
+    Product: { label: "Products" },
+    Order: { label: "Orders" },
+    OrderItem: { readOnly: true, label: "Line Items" },
+    Payment: { readOnly: true },
+    User: { hiddenFields: ["hashedPassword"] },
+  },
+};
+```
+
+**What this controls:**
+- `readOnly` — disables create/edit/delete, groups model under "System" in sidebar
+- `label` — display name in sidebar and headings
+- `hiddenFields` — fields excluded from forms and tables
+
+### Tier 2: Replace Model Pages (Custom Detail/Form)
+
+When the generic form or list isn't enough for a specific model, replace that model's page file. The admin route structure uses Next.js catch-all patterns:
+
+```
+apps/web/src/app/admin/
+  [model]/page.js          ← list view (auto-generated)
+  [model]/[id]/page.js     ← detail/edit form (auto-generated)
+  [model]/new/page.js      ← create form (auto-generated)
+```
+
+To customize a specific model, create a named route that takes priority over the dynamic `[model]` route:
+
+```
+apps/web/src/app/admin/
+  order/page.js            ← custom order list (overrides [model] for orders)
+  order/[id]/page.js       ← custom order detail (overrides [model]/[id])
+  [model]/page.js          ← generic list for everything else
+```
+
+#### Example: Custom Order Detail Page
+
+The generic edit form shows flat fields. An order needs line items, customer info, and status workflow buttons:
+
+```javascript
+// apps/web/src/app/admin/order/[id]/page.js
+import { prisma } from "@yourapp/db";
+import { Badge, Button, Card, CardContent, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@yourapp/ui";
+import { notFound } from "next/navigation";
+import { updateOrderStatus } from "./_actions";
+
+export default async function OrderDetailPage({ params }) {
+  const { id } = await params;
+  const order = await prisma.order.findUnique({
+    where: { id },
+    include: {
+      items: { include: { product: true } },
+      customer: { select: { id: true, name: true, email: true } },
+    },
+  });
+  if (!order) notFound();
+
+  const STATUS_VARIANTS = {
+    PENDING: "warning", CONFIRMED: "info", SHIPPED: "info",
+    DELIVERED: "success", CANCELLED: "default", REFUNDED: "danger",
+  };
+  const NEXT_STATUS = {
+    PENDING: "CONFIRMED", CONFIRMED: "SHIPPED",
+    SHIPPED: "DELIVERED",
+  };
+  const next = NEXT_STATUS[order.status];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-text">Order {order.id.slice(-8)}</h1>
+          <p className="text-sm text-text-faint mt-1">
+            {order.customer.name} · {order.customer.email}
+          </p>
+        </div>
+        <Badge variant={STATUS_VARIANTS[order.status]}>{order.status}</Badge>
+      </div>
+
+      {/* Line items */}
+      <Card>
+        <CardContent className="pt-6">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Product</TableHead>
+                <TableHead className="text-right">Qty</TableHead>
+                <TableHead className="text-right">Unit Price</TableHead>
+                <TableHead className="text-right">Subtotal</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {order.items.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell>{item.product.name}</TableCell>
+                  <TableCell className="text-right tabular-nums">{item.quantity}</TableCell>
+                  <TableCell className="text-right tabular-nums">${Number(item.price).toFixed(2)}</TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    ${(Number(item.price) * item.quantity).toFixed(2)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          <div className="flex justify-end pt-4 border-t border-border mt-4">
+            <p className="text-lg font-bold tabular-nums text-text">
+              Total: ${Number(order.total).toFixed(2)}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Status actions */}
+      {next && (
+        <form action={updateOrderStatus}>
+          <input type="hidden" name="id" value={order.id} />
+          <input type="hidden" name="status" value={next} />
+          <Button type="submit">Mark as {next}</Button>
+        </form>
+      )}
+    </div>
+  );
+}
+```
+
+```javascript
+// apps/web/src/app/admin/order/[id]/_actions.js
+"use server";
+import { prisma } from "@yourapp/db";
+import { revalidatePath } from "next/cache";
+import { requireRole } from "@techstream/quark-core/auth";
+
+export async function updateOrderStatus(formData) {
+  await requireRole("admin");
+  const id = formData.get("id");
+  const status = formData.get("status");
+  await prisma.order.update({ where: { id }, data: { status } });
+  revalidatePath(`/admin/order/${id}`);
+}
+```
+
+#### Example: Custom Form with Relation Dropdowns
+
+The generic form can't render relation fields as dropdowns. Build a custom create page when a model has required relations:
+
+```javascript
+// apps/web/src/app/admin/booking/new/page.js
+import { prisma } from "@yourapp/db";
+import { Button, Input, Label, Select } from "@yourapp/ui";
+import { createBooking } from "./_actions";
+
+export default async function NewBookingPage() {
+  const [services, staff, customers] = await Promise.all([
+    prisma.service.findMany({ where: { status: "ACTIVE" }, orderBy: { name: "asc" } }),
+    prisma.staff.findMany({ include: { user: { select: { name: true } } } }),
+    prisma.user.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, email: true } }),
+  ]);
+
+  return (
+    <div>
+      <h1 className="text-2xl font-bold text-text mb-6">New Booking</h1>
+      <form action={createBooking} className="space-y-4 max-w-lg">
+        <div>
+          <Label htmlFor="serviceId">Service</Label>
+          <Select name="serviceId" required>
+            <option value="">Select a service…</option>
+            {services.map((s) => (
+              <option key={s.id} value={s.id}>{s.name} — ${Number(s.price).toFixed(2)}</option>
+            ))}
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="staffId">Staff</Label>
+          <Select name="staffId">
+            <option value="">Any available</option>
+            {staff.map((s) => (
+              <option key={s.id} value={s.id}>{s.user.name}</option>
+            ))}
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="customerId">Customer</Label>
+          <Select name="customerId" required>
+            <option value="">Select customer…</option>
+            {customers.map((c) => (
+              <option key={c.id} value={c.id}>{c.name} ({c.email})</option>
+            ))}
+          </Select>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="startTime">Start</Label>
+            <Input type="datetime-local" name="startTime" required />
+          </div>
+          <div>
+            <Label htmlFor="endTime">End</Label>
+            <Input type="datetime-local" name="endTime" required />
+          </div>
+        </div>
+        <Button type="submit">Create Booking</Button>
+      </form>
+    </div>
+  );
+}
+```
+
+### Tier 3: Add Custom Pages and Dashboard Sections
+
+For views that don't map to a single model (analytics, calendars, overviews), add new routes under `/admin` and link them from the sidebar.
+
+#### Example: Low Stock Dashboard Section
+
+Edit the existing dashboard to add domain-specific metrics:
+
+```javascript
+// apps/web/src/app/admin/page.js — add to the existing dashboard
+
+// In the data fetching section, add:
+const lowStock = await prisma.product.findMany({
+  where: { stock: { lt: 10 }, status: "ACTIVE" },
+  orderBy: { stock: "asc" },
+  take: 10,
+  select: { id: true, name: true, sku: true, stock: true },
+});
+
+// In the JSX, add a section:
+<section>
+  <h2 className="text-xs font-semibold uppercase tracking-widest text-text-faint mb-3">
+    Low Stock Alerts
+  </h2>
+  <Card>
+    <CardContent className="pt-6">
+      {lowStock.length === 0 ? (
+        <p className="text-sm text-text-faint text-center py-4">All products well stocked</p>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Product</TableHead>
+              <TableHead>SKU</TableHead>
+              <TableHead className="text-right">Stock</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {lowStock.map((p) => (
+              <TableRow key={p.id}>
+                <TableCell>{p.name}</TableCell>
+                <TableCell className="font-mono text-xs">{p.sku}</TableCell>
+                <TableCell className="text-right">
+                  <Badge variant={p.stock === 0 ? "danger" : "warning"}>{p.stock}</Badge>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+    </CardContent>
+  </Card>
+</section>
+```
+
+#### Example: Custom Sidebar Links
+
+To add a non-model page to the sidebar, edit `Sidebar.js` directly. Add your link between the Dashboard and the model sections:
+
+```javascript
+// apps/web/src/app/admin/_components/Sidebar.js — in the nav section after Dashboard
+
+{navLink("/admin/calendar", "Calendar", /* your SVG icon */)}
+{navLink("/admin/analytics", "Analytics", /* your SVG icon */)}
+```
+
+Then create the corresponding route file:
+
+```javascript
+// apps/web/src/app/admin/calendar/page.js
+export default async function CalendarPage() {
+  // Query bookings, render calendar grid
+}
+```
+
+### Admin Extension Summary
+
+| Level | When to use | What you change | Examples |
+|-------|------------|-----------------|---------|
+| **Config** | Simple model customization | `adminConfig.modelOverrides` | Labels, hidden fields, read-only |
+| **Replace** | Model needs domain-specific UI | Named route overrides `[model]` | Order detail, booking form |
+| **Add** | Non-model views, custom metrics | New routes + sidebar links | Calendar, analytics, stock alerts |
+
+The generic CRUD handles 80% of models. Custom pages handle the rest. You never build an admin framework — you build Next.js pages that happen to live under `/admin`.
+

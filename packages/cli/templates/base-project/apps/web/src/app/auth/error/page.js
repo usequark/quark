@@ -1,11 +1,5 @@
-import {
-	Card,
-	CardContent,
-	CardFooter,
-	CardHeader,
-	CardTitle,
-	QuarkLogo,
-} from "@techstream/quark-ui";
+import { QuarkLogo } from "@techstream/quark-ui";
+import Link from "next/link";
 
 const ERROR_MESSAGES = {
 	Configuration: "There is a problem with the server configuration.",
@@ -21,34 +15,65 @@ const ERROR_MESSAGES = {
 
 export default async function AuthErrorPage({ searchParams }) {
 	const params = await searchParams;
-	const errorCode = params?.error || "Default";
+	const raw = params?.error;
+	// NextAuth sometimes passes the literal string "undefined" — normalise it.
+	const errorCode = !raw || raw === "undefined" ? "Default" : raw;
 	const message = ERROR_MESSAGES[errorCode] ?? ERROR_MESSAGES.Default;
 
 	return (
-		<main className="quark-page-grid min-h-screen flex items-center justify-center px-4">
-			<div className="w-full max-w-sm flex flex-col items-center gap-6">
-				<QuarkLogo size={48} />
-				<Card className="w-full">
-					<CardHeader>
-						<CardTitle>Authentication Error</CardTitle>
-					</CardHeader>
-
-					<CardContent>
-						<div className="rounded border border-red-200 dark:border-[#ff4757]/30 bg-red-50 dark:bg-[#ff4757]/10 px-3 py-2 text-sm text-red-700 dark:text-[#ff4757]">
-							{message}
-						</div>
-					</CardContent>
-
-					<CardFooter className="justify-center">
-						<a
-							href="/auth/signin"
-							className="text-sm text-gray-500 dark:text-[#6b7a99] hover:text-gray-700 dark:hover:text-[#e0e0e0] transition-colors"
-						>
-							← Back to sign in
-						</a>
-					</CardFooter>
-				</Card>
+		<div className="quark-auth-layout">
+			{/* Authority / branding panel */}
+			<div className="quark-auth-brand">
+				<Link href="/" aria-label="Go to home">
+					<QuarkLogo size={64} className="mb-8" />
+				</Link>
+				<p className="text-xs uppercase tracking-widest text-text-faint mb-3">
+					Authentication
+				</p>
+				<h2 className="text-3xl font-bold text-text leading-tight mb-4">
+					Something went wrong.
+				</h2>
+				<p className="text-sm text-text-muted leading-relaxed">
+					An error occurred during authentication.
+				</p>
 			</div>
-		</main>
+
+			{/* Form panel */}
+			<div className="quark-auth-form">
+				{/* Mobile-only logo */}
+				<div className="flex md:hidden mb-8">
+					<Link href="/" aria-label="Go to home">
+						<QuarkLogo size={44} />
+					</Link>
+				</div>
+
+				<div className="quark-auth-panel w-full max-w-sm">
+					<div className="mb-8">
+						<h1 className="text-2xl font-bold tracking-tight text-text">
+							Authentication error
+						</h1>
+						{errorCode !== "Default" && (
+							<p className="text-xs uppercase tracking-widest text-text-muted mt-2">
+								Error code: {errorCode}
+							</p>
+						)}
+					</div>
+
+					<div
+						role="alert"
+						className="border border-danger/40 bg-danger-muted px-4 py-3 text-sm text-danger mb-8"
+					>
+						{message}
+					</div>
+
+					<Link
+						href="/auth/signin"
+						className="text-xs text-text-muted hover:text-text transition-opacity duration-200 linear uppercase tracking-widest"
+					>
+						← Back to sign in
+					</Link>
+				</div>
+			</div>
+		</div>
 	);
 }

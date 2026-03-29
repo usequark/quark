@@ -1,5 +1,4 @@
 import HealthIndicator from "./_components/HealthIndicator.js";
-import HomeThemeToggle from "./_components/HomeThemeToggle.js";
 import QuarkAnimation from "./_components/QuarkAnimation.js";
 
 export default function Home() {
@@ -15,10 +14,6 @@ export default function Home() {
 
 				{/* Navigation */}
 				<nav className="flex items-center gap-2">
-					<a href="/api/health" className="quark-home-link">
-						health
-					</a>
-					<span className="quark-home-sep">·</span>
 					<a href="/playground" className="quark-home-link">
 						playground
 					</a>
@@ -35,10 +30,22 @@ export default function Home() {
 						rel="noopener noreferrer"
 						className="quark-home-link"
 					>
-						npm
+						npm{" "}
+						<svg
+							className="quark-home-external-icon"
+							viewBox="0 0 24 24"
+							fill="none"
+							xmlns="http://www.w3.org/2000/svg"
+							aria-hidden="true"
+						>
+							<path
+								d="M13.1667 5H6C5.44772 5 5 5.44772 5 6V18C5 18.5523 5.44772 19 6 19H18C18.5523 19 19 18.5523 19 18V10.8333M15.5 5H19M19 5V8.5M19 5L9.66667 14.3333"
+								stroke="currentColor"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+							/>
+						</svg>
 					</a>
-					<span className="quark-home-sep">·</span>
-					<HomeThemeToggle />
 				</nav>
 
 				{/* Status — supplementary, last */}

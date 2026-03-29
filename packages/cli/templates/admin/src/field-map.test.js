@@ -4,6 +4,7 @@ import {
 	getInputType,
 	isEditable,
 	isListVisible,
+	isSearchable,
 	isSystemField,
 } from "./field-map.js";
 
@@ -82,17 +83,17 @@ describe("getInputType", () => {
 		);
 	});
 
-	it("returns textarea for description field", () => {
+	it("returns richtext for description field", () => {
 		assert.equal(
 			getInputType(field({ name: "description", type: "String" })),
-			"textarea",
+			"richtext",
 		);
 	});
 
-	it("returns textarea for body field", () => {
+	it("returns richtext for body field", () => {
 		assert.equal(
 			getInputType(field({ name: "body", type: "String" })),
-			"textarea",
+			"richtext",
 		);
 	});
 
@@ -245,5 +246,48 @@ describe("isSystemField", () => {
 			),
 			false,
 		);
+	});
+});
+
+describe("isSearchable", () => {
+	it("true for regular String fields", () => {
+		assert.equal(isSearchable(field({ name: "title", type: "String" })), true);
+	});
+
+	it("true for enum fields", () => {
+		assert.equal(
+			isSearchable(
+				field({ kind: "enum", type: "JobStatus", enumValues: ["A", "B"] }),
+			),
+			true,
+		);
+	});
+
+	it("false for @id fields", () => {
+		assert.equal(
+			isSearchable(field({ name: "id", type: "String", isId: true })),
+			false,
+		);
+	});
+
+	it("false for sensitive fields", () => {
+		assert.equal(isSearchable(field({ name: "password" })), false);
+	});
+
+	it("false for system fields", () => {
+		assert.equal(
+			isSearchable(
+				field({ name: "createdAt", type: "DateTime", hasDefaultValue: true }),
+			),
+			false,
+		);
+	});
+
+	it("false for non-String scalar fields", () => {
+		assert.equal(isSearchable(field({ name: "count", type: "Int" })), false);
+	});
+
+	it("false for relation fields", () => {
+		assert.equal(isSearchable(field({ kind: "object", type: "User" })), false);
 	});
 });

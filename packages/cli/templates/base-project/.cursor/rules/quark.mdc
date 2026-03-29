@@ -50,7 +50,7 @@ import something  from "@techstream/quark-config";    // wrong scope for workspa
 
 - Styling: **Tailwind CSS utility classes only**. No inline styles, no CSS modules.
 - Components from `@__QUARK_SCOPE__/ui`. All accept `className` for overrides.
-- Available: `Button`, `Input`, `Label`, `Textarea`, `Select`, `Checkbox`, `Badge`, `Card`/`CardHeader`/`CardTitle`/`CardContent`/`CardFooter`, `Table`/`TableHeader`/`TableBody`/`TableRow`/`TableHead`/`TableCell`, `Skeleton`, `Dialog` *(client)*, `Toast`/`useToast` *(client)*.
+- Available: `Button`, `Input`, `Label`, `Textarea`, `Select`, `Checkbox`, `Badge`, `Card`/`CardHeader`/`CardTitle`/`CardContent`/`CardFooter`, `Table`/`TableHeader`/`TableBody`/`TableRow`/`TableHead`/`TableCell`, `Skeleton`, `QuarkLogo` *(server)*, `Dialog` *(client)*, `Toast`/`useToast` *(client)*, `ThemeProvider`/`useTheme` *(client)*.
 - Loading states → `<Skeleton>` + `<Suspense>` boundaries.
 - User feedback → `useToast()` (mark component `"use client"`).
 - Modals → `<Dialog>` (mark parent `"use client"`).

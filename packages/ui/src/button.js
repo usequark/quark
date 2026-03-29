@@ -1,32 +1,32 @@
 import React from "react";
 
 const base =
-	"inline-flex items-center justify-center rounded-sm font-medium transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none active:translate-y-px";
+	"inline-flex items-center justify-center font-medium tracking-wide transition-opacity duration-200 linear cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed active:opacity-80";
 
 const VARIANTS = {
+	// Primary: tinted ghost on dark, solid on light — both pull from --color-primary
 	primary:
-		"bg-blue-600 text-white shadow-sm hover:bg-blue-700 hover:shadow focus-visible:ring-blue-500 dark:bg-[#377dff]/10 dark:border dark:border-[#377dff]/40 dark:text-[#377dff] dark:shadow-none dark:hover:bg-[#377dff]/20 dark:hover:border-[#377dff]/80 dark:hover:shadow-none dark:focus-visible:ring-[#377dff]/40",
+		"bg-primary-muted border border-primary/40 text-primary hover:bg-primary-muted hover:border-primary/80 focus-visible:ring-primary/40",
 	secondary:
-		"border border-gray-200 bg-white text-gray-800 shadow-sm hover:bg-gray-50 hover:border-gray-300 hover:shadow focus-visible:ring-gray-400 dark:border-[#1e2535] dark:bg-transparent dark:text-[#6b7a99] dark:shadow-none dark:hover:bg-transparent dark:hover:border-[#377dff]/30 dark:hover:text-[#e0e0e0] dark:hover:shadow-none dark:focus-visible:ring-[#377dff]/30",
+		"border border-border bg-surface text-text-muted hover:border-border-hover hover:text-text focus-visible:ring-border-hover",
 	danger:
-		"bg-red-600 text-white shadow-sm hover:bg-red-700 hover:shadow focus-visible:ring-red-500 dark:bg-[#ff4757]/10 dark:border dark:border-[#ff4757]/40 dark:text-[#ff4757] dark:shadow-none dark:hover:bg-[#ff4757]/20 dark:hover:border-[#ff4757]/80 dark:hover:shadow-none dark:focus-visible:ring-[#ff4757]/40",
+		"bg-danger-muted border border-danger/40 text-danger hover:bg-danger-muted hover:border-danger/80 focus-visible:ring-danger/40",
 	ghost:
-		"bg-transparent text-gray-700 hover:bg-gray-100 hover:text-gray-900 focus-visible:ring-gray-400 dark:text-[#4a4a6a] dark:hover:bg-[#1e2535] dark:hover:text-[#e0e0e0] dark:focus-visible:ring-[#377dff]/30",
+		"bg-transparent text-text-faint hover:bg-surface-hover hover:text-text focus-visible:ring-border-hover",
 	success:
-		"bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 hover:shadow focus-visible:ring-emerald-500 dark:bg-emerald-500/10 dark:border dark:border-emerald-500/40 dark:text-emerald-400 dark:shadow-none dark:hover:bg-emerald-500/20 dark:hover:border-emerald-500/80 dark:hover:shadow-none dark:focus-visible:ring-emerald-400/40",
+		"bg-success-muted border border-success/40 text-success hover:border-success/80 focus-visible:ring-success/40",
 	warning:
-		"bg-amber-500 text-white shadow-sm hover:bg-amber-600 hover:shadow focus-visible:ring-amber-400 dark:bg-amber-500/10 dark:border dark:border-amber-400/40 dark:text-amber-400 dark:shadow-none dark:hover:bg-amber-500/20 dark:hover:border-amber-400/80 dark:hover:shadow-none dark:focus-visible:ring-amber-400/40",
-	info: "bg-cyan-600 text-white shadow-sm hover:bg-cyan-700 hover:shadow focus-visible:ring-cyan-500 dark:bg-cyan-500/10 dark:border dark:border-cyan-400/40 dark:text-cyan-400 dark:shadow-none dark:hover:bg-cyan-500/20 dark:hover:border-cyan-400/80 dark:hover:shadow-none dark:focus-visible:ring-cyan-400/40",
+		"bg-warning-muted border border-warning/40 text-warning hover:border-warning/80 focus-visible:ring-warning/40",
+	info: "bg-info-muted border border-info/40 text-info hover:border-info/80 focus-visible:ring-info/40",
 	outline:
-		"border border-blue-600 text-blue-600 bg-transparent hover:bg-blue-50 focus-visible:ring-blue-500 dark:border-[#377dff]/60 dark:text-[#377dff] dark:hover:bg-[#377dff]/10 dark:focus-visible:ring-[#377dff]/40",
-	solid:
-		"bg-blue-700 text-white shadow-sm hover:bg-blue-800 hover:shadow focus-visible:ring-blue-600 dark:bg-[#377dff] dark:shadow-none dark:hover:bg-[#2563eb] dark:hover:shadow-none dark:focus-visible:ring-[#377dff]/60",
+		"border border-primary text-primary bg-transparent hover:bg-primary-muted focus-visible:ring-primary/40",
+	solid: "bg-primary text-white hover:opacity-90 focus-visible:ring-primary/60",
 };
 
 const sizes = {
-	sm: "h-8 px-3 text-sm",
+	sm: "h-8 px-3 text-xs",
 	md: "h-10 px-4 text-sm",
-	lg: "h-11 px-6 text-base",
+	lg: "h-11 px-6 text-sm",
 };
 
 export function Button({
@@ -36,7 +36,7 @@ export function Button({
 	...props
 }) {
 	const cls =
-		`${base} ${VARIANTS[variant] ?? VARIANTS.primary} ${sizes[size] ?? sizes.md} ${className}`.trim();
+		`${base} ${VARIANTS[variant] ?? VARIANTS.primary} ${sizes[size] ?? sizes.md} rounded-[--radius-default] ${className}`.trim();
 	return React.createElement("button", {
 		type: "button",
 		className: cls,

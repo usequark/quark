@@ -299,9 +299,100 @@ console.log(JOB_NAMES.SEND_WELCOME_EMAIL);
 
 #### `@yourscope/ui` (Optional)
 
-React components and UI primitives for your application.
+React components and UI primitives for your application. The full component library with dark mode support built in.
+
+**Available components:**
+- `Button`, `Input`, `Label`, `Textarea`, `Select`, `Checkbox` — form primitives
+- `Badge` — status labels
+- `Card` / `CardHeader` / `CardTitle` / `CardContent` / `CardFooter` — content containers
+- `Table` / `TableHeader` / `TableBody` / `TableRow` / `TableHead` / `TableCell` — data tables
+- `Skeleton` — loading placeholders
+- `Dialog` *(client)* — modal dialogs
+- `Toast` / `useToast` *(client)* — notifications
+- `ThemeProvider` / `useTheme` *(client)* — dark/light mode context
+- `QuarkLogo` *(server)* — inline SVG logo, theme-aware
 
 **Why it's optional:** Not all apps need a shared component library. If scaffolded, you customize components to match your design system.
+
+---
+
+#### `@techstream/quark-admin` (Optional, Published)
+
+An auto-generated CRUD admin UI powered by Prisma DMMF introspection. Enable it by selecting the `admin` feature during scaffolding.
+
+```bash
+# Enable during scaffold
+npx @techstream/quark-create-app my-app --features ui,jobs,admin
+```
+
+**What you get:**
+- Full admin interface at `/admin` — lists all your Prisma models
+- List, create, edit, and delete records for every model — zero config
+- Field-type aware forms: strings → text inputs, booleans → checkboxes, enums → dropdowns, DateTimes → datetime pickers
+- Automatic protection: only users with `role: "admin"` can access the admin
+- Dark mode support via the shared theme system
+
+No code generation — the admin reads your schema at runtime via DMMF, so it automatically reflects schema changes without any regeneration step.
+
+---
+
+## Dark Mode / Theme System
+
+Quark uses a **dark-mode-first** theme system. Every scaffolded project ships with full dark and light mode support, zero flash on load.
+
+### How the theme is applied
+
+Theme is controlled by a `data-theme` attribute on `<html>` (`"dark"` or `"light"`), not by a CSS class. Tailwind's `dark:` utilities are wired to `data-theme` via a custom variant in `globals.css`.
+
+A blocking inline `<script>` in `layout.js` reads `localStorage` and `prefers-color-scheme` synchronously before the first paint — no flash.
+
+### Using ThemeProvider
+
+Wrap your app (or a subtree) in `ThemeProvider` to enable programmatic theme control:
+
+```jsx
+import { ThemeProvider } from "@yourscope/ui";
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <body>
+        <ThemeProvider defaultTheme="dark">
+          {children}
+        </ThemeProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+### Reading and setting the theme
+
+```jsx
+"use client";
+import { useTheme } from "@yourscope/ui";
+
+export function MyToggle() {
+  const { theme, setTheme } = useTheme();
+  return (
+    <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+      Switch to {theme === "dark" ? "light" : "dark"} mode
+    </button>
+  );
+}
+```
+
+`ThemeProvider` is optional for simple use cases — the FOUC prevention script and CSS variables work without it. Use it only when a component needs to read or programmatically change the theme.
+
+### Dark mode in your own components
+
+Use Tailwind's `dark:` utilities anywhere — they react to the `data-theme` attribute automatically:
+
+```jsx
+<div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+  Dark-aware content
+</div>
+```
 
 ---
 

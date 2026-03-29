@@ -4,6 +4,7 @@ import {
 	THEME_STORAGE_KEY,
 } from "@techstream/quark-ui/theme-constants";
 import { getSiteMetadata } from "../lib/seo/site-metadata.js";
+import FloatingThemeToggle from "./layout/_components/FloatingThemeToggle.js";
 
 export const metadata = getSiteMetadata();
 
@@ -17,7 +18,10 @@ export default function RootLayout({ children }) {
 				{/* biome-ignore lint/security/noDangerouslySetInnerHtml: static constant, not user input */}
 				<script dangerouslySetInnerHTML={{ __html: themeScript }} />
 			</head>
-			<body>{children}</body>
+			<body>
+				<FloatingThemeToggle />
+				{children}
+			</body>
 		</html>
 	);
 }

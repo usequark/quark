@@ -3,15 +3,16 @@ import {
 	findMany,
 	getModelBySlug,
 	hasIdField,
+	isSearchable,
 } from "@techstream/quark-admin";
 import { prisma } from "@techstream/quark-db";
-import { Button } from "@techstream/quark-ui";
+import { Button, Input } from "@techstream/quark-ui";
 import { notFound } from "next/navigation";
 import ModelTable from "../_components/ModelTable";
 
 export default async function ModelListPage({ params, searchParams }) {
 	const { model: slug } = await params;
-	const { page } = await searchParams;
+	const { page, q } = await searchParams;
 
 	const model = getModelBySlug(slug);
 	if (!model) notFound();
@@ -19,10 +20,25 @@ export default async function ModelListPage({ params, searchParams }) {
 	const overrides = adminConfig.modelOverrides[model.name] ?? {};
 	const pageSize = adminConfig.pageSize;
 	const currentPage = Math.max(1, Number.parseInt(page ?? "1", 10) || 1);
+	const search = typeof q === "string" ? q.trim() : "";
+
+	// Build text search filter across all searchable String fields
+	const searchableFields = model.fields.filter(isSearchable);
+	const where =
+		search && searchableFields.length > 0
+			? {
+					OR: searchableFields.map((f) =>
+						f.kind === "enum"
+							? { [f.name]: { equals: search } }
+							: { [f.name]: { contains: search, mode: "insensitive" } },
+					),
+				}
+			: undefined;
 
 	const { records, total } = await findMany(prisma, model.name, {
 		skip: (currentPage - 1) * pageSize,
 		take: pageSize,
+		where,
 	});
 
 	const totalPages = Math.ceil(total / pageSize);
@@ -32,11 +48,10 @@ export default async function ModelListPage({ params, searchParams }) {
 		<div>
 			<div className="flex items-center justify-between mb-6">
 				<div>
-					<h1 className="text-2xl font-bold dark:text-[#e0e0e0]">
-						{model.name}
-					</h1>
-					<p className="text-sm text-gray-500 dark:text-[#4a4a6a] mt-1">
+					<h1 className="text-2xl font-bold text-text">{model.name}</h1>
+					<p className="text-sm text-text-faint mt-1">
 						{total} record{total !== 1 ? "s" : ""}
+						{search ? ` matching "${search}"` : ""}
 					</p>
 				</div>
 				{canCreate && (
@@ -46,6 +61,32 @@ export default async function ModelListPage({ params, searchParams }) {
 				)}
 			</div>
 
+			{searchableFields.length > 0 && (
+				<form
+					action={`/admin/${slug}`}
+					method="GET"
+					className="mb-4 flex gap-2"
+				>
+					<Input
+						type="search"
+						name="q"
+						defaultValue={search}
+						placeholder={`Search ${model.name.toLowerCase()}…`}
+						className="max-w-xs"
+					/>
+					<Button type="submit" variant="secondary">
+						Search
+					</Button>
+					{search && (
+						<a href={`/admin/${slug}`}>
+							<Button type="button" variant="ghost">
+								Clear
+							</Button>
+						</a>
+					)}
+				</form>
+			)}
+
 			<ModelTable
 				model={model}
 				records={records}
@@ -54,11 +95,11 @@ export default async function ModelListPage({ params, searchParams }) {
 			/>
 
 			{totalPages > 1 && (
-				<div className="flex items-center gap-3 mt-4 text-sm text-gray-600 dark:text-[#6b7a99]">
+				<div className="flex items-center gap-3 mt-4 text-sm text-text-muted">
 					{currentPage > 1 && (
 						<a
-							href={`/admin/${slug}?page=${currentPage - 1}`}
-							className="hover:text-gray-900 dark:hover:text-[#e0e0e0]"
+							href={`/admin/${slug}?page=${currentPage - 1}${search ? `&q=${encodeURIComponent(search)}` : ""}`}
+							className="hover:text-text"
 						>
 							← Previous
 						</a>
@@ -68,8 +109,8 @@ export default async function ModelListPage({ params, searchParams }) {
 					</span>
 					{currentPage < totalPages && (
 						<a
-							href={`/admin/${slug}?page=${currentPage + 1}`}
-							className="hover:text-gray-900 dark:hover:text-[#e0e0e0]"
+							href={`/admin/${slug}?page=${currentPage + 1}${search ? `&q=${encodeURIComponent(search)}` : ""}`}
+							className="hover:text-text"
 						>
 							Next →
 						</a>

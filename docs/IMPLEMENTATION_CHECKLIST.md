@@ -2,8 +2,8 @@
 
 This document contains a comprehensive list of all missing features, issues, and tasks needed to bring Quark to production. Tasks are organized by priority level.
 
-**Total Tasks:** 95 (58 complete, 37 remaining)
-**P1 (Critical):** ✅ 100% | **P2 (High):** ✅ 100% | **P3 (Medium):** 23% | **P4 (Low):** 0%
+**Total Tasks:** 100 (72 complete, 28 remaining)
+**P1 (Critical):** ✅ 100% | **P2 (High):** ✅ 100% | **P3 (Medium):** 86% | **P4 (Low):** 0%
 
 ---
 
@@ -374,6 +374,50 @@ This document contains a comprehensive list of all missing features, issues, and
 
 - [x] **Test CLI end-to-end**
   - Create new project from CLI and verify it works
+
+### UI & Design System
+
+- [x] **Implement full component library**
+  - Files: `packages/ui/src/`
+  - 11 components: Badge, Button, Card, Checkbox, Dialog, Input, Label, Select, Skeleton, Table, Textarea
+  - All use `React.createElement` (no JSX in packages), accept `className`, Server Component safe
+  - Client-only: Dialog, Toast/useToast, ThemeProvider/useTheme
+
+- [x] **Add dark mode support (Tailwind `@custom-variant dark`)**
+  - `globals.css`: `@custom-variant dark (&:is([data-theme="dark"] *))` — data-theme attribute strategy
+  - Dark-first CSS custom properties with light overrides via `@media` + `[data-theme="light"]`
+  - FOUC prevention: blocking script in `layout.js` reads localStorage + OS pref before first paint
+  - All 11 UI components updated with `dark:` utility class variants
+  - CSS variables: `--quark-page-bg`, `--quark-text-primary`, `--quark-border`, `--quark-input-bg`, etc.
+
+- [x] **Implement ThemeProvider and theme toggle**
+  - Files: `packages/ui/src/theme.js`, `packages/ui/src/theme-constants.js`
+  - `ThemeProvider` React context + `useTheme()` hook for reading/setting theme
+  - `THEME_ATTR`, `THEME_STORAGE_KEY`, `THEME_CHANGE_EVENT` constants for DOM-level sync
+  - `HomeThemeToggle` in `apps/web` + `AdminThemeToggle` in admin sidebar
+
+- [x] **Add QuarkLogo component**
+  - Files: `packages/ui/src/logo.js`
+  - Pure Server Component inline SVG with dark-mode aware arc (`var(--quark-logo-dark-arc)`)
+  - CSS variable `--quark-logo-dark-arc` switches to visible desaturated blue-gray in dark mode
+
+### Admin UI
+
+- [x] **Implement auto-generated admin UI**
+  - Files: `apps/web/src/app/admin/`
+  - Powered by `@techstream/quark-admin` — Prisma DMMF introspection, no code generation
+  - Full CRUD: list, create, edit, delete for every Prisma model
+  - Routes: `/admin`, `/admin/[model]`, `/admin/[model]/new`, `/admin/[model]/[id]`
+  - `ModelTable.js` — generic record list using `<Table>` from `@techstream/quark-ui`
+  - `ModelForm.js` — generic create/edit form with proper `variant="danger"` delete button
+  - `FieldRenderer.js` — maps Prisma field types to appropriate form inputs
+  - `Sidebar.js` — collapsible model navigation
+  - Admin is opt-in at scaffolding time (`--features admin`)
+
+- [x] **Enforce admin RBAC**
+  - Admin `layout.js` requires authenticated session with `role: "admin"`
+  - Unauthorized users redirected to sign-in page
+  - Integrates with existing authorization middleware from `@techstream/quark-core`
 
 ---
 

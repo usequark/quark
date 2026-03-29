@@ -18,28 +18,35 @@ const providers = [
 				return null;
 			}
 
-			const existingUser = await user.findByEmail(credentials.email);
+			try {
+				const existingUser = await user.findByEmail(credentials.email);
 
-			if (!existingUser || !existingUser.password) {
+				if (!existingUser || !existingUser.password) {
+					return null;
+				}
+
+				const isValid = await verifyPassword(
+					credentials.password,
+					existingUser.password,
+				);
+
+				if (!isValid) {
+					return null;
+				}
+
+				return {
+					id: existingUser.id,
+					email: existingUser.email,
+					name: existingUser.name,
+					image: existingUser.image,
+					role: existingUser.role,
+				};
+			} catch (err) {
+				// Log the real error so it appears in the dev terminal.
+				// Returning null shows "Invalid credentials" on the form — no error page redirect.
+				console.error("[auth] authorize error:", err?.message ?? err);
 				return null;
 			}
-
-			const isValid = await verifyPassword(
-				credentials.password,
-				existingUser.password,
-			);
-
-			if (!isValid) {
-				return null;
-			}
-
-			return {
-				id: existingUser.id,
-				email: existingUser.email,
-				name: existingUser.name,
-				image: existingUser.image,
-				role: existingUser.role,
-			};
 		},
 	}),
 ];
