@@ -31,12 +31,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Generate Prisma Client
-        run: pnpm db:generate
-
-      - name: Build
-        run: pnpm build
-
       - name: Create Release PR or Publish
         id: changesets
         uses: changesets/action@v1
