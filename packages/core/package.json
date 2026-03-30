@@ -20,7 +20,7 @@
 	},
 	"devDependencies": {
 		"@types/busboy": "^1.5.4",
-		"@types/node": "^25.3.5"
+		"@types/node": "^25.5.0"
 	},
 	"scripts": {
 		"test": "node --test $(find src -name '*.test.js')",
