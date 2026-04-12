@@ -18,12 +18,11 @@ const cliPackageJson = await fs.readJSON(path.join(__dirname, "package.json"));
 
 console.log("🧪 Testing @techstream/quark-create-app CLI\n");
 
-// Cleanup
-console.log("📦 Setting up test environment...");
-await fs.remove(testDir);
-await fs.ensureDir(testDir);
-
 try {
+	// Cleanup
+	console.log("📦 Setting up test environment...");
+	await fs.remove(testDir);
+	await fs.ensureDir(testDir);
 	// Test 1: Create project with interactive CLI
 	console.log(`\n📝 Creating test project: ${projectName}`);
 
