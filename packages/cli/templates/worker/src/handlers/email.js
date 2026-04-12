@@ -41,6 +41,7 @@ export async function handleSendWelcomeEmail(bullJob, logger) {
 
 	const template = welcomeEmail({
 		name: userRecord.name,
+		appName: process.env.APP_NAME,
 		loginUrl: process.env.APP_URL
 			? `${process.env.APP_URL}/api/auth/signin`
 			: undefined,
@@ -86,6 +87,7 @@ export async function handleSendResetPasswordEmail(bullJob, logger) {
 
 	const template = passwordResetEmail({
 		name: userRecord.name,
+		appName: process.env.APP_NAME,
 		resetUrl,
 	});
 

@@ -78,7 +78,7 @@ import { storage } from "@techstream/quark-core";
 import { prisma, user } from "@__QUARK_SCOPE__/db";         // add more as you create query helpers
 import { loadConfig } from "@__QUARK_SCOPE__/config";
 import { Button, Card, Input } from "@__QUARK_SCOPE__/ui";   // if ui package selected
-import { JOB_TYPES } from "@__QUARK_SCOPE__/jobs";           // if jobs package selected
+import { JOB_NAMES } from "@__QUARK_SCOPE__/jobs";           // if jobs package selected
 ```
 
 ## UI & Design System
@@ -201,9 +201,9 @@ if (session.user.role !== "ADMIN") throw new AppError("Forbidden", 403);
 ```javascript
 // 1. Dispatch from web (Server Action or API route):
 import { createQueue, addJob } from "@techstream/quark-core";
-import { JOB_TYPES } from "@__QUARK_SCOPE__/jobs";
+import { JOB_NAMES } from "@__QUARK_SCOPE__/jobs";
 const queue = createQueue("default");
-await addJob(queue, JOB_TYPES.SEND_EMAIL, { userId: session.user.id, template: "welcome" });
+await addJob(queue, JOB_NAMES.SEND_WELCOME_EMAIL, { userId: session.user.id });
 
 // 2. Handle in apps/worker/src/handlers/<job-name>.js:
 import { createLogger } from "@techstream/quark-core";

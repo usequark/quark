@@ -1,7 +1,5 @@
-import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
-import { getConnectionString } from "../src/connection.js";
-import { PrismaClient } from "../src/generated/prisma/client.ts";
+import { prisma } from "../src/index.js";
 
 /**
  * Minimal seed: creates a single admin user.
@@ -78,31 +76,22 @@ async function seedDev(prisma) {
 }
 
 async function main() {
-	const prisma = new PrismaClient({
-		adapter: new PrismaPg({ connectionString: getConnectionString() }),
-		errorFormat: "pretty",
-	});
+	// SEED_PROFILE is intentionally separate from NODE_ENV.
+	// Railway sets NODE_ENV=production on ALL deployed services (including staging)
+	// for build/performance reasons, so NODE_ENV cannot reliably distinguish staging
+	// from production at seed time. Set SEED_PROFILE explicitly in your deploy command:
+	//   production: SEED_PROFILE=minimal pnpm db:seed
+	//   staging:    pnpm db:seed   (defaults to "dev")
+	const seedProfile = process.env.SEED_PROFILE || "dev";
+	console.log(`🌱 Seeding database with profile: "${seedProfile}"`);
 
-	try {
-		// SEED_PROFILE is intentionally separate from NODE_ENV.
-		// Railway sets NODE_ENV=production on ALL deployed services (including staging)
-		// for build/performance reasons, so NODE_ENV cannot reliably distinguish staging
-		// from production at seed time. Set SEED_PROFILE explicitly in your deploy command:
-		//   production: SEED_PROFILE=minimal pnpm db:seed
-		//   staging:    pnpm db:seed   (defaults to "dev")
-		const seedProfile = process.env.SEED_PROFILE || "dev";
-		console.log(`🌱 Seeding database with profile: "${seedProfile}"`);
-
-		if (seedProfile === "minimal") {
-			await seedMinimal(prisma);
-		} else {
-			await seedDev(prisma);
-		}
-
-		console.log("✅ Database seeding completed");
-	} finally {
-		await prisma.$disconnect();
+	if (seedProfile === "minimal") {
+		await seedMinimal(prisma);
+	} else {
+		await seedDev(prisma);
 	}
+
+	console.log("✅ Database seeding completed");
 }
 
 main().catch((error) => {

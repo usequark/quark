@@ -59,6 +59,13 @@ function remove(rel) {
 	fs.rmSync(abs, { recursive: true, force: true });
 }
 
+/** Write content to a file (relative to ROOT), creating parent dirs as needed. */
+function write(rel, content) {
+	const abs = path.join(ROOT, rel);
+	fs.mkdirSync(path.dirname(abs), { recursive: true });
+	fs.writeFileSync(abs, content, "utf-8");
+}
+
 // ─── Finding model ────────────────────────────────────────────────────────────
 
 /**
@@ -93,14 +100,32 @@ const quarkLink = (() => {
 })();
 const hasUI = Array.isArray(quarkLink.packages) && quarkLink.packages.includes("ui");
 
-// ── Check 1: Quark Animation still present ────────────────────────────────────
-if (exists("apps/web/src/app/_components/QuarkAnimation.js")) {
+// ── Check 1: Quark home scaffold still present ───────────────────────────────
+const homeScaffoldFiles = [
+	"apps/web/src/app/_components/QuarkAnimation.js",
+	"apps/web/src/app/_components/HealthIndicator.js",
+	"apps/web/src/app/_components/HomeThemeToggle.js",
+].filter(exists);
+
+if (homeScaffoldFiles.length > 0) {
 	warn(
-		"quark-animation",
+		"quark-home-scaffold",
 		"branding",
-		"QuarkAnimation is still in the project",
-		"apps/web/src/app/_components/QuarkAnimation.js",
-		"Replace or remove the animation and update the home page with your own hero content",
+		"Quark home scaffold components are still present",
+		homeScaffoldFiles.join("\n"),
+		"Replace these with your own hero content and update apps/web/src/app/page.js",
+		true,
+	);
+}
+
+// ── Check 1b: Quark layout scaffold still present ─────────────────────────────
+if (exists("apps/web/src/app/layout/_components/FloatingThemeToggle.js")) {
+	warn(
+		"quark-layout-scaffold",
+		"branding",
+		"Quark layout scaffold component is still present (FloatingThemeToggle)",
+		"apps/web/src/app/layout/_components/FloatingThemeToggle.js",
+		"Replace or remove the floating theme toggle and update the root layout with your own design",
 		true,
 	);
 }
@@ -115,6 +140,26 @@ if (hasUI && exists("apps/web/src/app/playground")) {
 		"Consider removing the playground before going to production",
 		true,
 	);
+}
+
+// ── Check 2b: app/page.js conflicts with a route group ────────────────────────
+const rootPagePath = "apps/web/src/app/page.js";
+const appDir = path.join(ROOT, "apps/web/src/app");
+if (exists(rootPagePath) && fs.existsSync(appDir)) {
+	const routeGroups = fs
+		.readdirSync(appDir, { withFileTypes: true })
+		.filter((e) => e.isDirectory() && /^\(.+\)$/.test(e.name))
+		.map((e) => `  apps/web/src/app/${e.name}/`);
+
+	if (routeGroups.length > 0) {
+		error(
+			"page-route-conflict",
+			"routing",
+			"apps/web/src/app/page.js conflicts with a route group — Next.js will fail to build",
+			routeGroups.join("\n"),
+			"Delete apps/web/src/app/page.js and move its content into the route group's page.js",
+		);
+	}
 }
 
 // ── Check 3: APP_NAME / APP_DESCRIPTION still reference "Quark" ───────────────
@@ -191,6 +236,18 @@ if (readmeContent && /quark/i.test(readmeContent)) {
 	);
 }
 
+// ── Check 7: Forgot-password page is a placeholder stub ───────────────────────
+const forgotPwContent = read("apps/web/src/app/auth/forgot-password/page.js");
+if (forgotPwContent && forgotPwContent.includes("quark-auth-layout")) {
+	warn(
+		"forgot-password-stub",
+		"security",
+		"Forgot-password page is a scaffold stub — users cannot reset their password",
+		"apps/web/src/app/auth/forgot-password/page.js",
+		"Implement a password reset flow (email token) before going to production, or remove this route",
+	);
+}
+
 // ─── --fix: auto-remove fixable items ────────────────────────────────────────
 
 const STATUS_ICON = { error: "✗", warn: "⚠", info: "·" };
@@ -240,9 +297,20 @@ if (FIX) {
 	} else {
 		console.log(fmt.bold(fmt.blue("\n🔧 Applying fixes…\n")));
 		for (const f of fixable) {
-			if (f.key === "quark-animation") {
-				remove("apps/web/src/app/_components/QuarkAnimation.js");
-				console.log(fmt.green(`  ✓ Removed QuarkAnimation.js`));
+			if (f.key === "quark-home-scaffold") {
+				for (const file of homeScaffoldFiles) {
+					remove(file);
+					console.log(fmt.green(`  ✓ Removed ${file}`));
+				}
+				// Replace page.js with a minimal stub so removed imports no longer crash the build
+				write(
+					"apps/web/src/app/page.js",
+					`export default function Home() {\n\treturn <main>Hello world</main>;\n}\n`,
+				);
+				console.log(fmt.green("  ✓ Replaced apps/web/src/app/page.js with a minimal stub"));
+			} else if (f.key === "quark-layout-scaffold") {
+				remove("apps/web/src/app/layout/_components");
+				console.log(fmt.green("  ✓ Removed apps/web/src/app/layout/_components/"));
 			} else if (f.key === "playground") {
 				remove("apps/web/src/app/playground");
 				console.log(fmt.green(`  ✓ Removed apps/web/src/app/playground/`));

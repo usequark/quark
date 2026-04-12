@@ -34,14 +34,11 @@ export default function ForgotPasswordPage() {
 						<h1 className="text-2xl font-bold tracking-tight text-text">
 							Forgot password
 						</h1>
-						<p className="text-xs uppercase tracking-widest text-text-muted mt-2">
-							Password reset is not yet available
-						</p>
 					</div>
 
 					<p className="text-sm text-text-muted leading-relaxed mb-8">
-						Password reset is not yet configured. Please contact your
-						administrator to reset your account.
+						Password reset is not available. Please contact support for help
+						accessing your account.
 					</p>
 
 					<Link
