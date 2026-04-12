@@ -17,7 +17,7 @@
 	"packageManager": "pnpm@10.12.1",
 	"dependencies": {
 		"@techstream/quark-config": "workspace:*",
-		"@techstream/quark-core": "^1.0.0",
+		"@techstream/quark-core": "^2.0.0",
 		"@techstream/quark-db": "workspace:*",
 		"@techstream/quark-jobs": "workspace:*",
 		"bullmq": "^5.70.4"

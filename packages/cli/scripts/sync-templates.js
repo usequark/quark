@@ -34,6 +34,12 @@ const TEMPLATES = path.join(ROOT, "packages/cli/templates");
 const CHECK_MODE = process.argv.includes("--check");
 const PRE_COMMIT_MODE = process.argv.includes("--pre-commit");
 
+// Derive quark-core version pin from the actual package (e.g. "2.3.0" → "^2.0.0")
+const coreVersion = JSON.parse(
+	fs.readFileSync(path.join(ROOT, "packages/core/package.json"), "utf8"),
+).version;
+const CORE_VERSION_PIN = `^${coreVersion.split(".")[0]}.0.0`;
+
 // ─── Sync Configuration ───────────────────────────────────────────────────────
 
 /**
@@ -184,7 +190,7 @@ function transformWebPackageJson(content) {
 
 	// Core is installed from npm (not workspace) in scaffolded projects
 	if (pkg.dependencies?.["@techstream/quark-core"]) {
-		pkg.dependencies["@techstream/quark-core"] = "^1.0.0";
+		pkg.dependencies["@techstream/quark-core"] = CORE_VERSION_PIN;
 	}
 	// Config moves from dependencies to devDependencies in template
 	if (pkg.dependencies?.["@techstream/quark-config"]) {
@@ -201,7 +207,7 @@ function transformWorkerPackageJson(content) {
 
 	// Core is installed from npm (not workspace) in scaffolded projects
 	if (pkg.dependencies?.["@techstream/quark-core"]) {
-		pkg.dependencies["@techstream/quark-core"] = "^1.0.0";
+		pkg.dependencies["@techstream/quark-core"] = CORE_VERSION_PIN;
 	}
 
 	return `${JSON.stringify(pkg, null, "\t")}\n`;
