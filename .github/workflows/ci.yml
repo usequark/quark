@@ -36,8 +36,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -57,19 +55,11 @@ jobs:
       - name: Check for drift
         run: |
           if ! git diff --quiet packages/cli/templates/; then
-            if [ "${{ github.event_name }}" = "push" ]; then
-              git config user.name "github-actions[bot]"
-              git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-              git add packages/cli/templates/
-              git commit -m "chore: sync CLI templates"
-              git push
-              echo "✅ Template drift detected and auto-fixed on main."
-            else
-              echo ""
-              echo "❌ Template drift detected!"
-              echo "Run 'pnpm --filter @techstream/quark-create-app sync-templates' locally and commit the changes."
-              exit 1
-            fi
+            echo ""
+            echo "❌ Template drift detected!"
+            echo "Run 'pnpm --filter @techstream/quark-create-app sync-templates' locally and commit the changes."
+            git diff --stat packages/cli/templates/
+            exit 1
           else
             echo "✅ Templates are in sync."
           fi
