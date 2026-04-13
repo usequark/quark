@@ -37,8 +37,8 @@ export default function ForgotPasswordPage() {
 					</div>
 
 					<p className="text-sm text-text-muted leading-relaxed mb-8">
-						Password reset is not available. Please contact support for
-						help accessing your account.
+						Password reset is not available. Please contact support for help
+						accessing your account.
 					</p>
 
 					<Link

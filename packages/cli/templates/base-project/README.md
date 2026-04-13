@@ -48,18 +48,17 @@ git push -u origin main
 
 ### 2. Deploy on Railway
 
-> **One-click Railway template coming soon.** For now, follow these steps:
-
 1. Go to [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub repo** → select `__QUARK_PROJECT_NAME__`
-2. In the service → **Settings** → **Source** → set **Config File** to `apps/web/railway.json`
-3. In the project → **+ New** → **Database** → **Add PostgreSQL** (injects `DATABASE_URL` automatically)
-4. In the project → **+ New** → **Database** → **Add Redis** (injects `REDIS_URL` automatically)
+2. In the service settings → **Source** → set **Config File** to `apps/web/railway.json`
+3. In the project → **+ New** → **Database** → **Add PostgreSQL** (auto-injects `DATABASE_URL`)
+4. In the project → **+ New** → **Database** → **Add Redis** (auto-injects `REDIS_URL`)
 5. In your web service → **Variables** → add:
    - `NEXTAUTH_SECRET` → run `openssl rand -base64 32` locally and paste the result
    - `APP_URL` → your Railway public domain (e.g. `https://__QUARK_PROJECT_NAME__.railway.app`)
-6. *(If you included the worker)* **+ New** → **GitHub Repo** → same repo → **Config File** → `apps/worker/railway.json`
+6. *(Worker only)* **+ New** → **GitHub Repo** → same repo → **Config File** → `apps/worker/railway.json`
+   - Add `DATABASE_URL` and `REDIS_URL` as reference variables pointing to your Postgres and Redis services
 
-Railway auto-deploys on every push to `main`. Migrations run automatically before each deploy.
+Railway auto-deploys on every push to `main`. Migrations run automatically before each deploy via the `releaseCommand` in `apps/web/railway.json`.
 
 ## AI-Assisted Development
 

@@ -12,6 +12,7 @@ Entry point: [../README.md](../README.md)
 | [QUARK_USAGE.md](./QUARK_USAGE.md) | Full usage guide (dev, CLI, updates) |
 | [MAINTAINABILITY.md](./MAINTAINABILITY.md) | Code style, testing, dependency management |
 | [TESTING_INFRASTRUCTURE.md](./TESTING_INFRASTRUCTURE.md) | Testing frameworks, organization, CI/CD, utilities, best practices |
+| [RAILWAY_TEMPLATE.md](./RAILWAY_TEMPLATE.md) | How to create and publish the Quark Railway template |
 | [ROADMAP.md](./ROADMAP.md) | Long-term vision and expansion plans |
 | [IMPLEMENTATION_CHECKLIST.md](./IMPLEMENTATION_CHECKLIST.md) | Task tracker with progress percentages |
 | [AI_TOOLS.md](./AI_TOOLS.md) | AI coding tools guide (Claude Code, Cursor, Copilot) |

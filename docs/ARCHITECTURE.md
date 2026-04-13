@@ -815,6 +815,84 @@ function ThemeToggle() {
 
 `ThemeProvider` is `"use client"` but all other components (`Card`, `Badge`, `Table`, `QuarkLogo`, etc.) are pure Server Components — theme adaptation happens via CSS variables, not JS. The `QuarkLogo` component specifically uses `var(--quark-logo-dark-arc)` to ensure the dark arc stroke remains visible against both light and dark backgrounds.
 
+### Forcing a single theme (disabling the toggle)
+
+Some sites should not offer theme switching — a marketing page with a specific aesthetic, or an app where dark mode simply doesn't fit. The correct method is to **set `data-theme` statically on `<html>`** and **remove the blocking script and toggle**. Because the attribute is present in the server-rendered HTML, there is no FOUC and no need for a script.
+
+**To lock to light mode**, edit `apps/web/src/app/layout.js`:
+
+```jsx
+// Before (dynamic theme system):
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body>
+        <FloatingThemeToggle />
+        {children}
+      </body>
+    </html>
+  );
+}
+
+// After (light-mode only):
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en" data-theme="light">
+      <head />
+      <body>
+        {children}
+      </body>
+    </html>
+  );
+}
+```
+
+- Remove the `themeScript` constant and its `<script>` tag.
+- Remove `<FloatingThemeToggle />` (and its import).
+- Add `data-theme="light"` (or `"dark"`) directly to `<html>`.
+- Remove `suppressHydrationWarning` — it is only needed when `data-theme` may differ between server and client.
+
+**Why not just remove the toggle?** The blocking script restores the user's previously stored preference from `localStorage` on every visit. A user who previously switched to dark will still get dark even after the toggle is removed. The only reliable fix is to replace the script with a static attribute.
+
+**Re-enableable flag pattern** — if you want to switch back later without hunting through JSX, add a single config constant:
+
+```js
+// apps/web/src/lib/theme-config.js
+export const FORCED_THEME = "light"; // "light" | "dark" | null (auto/user-controlled)
+```
+
+Then drive `layout.js` from it:
+
+```jsx
+import { FORCED_THEME } from "../lib/theme-config.js";
+
+const themeScript = /* existing blocking script string */;
+
+export default function RootLayout({ children }) {
+  return (
+    <html
+      lang="en"
+      {...(FORCED_THEME ? { "data-theme": FORCED_THEME } : { suppressHydrationWarning: true })}
+    >
+      <head>
+        {!FORCED_THEME && (
+          <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        )}
+      </head>
+      <body>
+        {!FORCED_THEME && <FloatingThemeToggle />}
+        {children}
+      </body>
+    </html>
+  );
+}
+```
+
+Set `FORCED_THEME = null` to re-enable the full dynamic system with zero further changes.
+
 ## Resources
 
 - [Core API Reference](./README.md)
