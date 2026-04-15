@@ -72,6 +72,10 @@ const SYNC_FILES = [
 	{ src: "turbo.json", dest: "base-project/turbo.json" },
 	{ src: "docker-compose.yml", dest: "base-project/docker-compose.yml" },
 	{
+		src: "docker-compose.override.yml",
+		dest: "base-project/docker-compose.override.yml",
+	},
+	{
 		src: "pnpm-workspace.yaml",
 		dest: "base-project/pnpm-workspace.yaml",
 	},
@@ -181,6 +185,9 @@ const TRANSFORMS = {
 function transformWebPackageJson(content) {
 	const pkg = JSON.parse(content);
 
+	// Use @myquark placeholder scope (CLI replaces with user's scope)
+	pkg.name = "@myquark/web";
+
 	// Template test script doesn't have integration test exclusion
 	if (pkg.scripts?.test) {
 		pkg.scripts.test = "node --test $(find src -name '*.test.js')";
@@ -205,6 +212,9 @@ function transformWebPackageJson(content) {
 function transformWorkerPackageJson(content) {
 	const pkg = JSON.parse(content);
 
+	// Use @myquark placeholder scope (CLI replaces with user's scope)
+	pkg.name = "@myquark/worker";
+
 	// Core is installed from npm (not workspace) in scaffolded projects
 	if (pkg.dependencies?.["@techstream/quark-core"]) {
 		pkg.dependencies["@techstream/quark-core"] = CORE_VERSION_PIN;
@@ -215,6 +225,9 @@ function transformWorkerPackageJson(content) {
 
 function transformDbPackageJson(content) {
 	const pkg = JSON.parse(content);
+
+	// Use @myquark placeholder scope (CLI replaces with user's scope)
+	pkg.name = "@myquark/db";
 
 	// Remove private flag — scaffolded packages use custom scope
 	delete pkg.private;
@@ -475,7 +488,7 @@ function shouldSyncForPreCommit() {
 			encoding: "utf-8",
 		});
 		const sourceDirPattern =
-			/^(apps\/|packages\/(db|config|ui|jobs|admin)\/|turbo\.json|docker-compose\.yml|pnpm-workspace\.yaml)/;
+			/^(apps\/|packages\/(db|config|ui|jobs|admin)\/|turbo\.json|docker-compose(\.override)?\.yml|pnpm-workspace\.yaml)/;
 		return staged.split("\n").some((f) => sourceDirPattern.test(f));
 	} catch {
 		return false;

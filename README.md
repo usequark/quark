@@ -60,10 +60,6 @@ pnpm dev
 
 🎉 **Open http://localhost:3000**
 
-### 3. Deploy on Railway
-
-Quark projects deploy to Railway with web + worker + Postgres + Redis. See [docs/RAILWAY_TEMPLATE.md](./docs/RAILWAY_TEMPLATE.md) for the full template setup guide.
-
 ---
 
 ## Security Features

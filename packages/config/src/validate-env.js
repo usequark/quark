@@ -74,6 +74,11 @@ const envSchema = {
 		description:
 			"Canonical application URL — derives NEXTAUTH_URL and CORS origins",
 	},
+	ALLOW_INDEXING: {
+		required: false,
+		description:
+			'Set to "true" to allow search engine indexing — only set in the production deployment',
+	},
 	NODE_ENV: {
 		required: false,
 		description: "Environment (development, test, staging, production)",

@@ -32,21 +32,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # --- 3. Mailpit (Local SMTP Server) ---
-  mailpit:
-    image: ghcr.io/axllent/mailpit
-    restart: always
-    ports:
-      # SMTP port (used by application to send mail)
-      - "${MAIL_SMTP_PORT:-1025}:1025"
-      # Web UI port (to view sent emails)
-      - "${MAIL_UI_PORT:-8025}:8025"
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8025"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-
 volumes:
   postgres_data:
   redis_data:

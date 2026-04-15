@@ -257,6 +257,19 @@ Railway with two services: **web** (`apps/web`) and **worker** (`apps/worker`).
 - Staging: auto-deploys on push to `main`. Production: deploy from a version tag.
 - Generate a production seed: `SEED_PROFILE=minimal pnpm db:seed`.
 
+### Railway Config as Code
+
+Each service needs its **Config as Code Path** set in the Railway dashboard:
+
+| Service | Root Directory | Config as Code Path |
+|---------|---------------|---------------------|
+| web | `/` | `apps/web/railway.json` |
+| worker | `/` | `apps/worker/railway.json` |
+
+Root Directory **must** be `/` so Railpack can resolve pnpm workspace dependencies. Without the Config as Code Path, Railway ignores the `railway.json` files and falls back to defaults.
+
+The canonical production start command is `node apps/web/.next/standalone/apps/web/server.js` (set in `railway.json`). The `pnpm start` / `next start` script is for local testing only — it requires full `node_modules` and skips the standalone build.
+
 ## Key Files
 
 | File | Purpose |

@@ -301,6 +301,25 @@ program
 			),
 		);
 
+		// Verify pnpm is available before doing any work
+		if (!options.skipInstall) {
+			try {
+				await execa("pnpm", ["--version"]);
+			} catch {
+				console.error(chalk.red("\n  ✖ pnpm is required but was not found.\n"));
+				console.error(chalk.yellow("  Install it with one of:"));
+				console.error(
+					chalk.white(
+						"    corepack enable          (recommended, built into Node)",
+					),
+				);
+				console.error(chalk.white("    npm install -g pnpm"));
+				console.error(chalk.white("    brew install pnpm        (macOS)\n"));
+				console.error(chalk.gray("  Then re-run this command.\n"));
+				process.exit(1);
+			}
+		}
+
 		const targetDir = validateProjectName(projectName);
 		const scope = projectName.toLowerCase().replace(/[^a-z0-9-]/g, "");
 		const appDisplayName = formatProjectDisplayName(projectName);
@@ -593,9 +612,9 @@ program
 			for (const pkgPath of allPkgPaths) {
 				if (await fs.pathExists(pkgPath)) {
 					const pkg = await fs.readJSON(pkgPath);
-					// Rename package name if it uses @quark/ prefix
-					if (pkg.name?.startsWith("@quark/")) {
-						const shortName = pkg.name.replace("@quark/", "");
+					// Rename package name if it uses @myquark/ placeholder scope
+					if (pkg.name?.startsWith("@myquark/")) {
+						const shortName = pkg.name.replace("@myquark/", "");
 						pkg.name = `@${scope}/${shortName}`;
 					}
 					replaceDepsScope(pkg.dependencies, scope, features);

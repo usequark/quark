@@ -18,7 +18,7 @@
 		"db:studio": "turbo run db:studio",
 		"doctor": "node scripts/doctor.js",
 		"doctor:fix": "node scripts/doctor.js --fix",
-		"prepare": "simple-git-hooks"
+		"prepare": "git rev-parse --is-inside-work-tree > /dev/null 2>&1 && simple-git-hooks || true"
 	},
 	"simple-git-hooks": {
 		"pre-commit": "pnpm nano-staged",

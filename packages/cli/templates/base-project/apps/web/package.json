@@ -1,5 +1,5 @@
 {
-	"name": "@techstream/quark-web",
+	"name": "@myquark/web",
 	"version": "1.0.0",
 	"type": "module",
 	"private": true,
