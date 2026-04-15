@@ -25,6 +25,7 @@ describe("SEO generators", () => {
 
 	test("generates sitemap entries in production", () => {
 		process.env.NODE_ENV = "production";
+		process.env.ALLOW_INDEXING = "true";
 
 		const entries = sitemap();
 
@@ -51,6 +52,7 @@ describe("SEO generators", () => {
 
 	test("returns sitemap reference in production", () => {
 		process.env.NODE_ENV = "production";
+		process.env.ALLOW_INDEXING = "true";
 
 		const config = robots();
 
