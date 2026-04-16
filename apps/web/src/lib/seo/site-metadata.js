@@ -1,10 +1,10 @@
 import { config, getAppUrl } from "@techstream/quark-config";
 import { getMetadataRobots } from "./indexing.js";
 
-const appUrl = getAppUrl();
-const { appName, appDescription } = config;
-
 export function getSiteMetadata() {
+	const appUrl = getAppUrl();
+	const { appName, appDescription } = config;
+
 	return {
 		metadataBase: new URL(appUrl),
 		title: {

@@ -6,8 +6,8 @@
 		"watchPatterns": ["apps/web/**", "packages/**"]
 	},
 	"deploy": {
-		"releaseCommand": "pnpm --filter './packages/db' exec prisma migrate deploy",
-		"startCommand": "node apps/web/.next/standalone/apps/web/server.js",
+		"releaseCommand": "pnpm --filter '@myquark/db' exec prisma migrate deploy",
+		"startCommand": "pnpm run --filter='@myquark/web' start",
 		"healthcheckPath": "/api/health",
 		"healthcheckTimeout": 120,
 		"restartPolicyType": "ON_FAILURE",

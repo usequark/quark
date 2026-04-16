@@ -7,7 +7,7 @@
 	},
 	"deploy": {
 		"releaseCommand": "pnpm --filter @techstream/quark-db exec prisma migrate deploy",
-		"startCommand": "node apps/web/.next/standalone/apps/web/server.js",
+		"startCommand": "pnpm run --filter=@techstream/quark-web start",
 		"healthcheckPath": "/api/health",
 		"healthcheckTimeout": 120,
 		"restartPolicyType": "ON_FAILURE",
