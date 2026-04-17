@@ -18,12 +18,18 @@
 import { spawn, spawnSync } from "node:child_process";
 import http from "node:http";
 import net from "node:net";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import fs from "fs-extra";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const E2E_TEST_DIR = "/tmp/e2e-test-quark-full";
+const E2E_TEST_DIR = path.join(tmpdir(), "e2e-test-quark-full");
+// RUNNER_TEMP is set by GitHub Actions; fall back to os.tmpdir() for local runs.
+const E2E_RESULTS_FILE = path.join(
+	process.env.RUNNER_TEMP ?? tmpdir(),
+	"e2e-test-results-latest.json",
+);
 const PROJECT_NAME = "e2e-test-app";
 const PROJECT_PATH = path.join(E2E_TEST_DIR, PROJECT_NAME);
 const STEP_TIMEOUT = 60000; // 60s per step timeout
@@ -548,11 +554,8 @@ async function runE2ETest() {
 				nodeVersion: process.version,
 				platform: process.platform,
 			};
-			await fs.writeFile(
-				"/tmp/e2e-test-results-latest.json",
-				JSON.stringify(results, null, 2),
-			);
-			log.info("Results written to /tmp/e2e-test-results-latest.json");
+			await fs.writeFile(E2E_RESULTS_FILE, JSON.stringify(results, null, 2));
+			log.info(`Results written to ${E2E_RESULTS_FILE}`);
 		} catch {
 			// Non-fatal: monitoring write failure should not affect test outcome
 		}

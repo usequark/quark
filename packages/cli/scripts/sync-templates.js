@@ -190,7 +190,7 @@ function transformWebPackageJson(content) {
 
 	// Template test script doesn't have integration test exclusion
 	if (pkg.scripts?.test) {
-		pkg.scripts.test = "node --test $(find src -name '*.test.js')";
+		pkg.scripts.test = "node --test 'src/**/*.test.js'";
 	}
 	// Remove monorepo-only scripts
 	delete pkg.scripts?.["test:integration"];
@@ -220,6 +220,12 @@ function transformWorkerPackageJson(content) {
 		pkg.dependencies["@techstream/quark-core"] = CORE_VERSION_PIN;
 	}
 
+	// Replace bash subshell glob with a cross-platform Node.js native glob
+	// so `pnpm test` works on Windows (cmd.exe/PowerShell) as well as Unix.
+	if (pkg.scripts?.test) {
+		pkg.scripts.test = "node --test 'src/**/*.test.js'";
+	}
+
 	return `${JSON.stringify(pkg, null, "\t")}\n`;
 }
 
@@ -231,6 +237,12 @@ function transformDbPackageJson(content) {
 
 	// Remove private flag — scaffolded packages use custom scope
 	delete pkg.private;
+
+	// Replace bash subshell glob with a cross-platform Node.js native glob
+	// so `pnpm test` works on Windows (cmd.exe/PowerShell) as well as Unix.
+	if (pkg.scripts?.test) {
+		pkg.scripts.test = "node --test 'src/**/*.test.js'";
+	}
 
 	return `${JSON.stringify(pkg, null, "\t")}\n`;
 }

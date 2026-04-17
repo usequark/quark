@@ -5,10 +5,41 @@ import { prisma } from "../src/index.js";
  * Minimal seed: creates a single admin user.
  * Used standalone in production initial setup (SEED_PROFILE=minimal).
  * Also called by seedDev to avoid duplication.
+ *
+ * Required env vars:
+ *   ADMIN_PASSWORD — min 12 characters, no default (generate: openssl rand -base64 24)
+ * Optional env vars:
+ *   ADMIN_EMAIL    — defaults to admin@example.com
+ *   ADMIN_NAME     — defaults to Admin
  */
 async function seedMinimal(prisma) {
+	const seedProfile = process.env.SEED_PROFILE || "dev";
+	const adminEmail = process.env.ADMIN_EMAIL;
+	const adminPassword = process.env.ADMIN_PASSWORD;
+	const adminName = process.env.ADMIN_NAME || "Admin";
+
+	if (!adminPassword) {
+		throw new Error(
+			"ADMIN_PASSWORD is required to seed the admin user.\n" +
+				"  Set it in your .env file (minimum 12 characters).\n" +
+				"  Generate one: openssl rand -base64 24",
+		);
+	}
+	if (adminPassword.length < 12) {
+		throw new Error("ADMIN_PASSWORD must be at least 12 characters.");
+	}
+
+	if (!adminEmail && seedProfile === "minimal") {
+		throw new Error(
+			"ADMIN_EMAIL is required when SEED_PROFILE=minimal.\n" +
+				"  Set it in your environment to the real admin email address.",
+		);
+	}
+
+	const resolvedEmail = adminEmail || "admin@example.com";
+
 	const existing = await prisma.user.findUnique({
-		where: { email: "admin@example.com" },
+		where: { email: resolvedEmail },
 	});
 
 	if (existing) {
@@ -18,10 +49,10 @@ async function seedMinimal(prisma) {
 
 	const admin = await prisma.user.create({
 		data: {
-			email: "admin@example.com",
-			name: "Admin User",
+			email: resolvedEmail,
+			name: adminName,
 			role: "admin",
-			password: await bcrypt.hash("admin123", 12),
+			password: await bcrypt.hash(adminPassword, 12),
 		},
 	});
 

@@ -6,12 +6,13 @@
  */
 
 import { spawn } from "node:child_process";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import fs from "fs-extra";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const testDir = "/tmp/integration-test";
+const testDir = path.join(tmpdir(), "integration-test");
 const projectName = "integration-test-app";
 
 await fs.remove(testDir);

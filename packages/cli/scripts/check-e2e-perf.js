@@ -13,9 +13,14 @@
  */
 
 import { readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 
-const RESULTS_FILE = "/tmp/e2e-test-results-latest.json";
+// RUNNER_TEMP is set by GitHub Actions; fall back to os.tmpdir() for local runs.
+const RESULTS_FILE = resolve(
+	process.env.RUNNER_TEMP ?? tmpdir(),
+	"e2e-test-results-latest.json",
+);
 
 // Thresholds (milliseconds)
 const TOTAL_HARD_LIMIT = 120_000; // 2 minutes → hard FAIL

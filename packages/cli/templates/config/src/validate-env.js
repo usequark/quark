@@ -115,6 +115,23 @@ const envSchema = {
 		description:
 			"Public CDN base URL for asset delivery — provider-agnostic (CloudFront, Cloudflare, Bunny, etc.). Falls back to /api/files when unset.",
 	},
+
+	// Admin seed (used by `pnpm db:seed` — not required at web/worker runtime)
+	ADMIN_EMAIL: {
+		required: false,
+		description:
+			"Admin user email address for initial database seed (default: admin@example.com)",
+	},
+	ADMIN_PASSWORD: {
+		required: false,
+		description:
+			"Admin user password for initial database seed — required by seed script, min 12 characters",
+	},
+	ADMIN_NAME: {
+		required: false,
+		description:
+			"Admin user display name for initial database seed (default: Admin)",
+	},
 };
 
 /**

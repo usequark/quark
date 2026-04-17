@@ -5,12 +5,13 @@
  * This manually walks through creating a project
  */
 
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import fs from "fs-extra";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const testDir = "/tmp/e2e-test-quark";
+const testDir = path.join(tmpdir(), "e2e-test-quark");
 const projectName = "my-awesome-app";
 const projectPath = path.join(testDir, projectName);
 

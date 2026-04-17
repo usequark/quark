@@ -40,5 +40,5 @@ export function getConnectionString({ throwOnMissing = true } = {}) {
 		return "postgresql://placeholder:placeholder@localhost:5432/placeholder?schema=public";
 	}
 
-	return `postgresql://${user}:${password}@${host}:${port}/${db}?schema=public`;
+	return `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${encodeURIComponent(db)}?schema=public`;
 }

@@ -134,10 +134,20 @@ async function initializeGit(projectDir) {
 		// Add all files
 		await execa("git", ["add", "."], { cwd: projectDir });
 
-		// Create initial commit
+		// Create initial commit.
+		// Supply a local identity via -c to avoid failures on machines that
+		// have no global user.email / user.name configured (common on Windows).
 		await execa(
 			"git",
-			["commit", "-m", "Initial commit: Quark project scaffold"],
+			[
+				"-c",
+				"user.email=scaffold@quark.local",
+				"-c",
+				"user.name=Quark Scaffold",
+				"commit",
+				"-m",
+				"Initial commit: Quark project scaffold",
+			],
 			{
 				cwd: projectDir,
 			},
@@ -208,9 +218,11 @@ async function patchNextConfig(webDir, scope, selectedFeatures) {
 
 	for (const [feature, pkg] of Object.entries(optionalEntries)) {
 		if (!selectedFeatures.includes(feature)) {
-			// Remove the line containing this package from transpilePackages
+			// Remove the line containing this package from transpilePackages.
+			// Use \r?\n so the regex matches both LF and CRLF line endings
+			// (CRLF can appear on Windows when git autocrlf=true is set).
 			content = content.replace(
-				new RegExp(`[ \\t]*"${pkg.replace("/", "\\/")}",?\\n`, "g"),
+				new RegExp(`[ \\t]*"${pkg.replace("/", "\\/")}",?\\r?\\n`, "g"),
 				"",
 			);
 		}
@@ -440,6 +452,15 @@ program
 					await copyTemplate(reqPkg, pkgDir);
 				}
 				const pkgJsonPath = path.join(pkgDir, "package.json");
+				// Verify copy succeeded — guards against Windows fs race conditions where a
+				// directory handle is returned before child writes are fully committed.
+				if (!(await fs.pathExists(pkgJsonPath))) {
+					throw new Error(
+						`Required package '${reqPkg}' is missing package.json after copy.\n` +
+							`  This can occur on Windows due to filesystem timing. Please re-run the scaffolder.\n` +
+							`  Expected: ${pkgJsonPath}`,
+					);
+				}
 				const pkgJson = await fs.readJSON(pkgJsonPath);
 				pkgJson.name = `@${scope}/${reqPkg}`;
 				await fs.writeFile(

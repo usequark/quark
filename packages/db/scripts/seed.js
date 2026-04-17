@@ -20,18 +20,34 @@ if (!VALID_PROFILES.includes(PROFILE)) {
 // ---------------------------------------------------------------------------
 
 async function seedUsers() {
+	const adminEmail = process.env.ADMIN_EMAIL || "admin@example.com";
+	const adminPassword = process.env.ADMIN_PASSWORD;
+	const adminName = process.env.ADMIN_NAME || "Admin";
+
+	if (!adminPassword) {
+		throw new Error(
+			"ADMIN_PASSWORD is required to seed the admin user.\n" +
+				"  Set it in your .env file (minimum 12 characters).\n" +
+				"  Generate one: openssl rand -base64 24",
+		);
+	}
+	if (adminPassword.length < 12) {
+		throw new Error("ADMIN_PASSWORD must be at least 12 characters.");
+	}
+
 	const users = [
 		{
-			email: "admin@example.com",
-			name: "Admin User",
+			email: adminEmail,
+			name: adminName,
 			role: "admin",
-			password: "Password1",
+			password: adminPassword,
 		},
 		{
+			// Dev-only sample account — password is randomly generated and logged once.
 			email: "viewer@example.com",
 			name: "Viewer User",
 			role: "viewer",
-			password: "Password1",
+			password: faker.internet.password({ length: 16, memorable: false }),
 		},
 	];
 

@@ -5,7 +5,7 @@
 	"description": "",
 	"main": "src/index.js",
 	"scripts": {
-		"test": "node --test $(find src -name '*.test.js')",
+		"test": "node --test 'src/**/*.test.js'",
 		"lint": "biome format --write && biome check --write",
 		"db:generate": "prisma generate",
 		"db:migrate": "prisma migrate dev",
