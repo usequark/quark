@@ -6,6 +6,7 @@
 	"description": "",
 	"main": "index.js",
 	"scripts": {
+		"clean": "rm -rf dist",
 		"test": "node --test $(find src -name '*.test.js')",
 		"dev": "tsx watch src/index.js",
 		"preflight": "node src/index.js --preflight",

@@ -107,6 +107,25 @@ async function seedDev(prisma) {
 }
 
 async function main() {
+	// Guard: require an explicit SEED_PROFILE when seeding a remote database.
+	// Without this, a missing SEED_PROFILE silently defaults to "dev" and seeds
+	// sample data onto production or staging databases.
+	if (!process.env.SEED_PROFILE) {
+		const host = process.env.POSTGRES_HOST || "";
+		const url = process.env.DATABASE_URL || "";
+		const isRemote =
+			(host && host !== "localhost" && host !== "127.0.0.1") ||
+			(url && !url.includes("localhost") && !url.includes("127.0.0.1"));
+		if (isRemote) {
+			console.error(
+				"❌ Set SEED_PROFILE explicitly when seeding a remote database.\n" +
+					"   Production: SEED_PROFILE=minimal pnpm db:seed\n" +
+					"   Staging:    SEED_PROFILE=dev pnpm db:seed",
+			);
+			process.exit(1);
+		}
+	}
+
 	// SEED_PROFILE is intentionally separate from NODE_ENV.
 	// Railway sets NODE_ENV=production on ALL deployed services (including staging)
 	// for build/performance reasons, so NODE_ENV cannot reliably distinguish staging
@@ -126,6 +145,6 @@ async function main() {
 }
 
 main().catch((error) => {
-	console.error("❌ Seed failed:", error.message);
+	console.error("❌ Seed failed:", error);
 	process.exit(1);
 });

@@ -5,6 +5,7 @@
 	"description": "",
 	"main": "index.js",
 	"scripts": {
+		"clean": "turbo run clean && rm -rf .turbo",
 		"build": "turbo run build",
 		"dev": "dotenv -- turbo run dev",
 		"lint": "biome format --write && biome check --write",

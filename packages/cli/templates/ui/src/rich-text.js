@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useLayoutEffect, useRef, useState } from "react";
 
 /**
  * RichText — dependency-free rich text editor using contentEditable.
@@ -137,9 +137,10 @@ export function RichText({
 		});
 	}, []);
 
-	// Set initial content once on mount — sanitize to prevent stored XSS
+	// Set initial content before the browser paints to prevent a flash of
+	// empty editor on first mount (same fix as Dialog's showModal() call).
 	const initializedRef = useRef(false);
-	useEffect(() => {
+	useLayoutEffect(() => {
 		if (!initializedRef.current && editorRef.current && defaultValue) {
 			initializedRef.current = true;
 			editorRef.current.innerHTML = sanitizeHtml(defaultValue);

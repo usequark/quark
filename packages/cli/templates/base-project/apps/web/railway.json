@@ -6,7 +6,7 @@
 		"watchPatterns": ["apps/web/**", "packages/**"]
 	},
 	"deploy": {
-		"releaseCommand": "pnpm --filter '@myquark/db' exec prisma migrate deploy",
+		"releaseCommand": "pnpm db:migrate:deploy",
 		"startCommand": "pnpm run --filter='@myquark/web' start",
 		"healthcheckPath": "/api/health",
 		"healthcheckTimeout": 120,

@@ -6,9 +6,9 @@ import { useState } from "react";
 import SignOutButton from "./SignOutButton";
 
 /**
- * @param {{ title: string, models: { name: string, slug: string, label: string, readOnly: boolean }[] }} props
+ * @param {{ title: string, models: { name: string, slug: string, label: string, readOnly: boolean }[], customLinks?: { href: string, label: string, icon?: import('react').ReactNode }[] }} props
  */
-export default function Sidebar({ title, models }) {
+export default function Sidebar({ title, models, customLinks = [] }) {
 	const pathname = usePathname();
 	const [open, setOpen] = useState(false);
 
@@ -20,6 +20,7 @@ export default function Sidebar({ title, models }) {
 			href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
 		return (
 			<a
+				key={href}
 				href={href}
 				onClick={() => setOpen(false)}
 				className={`flex items-center gap-2 px-3 py-2 rounded-[--radius-default] text-sm transition-colors ${
@@ -68,6 +69,17 @@ export default function Sidebar({ title, models }) {
 					</svg>,
 				)}
 			</nav>
+
+			{customLinks.length > 0 && (
+				<>
+					<div className="border-t border-border mb-3 shrink-0" />
+					<nav className="flex flex-col gap-1 mb-3 shrink-0">
+						{customLinks.map((link) =>
+							navLink(link.href, link.label, link.icon ?? null),
+						)}
+					</nav>
+				</>
+			)}
 
 			<div className="border-t border-border mb-3 shrink-0" />
 
@@ -149,11 +161,9 @@ function ModelSection({ label, models, navLink }) {
 				{label}
 			</p>
 			<nav className="flex flex-col gap-0.5">
-				{models.map((model) => (
-					<div key={model.name}>
-						{navLink(`/admin/${model.slug}`, model.label, null)}
-					</div>
-				))}
+				{models.map((model) =>
+					navLink(`/admin/${model.slug}`, model.label, null),
+				)}
 			</nav>
 		</div>
 	);

@@ -2,6 +2,9 @@
 	"$schema": "https://turbo.build/schema.json",
 	"ui": "stream",
 	"tasks": {
+		"clean": {
+			"cache": false
+		},
 		"build": {
 			"dependsOn": ["^build", "db:generate"],
 			"outputs": ["dist/**", ".next/**"],
@@ -16,17 +19,25 @@
 		},
 		"db:generate": {
 			"cache": false,
-			"outputs": ["node_modules/.prisma/client"]
+			"outputs": ["node_modules/.prisma/client"],
+			"passThroughEnv": ["DATABASE_URL", "POSTGRES_HOST", "POSTGRES_PORT", "POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_DB"]
 		},
 		"db:migrate": {
 			"cache": false,
-			"interactive": true
+			"interactive": true,
+			"passThroughEnv": ["DATABASE_URL", "POSTGRES_HOST", "POSTGRES_PORT", "POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_DB"]
+		},
+		"db:migrate:deploy": {
+			"cache": false,
+			"passThroughEnv": ["DATABASE_URL", "POSTGRES_HOST", "POSTGRES_PORT", "POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_DB"]
 		},
 		"db:push": {
-			"cache": false
+			"cache": false,
+			"passThroughEnv": ["DATABASE_URL", "POSTGRES_HOST", "POSTGRES_PORT", "POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_DB"]
 		},
 		"db:seed": {
-			"cache": false
+			"cache": false,
+			"passThroughEnv": ["DATABASE_URL", "POSTGRES_HOST", "POSTGRES_PORT", "POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_DB", "SEED_PROFILE", "ADMIN_EMAIL", "ADMIN_PASSWORD", "ADMIN_NAME"]
 		},
 		"sync-templates": {
 			"cache": false

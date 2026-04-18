@@ -923,13 +923,19 @@ const lowStock = await prisma.product.findMany({
 
 #### Example: Custom Sidebar Links
 
-To add a non-model page to the sidebar, edit `Sidebar.js` directly. Add your link between the Dashboard and the model sections:
+To add non-model pages to the sidebar, pass a `customLinks` array to the `<Sidebar>` component. Links appear between the Dashboard and the model sections:
 
 ```javascript
-// apps/web/src/app/admin/_components/Sidebar.js — in the nav section after Dashboard
+// apps/web/src/app/admin/layout.js
 
-{navLink("/admin/calendar", "Calendar", /* your SVG icon */)}
-{navLink("/admin/analytics", "Analytics", /* your SVG icon */)}
+<Sidebar
+  title="Admin"
+  models={models}
+  customLinks={[
+    { href: "/admin/calendar", label: "Calendar", icon: /* your SVG icon */ null },
+    { href: "/admin/analytics", label: "Analytics", icon: /* your SVG icon */ null },
+  ]}
+/>
 ```
 
 Then create the corresponding route file:

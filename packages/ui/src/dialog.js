@@ -1,5 +1,11 @@
 "use client";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+	useCallback,
+	useEffect,
+	useLayoutEffect,
+	useRef,
+	useState,
+} from "react";
 
 /**
  * Dialog — centered modal built on the native <dialog> element.
@@ -13,9 +19,12 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
  *
  * Architecture:
  *   • ALL close paths (header ×, backdrop click, Escape, external button)
- *     flow through the `open` prop → useEffect, which owns the single
- *     animation + el.close() call. handleClose() just calls onClose().
- *   • isClosingRef (ref, not state) prevents the effect from double-firing.
+ *     flow through the `open` prop → effects, which own the animation +
+ *     el.open/close calls. handleClose() just calls onClose().
+ *   • showModal() runs in useLayoutEffect (before browser paint) to prevent
+ *     the first-load flash where the dialog appears at full opacity before
+ *     the CSS entry animation can set opacity: 0.
+ *   • isClosingRef (ref, not state) prevents the close effect from double-firing.
  */
 
 const dialogCls =
@@ -36,13 +45,20 @@ export function Dialog({ open, onClose, title, children, className = "" }) {
 	const [isClosing, setIsClosing] = useState(false);
 	const isClosingRef = useRef(false);
 
-	// Single source of truth for open/close — drives both animation and native element
+	// Call showModal() before the browser paints so the CSS entry animation
+	// starts from opacity: 0 on the very first open (useEffect fires too late).
+	useLayoutEffect(() => {
+		const el = ref.current;
+		if (!el) return;
+		if (open && !el.open && typeof el.showModal === "function") el.showModal();
+	}, [open]);
+
+	// Manage state resets (open) and the exit animation (close).
 	useEffect(() => {
 		const el = ref.current;
 		if (!el) return;
 
 		if (open) {
-			if (!el.open && typeof el.showModal === "function") el.showModal();
 			isClosingRef.current = false;
 			setIsClosing(false);
 		} else {
