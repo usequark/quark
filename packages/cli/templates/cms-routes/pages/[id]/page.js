@@ -6,8 +6,8 @@ import {
 	cmsPublishPage,
 	cmsUnpublishPage,
 	cmsUpdatePage,
-} from "../../../_actions/content";
-import ContentForm from "../../../_components/ContentForm";
+} from "../../_actions/content";
+import ContentForm from "../../_components/ContentForm";
 
 export const metadata = { title: "CMS — Edit Page" };
 
