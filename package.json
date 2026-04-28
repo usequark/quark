@@ -73,6 +73,6 @@
 		]
 	},
 	"dependencies": {
-		"@prisma/client": "^7.5.0"
+		"@prisma/client": "^7.8.0"
 	}
 }
