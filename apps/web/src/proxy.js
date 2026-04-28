@@ -1,10 +1,65 @@
 /**
  * Next.js Proxy
- * Handles rate limiting, CORS, and security headers
+ * Handles auth guards, rate limiting, CORS, and security headers.
+ *
+ * Guards (in order):
+ *   1. Admin route guard    — verifies JWT role at the edge before any layout
+ *                             or Server Action under /admin is reached.
+ *   2. Metrics guard        — optionally protects /api/metrics with a bearer
+ *                             token. Set METRICS_TOKEN in env to enable.
+ *   3. Rate limiting, CORS, security headers for all API routes.
  */
 
 import { getAllowedOrigins } from "@techstream/quark-config/app-url";
 import { NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
+
+// ─── 1. Admin route guard ────────────────────────────────────────────────────
+
+async function adminGuard(request) {
+	const { pathname, search } = request.nextUrl;
+	if (pathname !== "/admin" && !pathname.startsWith("/admin/")) return null;
+
+	const token = await getToken({
+		req: request,
+		secret: process.env.NEXTAUTH_SECRET,
+	});
+
+	if (!token) {
+		const signinUrl = new URL("/auth/signin", request.url);
+		signinUrl.searchParams.set("callbackUrl", pathname + search);
+		return NextResponse.redirect(signinUrl);
+	}
+
+	if (token.role !== "admin") {
+		return NextResponse.redirect(new URL("/", request.url));
+	}
+
+	return null; // authorised — continue
+}
+
+// ─── 2. Metrics guard ────────────────────────────────────────────────────────
+
+function metricsGuard(request) {
+	const { pathname } = request.nextUrl;
+	if (pathname !== "/api/metrics") return null;
+
+	// If METRICS_TOKEN is not configured, the endpoint is unprotected (existing
+	// behaviour preserved). Set METRICS_TOKEN in env to enable protection.
+	const expectedToken = process.env.METRICS_TOKEN;
+	if (!expectedToken) return null;
+
+	const authHeader = request.headers.get("authorization") ?? "";
+	const providedToken = authHeader.startsWith("Bearer ")
+		? authHeader.slice(7)
+		: (request.headers.get("x-metrics-token") ?? "");
+
+	if (providedToken !== expectedToken) {
+		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+	}
+
+	return null; // authorised — continue
+}
 
 // Simple in-memory rate limiter (use Redis for production)
 const rateLimit = new Map();
@@ -120,7 +175,13 @@ const REQUEST_SIZE_LIMITS = {
 	upload: parseInt(process.env.UPLOAD_SIZE_LIMIT || "10485760", 10), // 10MB for uploads
 };
 
-export function proxy(request) {
+export async function proxy(request) {
+	const adminResponse = await adminGuard(request);
+	if (adminResponse) return adminResponse;
+
+	const metricsResponse = metricsGuard(request);
+	if (metricsResponse) return metricsResponse;
+
 	const { pathname } = request.nextUrl;
 	const origin = request.headers.get("origin") || "";
 

@@ -62,7 +62,19 @@ const SYNC_DIRS = [
 	{ src: "packages/jobs", dest: "jobs" },
 	{ src: "packages/admin", dest: "admin" },
 	// Admin routes live inside apps/web but are scaffolded separately (conditionally)
-	{ src: "apps/web/src/app/admin", dest: "admin-routes" },
+	{
+		src: "apps/web/src/app/admin",
+		dest: "admin-routes",
+		// CMS routes are scaffolded separately via cms-routes template
+		localExcludes: [/^apps\/web\/src\/app\/admin\/cms\//],
+	},
+	// CMS package (content models, slug helpers, status lifecycle)
+	{ src: "packages/cms", dest: "cms" },
+	// CMS admin routes — scaffolded conditionally alongside the CMS package
+	{
+		src: "apps/web/src/app/admin/cms",
+		dest: "cms-routes",
+	},
 ];
 
 /**
@@ -102,6 +114,11 @@ const EXCLUDE_PATTERNS = [
 	/^apps\/web\/src\/app\/api\/integration\.test\.js$/,
 	/^apps\/web\/src\/app\/manifest\.js$/,
 	/^apps\/web\/src\/app\/manifest\.test\.js$/,
+	// robots.js + sitemap.js intentionally diverge from the template:
+	// - Monorepo source: sync functions, relies on `export const dynamic = "force-dynamic"`
+	// - Template: async functions with `await headers()` to opt-in to dynamic rendering
+	//   in scaffold projects where force-dynamic may not be the convention
+	// Do NOT overwrite the template versions with the monorepo source.
 	/^apps\/web\/src\/app\/robots\.js$/,
 	/^apps\/web\/src\/app\/seo-routes\.test\.js$/,
 	/^apps\/web\/src\/app\/sitemap\.js$/,

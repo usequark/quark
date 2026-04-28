@@ -50,9 +50,10 @@ export async function pingRedis({ timeout = 3000 } = {}) {
 	try {
 		const { default: Redis } = await import("ioredis");
 
-		const url = getRedisUrl();
+		const conn = resolveRedisConnection();
 
-		client = new Redis(url, {
+		client = new Redis({
+			...conn,
 			lazyConnect: true,
 			connectTimeout: timeout,
 			maxRetriesPerRequest: 0,

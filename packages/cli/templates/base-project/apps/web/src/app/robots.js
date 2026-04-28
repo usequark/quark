@@ -14,7 +14,7 @@ export default async function robots() {
 			? {
 					userAgent: "*",
 					allow: "/",
-					disallow: ["/api/"],
+					disallow: ["/api/", "/admin/", "/auth/"],
 				}
 			: {
 					userAgent: "*",

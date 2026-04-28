@@ -1108,6 +1108,327 @@ STORAGE_PROVIDER=local
 		}
 	});
 
+// ---------------------------------------------------------------------------
+// quark add <feature> — Add optional packages to an existing Quark project
+// ---------------------------------------------------------------------------
+
+/** Feature metadata: dependencies and paired apps/routes */
+const FEATURE_META = {
+	ui: { requires: [], pairs: [] },
+	jobs: { requires: [], pairs: ["worker"] },
+	admin: { requires: ["ui"], pairs: ["admin-routes"] },
+};
+
+/**
+ * Detect the project scope from existing package.json files.
+ * Reads root package.json and extracts the scope from the name field.
+ * @param {string} projectDir
+ * @returns {Promise<string|null>}
+ */
+async function detectProjectScope(projectDir) {
+	const rootPkgPath = path.join(projectDir, "package.json");
+	if (!(await fs.pathExists(rootPkgPath))) return null;
+	const rootPkg = await fs.readJSON(rootPkgPath);
+	const match = rootPkg.name?.match(/^@([^/]+)\//);
+	return match ? match[1] : null;
+}
+
+/**
+ * Detect which optional features are already installed in a project.
+ * @param {string} projectDir
+ * @returns {Promise<string[]>}
+ */
+async function detectInstalledFeatures(projectDir) {
+	const installed = [];
+	for (const feature of Object.keys(FEATURE_META)) {
+		const featureDir = path.join(projectDir, "packages", feature);
+		if (await fs.pathExists(featureDir)) {
+			installed.push(feature);
+		}
+	}
+	return installed;
+}
+
+/**
+ * Add a transpilePackages entry to next.config.js if not already present.
+ * @param {string} webDir - Path to apps/web
+ * @param {string} scopedPkg - e.g. "@myapp/admin"
+ */
+async function addTranspilePackage(webDir, scopedPkg) {
+	const configPath = path.join(webDir, "next.config.js");
+	if (!(await fs.pathExists(configPath))) return;
+
+	let content = await fs.readFile(configPath, "utf-8");
+	if (content.includes(`"${scopedPkg}"`)) return; // already present
+
+	// Insert after the last entry in transpilePackages array
+	const transpileMatch = content.match(/transpilePackages:\s*\[([^\]]*)\]/s);
+	if (!transpileMatch) return;
+
+	const existingBlock = transpileMatch[1];
+	const lastEntry = existingBlock.trimEnd();
+	// Add a trailing comma to the last entry if needed, then add new entry
+	const updatedBlock = lastEntry.endsWith(",")
+		? `${lastEntry}\n\t\t"${scopedPkg}",`
+		: `${lastEntry},\n\t\t"${scopedPkg}",`;
+
+	content = content.replace(transpileMatch[1], `${updatedBlock}\n\t`);
+	await fs.writeFile(configPath, content);
+}
+
+/**
+ * Add a workspace dependency to a package.json file.
+ * @param {string} pkgJsonPath - Path to the package.json
+ * @param {string} depName - e.g. "@myapp/admin"
+ */
+async function addWorkspaceDep(pkgJsonPath, depName) {
+	if (!(await fs.pathExists(pkgJsonPath))) return;
+	const pkg = await fs.readJSON(pkgJsonPath);
+	pkg.dependencies = pkg.dependencies || {};
+	if (pkg.dependencies[depName]) return; // already present
+	pkg.dependencies[depName] = "workspace:*";
+	await fs.writeFile(pkgJsonPath, `${JSON.stringify(pkg, null, 2)}\n`);
+}
+
+program
+	.command("add")
+	.argument("<feature>", "Feature to add (ui, jobs, admin)")
+	.description("Add an optional package to an existing Quark project")
+	.option("--force", "Skip safety checks (uncommitted changes)")
+	.action(async (feature, options) => {
+		console.log(chalk.blue.bold(`\n📦 Quark Add: ${feature}\n`));
+
+		const projectDir = process.cwd();
+
+		// --- Validate: is this a Quark project? ---
+		const quarkLinkPath = path.join(projectDir, ".quark-link.json");
+		if (!(await fs.pathExists(quarkLinkPath))) {
+			console.error(
+				chalk.red(
+					"✗ .quark-link.json not found. Are you in a Quark project root?",
+				),
+			);
+			process.exit(1);
+		}
+
+		// --- Validate: is the feature valid? ---
+		const validFeatures = Object.keys(FEATURE_META);
+		if (!validFeatures.includes(feature)) {
+			console.error(
+				chalk.red(
+					`✗ Unknown feature: "${feature}". Valid options: ${validFeatures.join(", ")}`,
+				),
+			);
+			process.exit(1);
+		}
+
+		// --- Detect project state ---
+		const scope = await detectProjectScope(projectDir);
+		if (!scope) {
+			console.error(
+				chalk.red(
+					"✗ Could not detect project scope from package.json. Expected @scope/root format.",
+				),
+			);
+			process.exit(1);
+		}
+
+		const quarkLink = await fs.readJSON(quarkLinkPath);
+		const installedFeatures = await detectInstalledFeatures(projectDir);
+
+		// --- Check if already installed ---
+		if (installedFeatures.includes(feature)) {
+			console.log(
+				chalk.yellow(`⚠️  "${feature}" is already installed in this project.`),
+			);
+			process.exit(0);
+		}
+
+		// --- Safety: check for uncommitted changes ---
+		if (!options.force) {
+			try {
+				await execa("git", ["diff", "--exit-code"], { cwd: projectDir });
+				await execa("git", ["diff", "--cached", "--exit-code"], {
+					cwd: projectDir,
+				});
+			} catch {
+				console.log(
+					chalk.yellow(
+						"⚠️  You have uncommitted changes. Commit or stash them first.",
+					),
+				);
+				console.log(
+					chalk.white("Use --force to skip this check (not recommended).\n"),
+				);
+				process.exit(1);
+			}
+		}
+
+		// --- Resolve dependency chain ---
+		const meta = FEATURE_META[feature];
+		const toAdd = []; // features to scaffold, in order
+		for (const req of meta.requires) {
+			if (!installedFeatures.includes(req)) {
+				toAdd.push(req);
+				console.log(
+					chalk.yellow(
+						`  ℹ  "${feature}" requires "${req}" — adding automatically.`,
+					),
+				);
+			}
+		}
+		toAdd.push(feature);
+
+		try {
+			for (const feat of toAdd) {
+				const featMeta = FEATURE_META[feat];
+				console.log(chalk.cyan(`\n  📋 Adding ${feat}...`));
+
+				// 1. Copy package template
+				const packageDir = path.join(projectDir, "packages", feat);
+				if (await fs.pathExists(packageDir)) {
+					console.log(
+						chalk.dim(`    · packages/${feat} already exists — skipping copy`),
+					);
+				} else {
+					await copyTemplate(feat, packageDir);
+					await updatePackageJsonName(
+						path.join(packageDir, "package.json"),
+						scope,
+					);
+					await replaceImportsInSourceFiles(packageDir, scope);
+					console.log(chalk.green(`    ✓ packages/${feat}`));
+				}
+
+				// 2. Handle paired apps/routes
+				for (const pair of featMeta.pairs) {
+					if (pair === "worker") {
+						const workerDir = path.join(projectDir, "apps", "worker");
+						if (await fs.pathExists(workerDir)) {
+							console.log(
+								chalk.dim(`    · apps/worker already exists — skipping copy`),
+							);
+						} else {
+							await copyTemplate("worker", workerDir);
+							await updatePackageJsonName(
+								path.join(workerDir, "package.json"),
+								scope,
+							);
+							await replaceImportsInSourceFiles(workerDir, scope);
+							console.log(chalk.green(`    ✓ apps/worker (paired with jobs)`));
+						}
+					} else if (pair === "admin-routes") {
+						const adminRoutesDir = path.join(
+							projectDir,
+							"apps",
+							"web",
+							"src",
+							"app",
+							"admin",
+						);
+						if (await fs.pathExists(adminRoutesDir)) {
+							console.log(
+								chalk.dim(
+									`    · apps/web/src/app/admin already exists — skipping copy`,
+								),
+							);
+						} else {
+							await copyTemplate("admin-routes", adminRoutesDir);
+							await replaceImportsInSourceFiles(adminRoutesDir, scope);
+							console.log(
+								chalk.green(`    ✓ apps/web/src/app/admin (paired with admin)`),
+							);
+						}
+					}
+				}
+
+				// 3. Add transpilePackages entry in next.config.js
+				const scopedPkg = `@${scope}/${feat}`;
+				await addTranspilePackage(
+					path.join(projectDir, "apps", "web"),
+					scopedPkg,
+				);
+
+				// 4. Add workspace dependency to apps/web/package.json
+				await addWorkspaceDep(
+					path.join(projectDir, "apps", "web", "package.json"),
+					scopedPkg,
+				);
+
+				// 5. If adding jobs, also add dep to worker
+				if (feat === "jobs") {
+					await addWorkspaceDep(
+						path.join(projectDir, "apps", "worker", "package.json"),
+						`@${scope}/jobs`,
+					);
+				}
+			}
+
+			// --- Update .quark-link.json ---
+			const allFeatures = [...new Set([...quarkLink.packages, ...toAdd])];
+			quarkLink.packages = allFeatures;
+			quarkLink.hasWorker = allFeatures.includes("jobs");
+			quarkLink.lastAddedFeature = feature;
+			quarkLink.lastModifiedDate = new Date().toISOString();
+			await fs.writeFile(quarkLinkPath, JSON.stringify(quarkLink, null, 2));
+			console.log(chalk.green(`\n  ✓ .quark-link.json updated`));
+
+			// --- Run pnpm install ---
+			console.log(chalk.cyan("\n  📦 Installing dependencies..."));
+			try {
+				await execa("pnpm", ["install"], {
+					cwd: projectDir,
+					stdio: "inherit",
+				});
+				console.log(chalk.green(`\n  ✓ Dependencies installed`));
+			} catch {
+				console.warn(
+					chalk.yellow(
+						`\n  ⚠️  pnpm install failed. Run it manually to resolve.`,
+					),
+				);
+			}
+
+			// --- Success ---
+			console.log(chalk.green.bold(`\n✅ Added "${feature}" successfully!\n`));
+
+			// Feature-specific next steps
+			if (feature === "admin") {
+				console.log(chalk.cyan("Next steps:"));
+				console.log(chalk.white("  1. pnpm dev"));
+				console.log(chalk.white("  2. Visit http://localhost:3000/admin"));
+				console.log(
+					chalk.white("  3. Edit packages/admin/src/config.js to customize\n"),
+				);
+			} else if (feature === "jobs") {
+				console.log(chalk.cyan("Next steps:"));
+				console.log(chalk.white("  1. Define jobs in packages/jobs/src/"));
+				console.log(
+					chalk.white("  2. Add handlers in apps/worker/src/handlers/"),
+				);
+				console.log(chalk.white("  3. pnpm dev (starts web + worker)\n"));
+			} else if (feature === "ui") {
+				console.log(chalk.cyan("Next steps:"));
+				console.log(
+					chalk.white(
+						`  1. Import components: import { Button } from "@${scope}/ui"`,
+					),
+				);
+				console.log(chalk.white("  2. pnpm dev\n"));
+			}
+
+			console.log(
+				chalk.dim("  Run 'pnpm doctor' to check your project configuration.\n"),
+			);
+		} catch (error) {
+			console.error(
+				chalk.red(`\n✗ Failed to add "${feature}": ${error.message}`),
+			);
+			console.error(chalk.dim(error.stack));
+			process.exit(1);
+		}
+	});
+
 /**
  * Read the installed version of a package from node_modules.
  * Returns null if the package is not installed.

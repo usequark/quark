@@ -67,6 +67,9 @@ importers:
       '@techstream/quark-admin':
         specifier: workspace:*
         version: link:../../packages/admin
+      '@techstream/quark-cms':
+        specifier: workspace:*
+        version: link:../../packages/cms
       '@techstream/quark-config':
         specifier: workspace:*
         version: link:../../packages/config
@@ -155,6 +158,15 @@ importers:
       prompts:
         specifier: ^2.4.2
         version: 2.4.2
+
+  packages/cms:
+    dependencies:
+      '@techstream/quark-admin':
+        specifier: workspace:*
+        version: link:../admin
+      '@techstream/quark-core':
+        specifier: workspace:*
+        version: link:../core
 
   packages/config: {}
 

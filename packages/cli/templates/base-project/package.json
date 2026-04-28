@@ -12,12 +12,13 @@
 		"docker:up": "docker compose up -d",
 		"docker:down": "docker compose down",
 		"db:generate": "turbo run db:generate",
-		"db:migrate": "turbo run db:migrate",
+		"db:migrate": "pnpm --filter ./packages/db db:migrate",
 		"db:push": "turbo run db:push",
 		"db:seed": "turbo run db:seed",
 		"db:studio": "turbo run db:studio",
 		"doctor": "node scripts/doctor.js",
 		"doctor:fix": "node scripts/doctor.js --fix",
+		"doctor:ci": "node scripts/doctor.js --ci",
 		"prepare": "node scripts/prepare.js"
 	},
 	"simple-git-hooks": {

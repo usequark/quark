@@ -11,11 +11,9 @@ export default function sitemap() {
 	}
 
 	const appUrl = getAppUrl();
-	const lastModified = new Date();
 
 	return STATIC_ROUTES.map((route) => ({
 		url: `${appUrl}${route.path}`,
-		lastModified,
 		changeFrequency: route.changeFrequency,
 		priority: route.priority,
 	}));

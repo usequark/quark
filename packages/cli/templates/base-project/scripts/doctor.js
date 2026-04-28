@@ -8,6 +8,7 @@
  * Usage:
  *   pnpm doctor          # Audit only
  *   pnpm doctor:fix      # Audit + auto-remove Quark aesthetic scaffolding
+ *   pnpm doctor:ci       # CI-safe checks only (no .env, exits 1 on errors)
  *
  * Extend the CHECKS array below to add your own project-specific rules.
  * This script has zero external dependencies.
@@ -20,6 +21,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
 const FIX = process.argv.includes("--fix");
+const CI = process.argv.includes("--ci");
 
 // ─── ANSI helpers ─────────────────────────────────────────────────────────────
 
@@ -66,6 +68,27 @@ function write(rel, content) {
 	fs.writeFileSync(abs, content, "utf-8");
 }
 
+/**
+ * Recursively find source files under `dir` that contain `importString`.
+ * Returns an array of absolute file paths.
+ */
+function findImports(dir, importString) {
+	const results = [];
+	const entries = fs.readdirSync(dir, { withFileTypes: true });
+	for (const entry of entries) {
+		const full = path.join(dir, entry.name);
+		if (entry.isDirectory() && entry.name !== "node_modules" && entry.name !== ".next") {
+			results.push(...findImports(full, importString));
+		} else if (entry.isFile() && /\.(js|jsx|ts|tsx|mjs)$/.test(entry.name)) {
+			const content = fs.readFileSync(full, "utf-8");
+			if (content.includes(importString)) {
+				results.push(full);
+			}
+		}
+	}
+	return results;
+}
+
 // ─── Finding model ────────────────────────────────────────────────────────────
 
 /**
@@ -99,50 +122,11 @@ const quarkLink = (() => {
 	}
 })();
 const hasUI = Array.isArray(quarkLink.packages) && quarkLink.packages.includes("ui");
+const installedPackages = Array.isArray(quarkLink.packages) ? quarkLink.packages : [];
 
-// ── Check 1: Quark home scaffold still present ───────────────────────────────
-const homeScaffoldFiles = [
-	"apps/web/src/app/_components/QuarkAnimation.js",
-	"apps/web/src/app/_components/HealthIndicator.js",
-	"apps/web/src/app/_components/HomeThemeToggle.js",
-].filter(exists);
+// ── Structural checks (always run — safe in CI without .env) ─────────────────
 
-if (homeScaffoldFiles.length > 0) {
-	warn(
-		"quark-home-scaffold",
-		"branding",
-		"Quark home scaffold components are still present",
-		homeScaffoldFiles.join("\n"),
-		"Replace these with your own hero content and update apps/web/src/app/page.js",
-		true,
-	);
-}
-
-// ── Check 1b: Quark layout scaffold still present ─────────────────────────────
-if (exists("apps/web/src/app/layout/_components/FloatingThemeToggle.js")) {
-	warn(
-		"quark-layout-scaffold",
-		"branding",
-		"Quark layout scaffold component is still present (FloatingThemeToggle)",
-		"apps/web/src/app/layout/_components/FloatingThemeToggle.js",
-		"Replace or remove the floating theme toggle and update the root layout with your own design",
-		true,
-	);
-}
-
-// ── Check 2: Playground page present (only relevant with UI package) ──────────
-if (hasUI && exists("apps/web/src/app/playground")) {
-	warn(
-		"playground",
-		"branding",
-		"Playground page is still present",
-		"apps/web/src/app/playground/",
-		"Consider removing the playground before going to production",
-		true,
-	);
-}
-
-// ── Check 2b: app/page.js conflicts with a route group ────────────────────────
+// ── Check S1: app/page.js conflicts with a route group ────────────────────────
 const rootPagePath = "apps/web/src/app/page.js";
 const appDir = path.join(ROOT, "apps/web/src/app");
 if (exists(rootPagePath) && fs.existsSync(appDir)) {
@@ -162,7 +146,128 @@ if (exists(rootPagePath) && fs.existsSync(appDir)) {
 	}
 }
 
-// ── Check 3: APP_NAME / APP_DESCRIPTION still reference "Quark" ───────────────
+// ── Check S2: Forgot-password page is a placeholder stub ──────────────────────
+const forgotPwContent = read("apps/web/src/app/auth/forgot-password/page.js");
+if (forgotPwContent && forgotPwContent.includes("quark-auth-layout")) {
+	warn(
+		"forgot-password-stub",
+		"security",
+		"Forgot-password page is a scaffold stub — users cannot reset their password",
+		"apps/web/src/app/auth/forgot-password/page.js",
+		"Implement a password reset flow (email token) before going to production, or remove this route",
+	);
+}
+
+// ── Check S3: Source files import packages not installed ───────────────────────
+{
+	const optionalPackages = ["ui", "jobs", "admin"];
+	const scope = (() => {
+		try {
+			const pkg = JSON.parse(read("package.json") ?? "{}");
+			const m = pkg.name?.match(/^@([^/]+)\//);
+			return m ? m[1] : null;
+		} catch {
+			return null;
+		}
+	})();
+
+	if (scope) {
+		const missingPkgs = optionalPackages.filter(
+			(p) => !installedPackages.includes(p),
+		);
+		for (const pkg of missingPkgs) {
+			const importPattern = `@${scope}/${pkg}`;
+			const srcDir = path.join(ROOT, "apps/web/src");
+			if (fs.existsSync(srcDir)) {
+				const badFiles = findImports(srcDir, importPattern);
+				if (badFiles.length > 0) {
+					error(
+						`orphan-import-${pkg}`,
+						"imports",
+						`Source files import "${importPattern}" but "${pkg}" is not installed`,
+						badFiles.map((f) => `  ${path.relative(ROOT, f)}`).join("\n"),
+						`Remove these imports or run: npx @techstream/quark-create-app add ${pkg}`,
+					);
+				}
+			}
+		}
+	}
+}
+
+// ── Check S4: .quark-link.json missing ────────────────────────────────────────
+if (!exists(".quark-link.json")) {
+	warn(
+		"quark-link-missing",
+		"configuration",
+		".quark-link.json is missing — Quark CLI commands (update, add) will not work",
+		"",
+		"If this is a Quark project, restore .quark-link.json from git history",
+	);
+}
+
+// ── Check S5: .env.example contains placeholder scaffold values ───────────────
+const exampleContent = read(".env.example");
+if (exampleContent) {
+	const descLine = exampleContent.match(/^APP_DESCRIPTION=(.+)$/m);
+	const descVal = descLine?.[1]?.trim() ?? "";
+	if (/\bapplication\b$/i.test(descVal) && descVal.split(" ").length <= 3) {
+		warn(
+			"generic-description",
+			"metadata",
+			"APP_DESCRIPTION in .env.example is still a generic scaffold value",
+			`.env.example → APP_DESCRIPTION="${descVal}"`,
+			"Update APP_DESCRIPTION in .env.example to describe your actual project",
+		);
+	}
+}
+
+// ── Environment-dependent checks (skipped in CI mode) ─────────────────────────
+
+if (!CI) {
+
+// ── Check E1: Quark home scaffold still present ───────────────────────────────
+const homeScaffoldFiles = [
+	"apps/web/src/app/_components/QuarkAnimation.js",
+	"apps/web/src/app/_components/HealthIndicator.js",
+	"apps/web/src/app/_components/HomeThemeToggle.js",
+].filter(exists);
+
+if (homeScaffoldFiles.length > 0) {
+	warn(
+		"quark-home-scaffold",
+		"branding",
+		"Quark home scaffold components are still present",
+		homeScaffoldFiles.join("\n"),
+		"Replace these with your own hero content and update apps/web/src/app/page.js",
+		true,
+	);
+}
+
+// ── Check E2: Quark layout scaffold still present ─────────────────────────────
+if (exists("apps/web/src/app/layout/_components/FloatingThemeToggle.js")) {
+	warn(
+		"quark-layout-scaffold",
+		"branding",
+		"Quark layout scaffold component is still present (FloatingThemeToggle)",
+		"apps/web/src/app/layout/_components/FloatingThemeToggle.js",
+		"Replace or remove the floating theme toggle and update the root layout with your own design",
+		true,
+	);
+}
+
+// ── Check E3: Playground page present (only relevant with UI package) ─────────
+if (hasUI && exists("apps/web/src/app/playground")) {
+	warn(
+		"playground",
+		"branding",
+		"Playground page is still present",
+		"apps/web/src/app/playground/",
+		"Consider removing the playground before going to production",
+		true,
+	);
+}
+
+// ── Check E4: APP_NAME / APP_DESCRIPTION still reference "Quark" ──────────────
 const envContent = read(".env");
 if (envContent) {
 	const nameMatch = envContent.match(/^APP_NAME=(.+)$/m);
@@ -181,7 +286,7 @@ if (envContent) {
 	}
 }
 
-// ── Check 4: Placeholder secrets (CHANGE_ME) left in .env ────────────────────
+// ── Check E5: Placeholder secrets (CHANGE_ME) left in .env ───────────────────
 if (envContent && envContent.includes("CHANGE_ME")) {
 	const lines = envContent
 		.split("\n")
@@ -198,8 +303,7 @@ if (envContent && envContent.includes("CHANGE_ME")) {
 	);
 }
 
-// ── Check 5: .env missing vars that exist in .env.example ────────────────────
-const exampleContent = read(".env.example");
+// ── Check E6: .env missing vars that exist in .env.example ───────────────────
 if (envContent && exampleContent) {
 	const defined = new Set(
 		envContent
@@ -224,7 +328,7 @@ if (envContent && exampleContent) {
 	}
 }
 
-// ── Check 6: README still contains Quark template content ────────────────────
+// ── Check E7: README still contains Quark template content ───────────────────
 const readmeContent = read("README.md");
 if (readmeContent && /quark/i.test(readmeContent)) {
 	info(
@@ -236,17 +340,7 @@ if (readmeContent && /quark/i.test(readmeContent)) {
 	);
 }
 
-// ── Check 7: Forgot-password page is a placeholder stub ───────────────────────
-const forgotPwContent = read("apps/web/src/app/auth/forgot-password/page.js");
-if (forgotPwContent && forgotPwContent.includes("quark-auth-layout")) {
-	warn(
-		"forgot-password-stub",
-		"security",
-		"Forgot-password page is a scaffold stub — users cannot reset their password",
-		"apps/web/src/app/auth/forgot-password/page.js",
-		"Implement a password reset flow (email token) before going to production, or remove this route",
-	);
-}
+} // end if (!CI)
 
 // ─── --fix: auto-remove fixable items ────────────────────────────────────────
 
@@ -254,7 +348,7 @@ const STATUS_ICON = { error: "✗", warn: "⚠", info: "·" };
 const STATUS_COLOR = { error: fmt.red, warn: fmt.yellow, info: fmt.dim };
 
 // Print the report first so users see what was found before anything is changed.
-console.log(fmt.bold(fmt.blue("\n🩺 Quark Doctor\n")));
+console.log(fmt.bold(fmt.blue(`\n🩺 Quark Doctor${CI ? " (CI)" : ""}\n`)));
 
 if (findings.length === 0) {
 	console.log(fmt.green("  ✓ Nothing to do — project looks clean!\n"));
@@ -290,7 +384,7 @@ if (errorCount) parts.push(fmt.red(`${errorCount} error${errorCount > 1 ? "s" : 
 if (warnCount) parts.push(fmt.yellow(`${warnCount} warning${warnCount > 1 ? "s" : ""}`));
 console.log(fmt.bold(`  Summary: ${parts.join(", ")}`));
 
-if (FIX) {
+if (FIX && !CI) {
 	const fixable = findings.filter((f) => f.fixable);
 	if (fixable.length === 0) {
 		console.log(fmt.dim("  No auto-fixable items found.\n"));

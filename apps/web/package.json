@@ -18,6 +18,7 @@
 		"@aws-sdk/s3-request-presigner": "^3.1004.0",
 		"@techstream/quark-config": "workspace:*",
 		"@techstream/quark-admin": "workspace:*",
+		"@techstream/quark-cms": "workspace:*",
 		"@techstream/quark-core": "workspace:*",
 		"@techstream/quark-db": "workspace:*",
 		"@techstream/quark-jobs": "workspace:*",

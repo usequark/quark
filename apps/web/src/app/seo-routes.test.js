@@ -58,4 +58,16 @@ describe("SEO generators", () => {
 
 		assert.strictEqual(config.sitemap, "https://example.com/sitemap.xml");
 	});
+
+	test("disallows protected routes in production", () => {
+		process.env.NODE_ENV = "production";
+		process.env.ALLOW_INDEXING = "true";
+
+		const config = robots();
+
+		assert.ok(Array.isArray(config.rules.disallow));
+		assert.ok(config.rules.disallow.includes("/api/"));
+		assert.ok(config.rules.disallow.includes("/admin/"));
+		assert.ok(config.rules.disallow.includes("/auth/"));
+	});
 });

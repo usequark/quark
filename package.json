@@ -20,7 +20,7 @@
 		"docker:restart": "docker compose restart",
 		"docker:clean": "docker compose down -v",
 		"db:generate": "turbo run db:generate",
-		"db:migrate": "turbo run db:migrate",
+		"db:migrate": "pnpm --filter ./packages/db db:migrate",
 		"db:push": "turbo run db:push",
 		"db:seed": "turbo run db:seed",
 		"format": "biome format --write",
