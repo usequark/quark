@@ -32,7 +32,7 @@ function makePrisma(record) {
 		count: async () => 1,
 		findMany: async () => (record ? [record] : []),
 	};
-	return { page: delegate, post: delegate };
+	return { page: delegate };
 }
 
 // ─── findBySlug ───────────────────────────────────────────────────────────────

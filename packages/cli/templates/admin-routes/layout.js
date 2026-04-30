@@ -18,7 +18,8 @@ export default async function AdminLayout({ children }) {
 	if (!session?.user) {
 		redirect("/auth/signin?callbackUrl=/admin");
 	}
-	if (session.user.role !== "admin") {
+	const role = session.user.role;
+	if (role !== "admin" && role !== "editor") {
 		redirect("/");
 	}
 
@@ -35,6 +36,7 @@ export default async function AdminLayout({ children }) {
 				title={adminConfig.title}
 				models={models}
 				contentLinks={cmsLinks}
+				userRole={role}
 			/>
 			<main className="flex-1 overflow-auto p-4 pt-14 sm:p-6 sm:pt-6">
 				{children}

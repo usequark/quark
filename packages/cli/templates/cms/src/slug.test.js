@@ -53,7 +53,7 @@ function mockPrisma(taken = new Set()) {
 		findUnique: async ({ where: { slug } }) =>
 			taken.has(slug) ? { id: `id-${slug}`, slug } : null,
 	};
-	return { page: delegate, post: delegate };
+	return { page: delegate };
 }
 
 test("ensureUniqueSlug — returns slug as-is when not taken", async () => {

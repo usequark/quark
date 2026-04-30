@@ -99,13 +99,73 @@ export function useTheme() {
 }
 
 /**
- * Slide-pill toggle that switches between light and dark themes.
- * 32×18 px track with a 12 px sliding knob. Pure inline styles — no
- * Tailwind dependency. Must be rendered inside a ThemeProvider.
+ * Labeled pill button that shows the current theme and switches on click.
+ * Displays "🌙 Dark Mode" when dark, "☀ Light Mode" when light.
+ * Must be rendered inside a ThemeProvider.
  */
 export function ThemeToggle({ className = "", style = {} }) {
 	const { theme, setTheme } = useTheme();
 	const isDark = theme === "dark";
+
+	const icon = isDark
+		? React.createElement(
+				"svg",
+				{
+					"aria-hidden": "true",
+					width: "13",
+					height: "13",
+					viewBox: "0 0 24 24",
+					fill: "currentColor",
+					style: { flexShrink: 0 },
+				},
+				React.createElement("path", {
+					d: "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z",
+				}),
+			)
+		: React.createElement(
+				"svg",
+				{
+					"aria-hidden": "true",
+					width: "13",
+					height: "13",
+					viewBox: "0 0 24 24",
+					fill: "none",
+					stroke: "currentColor",
+					strokeWidth: "2",
+					strokeLinecap: "round",
+					strokeLinejoin: "round",
+					style: { flexShrink: 0 },
+				},
+				React.createElement("circle", { cx: "12", cy: "12", r: "5" }),
+				React.createElement("line", { x1: "12", y1: "1", x2: "12", y2: "3" }),
+				React.createElement("line", { x1: "12", y1: "21", x2: "12", y2: "23" }),
+				React.createElement("line", {
+					x1: "4.22",
+					y1: "4.22",
+					x2: "5.64",
+					y2: "5.64",
+				}),
+				React.createElement("line", {
+					x1: "18.36",
+					y1: "18.36",
+					x2: "19.78",
+					y2: "19.78",
+				}),
+				React.createElement("line", { x1: "1", y1: "12", x2: "3", y2: "12" }),
+				React.createElement("line", { x1: "21", y1: "12", x2: "23", y2: "12" }),
+				React.createElement("line", {
+					x1: "4.22",
+					y1: "19.78",
+					x2: "5.64",
+					y2: "18.36",
+				}),
+				React.createElement("line", {
+					x1: "18.36",
+					y1: "5.64",
+					x2: "19.78",
+					y2: "4.22",
+				}),
+			);
 
 	return React.createElement(
 		"button",
@@ -118,31 +178,27 @@ export function ThemeToggle({ className = "", style = {} }) {
 			style: {
 				display: "inline-flex",
 				alignItems: "center",
-				width: "32px",
-				height: "18px",
-				borderRadius: "9px",
+				gap: "6px",
+				height: "28px",
+				paddingLeft: "10px",
+				paddingRight: "12px",
+				borderRadius: "14px",
 				border: "1px solid var(--toggle-track-border)",
 				background: "var(--toggle-track-bg)",
+				color: "var(--text-muted)",
 				cursor: "pointer",
-				padding: "2px",
-				transition: "background 0.2s ease, border-color 0.2s ease",
+				fontSize: "12px",
+				fontWeight: "500",
+				letterSpacing: "0.01em",
+				whiteSpace: "nowrap",
+				transition:
+					"background 0.15s ease, border-color 0.15s ease, color 0.15s ease",
 				outline: "none",
 				flexShrink: 0,
 				...style,
 			},
 		},
-		React.createElement("span", {
-			"aria-hidden": "true",
-			style: {
-				display: "block",
-				width: "12px",
-				height: "12px",
-				borderRadius: "50%",
-				background: "var(--toggle-knob-bg)",
-				transform: "var(--toggle-knob-x)",
-				transition: "transform 0.2s ease, background 0.2s ease",
-				flexShrink: 0,
-			},
-		}),
+		icon,
+		isDark ? "Dark Mode" : "Light Mode",
 	);
 }

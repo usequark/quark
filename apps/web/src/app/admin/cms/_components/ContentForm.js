@@ -2,6 +2,7 @@
 
 import { Button, Input, Label, Textarea } from "@techstream/quark-ui";
 import { useActionState, useState } from "react";
+import CoverImageField from "./CoverImageField";
 import SlugField from "./SlugField";
 import StatusBadge from "./StatusBadge";
 
@@ -93,18 +94,9 @@ export default function ContentForm({
 						</div>
 					)}
 
-					{/* Cover image URL */}
+					{/* Cover image picker */}
 					{hasCoverImage && (
-						<div className="flex flex-col gap-1">
-							<Label htmlFor="cms-cover">Cover Image URL</Label>
-							<Input
-								id="cms-cover"
-								type="url"
-								name="coverImage"
-								defaultValue={record?.coverImage ?? ""}
-								placeholder="https://..."
-							/>
-						</div>
+						<CoverImageField defaultValue={record?.coverImage ?? ""} />
 					)}
 
 					{/* Body */}

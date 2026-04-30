@@ -3,6 +3,7 @@
 import { QuarkLogo } from "@techstream/quark-ui";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import AdminThemeToggle from "./AdminThemeToggle";
 import SignOutButton from "./SignOutButton";
 
 /**
@@ -10,7 +11,8 @@ import SignOutButton from "./SignOutButton";
  *   title: string,
  *   models: { name: string, slug: string, label: string, readOnly: boolean }[],
  *   customLinks?: { href: string, label: string, icon?: import('react').ReactNode }[],
- *   contentLinks?: { href: string, label: string }[]
+ *   contentLinks?: { href: string, label: string }[],
+ *   userRole?: string
  * }} props
  */
 export default function Sidebar({
@@ -18,16 +20,25 @@ export default function Sidebar({
 	models,
 	customLinks = [],
 	contentLinks = [],
+	userRole = "admin",
 }) {
 	const pathname = usePathname();
 	const [open, setOpen] = useState(false);
 
 	const coreModels = models.filter((m) => !m.readOnly);
 	const systemModels = models.filter((m) => m.readOnly);
+	const isCmsOnly = userRole === "editor";
 
-	function navLink(href, label, icon) {
-		const isActive =
-			href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
+	/**
+	 * Render a nav link. Uses exact matching for the root admin and CMS overview
+	 * to prevent both from highlighting when on a sub-page.
+	 * All other links match if the pathname equals or starts with `href/`.
+	 */
+	function navLink(href, label, icon, exact = false) {
+		const isExact = exact || href === "/admin" || href === "/admin/cms";
+		const isActive = isExact
+			? pathname === href
+			: pathname === href || pathname.startsWith(`${href}/`);
 		return (
 			<a
 				key={href}
@@ -51,34 +62,36 @@ export default function Sidebar({
 			<div className="mb-4 flex items-center gap-2">
 				<QuarkLogo size={24} />
 				<a
-					href="/admin"
+					href={isCmsOnly ? "/admin/cms" : "/admin"}
 					className="text-lg font-semibold text-text hover:text-text-muted"
 				>
 					{title}
 				</a>
 			</div>
 
-			{/* Dashboard */}
-			<nav className="flex flex-col gap-1 mb-3 shrink-0">
-				{navLink(
-					"/admin",
-					"Dashboard",
-					<svg
-						aria-hidden="true"
-						className="w-4 h-4 shrink-0"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor"
-						strokeWidth="2"
-					>
-						<path
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							d="M4 5a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 13a1 1 0 011-1h4a1 1 0 011 1v6a1 1 0 01-1 1h-4a1 1 0 01-1-1v-6z"
-						/>
-					</svg>,
-				)}
-			</nav>
+			{/* Dashboard — admin only */}
+			{!isCmsOnly && (
+				<nav className="flex flex-col gap-1 mb-3 shrink-0">
+					{navLink(
+						"/admin",
+						"Dashboard",
+						<svg
+							aria-hidden="true"
+							className="w-4 h-4 shrink-0"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							strokeWidth="2"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								d="M4 5a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 13a1 1 0 011-1h4a1 1 0 011 1v6a1 1 0 01-1 1h-4a1 1 0 01-1-1v-6z"
+							/>
+						</svg>,
+					)}
+				</nav>
+			)}
 
 			{customLinks.length > 0 && (
 				<>
@@ -99,66 +112,45 @@ export default function Sidebar({
 							Content
 						</p>
 						<nav className="flex flex-col gap-0.5 mb-3">
-							{navLink(
-								"/admin/cms",
-								"Overview",
-								<svg
-									aria-hidden="true"
-									className="w-4 h-4 shrink-0"
-									fill="none"
-									viewBox="0 0 24 24"
-									stroke="currentColor"
-									strokeWidth="2"
-								>
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-									/>
-								</svg>,
-							)}
-							{contentLinks.map((link) => navLink(link.href, link.label, null))}
-							{navLink(
-								"/admin/cms/media",
-								"Media",
-								<svg
-									aria-hidden="true"
-									className="w-4 h-4 shrink-0"
-									fill="none"
-									viewBox="0 0 24 24"
-									stroke="currentColor"
-									strokeWidth="2"
-								>
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-									/>
-								</svg>,
-							)}
+							{navLink("/admin/cms", "Overview")}
+							{contentLinks.map((link) => navLink(link.href, link.label))}
+							{navLink("/admin/cms/media", "Media")}
 						</nav>
 					</div>
 				</>
 			)}
 
-			<div className="border-t border-border mb-3 shrink-0" />
+			{/* Scrollable model sections — admin only */}
+			{!isCmsOnly && (
+				<>
+					<div className="border-t border-border mb-3 shrink-0" />
+					<div className="flex-1 flex flex-col gap-4 overflow-y-auto min-h-0">
+						{coreModels.length > 0 && (
+							<ModelSection
+								label="Models"
+								models={coreModels}
+								navLink={navLink}
+							/>
+						)}
+						{coreModels.length > 0 && systemModels.length > 0 && (
+							<div className="border-t border-border" />
+						)}
+						{systemModels.length > 0 && (
+							<ModelSection
+								label="System"
+								models={systemModels}
+								navLink={navLink}
+							/>
+						)}
+					</div>
+				</>
+			)}
 
-			{/* Scrollable model sections */}
-			<div className="flex-1 flex flex-col gap-4 overflow-y-auto min-h-0">
-				{coreModels.length > 0 && (
-					<ModelSection label="Models" models={coreModels} navLink={navLink} />
-				)}
-				{systemModels.length > 0 && (
-					<ModelSection
-						label="System"
-						models={systemModels}
-						navLink={navLink}
-					/>
-				)}
-			</div>
+			{isCmsOnly && <div className="flex-1" />}
 
 			{/* Footer */}
 			<div className="border-t border-border pt-3 mt-3 flex flex-col gap-1 shrink-0">
+				<AdminThemeToggle />
 				<a
 					href="/"
 					className="flex items-center gap-2 px-3 py-2 rounded-[--radius-default] text-sm text-text-faint hover:bg-surface-hover hover:text-text transition-colors"
@@ -176,12 +168,12 @@ export default function Sidebar({
 			<button
 				type="button"
 				onClick={() => setOpen(true)}
-				className="fixed top-3 left-3 z-40 p-2 rounded-[--radius-default] bg-surface border border-border text-text-muted hover:text-text sm:hidden cursor-pointer"
+				className="group fixed top-3 left-3 z-40 p-2 rounded-[--radius-default] bg-surface border border-border text-text-muted hover:text-text hover:scale-105 active:scale-95 sm:hidden cursor-pointer transition-transform duration-150"
 				aria-label="Open menu"
 			>
 				<svg
 					aria-hidden="true"
-					className="w-5 h-5"
+					className="w-5 h-5 transition-transform duration-200 group-active:rotate-180"
 					fill="none"
 					viewBox="0 0 24 24"
 					stroke="currentColor"

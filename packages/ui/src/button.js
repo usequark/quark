@@ -1,7 +1,7 @@
 import React from "react";
 
 const base =
-	"inline-flex items-center justify-center font-medium tracking-wide transition-opacity duration-200 linear cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed active:opacity-80";
+	"inline-flex items-center justify-center font-medium tracking-wide transition-all duration-200 linear cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed active:opacity-80";
 
 const VARIANTS = {
 	// Primary: tinted ghost on dark, solid on light — both pull from --color-primary

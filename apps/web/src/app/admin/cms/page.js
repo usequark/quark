@@ -38,9 +38,7 @@ export default async function CmsDashboard() {
 		<div className="space-y-8">
 			<div>
 				<h1 className="text-2xl font-bold tracking-tight text-text">Content</h1>
-				<p className="mt-1 text-sm text-text-faint">
-					Manage pages, posts, and media
-				</p>
+				<p className="mt-1 text-sm text-text-faint">Manage pages and media</p>
 			</div>
 
 			{/* Content type stats */}
@@ -48,24 +46,24 @@ export default async function CmsDashboard() {
 				<h2 className="text-xs font-semibold uppercase tracking-widest text-text-faint mb-3">
 					Content Types
 				</h2>
-				<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+				<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
 					{stats.map(({ model, label, total, drafts, published, archived }) => (
 						<a
 							key={model}
 							href={`/admin/cms/${model.toLowerCase()}s`}
-							className="block group"
+							className="block group h-full"
 						>
-							<Card className="transition-colors hover:border-border-hover">
+							<Card className="transition-colors hover:border-border-hover h-full flex flex-col">
 								<CardHeader className="pb-2">
 									<CardTitle className="text-sm font-semibold text-text-muted uppercase tracking-widest">
 										{label}
 									</CardTitle>
 								</CardHeader>
-								<CardContent>
+								<CardContent className="flex flex-col flex-1">
 									<p className="text-3xl font-bold tabular-nums text-text mb-3">
 										{total}
 									</p>
-									<div className="flex flex-wrap gap-2">
+									<div className="flex flex-wrap gap-2 mt-auto">
 										<StatusChip
 											label="Published"
 											count={published}
@@ -88,18 +86,20 @@ export default async function CmsDashboard() {
 					))}
 
 					{/* Media card */}
-					<a href="/admin/cms/media" className="block group">
-						<Card className="transition-colors hover:border-border-hover">
+					<a href="/admin/cms/media" className="block group h-full">
+						<Card className="transition-colors hover:border-border-hover h-full flex flex-col">
 							<CardHeader className="pb-2">
 								<CardTitle className="text-sm font-semibold text-text-muted uppercase tracking-widest">
 									Media Library
 								</CardTitle>
 							</CardHeader>
-							<CardContent>
+							<CardContent className="flex flex-col flex-1">
 								<p className="text-3xl font-bold tabular-nums text-text mb-3">
 									{mediaCount}
 								</p>
-								<p className="text-xs text-text-faint">assets uploaded</p>
+								<p className="text-xs text-text-faint mt-auto">
+									assets uploaded
+								</p>
 							</CardContent>
 						</Card>
 					</a>

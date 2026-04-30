@@ -14,14 +14,15 @@ export async function requireAuth() {
 }
 
 /**
- * Require the current user to have a specific role.
- * @param {string} role - Required role (e.g. "admin")
+ * Require the current user to have one of the specified roles.
+ * @param {string | string[]} role - Required role(s) (e.g. "admin" or ["admin", "editor"])
  * @returns {Promise<import("next-auth").Session>}
  */
 export async function requireRole(role) {
 	const session = await requireAuth();
 
-	if (session.user?.role !== role) {
+	const allowed = Array.isArray(role) ? role : [role];
+	if (!allowed.includes(session.user?.role)) {
 		throw new ForbiddenError(
 			"You do not have permission to access this resource",
 		);

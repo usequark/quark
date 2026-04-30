@@ -10,12 +10,6 @@ export const cmsConfig = {
 			slugSource: "title",
 			excerptField: "excerpt",
 		},
-		Post: {
-			label: "Blog Posts",
-			slugSource: "title",
-			excerptField: "excerpt",
-			hasCoverImage: true,
-		},
 	},
 
 	/** Media library configuration */

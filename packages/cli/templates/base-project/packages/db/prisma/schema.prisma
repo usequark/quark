@@ -35,7 +35,6 @@ model User {
   auditLogs     AuditLog[]
   files         File[]
   pages         Page[]
-  posts         Post[]
   mediaAssets   MediaAsset[]
 
   @@index([email])
@@ -182,27 +181,6 @@ model Page {
   updatedAt   DateTime      @updatedAt
 
   @@index([status])
-  @@index([slug])
-  @@index([authorId])
-  @@index([createdAt])
-}
-
-/// CMS: Blog posts — remove this model if you don't need a blog
-model Post {
-  id          String        @id @default(cuid())
-  title       String
-  slug        String        @unique
-  body        String        @db.Text
-  excerpt     String?
-  coverImage  String?
-  status      ContentStatus @default(DRAFT)
-  publishedAt DateTime?
-  authorId    String
-  author      User          @relation(fields: [authorId], references: [id])
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-
-  @@index([status, publishedAt])
   @@index([slug])
   @@index([authorId])
   @@index([createdAt])

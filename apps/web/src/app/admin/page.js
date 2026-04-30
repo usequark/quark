@@ -28,7 +28,7 @@ export default async function AdminDashboard() {
 	const models = getModels();
 
 	// Fetch everything in parallel
-	const [counts, health, jobStats, recentJobs] = await Promise.all([
+	const [counts, health, jobStats, recentJobs, cmsStats] = await Promise.all([
 		Promise.allSettled(
 			models.map(async (model) => ({
 				name: model.name,
@@ -39,6 +39,7 @@ export default async function AdminDashboard() {
 		getServiceHealth(),
 		getJobStats(),
 		getRecentJobs(),
+		getCmsStats(),
 	]);
 
 	const rows = counts
@@ -231,6 +232,27 @@ export default async function AdminDashboard() {
 				</div>
 			</section>
 
+			{/* CMS Content */}
+			<section>
+				<h2 className="text-xs font-semibold uppercase tracking-widest text-text-faint mb-3">
+					Content
+				</h2>
+				<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+					<CmsStatCard
+						label="Pages"
+						href="/admin/cms/pages"
+						published={cmsStats.pages.published}
+						drafts={cmsStats.pages.drafts}
+						total={cmsStats.pages.total}
+					/>
+					<CmsStatCard
+						label="Media"
+						href="/admin/cms/media"
+						total={cmsStats.media}
+					/>
+				</div>
+			</section>
+
 			{/* Model Records */}
 			<section>
 				<h2 className="text-xs font-semibold uppercase tracking-widest text-text-faint mb-3">
@@ -271,6 +293,62 @@ export default async function AdminDashboard() {
 				)}
 			</section>
 		</div>
+	);
+}
+
+/**
+ * Fetch CMS content counts.
+ * @returns {Promise<{ pages: {total,published,drafts}, media: number }>}
+ */
+async function getCmsStats() {
+	const [pagesTotal, pagesPublished, pagesDrafts, media] = await Promise.all([
+		prisma.page.count(),
+		prisma.page.count({ where: { status: "PUBLISHED" } }),
+		prisma.page.count({ where: { status: "DRAFT" } }),
+		prisma.mediaAsset.count(),
+	]);
+	return {
+		pages: {
+			total: pagesTotal,
+			published: pagesPublished,
+			drafts: pagesDrafts,
+		},
+		media,
+	};
+}
+
+/**
+ * CMS stat card linking to a CMS section.
+ */
+function CmsStatCard({ label, href, total, published, drafts }) {
+	const isMedia = published === undefined;
+	return (
+		<a href={href} className="block group">
+			<Card className="transition-colors hover:border-border-hover h-full">
+				<CardContent className="pt-6 flex flex-col h-full">
+					<p className="text-xs font-semibold uppercase tracking-widest text-text-faint">
+						{label}
+					</p>
+					<div className="mt-3 flex items-end justify-between">
+						<p className="text-3xl font-bold tabular-nums text-text">{total}</p>
+						<span className="mb-1 text-sm text-text-faint transition-colors group-hover:text-text">
+							{isMedia ? "assets →" : "items →"}
+						</span>
+					</div>
+					{!isMedia && (
+						<div className="flex gap-3 mt-3 pt-3 border-t border-border">
+							<span className="text-xs text-success tabular-nums">
+								{published} published
+							</span>
+							<span className="text-xs text-text-faint tabular-nums">
+								{drafts} draft
+							</span>
+						</div>
+					)}
+					{isMedia && <div className="mt-3 pt-3 border-t border-border" />}
+				</CardContent>
+			</Card>
+		</a>
 	);
 }
 

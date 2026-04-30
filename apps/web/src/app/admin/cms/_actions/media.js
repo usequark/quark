@@ -19,7 +19,7 @@ const uploadSchema = z.object({
  * @param {FormData} formData
  */
 export async function cmsUploadMedia(_prevState, formData) {
-	const session = await requireRole("admin");
+	const session = await requireRole(["admin", "editor"]);
 
 	const file = formData.get("file");
 	if (!(file instanceof File) || file.size === 0) {
@@ -65,13 +65,66 @@ export async function cmsUploadMedia(_prevState, formData) {
 }
 
 /**
+ * Server Action: upload a file inline (e.g. from CoverImageField) and return
+ * the asset URL without redirecting. Used when upload is embedded in another form.
+ *
+ * @param {object} _prevState
+ * @param {FormData} formData
+ * @returns {Promise<{ url: string, storageKey: string } | { error: string }>}
+ */
+export async function cmsUploadMediaInline(_prevState, formData) {
+	try {
+		const session = await requireRole(["admin", "editor"]);
+
+		const file = formData.get("file");
+		if (!(file instanceof File) || file.size === 0) {
+			return { error: "No file provided" };
+		}
+
+		const { maxFileSize, allowedTypes } = cmsConfig.media;
+
+		if (file.size > maxFileSize) {
+			return {
+				error: `File size exceeds the ${Math.round(maxFileSize / 1024 / 1024)}MB limit`,
+			};
+		}
+
+		if (!allowedTypes.includes(file.type)) {
+			return { error: `File type "${file.type}" is not allowed` };
+		}
+
+		const rand = Math.random().toString(36).slice(2, 8);
+		const storageKey = `cms/${Date.now()}-${rand}/${file.name}`;
+
+		const buffer = Buffer.from(await file.arrayBuffer());
+		await storage.put(storageKey, buffer, { contentType: file.type });
+
+		await prisma.mediaAsset.create({
+			data: {
+				filename: file.name,
+				storageKey,
+				mimeType: file.type,
+				size: file.size,
+				alt: null,
+				uploadedById: session.user.id,
+			},
+		});
+
+		revalidatePath("/admin/cms/media");
+		return { url: `/api/media/${encodeURIComponent(storageKey)}`, storageKey };
+	} catch (err) {
+		return { error: err?.message ?? "Upload failed" };
+	}
+}
+
+/**
  * Server Action: delete a MediaAsset and remove from storage.
  * Any admin can delete any media asset — the CMS media library is a shared
  * resource accessible to all admins (no per-user ownership enforcement).
  * @param {string} id
  */
 export async function cmsDeleteMedia(id) {
-	await requireRole("admin");
+	await requireRole(["admin", "editor"]);
 
 	const asset = await prisma.mediaAsset.findUnique({ where: { id } });
 	if (!asset) return;

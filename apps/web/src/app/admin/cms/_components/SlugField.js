@@ -51,16 +51,24 @@ export default function SlugField({
 	disabled = false,
 }) {
 	const id = useId();
+	// Lock by default: if editing an existing record (defaultSlug provided), start locked.
+	// For new records (no defaultSlug), start unlocked so auto-generation can run once,
+	// then auto-lock on first non-empty generation.
 	const [locked, setLocked] = useState(!!defaultSlug);
 	const [slug, setSlug] = useState(defaultSlug);
 	const inputRef = useRef(null);
 
 	const debouncedTitle = useDebounce(title, 350);
 
-	// When not locked and title changes, auto-update slug from title
+	// Auto-generate slug from title when unlocked. Auto-lock on first generation
+	// so the slug is stable once created (user must click Edit to change it).
 	useEffect(() => {
 		if (!locked && debouncedTitle) {
-			setSlug(generateSlug(debouncedTitle));
+			const generated = generateSlug(debouncedTitle);
+			if (generated) {
+				setSlug(generated);
+				setLocked(true); // lock immediately after first auto-generation
+			}
 		}
 	}, [debouncedTitle, locked]);
 

@@ -28,7 +28,7 @@ export function generateSlug(title) {
  * when the base slug is already taken.
  *
  * @param {import('@prisma/client').PrismaClient} prisma
- * @param {"Page" | "Post"} model     - Prisma model name
+ * @param {string} model     - Prisma model name
  * @param {string}          slug      - Candidate slug
  * @param {string}          [excludeId] - Exclude this record ID (for updates)
  * @returns {Promise<string>}           - A unique slug

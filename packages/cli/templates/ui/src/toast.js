@@ -1,33 +1,14 @@
 "use client";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
-/**
- * Toast — fixed bottom-right notification with auto-dismiss countdown.
- *
- * Props:
- *   message   (string)                        — notification text
- *   variant   ('default'|'success'|'error')   — colour scheme
- *   onClose   (fn)                            — called when dismissed / expired
- *   visible   (bool)                          — controlled visibility
- *   duration  (number)                        — ms before auto-dismiss (default 4000)
- *   toastId   (number)                        — incremented by useToast on each show()
- *                                               so the timer resets correctly
- *
- * Features:
- *   • SVG circle progress shows remaining time
- *   • Hovering pauses the timer and replaces the circle with a × close button
- */
-
 const RADIUS = 9;
-const CIRC = 2 * Math.PI * RADIUS; // ≈ 56.55
+const CIRC = 2 * Math.PI * RADIUS;
 
+// Replaced arbitrary hex with semantic design tokens
 const VARIANTS = {
-	default:
-		"border border-gray-700 dark:border-[#1e2535] bg-gray-900 dark:bg-[#090d14] text-white dark:text-[#e0e0e0]",
-	success:
-		"border border-green-500 dark:border-emerald-800/50 bg-green-600 dark:bg-[#090d14] text-white dark:text-emerald-400",
-	error:
-		"border border-red-500 dark:border-[#ff4757]/40 bg-red-600 dark:bg-[#090d14] text-white dark:text-[#ff4757]",
+	default: "border border-border bg-surface text-text shadow-xl",
+	success: "border border-success/40 bg-success-muted text-success shadow-xl",
+	error: "border border-danger/40 bg-danger-muted text-danger shadow-xl",
 };
 
 export function Toast({
@@ -38,15 +19,17 @@ export function Toast({
 	duration = 4000,
 	_toastId,
 }) {
-	const [progress, setProgress] = useState(100); // 100 → 0 as time elapses
+	const [progress, setProgress] = useState(100);
 	const [hovered, setHovered] = useState(false);
+	const [isAnimatingOut, setIsAnimatingOut] = useState(false);
+	const [shouldRender, setShouldRender] = useState(visible);
 
 	const variantCls = VARIANTS[variant] ?? VARIANTS.default;
 
-	// Mutable refs so the interval callback always reads fresh values
 	const remainingRef = useRef(duration);
 	const startRef = useRef(null);
 	const intervalRef = useRef(null);
+	const isClosingRef = useRef(false);
 
 	const stop = useCallback(() => clearInterval(intervalRef.current), []);
 
@@ -64,35 +47,51 @@ export function Toast({
 		}, 16);
 	}, [stop, onClose]);
 
-	// Reset when toast becomes visible or a new toast is shown (toastId changes)
 	useEffect(() => {
-		if (!visible) {
-			stop();
+		if (visible) {
+			setShouldRender(true);
+			setIsAnimatingOut(false);
+			isClosingRef.current = false;
+			remainingRef.current = duration;
 			setProgress(100);
-			return;
+			setHovered(false);
+			start();
+		} else {
+			if (isClosingRef.current) return;
+			isClosingRef.current = true;
+			setIsAnimatingOut(true);
+			stop();
+			// Wait for animation to finish before removing from DOM
+			const t = setTimeout(() => {
+				setShouldRender(false);
+				setIsAnimatingOut(false);
+				isClosingRef.current = false;
+			}, 200);
+			return () => clearTimeout(t);
 		}
-		remainingRef.current = duration;
-		setProgress(100);
-		setHovered(false);
-		start();
 		return stop;
 	}, [visible, duration, start, stop]);
 
-	// Pause on hover, RESET on leave (restart from full duration)
 	useEffect(() => {
-		if (!visible) return;
+		if (!visible || isAnimatingOut) return;
 		if (hovered) {
 			stop();
 		} else {
-			// Reset to full duration on every mouse-leave
 			remainingRef.current = duration;
 			start();
 		}
-	}, [hovered, duration, start, stop, visible]);
+	}, [hovered, duration, start, stop, visible, isAnimatingOut]);
 
-	if (!visible) return null;
+	if (!shouldRender) return null;
 
 	const dashOffset = CIRC * (1 - progress / 100);
+
+	const animStyle = isAnimatingOut
+		? { animation: "quark-toast-out 0.2s ease-in forwards" }
+		: {
+				animation:
+					"quark-toast-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+			};
 
 	return React.createElement(
 		"div",
@@ -102,10 +101,10 @@ export function Toast({
 			"data-toast-variant": variant,
 			onMouseEnter: () => setHovered(true),
 			onMouseLeave: () => setHovered(false),
-			className: `fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded px-4 py-3 text-sm shadow-xl transition-all duration-200 ${variantCls}`,
+			style: animStyle,
+			className: `fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-[--radius-default] px-4 py-3 text-sm transition-colors duration-200 ${variantCls}`,
 		},
 		React.createElement("span", null, message),
-		// Trailing indicator: × when hovered, progress circle otherwise
 		React.createElement(
 			"div",
 			{
@@ -120,7 +119,7 @@ export function Toast({
 							"aria-label": "Dismiss notification",
 							onClick: onClose,
 							className:
-								"flex h-6 w-6 cursor-pointer items-center justify-center rounded-sm text-base leading-none opacity-80 transition-all hover:bg-white/15 hover:opacity-100 active:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60",
+								"flex h-6 w-6 cursor-pointer items-center justify-center rounded-[--radius-default] text-base leading-none opacity-80 transition-all hover:bg-black/10 dark:hover:bg-white/10 hover:opacity-100 active:bg-black/20 dark:active:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
 						},
 						"\u00d7",
 					)
@@ -132,22 +131,21 @@ export function Toast({
 							viewBox: "0 0 24 24",
 							"aria-hidden": "true",
 						},
-						// Track ring
 						React.createElement("circle", {
 							cx: 12,
 							cy: 12,
 							r: RADIUS,
 							fill: "none",
-							stroke: "var(--quark-toast-track)",
+							stroke: "currentColor",
+							strokeOpacity: 0.2,
 							strokeWidth: 2,
 						}),
-						// Progress arc
 						React.createElement("circle", {
 							cx: 12,
 							cy: 12,
 							r: RADIUS,
 							fill: "none",
-							stroke: "var(--quark-toast-progress)",
+							stroke: "currentColor",
 							strokeWidth: 2,
 							strokeLinecap: "round",
 							strokeDasharray: CIRC,
@@ -159,16 +157,6 @@ export function Toast({
 	);
 }
 
-/**
- * useToast — manages toast state and exposes a stable show() / hide() API.
- *
- * Usage:
- *   const { show, hide, toastProps } = useToast();
- *   <Toast {...toastProps} />
- *
- *   show("Saved!", "success");
- *   show("Oops", "error", 6000);  // custom duration
- */
 export function useToast() {
 	const [state, setState] = useState({
 		visible: false,

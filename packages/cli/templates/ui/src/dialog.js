@@ -36,7 +36,7 @@ const headerCls =
 const titleCls = "text-base font-bold tracking-tight text-text";
 
 const closeCls =
-	"flex h-8 w-8 cursor-pointer items-center justify-center text-lg text-text-faint transition-opacity duration-200 linear hover:text-text hover:bg-surface-hover active:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-hover rounded-[--radius-default]";
+	"flex h-8 w-8 cursor-pointer items-center justify-center text-lg text-text-faint transition-colors duration-200 linear hover:text-text hover:bg-surface-hover active:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-hover rounded-[--radius-default]";
 
 const bodyCls = "px-5 py-4 text-text-muted";
 

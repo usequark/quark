@@ -24,33 +24,18 @@ import {
 	Toast,
 	useToast,
 } from "@techstream/quark-ui";
-import Link from "next/link";
-import { useEffect, useState } from "react";
-
-// ── Constants ─────────────────────────────────────────────────────────────────
+import { useState } from "react";
+import { Sidebar } from "./_components/Sidebar";
 
 const TABLE_DATA = [
 	{ name: "Alice", role: "Admin", status: "Active" },
 	{ name: "Bob", role: "Viewer", status: "Inactive" },
 ];
 
-const SECTIONS = [
-	{ id: "button", label: "Button" },
-	{ id: "badge", label: "Badge" },
-	{ id: "form", label: "Form" },
-	{ id: "card", label: "Card" },
-	{ id: "table", label: "Table" },
-	{ id: "skeleton", label: "Skeleton" },
-	{ id: "dialog", label: "Dialog" },
-	{ id: "toast", label: "Toast" },
-];
-
-// ── Layout helpers ────────────────────────────────────────────────────────────
-
 function Group({ label, children }) {
 	return (
 		<div className="space-y-2.5">
-			<p className="font-mono uppercase text-[11px] tracking-[0.2em] text-[#9ca3af] dark:text-[#4a6080]">
+			<p className="font-mono uppercase text-[11px] tracking-[0.2em] text-text-muted">
 				{label}
 			</p>
 			<div className="flex flex-wrap items-center gap-2">{children}</div>
@@ -63,30 +48,15 @@ function ComponentSection({ id, index, title, children }) {
 	return (
 		<section
 			id={id}
-			className="scroll-mt-6 space-y-5 py-5 border-t border-black/18 dark:border-white/25"
+			className="scroll-mt-8 space-y-5 py-5 border-t border-border"
 		>
-			<h2 className="font-mono uppercase text-xs tracking-[0.2em] text-[#9ca3af] dark:text-[#5c5c72]">
+			<h2 className="font-mono uppercase text-xs tracking-[0.2em] text-text-faint">
 				§ {num} — {title}
 			</h2>
 			{children}
 		</section>
 	);
 }
-
-function NavItem({ id, label, index }) {
-	const num = String(index).padStart(2, "0");
-	return (
-		<a
-			href={`#${id}`}
-			className="block font-mono uppercase text-[13px] tracking-[0.15em] text-[#9ca3af] dark:text-[#7c8fa0] hover:text-[#2563eb] dark:hover:text-[#377dff] transition-colors py-0.75"
-			style={{ textDecoration: "none" }}
-		>
-			{num} · {label}
-		</a>
-	);
-}
-
-// ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function PlaygroundPage() {
 	return (
@@ -97,63 +67,21 @@ export default function PlaygroundPage() {
 }
 
 function PlaygroundInner() {
-	const [mounted, setMounted] = useState(false);
-	useEffect(() => {
-		setMounted(true);
-	}, []);
-
 	const [dialogOpen, setDialogOpen] = useState(false);
 	const toast = useToast();
 
-	// Return a static placeholder before mount so the server-rendered HTML and
-	// the client's first render are identical — no hydration mismatch.
-	// After mount, the lazy ThemeProvider already has the correct stored theme,
-	// so the full page renders immediately in the right theme with no flash.
-	if (!mounted) {
-		return (
-			<div className="min-h-screen" style={{ backgroundColor: "#05070a" }} />
-		);
-	}
-
 	return (
-		<main
-			className="min-h-screen bg-[#f7f8fa] dark:bg-[#05070a] transition-colors duration-200"
-			style={{
-				backgroundImage:
-					"linear-gradient(var(--quark-grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--quark-grid-line) 1px, transparent 1px)",
-				backgroundSize: "40px 40px",
-			}}
-		>
-			<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-10">
-				{/* Body: sticky left nav + content */}
-				<div className="flex gap-12">
-					{/* Left nav */}
-					<nav className="hidden lg:block w-32 shrink-0">
-						<div className="sticky top-8">
-							<div className="mb-4">
-								<Link
-									href="/"
-									className="quark-home-link text-[13px] font-mono"
-								>
-									← home
-								</Link>
-							</div>
-							<p className="font-mono uppercase mb-3 text-[13px] tracking-[0.2em] text-[#9ca3af] dark:text-[#7c8fa0]">
-								index
-							</p>
-							{SECTIONS.map((s, i) => (
-								<NavItem key={s.id} id={s.id} label={s.label} index={i + 1} />
-							))}
-						</div>
-					</nav>
+		<div className="min-h-screen bg-bg dark:bg-zinc-950 transition-colors duration-200 lg:pl-56">
+			<Sidebar />
 
-					{/* Main content */}
-					<div className="flex-1 min-w-0">
-						{/* Page label */}
-						<p className="font-mono uppercase mb-2 text-xs tracking-[0.15em] text-[#9ca3af] dark:text-[#5c5c72]">
-							quark-ui · component reference
-						</p>
+			<main className="min-h-screen">
+				<div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-12 py-10">
+					{/* Page label */}
+					<p className="font-mono uppercase mb-6 text-xs tracking-[0.15em] text-text-faint">
+						quark-ui · component reference
+					</p>
 
+					<div className="space-y-2">
 						{/* ── 01 Button ── */}
 						<ComponentSection id="button" index={1} title="Button">
 							<Group label="variant">
@@ -170,7 +98,7 @@ function PlaygroundInner() {
 								<Button variant="solid">Solid</Button>
 							</Group>
 							<Group label="size">
-								<Button size="sm">Small</Button>
+								<Button>Small</Button>
 								<Button size="md">Medium</Button>
 								<Button size="lg">Large</Button>
 							</Group>
@@ -215,49 +143,51 @@ function PlaygroundInner() {
 
 						{/* ── 04 Card ── */}
 						<ComponentSection id="card" index={4} title="Card">
-							<Card className="max-w-xs">
+							<Card className="max-w-xs bg-surface shadow-sm">
 								<CardHeader>
 									<CardTitle>Card Title</CardTitle>
 								</CardHeader>
 								<CardContent>
-									<p className="text-sm text-[#6b7280] dark:text-[#6b7a99]">
+									<p className="text-sm text-text-muted">
 										Card body content goes here.
 									</p>
 								</CardContent>
 								<CardFooter>
-									<Button size="sm">Action</Button>
+									<Button>Action</Button>
 								</CardFooter>
 							</Card>
 						</ComponentSection>
 
 						{/* ── 05 Table ── */}
 						<ComponentSection id="table" index={5} title="Table">
-							<Table>
-								<TableHeader>
-									<TableRow>
-										<TableHead>Name</TableHead>
-										<TableHead>Role</TableHead>
-										<TableHead>Status</TableHead>
-									</TableRow>
-								</TableHeader>
-								<TableBody>
-									{TABLE_DATA.map((r) => (
-										<TableRow key={r.name}>
-											<TableCell>{r.name}</TableCell>
-											<TableCell>{r.role}</TableCell>
-											<TableCell>
-												<Badge
-													variant={
-														r.status === "Active" ? "success" : "default"
-													}
-												>
-													{r.status}
-												</Badge>
-											</TableCell>
+							<div className="bg-surface overflow-hidden rounded-md border border-border">
+								<Table>
+									<TableHeader>
+										<TableRow>
+											<TableHead>Name</TableHead>
+											<TableHead>Role</TableHead>
+											<TableHead>Status</TableHead>
 										</TableRow>
-									))}
-								</TableBody>
-							</Table>
+									</TableHeader>
+									<TableBody>
+										{TABLE_DATA.map((r) => (
+											<TableRow key={r.name}>
+												<TableCell>{r.name}</TableCell>
+												<TableCell>{r.role}</TableCell>
+												<TableCell>
+													<Badge
+														variant={
+															r.status === "Active" ? "success" : "default"
+														}
+													>
+														{r.status}
+													</Badge>
+												</TableCell>
+											</TableRow>
+										))}
+									</TableBody>
+								</Table>
+							</div>
 						</ComponentSection>
 
 						{/* ── 06 Skeleton ── */}
@@ -283,20 +213,17 @@ function PlaygroundInner() {
 								onClose={() => setDialogOpen(false)}
 								title="Confirm Action"
 							>
-								<p className="text-sm text-[#6b7280] dark:text-[#6b7a99]">
+								<p className="text-sm text-text-muted">
 									Are you sure you want to continue? This action cannot be
 									undone.
 								</p>
 								<div className="mt-5 flex justify-end gap-2">
+									<Button onClick={() => setDialogOpen(false)}>Confirm</Button>
 									<Button
 										variant="secondary"
-										size="sm"
 										onClick={() => setDialogOpen(false)}
 									>
 										Cancel
-									</Button>
-									<Button size="sm" onClick={() => setDialogOpen(false)}>
-										Confirm
 									</Button>
 								</div>
 							</Dialog>
@@ -305,21 +232,16 @@ function PlaygroundInner() {
 						{/* ── 08 Toast ── */}
 						<ComponentSection id="toast" index={8} title="Toast">
 							<Group label="trigger">
-								<Button
-									size="sm"
-									onClick={() => toast.show("Changes saved.", "success")}
-								>
+								<Button onClick={() => toast.show("Changes saved.", "success")}>
 									Success
 								</Button>
 								<Button
-									size="sm"
 									variant="danger"
 									onClick={() => toast.show("Request failed.", "error")}
 								>
 									Error
 								</Button>
 								<Button
-									size="sm"
 									variant="secondary"
 									onClick={() => toast.show("Notification sent.")}
 								>
@@ -330,7 +252,7 @@ function PlaygroundInner() {
 						</ComponentSection>
 					</div>
 				</div>
-			</div>
-		</main>
+			</main>
+		</div>
 	);
 }

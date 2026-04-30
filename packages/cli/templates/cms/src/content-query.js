@@ -16,7 +16,7 @@ import { applyTransition, canTransition } from "./status.js";
  * Sets status to PUBLISHED and publishedAt to now (if not already set).
  *
  * @param {import('@prisma/client').PrismaClient} prisma
- * @param {"Page" | "Post"} model
+ * @param {string} model
  * @param {string} id
  * @returns {Promise<object>}
  */
@@ -37,7 +37,7 @@ export async function publishContent(prisma, model, id) {
  * Archive a content record.
  *
  * @param {import('@prisma/client').PrismaClient} prisma
- * @param {"Page" | "Post"} model
+ * @param {string} model
  * @param {string} id
  * @returns {Promise<object>}
  */
@@ -59,7 +59,7 @@ export async function archiveContent(prisma, model, id) {
  * Clears publishedAt.
  *
  * @param {import('@prisma/client').PrismaClient} prisma
- * @param {"Page" | "Post"} model
+ * @param {string} model
  * @param {string} id
  * @returns {Promise<object>}
  */
@@ -82,7 +82,7 @@ export async function unpublishContent(prisma, model, id) {
  * Use this in public-facing Server Components.
  *
  * @param {import('@prisma/client').PrismaClient} prisma
- * @param {"Page" | "Post"} model
+ * @param {string} model
  * @param {string} slug
  * @returns {Promise<object | null>}
  */
@@ -95,7 +95,7 @@ export async function findBySlug(prisma, model, slug) {
  * List content filtered by status, ordered by publishedAt desc then updatedAt desc.
  *
  * @param {import('@prisma/client').PrismaClient} prisma
- * @param {"Page" | "Post"} model
+ * @param {string} model
  * @param {{ status?: string, skip?: number, take?: number }} [options]
  * @returns {Promise<{ records: object[], total: number, skip: number, take: number }>}
  */
