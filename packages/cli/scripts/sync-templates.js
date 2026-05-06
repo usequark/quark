@@ -104,6 +104,7 @@ const EXCLUDE_PATTERNS = [
 	/coverage\//,
 	/\.next\//,
 	/\.env$/,
+	/^apps\/web\/uploads\//,
 
 	// Prisma generated code — users run `prisma generate` post-scaffold
 	/\/src\/generated\//,

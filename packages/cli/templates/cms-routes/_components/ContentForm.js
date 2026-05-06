@@ -3,6 +3,7 @@
 import { Button, Dialog, Input, Label, Textarea } from "@techstream/quark-ui";
 import { useActionState, useState, useTransition } from "react";
 import CoverImageField from "./CoverImageField";
+import ContentPreview from "./ContentPreview";
 import SlugField from "./SlugField";
 import StatusBadge from "./StatusBadge";
 
@@ -52,6 +53,7 @@ export default function ContentForm({
 	);
 
 	const [title, setTitle] = useState(record?.title ?? "");
+	const [body, setBody] = useState(record?.body ?? "");
 	const [deleteOpen, setDeleteOpen] = useState(false);
 	const [isDeleting, startDeleteTransition] = useTransition();
 
@@ -112,6 +114,7 @@ export default function ContentForm({
 							rows={16}
 							placeholder="Write your content here…"
 							className="font-mono text-sm leading-relaxed resize-y"
+							onChange={(e) => setBody(e.target.value)}
 						/>
 						<p className="text-xs text-text-faint">
 							Supports plain text or basic HTML.
@@ -217,6 +220,9 @@ export default function ContentForm({
 						</Button>
 					</div>
 				)}
+
+				{/* Live preview */}
+				<ContentPreview body={body} />
 			</aside>
 
 			{isEdit && deleteAction && (
