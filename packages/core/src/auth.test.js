@@ -2,6 +2,7 @@ import assert from "node:assert";
 import { test } from "node:test";
 import {
 	createAuthConfig,
+	getCurrentSession,
 	getUserEmail,
 	getUserId,
 	isAuthenticated,
@@ -85,4 +86,15 @@ test("Auth Module", async (t) => {
 			(err) => err instanceof Error,
 		);
 	});
+
+	await t.test(
+		"getCurrentSession returns null when session lookup throws",
+		async () => {
+			const session = await getCurrentSession(async () => {
+				throw new Error("session store unavailable");
+			});
+
+			assert.strictEqual(session, null);
+		},
+	);
 });

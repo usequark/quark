@@ -7,41 +7,20 @@ import {
 	publishContent,
 	unpublishContent,
 } from "@techstream/quark-cms";
-import { ValidationError } from "@techstream/quark-core";
 import { prisma } from "@techstream/quark-db";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { z } from "zod";
 import { requireRole } from "@/lib/auth-middleware";
+import { parsePageFormData } from "./page-form.js";
 
 // ─── Shared schemas ──────────────────────────────────────────────────────────
-
-const pageSchema = z.object({
-	title: z.string().min(1, "Title is required").max(200),
-	slug: z
-		.string()
-		.min(1, "Slug is required")
-		.max(200)
-		.regex(
-			/^[a-z0-9-]+$/,
-			"Slug must be lowercase letters, numbers, and hyphens only",
-		),
-	body: z.string().min(1, "Body is required"),
-	excerpt: z.string().max(500).optional().or(z.literal("")),
-});
 
 // ─── Page actions ─────────────────────────────────────────────────────────────
 
 export async function cmsCreatePage(_prevState, formData) {
 	const session = await requireRole(["admin", "editor"]);
 
-	const raw = Object.fromEntries(formData);
-	const result = pageSchema.safeParse(raw);
-	if (!result.success) {
-		throw new ValidationError(result.error.issues[0].message);
-	}
-
-	const { title, slug: rawSlug, body, excerpt } = result.data;
+	const { title, slug: rawSlug, body, excerpt } = parsePageFormData(formData);
 	const slug = await ensureUniqueSlug(
 		prisma,
 		"Page",
@@ -65,13 +44,7 @@ export async function cmsCreatePage(_prevState, formData) {
 export async function cmsUpdatePage(id, _prevState, formData) {
 	await requireRole(["admin", "editor"]);
 
-	const raw = Object.fromEntries(formData);
-	const result = pageSchema.safeParse(raw);
-	if (!result.success) {
-		throw new ValidationError(result.error.issues[0].message);
-	}
-
-	const { title, slug: rawSlug, body, excerpt } = result.data;
+	const { title, slug: rawSlug, body, excerpt } = parsePageFormData(formData);
 	const slug = await ensureUniqueSlug(
 		prisma,
 		"Page",
