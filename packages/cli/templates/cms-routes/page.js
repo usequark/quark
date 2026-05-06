@@ -7,7 +7,8 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@techstream/quark-ui";
-import Image from "next/image";
+import MediaAssetCard from "./_components/MediaAssetCard";
+import StatusBadge from "./_components/StatusBadge";
 
 export const metadata = { title: "Content Overview" };
 
@@ -29,10 +30,30 @@ export default async function CmsDashboard() {
 	);
 
 	const mediaCount = await prisma.mediaAsset.count();
-	const recentMedia = await prisma.mediaAsset.findMany({
-		orderBy: { createdAt: "desc" },
-		take: 4,
-	});
+	const [recentMedia, recentPages] = await Promise.all([
+		prisma.mediaAsset.findMany({
+			orderBy: { createdAt: "desc" },
+			take: 4,
+			select: {
+				id: true,
+				filename: true,
+				storageKey: true,
+				mimeType: true,
+				size: true,
+				alt: true,
+			},
+		}),
+		prisma.page.findMany({
+			orderBy: { updatedAt: "desc" },
+			take: 5,
+			select: {
+				id: true,
+				title: true,
+				slug: true,
+				status: true,
+			},
+		}),
+	]);
 
 	return (
 		<div className="space-y-8">
@@ -121,30 +142,50 @@ export default async function CmsDashboard() {
 						</a>
 					</div>
 					<div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-						{recentMedia.map((asset) => (
-							<div
-								key={asset.id}
-								className="relative rounded-[--radius-default] border border-border bg-surface-hover overflow-hidden aspect-square flex items-center justify-center"
+						{recentMedia.map((asset) => {
+							return (
+								<MediaAssetCard
+									key={asset.id}
+									asset={asset}
+									href="/admin/cms/media"
+								/>
+							);
+						})}
+					</div>
+				</section>
+			)}
+
+			{/* Recent pages */}
+			{recentPages.length > 0 && (
+				<section>
+					<div className="flex items-center justify-between mb-3">
+						<h2 className="text-xs font-semibold uppercase tracking-widest text-text-faint">
+							Recent Pages
+						</h2>
+						<a
+							href="/admin/cms/pages"
+							className="text-xs text-primary hover:opacity-75"
+						>
+							View all →
+						</a>
+					</div>
+					<div className="rounded-[--radius-default] border border-border bg-surface divide-y divide-border">
+						{recentPages.map((page) => (
+							<a
+								key={page.id}
+								href={`/admin/cms/pages/${page.id}`}
+								className="flex items-center justify-between px-4 py-3 hover:bg-surface-hover transition-colors"
 							>
-								{asset.mimeType.startsWith("image/") ? (
-									<Image
-										fill
-										src={`/api/media/${asset.storageKey}`}
-										alt={asset.alt ?? asset.filename}
-										className="object-cover"
-										sizes="(max-width: 640px) 50vw, 25vw"
-									/>
-								) : (
-									<div className="text-center p-2">
-										<p className="text-xs font-mono text-text-muted truncate">
-											{asset.filename}
-										</p>
-										<p className="text-[10px] text-text-faint mt-1">
-											{asset.mimeType}
-										</p>
-									</div>
-								)}
-							</div>
+								<div className="min-w-0 mr-3">
+									<p className="text-sm font-medium text-text truncate">
+										{page.title}
+									</p>
+									<p className="text-[10px] text-text-faint font-mono truncate">
+										/{page.slug}
+									</p>
+								</div>
+								<StatusBadge status={page.status} />
+							</a>
 						))}
 					</div>
 				</section>

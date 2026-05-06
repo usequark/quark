@@ -2,8 +2,8 @@
 
 import { Button, Dialog, Input, Label, Textarea } from "@techstream/quark-ui";
 import { useActionState, useState, useTransition } from "react";
-import CoverImageField from "./CoverImageField";
 import ContentPreview from "./ContentPreview";
+import CoverImageField from "./CoverImageField";
 import SlugField from "./SlugField";
 import StatusBadge from "./StatusBadge";
 
