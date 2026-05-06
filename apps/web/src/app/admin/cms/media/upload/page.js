@@ -145,7 +145,7 @@ function MediaUploadForm() {
 				</Button>
 				<a
 					href="/admin/cms/media"
-					className="text-sm text-text-faint hover:text-text"
+					className="inline-flex items-center justify-center h-10 px-4 text-sm font-medium tracking-wide rounded-[--radius-default] text-text-faint hover:bg-surface-hover hover:text-text transition-all duration-200 linear"
 				>
 					Cancel
 				</a>

@@ -6,6 +6,12 @@ import {
 import { notFound } from "next/navigation";
 import ModelForm from "../../_components/ModelForm";
 
+export async function generateMetadata({ params }) {
+	const { model: slug } = await params;
+	const model = getModelBySlug(slug);
+	return { title: model ? `New ${model.name}` : "New Record" };
+}
+
 export default async function NewRecordPage({ params }) {
 	const { model: slug } = await params;
 

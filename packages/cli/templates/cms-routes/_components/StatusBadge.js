@@ -1,5 +1,3 @@
-"use client";
-
 import { Badge } from "@techstream/quark-ui";
 
 const STATUS_VARIANTS = {
@@ -8,10 +6,17 @@ const STATUS_VARIANTS = {
 	ARCHIVED: "default",
 };
 
+const STATUS_LABELS = {
+	DRAFT: "Draft",
+	PUBLISHED: "Published",
+	ARCHIVED: "Archived",
+};
+
 /**
  * @param {{ status: "DRAFT" | "PUBLISHED" | "ARCHIVED" }} props
  */
 export default function StatusBadge({ status }) {
 	const variant = STATUS_VARIANTS[status] ?? "default";
-	return <Badge variant={variant}>{status}</Badge>;
+	const label = STATUS_LABELS[status] ?? status;
+	return <Badge variant={variant}>{label}</Badge>;
 }

@@ -10,6 +10,12 @@ import { Button, Input } from "@techstream/quark-ui";
 import { notFound } from "next/navigation";
 import ModelTable from "../_components/ModelTable";
 
+export async function generateMetadata({ params }) {
+	const { model: slug } = await params;
+	const model = getModelBySlug(slug);
+	return { title: model ? model.name : "Model" };
+}
+
 export default async function ModelListPage({ params, searchParams }) {
 	const { model: slug } = await params;
 	const { page, q } = await searchParams;

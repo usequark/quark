@@ -1,10 +1,16 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import { createAuthConfig, verifyPassword } from "@techstream/quark-core";
-import { prisma, user } from "@techstream/quark-db";
+import {
+	createAuthConfig,
+	createLogger,
+	verifyPassword,
+} from "@techstream/quark-core";
+import { Prisma, prisma, user } from "@techstream/quark-db";
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GithubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
+
+const logger = createLogger({ name: "auth" });
 
 const providers = [
 	CredentialsProvider({
@@ -42,9 +48,24 @@ const providers = [
 					role: existingUser.role,
 				};
 			} catch (err) {
-				// Log the real error so it appears in the dev terminal.
-				// Returning null shows "Invalid credentials" on the form — no error page redirect.
-				console.error("[auth] authorize error:", err?.message ?? err);
+				// Re-throw if the database is unreachable so Auth.js surfaces a server error
+				// rather than "Invalid credentials", which misleads both user and developer.
+				// PrismaClientInitializationError: client could not connect on startup.
+				// PrismaClientKnownRequestError P1xxx: connection lost / timeout mid-request.
+				const isDbDown =
+					err instanceof Prisma.PrismaClientInitializationError ||
+					(err instanceof Prisma.PrismaClientKnownRequestError &&
+						err.errorCode?.startsWith("P1"));
+				if (isDbDown) {
+					logger.error("Database unavailable during authentication", {
+						errorCode: err.errorCode,
+					});
+					throw err;
+				}
+				// For all other unexpected errors, log and fail closed.
+				logger.error("Auth authorize error", {
+					message: err?.message ?? String(err),
+				});
 				return null;
 			}
 		},

@@ -5,7 +5,12 @@ import { auth } from "@/lib/auth";
 import Sidebar from "./_components/Sidebar";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Admin" };
+export const metadata = {
+	title: {
+		default: adminConfig.title,
+		template: `%s · ${adminConfig.title}`,
+	},
+};
 
 // CMS content type links for the sidebar, derived from cmsConfig.
 const cmsLinks = Object.entries(cmsConfig.contentTypes).map(([model, cfg]) => ({

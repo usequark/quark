@@ -9,6 +9,12 @@ import { prisma } from "@techstream/quark-db";
 import { notFound } from "next/navigation";
 import ModelForm from "../../_components/ModelForm";
 
+export async function generateMetadata({ params }) {
+	const { model: slug, _id } = await params;
+	const model = getModelBySlug(slug);
+	return { title: model ? `Edit ${model.name}` : "Edit Record" };
+}
+
 export default async function EditRecordPage({ params }) {
 	const { model: slug, id } = await params;
 

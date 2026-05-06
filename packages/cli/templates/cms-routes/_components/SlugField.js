@@ -85,7 +85,7 @@ export default function SlugField({
 					<button
 						type="button"
 						onClick={locked ? handleUnlock : () => setLocked(true)}
-						className="text-xs text-text-faint hover:text-text transition-colors"
+						className="text-xs text-primary underline hover:opacity-75 transition-opacity"
 					>
 						{locked ? "Edit" : "Lock"}
 					</button>

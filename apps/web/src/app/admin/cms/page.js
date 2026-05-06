@@ -9,7 +9,7 @@ import {
 } from "@techstream/quark-ui";
 import Image from "next/image";
 
-export const metadata = { title: "CMS — Content Overview" };
+export const metadata = { title: "Content Overview" };
 
 export default async function CmsDashboard() {
 	const contentTypes = Object.entries(cmsConfig.contentTypes);
@@ -53,7 +53,7 @@ export default async function CmsDashboard() {
 							href={`/admin/cms/${model.toLowerCase()}s`}
 							className="block group h-full"
 						>
-							<Card className="transition-colors hover:border-border-hover h-full flex flex-col">
+							<Card className="transition-colors hover:border-border-hover hover:bg-surface-hover h-full flex flex-col">
 								<CardHeader className="pb-2">
 									<CardTitle className="text-sm font-semibold text-text-muted uppercase tracking-widest">
 										{label}
@@ -87,7 +87,7 @@ export default async function CmsDashboard() {
 
 					{/* Media card */}
 					<a href="/admin/cms/media" className="block group h-full">
-						<Card className="transition-colors hover:border-border-hover h-full flex flex-col">
+						<Card className="transition-colors hover:border-border-hover hover:bg-surface-hover h-full flex flex-col">
 							<CardHeader className="pb-2">
 								<CardTitle className="text-sm font-semibold text-text-muted uppercase tracking-widest">
 									Media Library
@@ -98,7 +98,7 @@ export default async function CmsDashboard() {
 									{mediaCount}
 								</p>
 								<p className="text-xs text-text-faint mt-auto">
-									assets uploaded
+									{mediaCount === 0 ? "No assets yet" : "assets uploaded"}
 								</p>
 							</CardContent>
 						</Card>
@@ -156,10 +156,10 @@ export default async function CmsDashboard() {
 function StatusChip({ label, count, variant }) {
 	return (
 		<div className="flex items-center gap-1.5">
-			<Badge variant={variant}>{label}</Badge>
 			<span className="text-sm font-semibold tabular-nums text-text">
 				{count}
 			</span>
+			<Badge variant={variant}>{label}</Badge>
 		</div>
 	);
 }

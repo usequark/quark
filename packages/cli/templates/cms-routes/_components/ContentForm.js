@@ -1,7 +1,7 @@
 "use client";
 
-import { Button, Input, Label, Textarea } from "@techstream/quark-ui";
-import { useActionState, useState } from "react";
+import { Button, Dialog, Input, Label, Textarea } from "@techstream/quark-ui";
+import { useActionState, useState, useTransition } from "react";
 import CoverImageField from "./CoverImageField";
 import SlugField from "./SlugField";
 import StatusBadge from "./StatusBadge";
@@ -52,6 +52,8 @@ export default function ContentForm({
 	);
 
 	const [title, setTitle] = useState(record?.title ?? "");
+	const [deleteOpen, setDeleteOpen] = useState(false);
+	const [isDeleting, startDeleteTransition] = useTransition();
 
 	const status = record?.status ?? "DRAFT";
 	const canPublish = status === "DRAFT";
@@ -112,8 +114,7 @@ export default function ContentForm({
 							className="font-mono text-sm leading-relaxed resize-y"
 						/>
 						<p className="text-xs text-text-faint">
-							Plain text or HTML. Use the rich text upgrade path (Tiptap) for a
-							visual editor.
+							Supports plain text or basic HTML.
 						</p>
 					</div>
 
@@ -125,7 +126,10 @@ export default function ContentForm({
 									? "Save changes"
 									: `Create ${modelLabel}`}
 						</Button>
-						<a href="./" className="text-sm text-text-faint hover:text-text">
+						<a
+							href="./"
+							className="inline-flex items-center justify-center h-10 px-4 text-sm font-medium tracking-wide rounded-[--radius-default] text-text-faint hover:bg-surface-hover hover:text-text transition-all duration-200 linear"
+						>
 							Cancel
 						</a>
 					</div>
@@ -203,26 +207,52 @@ export default function ContentForm({
 						<p className="text-xs font-semibold uppercase tracking-widest text-text-faint">
 							Danger Zone
 						</p>
-						<form action={deleteAction}>
-							<Button
-								type="submit"
-								variant="danger"
-								className="w-full"
-								onClick={(e) => {
-									if (
-										!confirm(
-											`Delete this ${modelLabel}? This cannot be undone.`,
-										)
-									)
-										e.preventDefault();
-								}}
-							>
-								Delete {modelLabel}
-							</Button>
-						</form>
+						<Button
+							type="button"
+							variant="danger"
+							className="w-full"
+							onClick={() => setDeleteOpen(true)}
+						>
+							Delete {modelLabel}
+						</Button>
 					</div>
 				)}
 			</aside>
+
+			{isEdit && deleteAction && (
+				<Dialog
+					open={deleteOpen}
+					onClose={() => setDeleteOpen(false)}
+					title={`Delete ${modelLabel}`}
+				>
+					<div className="space-y-4">
+						<p className="text-sm">
+							Are you sure you want to delete this {modelLabel.toLowerCase()}?
+							This cannot be undone.
+						</p>
+						<div className="flex gap-2 justify-end pt-4 border-t border-border -mx-5 px-5">
+							<Button
+								variant="secondary"
+								onClick={() => setDeleteOpen(false)}
+								disabled={isDeleting}
+							>
+								Keep it
+							</Button>
+							<Button
+								variant="danger"
+								disabled={isDeleting}
+								onClick={() => {
+									startDeleteTransition(async () => {
+										await deleteAction();
+									});
+								}}
+							>
+								{isDeleting ? "Deleting\u2026" : `Delete ${modelLabel}`}
+							</Button>
+						</div>
+					</div>
+				</Dialog>
+			)}
 		</div>
 	);
 }

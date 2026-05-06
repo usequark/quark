@@ -2,8 +2,9 @@ import { prisma } from "@techstream/quark-db";
 import { Button } from "@techstream/quark-ui";
 import Image from "next/image";
 import { cmsDeleteMedia } from "../_actions/media";
+import DeleteMediaButton from "../_components/DeleteMediaButton";
 
-export const metadata = { title: "CMS — Media Library" };
+export const metadata = { title: "Media Library" };
 
 function formatBytes(bytes) {
 	if (bytes < 1024) return `${bytes} B`;
@@ -79,31 +80,18 @@ export default async function MediaPage() {
 								<p className="text-[10px] text-text-faint mt-0.5">
 									{formatBytes(asset.size)}
 								</p>
-
-								{/* Delete */}
-								<form
+								<DeleteMediaButton
 									action={cmsDeleteMedia.bind(null, asset.id)}
-									className="mt-2"
-								>
-									<button
-										type="submit"
-										className="text-[10px] text-danger hover:opacity-75 transition-opacity"
-										onClick={(e) => {
-											if (
-												!confirm(
-													"Delete this media asset? This cannot be undone.",
-												)
-											)
-												e.preventDefault();
-										}}
-									>
-										Delete
-									</button>
-								</form>
+								/>
 							</div>
 						</div>
 					))}
 				</div>
+			)}
+			{total > 100 && (
+				<p className="mt-3 text-xs text-text-faint text-center tabular-nums">
+					Showing 100 of {total} assets.
+				</p>
 			)}
 		</div>
 	);

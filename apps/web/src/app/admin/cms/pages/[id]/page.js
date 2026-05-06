@@ -9,7 +9,14 @@ import {
 } from "../../_actions/content";
 import ContentForm from "../../_components/ContentForm";
 
-export const metadata = { title: "CMS — Edit Page" };
+export async function generateMetadata({ params }) {
+	const { id } = await params;
+	const record = await prisma.page.findUnique({
+		where: { id },
+		select: { title: true },
+	});
+	return { title: record ? `Edit: ${record.title}` : "Edit Page" };
+}
 
 export default async function EditPagePage({ params }) {
 	const { id } = await params;

@@ -4,8 +4,11 @@
  */
 
 import { UnauthorizedError } from "../errors.js";
+import { createLogger } from "../logger.js";
 
 export * from "./password.js";
+
+const logger = createLogger({ name: "auth" });
 
 /**
  * Creates a next-auth configuration object with sensible defaults
@@ -77,7 +80,9 @@ export const getCurrentSession = async (getSession) => {
 	try {
 		return await getSession();
 	} catch (error) {
-		console.error("Failed to get session:", error);
+		logger.error("Failed to get session", {
+			message: error?.message ?? String(error),
+		});
 		return null;
 	}
 };

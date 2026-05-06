@@ -1,7 +1,7 @@
 import { cmsCreatePage } from "../../_actions/content";
 import ContentForm from "../../_components/ContentForm";
 
-export const metadata = { title: "CMS — New Page" };
+export const metadata = { title: "New Page" };
 
 export default function NewPagePage() {
 	return (

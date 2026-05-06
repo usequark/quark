@@ -1,4 +1,5 @@
 import {
+	Button,
 	Table,
 	TableBody,
 	TableCell,
@@ -19,7 +20,12 @@ export default function ContentTable({ records, basePath }) {
 	if (records.length === 0) {
 		return (
 			<div className="rounded-[--radius-default] border border-border py-16 text-center">
-				<p className="text-sm text-text-faint">No content yet</p>
+				<p className="text-sm text-text-faint mb-3">No content yet</p>
+				<a href={`${basePath}/new`}>
+					<Button variant="secondary" size="sm">
+						Create your first entry
+					</Button>
+				</a>
 			</div>
 		);
 	}
