@@ -62,7 +62,7 @@
 		"turbo": "^2.9.6"
 	},
 	"simple-git-hooks": {
-		"pre-commit": "node packages/cli/scripts/sync-templates.js --pre-commit && pnpm nano-staged",
+		"pre-commit": "pnpm nano-staged && node packages/cli/scripts/sync-templates.js --pre-commit",
 		"pre-push": "pnpm test"
 	},
 	"nano-staged": {

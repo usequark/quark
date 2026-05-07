@@ -178,6 +178,38 @@ async function updatePackageJsonName(filePath, scope) {
 	await fs.writeFile(filePath, `${JSON.stringify(packageJson, null, 2)}\n`);
 }
 
+function getWorkspacePackagesForFeatures(features) {
+	const packages = new Set();
+
+	for (const feature of features) {
+		const meta = FEATURE_META[feature];
+		const packageNames = meta?.packages ?? [feature];
+
+		for (const packageName of packageNames) {
+			packages.add(packageName);
+		}
+	}
+
+	return [...packages];
+}
+
+function getPairedTemplatesForFeatures(features) {
+	const pairs = [];
+
+	for (const feature of features) {
+		const meta = FEATURE_META[feature];
+		if (!meta) continue;
+
+		for (const pair of meta.pairs) {
+			if (!pairs.includes(pair)) {
+				pairs.push(pair);
+			}
+		}
+	}
+
+	return pairs;
+}
+
 /**
  * Replace @techstream/quark-* workspace deps with @scope/* for local packages.
  * Also removes deps for packages that were not selected.
@@ -201,10 +233,10 @@ function replaceDepsScope(deps, scope, selectedPackages) {
 }
 
 /**
- * Remove unselected optional feature entries from next.config.js transpilePackages.
+ * Remove unselected workspace package entries from next.config.js transpilePackages.
  * Must run AFTER replaceImportsInSourceFiles so package names are already scoped.
  */
-async function patchNextConfig(webDir, scope, selectedFeatures) {
+async function patchNextConfig(webDir, scope, selectedPackages) {
 	const configPath = path.join(webDir, "next.config.js");
 	if (!(await fs.pathExists(configPath))) return;
 
@@ -214,10 +246,11 @@ async function patchNextConfig(webDir, scope, selectedFeatures) {
 		ui: `@${scope}/ui`,
 		jobs: `@${scope}/jobs`,
 		admin: `@${scope}/admin`,
+		cms: `@${scope}/cms`,
 	};
 
 	for (const [feature, pkg] of Object.entries(optionalEntries)) {
-		if (!selectedFeatures.includes(feature)) {
+		if (!selectedPackages.includes(feature)) {
 			// Remove the line containing this package from transpilePackages.
 			// Use \r?\n so the regex matches both LF and CRLF line endings
 			// (CRLF can appear on Windows when git autocrlf=true is set).
@@ -233,11 +266,11 @@ async function patchNextConfig(webDir, scope, selectedFeatures) {
 
 /**
  * Replace @techstream/quark-* import paths in all .js source files
- * for workspace packages (db, jobs, ui, config) with @scope/* equivalents.
+ * for workspace packages (db, jobs, ui, config, admin, cms) with @scope/* equivalents.
  * Registry packages (@techstream/quark-core) are left untouched.
  */
 async function replaceImportsInSourceFiles(dir, scope) {
-	const workspacePackages = ["db", "jobs", "ui", "config", "admin"];
+	const workspacePackages = ["db", "jobs", "ui", "config", "admin", "cms"];
 	const entries = await fs.readdir(dir, { withFileTypes: true });
 
 	for (const entry of entries) {
@@ -475,7 +508,7 @@ program
 			if (!options.prompts && options.features) {
 				// Parse features from CLI flag
 				console.log(chalk.cyan("\n  🎯 Configuring optional features..."));
-				const validFeatures = ["ui", "jobs", "admin"];
+				const validFeatures = Object.keys(FEATURE_META);
 				features = options.features
 					.split(",")
 					.map((f) => f.trim())
@@ -557,35 +590,37 @@ program
 				}
 			}
 
+			const scaffoldPackages = getWorkspacePackagesForFeatures(features);
+			const pairedTemplates = getPairedTemplatesForFeatures(features);
+
 			// Step 6: Copy selected optional packages
-			if (features.length > 0) {
+			if (scaffoldPackages.length > 0) {
 				console.log(chalk.cyan("\n  📋 Setting up optional packages..."));
 
-				for (const feature of features) {
-					// admin is a package template — skip if no template exists yet
-					const templatePath = path.join(templatesDir, feature);
+				for (const packageName of scaffoldPackages) {
+					const templatePath = path.join(templatesDir, packageName);
 					if (!(await fs.pathExists(templatePath))) {
 						console.log(
 							chalk.yellow(
-								`    ⚠ ${feature} (template not yet available — skipped)`,
+								`    ⚠ ${packageName} (template not yet available — skipped)`,
 							),
 						);
 						continue;
 					}
 
-					const packageDir = path.join(targetDir, "packages", feature);
+					const packageDir = path.join(targetDir, "packages", packageName);
 					await fs.ensureDir(packageDir);
-					await copyTemplate(feature, packageDir);
+					await copyTemplate(packageName, packageDir);
 
 					// Update package.json with proper scope
 					const packageJsonPath = path.join(packageDir, "package.json");
 					await updatePackageJsonName(packageJsonPath, scope);
 
-					console.log(chalk.green(`    ✓ ${feature}`));
+					console.log(chalk.green(`    ✓ ${packageName}`));
 				}
 
 				// If jobs selected, also scaffold apps/worker from its template
-				if (features.includes("jobs")) {
+				if (pairedTemplates.includes("worker")) {
 					const workerDir = path.join(targetDir, "apps", "worker");
 					await fs.ensureDir(workerDir);
 					await copyTemplate("worker", workerDir);
@@ -593,7 +628,7 @@ program
 				}
 
 				// If admin selected, also scaffold admin routes into apps/web/src/app/admin
-				if (features.includes("admin")) {
+				if (pairedTemplates.includes("admin-routes")) {
 					const adminRoutesTemplatePath = path.join(
 						templatesDir,
 						"admin-routes",
@@ -612,6 +647,24 @@ program
 						console.log(chalk.green(`    ✓ admin routes (paired with admin)`));
 					}
 				}
+
+				if (pairedTemplates.includes("cms-routes")) {
+					const cmsRoutesTemplatePath = path.join(templatesDir, "cms-routes");
+					if (await fs.pathExists(cmsRoutesTemplatePath)) {
+						const cmsRoutesDir = path.join(
+							targetDir,
+							"apps",
+							"web",
+							"src",
+							"app",
+							"admin",
+							"cms",
+						);
+						await fs.ensureDir(cmsRoutesDir);
+						await copyTemplate("cms-routes", cmsRoutesDir);
+						console.log(chalk.green(`    ✓ cms routes (paired with admin)`));
+					}
+				}
 			}
 
 			// Step 7: Update all package.json dependencies to use correct scope
@@ -625,7 +678,7 @@ program
 					? [path.join(targetDir, "apps", "worker", "package.json")]
 					: []),
 				// Also update cross-dependencies in scaffolded packages (e.g. db → config)
-				...["db", ...features].map((pkg) =>
+				...[...requiredPackages, ...scaffoldPackages].map((pkg) =>
 					path.join(targetDir, "packages", pkg, "package.json"),
 				),
 			];
@@ -638,8 +691,8 @@ program
 						const shortName = pkg.name.replace("@myquark/", "");
 						pkg.name = `@${scope}/${shortName}`;
 					}
-					replaceDepsScope(pkg.dependencies, scope, features);
-					replaceDepsScope(pkg.devDependencies, scope, features);
+					replaceDepsScope(pkg.dependencies, scope, scaffoldPackages);
+					replaceDepsScope(pkg.devDependencies, scope, scaffoldPackages);
 					await fs.writeFile(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
 				}
 			}
@@ -666,7 +719,7 @@ program
 			await patchNextConfig(
 				path.join(targetDir, "apps", "web"),
 				scope,
-				features,
+				scaffoldPackages,
 			);
 			console.log(chalk.green(`    ✓ next.config.js patched`));
 
@@ -957,12 +1010,13 @@ STORAGE_PROVIDER=local
 
 			// Build shared variable map (used by SKILL.md, CLAUDE.md, .cursor/rules, copilot-instructions)
 			const scaffoldDate = new Date().toISOString().split("T")[0];
-			const optionalLines = features
+			const optionalLines = scaffoldPackages
 				.map((f) => {
 					const labels = {
 						ui: "Shared UI components",
 						jobs: "Job queue definitions",
 						admin: "Auto-generated admin dashboard",
+						cms: "CMS content models and helpers",
 					};
 					return `│   ├── ${f}/           # ${labels[f] || f}`;
 				})
@@ -1114,9 +1168,13 @@ STORAGE_PROVIDER=local
 
 /** Feature metadata: dependencies and paired apps/routes */
 const FEATURE_META = {
-	ui: { requires: [], pairs: [] },
-	jobs: { requires: [], pairs: ["worker"] },
-	admin: { requires: ["ui"], pairs: ["admin-routes"] },
+	ui: { requires: [], packages: ["ui"], pairs: [] },
+	jobs: { requires: [], packages: ["jobs"], pairs: ["worker"] },
+	admin: {
+		requires: ["ui"],
+		packages: ["admin", "cms"],
+		pairs: ["admin-routes", "cms-routes"],
+	},
 };
 
 /**
@@ -1187,6 +1245,14 @@ async function addWorkspaceDep(pkgJsonPath, depName) {
 	pkg.dependencies = pkg.dependencies || {};
 	if (pkg.dependencies[depName]) return; // already present
 	pkg.dependencies[depName] = "workspace:*";
+	await fs.writeFile(pkgJsonPath, `${JSON.stringify(pkg, null, 2)}\n`);
+}
+
+async function rewriteWorkspaceDeps(pkgJsonPath, scope, workspacePackages) {
+	if (!(await fs.pathExists(pkgJsonPath))) return;
+	const pkg = await fs.readJSON(pkgJsonPath);
+	replaceDepsScope(pkg.dependencies, scope, workspacePackages);
+	replaceDepsScope(pkg.devDependencies, scope, workspacePackages);
 	await fs.writeFile(pkgJsonPath, `${JSON.stringify(pkg, null, 2)}\n`);
 }
 
@@ -1278,26 +1344,39 @@ program
 			}
 		}
 		toAdd.push(feature);
+		const finalFeatures = [...new Set([...installedFeatures, ...toAdd])];
+		const finalWorkspacePackages =
+			getWorkspacePackagesForFeatures(finalFeatures);
 
 		try {
 			for (const feat of toAdd) {
 				const featMeta = FEATURE_META[feat];
+				const packageNames = featMeta.packages ?? [feat];
 				console.log(chalk.cyan(`\n  📋 Adding ${feat}...`));
 
 				// 1. Copy package template
-				const packageDir = path.join(projectDir, "packages", feat);
-				if (await fs.pathExists(packageDir)) {
-					console.log(
-						chalk.dim(`    · packages/${feat} already exists — skipping copy`),
-					);
-				} else {
-					await copyTemplate(feat, packageDir);
-					await updatePackageJsonName(
-						path.join(packageDir, "package.json"),
-						scope,
-					);
-					await replaceImportsInSourceFiles(packageDir, scope);
-					console.log(chalk.green(`    ✓ packages/${feat}`));
+				for (const packageName of packageNames) {
+					const packageDir = path.join(projectDir, "packages", packageName);
+					if (await fs.pathExists(packageDir)) {
+						console.log(
+							chalk.dim(
+								`    · packages/${packageName} already exists — skipping copy`,
+							),
+						);
+					} else {
+						await copyTemplate(packageName, packageDir);
+						await updatePackageJsonName(
+							path.join(packageDir, "package.json"),
+							scope,
+						);
+						await rewriteWorkspaceDeps(
+							path.join(packageDir, "package.json"),
+							scope,
+							finalWorkspacePackages,
+						);
+						await replaceImportsInSourceFiles(packageDir, scope);
+						console.log(chalk.green(`    ✓ packages/${packageName}`));
+					}
 				}
 
 				// 2. Handle paired apps/routes
@@ -1313,6 +1392,11 @@ program
 							await updatePackageJsonName(
 								path.join(workerDir, "package.json"),
 								scope,
+							);
+							await rewriteWorkspaceDeps(
+								path.join(workerDir, "package.json"),
+								scope,
+								finalWorkspacePackages,
 							);
 							await replaceImportsInSourceFiles(workerDir, scope);
 							console.log(chalk.green(`    ✓ apps/worker (paired with jobs)`));
@@ -1339,21 +1423,46 @@ program
 								chalk.green(`    ✓ apps/web/src/app/admin (paired with admin)`),
 							);
 						}
+					} else if (pair === "cms-routes") {
+						const cmsRoutesDir = path.join(
+							projectDir,
+							"apps",
+							"web",
+							"src",
+							"app",
+							"admin",
+							"cms",
+						);
+						if (await fs.pathExists(cmsRoutesDir)) {
+							console.log(
+								chalk.dim(
+									`    · apps/web/src/app/admin/cms already exists — skipping copy`,
+								),
+							);
+						} else {
+							await copyTemplate("cms-routes", cmsRoutesDir);
+							await replaceImportsInSourceFiles(cmsRoutesDir, scope);
+							console.log(
+								chalk.green(
+									`    ✓ apps/web/src/app/admin/cms (paired with admin)`,
+								),
+							);
+						}
 					}
 				}
 
-				// 3. Add transpilePackages entry in next.config.js
-				const scopedPkg = `@${scope}/${feat}`;
-				await addTranspilePackage(
-					path.join(projectDir, "apps", "web"),
-					scopedPkg,
-				);
-
-				// 4. Add workspace dependency to apps/web/package.json
-				await addWorkspaceDep(
-					path.join(projectDir, "apps", "web", "package.json"),
-					scopedPkg,
-				);
+				// 3. Add transpilePackages entries and workspace deps to apps/web/package.json
+				for (const packageName of packageNames) {
+					const scopedPkg = `@${scope}/${packageName}`;
+					await addTranspilePackage(
+						path.join(projectDir, "apps", "web"),
+						scopedPkg,
+					);
+					await addWorkspaceDep(
+						path.join(projectDir, "apps", "web", "package.json"),
+						scopedPkg,
+					);
+				}
 
 				// 5. If adding jobs, also add dep to worker
 				if (feat === "jobs") {

@@ -198,6 +198,7 @@ const TRANSFORMS = {
 	"ui/package.json": transformOptionalPackageJson,
 	"jobs/package.json": transformOptionalPackageJson,
 	"admin/package.json": transformOptionalPackageJson,
+	"cms/package.json": transformOptionalPackageJson,
 };
 
 function transformWebPackageJson(content) {
@@ -291,6 +292,11 @@ function transformOptionalPackageJson(content) {
 
 	// Remove scripts (optional packages in templates are minimal)
 	delete pkg.scripts;
+
+	// Core is installed from npm (not workspace) in scaffolded projects.
+	if (pkg.dependencies?.["@techstream/quark-core"]) {
+		pkg.dependencies["@techstream/quark-core"] = CORE_VERSION_PIN;
+	}
 
 	// Remove devDependencies that are monorepo workspace refs
 	if (pkg.devDependencies) {

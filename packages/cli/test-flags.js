@@ -8,7 +8,7 @@
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path, { join } from "node:path";
 import { describe, it } from "node:test";
@@ -125,6 +125,136 @@ describe("Feature Validation", () => {
 		}
 	});
 
+	it("admin feature scaffolds CMS package and routes", () => {
+		const tmpDir = makeTempDir();
+		const projectName = "test-admin-app";
+		const scope = projectName.toLowerCase().replace(/[^a-z0-9-]/g, "");
+		try {
+			const result = runCLI(
+				[
+					projectName,
+					"--no-prompts",
+					"--features",
+					"ui,admin",
+					"--skip-install",
+					"--skip-docker",
+				],
+				tmpDir,
+			);
+			assert.strictEqual(
+				result.status,
+				0,
+				`Expected exit 0\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
+			);
+
+			const projectDir = join(tmpDir, projectName);
+			assert.ok(existsSync(join(projectDir, "packages", "admin")));
+			assert.ok(existsSync(join(projectDir, "packages", "cms")));
+			assert.ok(
+				existsSync(
+					join(
+						projectDir,
+						"apps",
+						"web",
+						"src",
+						"app",
+						"admin",
+						"cms",
+						"page.js",
+					),
+				),
+			);
+
+			const webPackageJson = JSON.parse(
+				readFileSync(join(projectDir, "apps", "web", "package.json"), "utf8"),
+			);
+			const cmsPackageJson = JSON.parse(
+				readFileSync(
+					join(projectDir, "packages", "cms", "package.json"),
+					"utf8",
+				),
+			);
+			assert.strictEqual(cmsPackageJson.name, `@${scope}/cms`);
+			assert.ok(cmsPackageJson.dependencies["@techstream/quark-core"]);
+			assert.notStrictEqual(
+				cmsPackageJson.dependencies["@techstream/quark-core"],
+				"workspace:*",
+			);
+			assert.strictEqual(
+				webPackageJson.dependencies[`@${scope}/cms`],
+				"workspace:*",
+			);
+
+			const adminLayout = readFileSync(
+				join(projectDir, "apps", "web", "src", "app", "admin", "layout.js"),
+				"utf8",
+			);
+			assert.ok(adminLayout.includes(`@${scope}/cms`));
+
+			const nextConfig = readFileSync(
+				join(projectDir, "apps", "web", "next.config.js"),
+				"utf8",
+			);
+			assert.ok(nextConfig.includes(`@${scope}/cms`));
+		} finally {
+			cleanup(tmpDir);
+		}
+	});
+
+	it("add admin rewrites CMS workspace dependencies", () => {
+		const tmpDir = makeTempDir();
+		const projectName = "test-add-admin-app";
+		const scope = projectName.toLowerCase().replace(/[^a-z0-9-]/g, "");
+		try {
+			const createResult = runCLI(
+				[
+					projectName,
+					"--no-prompts",
+					"--features",
+					"ui",
+					"--skip-install",
+					"--skip-docker",
+				],
+				tmpDir,
+			);
+			assert.strictEqual(
+				createResult.status,
+				0,
+				`Expected exit 0\nstdout: ${createResult.stdout}\nstderr: ${createResult.stderr}`,
+			);
+
+			const projectDir = join(tmpDir, projectName);
+			const addResult = runCLI(["add", "admin"], projectDir);
+			assert.strictEqual(
+				addResult.status,
+				0,
+				`Expected exit 0\nstdout: ${addResult.stdout}\nstderr: ${addResult.stderr}`,
+			);
+
+			const cmsPackageJson = JSON.parse(
+				readFileSync(
+					join(projectDir, "packages", "cms", "package.json"),
+					"utf8",
+				),
+			);
+			assert.strictEqual(
+				cmsPackageJson.dependencies[`@${scope}/admin`],
+				"workspace:*",
+			);
+			assert.ok(!cmsPackageJson.dependencies["@techstream/quark-admin"]);
+
+			const webPackageJson = JSON.parse(
+				readFileSync(join(projectDir, "apps", "web", "package.json"), "utf8"),
+			);
+			assert.strictEqual(
+				webPackageJson.dependencies[`@${scope}/cms`],
+				"workspace:*",
+			);
+		} finally {
+			cleanup(tmpDir);
+		}
+	});
+
 	it("empty features string succeeds (minimal setup)", () => {
 		const tmpDir = makeTempDir();
 		try {
@@ -224,7 +354,7 @@ describe("Skip Flags", () => {
 // ---------------------------------------------------------------------------
 
 describe("Non-Interactive Mode", () => {
-	it('--no-prompts outputs "Running in non-interactive mode"', () => {
+	it("--no-prompts reports the default feature selection", () => {
 		const tmpDir = makeTempDir();
 		try {
 			const result = runCLI(
@@ -232,25 +362,24 @@ describe("Non-Interactive Mode", () => {
 				tmpDir,
 			);
 			assert.ok(
-				result.stdout.includes("Running in non-interactive mode"),
-				`Expected "Running in non-interactive mode" in stdout\nstdout: ${result.stdout}`,
+				result.stdout.includes(
+					"Using default features: ui, jobs (non-interactive mode)",
+				),
+				`Expected default feature summary in stdout\nstdout: ${result.stdout}`,
 			);
 		} finally {
 			cleanup(tmpDir);
 		}
 	});
 
-	it('--no-prompts outputs "Features: ui,jobs" (default features)', () => {
+	it("--no-prompts omits the interactive package prompt", () => {
 		const tmpDir = makeTempDir();
 		try {
 			const result = runCLI(
 				["test-app", "--no-prompts", "--skip-install", "--skip-docker"],
 				tmpDir,
 			);
-			assert.ok(
-				result.stdout.includes("Features: ui,jobs"),
-				`Expected "Features: ui,jobs" in stdout\nstdout: ${result.stdout}`,
-			);
+			assert.ok(!result.stdout.includes("Which optional packages"));
 		} finally {
 			cleanup(tmpDir);
 		}

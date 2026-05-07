@@ -1,7 +1,6 @@
 {
-	"name": "@techstream/quark-cms",
+	"name": "@myquark/cms",
 	"version": "1.0.0",
-	"private": true,
 	"type": "module",
 	"main": "src/index.js",
 	"exports": {
@@ -13,6 +12,6 @@
 	},
 	"dependencies": {
 		"@techstream/quark-admin": "workspace:*",
-		"@techstream/quark-core": "workspace:*"
+		"@techstream/quark-core": "^2.0.0"
 	}
 }
