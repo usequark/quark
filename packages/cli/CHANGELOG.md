@@ -1,5 +1,13 @@
 # @techstream/quark-create-app
 
+## 1.13.0
+
+### Minor Changes
+
+- [`cd830d9`](https://github.com/Bobnoddle/quark/commit/cd830d95a3ef66d37b2a0f28d21c910a75d84d1e) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add CMS scaffolding, media management flows, security contact metadata, and release-tooling improvements to the Quark CLI templates.
+
+  This release also hardens template sync by excluding local uploads from generated scaffolds.
+
 ## 1.11.0
 
 ### Minor Changes

@@ -1,5 +1,13 @@
 # @techstream/quark-core
 
+## 2.3.1
+
+### Patch Changes
+
+- [`a12ccd7`](https://github.com/Bobnoddle/quark/commit/a12ccd7d8dc21a778e98bb9826b5b9a80c55c291) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Fix `pingRedis` to use `resolveRedisConnection()` instead of a raw `getRedisUrl()` string.
+
+  Previously, `pingRedis` called `new Redis(url, options)` with the URL string from `getRedisUrl()`, which bypassed the structured `resolveRedisConnection()` path that correctly handles `REDIS_HOST`/`REDIS_PORT`, password decoding, and TLS (`rediss://`). The fix uses the same options-object form as the rest of the queue module.
+
 ## 2.3.0
 
 ### Minor Changes
