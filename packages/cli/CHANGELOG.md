@@ -1,5 +1,11 @@
 # @techstream/quark-create-app
 
+## 1.13.1
+
+### Patch Changes
+
+- [`5a360a9`](https://github.com/Bobnoddle/quark/commit/5a360a979d1a021969680386b4f9adfbc3335308) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Fix admin scaffolding so Quark create and add also include the CMS package and routes, rewrite generated workspace package names consistently, and keep optional package dependencies installable in generated apps.
+
 ## 1.13.0
 
 ### Minor Changes
