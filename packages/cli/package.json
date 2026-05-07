@@ -15,6 +15,7 @@
 	"scripts": {
 		"sync-templates": "node scripts/sync-templates.js",
 		"sync-templates:check": "node scripts/sync-templates.js --check",
+		"smoke:published": "node scripts/smoke-published.js",
 		"test": "node test-cli.js && node --test src/utils.test.js",
 		"test:build": "node test-build.js",
 		"test:e2e": "node test-e2e.js",

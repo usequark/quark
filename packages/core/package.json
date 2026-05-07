@@ -5,6 +5,9 @@
 	"main": "src/index.js",
 	"exports": {
 		".": "./src/index.js",
+		"./auth": "./src/auth/index.js",
+		"./errors": "./src/errors.js",
+		"./storage": "./src/storage.js",
 		"./testing": "./src/testing/index.js"
 	},
 	"dependencies": {

@@ -2,6 +2,7 @@
 	"name": "@myquark/root",
 	"private": true,
 	"version": "1.0.0",
+	"type": "module",
 	"description": "My Quark project",
 	"main": "index.js",
 	"scripts": {
@@ -41,6 +42,7 @@
 			"esbuild",
 			"msgpackr-extract",
 			"prisma",
+			"simple-git-hooks",
 			"sharp"
 		],
 		"peerDependencyRules": {

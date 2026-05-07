@@ -13,6 +13,7 @@ node_modules
 # testing
 coverage
 tmp-test-project
+tmp-npm-smoke/
 
 # next.js
 **/.next

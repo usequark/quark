@@ -1,8 +1,48 @@
+import { hostname, networkInterfaces } from "node:os";
+
+function getLocalNetworkHosts() {
+	const hosts = new Set(["localhost", "127.0.0.1", "0.0.0.0"]);
+
+	for (const entries of Object.values(networkInterfaces())) {
+		for (const entry of entries || []) {
+			if (!entry || entry.internal || entry.family !== "IPv4") continue;
+			hosts.add(entry.address.split("%")[0]);
+		}
+	}
+
+	const machineHostname = hostname().trim();
+	if (machineHostname) {
+		hosts.add(machineHostname);
+		if (!machineHostname.endsWith(".local")) {
+			hosts.add(`${machineHostname}.local`);
+		}
+	}
+
+	return [...hosts];
+}
+
+function getAllowedDevOrigins() {
+	const configuredOrigins = (
+		process.env.NEXT_DEV_ALLOWED_ORIGINS ||
+		process.env.ALLOWED_DEV_ORIGINS ||
+		""
+	)
+		.split(",")
+		.map((origin) => origin.trim())
+		.filter(Boolean);
+
+	return [...new Set([...getLocalNetworkHosts(), ...configuredOrigins])];
+}
+
+const allowedDevOrigins =
+	process.env.NODE_ENV === "development" ? getAllowedDevOrigins() : undefined;
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
 	// Required for Railway deployment — produces a self-contained build
 	// at .next/standalone that can run without node_modules.
 	output: "standalone",
+	allowedDevOrigins,
 
 	// Support workspace package resolution (including @techstream/quark-db which uses
 	// the Prisma driver-adapter pattern — pure JS, no native engine binary)
@@ -19,6 +59,11 @@ const nextConfig = {
 	// NOTE: These are also applied by proxy.js for proxy-matched routes.
 	// Keeping them here as a fallback for routes the proxy doesn't match.
 	async headers() {
+		const isProd = process.env.NODE_ENV === "production";
+		const connectSrc = isProd
+			? "connect-src 'self'"
+			: "connect-src 'self' ws: wss:";
+
 		return [
 			{
 				source: "/:path*",
@@ -47,10 +92,9 @@ const nextConfig = {
 						key: "Content-Security-Policy",
 						// unsafe-eval is required by Turbopack in development only.
 						// It is deliberately excluded from the production directive.
-						value:
-							process.env.NODE_ENV !== "production"
-								? "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self';"
-								: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self';",
+						value: isProd
+							? `default-src 'self'; script-src 'self' 'unsafe-inline'; ${connectSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self';`
+							: `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; ${connectSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self';`,
 					},
 				],
 			},

@@ -873,6 +873,11 @@ NEXTAUTH_SECRET=CHANGE_ME_TO_STRONG_SECRET
 # --- Web App Configuration ---
 PORT=3000
 
+# Development-only: allow extra hosts that can load Next.js dev endpoints
+# from LAN/VPN devices. Comma-separate additional hosts or IPs as needed.
+# NEXT_DEV_ALLOWED_ORIGINS=192.168.1.9,my-macbook.local
+# Legacy alias still recognized: ALLOWED_DEV_ORIGINS=192.168.1.9,my-macbook.local
+
 # --- Worker Configuration ---
 WORKER_CONCURRENCY=5
 
