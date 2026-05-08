@@ -1,5 +1,11 @@
 # @techstream/quark-create-app
 
+## 1.13.3
+
+### Patch Changes
+
+- [`3cecbed`](https://github.com/Bobnoddle/quark/commit/3cecbeddf1a5764c72688ed0d36c52c95a16eae5) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Update scaffolded Railway web deployment guidance to use the correct Next.js standalone server path and preserve static/public assets during the build so production CSS and JS load correctly.
+
 ## 1.13.2
 
 ### Patch Changes
