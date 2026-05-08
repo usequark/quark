@@ -7,7 +7,7 @@
 	},
 	"deploy": {
 		"releaseCommand": "pnpm db:migrate:deploy",
-		"startCommand": "pnpm run --filter='@myquark/web' start",
+		"startCommand": "node apps/web/.next/standalone/apps/web/server.js",
 		"healthcheckPath": "/api/health",
 		"healthcheckTimeout": 120,
 		"restartPolicyType": "ON_FAILURE",
