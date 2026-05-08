@@ -173,10 +173,12 @@ Scaffolded projects are designed for Railway with two services:
 
 | Railway Service | Start Command | Deploy Trigger |
 |---|---|---|
-| **web** | `node apps/web/.next/standalone/server.js` | Push to `main` (staging) or tag (production) |
+| **web** | `node apps/web/.next/standalone/apps/web/server.js` | Push to `main` (staging) or tag (production) |
 | **worker** | `node apps/worker/src/index.js` | Push to `main` (staging) or tag (production) |
 
 Railway-managed services: PostgreSQL, Redis. Environment variables (`DATABASE_URL`, `REDIS_URL`) are auto-injected by Railway.
+
+For the web service, the build step must also copy `apps/web/public` and `apps/web/.next/static` into `apps/web/.next/standalone/apps/web/` so the standalone server can serve hashed CSS and JS assets in production.
 
 ## Workspace Structure
 
