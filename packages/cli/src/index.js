@@ -335,7 +335,7 @@ program
 	)
 	.option(
 		"--features <features>",
-		"Comma-separated list of optional features to include (ui,jobs,admin)",
+		"Comma-separated list of optional features to include (ui,jobs,admin,cms)",
 	)
 	.option("--skip-install", "Skip pnpm install and Prisma generate steps")
 	.option("--skip-docker", "Skip Docker orphan-volume cleanup")
@@ -524,9 +524,17 @@ program
 					);
 				}
 
-				// Enforce admin dependencies: admin requires ui
-				if (features.includes("admin") && !features.includes("ui")) {
-					features.push("ui");
+				const requestedFeatures = [...features];
+				features = resolveFeatureSelection(features);
+				const autoIncluded = features.filter(
+					(feature) => !requestedFeatures.includes(feature),
+				);
+				if (autoIncluded.length > 0) {
+					console.log(
+						chalk.yellow(
+							`    ℹ Automatically included required features: ${autoIncluded.join(", ")}`,
+						),
+					);
 				}
 
 				console.log(
@@ -568,6 +576,11 @@ program
 								value: "admin",
 								selected: false,
 							},
+							{
+								title: "CMS (packages/cms + /admin/cms) [requires: admin, ui]",
+								value: "cms",
+								selected: false,
+							},
 						],
 					},
 				]);
@@ -581,11 +594,16 @@ program
 					process.exit(0);
 				}
 
-				// Enforce admin dependencies: admin requires ui
-				if (features.includes("admin") && !features.includes("ui")) {
-					features.push("ui");
+				const requestedFeatures = [...features];
+				features = resolveFeatureSelection(features);
+				const autoIncluded = features.filter(
+					(feature) => !requestedFeatures.includes(feature),
+				);
+				if (autoIncluded.length > 0) {
 					console.log(
-						chalk.yellow("    ℹ  Admin requires UI — automatically included."),
+						chalk.yellow(
+							`    ℹ Automatically included required features: ${autoIncluded.join(", ")}.`,
+						),
 					);
 				}
 			}
@@ -662,7 +680,7 @@ program
 						);
 						await fs.ensureDir(cmsRoutesDir);
 						await copyTemplate("cms-routes", cmsRoutesDir);
-						console.log(chalk.green(`    ✓ cms routes (paired with admin)`));
+						console.log(chalk.green(`    ✓ cms routes (paired with cms)`));
 					}
 				}
 			}
@@ -1177,10 +1195,46 @@ const FEATURE_META = {
 	jobs: { requires: [], packages: ["jobs"], pairs: ["worker"] },
 	admin: {
 		requires: ["ui"],
-		packages: ["admin", "cms"],
-		pairs: ["admin-routes", "cms-routes"],
+		packages: ["admin"],
+		pairs: ["admin-routes"],
+	},
+	cms: {
+		requires: ["admin"],
+		packages: ["cms"],
+		pairs: ["cms-routes"],
 	},
 };
+
+function resolveFeatureSelection(features) {
+	const resolved = [];
+	const resolvedSet = new Set();
+	const visiting = new Set();
+
+	function visit(feature) {
+		if (resolvedSet.has(feature)) return;
+		if (visiting.has(feature)) {
+			throw new Error(`Circular feature dependency detected for: ${feature}`);
+		}
+
+		const meta = FEATURE_META[feature];
+		if (!meta) return;
+
+		visiting.add(feature);
+		for (const dependency of meta.requires) {
+			visit(dependency);
+		}
+		visiting.delete(feature);
+
+		resolved.push(feature);
+		resolvedSet.add(feature);
+	}
+
+	for (const feature of features) {
+		visit(feature);
+	}
+
+	return resolved;
+}
 
 /**
  * Detect the project scope from existing package.json files.
@@ -1263,7 +1317,7 @@ async function rewriteWorkspaceDeps(pkgJsonPath, scope, workspacePackages) {
 
 program
 	.command("add")
-	.argument("<feature>", "Feature to add (ui, jobs, admin)")
+	.argument("<feature>", "Feature to add (ui, jobs, admin, cms)")
 	.description("Add an optional package to an existing Quark project")
 	.option("--force", "Skip safety checks (uncommitted changes)")
 	.action(async (feature, options) => {
@@ -1336,20 +1390,24 @@ program
 		}
 
 		// --- Resolve dependency chain ---
-		const meta = FEATURE_META[feature];
-		const toAdd = []; // features to scaffold, in order
-		for (const req of meta.requires) {
-			if (!installedFeatures.includes(req)) {
-				toAdd.push(req);
-				console.log(
-					chalk.yellow(
-						`  ℹ  "${feature}" requires "${req}" — adding automatically.`,
-					),
-				);
-			}
+		const resolvedFeatures = resolveFeatureSelection([
+			...installedFeatures,
+			feature,
+		]);
+		const toAdd = resolvedFeatures.filter(
+			(installedFeature) => !installedFeatures.includes(installedFeature),
+		);
+		const missingRequirements = toAdd.filter(
+			(installedFeature) => installedFeature !== feature,
+		);
+		if (missingRequirements.length > 0) {
+			console.log(
+				chalk.yellow(
+					`  ℹ  "${feature}" requires ${missingRequirements.join(", ")} — adding automatically.`,
+				),
+			);
 		}
-		toAdd.push(feature);
-		const finalFeatures = [...new Set([...installedFeatures, ...toAdd])];
+		const finalFeatures = resolvedFeatures;
 		const finalWorkspacePackages =
 			getWorkspacePackagesForFeatures(finalFeatures);
 
@@ -1449,7 +1507,7 @@ program
 							await replaceImportsInSourceFiles(cmsRoutesDir, scope);
 							console.log(
 								chalk.green(
-									`    ✓ apps/web/src/app/admin/cms (paired with admin)`,
+									`    ✓ apps/web/src/app/admin/cms (paired with cms)`,
 								),
 							);
 						}
@@ -1529,6 +1587,15 @@ program
 					),
 				);
 				console.log(chalk.white("  2. pnpm dev\n"));
+			} else if (feature === "cms") {
+				console.log(chalk.cyan("Next steps:"));
+				console.log(chalk.white("  1. pnpm dev"));
+				console.log(chalk.white("  2. Visit http://localhost:3000/admin/cms"));
+				console.log(
+					chalk.white(
+						"  3. Edit packages/cms/src/config.js to customize content types\n",
+					),
+				);
 			}
 
 			console.log(

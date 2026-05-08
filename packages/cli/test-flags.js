@@ -125,10 +125,9 @@ describe("Feature Validation", () => {
 		}
 	});
 
-	it("admin feature scaffolds CMS package and routes", () => {
+	it("admin feature scaffolds admin without CMS package or routes", () => {
 		const tmpDir = makeTempDir();
 		const projectName = "test-admin-app";
-		const scope = projectName.toLowerCase().replace(/[^a-z0-9-]/g, "");
 		try {
 			const result = runCLI(
 				[
@@ -136,6 +135,68 @@ describe("Feature Validation", () => {
 					"--no-prompts",
 					"--features",
 					"ui,admin",
+					"--skip-install",
+					"--skip-docker",
+				],
+				tmpDir,
+			);
+			assert.strictEqual(
+				result.status,
+				0,
+				`Expected exit 0\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
+			);
+
+			const projectDir = join(tmpDir, projectName);
+			assert.ok(existsSync(join(projectDir, "packages", "admin")));
+			assert.ok(!existsSync(join(projectDir, "packages", "cms")));
+			assert.ok(
+				!existsSync(
+					join(
+						projectDir,
+						"apps",
+						"web",
+						"src",
+						"app",
+						"admin",
+						"cms",
+						"page.js",
+					),
+				),
+			);
+
+			const webPackageJson = JSON.parse(
+				readFileSync(join(projectDir, "apps", "web", "package.json"), "utf8"),
+			);
+			assert.ok(!webPackageJson.dependencies[`@test-admin-app/cms`]);
+
+			const adminLayout = readFileSync(
+				join(projectDir, "apps", "web", "src", "app", "admin", "layout.js"),
+				"utf8",
+			);
+			assert.ok(adminLayout.includes("loadCmsConfig"));
+			assert.ok(!adminLayout.includes("@techstream/quark-cms"));
+
+			const nextConfig = readFileSync(
+				join(projectDir, "apps", "web", "next.config.js"),
+				"utf8",
+			);
+			assert.ok(!nextConfig.includes("@test-admin-app/cms"));
+		} finally {
+			cleanup(tmpDir);
+		}
+	});
+
+	it("cms feature auto-adds admin and ui and scaffolds CMS package and routes", () => {
+		const tmpDir = makeTempDir();
+		const projectName = "test-cms-app";
+		const scope = projectName.toLowerCase().replace(/[^a-z0-9-]/g, "");
+		try {
+			const result = runCLI(
+				[
+					projectName,
+					"--no-prompts",
+					"--features",
+					"cms",
 					"--skip-install",
 					"--skip-docker",
 				],
@@ -175,21 +236,23 @@ describe("Feature Validation", () => {
 				),
 			);
 			assert.strictEqual(cmsPackageJson.name, `@${scope}/cms`);
-			assert.ok(cmsPackageJson.dependencies["@techstream/quark-core"]);
-			assert.notStrictEqual(
-				cmsPackageJson.dependencies["@techstream/quark-core"],
+			assert.strictEqual(
+				cmsPackageJson.dependencies[`@${scope}/admin`],
+				"workspace:*",
+			);
+			assert.ok(!cmsPackageJson.dependencies["@techstream/quark-admin"]);
+			assert.strictEqual(
+				webPackageJson.dependencies[`@${scope}/admin`],
 				"workspace:*",
 			);
 			assert.strictEqual(
 				webPackageJson.dependencies[`@${scope}/cms`],
 				"workspace:*",
 			);
-
-			const adminLayout = readFileSync(
-				join(projectDir, "apps", "web", "src", "app", "admin", "layout.js"),
-				"utf8",
+			assert.strictEqual(
+				webPackageJson.dependencies[`@${scope}/ui`],
+				"workspace:*",
 			);
-			assert.ok(adminLayout.includes(`@${scope}/cms`));
 
 			const nextConfig = readFileSync(
 				join(projectDir, "apps", "web", "next.config.js"),
@@ -201,7 +264,7 @@ describe("Feature Validation", () => {
 		}
 	});
 
-	it("add admin rewrites CMS workspace dependencies", () => {
+	it("add cms rewrites CMS workspace dependencies and auto-adds admin", () => {
 		const tmpDir = makeTempDir();
 		const projectName = "test-add-admin-app";
 		const scope = projectName.toLowerCase().replace(/[^a-z0-9-]/g, "");
@@ -224,12 +287,13 @@ describe("Feature Validation", () => {
 			);
 
 			const projectDir = join(tmpDir, projectName);
-			const addResult = runCLI(["add", "admin"], projectDir);
+			const addResult = runCLI(["add", "cms"], projectDir);
 			assert.strictEqual(
 				addResult.status,
 				0,
 				`Expected exit 0\nstdout: ${addResult.stdout}\nstderr: ${addResult.stderr}`,
 			);
+			assert.ok(existsSync(join(projectDir, "packages", "admin")));
 
 			const cmsPackageJson = JSON.parse(
 				readFileSync(
@@ -245,6 +309,10 @@ describe("Feature Validation", () => {
 
 			const webPackageJson = JSON.parse(
 				readFileSync(join(projectDir, "apps", "web", "package.json"), "utf8"),
+			);
+			assert.strictEqual(
+				webPackageJson.dependencies[`@${scope}/admin`],
+				"workspace:*",
 			);
 			assert.strictEqual(
 				webPackageJson.dependencies[`@${scope}/cms`],

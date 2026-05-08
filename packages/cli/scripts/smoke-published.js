@@ -16,9 +16,15 @@ const { values } = parseArgs({
 			type: "string",
 			default: "latest",
 		},
+		"cli-spec": {
+			type: "string",
+		},
 		"core-version": {
 			type: "string",
 			default: "latest",
+		},
+		"core-spec": {
+			type: "string",
 		},
 		"keep-temp": {
 			type: "boolean",
@@ -28,8 +34,14 @@ const { values } = parseArgs({
 });
 
 const cliVersion = values["cli-version"];
+const cliSpec = values["cli-spec"];
 const coreVersion = values["core-version"];
+const coreSpec = values["core-spec"];
 const keepTemp = values["keep-temp"];
+const cliPackageSpec = cliSpec ?? `@techstream/quark-create-app@${cliVersion}`;
+const corePackageSpec = coreSpec ?? `@techstream/quark-core@${coreVersion}`;
+const cliLabel = cliSpec ? path.basename(cliSpec) : cliVersion;
+const coreLabel = coreSpec ? path.basename(coreSpec) : coreVersion;
 
 const workspaceRoot = path.join(
 	tmpdir(),
@@ -97,7 +109,7 @@ async function scaffoldProject({ name, features }) {
 		"pnpm",
 		[
 			"dlx",
-			`@techstream/quark-create-app@${cliVersion}`,
+			cliPackageSpec,
 			name,
 			"--no-prompts",
 			"--features",
@@ -124,38 +136,30 @@ async function validateScaffold(projectDir) {
 }
 
 async function runCreateSmoke() {
-	section(`CLI create smoke (${cliVersion})`);
+	section(`CLI create smoke (${cliLabel})`);
 	const projectDir = await scaffoldProject({
 		name: path.basename(createProjectDir),
-		features: "ui,jobs,admin",
+		features: "ui,jobs,admin,cms",
 	});
 	await validateScaffold(projectDir);
 }
 
 async function runAddSmoke() {
-	section(`CLI add smoke (${cliVersion})`);
+	section(`CLI add smoke (${cliLabel})`);
 	const projectDir = await scaffoldProject({
 		name: path.basename(addProjectDir),
 		features: "ui,jobs",
 	});
 
-	await run(
-		"pnpm",
-		[
-			"dlx",
-			`@techstream/quark-create-app@${cliVersion}`,
-			"add",
-			"admin",
-			"--no-prompts",
-		],
-		{ cwd: projectDir },
-	);
+	await run("pnpm", ["dlx", cliPackageSpec, "add", "cms", "--no-prompts"], {
+		cwd: projectDir,
+	});
 	await run("pnpm", ["install"], { cwd: projectDir });
 	await validateScaffold(projectDir);
 }
 
 async function runStandaloneCoreSmoke() {
-	section(`Core import smoke (${coreVersion})`);
+	section(`Core import smoke (${coreLabel})`);
 	await fs.ensureDir(coreProjectDir);
 	await fs.writeJson(
 		path.join(coreProjectDir, "package.json"),
@@ -168,17 +172,9 @@ async function runStandaloneCoreSmoke() {
 		{ spaces: 2 },
 	);
 
-	await run(
-		"pnpm",
-		[
-			"add",
-			`@techstream/quark-core@${coreVersion}`,
-			"next",
-			"react",
-			"react-dom",
-		],
-		{ cwd: coreProjectDir },
-	);
+	await run("pnpm", ["add", corePackageSpec, "next", "react", "react-dom"], {
+		cwd: coreProjectDir,
+	});
 	await runCoreImportCheck(coreProjectDir);
 }
 

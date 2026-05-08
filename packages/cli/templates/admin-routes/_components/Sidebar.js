@@ -12,6 +12,7 @@ import SignOutButton from "./SignOutButton";
  *   models: { name: string, slug: string, label: string, readOnly: boolean }[],
  *   customLinks?: { href: string, label: string, icon?: import('react').ReactNode }[],
  *   contentLinks?: { href: string, label: string }[],
+ *   hasCms?: boolean,
  *   userRole?: string
  * }} props
  */
@@ -20,6 +21,7 @@ export default function Sidebar({
 	models,
 	customLinks = [],
 	contentLinks = [],
+	hasCms = false,
 	userRole = "admin",
 }) {
 	const pathname = usePathname();
@@ -27,7 +29,7 @@ export default function Sidebar({
 
 	const coreModels = models.filter((m) => !m.readOnly);
 	const systemModels = models.filter((m) => m.readOnly);
-	const isCmsOnly = userRole === "editor";
+	const isCmsOnly = hasCms && userRole === "editor";
 
 	/**
 	 * Render a nav link. Uses exact matching for the root admin and CMS overview

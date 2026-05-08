@@ -1,7 +1,7 @@
 import { adminConfig, getModels, modelToSlug } from "@techstream/quark-admin";
-import { cmsConfig } from "@techstream/quark-cms";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { loadCmsConfig } from "@/lib/load-cms-config";
 import Sidebar from "./_components/Sidebar";
 
 export const dynamic = "force-dynamic";
@@ -12,21 +12,24 @@ export const metadata = {
 	},
 };
 
-// CMS content type links for the sidebar, derived from cmsConfig.
-const cmsLinks = Object.entries(cmsConfig.contentTypes).map(([model, cfg]) => ({
-	href: `/admin/cms/${model.toLowerCase()}s`,
-	label: cfg.label,
-}));
-
 export default async function AdminLayout({ children }) {
 	const session = await auth();
 	if (!session?.user) {
 		redirect("/auth/signin?callbackUrl=/admin");
 	}
+
+	const cmsConfig = await loadCmsConfig();
 	const role = session.user.role;
-	if (role !== "admin" && role !== "editor") {
+	if (role !== "admin" && (role !== "editor" || !cmsConfig)) {
 		redirect("/");
 	}
+
+	const cmsLinks = cmsConfig
+		? Object.entries(cmsConfig.contentTypes).map(([model, cfg]) => ({
+				href: `/admin/cms/${model.toLowerCase()}s`,
+				label: cfg.label,
+			}))
+		: [];
 
 	const models = getModels().map((m) => ({
 		name: m.name,
@@ -38,6 +41,7 @@ export default async function AdminLayout({ children }) {
 	return (
 		<div className="flex h-screen bg-bg overflow-hidden">
 			<Sidebar
+				hasCms={Boolean(cmsConfig)}
 				title={adminConfig.title}
 				models={models}
 				contentLinks={cmsLinks}

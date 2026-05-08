@@ -18,6 +18,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@techstream/quark-ui";
+import { hasCmsFeature } from "@/lib/load-cms-config";
 import {
 	getJobStats,
 	getRecentJobs,
@@ -26,6 +27,7 @@ import {
 
 export default async function AdminDashboard() {
 	const models = getModels();
+	const cmsEnabled = await hasCmsFeature();
 
 	// Fetch everything in parallel
 	const [counts, health, jobStats, recentJobs, cmsStats] = await Promise.all([
@@ -39,7 +41,7 @@ export default async function AdminDashboard() {
 		getServiceHealth(),
 		getJobStats(),
 		getRecentJobs(),
-		getCmsStats(),
+		cmsEnabled ? getCmsStats() : Promise.resolve(null),
 	]);
 
 	const rows = counts
@@ -232,26 +234,27 @@ export default async function AdminDashboard() {
 				</div>
 			</section>
 
-			{/* CMS Content */}
-			<section>
-				<h2 className="text-xs font-semibold uppercase tracking-widest text-text-faint mb-3">
-					Content
-				</h2>
-				<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-					<CmsStatCard
-						label="Pages"
-						href="/admin/cms/pages"
-						published={cmsStats.pages.published}
-						drafts={cmsStats.pages.drafts}
-						total={cmsStats.pages.total}
-					/>
-					<CmsStatCard
-						label="Media"
-						href="/admin/cms/media"
-						total={cmsStats.media}
-					/>
-				</div>
-			</section>
+			{cmsStats && (
+				<section>
+					<h2 className="text-xs font-semibold uppercase tracking-widest text-text-faint mb-3">
+						Content
+					</h2>
+					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+						<CmsStatCard
+							label="Pages"
+							href="/admin/cms/pages"
+							published={cmsStats.pages.published}
+							drafts={cmsStats.pages.drafts}
+							total={cmsStats.pages.total}
+						/>
+						<CmsStatCard
+							label="Media"
+							href="/admin/cms/media"
+							total={cmsStats.media}
+						/>
+					</div>
+				</section>
+			)}
 
 			{/* Model Records */}
 			<section>

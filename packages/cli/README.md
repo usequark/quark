@@ -57,7 +57,7 @@ npx @techstream/quark-create-app my-app --no-prompts
 
 ### Custom Features
 
-Specify which optional packages to include (default: `ui,jobs`):
+Specify which optional packages to include (default: `ui,jobs`; valid: `ui`, `jobs`, `admin`, `cms`):
 
 ```bash
 # Only include UI package
@@ -65,6 +65,9 @@ npx @techstream/quark-create-app my-app --no-prompts --features ui
 
 # Include both UI and Jobs
 npx @techstream/quark-create-app my-app --no-prompts --features ui,jobs
+
+# Include admin plus the CMS section explicitly
+npx @techstream/quark-create-app my-app --no-prompts --features ui,admin,cms
 
 # Minimal setup (no optional packages)
 npx @techstream/quark-create-app my-app --no-prompts --features ""

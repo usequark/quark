@@ -22,7 +22,7 @@ npx @techstream/quark-create-app my-app --no-prompts
 
 # With specific features:
 npx @techstream/quark-create-app my-app --no-prompts --features ui,jobs
-npx @techstream/quark-create-app my-app --no-prompts --features ui,jobs,admin
+npx @techstream/quark-create-app my-app --no-prompts --features ui,jobs,admin,cms
 npx @techstream/quark-create-app my-app --no-prompts --features ""    # minimal (db + config only)
 ```
 
