@@ -1,6 +1,6 @@
 {
 	"name": "@techstream/quark-create-app",
-	"version": "1.13.2",
+	"version": "1.13.3",
 	"type": "module",
 	"bin": {
 		"quark-create-app": "src/index.js",
