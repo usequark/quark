@@ -1,5 +1,11 @@
 # @techstream/quark-core
 
+## 2.3.2
+
+### Patch Changes
+
+- [`274bf3d`](https://github.com/Bobnoddle/quark/commit/274bf3dabacc7c517561512c7ddf0e8379d0b09a) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Export the documented `auth`, `errors`, and `storage` subpaths from `@techstream/quark-core`, and update scaffolded app manifests so installs set up git hooks without module-type or ignored-build-script warnings.
+
 ## 2.3.1
 
 ### Patch Changes
