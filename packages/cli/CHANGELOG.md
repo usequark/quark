@@ -1,5 +1,11 @@
 # @techstream/quark-create-app
 
+## 1.13.4
+
+### Patch Changes
+
+- [`e9411f9`](https://github.com/Bobnoddle/quark/commit/e9411f9e1d91ad13cb496e4645d15ba2aff6080d) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Split CMS into an explicit scaffold feature instead of bundling it into `admin`, automatically include its current dependencies, and make generated admin routes work cleanly when CMS is not installed.
+
 ## 1.13.3
 
 ### Patch Changes
