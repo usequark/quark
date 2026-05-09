@@ -42,6 +42,9 @@ const nextConfig = {
 	// Required for Railway deployment — produces a self-contained build
 	// at .next/standalone that can run without node_modules.
 	output: "standalone",
+	outputFileTracingIncludes: {
+		"/*": ["../../packages/db/prisma/schema.prisma"],
+	},
 	allowedDevOrigins,
 
 	// Support workspace package resolution (including @techstream/quark-db which uses

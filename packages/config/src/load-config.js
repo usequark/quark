@@ -114,6 +114,14 @@ function buildEnvOverrides(_envConfig) {
 		overrides.logging = { ...overrides.logging, level: process.env.LOG_LEVEL };
 	}
 
+	// Authentication
+	if (process.env.AUTH_ALLOW_SIGNUP) {
+		const allowSignup = parseBooleanEnv(process.env.AUTH_ALLOW_SIGNUP);
+		if (allowSignup !== undefined) {
+			overrides.auth = { ...overrides.auth, allowSignup };
+		}
+	}
+
 	// Database pool
 	if (process.env.DB_POOL_MAX) {
 		const poolMax = Number.parseInt(process.env.DB_POOL_MAX, 10);
@@ -132,4 +140,18 @@ function buildEnvOverrides(_envConfig) {
 	}
 
 	return overrides;
+}
+
+function parseBooleanEnv(value) {
+	const normalized = value.trim().toLowerCase();
+
+	if (["true", "1", "yes", "on"].includes(normalized)) {
+		return true;
+	}
+
+	if (["false", "0", "no", "off"].includes(normalized)) {
+		return false;
+	}
+
+	return undefined;
 }

@@ -99,6 +99,12 @@ describe("Configuration Loader - loadConfig", () => {
 		assert.strictEqual(config.logging.level, "error");
 	});
 
+	test("reads AUTH_ALLOW_SIGNUP from env", () => {
+		process.env.AUTH_ALLOW_SIGNUP = "false";
+		const config = loadConfig();
+		assert.strictEqual(config.auth.allowSignup, false);
+	});
+
 	test("reads DB_POOL_MAX from env", () => {
 		process.env.DB_POOL_MAX = "20";
 		const config = loadConfig();

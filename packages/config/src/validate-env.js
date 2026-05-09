@@ -84,6 +84,11 @@ const envSchema = {
 		description: "Environment (development, test, staging, production)",
 	},
 	PORT: { required: false, description: "Web server port" },
+	AUTH_ALLOW_SIGNUP: {
+		required: false,
+		description:
+			'Set to "false" to disable public self-service signup routes and UI',
+	},
 
 	// Worker
 	WORKER_CONCURRENCY: {
@@ -265,6 +270,19 @@ export function validateEnv(service = "web") {
 		if (!process.env.ZEPTOMAIL_URL) {
 			errors.push(
 				"Missing ZEPTOMAIL_URL — required when EMAIL_PROVIDER=zeptomail",
+			);
+		}
+	}
+
+	if (process.env.AUTH_ALLOW_SIGNUP) {
+		const normalized = process.env.AUTH_ALLOW_SIGNUP.trim().toLowerCase();
+		if (
+			!["true", "false", "1", "0", "yes", "no", "on", "off"].includes(
+				normalized,
+			)
+		) {
+			errors.push(
+				"AUTH_ALLOW_SIGNUP must be a boolean-like value (true/false/1/0/yes/no/on/off)",
 			);
 		}
 	}

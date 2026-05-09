@@ -372,6 +372,66 @@ describe("Feature Validation", () => {
 	});
 });
 
+describe("Signup Configuration", () => {
+	it("writes AUTH_ALLOW_SIGNUP=false when scaffolded with signup disabled", () => {
+		const tmpDir = makeTempDir();
+		const projectName = "test-no-signup-app";
+		try {
+			const result = runCLI(
+				[
+					projectName,
+					"--no-prompts",
+					"--signup",
+					"disabled",
+					"--skip-install",
+					"--skip-docker",
+				],
+				tmpDir,
+			);
+			assert.strictEqual(
+				result.status,
+				0,
+				`Expected exit 0\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
+			);
+
+			const projectDir = join(tmpDir, projectName);
+			const envExample = readFileSync(join(projectDir, ".env.example"), "utf8");
+			const env = readFileSync(join(projectDir, ".env"), "utf8");
+			const quarkLink = JSON.parse(
+				readFileSync(join(projectDir, ".quark-link.json"), "utf8"),
+			);
+
+			assert.ok(envExample.includes("AUTH_ALLOW_SIGNUP=false"));
+			assert.ok(env.includes("AUTH_ALLOW_SIGNUP=false"));
+			assert.strictEqual(quarkLink.authAllowSignup, false);
+		} finally {
+			cleanup(tmpDir);
+		}
+	});
+
+	it("writes AUTH_ALLOW_SIGNUP=true by default in non-interactive scaffolds", () => {
+		const tmpDir = makeTempDir();
+		const projectName = "test-signup-default-app";
+		try {
+			const result = runCLI(
+				[projectName, "--no-prompts", "--skip-install", "--skip-docker"],
+				tmpDir,
+			);
+			assert.strictEqual(
+				result.status,
+				0,
+				`Expected exit 0\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
+			);
+
+			const projectDir = join(tmpDir, projectName);
+			const env = readFileSync(join(projectDir, ".env"), "utf8");
+			assert.ok(env.includes("AUTH_ALLOW_SIGNUP=true"));
+		} finally {
+			cleanup(tmpDir);
+		}
+	});
+});
+
 // ---------------------------------------------------------------------------
 // Test Group 2: Skip Flags
 // ---------------------------------------------------------------------------

@@ -8,5 +8,8 @@
 		".": "./src/index.js",
 		"./field-map": "./src/field-map.js",
 		"./config": "./src/config.js"
+	},
+	"dependencies": {
+		"@techstream/quark-core": "workspace:*"
 	}
 }

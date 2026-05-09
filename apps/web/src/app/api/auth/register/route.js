@@ -7,9 +7,17 @@ import {
 import { user, userRegisterSchema } from "@techstream/quark-db";
 import { JOB_NAMES, JOB_QUEUES } from "@techstream/quark-jobs";
 import { NextResponse } from "next/server";
+import { isSignupEnabled } from "@/lib/auth-signup";
 import { handleError } from "../../error-handler";
 
 export const POST = withCsrfProtection(async (request) => {
+	if (!isSignupEnabled()) {
+		return NextResponse.json(
+			{ message: "Registration is disabled." },
+			{ status: 403 },
+		);
+	}
+
 	try {
 		const data = await validateBody(request, userRegisterSchema);
 

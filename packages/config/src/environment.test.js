@@ -89,6 +89,7 @@ describe("Environment - getEnvironmentConfig", () => {
 		assert.strictEqual(config.isDevelopment, true);
 		assert.strictEqual(config.isProduction, false);
 		assert.strictEqual(config.isTest, false);
+		assert.strictEqual(config.auth.allowSignup, true);
 	});
 
 	test("returns test config", () => {

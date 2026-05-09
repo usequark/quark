@@ -32,6 +32,8 @@
  * @property {Object} security - Security configuration
  * @property {boolean} security.enforceHttps - Require HTTPS
  * @property {boolean} security.trustProxy - Trust proxy headers
+ * @property {Object} auth - Authentication configuration
+ * @property {boolean} auth.allowSignup - Allow public self-service signup
  * @property {Object} features - Feature flags
  * @property {boolean} features.debugRoutes - Enable debug endpoints
  * @property {boolean} features.seedOnStart - Auto-seed database on startup
@@ -72,6 +74,9 @@ const ENVIRONMENT_CONFIGS = {
 			enforceHttps: false,
 			trustProxy: false,
 		},
+		auth: {
+			allowSignup: true,
+		},
 		features: {
 			debugRoutes: true,
 			seedOnStart: false,
@@ -110,6 +115,9 @@ const ENVIRONMENT_CONFIGS = {
 		security: {
 			enforceHttps: false,
 			trustProxy: false,
+		},
+		auth: {
+			allowSignup: true,
 		},
 		features: {
 			debugRoutes: true,
@@ -150,6 +158,9 @@ const ENVIRONMENT_CONFIGS = {
 			enforceHttps: true,
 			trustProxy: true,
 		},
+		auth: {
+			allowSignup: true,
+		},
 		features: {
 			debugRoutes: false,
 			seedOnStart: false,
@@ -188,6 +199,9 @@ const ENVIRONMENT_CONFIGS = {
 		security: {
 			enforceHttps: true,
 			trustProxy: true,
+		},
+		auth: {
+			allowSignup: true,
 		},
 		features: {
 			debugRoutes: false,

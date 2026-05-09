@@ -327,11 +327,35 @@ function validateProjectName(name) {
 	return resolved;
 }
 
+function resolveSignupPreference(optionValue) {
+	if (optionValue === undefined) {
+		return undefined;
+	}
+
+	const normalized = optionValue.trim().toLowerCase();
+
+	if (["enabled", "enable", "true", "yes", "on"].includes(normalized)) {
+		return true;
+	}
+
+	if (["disabled", "disable", "false", "no", "off"].includes(normalized)) {
+		return false;
+	}
+
+	throw new Error(
+		`Invalid value for --signup: ${optionValue}. Use "enabled" or "disabled".`,
+	);
+}
+
 program
 	.argument("<project-name>", "Name of the project to create")
 	.option(
 		"--no-prompts",
 		"Skip interactive prompts and use default/provided values",
+	)
+	.option(
+		"--signup <mode>",
+		'Public self-service signup mode for the scaffolded project ("enabled" or "disabled")',
 	)
 	.option(
 		"--features <features>",
@@ -369,6 +393,7 @@ program
 		const scope = projectName.toLowerCase().replace(/[^a-z0-9-]/g, "");
 		const appDisplayName = formatProjectDisplayName(projectName);
 		const appDescription = `${appDisplayName} application`;
+		const requestedSignupPreference = resolveSignupPreference(options.signup);
 
 		// Clean up orphaned Docker volumes from a previous project with the same name.
 		// Docker Compose names volumes as "<project>_postgres_data", "<project>_redis_data".
@@ -610,6 +635,43 @@ program
 
 			const scaffoldPackages = getWorkspacePackagesForFeatures(features);
 			const pairedTemplates = getPairedTemplatesForFeatures(features);
+			let allowSignup;
+
+			if (requestedSignupPreference !== undefined) {
+				allowSignup = requestedSignupPreference;
+				console.log(
+					chalk.cyan(
+						`\n  🔐 Public signup: ${allowSignup ? "enabled" : "disabled"} (from flag)`,
+					),
+				);
+			} else if (!options.prompts) {
+				allowSignup = true;
+				console.log(
+					chalk.cyan(
+						"\n  🔐 Public signup: enabled (default, non-interactive mode)",
+					),
+				);
+			} else {
+				console.log(chalk.cyan("\n  🔐 Configuring authentication...\n"));
+				const authResponse = await prompts({
+					type: "toggle",
+					name: "allowSignup",
+					message: "Allow public self-service signup?",
+					initial: true,
+					active: "yes",
+					inactive: "no",
+				});
+
+				if (typeof authResponse.allowSignup !== "boolean") {
+					console.log(chalk.yellow("\n\u26A0\uFE0F  Setup cancelled."));
+					await fs.remove(targetDir);
+					process.exit(0);
+				}
+
+				allowSignup = authResponse.allowSignup;
+			}
+
+			const signupEnvValue = allowSignup ? "true" : "false";
 
 			// Step 6: Copy selected optional packages
 			if (scaffoldPackages.length > 0) {
@@ -878,6 +940,10 @@ NEXTAUTH_SECRET=CHANGE_ME_TO_STRONG_SECRET
 # In production, explicitly set this to your domain:
 # NEXTAUTH_URL=https://yourdomain.com/api/auth
 
+# --- Authentication ---
+# Toggle during development without re-scaffolding.
+AUTH_ALLOW_SIGNUP=${signupEnvValue}
+
 # --- OAuth Providers (Not Yet Implemented) ---
 # OAuth support is planned for a future release.
 # GitHub OAuth - Get credentials at: https://github.com/settings/developers
@@ -993,6 +1059,10 @@ APP_DESCRIPTION=${appDescription}
 # --- NextAuth Configuration ---
 NEXTAUTH_SECRET=${nextAuthSecret}
 
+# --- Authentication ---
+# Toggle during development without re-scaffolding.
+AUTH_ALLOW_SIGNUP=${signupEnvValue}
+
 # --- Web App Configuration ---
 # APP_URL is derived from PORT automatically in development.
 # In production, set APP_URL explicitly in your environment.
@@ -1019,6 +1089,7 @@ STORAGE_PROVIDER=local
 				scaffoldedDate: new Date().toISOString(),
 				requiredPackages: ["db", "config"],
 				packages: features,
+				authAllowSignup: allowSignup,
 				// Track that worker is paired with jobs (not independently selectable)
 				hasWorker: features.includes("jobs"),
 			};
@@ -1151,6 +1222,11 @@ STORAGE_PROVIDER=local
 			console.log(chalk.white(`  3. pnpm db:migrate`));
 			console.log(chalk.white(`  4. pnpm db:seed`));
 			console.log(chalk.white(`  5. pnpm dev\n`));
+			console.log(
+				chalk.dim(
+					`  Toggle signup any time in development by editing AUTH_ALLOW_SIGNUP in .env\n`,
+				),
+			);
 			console.log(
 				chalk.dim(
 					`  Tip: set SEED_PROFILE=minimal in .env for a lean seed (admin user only)\n`,

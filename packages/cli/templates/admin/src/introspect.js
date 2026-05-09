@@ -1,12 +1,14 @@
-import { readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { existsSync, readFileSync } from "node:fs";
+import * as path from "node:path";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+import { AppError } from "@techstream/quark-core/errors";
 
-// Admin package is at packages/admin/src/introspect.js.
-// Prisma schema is always at packages/db/prisma/schema.prisma — two levels up from src/.
-const DEFAULT_SCHEMA_PATH = resolve(__dirname, "../../db/prisma/schema.prisma");
+const DEFAULT_SCHEMA_RELATIVE_PATHS = [
+	"packages/db/prisma/schema.prisma",
+	"../../packages/db/prisma/schema.prisma",
+	// In Next standalone, cwd becomes /app/apps/web/.next/standalone/apps/web.
+	"../../../../../../packages/db/prisma/schema.prisma",
+];
 
 const SCALAR_TYPES = new Set([
 	"String",
@@ -28,11 +30,53 @@ let _parsed = null;
  * Result is cached after the first call.
  * @param {string} [schemaPath]
  */
-export function getParsedSchema(schemaPath = DEFAULT_SCHEMA_PATH) {
+export function getParsedSchema(schemaPath) {
 	if (_parsed) return _parsed;
-	const text = readFileSync(schemaPath, "utf-8");
+	const text = readSchemaText(schemaPath);
 	_parsed = parseSchema(text);
 	return _parsed;
+}
+
+function readSchemaText(schemaPath) {
+	if (schemaPath) {
+		return readFileSync(resolveSchemaPath(schemaPath), "utf-8");
+	}
+
+	const defaultSchemaPaths = getDefaultSchemaPaths();
+
+	for (const candidatePath of defaultSchemaPaths) {
+		if (existsSync(candidatePath)) {
+			return readFileSync(candidatePath, "utf-8");
+		}
+	}
+
+	throw new AppError(
+		`Prisma schema file not found. Tried: ${defaultSchemaPaths.join(", ")}`,
+		500,
+		"PRISMA_SCHEMA_NOT_FOUND",
+	);
+}
+
+function getDefaultSchemaPaths() {
+	return [
+		...new Set(
+			DEFAULT_SCHEMA_RELATIVE_PATHS.map((relativePath) =>
+				path.resolve(process.cwd(), relativePath),
+			),
+		),
+	];
+}
+
+function resolveSchemaPath(schemaPath) {
+	if (existsSync(schemaPath)) {
+		return schemaPath;
+	}
+
+	throw new AppError(
+		`Prisma schema file not found at override path: ${schemaPath}`,
+		500,
+		"PRISMA_SCHEMA_NOT_FOUND",
+	);
 }
 
 /**
