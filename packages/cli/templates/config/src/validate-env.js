@@ -153,6 +153,12 @@ export function validateEnv(service = "web") {
 	const validated = {};
 	const isTest = process.env.NODE_ENV === "test";
 
+	// During Next.js build, runtime secrets are not (and should not be) available.
+	// Skip strict validation — the server process will re-validate on first request.
+	if (process.env.NEXT_PHASE === "phase-production-build") {
+		return { validated: {}, warnings: [] };
+	}
+
 	// Web-only required fields that workers can skip
 	const webOnlyRequired = new Set(["NEXTAUTH_SECRET"]);
 

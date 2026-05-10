@@ -14,7 +14,7 @@
 			"outputs": []
 		},
 		"test": {
-			"dependsOn": ["build"],
+			"dependsOn": ["^build"],
 			"outputs": []
 		},
 		"db:generate": {
