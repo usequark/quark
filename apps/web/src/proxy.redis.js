@@ -16,11 +16,51 @@ import {
 } from "@techstream/quark-core";
 import { NextResponse } from "next/server";
 
+import { getProxyToken, getRateLimitBucket } from "./lib/proxy-auth";
+
 const logger = createLogger("proxy");
 
 // Initialize Redis client (lazy initialization)
 let redisClient = null;
 let rateLimiter = null;
+
+async function adminGuard(request) {
+	const { pathname, search } = request.nextUrl;
+	if (pathname !== "/admin" && !pathname.startsWith("/admin/")) return null;
+
+	const token = await getProxyToken(request);
+
+	if (!token) {
+		const signinUrl = new URL("/auth/signin", request.url);
+		signinUrl.searchParams.set("callbackUrl", pathname + search);
+		return NextResponse.redirect(signinUrl);
+	}
+
+	if (token.role !== "admin") {
+		return NextResponse.redirect(new URL("/", request.url));
+	}
+
+	return null;
+}
+
+function metricsGuard(request) {
+	const { pathname } = request.nextUrl;
+	if (pathname !== "/api/metrics") return null;
+
+	const expectedToken = process.env.METRICS_TOKEN;
+	if (!expectedToken) return null;
+
+	const authHeader = request.headers.get("authorization") ?? "";
+	const providedToken = authHeader.startsWith("Bearer ")
+		? authHeader.slice(7)
+		: (request.headers.get("x-metrics-token") ?? "");
+
+	if (providedToken !== expectedToken) {
+		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+	}
+
+	return null;
+}
 
 async function getRateLimiter() {
 	if (rateLimiter) return rateLimiter;
@@ -63,14 +103,10 @@ async function getRateLimiter() {
 /**
  * Rate limiting check
  */
-async function checkRateLimit(ip, path) {
+async function checkRateLimit(ip, path, method) {
 	const limiter = await getRateLimiter();
 
-	// Determine which preset to use
-	const isAuthEndpoint = path.startsWith("/api/auth/");
-	const preset = isAuthEndpoint
-		? RATE_LIMIT_PRESETS.auth
-		: RATE_LIMIT_PRESETS.api;
+	const preset = RATE_LIMIT_PRESETS[getRateLimitBucket(path, method)];
 
 	const key = `${ip}:${path}`;
 	return limiter.checkLimit(key, preset.maxRequests, preset.windowMs);
@@ -123,6 +159,12 @@ const REQUEST_SIZE_LIMITS = {
 };
 
 export async function proxy(request) {
+	const adminResponse = await adminGuard(request);
+	if (adminResponse) return adminResponse;
+
+	const metricsResponse = metricsGuard(request);
+	if (metricsResponse) return metricsResponse;
+
 	const { pathname } = request.nextUrl;
 	const origin = request.headers.get("origin") || "";
 
@@ -162,7 +204,9 @@ export async function proxy(request) {
 	// Apply rate limiting to API routes only
 	if (pathname.startsWith("/api/")) {
 		const ip = request.ip || "unknown";
-		const rateLimitResult = await checkRateLimit(ip, pathname);
+		const rateLimitBucket = getRateLimitBucket(pathname, request.method);
+		const maxRequests = RATE_LIMIT_PRESETS[rateLimitBucket].maxRequests;
+		const rateLimitResult = await checkRateLimit(ip, pathname, request.method);
 
 		if (rateLimitResult.limited) {
 			const retryAfter = Math.ceil(
@@ -179,9 +223,7 @@ export async function proxy(request) {
 					headers: {
 						"Content-Type": "application/json",
 						"Retry-After": retryAfter.toString(),
-						"X-RateLimit-Limit": pathname.startsWith("/api/auth/")
-							? RATE_LIMIT_PRESETS.auth.maxRequests.toString()
-							: RATE_LIMIT_PRESETS.api.maxRequests.toString(),
+						"X-RateLimit-Limit": maxRequests.toString(),
 						"X-RateLimit-Remaining": "0",
 						"X-RateLimit-Reset": new Date(
 							rateLimitResult.resetTime,
@@ -192,12 +234,7 @@ export async function proxy(request) {
 		}
 
 		// Add rate limit headers to response
-		response.headers.set(
-			"X-RateLimit-Limit",
-			pathname.startsWith("/api/auth/")
-				? RATE_LIMIT_PRESETS.auth.maxRequests.toString()
-				: RATE_LIMIT_PRESETS.api.maxRequests.toString(),
-		);
+		response.headers.set("X-RateLimit-Limit", maxRequests.toString());
 		response.headers.set(
 			"X-RateLimit-Remaining",
 			rateLimitResult.remaining.toString(),

@@ -12,7 +12,8 @@
 
 import { getAllowedOrigins } from "@techstream/quark-config/app-url";
 import { NextResponse } from "next/server";
-import { getToken } from "next-auth/jwt";
+
+import { getProxyToken, getRateLimitBucket } from "./lib/proxy-auth";
 
 // ─── 1. Admin route guard ────────────────────────────────────────────────────
 
@@ -20,10 +21,7 @@ async function adminGuard(request) {
 	const { pathname, search } = request.nextUrl;
 	if (pathname !== "/admin" && !pathname.startsWith("/admin/")) return null;
 
-	const token = await getToken({
-		req: request,
-		secret: process.env.NEXTAUTH_SECRET,
-	});
+	const token = await getProxyToken(request);
 
 	if (!token) {
 		const signinUrl = new URL("/auth/signin", request.url);
@@ -75,15 +73,12 @@ const RATE_LIMIT_CONFIG = {
 /**
  * Rate limiting implementation
  */
-function checkRateLimit(ip, path) {
+function checkRateLimit(ip, path, method) {
 	const now = Date.now();
 	const key = `${ip}:${path}`;
 
-	// Determine which limit to use
-	const isAuthEndpoint = path.startsWith("/api/auth/");
-	const maxRequests = isAuthEndpoint
-		? RATE_LIMIT_CONFIG.maxRequests.auth
-		: RATE_LIMIT_CONFIG.maxRequests.api;
+	const maxRequests =
+		RATE_LIMIT_CONFIG.maxRequests[getRateLimitBucket(path, method)];
 
 	// Get or create rate limit record
 	const record = rateLimit.get(key) || {
@@ -221,7 +216,9 @@ export async function proxy(request) {
 	// Apply rate limiting to API routes only
 	if (pathname.startsWith("/api/")) {
 		const ip = request.ip || "unknown";
-		const rateLimitResult = checkRateLimit(ip, pathname);
+		const rateLimitBucket = getRateLimitBucket(pathname, request.method);
+		const maxRequests = RATE_LIMIT_CONFIG.maxRequests[rateLimitBucket];
+		const rateLimitResult = checkRateLimit(ip, pathname, request.method);
 
 		if (rateLimitResult.limited) {
 			const retryAfter = Math.ceil(
@@ -238,9 +235,7 @@ export async function proxy(request) {
 					headers: {
 						"Content-Type": "application/json",
 						"Retry-After": retryAfter.toString(),
-						"X-RateLimit-Limit": pathname.startsWith("/api/auth/")
-							? RATE_LIMIT_CONFIG.maxRequests.auth.toString()
-							: RATE_LIMIT_CONFIG.maxRequests.api.toString(),
+						"X-RateLimit-Limit": maxRequests.toString(),
 						"X-RateLimit-Remaining": "0",
 						"X-RateLimit-Reset": new Date(
 							rateLimitResult.resetTime,
@@ -251,12 +246,7 @@ export async function proxy(request) {
 		}
 
 		// Add rate limit headers to response
-		response.headers.set(
-			"X-RateLimit-Limit",
-			pathname.startsWith("/api/auth/")
-				? RATE_LIMIT_CONFIG.maxRequests.auth.toString()
-				: RATE_LIMIT_CONFIG.maxRequests.api.toString(),
-		);
+		response.headers.set("X-RateLimit-Limit", maxRequests.toString());
 		response.headers.set(
 			"X-RateLimit-Remaining",
 			rateLimitResult.remaining.toString(),
