@@ -13,7 +13,7 @@
 
 import { createWriteStream } from "node:fs";
 import { mkdir, readFile, stat, unlink } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { dirname, isAbsolute, relative, resolve } from "node:path";
 import { pipeline } from "node:stream/promises";
 
 /**
@@ -26,7 +26,8 @@ import { pipeline } from "node:stream/promises";
  */
 function safePath(baseDir, key) {
 	const resolved = resolve(baseDir, key);
-	if (!resolved.startsWith(`${baseDir}/`) && resolved !== baseDir) {
+	const relativePath = relative(baseDir, resolved);
+	if (relativePath.startsWith("..") || isAbsolute(relativePath)) {
 		throw new Error("Path traversal detected — key escapes storage directory");
 	}
 	return resolved;
