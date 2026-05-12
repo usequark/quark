@@ -58,6 +58,17 @@ test("TableHead - renders with default props", () => {
 	assert.ok(result);
 });
 
+test("TableHead - supports sortable controls", () => {
+	const result = TableHead({
+		sortable: true,
+		sortDirection: "asc",
+		onSort: () => {},
+		children: "Name",
+	});
+	assert.ok(result);
+	assert.strictEqual(result.type, "th");
+});
+
 test("TableCell - renders with default props", () => {
 	const result = TableCell({});
 	assert.ok(result);

@@ -5,6 +5,7 @@ const base =
 
 const VARIANTS = {
 	default: "border-border bg-surface-hover text-text-muted",
+	primary: "border-primary/40 bg-primary-muted text-primary",
 	success: "border-success/40 bg-success-muted text-success",
 	warning: "border-warning/40 bg-warning-muted text-warning",
 	danger: "border-danger/40 bg-danger-muted text-danger",

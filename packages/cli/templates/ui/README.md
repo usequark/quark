@@ -49,6 +49,18 @@ Props: `className` (use to set width/height for the placeholder shape).
 `"use client"` — `Toast` props: `message`, `variant` ('default' | 'success' | 'error'), `onClose` (fn), `visible` (bool).  
 `useToast()` returns `{ show(message, variant?), hide, toastProps }`. Spread `toastProps` onto `<Toast />`.
 
+### Footer
+Standardized multi-column site footer with brand block, CTA, links, and legal bottom bar.
+Props include: `brandName`, `brandDescription`, `ctaLabel`, `ctaHref`, `columns` (3-column array), `copyrightText`, `legalLinks`, `poweredByText`, `poweredByHref`, `mark`, `className`.
+
+### Navbar
+`"use client"` desktop navigation bar with three-zone layout: logo (left), centered nav links (middle), and action button (right). Supports dropdown sub-navigation on parent items.
+Props include: `logo`, `logoHref`, `links`, `action`, `maxWidthClassName`, `className`.
+
+### MobileNavbar
+`"use client"` mobile-first navigation with logo + burger trigger, animated menu expansion, and animated nested submenus.
+Props include: `logo`, `logoHref`, `links`, `action`, `maxWidthClassName`, `className`.
+
 ```javascript
 // Example
 const { show, toastProps } = useToast();

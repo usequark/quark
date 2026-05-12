@@ -44,6 +44,7 @@ test("Button - supports md size", () => {
 test("Button - supports lg size", () => {
 	const result = Button({ size: "lg" });
 	assert.ok(result);
+	assert.match(result.props.className, /text-base/);
 });
 
 test("Button - accepts className override", () => {

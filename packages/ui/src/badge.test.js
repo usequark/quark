@@ -16,6 +16,11 @@ test("Badge - supports default variant", () => {
 	assert.ok(result);
 });
 
+test("Badge - supports primary variant", () => {
+	const result = Badge({ variant: "primary" });
+	assert.ok(result);
+});
+
 test("Badge - supports success variant", () => {
 	const result = Badge({ variant: "success" });
 	assert.ok(result);

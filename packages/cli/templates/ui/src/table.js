@@ -17,6 +17,30 @@ const headCls =
 
 const cellCls = "p-3 align-middle text-text dark:font-mono dark:text-sm";
 
+const sortButtonCls =
+	"group inline-flex w-full items-center justify-between gap-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-[--radius-default]";
+
+const sortIconCls = "text-text-faint transition-colors group-hover:text-text";
+
+function toAriaSort(direction) {
+	if (direction === "asc") return "ascending";
+	if (direction === "desc") return "descending";
+	return "none";
+}
+
+function sortIndicator(direction) {
+	if (direction === "asc") return "\u2191";
+	if (direction === "desc") return "\u2193";
+	return "\u2195";
+}
+
+function headingText(children) {
+	if (typeof children === "string" || typeof children === "number") {
+		return String(children);
+	}
+	return "column";
+}
+
 export function Table({ className = "", ...props }) {
 	return React.createElement(
 		"div",
@@ -49,11 +73,59 @@ export function TableRow({ className = "", ...props }) {
 	});
 }
 
-export function TableHead({ className = "", ...props }) {
-	return React.createElement("th", {
-		className: `${headCls} ${className}`.trim(),
-		...props,
-	});
+export function TableHead({
+	className = "",
+	sortable = false,
+	sortDirection = "none",
+	onSort,
+	sortLabel,
+	children,
+	...props
+}) {
+	const direction =
+		sortDirection === "asc" || sortDirection === "desc"
+			? sortDirection
+			: "none";
+
+	if (!sortable) {
+		return React.createElement(
+			"th",
+			{
+				className: `${headCls} ${className}`.trim(),
+				...props,
+			},
+			children,
+		);
+	}
+
+	return React.createElement(
+		"th",
+		{
+			className: `${headCls} ${className}`.trim(),
+			"aria-sort": toAriaSort(direction),
+			...props,
+		},
+		React.createElement(
+			"button",
+			{
+				type: "button",
+				onClick: onSort,
+				disabled: typeof onSort !== "function",
+				"aria-label": sortLabel ?? `Sort by ${headingText(children)}`,
+				className: `${sortButtonCls} ${typeof onSort !== "function" ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`,
+			},
+			React.createElement("span", null, children),
+			React.createElement(
+				"span",
+				{
+					"aria-hidden": "true",
+					className:
+						`${sortIconCls} ${direction !== "none" ? "text-primary" : ""}`.trim(),
+				},
+				sortIndicator(direction),
+			),
+		),
+	);
 }
 
 export function TableCell({ className = "", ...props }) {
