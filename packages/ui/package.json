@@ -10,7 +10,7 @@
 		"./theme-constants": "./src/theme-constants.js"
 	},
 	"scripts": {
-		"test": "node --test $(find src -name '*.test.js')",
+		"test": "node ../../scripts/run-tests.mjs src",
 		"lint": "biome format --write && biome check --write"
 	},
 	"keywords": [],

@@ -8,7 +8,7 @@
 		"dev": "next dev",
 		"build": "next build",
 		"start": "next start",
-		"test": "node --test $(find src -name '*.test.js' ! -name 'integration.test.js')",
+		"test": "node ../../scripts/run-tests.mjs src --exclude=integration.test.js",
 		"test:integration": "node --test src/app/api/integration.test.js",
 		"lint": "biome format --write && biome check --write"
 	},

@@ -7,7 +7,7 @@
 	"main": "index.js",
 	"scripts": {
 		"clean": "rm -rf dist",
-		"test": "node --test $(find src -name '*.test.js')",
+		"test": "node ../../scripts/run-tests.mjs src",
 		"dev": "tsx watch src/index.js",
 		"preflight": "node src/index.js --preflight",
 		"lint": "biome format --write && biome check --write"
