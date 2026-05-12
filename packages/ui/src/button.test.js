@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import { test } from "node:test";
+import React from "react";
 import { Button } from "./button.js";
 
 test("Button - component exports correctly", () => {
@@ -50,4 +51,30 @@ test("Button - supports lg size", () => {
 test("Button - accepts className override", () => {
 	const result = Button({ className: "custom-class" });
 	assert.ok(result);
+});
+
+test("Button - renders icon with label", () => {
+	const result = Button({
+		icon: React.createElement("svg", { className: "icon-child" }),
+		children: "Continue",
+	});
+
+	assert.ok(result);
+	assert.match(result.props.className, /gap-2/);
+	assert.equal(result.props.children.length, 2);
+	assert.match(result.props.children[0].props.className, /size-4/);
+	assert.match(result.props.children[0].props.className, /icon-child/);
+	assert.equal(result.props.children[1], "Continue");
+});
+
+test("Button - icon scales independently from text size", () => {
+	const result = Button({
+		size: "lg",
+		icon: React.createElement("svg", { className: "icon-child" }),
+		children: "Large",
+	});
+
+	assert.ok(result);
+	assert.match(result.props.className, /text-base/);
+	assert.match(result.props.children[0].props.className, /size-5/);
 });

@@ -29,17 +29,63 @@ const sizes = {
 	lg: "h-11 px-6 text-base",
 };
 
+const iconSizes = {
+	sm: "size-4",
+	md: "size-4",
+	lg: "size-5",
+};
+
+function buildIcon(icon, size) {
+	if (!icon) return null;
+
+	const iconClass = `${iconSizes[size] ?? iconSizes.md} shrink-0`;
+
+	if (React.isValidElement(icon)) {
+		const existingClassName = icon.props.className ?? "";
+		return React.cloneElement(icon, {
+			"aria-hidden": true,
+			focusable: false,
+			className: `${iconClass} ${existingClassName}`.trim(),
+		});
+	}
+
+	return React.createElement(
+		"span",
+		{
+			"aria-hidden": true,
+			className: iconClass,
+		},
+		icon,
+	);
+}
+
 export function Button({
 	variant = "primary",
 	size = "md",
 	className = "",
+	icon,
+	children,
 	...props
 }) {
+	const hasLabel =
+		children !== null && children !== undefined && children !== false;
+	const hasIcon = Boolean(icon);
+	const spacing = hasIcon && hasLabel ? "gap-2" : "";
 	const cls =
-		`${base} ${VARIANTS[variant] ?? VARIANTS.primary} ${sizes[size] ?? sizes.md} rounded-[--radius-default] ${className}`.trim();
-	return React.createElement("button", {
-		type: "button",
-		className: cls,
-		...props,
-	});
+		`${base} ${VARIANTS[variant] ?? VARIANTS.primary} ${sizes[size] ?? sizes.md} ${spacing} rounded-[--radius-default] ${className}`.trim();
+
+	const buttonChildren = [];
+
+	if (hasIcon) buttonChildren.push(buildIcon(icon, size));
+	if (hasLabel) buttonChildren.push(children);
+
+	return React.createElement(
+		"button",
+		{
+			type: "button",
+			className: cls,
+			...props,
+		},
+		...buttonChildren,
+	);
 }

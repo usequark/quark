@@ -27,6 +27,7 @@ import {
 	Toast,
 	useToast,
 } from "@techstream/quark-ui";
+import { ArrowRight } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Sidebar } from "./_components/Sidebar";
 
@@ -249,6 +250,12 @@ function PlaygroundInner() {
 							</Group>
 							<Group label="state">
 								<Button disabled>Disabled</Button>
+							</Group>
+							<Group label="icon">
+								<Button variant="outline" size="sm" icon={<ArrowRight />}>
+									Read docs
+								</Button>
+								<Button icon={<ArrowRight />}>Continue</Button>
 							</Group>
 						</ComponentSection>
 

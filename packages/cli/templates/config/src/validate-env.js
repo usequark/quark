@@ -1,5 +1,9 @@
 import { syncNextAuthUrl } from "./app-url.js";
 
+function getResolvedNextAuthSecret() {
+	return process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET || null;
+}
+
 /**
  * Environment variable validation schema
  * Validates all required and optional environment variables on startup
@@ -163,7 +167,10 @@ export function validateEnv(service = "web") {
 	const webOnlyRequired = new Set(["NEXTAUTH_SECRET"]);
 
 	for (const [key, config] of Object.entries(envSchema)) {
-		const value = process.env[key];
+		const value =
+			key === "NEXTAUTH_SECRET"
+				? getResolvedNextAuthSecret()
+				: process.env[key];
 
 		// Skip web-only required checks for worker service
 		const isRequired =
@@ -305,11 +312,19 @@ export function validateEnv(service = "web") {
 
 	// Ensure NEXTAUTH_URL is derived from APP_URL when not explicitly set
 	if (service === "web") {
+		if (!process.env.NEXTAUTH_SECRET && process.env.AUTH_SECRET) {
+			process.env.NEXTAUTH_SECRET = process.env.AUTH_SECRET;
+		}
+
 		syncNextAuthUrl();
 
 		// Include the (possibly derived) NEXTAUTH_URL in the validated object
 		if (process.env.NEXTAUTH_URL && !validated.NEXTAUTH_URL) {
 			validated.NEXTAUTH_URL = process.env.NEXTAUTH_URL;
+		}
+
+		if (process.env.NEXTAUTH_SECRET && !validated.NEXTAUTH_SECRET) {
+			validated.NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
 		}
 	}
 
