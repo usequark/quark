@@ -141,7 +141,7 @@ export async function postReplayBatch({
 	const keepalive = useKeepalive && body.length < 60000;
 
 	try {
-		await fetchImpl(endpoint, {
+		const response = await fetchImpl(endpoint, {
 			keepalive,
 			method: "POST",
 			body,
@@ -152,7 +152,7 @@ export async function postReplayBatch({
 			credentials: "omit",
 		});
 
-		return true;
+		return response?.ok === true;
 	} catch {
 		return false;
 	}

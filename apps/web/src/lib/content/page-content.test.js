@@ -47,6 +47,16 @@ test("normalizePageContent falls back to sanitized legacy body content", () => {
 	]);
 });
 
+test("normalizePageContent strips unquoted javascript URLs from legacy body content", () => {
+	const blocks = normalizePageContent(
+		[],
+		"<a href=javascript:alert(1)>Click</a>",
+	);
+
+	assert.equal(blocks[0].html, "<a>Click</a>");
+	assert.doesNotMatch(blocks[0].html, /javascript:/i);
+});
+
 test("parseStoredPageContent drops unsafe URLs from stored blocks", () => {
 	const blocks = parseStoredPageContent([
 		{

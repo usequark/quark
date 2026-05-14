@@ -135,7 +135,10 @@ function sanitizeRichTextHtml(html) {
 			"",
 		)
 		.replace(/\son[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
-		.replace(/\s(href|src)\s*=\s*(["'])\s*javascript:[^"']*\2/gi, "")
+		.replace(
+			/\s(href|src)\s*=\s*(?:(["'])\s*javascript:[^"']*\2|javascript:[^\s>]+)/gi,
+			"",
+		)
 		.trim();
 }
 

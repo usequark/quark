@@ -120,6 +120,18 @@ test("postReplayBatch refreshes the Umami cache before uploading", async () => {
 	assert.equal(request.options.headers["x-umami-cache"], "fresh-cache");
 });
 
+test("postReplayBatch returns false when Umami responds with an HTTP error", async () => {
+	const sent = await postReplayBatch({
+		endpoint: "https://stats.example.com/api/record",
+		cache: "cache-token",
+		websiteId: "site_123",
+		events: [{ timestamp: 1, type: 4 }],
+		fetchImpl: async () => ({ ok: false, status: 500 }),
+	});
+
+	assert.equal(sent, false);
+});
+
 test("postReplayBatch disables keepalive for oversized unload payloads", async () => {
 	let request;
 

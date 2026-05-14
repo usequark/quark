@@ -1,9 +1,9 @@
+import { generateSlug } from "@techstream/quark-cms";
 import {
 	hasRenderablePageContent,
 	parsePageBuilderInput,
 	serializePageContentToBody,
 } from "@techstream/quark-cms/page-builder";
-import { generateSlug } from "@techstream/quark-cms";
 import { ValidationError } from "@techstream/quark-core";
 import { z } from "zod";
 
@@ -21,7 +21,8 @@ export function assertPageSlugAllowed(slug) {
 }
 
 export function resolvePageSlugCandidate({ title, slug }) {
-	const candidate = getStringValue(slug).trim() || generateSlug(getStringValue(title));
+	const candidate =
+		getStringValue(slug).trim() || generateSlug(getStringValue(title));
 	assertPageSlugAllowed(candidate);
 	return candidate;
 }

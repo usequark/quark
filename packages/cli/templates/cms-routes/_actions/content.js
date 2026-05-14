@@ -3,7 +3,6 @@
 import {
 	archiveContent,
 	ensureUniqueSlug,
-	generateSlug,
 	publishContent,
 	unpublishContent,
 } from "@techstream/quark-cms";
@@ -29,11 +28,7 @@ export async function cmsCreatePage(_prevState, formData) {
 		layout,
 	} = parsePageFormData(formData);
 	const slugCandidate = resolvePageSlugCandidate({ title, slug: rawSlug });
-	const slug = await ensureUniqueSlug(
-		prisma,
-		"Page",
-		slugCandidate,
-	);
+	const slug = await ensureUniqueSlug(prisma, "Page", slugCandidate);
 
 	await prisma.page.create({
 		data: {
@@ -63,12 +58,7 @@ export async function cmsUpdatePage(id, _prevState, formData) {
 		layout,
 	} = parsePageFormData(formData);
 	const slugCandidate = resolvePageSlugCandidate({ title, slug: rawSlug });
-	const slug = await ensureUniqueSlug(
-		prisma,
-		"Page",
-		slugCandidate,
-		id,
-	);
+	const slug = await ensureUniqueSlug(prisma, "Page", slugCandidate, id);
 
 	await prisma.page.update({
 		where: { id },

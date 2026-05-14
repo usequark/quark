@@ -3,7 +3,6 @@
 import {
 	archiveContent,
 	ensureUniqueSlug,
-	generateSlug,
 	publishContent,
 	unpublishContent,
 } from "@techstream/quark-cms";
@@ -11,7 +10,7 @@ import { prisma } from "@techstream/quark-db";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth-middleware";
-import { parsePageFormData } from "./page-form.js";
+import { parsePageFormData, resolvePageSlugCandidate } from "./page-form.js";
 
 // ─── Shared schemas ──────────────────────────────────────────────────────────
 
@@ -28,11 +27,8 @@ export async function cmsCreatePage(_prevState, formData) {
 		excerpt,
 		layout,
 	} = parsePageFormData(formData);
-	const slug = await ensureUniqueSlug(
-		prisma,
-		"Page",
-		rawSlug || generateSlug(title),
-	);
+	const slugCandidate = resolvePageSlugCandidate({ title, slug: rawSlug });
+	const slug = await ensureUniqueSlug(prisma, "Page", slugCandidate);
 
 	await prisma.page.create({
 		data: {
@@ -61,12 +57,8 @@ export async function cmsUpdatePage(id, _prevState, formData) {
 		excerpt,
 		layout,
 	} = parsePageFormData(formData);
-	const slug = await ensureUniqueSlug(
-		prisma,
-		"Page",
-		rawSlug || generateSlug(title),
-		id,
-	);
+	const slugCandidate = resolvePageSlugCandidate({ title, slug: rawSlug });
+	const slug = await ensureUniqueSlug(prisma, "Page", slugCandidate, id);
 
 	await prisma.page.update({
 		where: { id },

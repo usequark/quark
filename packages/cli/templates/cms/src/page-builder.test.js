@@ -48,7 +48,7 @@ test("normalizePageContent sanitizes legacy body fallback HTML", () => {
 
 test("createPageBlock strips unquoted javascript URLs from rich text", () => {
 	const block = createPageBlock("richText", {
-		html: '<a href=javascript:alert(1)>Click</a>',
+		html: "<a href=javascript:alert(1)>Click</a>",
 	});
 
 	assert.doesNotMatch(block.html, /javascript:/i);

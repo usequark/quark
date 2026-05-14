@@ -35,7 +35,7 @@ test("normalizePageContent falls back to a rich text block from legacy body", ()
 test("normalizePageContent sanitizes legacy body fallback HTML", () => {
 	const result = normalizePageContent(
 		null,
-		'<p onclick="alert(1)">Legacy</p><script>alert(1)</script><a href="javascript:alert(1)">Bad</a>',
+		'<p onclick="alert(1)">Legacy</p><script>alert(1)</script><a href="javascript:alert(1)">Bad</a><a href=javascript:alert(1)>Also bad</a>',
 	);
 
 	assert.equal(result.length, 1);
@@ -44,6 +44,15 @@ test("normalizePageContent sanitizes legacy body fallback HTML", () => {
 	assert.doesNotMatch(result[0].html, /<script/i);
 	assert.doesNotMatch(result[0].html, /javascript:/i);
 	assert.match(result[0].html, /Legacy/);
+});
+
+test("createPageBlock strips unquoted javascript URLs from rich text", () => {
+	const block = createPageBlock("richText", {
+		html: "<a href=javascript:alert(1)>Click</a>",
+	});
+
+	assert.doesNotMatch(block.html, /javascript:/i);
+	assert.match(block.html, /Click/);
 });
 
 test("normalizePageContent uses stable fallback IDs across repeated calls", () => {
