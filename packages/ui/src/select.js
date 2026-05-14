@@ -211,7 +211,7 @@ export function Select({
 						disabled: triggerDisabled,
 						tabIndex: -1,
 						"aria-hidden": "true",
-						onChange: () => {},
+						onChange: (event) => commitValue(event.target.value),
 						className: "sr-only",
 					},
 					options.map((option) =>
