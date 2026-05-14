@@ -123,6 +123,7 @@ export function Select({
 	const selectedOption = options.find(
 		(option) => option.value === selectedValue,
 	);
+	const triggerDisabled = disabled || options.length === 0;
 	const panelStateCls = open
 		? "opacity-100 scale-y-100 pointer-events-auto"
 		: "opacity-0 scale-y-0 pointer-events-none";
@@ -172,13 +173,13 @@ export function Select({
 	);
 
 	const toggleOpen = useCallback(() => {
-		if (disabled || options.length === 0) return;
+		if (triggerDisabled) return;
 		setOpen((state) => !state);
-	}, [disabled, options.length]);
+	}, [triggerDisabled]);
 
 	const handleTriggerKeyDown = useCallback(
 		(event) => {
-			if (disabled) return;
+			if (triggerDisabled) return;
 
 			if (
 				event.key === "ArrowDown" ||
@@ -194,26 +195,44 @@ export function Select({
 				setOpen(false);
 			}
 		},
-		[disabled],
+		[triggerDisabled],
 	);
 
 	return React.createElement(
 		"div",
 		{ className: "relative", ref: rootRef },
 		name
-			? React.createElement("input", {
-					type: "hidden",
-					name,
-					value: selectedValue,
-					required,
-				})
+			? React.createElement(
+					"select",
+					{
+						name,
+						value: selectedValue,
+						required,
+						disabled: triggerDisabled,
+						tabIndex: -1,
+						"aria-hidden": "true",
+						onChange: () => {},
+						className: "sr-only",
+					},
+					options.map((option) =>
+						React.createElement(
+							"option",
+							{
+								key: option.key,
+								value: option.value,
+								disabled: option.disabled,
+							},
+							option.label || option.value,
+						),
+					),
+				)
 			: null,
 		React.createElement(
 			"button",
 			{
 				type: "button",
 				id: selectId,
-				disabled,
+				disabled: triggerDisabled,
 				onBlur,
 				onFocus,
 				onClick: toggleOpen,
@@ -228,7 +247,8 @@ export function Select({
 			React.createElement(
 				"span",
 				{ className: selectedOption ? "text-text" : "text-text-faint" },
-				selectedOption?.label ?? placeholder,
+				selectedOption?.label ??
+					(options.length === 0 ? "No options" : placeholder),
 			),
 			React.createElement(
 				"span",

@@ -199,6 +199,7 @@ export function validateEnv(service = "web") {
 	const placeholderPattern = /^CHANGE_ME_/i;
 	const criticalKeys = [
 		"NEXTAUTH_SECRET",
+		"AUTH_SECRET",
 		"POSTGRES_PASSWORD",
 		"RESEND_API_KEY",
 		"ZEPTOMAIL_TOKEN",

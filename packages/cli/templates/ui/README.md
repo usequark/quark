@@ -25,13 +25,13 @@ Props: `className`, all native label attributes.
 Props: `className`, all native textarea attributes.
 
 ### Select
-Props: `className`, `children` (option elements), all native select attributes.
+Props: `className`, `children` (option elements), `value`/`defaultValue`, `onChange`, `name`, `required`, `disabled`, plus trigger button attributes.
 
 ### Checkbox
 Props: `id`, `label` (string), `className`, all native checkbox input attributes.
 
 ### Badge
-Props: `variant` ('default' | 'success' | 'warning' | 'danger' | 'info', default: 'default'), `className`.
+Props: `variant` ('default' | 'primary' | 'success' | 'warning' | 'danger' | 'info', default: 'default'), `className`.
 
 ### Card / CardHeader / CardTitle / CardContent / CardFooter
 Composable card container. All parts accept `className`.
@@ -75,5 +75,5 @@ return (
 ## Design notes
 - Tailwind CSS only. No CSS-in-JS, no external dependencies.
 - All components accept `className` for overrides.
-- Server Component compatible except Dialog and Toast (marked `"use client"`).
+- Client-only components: `Dialog`, `Toast`, `useToast`, `Select`, `RichText`, `Navbar`, `MobileNavbar`, `ThemeProvider`, `useTheme`.
 - Accessible: ARIA attributes, focus management on interactive elements.

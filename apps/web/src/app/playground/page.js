@@ -30,7 +30,7 @@ import {
 	useToast,
 } from "@techstream/quark-ui";
 import { ArrowRight } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Sidebar } from "./_components/Sidebar";
 
 const TABLE_DATA = [
@@ -98,34 +98,6 @@ function PlaygroundInner() {
 	const [previewType, setPreviewType] = useState(null);
 	const [sortState, setSortState] = useState({ key: null, direction: "none" });
 	const toast = useToast();
-
-	useEffect(() => {
-		if (!previewType) return;
-
-		function onEscape(event) {
-			if (event.key === "Escape") {
-				setPreviewType(null);
-			}
-		}
-
-		document.addEventListener("keydown", onEscape);
-		return () => document.removeEventListener("keydown", onEscape);
-	}, [previewType]);
-
-	useEffect(() => {
-		if (!previewType) return;
-
-		const previousBodyOverflow = document.body.style.overflow;
-		const previousHtmlOverflow = document.documentElement.style.overflow;
-
-		document.body.style.overflow = "hidden";
-		document.documentElement.style.overflow = "hidden";
-
-		return () => {
-			document.body.style.overflow = previousBodyOverflow;
-			document.documentElement.style.overflow = previousHtmlOverflow;
-		};
-	}, [previewType]);
 
 	const rows = useMemo(() => {
 		if (!sortState.key || sortState.direction === "none")
@@ -463,34 +435,16 @@ function PlaygroundInner() {
 				</div>
 			</main>
 
-			{previewType ? (
-				<div className="fixed inset-0 z-60" role="dialog" aria-modal="true">
-					<button
-						type="button"
-						aria-label="Close preview"
-						onClick={() => setPreviewType(null)}
-						className="absolute inset-0 bg-black/60"
-					/>
-
-					<div className="absolute inset-x-0 bottom-0 mx-0 flex max-h-[calc(100vh-1.5rem)] flex-col overflow-hidden border-y border-border bg-surface shadow-2xl">
-						<div className="flex items-center justify-between border-b border-border px-4 py-3 sm:px-6">
-							<p className="font-mono uppercase text-[11px] tracking-[0.2em] text-text-faint">
-								{previewTitle}
-							</p>
-							<Button
-								size="sm"
-								variant="secondary"
-								onClick={() => setPreviewType(null)}
-							>
-								Close
-							</Button>
-						</div>
-						<div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-							{renderPreviewBody()}
-						</div>
-					</div>
+			<Dialog
+				open={Boolean(previewType)}
+				onClose={() => setPreviewType(null)}
+				title={previewTitle}
+				className="max-w-[min(96vw,72rem)]"
+			>
+				<div className="max-h-[70vh] overflow-y-auto overscroll-contain">
+					{previewType ? renderPreviewBody() : null}
 				</div>
-			) : null}
+			</Dialog>
 		</div>
 	);
 }

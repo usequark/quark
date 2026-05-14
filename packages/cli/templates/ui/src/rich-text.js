@@ -1,5 +1,12 @@
 "use client";
-import React, { useCallback, useLayoutEffect, useRef, useState } from "react";
+import React, {
+	useCallback,
+	useEffect,
+	useId,
+	useLayoutEffect,
+	useRef,
+	useState,
+} from "react";
 import { Button } from "./button.js";
 import { Dialog } from "./dialog.js";
 import { Input } from "./input.js";
@@ -118,6 +125,7 @@ export function RichText({
 	const [linkUrl, setLinkUrl] = useState("");
 	const [linkError, setLinkError] = useState("");
 	const savedRangeRef = useRef(null);
+	const linkInputId = useId();
 
 	// Sync hidden input value with editor content
 	const syncValue = useCallback(() => {
@@ -210,6 +218,14 @@ export function RichText({
 		setLinkError("");
 		savedRangeRef.current = null;
 	}, []);
+
+	useEffect(() => {
+		if (!linkDialogOpen) return;
+		const handle = requestAnimationFrame(() => {
+			document.getElementById(linkInputId)?.focus();
+		});
+		return () => cancelAnimationFrame(handle);
+	}, [linkDialogOpen, linkInputId]);
 
 	const onInput = useCallback(() => {
 		syncValue();
@@ -368,16 +384,19 @@ export function RichText({
 				React.createElement(
 					"div",
 					null,
-					React.createElement("label", {
-						htmlFor: "rt-link-url",
-						className: "block text-sm font-medium text-text mb-1.5",
-					}),
+					React.createElement(
+						"label",
+						{
+							htmlFor: linkInputId,
+							className: "block text-sm font-medium text-text mb-1.5",
+						},
+						"Link URL",
+					),
 					React.createElement(Input, {
-						id: "rt-link-url",
+						id: linkInputId,
 						type: "url",
 						placeholder: "https://example.com",
 						value: linkUrl,
-						autoFocus: true,
 						onChange: (e) => {
 							setLinkUrl(e.target.value);
 							setLinkError("");

@@ -234,4 +234,16 @@ describe("Environment Validation - NEXTAUTH_SECRET strength", () => {
 			process.env.AUTH_SECRET,
 		);
 	});
+
+	test("rejects placeholder AUTH_SECRET values", () => {
+		delete process.env.NEXTAUTH_SECRET;
+		process.env.AUTH_SECRET = "CHANGE_ME_SUPER_SECRET";
+		process.env.POSTGRES_USER = "test_user";
+		process.env.POSTGRES_PASSWORD = "test_pass";
+		process.env.POSTGRES_DB = "test_db";
+		assert.throws(
+			() => validateEnv(),
+			/AUTH_SECRET contains a placeholder value/,
+		);
+	});
 });

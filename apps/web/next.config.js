@@ -108,8 +108,6 @@ const nextConfig = {
 	env: {
 		APP_URL: process.env.APP_URL,
 		NEXTAUTH_URL: process.env.NEXTAUTH_URL || process.env.APP_URL,
-		NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET,
-		AUTH_SECRET: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
 	},
 
 	// Request body size limits (security)

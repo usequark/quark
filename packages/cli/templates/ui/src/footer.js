@@ -90,12 +90,8 @@ export function Footer({
 	poweredByHref = "#",
 	mark,
 }) {
-	const cols =
-		Array.isArray(columns) && columns.length > 0 ? columns : DEFAULT_COLUMNS;
-	const legal =
-		Array.isArray(legalLinks) && legalLinks.length > 0
-			? legalLinks
-			: DEFAULT_LEGAL_LINKS;
+	const cols = Array.isArray(columns) ? columns : DEFAULT_COLUMNS;
+	const legal = Array.isArray(legalLinks) ? legalLinks : DEFAULT_LEGAL_LINKS;
 
 	return React.createElement(
 		"footer",
@@ -160,7 +156,9 @@ export function Footer({
 					"div",
 					{ className: legalCls },
 					React.createElement("span", null, copyrightText),
-					React.createElement("span", { className: sepCls }, "\u2022"),
+					legal.length > 0
+						? React.createElement("span", { className: sepCls }, "\u2022")
+						: null,
 					...legal.flatMap((item, index) => {
 						const node = item?.href
 							? React.createElement(

@@ -13,16 +13,12 @@ const contentCls = "p-6 pt-0";
 const footerCls = "flex items-center p-6 pt-0";
 
 const collapsibleSummaryCls =
-	"flex items-center justify-between p-6 text-text transition-colors duration-200 hover:bg-surface-hover peer-checked:[&_[data-chevron]]:rotate-180";
+	"flex cursor-pointer list-none items-center justify-between p-6 text-text transition-colors duration-200 hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 [&::-webkit-details-marker]:hidden";
 
 const collapsibleChevronCls =
-	"pointer-events-none ml-3 shrink-0 rotate-0 text-text-faint transition-transform duration-300 ease-in-out";
+	"pointer-events-none ml-3 shrink-0 rotate-0 text-text-faint transition-transform duration-300 ease-in-out group-open:rotate-180";
 
-const collapsiblePanelCls =
-	"grid grid-rows-[0fr] opacity-0 transition-[grid-template-rows,opacity] duration-300 ease-in-out peer-checked:grid-rows-[1fr] peer-checked:opacity-100";
-
-const collapsibleBodyCls =
-	"min-h-0 overflow-hidden border-t border-border text-text-muted";
+const collapsiblePanelCls = "border-t border-border text-text-muted";
 
 const collapsibleInnerCls = "block p-6";
 
@@ -36,51 +32,39 @@ export function Card({
 }) {
 	if (variant === "collapsible") {
 		return React.createElement(
-			"div",
+			"details",
 			{
 				className:
-					`${cardCls} h-fit self-start rounded-[--radius-default] ${className}`.trim(),
+					`${cardCls} group h-fit self-start rounded-[--radius-default] ${className}`.trim(),
+				open: defaultOpen,
 				...props,
 			},
 			React.createElement(
-				"label",
-				{ className: "relative block cursor-pointer" },
-				React.createElement("input", {
-					type: "checkbox",
-					defaultChecked: defaultOpen,
-					className: "peer sr-only",
-				}),
+				"summary",
+				{ className: collapsibleSummaryCls },
 				React.createElement(
 					"div",
-					{ className: collapsibleSummaryCls },
-					React.createElement(
-						"span",
-						{ className: "text-base font-bold tracking-tight flex" },
-						collapsibleLabel,
-					),
-					React.createElement(
-						"span",
-						{
-							"aria-hidden": "true",
-							"data-chevron": "true",
-							className: collapsibleChevronCls,
-						},
-						React.createElement(ChevronDown, { size: 16 }),
-					),
+					{ className: "text-base font-bold tracking-tight flex" },
+					React.createElement("span", null, collapsibleLabel),
 				),
-
 				React.createElement(
 					"span",
-					{ className: collapsiblePanelCls },
-					React.createElement(
-						"span",
-						{ className: collapsibleBodyCls },
-						React.createElement(
-							"span",
-							{ className: collapsibleInnerCls },
-							children,
-						),
-					),
+					{
+						"aria-hidden": "true",
+						"data-chevron": "true",
+						className: collapsibleChevronCls,
+					},
+					React.createElement(ChevronDown, { size: 16 }),
+				),
+			),
+
+			React.createElement(
+				"div",
+				{ className: collapsiblePanelCls },
+				React.createElement(
+					"div",
+					{ className: collapsibleInnerCls },
+					children,
 				),
 			),
 		);
