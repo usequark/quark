@@ -1,7 +1,7 @@
 import React from "react";
 
 const base =
-	"inline-flex items-center border px-2.5 py-0.5 text-xs font-medium uppercase tracking-widest";
+	"inline-flex items-center justify-center min-w-20 border px-2.5 py-0.5 text-xs font-medium uppercase tracking-widest";
 
 const VARIANTS = {
 	default: "border-border bg-surface-hover text-text-muted",

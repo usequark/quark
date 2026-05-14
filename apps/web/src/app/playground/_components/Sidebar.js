@@ -11,7 +11,7 @@ const SECTIONS = [
 	{ id: "table", label: "Table" },
 	{ id: "skeleton", label: "Skeleton" },
 	{ id: "dialog", label: "Dialog" },
-	{ id: "toast", label: "Toast" },
+	{ id: "toast", label: "Notifications" },
 	{ id: "footer", label: "Footer" },
 ];
 

@@ -9,11 +9,13 @@ import {
 	CardTitle,
 	Checkbox,
 	Dialog,
+	ErrorBanner,
 	Footer,
 	Input,
 	Label,
 	MobileNavbar,
 	Navbar,
+	RichText,
 	Select,
 	Skeleton,
 	Table,
@@ -94,7 +96,7 @@ export default function PlaygroundPage() {
 function PlaygroundInner() {
 	const [dialogOpen, setDialogOpen] = useState(false);
 	const [previewType, setPreviewType] = useState(null);
-	const [sortState, setSortState] = useState({ key: "name", direction: "asc" });
+	const [sortState, setSortState] = useState({ key: null, direction: "none" });
 	const toast = useToast();
 
 	useEffect(() => {
@@ -126,6 +128,8 @@ function PlaygroundInner() {
 	}, [previewType]);
 
 	const rows = useMemo(() => {
+		if (!sortState.key || sortState.direction === "none")
+			return [...TABLE_DATA];
 		const sorted = [...TABLE_DATA].sort((a, b) => {
 			const left = String(a[sortState.key] ?? "").toLowerCase();
 			const right = String(b[sortState.key] ?? "").toLowerCase();
@@ -137,17 +141,12 @@ function PlaygroundInner() {
 		return sorted;
 	}, [sortState]);
 
-	function toggleSort(columnKey) {
-		setSortState((state) => {
-			if (state.key !== columnKey) {
-				return { key: columnKey, direction: "asc" };
-			}
-
-			return {
-				key: columnKey,
-				direction: state.direction === "asc" ? "desc" : "asc",
-			};
-		});
+	function toggleSort(columnKey, nextDir) {
+		if (nextDir === "none") {
+			setSortState({ key: null, direction: "none" });
+		} else {
+			setSortState({ key: columnKey, direction: nextDir });
+		}
 	}
 
 	function getSortDirection(columnKey) {
@@ -273,7 +272,7 @@ function PlaygroundInner() {
 
 						{/* ── 03 Form ── */}
 						<ComponentSection id="form" index={3} title="Form Controls">
-							<div className="max-w-xs space-y-3">
+							<div className="max-w-2xl space-y-3">
 								<div>
 									<Label htmlFor="inp">Input</Label>
 									<Input id="inp" placeholder="Enter text…" />
@@ -291,6 +290,10 @@ function PlaygroundInner() {
 									</Select>
 								</div>
 								<Checkbox id="chk" label="Accept terms" />
+								<div>
+									<Label htmlFor="rt">Rich Text</Label>
+									<RichText id="rt" placeholder="Start writing…" rows={8} />
+								</div>
 							</div>
 						</ComponentSection>
 
@@ -332,14 +335,14 @@ function PlaygroundInner() {
 											<TableHead
 												sortable
 												sortDirection={getSortDirection("name")}
-												onSort={() => toggleSort("name")}
+												onSort={(dir) => toggleSort("name", dir)}
 											>
 												Name
 											</TableHead>
 											<TableHead
 												sortable
 												sortDirection={getSortDirection("role")}
-												onSort={() => toggleSort("role")}
+												onSort={(dir) => toggleSort("role", dir)}
 											>
 												Role
 											</TableHead>
@@ -406,8 +409,8 @@ function PlaygroundInner() {
 							</Dialog>
 						</ComponentSection>
 
-						{/* ── 08 Toast ── */}
-						<ComponentSection id="toast" index={8} title="Toast">
+						{/* ── 08 Notifications ── */}
+						<ComponentSection id="toast" index={8} title="Notifications">
 							<Group label="trigger">
 								<Button
 									variant="success"
@@ -426,6 +429,11 @@ function PlaygroundInner() {
 								</Button>
 							</Group>
 							<Toast {...toast.toastProps} />
+							<Group label="error banner">
+								<div className="w-full max-w-sm">
+									<ErrorBanner message="Something went wrong. Please try again." />
+								</div>
+							</Group>
 						</ComponentSection>
 
 						{/* ── 09 Footer ── */}

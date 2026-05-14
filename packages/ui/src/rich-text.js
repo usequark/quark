@@ -1,5 +1,8 @@
 "use client";
 import React, { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { Button } from "./button.js";
+import { Dialog } from "./dialog.js";
+import { Input } from "./input.js";
 
 /**
  * RichText — dependency-free rich text editor using contentEditable.
@@ -111,6 +114,10 @@ export function RichText({
 	const hiddenRef = useRef(null);
 	const [activeStates, setActiveStates] = useState({});
 	const [isEmpty, setIsEmpty] = useState(!defaultValue);
+	const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+	const [linkUrl, setLinkUrl] = useState("");
+	const [linkError, setLinkError] = useState("");
+	const savedRangeRef = useRef(null);
 
 	// Sync hidden input value with editor content
 	const syncValue = useCallback(() => {
@@ -153,12 +160,14 @@ export function RichText({
 			if (disabled) return;
 			editorRef.current?.focus();
 			if (command === "createLink") {
-				const url = prompt("Enter URL:");
-				if (url && isSafeUrl(url)) {
-					document.execCommand("createLink", false, url);
-				} else if (url) {
-					alert("Only http:// and https:// URLs are allowed.");
+				const sel = window.getSelection();
+				if (sel && sel.rangeCount > 0) {
+					savedRangeRef.current = sel.getRangeAt(0).cloneRange();
 				}
+				setLinkUrl("");
+				setLinkError("");
+				setLinkDialogOpen(true);
+				return;
 			} else if (command === "formatBlock") {
 				document.execCommand("formatBlock", false, `<${arg}>`);
 			} else {
@@ -169,6 +178,38 @@ export function RichText({
 		},
 		[disabled, syncValue, updateToolbar],
 	);
+
+	const confirmLink = useCallback(() => {
+		const trimmed = linkUrl.trim();
+		if (!trimmed) {
+			setLinkError("Please enter a URL.");
+			return;
+		}
+		if (!isSafeUrl(trimmed)) {
+			setLinkError("Only http:// and https:// URLs are allowed.");
+			return;
+		}
+		const sel = window.getSelection();
+		if (sel && savedRangeRef.current) {
+			sel.removeAllRanges();
+			sel.addRange(savedRangeRef.current);
+		}
+		editorRef.current?.focus();
+		document.execCommand("createLink", false, trimmed);
+		setLinkDialogOpen(false);
+		setLinkUrl("");
+		setLinkError("");
+		savedRangeRef.current = null;
+		syncValue();
+		updateToolbar();
+	}, [linkUrl, syncValue, updateToolbar]);
+
+	const cancelLink = useCallback(() => {
+		setLinkDialogOpen(false);
+		setLinkUrl("");
+		setLinkError("");
+		savedRangeRef.current = null;
+	}, []);
 
 	const onInput = useCallback(() => {
 		syncValue();
@@ -318,6 +359,60 @@ export function RichText({
 		toolbar,
 		editor,
 		hidden,
+		React.createElement(
+			Dialog,
+			{ open: linkDialogOpen, onClose: cancelLink, title: "Insert Link" },
+			React.createElement(
+				"div",
+				{ className: "space-y-4" },
+				React.createElement(
+					"div",
+					null,
+					React.createElement("label", {
+						htmlFor: "rt-link-url",
+						className: "block text-sm font-medium text-text mb-1.5",
+					}),
+					React.createElement(Input, {
+						id: "rt-link-url",
+						type: "url",
+						placeholder: "https://example.com",
+						value: linkUrl,
+						autoFocus: true,
+						onChange: (e) => {
+							setLinkUrl(e.target.value);
+							setLinkError("");
+						},
+						onKeyDown: (e) => {
+							if (e.key === "Enter") {
+								e.preventDefault();
+								confirmLink();
+							}
+						},
+					}),
+					linkError
+						? React.createElement(
+								"p",
+								{ className: "mt-1.5 text-xs text-danger" },
+								linkError,
+							)
+						: null,
+				),
+				React.createElement(
+					"div",
+					{ className: "flex justify-end gap-2 pt-1" },
+					React.createElement(
+						Button,
+						{ variant: "primary", type: "button", onClick: confirmLink },
+						"Insert",
+					),
+					React.createElement(
+						Button,
+						{ variant: "secondary", type: "button", onClick: cancelLink },
+						"Cancel",
+					),
+				),
+			),
+		),
 	);
 }
 

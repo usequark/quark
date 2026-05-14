@@ -1,3 +1,4 @@
+import { ChevronDown } from "lucide-react";
 import React from "react";
 
 const cardCls =
@@ -12,10 +13,10 @@ const contentCls = "p-6 pt-0";
 const footerCls = "flex items-center p-6 pt-0";
 
 const collapsibleSummaryCls =
-	"block p-6 pr-12 text-text transition-colors duration-200 hover:bg-surface-hover";
+	"flex items-center justify-between p-6 text-text transition-colors duration-200 hover:bg-surface-hover peer-checked:[&_[data-chevron]]:rotate-180";
 
 const collapsibleChevronCls =
-	"pointer-events-none absolute right-6 top-6 text-text-faint transition-transform duration-300 ease-in-out peer-checked:rotate-180";
+	"pointer-events-none ml-3 shrink-0 rotate-0 text-text-faint transition-transform duration-300 ease-in-out";
 
 const collapsiblePanelCls =
 	"grid grid-rows-[0fr] opacity-0 transition-[grid-template-rows,opacity] duration-300 ease-in-out peer-checked:grid-rows-[1fr] peer-checked:opacity-100";
@@ -50,22 +51,24 @@ export function Card({
 					className: "peer sr-only",
 				}),
 				React.createElement(
-					"span",
+					"div",
 					{ className: collapsibleSummaryCls },
 					React.createElement(
 						"span",
-						{ className: "text-base font-bold tracking-tight" },
+						{ className: "text-base font-bold tracking-tight flex" },
 						collapsibleLabel,
 					),
+					React.createElement(
+						"span",
+						{
+							"aria-hidden": "true",
+							"data-chevron": "true",
+							className: collapsibleChevronCls,
+						},
+						React.createElement(ChevronDown, { size: 16 }),
+					),
 				),
-				React.createElement(
-					"span",
-					{
-						"aria-hidden": "true",
-						className: collapsibleChevronCls,
-					},
-					"\u25be",
-				),
+
 				React.createElement(
 					"span",
 					{ className: collapsiblePanelCls },

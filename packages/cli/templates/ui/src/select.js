@@ -1,4 +1,5 @@
 "use client";
+import { Check, ChevronDown } from "lucide-react";
 import React, {
 	useCallback,
 	useEffect,
@@ -12,7 +13,7 @@ const triggerCls =
 	"flex h-10 w-full items-center justify-between rounded-[--radius-default] border border-border bg-surface px-3 text-sm text-text shadow-sm transition-all duration-200 cursor-pointer hover:border-border-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50";
 
 const panelCls =
-	"absolute z-30 max-h-60 w-full overflow-auto rounded-[--radius-default] border border-border bg-surface shadow-xl";
+	"absolute z-30 max-h-60 w-full overflow-auto rounded-[--radius-default] border border-border bg-surface shadow-xl origin-top transition-all duration-200 ease-out";
 
 const optionBaseCls =
 	"flex w-full items-center justify-between rounded-[--radius-default] px-2.5 py-2 text-left text-sm transition-colors duration-150";
@@ -122,6 +123,9 @@ export function Select({
 	const selectedOption = options.find(
 		(option) => option.value === selectedValue,
 	);
+	const panelStateCls = open
+		? "opacity-100 scale-y-100 pointer-events-auto"
+		: "opacity-0 scale-y-0 pointer-events-none";
 
 	useEffect(() => {
 		if (isControlled) {
@@ -228,57 +232,58 @@ export function Select({
 			),
 			React.createElement(
 				"span",
-				{ "aria-hidden": "true", className: "ml-2 text-text-faint" },
-				open ? "\u25b4" : "\u25be",
+				{
+					"aria-hidden": "true",
+					className:
+						`ml-2 text-text-faint transition-transform duration-200 ease-in-out ${open ? "rotate-180" : "rotate-0"}`.trim(),
+				},
+				React.createElement(ChevronDown, { size: 16 }),
 			),
 		),
-		open
-			? React.createElement(
-					"div",
-					{
-						id: panelId,
-						role: "listbox",
-						className: panelCls,
-					},
-					options.length === 0
-						? React.createElement(
-								"p",
-								{ className: "px-2.5 py-2 text-sm text-text-faint" },
-								"No options",
-							)
-						: options.map((option) => {
-								const selected = option.value === selectedValue;
-								return React.createElement(
-									"button",
-									{
-										type: "button",
-										key: option.key,
-										role: "option",
-										"aria-selected": selected,
-										disabled: option.disabled,
-										onClick: () => {
-											if (option.disabled) return;
-											commitValue(option.value);
-											setOpen(false);
-										},
-										className:
-											`${optionBaseCls} ${selected ? optionActiveCls : optionIdleCls} ${option.disabled ? "cursor-not-allowed opacity-50" : ""}`.trim(),
-									},
-									React.createElement(
+		React.createElement(
+			"div",
+			{
+				id: panelId,
+				role: "listbox",
+				"aria-hidden": !open,
+				className: `${panelCls} ${panelStateCls}`.trim(),
+			},
+			options.length === 0
+				? React.createElement(
+						"p",
+						{ className: "px-2.5 py-2 text-sm text-text-faint" },
+						"No options",
+					)
+				: options.map((option) => {
+						const selected = option.value === selectedValue;
+						const isOptionDisabled = option.disabled || !open;
+						return React.createElement(
+							"button",
+							{
+								type: "button",
+								key: option.key,
+								role: "option",
+								"aria-selected": selected,
+								disabled: isOptionDisabled,
+								tabIndex: open ? 0 : -1,
+								onClick: () => {
+									if (option.disabled) return;
+									commitValue(option.value);
+									setOpen(false);
+								},
+								className:
+									`${optionBaseCls} ${selected ? optionActiveCls : optionIdleCls} ${option.disabled ? "cursor-not-allowed opacity-50" : ""}`.trim(),
+							},
+							React.createElement("span", null, option.label || option.value),
+							selected
+								? React.createElement(
 										"span",
-										null,
-										option.label || option.value,
-									),
-									selected
-										? React.createElement(
-												"span",
-												{ "aria-hidden": "true", className: "text-primary" },
-												"\u2713",
-											)
-										: null,
-								);
-							}),
-				)
-			: null,
+										{ "aria-hidden": "true", className: "text-primary" },
+										React.createElement(Check, { size: 16 }),
+									)
+								: null,
+						);
+					}),
+		),
 	);
 }

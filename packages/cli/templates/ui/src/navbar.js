@@ -21,7 +21,14 @@ const desktopListCls = "flex items-center gap-3";
 const desktopLinkCls =
 	"inline-flex h-10 items-center rounded-[--radius-default] px-3.5 text-base font-medium text-text-muted transition-colors hover:bg-surface hover:text-text";
 const desktopTriggerCls =
-	"inline-flex h-10 items-center gap-2 rounded-[--radius-default] px-3.5 text-base font-medium text-text-muted transition-colors hover:bg-surface hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40";
+	"flex h-10 items-center gap-2 rounded-[--radius-default] px-3.5 text-base font-medium text-text-muted transition-colors hover:bg-surface hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40";
+
+const desktopDropdownWrapCls =
+	"group inline-flex items-center rounded-[--radius-default] transition-colors hover:bg-surface";
+const desktopDropdownLinkCls =
+	"flex items-center text-base font-medium text-text-muted transition-colors group-hover:text-text";
+const desktopDropdownChevronCls =
+	"flex items-center px-2 pt-1 text-text-muted transition-colors group-hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-r-[--radius-default]";
 const actionCls =
 	"inline-flex h-11 items-center justify-center whitespace-nowrap rounded-[--radius-default] border border-primary/55 bg-primary-muted px-5 text-base font-semibold text-primary transition-colors hover:border-primary hover:bg-primary-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40";
 
@@ -133,6 +140,7 @@ export function Navbar({
 	maxWidthClassName = "max-w-6xl",
 }) {
 	const rootRef = useRef(null);
+	const leaveTimerRef = useRef(null);
 	const [openIndex, setOpenIndex] = useState(null);
 	const navLinks = useMemo(() => safeLinks(links), [links]);
 
@@ -202,29 +210,44 @@ export function Navbar({
 								{
 									key: `${link.label}-${index}`,
 									className: "relative",
-									onMouseEnter: () => setOpenIndex(index),
-									onMouseLeave: () =>
-										setOpenIndex((state) => (state === index ? null : state)),
+								onMouseEnter: () => {
+									if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current);
+									setOpenIndex(index);
+								},
+								onMouseLeave: () => {
+									leaveTimerRef.current = setTimeout(() => {
+										setOpenIndex((state) => (state === index ? null : state));
+									}, 150);
+								},
 								},
 								React.createElement(
-									"button",
-									{
-										type: "button",
-										className: desktopTriggerCls,
-										"aria-expanded": isOpen,
-										"aria-haspopup": "menu",
-										onClick: () => {
-											setOpenIndex((state) => (state === index ? null : index));
+									"div",
+									{ className: desktopDropdownWrapCls },
+									React.createElement(
+										"a",
+										{ href: link.href ?? "#", className: desktopDropdownLinkCls },
+										link.label,
+									),
+									React.createElement(
+										"button",
+										{
+											type: "button",
+											className: desktopDropdownChevronCls,
+											"aria-expanded": isOpen,
+											"aria-haspopup": "menu",
+											"aria-label": `${link.label} submenu`,
+											onClick: () => {
+												setOpenIndex((state) => (state === index ? null : index));
+											},
 										},
-									},
-									link.label,
-									React.createElement(Chevron, { open: isOpen }),
+										React.createElement(Chevron, { open: isOpen }),
+									),
 								),
 								React.createElement(
 									"div",
 									{
 										role: "menu",
-										className: `absolute left-1/2 top-[calc(100%+0.6rem)] z-40 w-48 -translate-x-1/2 rounded-[--radius-default] border border-border bg-surface p-2 shadow-xl origin-top transition duration-200 ${
+										className: `absolute left-full top-[calc(100%+0.6rem)] z-40 w-48 -translate-x-1/2 rounded-[--radius-default] border border-border bg-surface shadow-xl origin-top transition duration-200 ${
 											isOpen
 												? "pointer-events-auto scale-100 opacity-100"
 												: "pointer-events-none scale-95 opacity-0"
