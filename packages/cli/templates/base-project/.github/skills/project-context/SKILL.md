@@ -57,6 +57,7 @@ __QUARK_OPTIONAL_PACKAGES__├── docker-compose.yml
 - **Errors:** Use `AppError` / `ValidationError` from `@techstream/quark-core/errors`.
 - **Database models:** Always include `createdAt`/`updatedAt`.
 - **Environment:** All env vars validated in `packages/config/src/validate-env.js`.
+- **Analytics:** Optional Umami support lives in `apps/web/src/lib/analytics/*`. The public env contract uses only `NEXT_PUBLIC_UMAMI_URL`, `NEXT_PUBLIC_UMAMI_WEBSITE_ID`, and `NEXT_PUBLIC_UMAMI_REPLAY_ENABLED`; replay uses a local rrweb recorder.
 
 ## Common Commands
 
@@ -78,6 +79,7 @@ docker compose up -d  # Start infrastructure
 - `packages/config/src/validate-env.js` — Environment variable validation
 - `apps/web/src/app/` — Next.js App Router pages and API routes
 - `apps/web/src/lib/auth.js` — Authentication configuration
+- `apps/web/src/lib/analytics/umami-config.js` — Optional Umami URL and replay gating
 - `apps/worker/src/handlers/` — Background job handlers
 
 ## Updating Quark Core

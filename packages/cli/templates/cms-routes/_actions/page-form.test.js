@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { createPageBlock } from "@techstream/quark-cms/page-builder";
 import { ValidationError } from "@techstream/quark-core";
-import { parsePageFormData } from "./page-form.js";
+import { parsePageFormData, resolvePageSlugCandidate } from "./page-form.js";
 
 function makeFormData(overrides = {}) {
 	const formData = new FormData();
@@ -86,6 +86,15 @@ test("parsePageFormData rejects invalid slugs", () => {
 test("parsePageFormData rejects reserved top-level slugs", () => {
 	assert.throws(
 		() => parsePageFormData(makeFormData({ slug: "admin" })),
+		(error) =>
+			error instanceof ValidationError &&
+			error.message === "Slug is reserved for an existing route",
+	);
+});
+
+test("resolvePageSlugCandidate rejects reserved generated slugs", () => {
+	assert.throws(
+		() => resolvePageSlugCandidate({ title: "Admin", slug: "" }),
 		(error) =>
 			error instanceof ValidationError &&
 			error.message === "Slug is reserved for an existing route",

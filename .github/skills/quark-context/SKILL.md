@@ -57,6 +57,7 @@ Scaffolded (local-only) packages:
 - **Metrics:** Use `metrics` singleton from `@techstream/quark-core` for counters, gauges, histograms. Pre-registered HTTP metrics: `httpRequestsTotal`, `httpRequestDuration`, `httpRequestsInFlight`, `appErrorsTotal`. Prometheus format exported at `/api/metrics`.
 - **Logging:** Use `createLogger(name)` from `@techstream/quark-core`. Never use `console.log/error` in production code.
 - **Config:** Use `loadConfig()` from `@<app>/config` for centralized configuration. Supports per-environment defaults (dev/test/staging/prod) with env-var overrides.
+- **Analytics:** Optional Umami support stays app-local in `apps/web/src/lib/analytics/*`. The scaffolded public contract is only `NEXT_PUBLIC_UMAMI_URL`, `NEXT_PUBLIC_UMAMI_WEBSITE_ID`, and `NEXT_PUBLIC_UMAMI_REPLAY_ENABLED`; replay uses a local rrweb recorder rather than hosted `recorder.js`.
 
 ## CI/CD Pipeline
 

@@ -1,4 +1,4 @@
-import { normalizePageContent } from "@techstream/quark-cms/page-builder";
+import { normalizePageContent } from "../../lib/content/page-content.js";
 
 function hasRenderableContent(blocks) {
 	return blocks.some((block) => {

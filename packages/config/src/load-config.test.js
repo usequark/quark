@@ -247,3 +247,69 @@ describe("Environment Validation - NEXTAUTH_SECRET strength", () => {
 		);
 	});
 });
+
+describe("Environment Validation - Umami contract", () => {
+	let savedEnv;
+	let originalWarn;
+
+	beforeEach(() => {
+		savedEnv = { ...process.env };
+		originalWarn = console.warn;
+		console.warn = () => {};
+		resetConfig();
+		process.env.NEXTAUTH_SECRET = "test-secret-at-least-32-characters-long";
+		process.env.POSTGRES_USER = "test_user";
+		process.env.POSTGRES_PASSWORD = "test_pass";
+		process.env.POSTGRES_DB = "test_db";
+	});
+
+	afterEach(() => {
+		console.warn = originalWarn;
+		for (const key of Object.keys(process.env)) {
+			if (!(key in savedEnv)) delete process.env[key];
+		}
+		for (const [key, value] of Object.entries(savedEnv)) {
+			process.env[key] = value;
+		}
+		resetConfig();
+	});
+
+	test("warns when only one Umami analytics variable is set", () => {
+		process.env.NEXT_PUBLIC_UMAMI_URL = "https://stats.example.com";
+
+		const result = validateEnv();
+
+		assert.deepEqual(result.warnings, [
+			"Umami analytics is incomplete: set both NEXT_PUBLIC_UMAMI_URL and NEXT_PUBLIC_UMAMI_WEBSITE_ID to enable tracking.",
+		]);
+	});
+
+	test("rejects invalid Umami website IDs", () => {
+		process.env.NEXT_PUBLIC_UMAMI_URL = "https://stats.example.com";
+		process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID = "website_123";
+
+		assert.throws(
+			() => validateEnv(),
+			/NEXT_PUBLIC_UMAMI_WEBSITE_ID must be a UUID/,
+		);
+	});
+
+	test("rejects invalid Umami URLs", () => {
+		process.env.NEXT_PUBLIC_UMAMI_URL = "stats.example.com";
+		process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID = "site_123";
+
+		assert.throws(
+			() => validateEnv(),
+			/NEXT_PUBLIC_UMAMI_URL must be an absolute http\(s\) URL/,
+		);
+	});
+
+	test("rejects replay enablement without the full analytics contract", () => {
+		process.env.NEXT_PUBLIC_UMAMI_REPLAY_ENABLED = "true";
+
+		assert.throws(
+			() => validateEnv(),
+			/NEXT_PUBLIC_UMAMI_REPLAY_ENABLED requires NEXT_PUBLIC_UMAMI_URL and NEXT_PUBLIC_UMAMI_WEBSITE_ID/,
+		);
+	});
+});

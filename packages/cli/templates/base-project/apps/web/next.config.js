@@ -1,5 +1,7 @@
 import { hostname, networkInterfaces } from "node:os";
 
+import { getUmamiCspOrigins } from "./src/lib/analytics/umami-config.js";
+
 function getLocalNetworkHosts() {
 	const hosts = new Set(["localhost", "127.0.0.1", "0.0.0.0"]);
 
@@ -63,9 +65,21 @@ const nextConfig = {
 	// Keeping them here as a fallback for routes the proxy doesn't match.
 	async headers() {
 		const isProd = process.env.NODE_ENV === "production";
-		const connectSrc = isProd
-			? "connect-src 'self'"
-			: "connect-src 'self' ws: wss:";
+		const { connectSrc: umamiConnectSrc, scriptSrc: umamiScriptSrc } =
+			getUmamiCspOrigins();
+		const connectSrc = [
+			"connect-src",
+			"'self'",
+			...(isProd ? [] : ["ws:", "wss:"]),
+			...umamiConnectSrc,
+		].join(" ");
+		const scriptSrc = [
+			"script-src",
+			"'self'",
+			"'unsafe-inline'",
+			...(isProd ? [] : ["'unsafe-eval'"]),
+			...umamiScriptSrc,
+		].join(" ");
 
 		return [
 			{
@@ -95,9 +109,7 @@ const nextConfig = {
 						key: "Content-Security-Policy",
 						// unsafe-eval is required by Turbopack in development only.
 						// It is deliberately excluded from the production directive.
-						value: isProd
-							? `default-src 'self'; script-src 'self' 'unsafe-inline'; ${connectSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self';`
-							: `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; ${connectSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self';`,
+						value: `default-src 'self'; ${scriptSrc}; ${connectSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self';`,
 					},
 				],
 			},
