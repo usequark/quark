@@ -1,3 +1,4 @@
+import { getAuthSecret } from "@techstream/quark-core/auth";
 import { getToken } from "next-auth/jwt";
 
 const STRICT_AUTH_RATE_LIMIT_ROUTES = new Set([
@@ -50,6 +51,9 @@ export function shouldUseSecureAuthCookie(request) {
 }
 
 export async function getProxyToken(request) {
+	const secret = getAuthSecret();
+	if (!secret) return null;
+
 	const secureCookiePreferences = shouldUseSecureAuthCookie(request)
 		? [true, false]
 		: [false, true];
@@ -57,7 +61,7 @@ export async function getProxyToken(request) {
 	for (const secureCookie of secureCookiePreferences) {
 		const token = await getToken({
 			req: request,
-			secret: process.env.NEXTAUTH_SECRET,
+			secret,
 			secureCookie,
 		});
 

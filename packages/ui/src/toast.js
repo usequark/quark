@@ -6,7 +6,7 @@ const CIRC = 2 * Math.PI * RADIUS;
 
 // Replaced arbitrary hex with semantic design tokens
 const VARIANTS = {
-	default: "border border-border bg-surface text-text shadow-xl",
+	default: "border border-primary/40 bg-primary-muted text-primary shadow-xl",
 	success: "border border-success/40 bg-success-muted text-success shadow-xl",
 	error: "border border-danger/40 bg-danger-muted text-danger shadow-xl",
 };
@@ -121,7 +121,29 @@ export function Toast({
 							className:
 								"flex h-6 w-6 cursor-pointer items-center justify-center rounded-[--radius-default] text-base leading-none opacity-80 transition-all hover:bg-black/10 dark:hover:bg-white/10 hover:opacity-100 active:bg-black/20 dark:active:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
 						},
-						"\u00d7",
+						React.createElement(
+							"svg",
+							{
+								width: 10,
+								height: 10,
+								viewBox: "0 0 10 10",
+								"aria-hidden": "true",
+								fill: "none",
+								className: "shrink-0",
+							},
+							React.createElement("path", {
+								d: "M1 1L9 9",
+								stroke: "currentColor",
+								strokeWidth: 1.5,
+								strokeLinecap: "round",
+							}),
+							React.createElement("path", {
+								d: "M9 1L1 9",
+								stroke: "currentColor",
+								strokeWidth: 1.5,
+								strokeLinecap: "round",
+							}),
+						),
 					)
 				: React.createElement(
 						"svg",

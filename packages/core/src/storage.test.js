@@ -223,6 +223,18 @@ test("Storage - allows nested subdirectories within baseDir", async () => {
 	}
 });
 
+test("Storage - allows keys that start with '..' but stay within baseDir", async () => {
+	const dir = await mkdtemp(join(tmpdir(), "storage-"));
+	try {
+		const storage = createLocalStorage({ directory: dir });
+		await storage.put("..well-known/file.txt", "safe");
+		const result = await storage.get("..well-known/file.txt");
+		assert.strictEqual(result.body.toString(), "safe");
+	} finally {
+		await rm(dir, { recursive: true });
+	}
+});
+
 // ---------------------------------------------------------------------------
 // createStorage factory
 // ---------------------------------------------------------------------------

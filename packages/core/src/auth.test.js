@@ -18,16 +18,46 @@ test("Auth Module", async (t) => {
 		assert.deepStrictEqual(config.providers, []);
 	});
 
+	await t.test("createAuthConfig falls back to AUTH_SECRET", () => {
+		const nextAuthSecret = process.env.NEXTAUTH_SECRET;
+		const authSecret = process.env.AUTH_SECRET;
+
+		delete process.env.NEXTAUTH_SECRET;
+		process.env.AUTH_SECRET = "test-secret";
+
+		try {
+			const config = createAuthConfig();
+			assert.strictEqual(config.secret, "test-secret");
+		} finally {
+			if (nextAuthSecret !== undefined) {
+				process.env.NEXTAUTH_SECRET = nextAuthSecret;
+			} else {
+				delete process.env.NEXTAUTH_SECRET;
+			}
+
+			if (authSecret !== undefined) {
+				process.env.AUTH_SECRET = authSecret;
+			} else {
+				delete process.env.AUTH_SECRET;
+			}
+		}
+	});
+
 	await t.test("createAuthConfig throws when secret is missing", () => {
 		const orig = process.env.NEXTAUTH_SECRET;
+		const authOrig = process.env.AUTH_SECRET;
 		delete process.env.NEXTAUTH_SECRET;
+		delete process.env.AUTH_SECRET;
 		try {
 			assert.throws(
 				() => createAuthConfig(),
-				(err) => err instanceof Error && /NEXTAUTH_SECRET/.test(err.message),
+				(err) =>
+					err instanceof Error &&
+					/NEXTAUTH_SECRET|AUTH_SECRET/.test(err.message),
 			);
 		} finally {
 			if (orig !== undefined) process.env.NEXTAUTH_SECRET = orig;
+			if (authOrig !== undefined) process.env.AUTH_SECRET = authOrig;
 		}
 	});
 

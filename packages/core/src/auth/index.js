@@ -11,6 +11,15 @@ export * from "./password.js";
 const logger = createLogger({ name: "auth" });
 
 /**
+ * Resolves the auth secret from the supported environment variables.
+ * Prefers NEXTAUTH_SECRET for compatibility, but also accepts AUTH_SECRET.
+ * @returns {string|null}
+ */
+export const getAuthSecret = () => {
+	return process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET || null;
+};
+
+/**
  * Creates a next-auth configuration object with sensible defaults
  * Designed to be extended by applications
  * @param {Object} options - Configuration options
@@ -25,12 +34,14 @@ export const createAuthConfig = (options = {}) => {
 		providers = [],
 		callbacks = {},
 		session = {},
-		secret = process.env.NEXTAUTH_SECRET,
+		secret = getAuthSecret(),
 		...rest
 	} = options;
 
 	if (!secret) {
-		throw new Error("NEXTAUTH_SECRET must be set (env var or options.secret)");
+		throw new Error(
+			"NEXTAUTH_SECRET or AUTH_SECRET must be set (env var or options.secret)",
+		);
 	}
 
 	return {

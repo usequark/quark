@@ -25,13 +25,13 @@ Props: `className`, all native label attributes.
 Props: `className`, all native textarea attributes.
 
 ### Select
-Props: `className`, `children` (option elements), all native select attributes.
+Props: `className`, `children` (option elements), `value`/`defaultValue`, `onChange`, `name`, `required`, `disabled`, plus trigger button attributes.
 
 ### Checkbox
 Props: `id`, `label` (string), `className`, all native checkbox input attributes.
 
 ### Badge
-Props: `variant` ('default' | 'success' | 'warning' | 'danger' | 'info', default: 'default'), `className`.
+Props: `variant` ('default' | 'primary' | 'success' | 'warning' | 'danger' | 'info', default: 'default'), `className`.
 
 ### Card / CardHeader / CardTitle / CardContent / CardFooter
 Composable card container. All parts accept `className`.
@@ -49,6 +49,18 @@ Props: `className` (use to set width/height for the placeholder shape).
 `"use client"` — `Toast` props: `message`, `variant` ('default' | 'success' | 'error'), `onClose` (fn), `visible` (bool).  
 `useToast()` returns `{ show(message, variant?), hide, toastProps }`. Spread `toastProps` onto `<Toast />`.
 
+### Footer
+Standardized multi-column site footer with brand block, CTA, links, and legal bottom bar.
+Props include: `brandName`, `brandDescription`, `ctaLabel`, `ctaHref`, `columns` (3-column array), `copyrightText`, `legalLinks`, `poweredByText`, `poweredByHref`, `mark`, `className`.
+
+### Navbar
+`"use client"` desktop navigation bar with three-zone layout: logo (left), centered nav links (middle), and action button (right). Supports dropdown sub-navigation on parent items.
+Props include: `logo`, `logoHref`, `links`, `action`, `maxWidthClassName`, `className`.
+
+### MobileNavbar
+`"use client"` mobile-first navigation with logo + burger trigger, animated menu expansion, and animated nested submenus.
+Props include: `logo`, `logoHref`, `links`, `action`, `maxWidthClassName`, `className`.
+
 ```javascript
 // Example
 const { show, toastProps } = useToast();
@@ -63,5 +75,5 @@ return (
 ## Design notes
 - Tailwind CSS only. No CSS-in-JS, no external dependencies.
 - All components accept `className` for overrides.
-- Server Component compatible except Dialog and Toast (marked `"use client"`).
+- Client-only components: `Dialog`, `Toast`, `useToast`, `Select`, `RichText`, `Navbar`, `MobileNavbar`, `ThemeProvider`, `useTheme`.
 - Accessible: ARIA attributes, focus management on interactive elements.

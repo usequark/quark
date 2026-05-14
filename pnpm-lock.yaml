@@ -249,6 +249,10 @@ importers:
         version: 5.70.4
 
   packages/ui:
+    dependencies:
+      lucide-react:
+        specifier: ^1.14.0
+        version: 1.14.0(react@19.2.4)
     devDependencies:
       '@techstream/quark-config':
         specifier: workspace:*

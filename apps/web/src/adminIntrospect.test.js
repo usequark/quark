@@ -101,7 +101,10 @@ describe("admin introspect schema resolution", () => {
 				() => withCwd(join(fixture.root, "apps/web"), () => getParsedSchema()),
 				(error) => {
 					assert.match(error.message, /Prisma schema file not found\. Tried:/);
-					assert.match(error.message, /packages\/db\/prisma\/schema\.prisma/);
+					assert.match(
+						error.message,
+						/packages[\\/]+db[\\/]+prisma[\\/]+schema\.prisma/,
+					);
 					return true;
 				},
 			);

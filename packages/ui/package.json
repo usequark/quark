@@ -10,13 +10,16 @@
 		"./theme-constants": "./src/theme-constants.js"
 	},
 	"scripts": {
-		"test": "node --test $(find src -name '*.test.js')",
+		"test": "node ../../scripts/run-tests.mjs src",
 		"lint": "biome format --write && biome check --write"
 	},
 	"keywords": [],
 	"author": "",
 	"license": "ISC",
 	"packageManager": "pnpm@10.12.1",
+	"dependencies": {
+		"lucide-react": "^1.14.0"
+	},
 	"devDependencies": {
 		"@techstream/quark-config": "workspace:*",
 		"@types/react": "^19.2.14",

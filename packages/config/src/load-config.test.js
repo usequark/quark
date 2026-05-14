@@ -220,4 +220,30 @@ describe("Environment Validation - NEXTAUTH_SECRET strength", () => {
 		process.env.POSTGRES_DB = "test_db";
 		assert.doesNotThrow(() => validateEnv());
 	});
+
+	test("accepts AUTH_SECRET when NEXTAUTH_SECRET is absent", () => {
+		delete process.env.NEXTAUTH_SECRET;
+		process.env.AUTH_SECRET = "a".repeat(32);
+		process.env.POSTGRES_USER = "test_user";
+		process.env.POSTGRES_PASSWORD = "test_pass";
+		process.env.POSTGRES_DB = "test_db";
+
+		const validated = validateEnv();
+		assert.strictEqual(
+			validated.validated.NEXTAUTH_SECRET,
+			process.env.AUTH_SECRET,
+		);
+	});
+
+	test("rejects placeholder AUTH_SECRET values", () => {
+		delete process.env.NEXTAUTH_SECRET;
+		process.env.AUTH_SECRET = "CHANGE_ME_SUPER_SECRET";
+		process.env.POSTGRES_USER = "test_user";
+		process.env.POSTGRES_PASSWORD = "test_pass";
+		process.env.POSTGRES_DB = "test_db";
+		assert.throws(
+			() => validateEnv(),
+			/AUTH_SECRET contains a placeholder value/,
+		);
+	});
 });

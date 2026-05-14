@@ -57,3 +57,13 @@ test("Card - accepts className override", () => {
 	const result = Card({ className: "custom" });
 	assert.ok(result);
 });
+
+test("Card - supports collapsible variant", () => {
+	const result = Card({
+		variant: "collapsible",
+		collapsibleLabel: "Details",
+		children: "Body",
+	});
+	assert.ok(result);
+	assert.strictEqual(result.type, "details");
+});

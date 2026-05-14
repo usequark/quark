@@ -6,9 +6,11 @@ export * from "./checkbox.js";
 // Client components ("use client")
 export * from "./dialog.js";
 export * from "./error-banner.js";
+export * from "./footer.js";
 export * from "./input.js";
 export * from "./label.js";
 export * from "./logo.js";
+export * from "./navbar.js";
 export * from "./rich-text.js";
 export * from "./select.js";
 export * from "./skeleton.js";

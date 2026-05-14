@@ -14,6 +14,7 @@ function snapshotEnv() {
 	return {
 		APP_URL: process.env.APP_URL,
 		AUTH_URL: process.env.AUTH_URL,
+		AUTH_SECRET: process.env.AUTH_SECRET,
 		NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
 		NEXTAUTH_URL: process.env.NEXTAUTH_URL,
 	};
@@ -62,6 +63,37 @@ test("getProxyToken decodes secure auth cookies for forwarded https requests", a
 			secret: process.env.NEXTAUTH_SECRET,
 		});
 		assert.equal(defaultDecodedToken, null);
+	} finally {
+		restoreEnv(previousEnv);
+	}
+});
+
+test("getProxyToken falls back to AUTH_SECRET when NEXTAUTH_SECRET is absent", async () => {
+	const previousEnv = snapshotEnv();
+	delete process.env.NEXTAUTH_SECRET;
+	process.env.AUTH_SECRET = "test-secret";
+
+	try {
+		const secureCookieName = "__Secure-authjs.session-token";
+		const encodedToken = await encode({
+			token: {
+				sub: "user-1b",
+				role: "admin",
+			},
+			secret: process.env.AUTH_SECRET,
+			salt: secureCookieName,
+		});
+
+		const request = new NextRequest("http://internal.test/admin", {
+			headers: {
+				cookie: `${secureCookieName}=${encodedToken}`,
+				"x-forwarded-proto": "https",
+			},
+		});
+
+		const decodedToken = await getProxyToken(request);
+		assert.equal(decodedToken?.sub, "user-1b");
+		assert.equal(decodedToken?.role, "admin");
 	} finally {
 		restoreEnv(previousEnv);
 	}
