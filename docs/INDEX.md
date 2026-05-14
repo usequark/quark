@@ -9,6 +9,7 @@ Entry point: [../README.md](../README.md)
 | [EXAMPLES.md](./EXAMPLES.md) | Domain model examples (blog posts, products, contacts, teams) |
 | [API.md](./API.md) | REST endpoint reference |
 | [SECURITY.md](./SECURITY.md) | Security features, checklists, incident response |
+| [UMAMI.md](./UMAMI.md) | Optional Umami integration review, setup guidance, and feature recommendations |
 | [QUARK_USAGE.md](./QUARK_USAGE.md) | Full usage guide (dev, CLI, updates) |
 | [MAINTAINABILITY.md](./MAINTAINABILITY.md) | Code style, testing, dependency management |
 | [TESTING_INFRASTRUCTURE.md](./TESTING_INFRASTRUCTURE.md) | Testing frameworks, organization, CI/CD, utilities, best practices |

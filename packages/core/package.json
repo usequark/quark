@@ -11,18 +11,26 @@
 		"./testing": "./src/testing/index.js"
 	},
 	"dependencies": {
-		"@aws-sdk/client-s3": "^3.1004.0",
-		"@aws-sdk/s3-request-presigner": "^3.1004.0",
 		"bcryptjs": "^3.0.3",
-		"bullmq": "^5.70.4",
 		"busboy": "^1.6.0",
+		"bullmq": "^5.70.4",
 		"ioredis": "^5.10.0",
-		"next-auth": "5.0.0-beta.31",
 		"nodemailer": "^7.0.7",
 		"zod": "^4.3.6"
 	},
+	"peerDependencies": {
+		"@aws-sdk/client-s3": "^3.1004.0",
+		"@aws-sdk/s3-request-presigner": "^3.1004.0"
+	},
+	"peerDependenciesMeta": {
+		"@aws-sdk/client-s3": {
+			"optional": true
+		},
+		"@aws-sdk/s3-request-presigner": {
+			"optional": true
+		}
+	},
 	"devDependencies": {
-		"@types/busboy": "^1.5.4",
 		"@types/node": "^25.3.5"
 	},
 	"scripts": {

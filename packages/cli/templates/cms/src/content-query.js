@@ -88,7 +88,7 @@ export async function unpublishContent(prisma, model, id) {
  */
 export async function findBySlug(prisma, model, slug) {
 	const delegate = getDelegate(prisma, model);
-	return delegate.findUnique({ where: { slug, status: "PUBLISHED" } });
+	return delegate.findFirst({ where: { slug, status: "PUBLISHED" } });
 }
 
 /**

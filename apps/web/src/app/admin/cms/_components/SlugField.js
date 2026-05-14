@@ -1,21 +1,7 @@
 "use client";
 
-import { Input, Label } from "@techstream/quark-ui";
+import { Label } from "@techstream/quark-ui";
 import { useEffect, useId, useRef, useState } from "react";
-
-/**
- * Debounce a value by `delay` ms.
- * @param {string} value
- * @param {number} delay
- */
-function useDebounce(value, delay) {
-	const [debounced, setDebounced] = useState(value);
-	useEffect(() => {
-		const id = setTimeout(() => setDebounced(value), delay);
-		return () => clearTimeout(id);
-	}, [value, delay]);
-	return debounced;
-}
 
 /**
  * Generate a URL-safe slug from a title string (client-side mirror of cms/slug.js).
@@ -51,30 +37,39 @@ export default function SlugField({
 	disabled = false,
 }) {
 	const id = useId();
-	// Lock by default: if editing an existing record (defaultSlug provided), start locked.
-	// For new records (no defaultSlug), start unlocked so auto-generation can run once,
-	// then auto-lock on first non-empty generation.
-	const [locked, setLocked] = useState(!!defaultSlug);
+	const [autoMode, setAutoMode] = useState(!defaultSlug);
+	const [isEditing, setIsEditing] = useState(false);
 	const [slug, setSlug] = useState(defaultSlug);
 	const inputRef = useRef(null);
 
-	const debouncedTitle = useDebounce(title, 350);
-
-	// Auto-generate slug from title when unlocked. Auto-lock on first generation
-	// so the slug is stable once created (user must click Edit to change it).
 	useEffect(() => {
-		if (!locked && debouncedTitle) {
-			const generated = generateSlug(debouncedTitle);
-			if (generated) {
-				setSlug(generated);
-				setLocked(true); // lock immediately after first auto-generation
-			}
+		if (autoMode) {
+			setSlug(generateSlug(title));
 		}
-	}, [debouncedTitle, locked]);
+	}, [title, autoMode]);
 
-	function handleUnlock() {
-		setLocked(false);
+	function handleEdit() {
+		setAutoMode(false);
+		setIsEditing(true);
 		setTimeout(() => inputRef.current?.focus(), 0);
+	}
+
+	function handleUseTitle() {
+		setSlug(generateSlug(title));
+		setAutoMode(true);
+		setIsEditing(false);
+	}
+
+	const readOnly = disabled || !isEditing;
+
+	let helperText = null;
+	if (autoMode) {
+		helperText = "Auto-generated from the title. Click Edit to customize.";
+	} else if (isEditing) {
+		helperText =
+			"Custom slug. Use title to switch back to the generated value.";
+	} else if (defaultSlug) {
+		helperText = "Using the saved slug. Click Edit to customize.";
 	}
 
 	return (
@@ -84,26 +79,39 @@ export default function SlugField({
 				{!disabled && (
 					<button
 						type="button"
-						onClick={locked ? handleUnlock : () => setLocked(true)}
+						onClick={isEditing ? handleUseTitle : handleEdit}
 						className="text-xs text-primary underline hover:opacity-75 transition-opacity"
 					>
-						{locked ? "Edit" : "Lock"}
+						{isEditing ? "Use title" : "Edit"}
 					</button>
 				)}
 			</div>
-			<Input
-				ref={inputRef}
-				id={id}
-				type="text"
-				name={name}
-				value={slug}
-				onChange={(e) => setSlug(e.target.value.replace(/[^a-z0-9-]/g, ""))}
-				disabled={disabled || locked}
-				required={required}
-				placeholder="auto-generated-from-title"
-				className="font-mono text-sm"
-			/>
-			{slug && <p className="text-xs text-text-faint font-mono">/{slug}</p>}
+			<div
+				className={`flex h-10 items-center rounded-[--radius-default] border bg-surface transition-colors duration-200 linear ${
+					disabled
+						? "cursor-not-allowed border-border opacity-30"
+						: readOnly
+							? "border-border bg-surface-hover text-text-muted"
+							: "border-border hover:border-border-hover focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20"
+				}`}
+			>
+				<span className="pl-3 text-sm font-mono text-text-faint">/</span>
+				<input
+					ref={inputRef}
+					id={id}
+					type="text"
+					name={name}
+					value={slug}
+					onChange={(e) => setSlug(generateSlug(e.target.value))}
+					readOnly={readOnly}
+					aria-readonly={readOnly}
+					disabled={disabled}
+					required={required}
+					placeholder="auto-generated-from-title"
+					className="h-full w-full bg-transparent px-2 pr-3 font-mono text-sm text-text placeholder-text-faint outline-none disabled:cursor-not-allowed"
+				/>
+			</div>
+			{helperText && <p className="text-xs text-text-faint">{helperText}</p>}
 		</div>
 	);
 }

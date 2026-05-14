@@ -4,8 +4,9 @@ Shared infrastructure for the Quark platform — authentication, job queues, err
 
 ## What's Included
 
-- **Authentication** — Next-auth helpers (`createAuthConfig`, `requireAuth`, password hashing)
+- **Authentication** — Auth.js-compatible config helpers (`createAuthConfig`, `requireAuth`, password hashing)
 - **Job Queue** — BullMQ integration (`createQueue`, `createWorker`, `addJob`)
+- **Storage** — Local filesystem built in; S3/R2/MinIO via optional AWS SDK install in the app
 - **Errors** — Standardized error types (`ValidationError`, `NotFoundError`, `UnauthorizedError`, etc.)
 - **Utilities** — `retryAsync`, `deepMerge`, `randomString`, `sanitizeId`, `measureTime`, `memoize`
 - **Validation** — Zod-based request body validation

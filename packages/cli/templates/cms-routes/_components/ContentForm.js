@@ -2,8 +2,8 @@
 
 import { Button, Dialog, Input, Label, Textarea } from "@techstream/quark-ui";
 import { useActionState, useState, useTransition } from "react";
-import ContentPreview from "./ContentPreview";
 import CoverImageField from "./CoverImageField";
+import PageBuilder from "./PageBuilder";
 import SlugField from "./SlugField";
 import StatusBadge from "./StatusBadge";
 
@@ -53,7 +53,6 @@ export default function ContentForm({
 	);
 
 	const [title, setTitle] = useState(record?.title ?? "");
-	const [body, setBody] = useState(record?.body ?? "");
 	const [deleteOpen, setDeleteOpen] = useState(false);
 	const [isDeleting, startDeleteTransition] = useTransition();
 
@@ -61,12 +60,52 @@ export default function ContentForm({
 	const canPublish = status === "DRAFT";
 	const canArchive = status === "PUBLISHED";
 	const canUnpublish = status === "PUBLISHED";
+	const titlePlaceholder =
+		modelLabel === "Page"
+			? "About, Pricing, Contact, Terms of Service"
+			: `${modelLabel} title`;
+	const excerptPlaceholder =
+		modelLabel === "Page"
+			? "Summarize what this page covers and who it is for."
+			: "Short summary (optional)";
+	const bodyPlaceholder =
+		modelLabel === "Page"
+			? "<h1>Headline</h1>\n<p>Lead paragraph that explains the page.</p>\n\n<h2>Key section</h2>\n<p>Add supporting details, proof, or a clear next step.</p>"
+			: "Write your content here…";
+	const bodyHelpText =
+		modelLabel === "Page"
+			? "A strong page usually has a clear headline, a short intro, 2-3 supporting sections, and a next step. Plain text or basic HTML both work."
+			: "Supports plain text or basic HTML.";
+	const isPageModel = modelLabel === "Page";
+	const previewHref =
+		isPageModel && isEdit ? `/admin/cms/pages/${record.id}/preview` : null;
+	const livePageHref =
+		isPageModel && record?.status === "PUBLISHED" && record?.slug
+			? `/${record.slug}`
+			: null;
+
+	function openInNewTab(href) {
+		if (!href) return;
+		window.open(href, "_blank", "noopener,noreferrer");
+	}
 
 	return (
 		<div className="flex flex-col gap-6 lg:flex-row lg:items-start">
 			{/* Main editor — takes 2/3 width on large screens */}
 			<div className="flex-1 min-w-0">
 				<form action={formAction} className="space-y-5">
+					{!isEdit && modelLabel === "Page" && (
+						<div className="rounded-[--radius-default] border border-border bg-surface px-4 py-3">
+							<p className="text-xs font-semibold uppercase tracking-widest text-text-faint">
+								Starter Checklist
+							</p>
+							<p className="mt-2 text-sm text-text-muted">
+								Give the page a descriptive title, keep the excerpt to one or
+								two sentences, and use the body for the full structure.
+							</p>
+						</div>
+					)}
+
 					{/* Title */}
 					<div className="flex flex-col gap-1">
 						<Label htmlFor="cms-title">Title *</Label>
@@ -76,7 +115,7 @@ export default function ContentForm({
 							name="title"
 							defaultValue={record?.title ?? ""}
 							required
-							placeholder={`${modelLabel} title`}
+							placeholder={titlePlaceholder}
 							onChange={(e) => setTitle(e.target.value)}
 						/>
 					</div>
@@ -93,7 +132,7 @@ export default function ContentForm({
 								name="excerpt"
 								defaultValue={record?.excerpt ?? ""}
 								rows={2}
-								placeholder="Short summary (optional)"
+								placeholder={excerptPlaceholder}
 							/>
 						</div>
 					)}
@@ -103,23 +142,43 @@ export default function ContentForm({
 						<CoverImageField defaultValue={record?.coverImage ?? ""} />
 					)}
 
-					{/* Body */}
-					<div className="flex flex-col gap-1">
-						<Label htmlFor="cms-body">Body *</Label>
-						<Textarea
-							id="cms-body"
-							name="body"
-							defaultValue={record?.body ?? ""}
-							required
-							rows={16}
-							placeholder="Write your content here…"
-							className="font-mono text-sm leading-relaxed resize-y"
-							onChange={(e) => setBody(e.target.value)}
-						/>
-						<p className="text-xs text-text-faint">
-							Supports plain text or basic HTML.
-						</p>
-					</div>
+					{/* Body / sections */}
+					{isPageModel ? (
+						<div className="space-y-3">
+							<div>
+								<p className="text-xs font-semibold uppercase tracking-widest text-text-faint">
+									Page Builder
+								</p>
+								<p className="mt-1 text-sm text-text-muted">
+									Build the page with sections for rich text, media, and calls
+									to action.
+								</p>
+							</div>
+							<PageBuilder
+								defaultContent={record?.content}
+								defaultBody={record?.body ?? ""}
+								defaultLayout={record?.layout ?? "standard"}
+							/>
+							<p className="text-xs text-text-faint">
+								Use sections to shape the public page instead of writing one
+								long body field.
+							</p>
+						</div>
+					) : (
+						<div className="flex flex-col gap-1">
+							<Label htmlFor="cms-body">Body *</Label>
+							<Textarea
+								id="cms-body"
+								name="body"
+								defaultValue={record?.body ?? ""}
+								required
+								rows={16}
+								placeholder={bodyPlaceholder}
+								className="font-mono text-sm leading-relaxed resize-y"
+							/>
+							<p className="text-xs text-text-faint">{bodyHelpText}</p>
+						</div>
+					)}
 
 					<div className="flex items-center gap-3 pt-4 border-t border-border">
 						<Button type="submit" disabled={isPending}>
@@ -183,6 +242,37 @@ export default function ContentForm({
 							Saved as <strong>Draft</strong> — publish after creating.
 						</p>
 					)}
+
+					{isPageModel && (
+						<div className="space-y-2 border-t border-border pt-3">
+							<Button
+								type="button"
+								variant="secondary"
+								className="w-full"
+								disabled={!previewHref}
+								onClick={() => openInNewTab(previewHref)}
+							>
+								PREVIEW
+							</Button>
+
+							{livePageHref ? (
+								<Button
+									type="button"
+									variant="secondary"
+									className="w-full"
+									onClick={() => openInNewTab(livePageHref)}
+								>
+									VIEW LIVE PAGE
+								</Button>
+							) : null}
+
+							<p className="text-xs leading-5 text-text-faint">
+								{previewHref
+									? "Preview opens the most recently saved version in a protected admin view."
+									: "Save this page once to open a protected preview in a new tab."}
+							</p>
+						</div>
+					)}
 				</div>
 
 				{/* Timestamps (edit only) */}
@@ -220,9 +310,6 @@ export default function ContentForm({
 						</Button>
 					</div>
 				)}
-
-				{/* Live preview */}
-				<ContentPreview body={body} />
 			</aside>
 
 			{isEdit && deleteAction && (

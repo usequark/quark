@@ -16,6 +16,41 @@ import { mkdir, readFile, stat, unlink } from "node:fs/promises";
 import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
 import { pipeline } from "node:stream/promises";
 
+function isMissingPackageError(error, packageName) {
+	const message = error?.message ?? "";
+	return (
+		error?.code === "ERR_MODULE_NOT_FOUND" ||
+		error?.code === "MODULE_NOT_FOUND" ||
+		message.includes(`Cannot find package '${packageName}'`) ||
+		message.includes(`Cannot find module '${packageName}'`)
+	);
+}
+
+async function importOptionalPackage(packageName, installMessage) {
+	try {
+		return await import(packageName);
+	} catch (error) {
+		if (isMissingPackageError(error, packageName)) {
+			throw new Error(installMessage);
+		}
+		throw error;
+	}
+}
+
+async function importS3ClientPackage() {
+	return importOptionalPackage(
+		"@aws-sdk/client-s3",
+		'S3 storage support requires installing "@aws-sdk/client-s3" in the app that uses STORAGE_PROVIDER=s3.',
+	);
+}
+
+async function importS3PresignerPackage() {
+	return importOptionalPackage(
+		"@aws-sdk/s3-request-presigner",
+		'Signed upload URLs require installing "@aws-sdk/s3-request-presigner" in the app that uses STORAGE_PROVIDER=s3.',
+	);
+}
+
 /**
  * Resolves a storage key against the base directory and guards against
  * path-traversal attacks.  Throws if the resolved path escapes baseDir.
@@ -157,7 +192,7 @@ export function createS3Storage(options = {}) {
 
 	async function getClient() {
 		if (_client) return _client;
-		const { S3Client } = await import("@aws-sdk/client-s3");
+		const { S3Client } = await importS3ClientPackage();
 		_client = new S3Client({
 			region,
 			credentials: { accessKeyId, secretAccessKey },
@@ -170,7 +205,7 @@ export function createS3Storage(options = {}) {
 		provider: "s3",
 
 		async put(key, data, meta = {}) {
-			const { PutObjectCommand } = await import("@aws-sdk/client-s3");
+			const { PutObjectCommand } = await importS3ClientPackage();
 			const client = await getClient();
 
 			let body;
@@ -201,7 +236,7 @@ export function createS3Storage(options = {}) {
 		},
 
 		async get(key) {
-			const { GetObjectCommand } = await import("@aws-sdk/client-s3");
+			const { GetObjectCommand } = await importS3ClientPackage();
 			const client = await getClient();
 
 			const response = await client.send(
@@ -221,14 +256,14 @@ export function createS3Storage(options = {}) {
 		},
 
 		async delete(key) {
-			const { DeleteObjectCommand } = await import("@aws-sdk/client-s3");
+			const { DeleteObjectCommand } = await importS3ClientPackage();
 			const client = await getClient();
 
 			await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
 		},
 
 		async exists(key) {
-			const { HeadObjectCommand } = await import("@aws-sdk/client-s3");
+			const { HeadObjectCommand } = await importS3ClientPackage();
 			const client = await getClient();
 
 			try {
@@ -261,8 +296,8 @@ export function createS3Storage(options = {}) {
 		 * @returns {Promise<{ url: string, key: string, expiresAt: string }>}
 		 */
 		async getSignedUploadUrl(key, options = {}) {
-			const { getSignedUrl } = await import("@aws-sdk/s3-request-presigner");
-			const { PutObjectCommand } = await import("@aws-sdk/client-s3");
+			const { getSignedUrl } = await importS3PresignerPackage();
+			const { PutObjectCommand } = await importS3ClientPackage();
 			const client = await getClient();
 
 			const expiresIn = options.expiresIn ?? 300;

@@ -59,9 +59,9 @@ Quark takes a hybrid approach:
 - BullMQ queue factory
 - Standardized error types
 - Common utility functions (password hashing, etc.)
-- File storage adapters (local filesystem, S3/Cloudflare R2)
+- File storage adapters (local filesystem built in, S3/Cloudflare R2 via optional SDK install)
 - File validation with magic-byte detection
-- Multipart form parsing (busboy)
+- Multipart form parsing with early limit enforcement
 - Email service and templates
 
 ✅ **Provider-Agnostic Patterns**

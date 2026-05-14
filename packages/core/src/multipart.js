@@ -1,7 +1,7 @@
 /**
  * @techstream/quark-core - Multipart Parser
  *
- * Stream-based multipart/form-data parsing using busboy.
+ * Stream-based multipart/form-data parsing with early limit enforcement.
  * Works with Next.js App Router Request objects.
  */
 
@@ -48,12 +48,28 @@ export async function parseMultipart(request, options = {}) {
 		throw new Error("Request is not multipart/form-data");
 	}
 
+	if (!request.body) {
+		throw new Error("Request body is empty");
+	}
+
 	const { default: Busboy } = await import("busboy");
 
 	return new Promise((resolve, reject) => {
 		const files = [];
 		const fields = {};
-		let finished = false;
+		let settled = false;
+
+		function resolveOnce(result) {
+			if (settled) return;
+			settled = true;
+			resolve(result);
+		}
+
+		function rejectOnce(error) {
+			if (settled) return;
+			settled = true;
+			reject(error);
+		}
 
 		const busboy = Busboy({
 			headers: { "content-type": contentType },
@@ -66,7 +82,6 @@ export async function parseMultipart(request, options = {}) {
 
 		busboy.on("file", (fieldName, stream, info) => {
 			const { filename, mimeType } = info;
-
 			const chunks = [];
 			let size = 0;
 			let truncated = false;
@@ -78,12 +93,14 @@ export async function parseMultipart(request, options = {}) {
 
 			stream.on("limit", () => {
 				truncated = true;
-				stream.resume(); // drain remaining data
+				stream.resume();
 			});
+
+			stream.on("error", rejectOnce);
 
 			stream.on("end", () => {
 				if (truncated) {
-					reject(
+					rejectOnce(
 						new Error(
 							`File "${filename}" exceeds maximum size of ${(maxFileSize / (1024 * 1024)).toFixed(1)} MB`,
 						),
@@ -105,35 +122,23 @@ export async function parseMultipart(request, options = {}) {
 			fields[name] = value;
 		});
 
-		busboy.on("close", () => {
-			if (!finished) {
-				finished = true;
-				resolve({ files, fields });
-			}
+		busboy.on("filesLimit", () => {
+			rejectOnce(
+				new Error(`Request exceeds maximum file count of ${maxFiles}`),
+			);
 		});
 
-		busboy.on("error", (err) => {
-			if (!finished) {
-				finished = true;
-				reject(err);
-			}
+		busboy.on("fieldsLimit", () => {
+			rejectOnce(
+				new Error(`Request exceeds maximum field count of ${maxFields}`),
+			);
 		});
 
-		// Pipe the request body (ReadableStream) into busboy (Node stream)
-		const body = request.body;
-		if (!body) {
-			reject(new Error("Request body is empty"));
-			return;
-		}
+		busboy.on("error", rejectOnce);
+		busboy.on("close", () => resolveOnce({ files, fields }));
 
-		const nodeStream = Readable.fromWeb(body);
+		const nodeStream = Readable.fromWeb(request.body);
+		nodeStream.on("error", rejectOnce);
 		nodeStream.pipe(busboy);
-
-		nodeStream.on("error", (err) => {
-			if (!finished) {
-				finished = true;
-				reject(err);
-			}
-		});
 	});
 }

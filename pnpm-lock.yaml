@@ -55,12 +55,6 @@ importers:
       '@auth/prisma-adapter':
         specifier: ^2.11.1
         version: 2.11.1(@prisma/client@7.4.2(prisma@7.5.0(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3))(nodemailer@7.0.13)
-      '@aws-sdk/client-s3':
-        specifier: ^3.1004.0
-        version: 3.1004.0
-      '@aws-sdk/s3-request-presigner':
-        specifier: ^3.1004.0
-        version: 3.1004.0
       '@prisma/client':
         specifier: ^7.4.2
         version: 7.4.2(prisma@7.5.0(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3)
@@ -174,6 +168,9 @@ importers:
       '@techstream/quark-core':
         specifier: workspace:*
         version: link:../core
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
 
   packages/config: {}
 
@@ -197,9 +194,6 @@ importers:
       ioredis:
         specifier: ^5.10.0
         version: 5.10.0
-      next-auth:
-        specifier: 5.0.0-beta.31
-        version: 5.0.0-beta.31(next@16.1.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(nodemailer@7.0.13)(react@19.2.4)
       nodemailer:
         specifier: ^7.0.7
         version: 7.0.13
@@ -207,9 +201,6 @@ importers:
         specifier: ^4.3.6
         version: 4.3.6
     devDependencies:
-      '@types/busboy':
-        specifier: ^1.5.4
-        version: 1.5.4
       '@types/node':
         specifier: ^25.3.5
         version: 25.3.5
@@ -1508,9 +1499,6 @@ packages:
     resolution: {integrity: sha512-1XUUyWW0W6FTSqGEhU8RHVqb2wP1SPkr7hIvBlMEwH9jr+sJQK5kqeosLJ/QaUv4ecSAd1ZhIrLoW7qslAzT4A==}
     cpu: [arm64]
     os: [win32]
-
-  '@types/busboy@1.5.4':
-    resolution: {integrity: sha512-kG7WrUuAKK0NoyxfQHsVE6j1m01s6kMma64E+OZenQABMQyTJop1DumUWcLwAQ2JzpefU7PDYoRDKl8uZosFjw==}
 
   '@types/node@12.20.55':
     resolution: {integrity: sha512-J8xLz7q2OFulZ2cyGTLE1TbbZcjpno7FaN6zdJNrgAdrJ+DZzh/uFR6YrTb4C+nXakvud8Q4+rbhoIWlYQbUFQ==}
@@ -4153,10 +4141,6 @@ snapshots:
 
   '@turbo/windows-arm64@2.9.6':
     optional: true
-
-  '@types/busboy@1.5.4':
-    dependencies:
-      '@types/node': 25.3.5
 
   '@types/node@12.20.55': {}
 

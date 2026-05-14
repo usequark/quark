@@ -9,10 +9,12 @@
 		"./config": "./src/config.js",
 		"./slug": "./src/slug.js",
 		"./status": "./src/status.js",
-		"./content-query": "./src/content-query.js"
+		"./content-query": "./src/content-query.js",
+		"./page-builder": "./src/page-builder.js"
 	},
 	"dependencies": {
 		"@techstream/quark-admin": "workspace:*",
-		"@techstream/quark-core": "workspace:*"
+		"@techstream/quark-core": "workspace:*",
+		"zod": "^4.3.6"
 	}
 }

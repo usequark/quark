@@ -23,8 +23,17 @@ const TABS = ["Media", "Upload", "URL"];
 export default function CoverImageField({
 	defaultValue = "",
 	name = "coverImage",
+	label = "Cover Image",
 	disabled = false,
+	onChange,
 }) {
+	function applyValue(nextValue) {
+		setValue((currentValue) =>
+			currentValue === nextValue ? currentValue : nextValue,
+		);
+		onChange?.(nextValue);
+	}
+
 	const [value, setValue] = useState(defaultValue);
 	const [open, setOpen] = useState(false);
 	const [tab, setTab] = useState("Media");
@@ -35,7 +44,7 @@ export default function CoverImageField({
 		async (_prev, formData) => {
 			const result = await cmsUploadMediaInline(_prev, formData);
 			if (result?.url) {
-				setValue(result.url);
+				applyValue(result.url);
 				setOpen(false);
 				return { error: null };
 			}
@@ -59,12 +68,12 @@ export default function CoverImageField({
 	}, [open, tab, mediaAssets, loadingMedia]);
 
 	function handleSelectMedia(asset) {
-		setValue(`/api/media/${encodeURIComponent(asset.storageKey)}`);
+		applyValue(`/api/media/${encodeURIComponent(asset.storageKey)}`);
 		setOpen(false);
 	}
 
 	function handleUrlConfirm() {
-		setValue(urlInput);
+		applyValue(urlInput);
 		setOpen(false);
 	}
 
@@ -81,7 +90,7 @@ export default function CoverImageField({
 
 	return (
 		<div className="flex flex-col gap-1">
-			<Label>Cover Image</Label>
+			<Label>{label}</Label>
 
 			{/* Current value preview */}
 			{value ? (
@@ -115,7 +124,7 @@ export default function CoverImageField({
 							{!disabled && (
 								<button
 									type="button"
-									onClick={() => setValue("")}
+									onClick={() => applyValue("")}
 									className="text-xs text-danger hover:opacity-75 transition-opacity"
 								>
 									Remove
@@ -151,7 +160,7 @@ export default function CoverImageField({
 			)}
 
 			{/* Hidden input carries the value into the form */}
-			<input type="hidden" name={name} value={value} />
+			{name ? <input type="hidden" name={name} value={value} /> : null}
 
 			{/* Picker panel */}
 			{open && (
