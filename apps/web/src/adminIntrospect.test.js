@@ -103,7 +103,7 @@ describe("admin introspect schema resolution", () => {
 					assert.match(error.message, /Prisma schema file not found\. Tried:/);
 					assert.match(
 						error.message,
-						/packages[\\/]db[\\/]prisma[\\/]schema\.prisma/,
+						/packages[\\/]+db[\\/]+prisma[\\/]+schema\.prisma/,
 					);
 					return true;
 				},
