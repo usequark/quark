@@ -12,6 +12,7 @@ import {
 	getRedisUrl,
 	updateQueueDepths,
 } from "@techstream/quark-core";
+import { AppError } from "@techstream/quark-core/errors";
 import { prisma } from "@techstream/quark-db";
 import { JOB_NAMES, JOB_QUEUES } from "@techstream/quark-jobs";
 import { jobHandlers } from "./handlers/index.js";
@@ -79,6 +80,20 @@ export function throttledError(logger, windowMs = 5000) {
 	};
 }
 
+export function getJobHandlerOrThrow(jobName) {
+	const handler = jobHandlers[jobName];
+
+	if (!handler) {
+		throw new AppError(
+			`No handler registered for job: ${jobName}`,
+			500,
+			"JOB_HANDLER_NOT_REGISTERED",
+		);
+	}
+
+	return handler;
+}
+
 function disableWorkerInDev() {
 	if (!devDisabledKeepAlive) {
 		// Keep the process alive so the dev session stays healthy even when the
@@ -122,14 +137,20 @@ export async function waitForRedis(
 					await new Promise((resolve) => setTimeout(resolve, intervalMs));
 				}
 			} else {
-				throw new Error(`Redis health check failed: ${error.message}`);
+				throw new AppError(
+					`Redis health check failed: ${error.message}`,
+					503,
+					"REDIS_HEALTH_CHECK_FAILED",
+				);
 			}
 		}
 	}
 
 	// All retries exhausted
-	throw new Error(
+	throw new AppError(
 		`Redis unavailable at ${getRedisUrl()} after ${maxRetries} attempts. Start Redis or check REDIS_URL/REDIS_HOST/REDIS_PORT.`,
+		503,
+		"REDIS_UNAVAILABLE",
 	);
 }
 
@@ -192,11 +213,7 @@ function createQueueWorker(queueName) {
 	const queueWorker = createWorker(
 		queueName,
 		async (bullJob) => {
-			const handler = jobHandlers[bullJob.name];
-
-			if (!handler) {
-				throw new Error(`No handler registered for job: ${bullJob.name}`);
-			}
+			const handler = getJobHandlerOrThrow(bullJob.name);
 
 			return handler(bullJob, logger);
 		},

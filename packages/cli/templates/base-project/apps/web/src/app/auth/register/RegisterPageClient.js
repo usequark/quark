@@ -11,6 +11,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Suspense, useEffect, useState } from "react";
+import { loadAuthProviders } from "../provider-loading";
 
 const STRENGTH_LABELS = ["", "Weak", "Fair", "Good", "Strong"];
 const STRENGTH_COLORS = [
@@ -50,14 +51,25 @@ function RegisterForm() {
 	const [passwordError, setPasswordError] = useState("");
 	const [loading, setLoading] = useState(false);
 	const [providers, setProviders] = useState(null);
+	const [providerError, setProviderError] = useState("");
 	const [error, setError] = useState("");
 	const strength = getPasswordStrength(password);
 
 	useEffect(() => {
-		fetch("/api/auth/providers")
-			.then((r) => r.json())
-			.then(setProviders)
-			.catch(() => {});
+		let cancelled = false;
+
+		void loadAuthProviders().then(({ providers: loadedProviders, error }) => {
+			if (cancelled) {
+				return;
+			}
+
+			setProviders(loadedProviders);
+			setProviderError(error);
+		});
+
+		return () => {
+			cancelled = true;
+		};
 	}, []);
 
 	function validatePassword(value) {
@@ -273,6 +285,12 @@ function RegisterForm() {
 							{loading ? "Creating account…" : "Get started →"}
 						</Button>
 					</form>
+
+					{providerError ? (
+						<p className="mt-4 text-xs uppercase tracking-widest text-text-muted">
+							{providerError}
+						</p>
+					) : null}
 
 					{providers?.github || providers?.google ? (
 						<>

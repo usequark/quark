@@ -24,6 +24,8 @@ jobs:
 
       - run: pnpm lint
 
+      - run: pnpm standards
+
   test:
     runs-on: ubuntu-latest
     name: Test

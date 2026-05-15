@@ -11,6 +11,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Suspense, useEffect, useState } from "react";
+import { loadAuthProviders } from "../provider-loading";
 
 const ERROR_MESSAGES = {
 	CredentialsSignin: "Invalid email or password.",
@@ -38,18 +39,28 @@ function SignInForm({ allowSignup }) {
 
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
-	const [rememberMe, setRememberMe] = useState(false);
 	const [loading, setLoading] = useState(false);
 	const [providers, setProviders] = useState(null);
+	const [providerError, setProviderError] = useState("");
 	const [error, setError] = useState(
 		errorCode ? (ERROR_MESSAGES[errorCode] ?? ERROR_MESSAGES.Default) : "",
 	);
 
 	useEffect(() => {
-		fetch("/api/auth/providers")
-			.then((r) => r.json())
-			.then(setProviders)
-			.catch(() => {});
+		let cancelled = false;
+
+		void loadAuthProviders().then(({ providers: loadedProviders, error }) => {
+			if (cancelled) {
+				return;
+			}
+
+			setProviders(loadedProviders);
+			setProviderError(error);
+		});
+
+		return () => {
+			cancelled = true;
+		};
 	}, []);
 
 	async function handleSubmit(e) {
@@ -152,22 +163,6 @@ function SignInForm({ allowSignup }) {
 							/>
 						</div>
 
-						<div className="flex items-center gap-2">
-							<input
-								id="remember-me"
-								type="checkbox"
-								className="h-3.5 w-3.5 border border-border bg-surface accent-primary cursor-pointer"
-								checked={rememberMe}
-								onChange={(e) => setRememberMe(e.target.checked)}
-							/>
-							<label
-								htmlFor="remember-me"
-								className="text-xs uppercase tracking-widest text-text-muted cursor-pointer select-none"
-							>
-								Remember me
-							</label>
-						</div>
-
 						<Button
 							type="submit"
 							variant="primary"
@@ -177,6 +172,12 @@ function SignInForm({ allowSignup }) {
 							{loading ? "Signing in…" : "Continue →"}
 						</Button>
 					</form>
+
+					{providerError ? (
+						<p className="mt-4 text-xs uppercase tracking-widest text-text-muted">
+							{providerError}
+						</p>
+					) : null}
 
 					{providers?.github || providers?.google ? (
 						<>

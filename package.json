@@ -11,6 +11,7 @@
 		"lint": "biome format --write && biome check --write",
 		"lint:unsafe": "biome format --write && biome check --write --unsafe",
 		"lint:all": "turbo run lint",
+		"standards": "node scripts/check-standards.mjs",
 		"smoke:published": "node packages/cli/scripts/smoke-published.js",
 		"test": "turbo run test",
 		"test:integration": "pnpm --filter @techstream/quark-web test:integration",

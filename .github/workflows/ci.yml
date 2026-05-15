@@ -29,6 +29,9 @@ jobs:
       - name: Run lint
         run: pnpm lint
 
+      - name: Run standards
+        run: pnpm standards
+
   template-drift:
     name: Template Drift Check
     runs-on: ubuntu-latest

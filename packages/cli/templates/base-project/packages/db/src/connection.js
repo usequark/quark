@@ -1,6 +1,6 @@
 /**
  * Shared connection string builder for PostgreSQL.
- * Used by both the Prisma client (client.js) and Prisma CLI (prisma.config.ts).
+ * Used by both the Prisma client (client.js) and Prisma CLI (prisma.config.js).
  *
  * Priority: DATABASE_URL env var → assembled from POSTGRES_* env vars.
  *

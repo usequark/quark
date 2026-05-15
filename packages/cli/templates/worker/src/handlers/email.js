@@ -10,6 +10,11 @@ import {
 } from "@techstream/quark-core";
 import { prisma } from "@techstream/quark-db";
 import { JOB_NAMES } from "@techstream/quark-jobs";
+import {
+	requireResetPasswordEmailData,
+	requireUserEmailRecord,
+	requireWelcomeEmailUserId,
+} from "./email-job-validation.js";
 
 const emailService = createEmailService();
 
@@ -19,25 +24,20 @@ const emailService = createEmailService();
  * @param {import("@techstream/quark-core").Logger} logger
  */
 export async function handleSendWelcomeEmail(bullJob, logger) {
-	const { userId } = bullJob.data;
-
-	if (!userId) {
-		throw new Error("userId is required for SEND_WELCOME_EMAIL job");
-	}
+	const userId = requireWelcomeEmailUserId(bullJob.data);
 
 	logger.info(`Sending welcome email for user ${userId}`, {
 		job: JOB_NAMES.SEND_WELCOME_EMAIL,
 		userId,
 	});
 
-	const userRecord = await prisma.user.findUnique({
-		where: { id: userId },
-		select: { email: true, name: true },
-	});
-
-	if (!userRecord?.email) {
-		throw new Error(`User ${userId} not found or has no email`);
-	}
+	const userRecord = requireUserEmailRecord(
+		userId,
+		await prisma.user.findUnique({
+			where: { id: userId },
+			select: { email: true, name: true },
+		}),
+	);
 
 	const template = welcomeEmail({
 		name: userRecord.name,
@@ -63,27 +63,20 @@ export async function handleSendWelcomeEmail(bullJob, logger) {
  * @param {import("@techstream/quark-core").Logger} logger
  */
 export async function handleSendResetPasswordEmail(bullJob, logger) {
-	const { userId, resetUrl } = bullJob.data;
-
-	if (!userId || !resetUrl) {
-		throw new Error(
-			"userId and resetUrl are required for SEND_RESET_PASSWORD_EMAIL job",
-		);
-	}
+	const { userId, resetUrl } = requireResetPasswordEmailData(bullJob.data);
 
 	logger.info(`Sending password reset email for user ${userId}`, {
 		job: JOB_NAMES.SEND_RESET_PASSWORD_EMAIL,
 		userId,
 	});
 
-	const userRecord = await prisma.user.findUnique({
-		where: { id: userId },
-		select: { email: true, name: true },
-	});
-
-	if (!userRecord?.email) {
-		throw new Error(`User ${userId} not found or has no email`);
-	}
+	const userRecord = requireUserEmailRecord(
+		userId,
+		await prisma.user.findUnique({
+			where: { id: userId },
+			select: { email: true, name: true },
+		}),
+	);
 
 	const template = passwordResetEmail({
 		name: userRecord.name,

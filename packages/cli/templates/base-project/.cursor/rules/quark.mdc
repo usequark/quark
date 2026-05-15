@@ -13,10 +13,10 @@ Scaffolded: __QUARK_SCAFFOLD_DATE__
 ## Non-Negotiable Rules
 
 1. **ESM only.** Always `import`/`export`. Never `require()` or `module.exports`.
-2. **No TypeScript.** Plain `.js` and `.jsx` files only — no `.ts`, `.tsx`, or type annotations.
+2. **No authored TypeScript.** Plain `.js` and `.jsx` files only — no repo-authored `.ts`, `.tsx`, or type annotations. Generated code is the only exception.
 3. **Validate everything at boundaries.** Server Actions and API routes must use Zod. No raw `req.body` access without parsing.
-4. **Use AppError — not Error.** Throw `AppError` / `ValidationError` / `NotFoundError` from `@techstream/quark-core/errors`. Never `throw new Error()` in application code.
-5. **Log — never console.** Use `createLogger(name)` from `@techstream/quark-core`. Zero `console.log` / `console.error` in non-test code.
+4. **Use AppError at runtime boundaries.** Throw `AppError` / `ValidationError` / `NotFoundError` from `@techstream/quark-core/errors` in application/runtime code. Native `Error` is reserved for library, bootstrap, CLI, and test code.
+5. **Log with createLogger in runtime code.** Use `createLogger(name)` from `@techstream/quark-core` for application/runtime code. Console output is reserved for bootstrap, CLI, and test code.
 6. **DB models always have timestamps.** Every Prisma model: `createdAt DateTime @default(now())` + `updatedAt DateTime @updatedAt`.
 7. **Workspace import scope.** Use `@__QUARK_SCOPE__/*` for local packages. Never `@techstream/quark-db`, `@techstream/quark-config`, etc.
 8. **Co-located tests.** `feature.test.js` lives next to `feature.js`. Tests use `node --test` — no Jest, no Vitest.

@@ -8,6 +8,8 @@ import { ValidationError } from "@techstream/quark-core";
 import { z } from "zod";
 
 const RESERVED_PAGE_SLUGS = new Set(["admin", "api", "auth", "playground"]);
+const EMPTY_GENERATED_SLUG_MESSAGE =
+	"Add a custom slug when the title cannot be converted into a URL path";
 
 function getStringValue(value) {
 	return typeof value === "string" ? value : "";
@@ -23,6 +25,9 @@ export function assertPageSlugAllowed(slug) {
 export function resolvePageSlugCandidate({ title, slug }) {
 	const candidate =
 		getStringValue(slug).trim() || generateSlug(getStringValue(title));
+	if (!candidate) {
+		throw new ValidationError(EMPTY_GENERATED_SLUG_MESSAGE);
+	}
 	assertPageSlugAllowed(candidate);
 	return candidate;
 }

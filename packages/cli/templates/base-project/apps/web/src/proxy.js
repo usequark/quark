@@ -13,7 +13,7 @@
 import { getAllowedOrigins } from "@techstream/quark-config/app-url";
 import { NextResponse } from "next/server";
 
-import { getUmamiCspOrigins } from "./lib/analytics/umami-config.js";
+import { buildContentSecurityPolicy } from "./lib/analytics/umami-csp.js";
 import { getProxyToken, getRateLimitBucket } from "./lib/proxy-auth";
 
 // ─── 1. Admin route guard ────────────────────────────────────────────────────
@@ -148,21 +148,6 @@ const CORS_CONFIG = {
  * evaluation. 'unsafe-eval' is therefore added to script-src only when
  * NODE_ENV is not 'production' — it must never reach a production build.
  */
-const _scriptSrc = [
-	"script-src",
-	"'self'",
-	"'unsafe-inline'",
-	...(process.env.NODE_ENV !== "production" ? ["'unsafe-eval'"] : []),
-	...getUmamiCspOrigins().scriptSrc,
-].join(" ");
-
-const _connectSrc = [
-	"connect-src",
-	"'self'",
-	...(process.env.NODE_ENV !== "production" ? ["ws:", "wss:"] : []),
-	...getUmamiCspOrigins().connectSrc,
-].join(" ");
-
 const SECURITY_HEADERS = {
 	"X-DNS-Prefetch-Control": "on",
 	"Strict-Transport-Security": "max-age=63072000; includeSubDomains",
@@ -170,7 +155,7 @@ const SECURITY_HEADERS = {
 	"X-Content-Type-Options": "nosniff",
 	"Referrer-Policy": "strict-origin-when-cross-origin",
 	"Permissions-Policy": "camera=(), microphone=(), geolocation=()",
-	"Content-Security-Policy": `default-src 'self'; ${_scriptSrc}; ${_connectSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self';`,
+	"Content-Security-Policy": buildContentSecurityPolicy(),
 };
 
 /**

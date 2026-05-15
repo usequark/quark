@@ -5,9 +5,9 @@
 ## Non-Negotiable Rules
 
 - **ESM only** — `import`/`export` everywhere. Never `require()` or `module.exports`.
-- **No TypeScript** — `.js` and `.jsx` files only. No `.ts`, `.tsx`, type annotations, or `tsconfig`.
-- **No `throw new Error()`** — use `AppError` / `ValidationError` from `@techstream/quark-core/errors`.
-- **No `console.log/error`** — use `createLogger(name)` from `@techstream/quark-core`.
+- **No authored TypeScript** — `.js` and `.jsx` files only. Generated code may emit typed artifacts, but repo code should not add `.ts`, `.tsx`, type annotations, or `tsconfig`.
+- **No `throw new Error()` in app/runtime code** — use `AppError` / `ValidationError` from `@techstream/quark-core/errors`. Native `Error` is reserved for library, bootstrap, CLI, and test code.
+- **No `console.log/error` in app/runtime code** — use `createLogger(name)` from `@techstream/quark-core`. Console output is reserved for bootstrap, CLI, and test code.
 - **Zod required** — all Server Actions and API routes must validate with Zod. No exceptions.
 - **Biome only** — no ESLint, no Prettier. Run `pnpm lint` to check.
 - **DB models** — every Prisma model must include `createdAt DateTime @default(now())` and `updatedAt DateTime @updatedAt`.

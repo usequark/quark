@@ -50,11 +50,12 @@ __QUARK_OPTIONAL_PACKAGES__├── docker-compose.yml
 ## Coding Conventions
 
 - **ESM only** — use `import`/`export`, never `require`.
-- **No TypeScript** — plain `.js` and `.jsx` files.
+- **No authored TypeScript** — plain `.js` and `.jsx` files. Generated code may emit typed artifacts, but project code should not add `.ts` or `.tsx` sources.
 - **Imports:** Use `@techstream/quark-core` for published utilities. Use `@__QUARK_SCOPE__/*` for local packages (db, config, ui, jobs).
 - **Tests:** Co-located `*.test.js` files, run with `node --test`.
 - **Validation:** Zod schemas for all Server Actions and API routes.
-- **Errors:** Use `AppError` / `ValidationError` from `@techstream/quark-core/errors`.
+- **Errors:** Use `AppError` / `ValidationError` from `@techstream/quark-core/errors` in app/runtime code. Native `Error` is acceptable in library, bootstrap, CLI, and test code.
+- **Logging:** Use `createLogger(name)` from `@techstream/quark-core` in app/runtime code. Console output is acceptable in bootstrap, CLI, and test code.
 - **Database models:** Always include `createdAt`/`updatedAt`.
 - **Environment:** All env vars validated in `packages/config/src/validate-env.js`.
 - **Analytics:** Optional Umami support lives in `apps/web/src/lib/analytics/*`. The public env contract uses only `NEXT_PUBLIC_UMAMI_URL`, `NEXT_PUBLIC_UMAMI_WEBSITE_ID`, and `NEXT_PUBLIC_UMAMI_REPLAY_ENABLED`; replay uses a local rrweb recorder.

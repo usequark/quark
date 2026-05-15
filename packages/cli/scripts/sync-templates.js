@@ -191,8 +191,8 @@ const TRANSFORMS = {
 	"worker/package.json": transformWorkerPackageJson,
 	// DB: remove private flag for scaffold context
 	"base-project/packages/db/package.json": transformDbPackageJson,
-	// DB: prisma.config.ts uses simple defaults for new projects
-	"base-project/packages/db/prisma.config.ts": transformPrismaConfig,
+	// DB: prisma.config.js uses simple defaults for new projects
+	"base-project/packages/db/prisma.config.js": transformPrismaConfig,
 	// Optional packages: use @myquark placeholder scope
 	"config/package.json": transformOptionalPackageJson,
 	"ui/package.json": transformOptionalPackageJson,

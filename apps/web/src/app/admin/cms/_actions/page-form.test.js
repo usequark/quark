@@ -100,3 +100,23 @@ test("resolvePageSlugCandidate rejects reserved generated slugs", () => {
 			error.message === "Slug is reserved for an existing route",
 	);
 });
+
+test("resolvePageSlugCandidate rejects punctuation-only generated slugs", () => {
+	assert.throws(
+		() => resolvePageSlugCandidate({ title: "!!!", slug: "" }),
+		(error) =>
+			error instanceof ValidationError &&
+			error.message ===
+				"Add a custom slug when the title cannot be converted into a URL path",
+	);
+});
+
+test("resolvePageSlugCandidate rejects unicode-only generated slugs", () => {
+	assert.throws(
+		() => resolvePageSlugCandidate({ title: "\u4F60\u597D", slug: "" }),
+		(error) =>
+			error instanceof ValidationError &&
+			error.message ===
+				"Add a custom slug when the title cannot be converted into a URL path",
+	);
+});

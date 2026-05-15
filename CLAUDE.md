@@ -50,11 +50,11 @@ quark/
 ## Coding Conventions
 
 - **ESM only** — `import`/`export`. Never `require()` or `module.exports`.
-- **No TypeScript** — `.js` and `.jsx` files only.
+- **No authored TypeScript** — `.js` and `.jsx` files only. Generated code may emit typed artifacts, but repo code should not add `.ts` or `.tsx` sources.
 - **Linting** — Biome for all formatting and linting. No ESLint, no Prettier.
 - **Validation** — Zod for all Server Actions and API routes. No exceptions.
-- **Errors** — `AppError` / `ValidationError` from `@techstream/quark-core/errors`. Never `throw new Error()` in app code.
-- **Logging** — `createLogger(name)` from `@techstream/quark-core`. Never `console.log` or `console.error` in production code.
+- **Errors** — `AppError` / `ValidationError` from `@techstream/quark-core/errors` in app/runtime code. Native `Error` is acceptable in library, bootstrap, CLI, and test code.
+- **Logging** — `createLogger(name)` from `@techstream/quark-core` in app/runtime code. Console output is acceptable in bootstrap, CLI, and test code.
 - **Metrics** — `metrics` singleton from `@techstream/quark-core` for counters, gauges, histograms.
 - **DB models** — Always include `createdAt DateTime @default(now())` and `updatedAt DateTime @updatedAt` on every Prisma model.
 - **Tests** — Co-located `*.test.js` files, run with `node --test`. Postgres + Redis required.

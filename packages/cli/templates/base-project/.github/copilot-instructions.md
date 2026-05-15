@@ -14,10 +14,10 @@
 ## Non-Negotiable Rules
 
 - **ESM only** — `import`/`export` everywhere. Never `require()`.
-- **No TypeScript** — `.js` and `.jsx` only.
+- **No authored TypeScript** — `.js` and `.jsx` only. Generated code may emit typed artifacts, but project code should not add `.ts` or `.tsx` sources.
 - **Validate at every boundary** — Zod schemas on all Server Actions and API routes.
-- **Errors** — `AppError` / `ValidationError` from `@techstream/quark-core/errors`. Never `throw new Error()`.
-- **Logging** — `createLogger(name)` from `@techstream/quark-core`. No `console.log` in production code.
+- **Errors** — `AppError` / `ValidationError` from `@techstream/quark-core/errors` in app/runtime code. Native `Error` is acceptable in library, bootstrap, CLI, and test code.
+- **Logging** — `createLogger(name)` from `@techstream/quark-core` in app/runtime code. Console output is acceptable in bootstrap, CLI, and test code.
 - **DB models** — Always add `createdAt` and `updatedAt` to every Prisma model.
 - **Workspace imports** — Use `@__QUARK_SCOPE__/*` for local packages (`db`, `config`, `ui`, `jobs`). Never `@techstream/quark-db` etc.
 - **Tests** — Co-located `*.test.js`, run with `node --test`.
