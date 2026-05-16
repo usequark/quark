@@ -35,6 +35,12 @@ npx @techstream/quark-create-app update
 
 # Check for available updates without applying them
 npx @techstream/quark-create-app update --check
+
+# Report drift in scaffold-managed files without overwriting anything
+npx @techstream/quark-create-app update --scaffold-check
+
+# Fail CI when scaffold drift is detected
+npx @techstream/quark-create-app update --scaffold-check --fail-on-drift
 ```
 
 Aliases:
@@ -110,6 +116,8 @@ npx @techstream/quark-create-app my-app \
 
 - **Update Quark packages**: `quark-update` or `pnpm update @techstream/quark-*`
 - **Check for updates**: `quark-update --check`
+- **Review scaffold drift**: `quark-update --scaffold-check`
+- **Fail CI on scaffold drift**: `quark-update --scaffold-check --fail-on-drift`
 - **Configure environment**: Edit `.env` file (see `.env.example`)
 
 ## CLI Testing

@@ -21,8 +21,7 @@ This is a Quark-based full-stack JavaScript application.
 __QUARK_PROJECT_NAME__/
 ├── apps/
 │   ├── web/          # Next.js (App Router, Server Actions)
-│   └── worker/       # BullMQ background worker
-├── packages/
+__QUARK_OPTIONAL_APPS__├── packages/
 │   ├── db/           # Prisma schema, client, queries
 │   ├── config/       # Environment validation & shared config
 __QUARK_OPTIONAL_PACKAGES__├── docker-compose.yml

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import crypto from "node:crypto";
 import net from "node:net";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import chalk from "chalk";
@@ -13,6 +14,8 @@ import { formatProjectDisplayName } from "./utils.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const templatesDir = path.join(__dirname, "../templates");
 const pkg = await fs.readJSON(path.join(__dirname, "../package.json"));
+const REQUIRED_PACKAGES = ["db", "config"];
+const SCAFFOLD_CHECK_IGNORED_FILES = new Set([".env", ".quark-link.json"]);
 
 const program = new Command();
 
@@ -208,6 +211,82 @@ function getPairedTemplatesForFeatures(features) {
 	}
 
 	return pairs;
+}
+
+function buildFeatureRows(features) {
+	const rows = {
+		ui: "| UI package | Included | `packages/ui/README.md` |",
+		jobs: "| Jobs + worker | Included | `packages/jobs/README.md`, `apps/worker/src/handlers/` |",
+		admin:
+			"| Admin panel | Included | `packages/admin/README.md`, `apps/web/src/app/admin/` |",
+		cms: "| CMS | Included | `packages/cms/README.md`, `apps/web/src/app/admin/cms/` |",
+	};
+
+	const selectedRows = features
+		.filter((feature) => rows[feature])
+		.map((feature) => rows[feature]);
+
+	if (selectedRows.length === 0) {
+		return "| Optional scaffolded features | None selected yet | Add one later with `npx @techstream/quark-create-app add <feature>` |";
+	}
+
+	return selectedRows.join("\n");
+}
+
+function buildOptionalAppLines(features) {
+	if (!features.includes("jobs")) {
+		return "";
+	}
+
+	return "│   └── worker/               # BullMQ background worker\n";
+}
+
+function buildFirstEditLines(features) {
+	const lines = {
+		ui: "- `packages/ui/src/` - adjust primitives or add app-specific UI components",
+		jobs: "- `packages/jobs/src/definitions.js` and `apps/worker/src/handlers/` - define and process background jobs",
+		admin:
+			"- `packages/admin/src/config.js` and `apps/web/src/app/admin/` - tune model labels, hidden fields, and admin pages",
+		cms: "- `packages/cms/src/config.js` and `apps/web/src/app/admin/cms/` - choose managed content types and editorial flows",
+	};
+
+	const selectedLines = features
+		.filter((feature) => lines[feature])
+		.map((feature) => lines[feature]);
+
+	if (selectedLines.length === 0) {
+		return "- No optional scaffolded packages were selected yet. Add one later when the product needs it.";
+	}
+
+	return selectedLines.join("\n");
+}
+
+function buildFeatureGuideLines(features) {
+	const lines = {
+		ui: "- `packages/ui/README.md` - component catalog, import rules, and extension notes",
+		jobs: "- `packages/jobs/README.md` - queue names, worker pairing, and the job-extension workflow",
+		admin:
+			"- `packages/admin/README.md` - admin configuration, model overrides, and route ownership",
+		cms: "- `packages/cms/README.md` - content types, media rules, and CMS/admin boundaries",
+	};
+
+	const selectedLines = features
+		.filter((feature) => lines[feature])
+		.map((feature) => lines[feature]);
+
+	if (selectedLines.length === 0) {
+		return "- No optional package guides are present yet. Start with `packages/db` and `apps/web`.";
+	}
+
+	return selectedLines.join("\n");
+}
+
+function normalizeScaffoldDate(scaffoldedDate) {
+	return (scaffoldedDate || new Date().toISOString()).split("T")[0];
+}
+
+function formatFeatureSummary(features) {
+	return features.length > 0 ? features.join(", ") : "none";
 }
 
 /**
@@ -501,8 +580,7 @@ program
 			console.log(chalk.cyan("\n  📦 Setting up required packages..."));
 
 			// Database and config packages are always required
-			const requiredPackages = ["db", "config"];
-			for (const reqPkg of requiredPackages) {
+			for (const reqPkg of REQUIRED_PACKAGES) {
 				const pkgDir = path.join(targetDir, "packages", reqPkg);
 				// db is already copied from base-project; config needs to be copied from its template
 				if (!(await fs.pathExists(pkgDir))) {
@@ -530,7 +608,7 @@ program
 
 			// Step 5: Ask which optional features to eject
 			let features;
-			if (!options.prompts && options.features) {
+			if (!options.prompts && options.features !== undefined) {
 				// Parse features from CLI flag
 				console.log(chalk.cyan("\n  🎯 Configuring optional features..."));
 				const validFeatures = Object.keys(FEATURE_META);
@@ -758,7 +836,7 @@ program
 					? [path.join(targetDir, "apps", "worker", "package.json")]
 					: []),
 				// Also update cross-dependencies in scaffolded packages (e.g. db → config)
-				...[...requiredPackages, ...scaffoldPackages].map((pkg) =>
+				...[...REQUIRED_PACKAGES, ...scaffoldPackages].map((pkg) =>
 					path.join(targetDir, "packages", pkg, "package.json"),
 				),
 			];
@@ -1083,11 +1161,14 @@ STORAGE_PROVIDER=local
 			);
 
 			// Step 11: Create .quark-link.json to track Quark version
+			const scaffoldedAt =
+				process.env.QUARK_SCAFFOLD_DATE || new Date().toISOString();
 			const quarkLinkJson = {
 				quarkVersion: process.env.QUARK_VERSION || "latest",
 				quarkSourcePath: process.env.QUARK_SOURCE_PATH || "../../quark",
-				scaffoldedDate: new Date().toISOString(),
-				requiredPackages: ["db", "config"],
+				scaffoldedDate: scaffoldedAt,
+				projectName,
+				requiredPackages: REQUIRED_PACKAGES,
 				packages: features,
 				authAllowSignup: allowSignup,
 				// Track that worker is paired with jobs (not independently selectable)
@@ -1103,7 +1184,7 @@ STORAGE_PROVIDER=local
 			console.log(chalk.cyan("\n  🤖 Generating AI context files..."));
 
 			// Build shared variable map (used by SKILL.md, CLAUDE.md, .cursor/rules, copilot-instructions)
-			const scaffoldDate = new Date().toISOString().split("T")[0];
+			const scaffoldDate = normalizeScaffoldDate(scaffoldedAt);
 			const optionalLines = scaffoldPackages
 				.map((f) => {
 					const labels = {
@@ -1115,7 +1196,11 @@ STORAGE_PROVIDER=local
 					return `│   ├── ${f}/           # ${labels[f] || f}`;
 				})
 				.join("\n");
+			const optionalAppLines = buildOptionalAppLines(features);
 			const optionalBlock = optionalLines ? `${optionalLines}\n` : "";
+			const featureRows = buildFeatureRows(features);
+			const firstEditLines = buildFirstEditLines(features);
+			const featureGuideLines = buildFeatureGuideLines(features);
 
 			// Step 10b: Substitute variables in project-context SKILL.md
 			const skillPath = path.join(
@@ -1131,7 +1216,11 @@ STORAGE_PROVIDER=local
 					.replace(/__QUARK_SCOPE__/g, scope)
 					.replace(/__QUARK_PROJECT_NAME__/g, projectName)
 					.replace(/__QUARK_SCAFFOLD_DATE__/g, scaffoldDate)
-					.replace(/__QUARK_OPTIONAL_PACKAGES__/g, optionalBlock);
+					.replace(/__QUARK_OPTIONAL_APPS__/g, optionalAppLines)
+					.replace(/__QUARK_OPTIONAL_PACKAGES__/g, optionalBlock)
+					.replace(/__QUARK_FEATURE_ROWS__/g, featureRows)
+					.replace(/__QUARK_FIRST_EDITS__/g, firstEditLines)
+					.replace(/__QUARK_FEATURE_GUIDES__/g, featureGuideLines);
 				await fs.writeFile(skillPath, skillContent);
 				console.log(
 					chalk.green(`    ✓ .github/skills/project-context/SKILL.md`),
@@ -1144,6 +1233,7 @@ STORAGE_PROVIDER=local
 				"CLAUDE.md",
 				".cursor/rules/quark.mdc",
 				".github/copilot-instructions.md",
+				"docs/adr/README.md",
 			];
 			for (const relPath of aiContextFiles) {
 				const filePath = path.join(targetDir, relPath);
@@ -1153,17 +1243,25 @@ STORAGE_PROVIDER=local
 						.replace(/__QUARK_SCOPE__/g, scope)
 						.replace(/__QUARK_PROJECT_NAME__/g, projectName)
 						.replace(/__QUARK_SCAFFOLD_DATE__/g, scaffoldDate)
-						.replace(/__QUARK_OPTIONAL_PACKAGES__/g, optionalBlock);
+						.replace(/__QUARK_OPTIONAL_APPS__/g, optionalAppLines)
+						.replace(/__QUARK_OPTIONAL_PACKAGES__/g, optionalBlock)
+						.replace(/__QUARK_FEATURE_ROWS__/g, featureRows)
+						.replace(/__QUARK_FIRST_EDITS__/g, firstEditLines)
+						.replace(/__QUARK_FEATURE_GUIDES__/g, featureGuideLines);
 					await fs.writeFile(filePath, content);
 					console.log(chalk.green(`    ✓ ${relPath}`));
 				}
 			}
 
 			// Step 11: Initialize git repository
-			console.log(chalk.cyan("\n  📝 Initializing git repository..."));
-			const gitInitialized = await initializeGit(targetDir);
-			if (gitInitialized) {
-				console.log(chalk.green(`    ✓ Git initialized with initial commit`));
+			if (process.env.QUARK_SKIP_GIT_INIT === "true") {
+				console.log(chalk.dim("\n  · Skipping git initialization"));
+			} else {
+				console.log(chalk.cyan("\n  📝 Initializing git repository..."));
+				const gitInitialized = await initializeGit(targetDir);
+				if (gitInitialized) {
+					console.log(chalk.green(`    ✓ Git initialized with initial commit`));
+				}
 			}
 
 			// Step 12: Run pnpm install
@@ -1340,6 +1438,222 @@ async function detectInstalledFeatures(projectDir) {
 		}
 	}
 	return installed;
+}
+
+async function collectRelativeFilePaths(
+	rootDir,
+	currentDir = rootDir,
+	results = [],
+) {
+	const entries = await fs.readdir(currentDir, { withFileTypes: true });
+
+	for (const entry of entries) {
+		if (entry.name === ".git" || entry.name === "node_modules") {
+			continue;
+		}
+
+		const fullPath = path.join(currentDir, entry.name);
+		const relativePath = path.relative(rootDir, fullPath);
+
+		if (entry.isDirectory()) {
+			await collectRelativeFilePaths(rootDir, fullPath, results);
+			continue;
+		}
+
+		if (entry.isFile() && !SCAFFOLD_CHECK_IGNORED_FILES.has(relativePath)) {
+			results.push(relativePath);
+		}
+	}
+
+	return results.sort();
+}
+
+async function compareScaffoldManagedFiles(expectedDir, projectDir) {
+	const expectedFiles = await collectRelativeFilePaths(expectedDir);
+	const changed = [];
+	const missing = [];
+
+	for (const relativePath of expectedFiles) {
+		const expectedPath = path.join(expectedDir, relativePath);
+		const projectPath = path.join(projectDir, relativePath);
+
+		if (!(await fs.pathExists(projectPath))) {
+			missing.push(relativePath);
+			continue;
+		}
+
+		const projectStat = await fs.stat(projectPath);
+		if (!projectStat.isFile()) {
+			changed.push(relativePath);
+			continue;
+		}
+
+		const [expectedContent, projectContent] = await Promise.all([
+			fs.readFile(expectedPath),
+			fs.readFile(projectPath),
+		]);
+
+		if (!expectedContent.equals(projectContent)) {
+			changed.push(relativePath);
+		}
+	}
+
+	return {
+		total: expectedFiles.length,
+		changed,
+		missing,
+	};
+}
+
+async function createReferenceScaffold(projectDir, quarkLink) {
+	const projectName = quarkLink.projectName || path.basename(projectDir);
+	const linkedFeatures = resolveFeatureSelection(
+		Array.isArray(quarkLink.packages) ? quarkLink.packages : [],
+	);
+	const detectedFeatures = resolveFeatureSelection(
+		await detectInstalledFeatures(projectDir),
+	);
+	const comparisonFeatures = resolveFeatureSelection([
+		...linkedFeatures,
+		...detectedFeatures,
+	]);
+	const allowSignup =
+		typeof quarkLink.authAllowSignup === "boolean"
+			? quarkLink.authAllowSignup
+			: true;
+	const tempRoot = await fs.mkdtemp(
+		path.join(os.tmpdir(), "quark-scaffold-check-"),
+	);
+	const args = [
+		path.join(__dirname, "index.js"),
+		projectName,
+		"--no-prompts",
+		"--skip-install",
+		"--skip-docker",
+		"--features",
+		comparisonFeatures.join(","),
+		"--signup",
+		allowSignup ? "enabled" : "disabled",
+	];
+
+	try {
+		await execa(process.execPath, args, {
+			cwd: tempRoot,
+			env: {
+				...process.env,
+				QUARK_SCAFFOLD_DATE:
+					quarkLink.scaffoldedDate || new Date().toISOString(),
+				QUARK_SKIP_GIT_INIT: "true",
+			},
+			stdio: "pipe",
+		});
+	} catch (error) {
+		const details = error.stderr || error.stdout || error.shortMessage;
+		await fs.remove(tempRoot);
+		throw new Error(
+			details
+				? `Could not generate the reference scaffold.\n${details}`
+				: "Could not generate the reference scaffold.",
+		);
+	}
+
+	return {
+		tempRoot,
+		expectedDir: path.join(tempRoot, projectName),
+		linkedFeatures,
+		detectedFeatures,
+		comparisonFeatures,
+	};
+}
+
+async function reportScaffoldDrift(projectDir, quarkLink) {
+	console.log(chalk.yellow("Checking scaffold-managed files...\n"));
+
+	const {
+		tempRoot,
+		expectedDir,
+		linkedFeatures,
+		detectedFeatures,
+		comparisonFeatures,
+	} = await createReferenceScaffold(projectDir, quarkLink);
+
+	try {
+		const { total, changed, missing } = await compareScaffoldManagedFiles(
+			expectedDir,
+			projectDir,
+		);
+		const linkedOnly = linkedFeatures.filter(
+			(feature) => !detectedFeatures.includes(feature),
+		);
+		const detectedOnly = detectedFeatures.filter(
+			(feature) => !linkedFeatures.includes(feature),
+		);
+
+		console.log(
+			chalk.cyan(`Recorded features: ${formatFeatureSummary(linkedFeatures)}`),
+		);
+		console.log(
+			chalk.cyan(
+				`Detected features: ${formatFeatureSummary(detectedFeatures)}`,
+			),
+		);
+		console.log(
+			chalk.cyan(
+				`Compared against: ${formatFeatureSummary(comparisonFeatures)}`,
+			),
+		);
+		console.log(chalk.cyan(`Managed files:    ${total}`));
+
+		if (linkedOnly.length > 0 || detectedOnly.length > 0) {
+			console.log(
+				chalk.yellow(
+					"\n  ℹ .quark-link.json and installed feature directories differ; this report used the union.",
+				),
+			);
+		}
+
+		if (changed.length === 0 && missing.length === 0) {
+			console.log(
+				chalk.green(
+					"\n  ✓ No scaffold drift detected. This report is read-only.\n",
+				),
+			);
+			return { total, changed, missing };
+		}
+
+		console.log(
+			chalk.yellow(
+				`\n⚠️  Scaffold drift detected in ${changed.length + missing.length} file(s).\n`,
+			),
+		);
+
+		if (changed.length > 0) {
+			console.log(chalk.yellow(`Changed files (${changed.length}):`));
+			for (const relativePath of changed) {
+				console.log(chalk.white(`  - ${relativePath}`));
+			}
+		}
+
+		if (missing.length > 0) {
+			if (changed.length > 0) {
+				console.log("");
+			}
+			console.log(chalk.yellow(`Missing scaffold files (${missing.length}):`));
+			for (const relativePath of missing) {
+				console.log(chalk.white(`  - ${relativePath}`));
+			}
+		}
+
+		console.log(
+			chalk.dim(
+				"\n  This command only reports scaffold drift. It does not overwrite project files.\n",
+			),
+		);
+
+		return { total, changed, missing };
+	} finally {
+		await fs.remove(tempRoot);
+	}
 }
 
 /**
@@ -1736,9 +2050,24 @@ program
 	.command("update")
 	.description("Update Quark packages in the current project")
 	.option("--check", "Check for updates without applying")
+	.option(
+		"--scaffold-check",
+		"Report drift in scaffold-managed files without applying changes",
+	)
+	.option(
+		"--fail-on-drift",
+		"Exit with status 1 when scaffold drift is detected (use with --scaffold-check)",
+	)
 	.option("--force", "Skip safety checks")
 	.action(async (options) => {
 		console.log(chalk.blue.bold(`\n🔄 Quark Package Update\n`));
+
+		if (options.failOnDrift && !options.scaffoldCheck) {
+			console.error(
+				chalk.red("✗ --fail-on-drift requires --scaffold-check.\n"),
+			);
+			process.exit(1);
+		}
 
 		// Check if .quark-link.json exists
 		const quarkLinkPath = path.join(process.cwd(), ".quark-link.json");
@@ -1795,6 +2124,24 @@ program
 			} else {
 				console.log(chalk.dim("\n  Nothing to update.\n"));
 			}
+		}
+
+		if (options.scaffoldCheck) {
+			const scaffoldReport = await reportScaffoldDrift(
+				process.cwd(),
+				quarkLink,
+			);
+			const hasDrift =
+				scaffoldReport.changed.length > 0 || scaffoldReport.missing.length > 0;
+			if (options.failOnDrift && hasDrift) {
+				console.error(
+					chalk.red("✗ Drift detected and --fail-on-drift was set.\n"),
+				);
+				process.exitCode = 1;
+			}
+		}
+
+		if (options.check || options.scaffoldCheck) {
 			return;
 		}
 

@@ -62,6 +62,28 @@ pnpm dev
 
 ---
 
+## Start Here
+
+- **[Start Here](./docs/START_HERE.md)** - the current onboarding path for creating, running, and learning a Quark project
+- **[First Feature Guide](./docs/FIRST_FEATURE.md)** - add your first domain model, query helper, and page without reverse-engineering the scaffold
+- **[Documentation Index](./docs/INDEX.md)** - the full map of reference docs, feature guides, and planning docs
+
+---
+
+## Available in Quark Today
+
+| Capability | Status | Where to start |
+|---|---|---|
+| Core runtime (`@techstream/quark-core`) | **Available now** | `packages/core/`, [Architecture](./docs/ARCHITECTURE.md) |
+| UI package (`ui`) | **Optional scaffold** | `packages/ui/README.md` |
+| Jobs + worker (`jobs`) | **Optional scaffold** | `packages/jobs/README.md`, `apps/worker/README.md` |
+| Admin panel (`admin`) | **Optional scaffold** | `packages/admin/README.md` |
+| CMS (`cms`) | **Optional scaffold** | `packages/cms/README.md` |
+| AI project context | **Included in every scaffold** | `CLAUDE.md`, `.github/copilot-instructions.md`, `.github/skills/project-context/SKILL.md` |
+| `@techstream/quark-ai` | **Planned** | `PLAN_SUMMARY.md`, `docs/ROADMAP.md` |
+
+---
+
 ## Security Features
 
 Quark includes production-ready security features:
@@ -100,6 +122,8 @@ To update infrastructure in a project:
 
 ```bash
 pnpm update @techstream/quark-core
+npx @techstream/quark-create-app update --scaffold-check
+npx @techstream/quark-create-app update --scaffold-check --fail-on-drift
 ```
 
 ---
@@ -160,6 +184,8 @@ pnpm changeset --empty
 
 ## Documentation
 
+- **[Start Here](./docs/START_HERE.md)** - Current onboarding path for new Quark projects
+- **[First Feature Guide](./docs/FIRST_FEATURE.md)** - End-to-end walkthrough for adding a real domain feature
 - **[Documentation Index](./docs/INDEX.md)** - Start here to navigate all documentation
 - **[Developer Guide](./copilot-instructions.md)** - Setup, conventions, and workflows
 - **[Architecture](./docs/ARCHITECTURE.md)** - Core design patterns and inheritance model

@@ -2,16 +2,50 @@
 
 Scaffolded with [Quark](https://github.com/Bobnoddle/quark) on __QUARK_SCAFFOLD_DATE__.
 
+## Start Here
+
+- `docs/START_HERE.md` - current onboarding path for this project
+- `docs/FIRST_FEATURE.md` - add your first domain model, query helper, and page
+- `CLAUDE.md` - AI tool context for Claude Code, Cursor, Copilot, and others
+
 ## Local Development
 
 ```bash
 docker compose up -d   # Start PostgreSQL, Redis, Mailpit
 pnpm install           # Install dependencies
 pnpm db:migrate        # Apply migrations
-pnpm dev               # Start web + worker
+pnpm dev               # Start the app (and worker, if included)
 ```
 
 Open [http://localhost:3000](http://localhost:3000)
+
+## Included in This Project
+
+| Area | Status | Where to start |
+|---|---|---|
+| Web app | Included | `apps/web/src/app/` |
+| Database | Included | `packages/db/prisma/schema.prisma` |
+| Config | Included | `packages/config/src/load-config.js` |
+__QUARK_FEATURE_ROWS__
+
+Optional features can be added later with:
+
+```bash
+npx @techstream/quark-create-app add <feature>
+```
+
+## First Files to Edit
+
+- `packages/db/prisma/schema.prisma` - add your domain models
+- `packages/db/src/queries.js` - add reusable query helpers
+- `apps/web/src/app/` - build pages, Server Actions, and route handlers
+__QUARK_FIRST_EDITS__
+
+## Feature Guides
+
+- `docs/FIRST_FEATURE.md` - the best first walkthrough for product work
+- `packages/db/src/queries.js` - the canonical place for reusable data access
+__QUARK_FEATURE_GUIDES__
 
 ## Database
 
@@ -29,6 +63,8 @@ Open [http://localhost:3000](http://localhost:3000)
 pnpm build    # Build all packages
 pnpm test     # Run all tests (requires Docker)
 pnpm lint     # Lint + format check (Biome)
+npx @techstream/quark-create-app update --scaffold-check                 # Review scaffold-managed drift
+npx @techstream/quark-create-app update --scaffold-check --fail-on-drift # CI-friendly drift check
 ```
 
 ## Launch
@@ -69,7 +105,7 @@ Railway auto-deploys on every push to `main`. Migrations run automatically befor
 
 ## AI-Assisted Development
 
-This project ships with pre-loaded context for Claude Code, Cursor, GitHub Copilot, and others — see `CLAUDE.md` for the full reference.
+This project ships with pre-loaded context for Claude Code, Cursor, GitHub Copilot, and others - see `CLAUDE.md` for the full reference.
 
 **Suggested first prompt:**
 
@@ -88,8 +124,7 @@ Replace that bracketed description with what you're actually building, and the A
 __QUARK_PROJECT_NAME__/
 ├── apps/
 │   ├── web/         # Next.js 16 (App Router, Server Actions)
-│   └── worker/      # BullMQ background worker
-├── packages/
+__QUARK_OPTIONAL_APPS__├── packages/
 │   ├── db/          # Prisma schema + query helpers
 │   └── config/      # Environment validation
 ├── docker-compose.yml
