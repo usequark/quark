@@ -6,8 +6,8 @@
 	"main": "index.js",
 	"scripts": {
 		"clean": "turbo run clean && rm -rf .turbo",
-		"build": "turbo run build",
-		"dev": "dotenv -- turbo run dev",
+		"build": "dotenv -- turbo run build",
+		"dev": "dotenv -- node scripts/dev-preflight.mjs && dotenv -- turbo run dev",
 		"lint": "biome format --write && biome check --write",
 		"lint:unsafe": "biome format --write && biome check --write --unsafe",
 		"lint:all": "turbo run lint",

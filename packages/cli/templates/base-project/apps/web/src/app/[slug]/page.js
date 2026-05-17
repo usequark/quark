@@ -1,18 +1,20 @@
-import { prisma } from "@techstream/quark-db";
 import { notFound } from "next/navigation";
+import {
+	getPublishedPageBySlug,
+	getPublishedPageSlugs,
+} from "@/lib/public-content.js";
 import PageContentRenderer from "../_components/PageContentRenderer";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
+
+export async function generateStaticParams() {
+	const records = await getPublishedPageSlugs();
+	return records.map(({ slug }) => ({ slug }));
+}
 
 export async function generateMetadata({ params }) {
 	const { slug } = await params;
-	const page = await prisma.page.findFirst({
-		where: { slug, status: "PUBLISHED" },
-		select: {
-			title: true,
-			excerpt: true,
-		},
-	});
+	const page = await getPublishedPageBySlug(slug);
 
 	if (!page) {
 		return {};
@@ -26,16 +28,7 @@ export async function generateMetadata({ params }) {
 
 export default async function PublishedPage({ params }) {
 	const { slug } = await params;
-	const page = await prisma.page.findFirst({
-		where: { slug, status: "PUBLISHED" },
-		select: {
-			title: true,
-			excerpt: true,
-			body: true,
-			content: true,
-			layout: true,
-		},
-	});
+	const page = await getPublishedPageBySlug(slug);
 
 	if (!page) {
 		notFound();

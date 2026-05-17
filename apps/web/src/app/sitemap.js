@@ -1,20 +1,17 @@
 import { getAppUrl } from "@techstream/quark-config";
+import { getPublicContentSitemapEntries } from "../lib/public-content.js";
 import { isWebsiteIndexable } from "../lib/seo/indexing.js";
+import { buildSitemapEntries } from "../lib/sitemap-entries.js";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
-const STATIC_ROUTES = [{ path: "/", changeFrequency: "daily", priority: 1 }];
-
-export default function sitemap() {
+export default async function sitemap() {
 	if (!isWebsiteIndexable()) {
 		return [];
 	}
 
 	const appUrl = getAppUrl();
+	const publicContentEntries = await getPublicContentSitemapEntries();
 
-	return STATIC_ROUTES.map((route) => ({
-		url: `${appUrl}${route.path}`,
-		changeFrequency: route.changeFrequency,
-		priority: route.priority,
-	}));
+	return buildSitemapEntries({ appUrl, publicContentEntries });
 }

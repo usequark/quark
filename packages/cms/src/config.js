@@ -9,6 +9,13 @@ export const cmsConfig = {
 			label: "Pages",
 			slugSource: "title",
 			excerptField: "excerpt",
+			publicRoute: {
+				pathPrefix: "",
+				sitemap: {
+					changeFrequency: "weekly",
+					priority: 0.8,
+				},
+			},
 		},
 	},
 

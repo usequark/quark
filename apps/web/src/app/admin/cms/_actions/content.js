@@ -10,6 +10,7 @@ import { prisma } from "@techstream/quark-db";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth-middleware";
+import { revalidatePublicContent } from "@/lib/public-content-revalidation.js";
 import { parsePageFormData, resolvePageSlugCandidate } from "./page-form.js";
 
 // ─── Shared schemas ──────────────────────────────────────────────────────────
@@ -42,6 +43,7 @@ export async function cmsCreatePage(_prevState, formData) {
 		},
 	});
 
+	await revalidatePublicContent();
 	revalidatePath("/admin/cms/pages");
 	redirect("/admin/cms/pages");
 }
@@ -65,6 +67,7 @@ export async function cmsUpdatePage(id, _prevState, formData) {
 		data: { title, slug, body, content, excerpt: excerpt || null, layout },
 	});
 
+	await revalidatePublicContent();
 	revalidatePath("/admin/cms/pages");
 	revalidatePath(`/admin/cms/pages/${id}`);
 	redirect("/admin/cms/pages");
@@ -73,6 +76,7 @@ export async function cmsUpdatePage(id, _prevState, formData) {
 export async function cmsPublishPage(id) {
 	await requireRole(["admin", "editor"]);
 	await publishContent(prisma, "Page", id);
+	await revalidatePublicContent();
 	revalidatePath("/admin/cms/pages");
 	revalidatePath(`/admin/cms/pages/${id}`);
 }
@@ -80,6 +84,7 @@ export async function cmsPublishPage(id) {
 export async function cmsArchivePage(id) {
 	await requireRole(["admin", "editor"]);
 	await archiveContent(prisma, "Page", id);
+	await revalidatePublicContent();
 	revalidatePath("/admin/cms/pages");
 	revalidatePath(`/admin/cms/pages/${id}`);
 }
@@ -87,6 +92,7 @@ export async function cmsArchivePage(id) {
 export async function cmsUnpublishPage(id) {
 	await requireRole(["admin", "editor"]);
 	await unpublishContent(prisma, "Page", id);
+	await revalidatePublicContent();
 	revalidatePath("/admin/cms/pages");
 	revalidatePath(`/admin/cms/pages/${id}`);
 }
@@ -94,6 +100,7 @@ export async function cmsUnpublishPage(id) {
 export async function cmsDeletePage(id) {
 	await requireRole(["admin", "editor"]);
 	await prisma.page.delete({ where: { id } });
+	await revalidatePublicContent();
 	revalidatePath("/admin/cms/pages");
 	redirect("/admin/cms/pages");
 }
