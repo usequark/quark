@@ -20,7 +20,14 @@ import { parsePageFormData } from "./page-form.js";
 export async function cmsCreatePage(_prevState, formData) {
 	const session = await requireRole(["admin", "editor"]);
 
-	const { title, slug: rawSlug, body, excerpt } = parsePageFormData(formData);
+	const {
+		title,
+		slug: rawSlug,
+		body,
+		excerpt,
+		layout,
+		content,
+	} = parsePageFormData(formData);
 	const slug = await ensureUniqueSlug(
 		prisma,
 		"Page",
@@ -33,6 +40,8 @@ export async function cmsCreatePage(_prevState, formData) {
 			slug,
 			body,
 			excerpt: excerpt || null,
+			layout,
+			content,
 			authorId: session.user.id,
 		},
 	});
@@ -44,7 +53,14 @@ export async function cmsCreatePage(_prevState, formData) {
 export async function cmsUpdatePage(id, _prevState, formData) {
 	await requireRole(["admin", "editor"]);
 
-	const { title, slug: rawSlug, body, excerpt } = parsePageFormData(formData);
+	const {
+		title,
+		slug: rawSlug,
+		body,
+		excerpt,
+		layout,
+		content,
+	} = parsePageFormData(formData);
 	const slug = await ensureUniqueSlug(
 		prisma,
 		"Page",
@@ -54,7 +70,7 @@ export async function cmsUpdatePage(id, _prevState, formData) {
 
 	await prisma.page.update({
 		where: { id },
-		data: { title, slug, body, excerpt: excerpt || null },
+		data: { title, slug, body, excerpt: excerpt || null, layout, content },
 	});
 
 	revalidatePath("/admin/cms/pages");
