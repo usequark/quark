@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { afterEach, beforeEach, describe, test } from "node:test";
+import { buildSitemapEntries } from "../lib/sitemap-entries.js";
 import robots from "./robots.js";
-import sitemap from "./sitemap.js";
 
 describe("SEO generators", () => {
 	let savedEnv;
@@ -23,22 +23,20 @@ describe("SEO generators", () => {
 		}
 	});
 
-	test("generates sitemap entries in production", () => {
-		process.env.NODE_ENV = "production";
-		process.env.ALLOW_INDEXING = "true";
+	test("builds sitemap entries for static and public content routes", () => {
+		const entries = buildSitemapEntries({
+			appUrl: "https://example.com",
+			publicContentEntries: [
+				{
+					path: "/about",
+					changeFrequency: "weekly",
+					priority: 0.8,
+				},
+			],
+		});
 
-		const entries = sitemap();
-
-		assert.ok(entries.length > 0);
 		assert.strictEqual(entries[0].url, "https://example.com/");
-	});
-
-	test("returns empty sitemap in non-production", () => {
-		process.env.NODE_ENV = "staging";
-
-		const entries = sitemap();
-
-		assert.deepStrictEqual(entries, []);
+		assert.strictEqual(entries[1].url, "https://example.com/about");
 	});
 
 	test("returns disallow-all robots in staging", () => {

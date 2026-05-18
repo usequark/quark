@@ -6,11 +6,12 @@
 	"main": "index.js",
 	"scripts": {
 		"clean": "turbo run clean && rm -rf .turbo",
-		"build": "turbo run build",
-		"dev": "dotenv -- turbo run dev",
+		"build": "dotenv -- turbo run build",
+		"dev": "dotenv -- node scripts/dev-preflight.mjs && dotenv -- turbo run dev",
 		"lint": "biome format --write && biome check --write",
 		"lint:unsafe": "biome format --write && biome check --write --unsafe",
 		"lint:all": "turbo run lint",
+		"standards": "node scripts/check-standards.mjs",
 		"smoke:published": "node packages/cli/scripts/smoke-published.js",
 		"test": "turbo run test",
 		"test:integration": "pnpm --filter @techstream/quark-web test:integration",
@@ -29,7 +30,7 @@
 		"changeset": "changeset",
 		"version-packages": "changeset version",
 		"release": "changeset publish",
-		"prepare": "git rev-parse --is-inside-work-tree > /dev/null 2>&1 && simple-git-hooks || true"
+		"prepare": "node scripts/prepare.mjs"
 	},
 	"keywords": [],
 	"author": "",

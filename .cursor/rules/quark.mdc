@@ -13,11 +13,11 @@ alwaysApply: true
 ## Non-Negotiable Rules
 
 1. **ESM only.** Always `import`/`export`. Never `require()` or `module.exports`.
-2. **No TypeScript.** Plain `.js` and `.jsx` files only — no `.ts`, `.tsx`, or type annotations.
+2. **No authored TypeScript.** Plain `.js` and `.jsx` files only — no repo-authored `.ts`, `.tsx`, or type annotations. Generated code is the only exception.
 3. **Biome for everything.** No ESLint, no Prettier. Run `pnpm lint` to check.
 4. **Validate at boundaries.** Zod schemas on all Server Actions and API routes. No exceptions.
-5. **Use AppError — not Error.** Throw `AppError` / `ValidationError` from `@techstream/quark-core/errors`. Never `throw new Error()` in application code.
-6. **Log — never console.** `createLogger(name)` from `@techstream/quark-core`. Zero `console.log` / `console.error` in non-test code.
+5. **Use AppError at runtime boundaries.** Throw `AppError` / `ValidationError` from `@techstream/quark-core/errors` in application/runtime code. Native `Error` is reserved for library, bootstrap, CLI, and test code.
+6. **Log with createLogger in runtime code.** `createLogger(name)` from `@techstream/quark-core` for application/runtime code. Console output is reserved for bootstrap, CLI, and test code.
 7. **DB models always have timestamps.** Every Prisma model: `createdAt DateTime @default(now())` + `updatedAt DateTime @updatedAt`.
 8. **Co-located tests.** `feature.test.js` next to `feature.js`. `node --test` — no Jest, no Vitest.
 

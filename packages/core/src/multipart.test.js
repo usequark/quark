@@ -1,5 +1,4 @@
 import assert from "node:assert";
-import { Readable } from "node:stream";
 import { test } from "node:test";
 import { parseMultipart } from "../src/multipart.js";
 
@@ -30,15 +29,13 @@ function buildMultipartBody(boundary, parts) {
 
 function createMultipartRequest(parts, boundary = "----TestBoundary") {
 	const body = buildMultipartBody(boundary, parts);
-	const buf = Buffer.from(body);
-	const stream = Readable.toWeb(Readable.from(buf));
-
-	return {
-		headers: new Headers({
+	return new Request("http://localhost/upload", {
+		method: "POST",
+		headers: {
 			"content-type": `multipart/form-data; boundary=${boundary}`,
-		}),
-		body: stream,
-	};
+		},
+		body,
+	});
 }
 
 // ---------------------------------------------------------------------------
@@ -116,10 +113,11 @@ test("Multipart - parses multiple files", async () => {
 });
 
 test("Multipart - rejects non-multipart request", async () => {
-	const request = {
-		headers: new Headers({ "content-type": "application/json" }),
-		body: Readable.toWeb(Readable.from(Buffer.from("{}"))),
-	};
+	const request = new Request("http://localhost/upload", {
+		method: "POST",
+		headers: { "content-type": "application/json" },
+		body: "{}",
+	});
 
 	await assert.rejects(
 		() => parseMultipart(request),
@@ -128,12 +126,12 @@ test("Multipart - rejects non-multipart request", async () => {
 });
 
 test("Multipart - rejects request with no body", async () => {
-	const request = {
-		headers: new Headers({
+	const request = new Request("http://localhost/upload", {
+		method: "POST",
+		headers: {
 			"content-type": "multipart/form-data; boundary=test",
-		}),
-		body: null,
-	};
+		},
+	});
 
 	await assert.rejects(() => parseMultipart(request), /body is empty/);
 });
@@ -152,5 +150,39 @@ test("Multipart - rejects file exceeding maxFileSize", async () => {
 	await assert.rejects(
 		() => parseMultipart(request, { maxFileSize: 100 }),
 		/exceeds maximum size/,
+	);
+});
+
+test("Multipart - rejects request exceeding maxFiles", async () => {
+	const request = createMultipartRequest([
+		{
+			name: "files",
+			filename: "a.txt",
+			contentType: "text/plain",
+			value: "aaa",
+		},
+		{
+			name: "files",
+			filename: "b.txt",
+			contentType: "text/plain",
+			value: "bbb",
+		},
+	]);
+
+	await assert.rejects(
+		() => parseMultipart(request, { maxFiles: 1 }),
+		/maximum file count/,
+	);
+});
+
+test("Multipart - rejects request exceeding maxFields", async () => {
+	const request = createMultipartRequest([
+		{ name: "title", value: "My Upload" },
+		{ name: "description", value: "A test file" },
+	]);
+
+	await assert.rejects(
+		() => parseMultipart(request, { maxFields: 1 }),
+		/maximum field count/,
 	);
 });

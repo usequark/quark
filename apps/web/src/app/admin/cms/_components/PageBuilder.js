@@ -103,30 +103,20 @@ export default function PageBuilder({
 			<input type="hidden" name="layout" value={layout} />
 
 			<div className="rounded-[--radius-default] border border-border bg-surface p-4">
-				<div className="mb-4 border-b border-border pb-3">
-					<h2 className="text-xs font-semibold uppercase tracking-widest text-text-faint">
-						Layout
-					</h2>
-					<p className="mt-1 text-sm text-text-faint">
-						Choose how sections are arranged on the public page.
-					</p>
-				</div>
+				<Label htmlFor="page-layout">Layout</Label>
 				<div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-center">
-					<div className="flex flex-col gap-1">
-						<Label htmlFor="page-layout">Page layout</Label>
-						<Select
-							id="page-layout"
-							aria-describedby="page-layout-description"
-							value={layout}
-							onChange={(event) => setLayout(event.target.value)}
-						>
-							{PAGE_LAYOUTS.map((option) => (
-								<option key={option.value} value={option.value}>
-									{option.label}
-								</option>
-							))}
-						</Select>
-					</div>
+					<Select
+						id="page-layout"
+						aria-describedby="page-layout-description"
+						value={layout}
+						onChange={(event) => setLayout(event.target.value)}
+					>
+						{PAGE_LAYOUTS.map((option) => (
+							<option key={option.value} value={option.value}>
+								{option.label}
+							</option>
+						))}
+					</Select>
 					<p
 						id="page-layout-description"
 						className="text-sm leading-6 text-text-muted"
@@ -160,32 +150,29 @@ export default function PageBuilder({
 									</p>
 								</div>
 								<div className="flex flex-wrap items-center gap-2">
-									<Button
+									<button
 										type="button"
-										variant="secondary"
 										onClick={() => moveBlock(block.id, -1)}
 										disabled={index === 0}
-										className="h-8 px-3 text-xs"
+										className="rounded-[--radius-default] border border-border px-3 py-1.5 text-xs text-text-muted transition-colors hover:border-border-hover hover:text-text disabled:cursor-not-allowed disabled:opacity-40"
 									>
 										Move Up
-									</Button>
-									<Button
+									</button>
+									<button
 										type="button"
-										variant="secondary"
 										onClick={() => moveBlock(block.id, 1)}
 										disabled={index === blocks.length - 1}
-										className="h-8 px-3 text-xs"
+										className="rounded-[--radius-default] border border-border px-3 py-1.5 text-xs text-text-muted transition-colors hover:border-border-hover hover:text-text disabled:cursor-not-allowed disabled:opacity-40"
 									>
 										Move Down
-									</Button>
-									<Button
+									</button>
+									<button
 										type="button"
-										variant="danger"
 										onClick={() => removeBlock(block.id)}
-										className="h-8 px-3 text-xs"
+										className="rounded-[--radius-default] border border-danger/40 px-3 py-1.5 text-xs text-danger transition-colors hover:bg-danger/10"
 									>
 										Remove
-									</Button>
+									</button>
 								</div>
 							</div>
 
@@ -198,14 +185,9 @@ export default function PageBuilder({
 			</div>
 
 			<div className="rounded-[--radius-default] border border-dashed border-border bg-surface px-4 py-4">
-				<div className="mb-4 border-b border-border pb-3">
-					<h2 className="text-xs font-semibold uppercase tracking-widest text-text-faint">
-						Add Section
-					</h2>
-					<p className="mt-1 text-sm text-text-faint">
-						Insert a new content block into this page.
-					</p>
-				</div>
+				<p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-faint">
+					Add Section
+				</p>
 				<div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
 					{PAGE_BLOCK_TYPES.map((blockType) => (
 						<Button

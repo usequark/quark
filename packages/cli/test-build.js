@@ -1,12 +1,11 @@
 #!/usr/bin/env node
 /**
  * Build verification test for @techstream/quark-create-app CLI
- * Runs: scaffold -> install -> build
+ * Runs: scaffold -> install -> build for non-interactive default and CMS scenarios
  *
  * Enable with: QUARK_CLI_BUILD_TEST=1 node test-build.js
  */
 
-import { spawn } from "node:child_process";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -15,8 +14,24 @@ import fs from "fs-extra";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const testDir = path.join(tmpdir(), "quark-cli-build-test");
-const projectName = "cli-build-test-app";
-const projectPath = path.join(testDir, projectName);
+const BUILD_SCENARIOS = [
+	{
+		name: "default",
+		projectName: "cli-build-default-app",
+		features: "ui,jobs",
+	},
+	{
+		name: "cms",
+		projectName: "cli-build-cms-app",
+		features: "cms",
+	},
+];
+const REQUIRED_ANALYTICS_FILES = [
+	"apps/web/src/app/_components/UmamiReplayRecorder.js",
+	"apps/web/src/lib/analytics/umami-config.js",
+	"apps/web/src/lib/analytics/umami-replay.js",
+	"apps/web/src/lib/analytics/umami.js",
+];
 
 if (!process.env.QUARK_CLI_BUILD_TEST) {
 	console.log("⏭️  Skipping build test (set QUARK_CLI_BUILD_TEST=1 to run)");
@@ -26,55 +41,68 @@ if (!process.env.QUARK_CLI_BUILD_TEST) {
 await fs.remove(testDir);
 await fs.ensureDir(testDir);
 
-console.log("🧪 Build Test: Scaffold -> Install -> Build\n");
+console.log("🧪 Build Test: Non-interactive Scaffold -> Install -> Build\n");
 
-try {
-	console.log("📦 Scaffolding project...");
-	const cliPath = path.join(__dirname, "src/index.js");
-	const proc = spawn("node", [cliPath, projectName], {
-		cwd: testDir,
-		stdio: ["pipe", "pipe", "pipe"],
-	});
-
-	let _output = "";
-	let responded = false;
-
-	proc.stdout.on("data", (data) => {
-		const str = data.toString();
-		_output += str;
-		process.stdout.write(str);
-
-		if (!responded && str.includes("Which optional packages")) {
-			responded = true;
-			proc.stdin.write("\n");
+async function assertGeneratedAnalytics(projectPath) {
+	for (const relativePath of REQUIRED_ANALYTICS_FILES) {
+		if (!(await fs.pathExists(path.join(projectPath, relativePath)))) {
+			throw new Error(`Missing generated analytics file: ${relativePath}`);
 		}
-	});
-
-	proc.stderr.on("data", (data) => {
-		const str = data.toString();
-		_output += str;
-		process.stderr.write(str);
-	});
-
-	const exitCode = await new Promise((resolve) => {
-		proc.on("close", (code) => resolve(code));
-	});
-
-	if (exitCode !== 0) {
-		throw new Error(`CLI exited with code ${exitCode}`);
 	}
+
+	const webPackage = await fs.readJson(
+		path.join(projectPath, "apps/web/package.json"),
+	);
+	if (webPackage.dependencies?.rrweb !== "2.0.0-alpha.4") {
+		throw new Error("Generated web app is missing the rrweb dependency");
+	}
+}
+
+async function runScenario({ name, projectName, features }) {
+	const scenarioDir = path.join(testDir, name);
+	const projectPath = path.join(scenarioDir, projectName);
+	const cliPath = path.join(__dirname, "src/index.js");
+
+	await fs.ensureDir(scenarioDir);
+
+	console.log(`📦 Scaffolding ${name} project (${features || "none"})...`);
+	await execa(
+		"node",
+		[
+			cliPath,
+			projectName,
+			"--no-prompts",
+			"--features",
+			features,
+			"--signup",
+			"enabled",
+			"--skip-docker",
+		],
+		{
+			cwd: scenarioDir,
+			stdio: "inherit",
+		},
+	);
 
 	if (!(await fs.pathExists(projectPath))) {
-		throw new Error("Project directory not created");
+		throw new Error(`Project directory not created for scenario: ${name}`);
 	}
 
-	console.log("\n✅ Project scaffolded successfully\n");
-	console.log("🏗️  Running build...\n");
+	await assertGeneratedAnalytics(projectPath);
 
-	await execa("pnpm", ["build"], {
+	console.log(`\n🏗️  Running web build for ${name}...\n`);
+	await execa("pnpm", ["--filter", `@${projectName}/web`, "build"], {
 		cwd: projectPath,
 		stdio: "inherit",
 	});
+
+	console.log(`\n✅ ${name} build completed successfully\n`);
+}
+
+try {
+	for (const scenario of BUILD_SCENARIOS) {
+		await runScenario(scenario);
+	}
 
 	console.log("\n✅ Build completed successfully\n");
 } catch (error) {

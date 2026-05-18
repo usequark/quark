@@ -63,104 +63,137 @@ export default function ContentForm({
 	const canPublish = status === "DRAFT";
 	const canArchive = status === "PUBLISHED";
 	const canUnpublish = status === "PUBLISHED";
+	const titlePlaceholder =
+		modelLabel === "Page"
+			? "About, Pricing, Contact, Terms of Service"
+			: `${modelLabel} title`;
+	const _excerptPlaceholder =
+		modelLabel === "Page"
+			? "Summarize what this page covers and who it is for."
+			: "Short summary (optional)";
+	const _bodyPlaceholder =
+		modelLabel === "Page"
+			? "<h1>Headline</h1>\n<p>Lead paragraph that explains the page.</p>\n\n<h2>Key section</h2>\n<p>Add supporting details, proof, or a clear next step.</p>"
+			: "Write your content here…";
+	const _bodyHelpText =
+		modelLabel === "Page"
+			? "A strong page usually has a clear headline, a short intro, 2-3 supporting sections, and a next step. Plain text or basic HTML both work."
+			: "Supports plain text or basic HTML.";
 	const isPageModel = modelLabel === "Page";
+	const previewHref =
+		isPageModel && isEdit ? `/admin/cms/pages/${record.id}/preview` : null;
+	const livePageHref =
+		isPageModel && record?.status === "PUBLISHED" && record?.slug
+			? `/${record.slug}`
+			: null;
+
+	function openInNewTab(href) {
+		if (!href) return;
+		window.open(href, "_blank", "noopener,noreferrer");
+	}
 
 	return (
-		<div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
-			<form id={formId} action={formAction} className="space-y-4 min-w-0">
-				<section className="rounded-[--radius-default] border border-border bg-surface p-4 shadow-sm sm:p-5">
-					<PanelHeader
-						title="Details"
-						description="Core page metadata and URL settings."
-					/>
-					<div className="space-y-4">
-						<div className="flex flex-col gap-1">
-							<Label htmlFor="cms-title">Title *</Label>
-							<Input
-								id="cms-title"
-								type="text"
-								name="title"
-								defaultValue={record?.title ?? ""}
-								required
-								placeholder={`${modelLabel} title`}
-								onChange={(e) => setTitle(e.target.value)}
-							/>
-						</div>
-
-						<SlugField
-							title={title}
-							defaultSlug={record?.slug ?? ""}
-							required
-						/>
-
-						{hasExcerpt && (
-							<div className="flex flex-col gap-1">
-								<Label htmlFor="cms-excerpt">Excerpt</Label>
-								<Textarea
-									id="cms-excerpt"
-									name="excerpt"
-									defaultValue={record?.excerpt ?? ""}
-									rows={2}
-									placeholder="Short summary (optional)"
-								/>
-							</div>
-						)}
-					</div>
-				</section>
-
-				{hasCoverImage && (
-					<section className="rounded-[--radius-default] border border-border bg-surface p-4 shadow-sm sm:p-5">
-						<PanelHeader
-							title="Media"
-							description="Select or upload a cover image for this page."
-						/>
-						<CoverImageField defaultValue={record?.coverImage ?? ""} />
-					</section>
-				)}
-
-				{isPageModel ? (
-					<div className="space-y-3">
-						<PageBuilder
-							defaultContent={record?.content}
-							defaultBody={record?.body ?? ""}
-							defaultLayout={record?.layout ?? "standard"}
-						/>
-						<p className="px-1 text-xs text-text-faint">
-							Use sections to shape the public page instead of writing one long
-							body field.
-						</p>
-					</div>
-				) : (
-					<section className="rounded-[--radius-default] border border-border bg-surface p-4 shadow-sm sm:p-5">
-						<PanelHeader
-							title="Body"
-							description="Write and structure the full content body."
-						/>
-						<div className="flex flex-col gap-1">
-							<Label htmlFor="cms-body">Body *</Label>
-							<Textarea
-								id="cms-body"
-								name="body"
-								value={body}
-								required
-								rows={16}
-								placeholder="Write your content here…"
-								className="font-mono text-sm leading-relaxed resize-y"
-								onChange={(e) => setBody(e.target.value)}
-							/>
-							<p className="text-xs text-text-faint">
-								Supports plain text or basic HTML.
+		<div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+			{/* Main editor — takes 2/3 width on large screens */}
+			<div className="flex-1 min-w-0">
+				<form id={formId} action={formAction} className="space-y-5">
+					{!isEdit && modelLabel === "Page" && (
+						<div className="rounded-[--radius-default] border border-border bg-surface px-4 py-3">
+							<p className="text-xs font-semibold uppercase tracking-widest text-text-faint">
+								Starter Checklist
+							</p>
+							<p className="mt-2 text-sm text-text-muted">
+								Give the page a descriptive title, keep the excerpt to one or
+								two sentences, and use the body for the full structure.
 							</p>
 						</div>
-					</section>
-				)}
+					)}
 
-				{state?.error && (
-					<p className="rounded-[--radius-default] border border-danger/40 bg-danger-muted px-4 py-3 text-sm text-danger">
-						{state.error}
-					</p>
-				)}
-			</form>
+					{/* Title */}
+					<div className="flex flex-col gap-1">
+						<Label htmlFor="cms-title">Title *</Label>
+						<Input
+							id="cms-title"
+							type="text"
+							name="title"
+							defaultValue={record?.title ?? ""}
+							required
+							placeholder={titlePlaceholder}
+							onChange={(e) => setTitle(e.target.value)}
+						/>
+					</div>
+
+					{/* Slug — auto-generated from title */}
+					<SlugField title={title} defaultSlug={record?.slug ?? ""} required />
+
+					{/* Excerpt */}
+					{hasExcerpt && (
+						<div className="flex flex-col gap-1">
+							<Label htmlFor="cms-excerpt">Excerpt</Label>
+							<Textarea
+								id="cms-excerpt"
+								name="excerpt"
+								defaultValue={record?.excerpt ?? ""}
+								rows={2}
+								placeholder="Short summary (optional)"
+							/>
+						</div>
+					)}
+
+					{hasCoverImage && (
+						<section className="rounded-[--radius-default] border border-border bg-surface p-4 shadow-sm sm:p-5">
+							<PanelHeader
+								title="Media"
+								description="Select or upload a cover image for this page."
+							/>
+							<CoverImageField defaultValue={record?.coverImage ?? ""} />
+						</section>
+					)}
+
+					{isPageModel ? (
+						<div className="space-y-3">
+							<PageBuilder
+								defaultContent={record?.content}
+								defaultBody={record?.body ?? ""}
+								defaultLayout={record?.layout ?? "standard"}
+							/>
+							<p className="px-1 text-xs text-text-faint">
+								Use sections to shape the public page instead of writing one
+								long body field.
+							</p>
+						</div>
+					) : (
+						<section className="rounded-[--radius-default] border border-border bg-surface p-4 shadow-sm sm:p-5">
+							<PanelHeader
+								title="Body"
+								description="Write and structure the full content body."
+							/>
+							<div className="flex flex-col gap-1">
+								<Label htmlFor="cms-body">Body *</Label>
+								<Textarea
+									id="cms-body"
+									name="body"
+									value={body}
+									required
+									rows={16}
+									placeholder="Write your content here…"
+									className="font-mono text-sm leading-relaxed resize-y"
+									onChange={(e) => setBody(e.target.value)}
+								/>
+								<p className="text-xs text-text-faint">
+									Supports plain text or basic HTML.
+								</p>
+							</div>
+						</section>
+					)}
+
+					{state?.error && (
+						<p className="rounded-[--radius-default] border border-danger/40 bg-danger-muted px-4 py-3 text-sm text-danger">
+							{state.error}
+						</p>
+					)}
+				</form>
+			</div>
 
 			<aside className="space-y-4 lg:sticky lg:-top-2 lg:self-start">
 				<div className="rounded-[--radius-default] border border-border bg-surface p-4 shadow-sm sm:p-5">
@@ -231,6 +264,37 @@ export default function ContentForm({
 						<p className="text-xs text-text-faint">
 							Saved as <strong>Draft</strong> — publish after creating.
 						</p>
+					)}
+
+					{isPageModel && (
+						<div className="space-y-2 border-t border-border pt-3">
+							<Button
+								type="button"
+								variant="secondary"
+								className="w-full"
+								disabled={!previewHref}
+								onClick={() => openInNewTab(previewHref)}
+							>
+								PREVIEW
+							</Button>
+
+							{livePageHref ? (
+								<Button
+									type="button"
+									variant="secondary"
+									className="w-full"
+									onClick={() => openInNewTab(livePageHref)}
+								>
+									VIEW LIVE PAGE
+								</Button>
+							) : null}
+
+							<p className="text-xs leading-5 text-text-faint">
+								{previewHref
+									? "Preview opens the most recently saved version in a protected admin view."
+									: "Save this page once to open a protected preview in a new tab."}
+							</p>
+						</div>
 					)}
 				</div>
 

@@ -1,6 +1,17 @@
 import assert from "node:assert";
 import { describe, mock, test } from "node:test";
-import { isConnectionError, throttledError, waitForRedis } from "./index.js";
+import { AppError, ValidationError } from "@techstream/quark-core/errors";
+import {
+	requireResetPasswordEmailData,
+	requireUserEmailRecord,
+	requireWelcomeEmailUserId,
+} from "./handlers/email-job-validation.js";
+import {
+	getJobHandlerOrThrow,
+	isConnectionError,
+	throttledError,
+	waitForRedis,
+} from "./index.js";
 
 // ---------------------------------------------------------------------------
 // Helpers: lightweight fakes for Prisma, emailService, and storage
@@ -23,65 +34,46 @@ function makeBullJob(name, data, overrides = {}) {
 // ---------------------------------------------------------------------------
 
 describe("handleSendWelcomeEmail", () => {
-	test("throws when userId is missing", async () => {
-		// Inline handler that mirrors the real one's validation
-		const handler = async (bullJob) => {
-			const { userId } = bullJob.data;
-			if (!userId) {
-				throw new Error("userId is required for SEND_WELCOME_EMAIL job");
-			}
-		};
-
-		await assert.rejects(() => handler(makeBullJob("send-welcome-email", {})), {
-			message: "userId is required for SEND_WELCOME_EMAIL job",
-		});
-	});
-
-	test("throws when user is not found", async () => {
-		const handler = async (bullJob) => {
-			const { userId } = bullJob.data;
-			if (!userId) throw new Error("userId is required");
-			// Simulate user not found
-			const userRecord = null;
-			if (!userRecord?.email) {
-				throw new Error(`User ${userId} not found or has no email`);
-			}
-		};
-
-		await assert.rejects(
-			() => handler(makeBullJob("send-welcome-email", { userId: "user-123" })),
-			{ message: "User user-123 not found or has no email" },
+	test("throws when userId is missing", () => {
+		assert.throws(
+			() =>
+				requireWelcomeEmailUserId(makeBullJob("send-welcome-email", {}).data),
+			(error) => {
+				assert.ok(error instanceof ValidationError);
+				assert.strictEqual(
+					error.message,
+					"userId is required for SEND_WELCOME_EMAIL job",
+				);
+				return true;
+			},
 		);
 	});
 
-	test("returns success when user exists and email sends", async () => {
-		const sendEmail = mock.fn(async () => {});
-
-		const handler = async (bullJob, _logger) => {
-			const { userId } = bullJob.data;
-			if (!userId) throw new Error("userId is required");
-
-			const userRecord = { email: "a@b.com", name: "Alice" };
-			if (!userRecord?.email) {
-				throw new Error(`User ${userId} not found or has no email`);
-			}
-
-			await sendEmail(userRecord.email, "Welcome", "<p>Hi</p>", "Hi");
-			return { success: true, userId, email: userRecord.email };
-		};
-
-		const logger = createMockLogger();
-		const result = await handler(
-			makeBullJob("send-welcome-email", { userId: "user-123" }),
-			logger,
+	test("throws when user is not found", () => {
+		assert.throws(
+			() => requireUserEmailRecord("user-123", null),
+			(error) => {
+				assert.ok(error instanceof AppError);
+				assert.strictEqual(error.code, "USER_EMAIL_NOT_FOUND");
+				assert.strictEqual(
+					error.message,
+					"User user-123 not found or has no email",
+				);
+				return true;
+			},
 		);
+	});
 
-		assert.deepStrictEqual(result, {
-			success: true,
-			userId: "user-123",
+	test("accepts a valid user record", () => {
+		const userRecord = requireUserEmailRecord("user-123", {
 			email: "a@b.com",
+			name: "Alice",
 		});
-		assert.strictEqual(sendEmail.mock.callCount(), 1);
+
+		assert.deepStrictEqual(userRecord, {
+			email: "a@b.com",
+			name: "Alice",
+		});
 	});
 });
 
@@ -90,39 +82,38 @@ describe("handleSendWelcomeEmail", () => {
 // ---------------------------------------------------------------------------
 
 describe("handleSendResetPasswordEmail", () => {
-	test("throws when userId or resetUrl is missing", async () => {
-		const handler = async (bullJob) => {
-			const { userId, resetUrl } = bullJob.data;
-			if (!userId || !resetUrl) {
-				throw new Error(
-					"userId and resetUrl are required for SEND_RESET_PASSWORD_EMAIL job",
-				);
-			}
-		};
-
-		await assert.rejects(
+	test("throws when userId or resetUrl is missing", () => {
+		assert.throws(
 			() =>
-				handler(
+				requireResetPasswordEmailData(
 					makeBullJob("send-reset-password-email", {
 						userId: "user-1",
-					}),
+					}).data,
 				),
-			{
-				message:
+			(error) => {
+				assert.ok(error instanceof ValidationError);
+				assert.strictEqual(
+					error.message,
 					"userId and resetUrl are required for SEND_RESET_PASSWORD_EMAIL job",
+				);
+				return true;
 			},
 		);
 
-		await assert.rejects(
+		assert.throws(
 			() =>
-				handler(
+				requireResetPasswordEmailData(
 					makeBullJob("send-reset-password-email", {
 						resetUrl: "https://example.com/reset",
-					}),
+					}).data,
 				),
-			{
-				message:
+			(error) => {
+				assert.ok(error instanceof ValidationError);
+				assert.strictEqual(
+					error.message,
 					"userId and resetUrl are required for SEND_RESET_PASSWORD_EMAIL job",
+				);
+				return true;
 			},
 		);
 	});
@@ -283,20 +274,19 @@ describe("jobHandlers registry", () => {
 		}
 	});
 
-	test("throws for unregistered job name", async () => {
-		const jobHandlers = {};
-
-		const dispatch = async (bullJob) => {
-			const handler = jobHandlers[bullJob.name];
-			if (!handler) {
-				throw new Error(`No handler registered for job: ${bullJob.name}`);
-			}
-			return handler(bullJob);
-		};
-
-		await assert.rejects(() => dispatch(makeBullJob("unknown-job", {})), {
-			message: "No handler registered for job: unknown-job",
-		});
+	test("throws for unregistered job name", () => {
+		assert.throws(
+			() => getJobHandlerOrThrow("unknown-job"),
+			(error) => {
+				assert.ok(error instanceof AppError);
+				assert.strictEqual(error.code, "JOB_HANDLER_NOT_REGISTERED");
+				assert.strictEqual(
+					error.message,
+					"No handler registered for job: unknown-job",
+				);
+				return true;
+			},
+		);
 	});
 });
 
@@ -478,7 +468,12 @@ describe("waitForRedis", () => {
 					maxRetries: 2,
 					intervalMs: 10,
 				}),
-			{ message: /Redis unavailable at .+ after 2 attempts/ },
+			(error) => {
+				assert.ok(error instanceof AppError);
+				assert.strictEqual(error.code, "REDIS_UNAVAILABLE");
+				assert.match(error.message, /Redis unavailable at .+ after 2 attempts/);
+				return true;
+			},
 		);
 
 		assert.strictEqual(healthCheck.mock.callCount(), 2);
@@ -495,7 +490,15 @@ describe("waitForRedis", () => {
 					maxRetries: 5,
 					intervalMs: 10,
 				}),
-			{ message: "Redis health check failed: Invalid configuration" },
+			(error) => {
+				assert.ok(error instanceof AppError);
+				assert.strictEqual(error.code, "REDIS_HEALTH_CHECK_FAILED");
+				assert.strictEqual(
+					error.message,
+					"Redis health check failed: Invalid configuration",
+				);
+				return true;
+			},
 		);
 
 		// Should fail immediately, not retry 5 times

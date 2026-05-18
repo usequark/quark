@@ -1,11 +1,9 @@
-import { headers } from "next/headers";
 import { getAppUrl } from "@techstream/quark-config";
 import { isWebsiteIndexable } from "../lib/seo/indexing.js";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
-export default async function robots() {
-	await headers();
+export default function robots() {
 	const appUrl = getAppUrl();
 	const indexable = isWebsiteIndexable();
 

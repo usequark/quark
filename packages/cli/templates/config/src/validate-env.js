@@ -4,6 +4,41 @@ function getResolvedNextAuthSecret() {
 	return process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET || null;
 }
 
+const BOOLEAN_LIKE_VALUES = new Set([
+	"true",
+	"false",
+	"1",
+	"0",
+	"yes",
+	"no",
+	"on",
+	"off",
+]);
+const TRUTHY_VALUES = new Set(["true", "1", "yes", "on"]);
+const UUID_PATTERN =
+	/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isBooleanLike(value) {
+	return BOOLEAN_LIKE_VALUES.has(value.trim().toLowerCase());
+}
+
+function isTruthyLike(value) {
+	return TRUTHY_VALUES.has(value.trim().toLowerCase());
+}
+
+function isAbsoluteHttpUrl(value) {
+	try {
+		const parsed = new URL(value);
+		return ["http:", "https:"].includes(parsed.protocol);
+	} catch {
+		return false;
+	}
+}
+
+function isUuid(value) {
+	return UUID_PATTERN.test(value.trim());
+}
+
 /**
  * Environment variable validation schema
  * Validates all required and optional environment variables on startup
@@ -77,6 +112,18 @@ const envSchema = {
 		required: false,
 		description:
 			"Canonical application URL — derives NEXTAUTH_URL and CORS origins",
+	},
+	NEXT_PUBLIC_UMAMI_URL: {
+		required: false,
+		description: "Public Umami base URL for script.js and replay uploads",
+	},
+	NEXT_PUBLIC_UMAMI_WEBSITE_ID: {
+		required: false,
+		description: "Public Umami website UUID",
+	},
+	NEXT_PUBLIC_UMAMI_REPLAY_ENABLED: {
+		required: false,
+		description: "Enable local rrweb session replay uploads to Umami",
 	},
 	ALLOW_INDEXING: {
 		required: false,
@@ -199,6 +246,7 @@ export function validateEnv(service = "web") {
 	const placeholderPattern = /^CHANGE_ME_/i;
 	const criticalKeys = [
 		"NEXTAUTH_SECRET",
+		"AUTH_SECRET",
 		"POSTGRES_PASSWORD",
 		"RESEND_API_KEY",
 		"ZEPTOMAIL_TOKEN",
@@ -289,15 +337,48 @@ export function validateEnv(service = "web") {
 
 	if (process.env.AUTH_ALLOW_SIGNUP) {
 		const normalized = process.env.AUTH_ALLOW_SIGNUP.trim().toLowerCase();
-		if (
-			!["true", "false", "1", "0", "yes", "no", "on", "off"].includes(
-				normalized,
-			)
-		) {
+		if (!BOOLEAN_LIKE_VALUES.has(normalized)) {
 			errors.push(
 				"AUTH_ALLOW_SIGNUP must be a boolean-like value (true/false/1/0/yes/no/on/off)",
 			);
 		}
+	}
+
+	const umamiUrl = process.env.NEXT_PUBLIC_UMAMI_URL?.trim();
+	const umamiWebsiteId = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID?.trim();
+	const umamiReplayEnabled =
+		process.env.NEXT_PUBLIC_UMAMI_REPLAY_ENABLED?.trim();
+
+	if (umamiUrl && !isAbsoluteHttpUrl(umamiUrl)) {
+		errors.push("NEXT_PUBLIC_UMAMI_URL must be an absolute http(s) URL");
+	}
+
+	if (umamiWebsiteId && !isUuid(umamiWebsiteId)) {
+		errors.push("NEXT_PUBLIC_UMAMI_WEBSITE_ID must be a UUID");
+	}
+
+	if (umamiReplayEnabled && !isBooleanLike(umamiReplayEnabled)) {
+		errors.push(
+			"NEXT_PUBLIC_UMAMI_REPLAY_ENABLED must be a boolean-like value (true/false/1/0/yes/no/on/off)",
+		);
+	}
+
+	const hasUmamiUrl = Boolean(umamiUrl);
+	const hasUmamiWebsiteId = Boolean(umamiWebsiteId);
+	if (hasUmamiUrl !== hasUmamiWebsiteId) {
+		warnings.push(
+			"Umami analytics is incomplete: set both NEXT_PUBLIC_UMAMI_URL and NEXT_PUBLIC_UMAMI_WEBSITE_ID to enable tracking.",
+		);
+	}
+
+	if (
+		umamiReplayEnabled &&
+		isTruthyLike(umamiReplayEnabled) &&
+		(!hasUmamiUrl || !hasUmamiWebsiteId)
+	) {
+		errors.push(
+			"NEXT_PUBLIC_UMAMI_REPLAY_ENABLED requires NEXT_PUBLIC_UMAMI_URL and NEXT_PUBLIC_UMAMI_WEBSITE_ID.",
+		);
 	}
 
 	// Log warnings (non-fatal)

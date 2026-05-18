@@ -1,5 +1,7 @@
 import { hostname, networkInterfaces } from "node:os";
 
+import { buildContentSecurityPolicy } from "./src/lib/analytics/umami-csp.js";
+
 function getLocalNetworkHosts() {
 	const hosts = new Set(["localhost", "127.0.0.1", "0.0.0.0"]);
 
@@ -62,11 +64,6 @@ const nextConfig = {
 	// NOTE: These are also applied by proxy.js for proxy-matched routes.
 	// Keeping them here as a fallback for routes the proxy doesn't match.
 	async headers() {
-		const isProd = process.env.NODE_ENV === "production";
-		const connectSrc = isProd
-			? "connect-src 'self'"
-			: "connect-src 'self' ws: wss:";
-
 		return [
 			{
 				source: "/:path*",
@@ -95,9 +92,7 @@ const nextConfig = {
 						key: "Content-Security-Policy",
 						// unsafe-eval is required by Turbopack in development only.
 						// It is deliberately excluded from the production directive.
-						value: isProd
-							? `default-src 'self'; script-src 'self' 'unsafe-inline'; ${connectSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self';`
-							: `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; ${connectSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self';`,
+						value: buildContentSecurityPolicy(),
 					},
 				],
 			},
@@ -108,8 +103,6 @@ const nextConfig = {
 	env: {
 		APP_URL: process.env.APP_URL,
 		NEXTAUTH_URL: process.env.NEXTAUTH_URL || process.env.APP_URL,
-		NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET,
-		AUTH_SECRET: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
 	},
 
 	// Request body size limits (security)

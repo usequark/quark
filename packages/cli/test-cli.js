@@ -13,7 +13,8 @@ import fs from "fs-extra";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const testDir = path.join(__dirname, "../../tmp-test-project");
 const projectName = "my-test-quark-app";
-const _projectPath = path.join(testDir, projectName);
+const projectPath = path.join(testDir, projectName);
+const cliEntry = path.join(__dirname, "src/index.js");
 const cliPackageJson = await fs.readJSON(path.join(__dirname, "package.json"));
 
 console.log("🧪 Testing @techstream/quark-create-app CLI\n");
@@ -64,6 +65,20 @@ try {
 				),
 		},
 		{
+			name: "Base template has START_HERE guide",
+			test: () =>
+				fs.existsSync(
+					path.join(__dirname, "templates/base-project/docs/START_HERE.md"),
+				),
+		},
+		{
+			name: "Base template has FIRST_FEATURE guide",
+			test: () =>
+				fs.existsSync(
+					path.join(__dirname, "templates/base-project/docs/FIRST_FEATURE.md"),
+				),
+		},
+		{
 			name: "UI template exists",
 			test: () => fs.existsSync(path.join(__dirname, "templates/ui")),
 		},
@@ -91,8 +106,23 @@ try {
 				),
 		},
 		{
+			name: "Jobs template has README",
+			test: () =>
+				fs.existsSync(path.join(__dirname, "templates/jobs/README.md")),
+		},
+		{
 			name: "Config template exists",
 			test: () => fs.existsSync(path.join(__dirname, "templates/config")),
+		},
+		{
+			name: "Admin template has README",
+			test: () =>
+				fs.existsSync(path.join(__dirname, "templates/admin/README.md")),
+		},
+		{
+			name: "CMS template has README",
+			test: () =>
+				fs.existsSync(path.join(__dirname, "templates/cms/README.md")),
 		},
 	];
 
@@ -118,10 +148,7 @@ try {
 	// Test 3: Test CLI execution with help flag
 	console.log("\n📋 Testing CLI help command...");
 	try {
-		const { stdout } = await execa("node", [
-			path.join(__dirname, "src/index.js"),
-			"--help",
-		]);
+		const { stdout } = await execa("node", [cliEntry, "--help"]);
 		if (stdout.includes("quark-create-app")) {
 			console.log("  ✓ CLI help command works");
 			passed++;
@@ -134,16 +161,140 @@ try {
 	// Test 4: Test CLI version
 	console.log("\n📋 Testing CLI version command...");
 	try {
-		const { stdout } = await execa("node", [
-			path.join(__dirname, "src/index.js"),
-			"--version",
-		]);
+		const { stdout } = await execa("node", [cliEntry, "--version"]);
 		if (stdout.includes(cliPackageJson.version)) {
 			console.log("  ✓ CLI version command works");
 			passed++;
 		}
 	} catch (error) {
 		console.log(`  ✗ CLI version command failed: ${error.message}`);
+		failed++;
+	}
+
+	// Test 5: Scaffold smoke test + scaffold drift report
+	console.log("\n📋 Testing scaffold generation and drift reporting...");
+	try {
+		await execa(
+			"node",
+			[
+				cliEntry,
+				projectName,
+				"--no-prompts",
+				"--skip-install",
+				"--skip-docker",
+				"--features",
+				"ui,admin",
+				"--signup",
+				"disabled",
+			],
+			{
+				cwd: testDir,
+			},
+		);
+
+		const adrReadme = await fs.readFile(
+			path.join(projectPath, "docs", "adr", "README.md"),
+			"utf8",
+		);
+		if (
+			adrReadme.includes(projectName) &&
+			!adrReadme.includes("__QUARK_PROJECT_NAME__")
+		) {
+			console.log("  ✓ ADR README placeholders are substituted");
+			passed++;
+		} else {
+			console.log("  ✗ ADR README placeholders were not substituted");
+			failed++;
+		}
+
+		const { stdout: cleanDriftOutput } = await execa(
+			"node",
+			[cliEntry, "update", "--scaffold-check"],
+			{
+				cwd: projectPath,
+			},
+		);
+		if (cleanDriftOutput.includes("No scaffold drift detected")) {
+			console.log("  ✓ Clean scaffold passes drift check");
+			passed++;
+		} else {
+			console.log("  ✗ Clean scaffold reported unexpected drift");
+			failed++;
+		}
+
+		const quarkLinkPath = path.join(projectPath, ".quark-link.json");
+		const quarkLink = await fs.readJSON(quarkLinkPath);
+		quarkLink.packages = ["ui"];
+		await fs.writeFile(
+			quarkLinkPath,
+			`${JSON.stringify(quarkLink, null, 2)}\n`,
+		);
+
+		const { stdout: mismatchOutput } = await execa(
+			"node",
+			[cliEntry, "update", "--scaffold-check"],
+			{
+				cwd: projectPath,
+			},
+		);
+		if (
+			mismatchOutput.includes("used the union") &&
+			mismatchOutput.includes("No scaffold drift detected")
+		) {
+			console.log("  ✓ Drift check handles feature metadata mismatches safely");
+			passed++;
+		} else {
+			console.log("  ✗ Drift check did not preserve the union behavior");
+			failed++;
+		}
+
+		await fs.appendFile(
+			path.join(projectPath, "README.md"),
+			"\n<!-- scaffold drift smoke test -->\n",
+		);
+		const { stdout: driftOutput } = await execa(
+			"node",
+			[cliEntry, "update", "--scaffold-check"],
+			{
+				cwd: projectPath,
+			},
+		);
+		if (
+			driftOutput.includes("Scaffold drift detected") &&
+			driftOutput.includes("README.md")
+		) {
+			console.log("  ✓ Drift report surfaces changed scaffold files");
+			passed++;
+		} else {
+			console.log("  ✗ Drift report did not surface the modified README");
+			failed++;
+		}
+
+		const failOnDriftRun = await execa(
+			"node",
+			[cliEntry, "update", "--scaffold-check", "--fail-on-drift"],
+			{
+				cwd: projectPath,
+				reject: false,
+			},
+		);
+		if (
+			failOnDriftRun.exitCode === 1 &&
+			failOnDriftRun.stdout.includes("Scaffold drift detected") &&
+			failOnDriftRun.stderr.includes("--fail-on-drift was set")
+		) {
+			console.log("  ✓ fail-on-drift returns a CI-friendly non-zero exit");
+			passed++;
+		} else {
+			console.log(
+				"  ✗ fail-on-drift did not return the expected non-zero exit",
+			);
+			failed++;
+		}
+	} catch (error) {
+		console.log(
+			`  ✗ Scaffold generation/drift report failed: ${error.stderr || error.message}`,
+		);
 		failed++;
 	}
 

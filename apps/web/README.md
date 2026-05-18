@@ -30,7 +30,7 @@ The most important values to set:
 | Variable | Description |
 |---|---|
 | `NEXTAUTH_URL` | Full URL the app runs on — must match exactly, no trailing slash |
-| `NEXTAUTH_SECRET` | Long random secret — `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
+| `NEXTAUTH_SECRET` | Long random secret — `node --input-type=module -e "import { randomBytes } from 'node:crypto'; console.log(randomBytes(32).toString('hex'))"` |
 | `POSTGRES_*` | Match your `docker-compose.yml` defaults |
 | `REDIS_HOST` / `REDIS_PORT` | Match your `docker-compose.yml` defaults |
 

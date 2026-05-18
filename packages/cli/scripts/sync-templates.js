@@ -115,14 +115,7 @@ const EXCLUDE_PATTERNS = [
 	/^apps\/web\/src\/app\/api\/integration\.test\.js$/,
 	/^apps\/web\/src\/app\/manifest\.js$/,
 	/^apps\/web\/src\/app\/manifest\.test\.js$/,
-	// robots.js + sitemap.js intentionally diverge from the template:
-	// - Monorepo source: sync functions, relies on `export const dynamic = "force-dynamic"`
-	// - Template: async functions with `await headers()` to opt-in to dynamic rendering
-	//   in scaffold projects where force-dynamic may not be the convention
-	// Do NOT overwrite the template versions with the monorepo source.
-	/^apps\/web\/src\/app\/robots\.js$/,
 	/^apps\/web\/src\/app\/seo-routes\.test\.js$/,
-	/^apps\/web\/src\/app\/sitemap\.js$/,
 	/^apps\/web\/src\/lib\/seo\//,
 	/^apps\/web\/README\.md$/,
 
@@ -191,8 +184,8 @@ const TRANSFORMS = {
 	"worker/package.json": transformWorkerPackageJson,
 	// DB: remove private flag for scaffold context
 	"base-project/packages/db/package.json": transformDbPackageJson,
-	// DB: prisma.config.ts uses simple defaults for new projects
-	"base-project/packages/db/prisma.config.ts": transformPrismaConfig,
+	// DB: prisma.config.js uses simple defaults for new projects
+	"base-project/packages/db/prisma.config.js": transformPrismaConfig,
 	// Optional packages: use @myquark placeholder scope
 	"config/package.json": transformOptionalPackageJson,
 	"ui/package.json": transformOptionalPackageJson,

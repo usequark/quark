@@ -5,18 +5,18 @@ const base =
 
 const VARIANTS = {
 	primary:
-		"bg-primary border border-primary text-white hover:brightness-90 hover:shadow-md focus-visible:ring-primary/60",
+		"bg-primary-hover border border-primary-hover text-white hover:brightness-95 hover:shadow-md focus-visible:ring-primary/60",
 	secondary:
 		"border border-border-hover bg-surface text-text hover:bg-surface-hover focus-visible:ring-border-hover",
 	danger:
-		"bg-danger border border-danger text-white hover:brightness-90 hover:shadow-md focus-visible:ring-danger/60",
+		"bg-danger-hover border border-danger-hover text-white hover:brightness-95 hover:shadow-md focus-visible:ring-danger/60",
 	ghost:
 		"bg-transparent text-text-faint hover:bg-surface-hover hover:text-text focus-visible:ring-border-hover",
 	success:
-		"bg-success border border-success text-white hover:opacity-90 focus-visible:ring-success/60",
+		"bg-success-muted border border-success text-success hover:bg-success-muted/80 focus-visible:ring-success/60",
 	warning:
-		"bg-warning border border-warning text-white hover:opacity-90 focus-visible:ring-warning/60",
-	info: "bg-info border border-info text-white hover:opacity-90 focus-visible:ring-info/60",
+		"bg-warning-muted border border-warning text-warning hover:bg-warning-muted/80 focus-visible:ring-warning/60",
+	info: "bg-info-muted border border-info text-info hover:bg-info-muted/80 focus-visible:ring-info/60",
 	outline:
 		"border border-primary text-primary bg-transparent hover:bg-primary-muted focus-visible:ring-primary/40",
 	solid:

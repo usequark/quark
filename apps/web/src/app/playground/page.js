@@ -18,8 +18,11 @@ import {
 	CardTitle,
 	Checkbox,
 	Dialog,
+	Footer,
 	Input,
 	Label,
+	MobileNavbar,
+	Navbar,
 	Section,
 	Select,
 	Skeleton,
@@ -151,6 +154,7 @@ export default function PlaygroundPage() {
 function PlaygroundInner() {
 	const [animationKey, setAnimationKey] = useState("aurora");
 	const [dialogOpen, setDialogOpen] = useState(false);
+	const [layoutPreviewType, setLayoutPreviewType] = useState(null);
 	const [sectionPreviewType, setSectionPreviewType] = useState("hero");
 	const toast = useToast();
 
@@ -162,6 +166,13 @@ function PlaygroundInner() {
 				: sectionPreviewType === "split"
 					? "Split Page Section Preview"
 					: "CTA Section Preview";
+
+	const layoutPreviewTitle =
+		layoutPreviewType === "navbar"
+			? "Desktop Navbar Preview"
+			: layoutPreviewType === "mobile-navbar"
+				? "Mobile Navbar Preview"
+				: "Footer Preview";
 
 	function renderSectionPreview() {
 		switch (sectionPreviewType) {
@@ -208,6 +219,46 @@ function PlaygroundInner() {
 						backgroundMode="color"
 						backgroundValue="primary"
 					/>
+				);
+			default:
+				return null;
+		}
+	}
+
+	function renderLayoutPreview() {
+		switch (layoutPreviewType) {
+			case "navbar":
+				return (
+					<div className="bg-bg">
+						<Navbar logo="Quark" action={{ label: "Get Started", href: "#" }} />
+					</div>
+				);
+			case "mobile-navbar":
+				return (
+					<div className="bg-bg py-6 px-4">
+						<div className="mx-auto max-w-md overflow-hidden rounded-[--radius-default] border border-border bg-surface">
+							<MobileNavbar
+								logo="Quark"
+								action={{ label: "Get Started", href: "#" }}
+							/>
+							<div className="px-4 py-6 text-sm text-text-muted">
+								Open the menu icon to inspect the mobile navigation panel.
+							</div>
+						</div>
+					</div>
+				);
+			case "footer":
+				return (
+					<div className="bg-bg">
+						<Footer
+							brandName="Quark"
+							brandDescription="Ship production-ready apps with a practical full-stack toolkit built for velocity."
+							ctaLabel="Start Building"
+							ctaHref="#"
+							poweredByText="Powered by Quark"
+							poweredByHref="#"
+						/>
+					</div>
 				);
 			default:
 				return null;
@@ -287,19 +338,37 @@ function PlaygroundInner() {
 
 						{/* ── 04 Card ── */}
 						<ComponentSection id="card" index={4} title="Card">
-							<Card className="max-w-xs bg-surface shadow-sm">
-								<CardHeader>
-									<CardTitle>Card Title</CardTitle>
-								</CardHeader>
-								<CardContent>
-									<p className="text-sm text-text-muted">
-										Card body content goes here.
-									</p>
-								</CardContent>
-								<CardFooter>
-									<Button>Action</Button>
-								</CardFooter>
-							</Card>
+							<div className="grid gap-4 sm:grid-cols-2">
+								<Card className="max-w-xs bg-surface shadow-sm">
+									<CardHeader>
+										<CardTitle>Card Title</CardTitle>
+									</CardHeader>
+									<CardContent>
+										<p className="text-sm text-text-muted">
+											Card body content goes here.
+										</p>
+									</CardContent>
+									<CardFooter>
+										<Button>Action</Button>
+									</CardFooter>
+								</Card>
+
+								<Card
+									variant="collapsible"
+									collapsibleLabel="Expandable Card"
+									className="max-w-xs bg-surface shadow-sm"
+								>
+									<div className="space-y-3">
+										<p className="text-sm text-text-muted">
+											This card starts collapsed and expands to reveal
+											additional content.
+										</p>
+										<Button size="md" variant="secondary">
+											Learn More
+										</Button>
+									</div>
+								</Card>
+							</div>
 						</ComponentSection>
 
 						{/* ── 05 Table ── */}
@@ -442,10 +511,46 @@ function PlaygroundInner() {
 								</div>
 							</div>
 						</ComponentSection>
-						{/* ── 10 Animations ── */}
+						{/* ── 10 Navbar & Footer ── */}
+						<ComponentSection
+							id="navbar-footer"
+							index={10}
+							title="Navbar & Footer"
+						>
+							<Group label="open preview overlay">
+								<Button
+									variant={
+										layoutPreviewType === "navbar" ? "primary" : "secondary"
+									}
+									onClick={() => setLayoutPreviewType("navbar")}
+								>
+									Navbar
+								</Button>
+								<Button
+									variant={
+										layoutPreviewType === "mobile-navbar"
+											? "primary"
+											: "secondary"
+									}
+									onClick={() => setLayoutPreviewType("mobile-navbar")}
+								>
+									Mobile Navbar
+								</Button>
+								<Button
+									variant={
+										layoutPreviewType === "footer" ? "primary" : "secondary"
+									}
+									onClick={() => setLayoutPreviewType("footer")}
+								>
+									Footer
+								</Button>
+							</Group>
+						</ComponentSection>
+
+						{/* ── 11 Animations ── */}
 						<ComponentSection
 							id="animations"
-							index={10}
+							index={11}
 							title="Background Animations"
 						>
 							<Group label="select animation">
@@ -493,6 +598,22 @@ function PlaygroundInner() {
 					</div>
 				</div>
 			</main>
+
+			{layoutPreviewType ? (
+				<div className="fixed inset-x-0 bottom-0 z-60 border-t border-border bg-bg/95 shadow-[0_-18px_40px_rgba(0,0,0,0.35)] backdrop-blur">
+					<div className="flex items-center justify-between border-b border-border px-4 py-3 sm:px-6 lg:px-8">
+						<p className="font-mono text-[11px] uppercase tracking-[0.2em] text-text-faint">
+							{layoutPreviewTitle}
+						</p>
+						<Button variant="ghost" onClick={() => setLayoutPreviewType(null)}>
+							Close
+						</Button>
+					</div>
+					<div className="max-h-[72vh] overflow-y-auto">
+						{renderLayoutPreview()}
+					</div>
+				</div>
+			) : null}
 		</div>
 	);
 }

@@ -73,7 +73,11 @@ function hasSubItems(link) {
 }
 
 function safeLinks(links) {
-	return Array.isArray(links) && links.length > 0 ? links : DEFAULT_LINKS;
+	return links === undefined
+		? DEFAULT_LINKS
+		: Array.isArray(links)
+			? links
+			: [];
 }
 
 function renderLogo(logo) {
@@ -141,6 +145,9 @@ export function Navbar({
 	const leaveTimerRef = useRef(null);
 	const [openIndex, setOpenIndex] = useState(null);
 	const navLinks = useMemo(() => safeLinks(links), [links]);
+	const toggleDesktopDropdown = (index) => {
+		setOpenIndex((state) => (state === index ? null : index));
+	};
 
 	useEffect(() => {
 		if (openIndex === null) return;
@@ -222,14 +229,26 @@ export function Navbar({
 								React.createElement(
 									"div",
 									{ className: desktopDropdownWrapCls },
-									React.createElement(
-										"a",
-										{
-											href: link.href ?? "#",
-											className: desktopDropdownLinkCls,
-										},
-										link.label,
-									),
+									link.href
+										? React.createElement(
+												"a",
+												{
+													href: link.href,
+													className: desktopDropdownLinkCls,
+												},
+												link.label,
+											)
+										: React.createElement(
+												"button",
+												{
+													type: "button",
+													className: `${desktopDropdownLinkCls} rounded-l-[--radius-default] px-3.5 py-2`,
+													onClick: () => toggleDesktopDropdown(index),
+													"aria-expanded": isOpen,
+													"aria-haspopup": "menu",
+												},
+												link.label,
+											),
 									React.createElement(
 										"button",
 										{
@@ -238,40 +257,35 @@ export function Navbar({
 											"aria-expanded": isOpen,
 											"aria-haspopup": "menu",
 											"aria-label": `${link.label} submenu`,
-											onClick: () => {
-												setOpenIndex((state) =>
-													state === index ? null : index,
-												);
-											},
+											onClick: () => toggleDesktopDropdown(index),
 										},
 										React.createElement(Chevron, { open: isOpen }),
 									),
 								),
-								React.createElement(
-									"div",
-									{
-										role: "menu",
-										className: `absolute left-full top-[calc(100%+0.6rem)] z-40 w-48 -translate-x-1/2 rounded-[--radius-default] border border-border bg-surface shadow-xl origin-top transition duration-200 ${
-											isOpen
-												? "pointer-events-auto scale-100 opacity-100"
-												: "pointer-events-none scale-95 opacity-0"
-										}`,
-									},
-									...(link.items ?? []).map((item, itemIndex) =>
-										React.createElement(
-											"a",
+								isOpen
+									? React.createElement(
+											"div",
 											{
-												key: `${item.label}-${itemIndex}`,
-												href: item.href ?? "#",
-												role: "menuitem",
+												role: "menu",
 												className:
-													"block rounded-[--radius-default] px-3.5 py-2.5 text-base text-text-muted transition-colors hover:bg-surface-hover hover:text-text",
-												onClick: () => setOpenIndex(null),
+													"absolute left-full top-[calc(100%+0.6rem)] z-40 w-48 -translate-x-1/2 rounded-[--radius-default] border border-border bg-surface shadow-xl",
 											},
-											item.label,
-										),
-									),
-								),
+											...(link.items ?? []).map((item, itemIndex) =>
+												React.createElement(
+													"a",
+													{
+														key: `${item.label}-${itemIndex}`,
+														href: item.href ?? "#",
+														role: "menuitem",
+														className:
+															"block rounded-[--radius-default] px-3.5 py-2.5 text-base text-text-muted transition-colors hover:bg-surface-hover hover:text-text",
+														onClick: () => setOpenIndex(null),
+													},
+													item.label,
+												),
+											),
+										)
+									: null,
 							);
 						}),
 					),
@@ -418,114 +432,115 @@ export function MobileNavbar({
 					),
 				),
 			),
-			React.createElement(
-				"div",
-				{
-					className: `${mobilePanelWrapCls} ${menuOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"}`,
-					style: {
-						top: `${panelLayout.top}px`,
-						left: `${panelLayout.left}px`,
-						width: `${panelLayout.width}px`,
-						maxHeight: `${panelLayout.maxHeight}px`,
-						paddingBottom: "env(safe-area-inset-bottom)",
-					},
-				},
-				React.createElement(
-					"div",
-					{ className: "overflow-visible" },
-					React.createElement(
-						"nav",
+			menuOpen
+				? React.createElement(
+						"div",
 						{
-							className: `${mobilePanelCls} ${menuOpen ? "translate-y-0 opacity-100" : "-translate-y-1 opacity-0"}`,
-							"aria-label": "Mobile navigation",
+							className: `${mobilePanelWrapCls} pointer-events-auto opacity-100`,
+							style: {
+								top: `${panelLayout.top}px`,
+								left: `${panelLayout.left}px`,
+								width: `${panelLayout.width}px`,
+								maxHeight: `${panelLayout.maxHeight}px`,
+								paddingBottom: "env(safe-area-inset-bottom)",
+							},
 						},
 						React.createElement(
-							"ul",
-							{ className: "divide-y divide-border" },
-							...navLinks.map((link, index) => {
-								if (!hasSubItems(link)) {
-									return React.createElement(
-										"li",
-										{ key: `${link.label}-${index}` },
-										React.createElement(
-											"a",
-											{
-												href: link.href ?? "#",
-												className: mobileLinkCls,
-												onClick: () => setMenuOpen(false),
-											},
-											link.label,
-										),
-									);
-								}
-
-								const submenuOpen = Boolean(openSubmenus[index]);
-								return React.createElement(
-									"li",
-									{ key: `${link.label}-${index}` },
-									React.createElement(
-										"button",
-										{
-											type: "button",
-											className: mobileLinkCls,
-											"aria-expanded": submenuOpen,
-											onClick: () => toggleSubmenu(index),
-										},
-										link.label,
-										React.createElement(Chevron, {
-											open: submenuOpen,
-											className: "h-4 w-4",
-										}),
-									),
-									React.createElement(
-										"div",
-										{
-											className: `grid transition-[grid-template-rows,opacity,transform] duration-300 ease-out ${
-												submenuOpen
-													? "grid-rows-[1fr] opacity-100 translate-y-0"
-													: "grid-rows-[0fr] opacity-0 -translate-y-1"
-											}`,
-										},
-										React.createElement(
-											"div",
-											{ className: "overflow-hidden" },
-											React.createElement(
-												"ul",
-												{ className: "space-y-0 pb-2 pt-1" },
-												...(link.items ?? []).map((item, itemIndex) =>
-													React.createElement(
-														"li",
-														{ key: `${item.label}-${itemIndex}` },
-														React.createElement(
-															"a",
-															{
-																href: item.href ?? "#",
-																className: mobileSubLinkCls,
-																onClick: () => {
-																	setMenuOpen(false);
-																	setOpenSubmenus({});
-																},
-															},
-															item.label,
-														),
-													),
+							"div",
+							{ className: "overflow-visible" },
+							React.createElement(
+								"nav",
+								{
+									className: `${mobilePanelCls} translate-y-0 opacity-100`,
+									"aria-label": "Mobile navigation",
+								},
+								React.createElement(
+									"ul",
+									{ className: "divide-y divide-border" },
+									...navLinks.map((link, index) => {
+										if (!hasSubItems(link)) {
+											return React.createElement(
+												"li",
+												{ key: `${link.label}-${index}` },
+												React.createElement(
+													"a",
+													{
+														href: link.href ?? "#",
+														className: mobileLinkCls,
+														onClick: () => setMenuOpen(false),
+													},
+													link.label,
 												),
+											);
+										}
+
+										const submenuOpen = Boolean(openSubmenus[index]);
+										return React.createElement(
+											"li",
+											{ key: `${link.label}-${index}` },
+											React.createElement(
+												"button",
+												{
+													type: "button",
+													className: mobileLinkCls,
+													"aria-expanded": submenuOpen,
+													onClick: () => toggleSubmenu(index),
+												},
+												link.label,
+												React.createElement(Chevron, {
+													open: submenuOpen,
+													className: "h-4 w-4",
+												}),
 											),
-										),
-									),
-								);
-							}),
+											submenuOpen
+												? React.createElement(
+														"div",
+														{
+															className:
+																"grid grid-rows-[1fr] opacity-100 translate-y-0",
+														},
+														React.createElement(
+															"div",
+															{ className: "overflow-hidden" },
+															React.createElement(
+																"ul",
+																{ className: "space-y-0 pb-2 pt-1" },
+																...(link.items ?? []).map((item, itemIndex) =>
+																	React.createElement(
+																		"li",
+																		{ key: `${item.label}-${itemIndex}` },
+																		React.createElement(
+																			"a",
+																			{
+																				href: item.href ?? "#",
+																				className: mobileSubLinkCls,
+																				onClick: () => {
+																					setMenuOpen(false);
+																					setOpenSubmenus({});
+																				},
+																			},
+																			item.label,
+																		),
+																	),
+																),
+															),
+														),
+													)
+												: null,
+										);
+									}),
+								),
+								action
+									? React.createElement(
+											"div",
+											{ className: mobileActionWrapCls },
+											renderAction(action, mobileActionCls),
+										)
+									: null,
+							),
 						),
-						action
-							? React.createElement(
-									"div",
-									{ className: mobileActionWrapCls },
-									renderAction(action, mobileActionCls),
-								)
-							: null,
-					),
-				),
-			),
+					)
+				: null,
 		),
 	);
 }

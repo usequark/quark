@@ -75,8 +75,8 @@ describe("API Integration Tests", () => {
 				body: { email, password: "SecurePass123!", name: "Test User" },
 			});
 			assert.strictEqual(status, 201);
-			assert.ok(data.user);
-			assert.strictEqual(data.user.email, email);
+			assert.ok(data);
+			assert.strictEqual(data.email, email);
 		});
 
 		it("should reject duplicate email", async () => {

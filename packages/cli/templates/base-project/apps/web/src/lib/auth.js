@@ -11,6 +11,48 @@ import GithubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 
 const logger = createLogger({ name: "auth" });
+const STALE_SESSION_PATTERN = /jwtsessionerror|no matching decryption secret/i;
+
+function describeAuthIssue(issue, seen = new Set()) {
+	if (!issue) {
+		return "";
+	}
+
+	if (typeof issue === "string") {
+		return issue;
+	}
+
+	if (typeof issue === "number" || typeof issue === "boolean") {
+		return String(issue);
+	}
+
+	if (typeof issue !== "object" || seen.has(issue)) {
+		return "";
+	}
+
+	seen.add(issue);
+
+	const parts = [];
+	for (const key of ["name", "type", "code", "message"]) {
+		const value = issue[key];
+		if (typeof value === "string" && value) {
+			parts.push(value);
+		}
+	}
+
+	for (const key of ["cause", "error", "details"]) {
+		const nested = describeAuthIssue(issue[key], seen);
+		if (nested) {
+			parts.push(nested);
+		}
+	}
+
+	return parts.join(" ");
+}
+
+function isIgnorableSessionError(issue) {
+	return STALE_SESSION_PATTERN.test(describeAuthIssue(issue));
+}
 
 const providers = [
 	CredentialsProvider({
@@ -94,6 +136,17 @@ export function getAuthOptions() {
 	return createAuthConfig({
 		adapter: PrismaAdapter(prisma),
 		providers: providers,
+		logger: {
+			error(...issues) {
+				if (issues.some(isIgnorableSessionError)) {
+					return;
+				}
+
+				logger.error("Auth.js error", {
+					details: issues.map((issue) => describeAuthIssue(issue)).join(" | "),
+				});
+			},
+		},
 		session: {
 			strategy: "jwt",
 		},
@@ -114,7 +167,15 @@ export function getAuth() {
 }
 
 export async function auth() {
-	return getAuthInstance().auth();
+	try {
+		return await getAuthInstance().auth();
+	} catch (error) {
+		if (isIgnorableSessionError(error)) {
+			return null;
+		}
+
+		throw error;
+	}
 }
 
 export const handlers = new Proxy(

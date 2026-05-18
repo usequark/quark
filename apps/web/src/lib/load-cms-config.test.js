@@ -2,24 +2,30 @@ import assert from "node:assert/strict";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { test } from "node:test";
+import { describe, test } from "node:test";
 
 import { loadCmsConfig, resetCmsConfigCache } from "./load-cms-config.js";
 
-const CONFIG_TEXT = `
+const CMS_CONFIG_TEXT = `
 export const cmsConfig = {
 	contentTypes: {
-		Page: { label: "Pages" },
+		Page: {
+			label: "Pages",
+		},
+	},
+	media: {
+		maxFileSize: 1024,
+		allowedTypes: ["image/png"],
 	},
 };
 `;
 
-function createFixture({ withConfig = true } = {}) {
-	const root = mkdtempSync(join(tmpdir(), "quark-load-cms-config-"));
+function createFixture({ withCmsConfig = true } = {}) {
+	const root = mkdtempSync(join(tmpdir(), "quark-cms-config-"));
 
-	if (withConfig) {
+	if (withCmsConfig) {
 		mkdirSync(join(root, "packages/cms/src"), { recursive: true });
-		writeFileSync(join(root, "packages/cms/src/config.js"), CONFIG_TEXT);
+		writeFileSync(join(root, "packages/cms/src/config.js"), CMS_CONFIG_TEXT);
 	}
 
 	return {
@@ -44,47 +50,58 @@ async function withCwd(nextCwd, run) {
 	}
 }
 
-test("loadCmsConfig reads config from the web app cwd", async () => {
-	const fixture = createFixture();
+describe("CMS config resolution", () => {
+	test("reads the config from the web app cwd", async () => {
+		const fixture = createFixture();
 
-	try {
-		const config = await withCwd(join(fixture.root, "apps/web"), () =>
-			loadCmsConfig(),
-		);
+		try {
+			const cmsConfig = await withCwd(join(fixture.root, "apps/web"), () =>
+				loadCmsConfig(),
+			);
 
-		assert.ok(config);
-		assert.equal(config.contentTypes.Page.label, "Pages");
-	} finally {
-		fixture.cleanup();
-	}
-});
+			assert.deepStrictEqual(cmsConfig, {
+				contentTypes: {
+					Page: {
+						label: "Pages",
+					},
+				},
+				media: {
+					maxFileSize: 1024,
+					allowedTypes: ["image/png"],
+				},
+			});
+		} finally {
+			fixture.cleanup();
+		}
+	});
 
-test("loadCmsConfig reads config from Next standalone cwd", async () => {
-	const fixture = createFixture();
+	test("reads the config from a Next standalone cwd", async () => {
+		const fixture = createFixture();
 
-	try {
-		const config = await withCwd(
-			join(fixture.root, "apps/web/.next/standalone/apps/web"),
-			() => loadCmsConfig(),
-		);
+		try {
+			const cmsConfig = await withCwd(
+				join(fixture.root, "apps/web/.next/standalone/apps/web"),
+				() => loadCmsConfig(),
+			);
 
-		assert.ok(config);
-		assert.equal(config.contentTypes.Page.label, "Pages");
-	} finally {
-		fixture.cleanup();
-	}
-});
+			assert.equal(cmsConfig?.contentTypes?.Page?.label, "Pages");
+			assert.equal(cmsConfig?.media?.maxFileSize, 1024);
+		} finally {
+			fixture.cleanup();
+		}
+	});
 
-test("loadCmsConfig returns null when config file is missing", async () => {
-	const fixture = createFixture({ withConfig: false });
+	test("returns null when the CMS package is absent", async () => {
+		const fixture = createFixture({ withCmsConfig: false });
 
-	try {
-		const config = await withCwd(join(fixture.root, "apps/web"), () =>
-			loadCmsConfig(),
-		);
+		try {
+			const cmsConfig = await withCwd(join(fixture.root, "apps/web"), () =>
+				loadCmsConfig(),
+			);
 
-		assert.equal(config, null);
-	} finally {
-		fixture.cleanup();
-	}
+			assert.equal(cmsConfig, null);
+		} finally {
+			fixture.cleanup();
+		}
+	});
 });

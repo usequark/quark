@@ -6,9 +6,10 @@
 	"description": "My Quark project",
 	"main": "index.js",
 	"scripts": {
-		"build": "turbo run build",
-		"dev": "dotenv -- turbo run dev",
+		"build": "dotenv -- turbo run build",
+		"dev": "dotenv -- node scripts/dev-preflight.mjs && dotenv -- turbo run dev",
 		"lint": "turbo run lint",
+		"standards": "node scripts/check-standards.mjs",
 		"test": "turbo run test",
 		"docker:up": "docker compose up -d",
 		"docker:down": "docker compose down",

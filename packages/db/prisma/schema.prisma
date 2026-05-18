@@ -172,7 +172,9 @@ model Page {
   title       String
   slug        String        @unique
   body        String        @db.Text
+  content     Json?
   excerpt     String?
+  layout      String        @default("standard")
   status      ContentStatus @default(DRAFT)
   publishedAt DateTime?
   authorId    String

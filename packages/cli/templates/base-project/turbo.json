@@ -8,7 +8,20 @@
 		"build": {
 			"dependsOn": ["^build", "db:generate"],
 			"outputs": ["dist/**", ".next/**"],
-			"env": ["NODE_ENV"]
+			"env": ["NODE_ENV"],
+			"passThroughEnv": [
+				"DATABASE_URL",
+				"POSTGRES_HOST",
+				"POSTGRES_PORT",
+				"POSTGRES_USER",
+				"POSTGRES_PASSWORD",
+				"POSTGRES_DB",
+				"APP_URL",
+				"ALLOW_INDEXING",
+				"PORT",
+				"NEXTAUTH_SECRET",
+				"AUTH_SECRET"
+			]
 		},
 		"lint": {
 			"outputs": []
@@ -76,19 +89,24 @@
 			"cache": false,
 			"persistent": true,
 			"passThroughEnv": [
+				"DATABASE_URL",
 				"PORT",
 				"POSTGRES_HOST",
 				"POSTGRES_PORT",
 				"POSTGRES_USER",
 				"POSTGRES_PASSWORD",
 				"POSTGRES_DB",
+				"REDIS_URL",
 				"REDIS_HOST",
 				"REDIS_PORT",
 				"MAIL_HOST",
 				"MAIL_SMTP_PORT",
 				"MAIL_UI_PORT",
+				"NEXTAUTH_URL",
 				"NEXTAUTH_SECRET",
+				"AUTH_SECRET",
 				"APP_URL",
+				"ALLOW_INDEXING",
 				"WORKER_CONCURRENCY",
 				"STORAGE_PROVIDER",
 				"STORAGE_LOCAL_DIR",

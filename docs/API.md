@@ -234,6 +234,8 @@ import {
 } from "@techstream/quark-core";
 
 // Storage — reads STORAGE_PROVIDER env var
+// For STORAGE_PROVIDER=s3, install @aws-sdk/client-s3 and
+// @aws-sdk/s3-request-presigner in the app first.
 const storage = createStorage();
 const key = generateStorageKey("photo.jpg"); // "uploads/2026/02/abc123-photo.jpg"
 await storage.put(key, buffer, { contentType: "image/jpeg" });
@@ -249,7 +251,7 @@ const result = validateFile({
 });
 // result: { valid: true, detectedType: "image/jpeg" }
 
-// Multipart parsing — streams from Web Request into files + fields
+// Multipart parsing — streams Web Request bodies into files + fields
 const { files, fields } = await parseMultipart(request);
 ```
 

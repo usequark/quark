@@ -13,6 +13,7 @@ const SECTIONS = [
 	{ id: "dialog", label: "Dialog" },
 	{ id: "toast", label: "Toast" },
 	{ id: "sections", label: "Sections" },
+	{ id: "navbar-footer", label: "Navbar & Footer" },
 	{ id: "animations", label: "Animations" },
 ];
 

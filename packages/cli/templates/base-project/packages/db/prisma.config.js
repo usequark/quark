@@ -1,6 +1,9 @@
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "prisma/config";
 import { getConnectionString } from "./src/connection.js";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Load .env from monorepo root (needed for standalone commands like db:push, db:seed)
 try {

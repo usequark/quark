@@ -9,7 +9,7 @@ export function getSiteMetadata() {
 		metadataBase: new URL(appUrl),
 		title: {
 			default: appName,
-			template: `%s | ${appName}`,
+			template: `%s · ${appName}`,
 		},
 		description: appDescription,
 		applicationName: appName,

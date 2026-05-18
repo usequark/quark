@@ -8,9 +8,28 @@ import { ValidationError } from "@techstream/quark-core";
 import { z } from "zod";
 
 const RESERVED_PAGE_SLUGS = new Set(["admin", "api", "auth", "playground"]);
+const EMPTY_GENERATED_SLUG_MESSAGE =
+	"Add a custom slug when the title cannot be converted into a URL path";
 
 function getStringValue(value) {
 	return typeof value === "string" ? value : "";
+}
+
+export function assertPageSlugAllowed(slug) {
+	const normalizedSlug = getStringValue(slug).trim().toLowerCase();
+	if (normalizedSlug && RESERVED_PAGE_SLUGS.has(normalizedSlug)) {
+		throw new ValidationError("Slug is reserved for an existing route");
+	}
+}
+
+export function resolvePageSlugCandidate({ title, slug }) {
+	const candidate =
+		getStringValue(slug).trim() || generateSlug(getStringValue(title));
+	if (!candidate) {
+		throw new ValidationError(EMPTY_GENERATED_SLUG_MESSAGE);
+	}
+	assertPageSlugAllowed(candidate);
+	return candidate;
 }
 
 export const pageSchema = z.object({
@@ -43,12 +62,7 @@ export function parsePageFormData(formData) {
 		throw new ValidationError(result.error.issues[0].message);
 	}
 
-	if (
-		result.data.slug &&
-		RESERVED_PAGE_SLUGS.has(result.data.slug.toLowerCase())
-	) {
-		throw new ValidationError("Slug is reserved for an existing route");
-	}
+	assertPageSlugAllowed(result.data.slug);
 
 	const { layout, content } = parsePageBuilderInput({
 		layout: raw.layout,
@@ -65,13 +79,4 @@ export function parsePageFormData(formData) {
 		content,
 		body: serializePageContentToBody(content),
 	};
-}
-
-export function resolvePageSlugCandidate({ title, slug }) {
-	const parsedSlug = getStringValue(slug).trim();
-	if (parsedSlug) {
-		return parsedSlug;
-	}
-
-	return generateSlug(getStringValue(title).trim());
 }

@@ -51,12 +51,13 @@ Scaffolded (local-only) packages:
 - **Database:** Prisma + Postgres. Always include `createdAt`/`updatedAt` on models.
 - **UI:** Tailwind CSS. Keep components atomic. When the `ui` package is selected, use components from `@<app>/ui`. Available exports: `Button`, `Input`, `Label`, `Textarea`, `Select`, `Checkbox`, `Badge`, `Card`/`CardHeader`/`CardTitle`/`CardContent`/`CardFooter`, `Table`/`TableHeader`/`TableBody`/`TableRow`/`TableHead`/`TableCell`, `Skeleton`, `QuarkLogo` (server), `Dialog` (client), `Toast`/`useToast` (client), `ThemeProvider`/`useTheme` (client). All accept `className` for overrides. Do **not** import from `@/components/ui/*` — that Shadcn path convention is not used.
 - **Validation:** Zod is mandatory for all Server Actions and API routes.
-- **Errors:** Use `AppError` / `ValidationError` from `@techstream/quark-core/errors`.
+- **Errors:** Use `AppError` / `ValidationError` from `@techstream/quark-core/errors` in app/runtime code. Native `Error` is acceptable in library, bootstrap, CLI, and test code.
 - **Environment:** All env vars validated via `validate-env.js` in the config package. Environment-specific defaults managed by `environment.js`. Centralized config loading via `loadConfig()` from `load-config.js`.
 - **Mail env vars:** Use `MAIL_HOST`, `MAIL_PORT`, `MAIL_FROM` (not MAILHOG_*).
 - **Metrics:** Use `metrics` singleton from `@techstream/quark-core` for counters, gauges, histograms. Pre-registered HTTP metrics: `httpRequestsTotal`, `httpRequestDuration`, `httpRequestsInFlight`, `appErrorsTotal`. Prometheus format exported at `/api/metrics`.
-- **Logging:** Use `createLogger(name)` from `@techstream/quark-core`. Never use `console.log/error` in production code.
+- **Logging:** Use `createLogger(name)` from `@techstream/quark-core` in app/runtime code. Console output is acceptable in bootstrap, CLI, and test code.
 - **Config:** Use `loadConfig()` from `@<app>/config` for centralized configuration. Supports per-environment defaults (dev/test/staging/prod) with env-var overrides.
+- **Analytics:** Optional Umami support stays app-local in `apps/web/src/lib/analytics/*`. The scaffolded public contract is only `NEXT_PUBLIC_UMAMI_URL`, `NEXT_PUBLIC_UMAMI_WEBSITE_ID`, and `NEXT_PUBLIC_UMAMI_REPLAY_ENABLED`; replay uses a local rrweb recorder rather than hosted `recorder.js`.
 
 ## CI/CD Pipeline
 
@@ -227,7 +228,7 @@ quark/
 ## Database Seeding
 
 Seed file: `packages/db/prisma/seed.js` (scaffolded template: `packages/cli/templates/base-project/packages/db/prisma/seed.js`).
-Run via `pnpm db:seed`, configured in `prisma.config.ts` as `tsx prisma/seed.js`.
+Run via `pnpm db:seed`, configured in `prisma.config.js` as `tsx prisma/seed.js`.
 
 | `SEED_PROFILE` | Records created | Use case |
 |---|---|---|

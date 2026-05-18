@@ -32,8 +32,7 @@ npx @techstream/quark-create-app my-app --no-prompts --features ""    # minimal 
 __QUARK_PROJECT_NAME__/
 ├── apps/
 │   ├── web/                  # Next.js 16 (App Router, Server Actions)
-│   └── worker/               # BullMQ background worker
-├── packages/
+__QUARK_OPTIONAL_APPS__├── packages/
 │   ├── db/                   # Prisma schema, client, query functions
 │   ├── config/               # Environment validation & shared config
 __QUARK_OPTIONAL_PACKAGES__├── docker-compose.yml

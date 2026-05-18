@@ -21,7 +21,12 @@ import {
 
 function makePrisma(record) {
 	const delegate = {
-		findUnique: async ({ where: { slug, status } }) => {
+		findUnique: async ({ where: { id } }) => {
+			if (!record) return null;
+			if (id && id !== record.id) return null;
+			return record;
+		},
+		findFirst: async ({ where: { slug, status } }) => {
 			if (!record) return null;
 			if (slug !== record.slug) return null;
 			// Mirror the status filter applied by findBySlug
