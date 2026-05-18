@@ -4,6 +4,14 @@ import { createPageBlock } from "@techstream/quark-cms/page-builder";
 import { ValidationError } from "@techstream/quark-core";
 import { parsePageFormData, resolvePageSlugCandidate } from "./page-form.js";
 
+const _DEFAULT_CONTENT = [
+	{
+		id: "page-block-test-1",
+		type: "richText",
+		html: "Hello world",
+	},
+];
+
 function makeFormData(overrides = {}) {
 	const formData = new FormData();
 	const values = {

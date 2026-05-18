@@ -405,8 +405,18 @@ function sanitizeRichTextHtml(html) {
 		)
 		.replace(/\son[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
 		.replace(
-			/\s(href|src)\s*=\s*(?:(["'])\s*javascript:[^"']*\2|javascript:[^\s>]+)/gi,
-			"",
+			/\s(href|src)\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi,
+			(match, _attr, value) => {
+				const normalizedValue = value
+					.trim()
+					.replace(/^['"]|['"]$/g, "")
+					.replace(/\s/g, "")
+					.toLowerCase();
+
+				return /^(javascript|vbscript|data):/.test(normalizedValue)
+					? ""
+					: match;
+			},
 		)
 		.trim();
 }

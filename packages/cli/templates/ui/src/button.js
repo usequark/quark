@@ -63,6 +63,10 @@ export function Button({
 	variant = "primary",
 	size = "md",
 	className = "",
+	href,
+	target,
+	rel,
+	type = "button",
 	icon,
 	children,
 	...props
@@ -73,16 +77,36 @@ export function Button({
 	const spacing = hasIcon && hasLabel ? "gap-2" : "";
 	const cls =
 		`${base} ${VARIANTS[variant] ?? VARIANTS.primary} ${sizes[size] ?? sizes.md} ${spacing} rounded-[--radius-default] ${className}`.trim();
+	const buttonType =
+		type === "submit" || type === "reset" || type === "button"
+			? type
+			: "button";
 
 	const buttonChildren = [];
 
 	if (hasIcon) buttonChildren.push(buildIcon(icon, size));
 	if (hasLabel) buttonChildren.push(children);
 
+	if (href) {
+		const anchorRel =
+			target === "_blank" ? (rel ?? "noopener noreferrer") : rel;
+		return React.createElement(
+			"a",
+			{
+				href,
+				target,
+				rel: anchorRel,
+				className: cls,
+				...props,
+			},
+			...buttonChildren,
+		);
+	}
+
 	return React.createElement(
 		"button",
 		{
-			type: "button",
+			type: buttonType,
 			className: cls,
 			...props,
 		},

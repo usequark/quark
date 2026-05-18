@@ -2,6 +2,7 @@
 
 import { Button, Dialog, Input, Label, Textarea } from "@techstream/quark-ui";
 import { useActionState, useState, useTransition } from "react";
+import ContentPreview from "./ContentPreview";
 import CoverImageField from "./CoverImageField";
 import PageBuilder from "./PageBuilder";
 import SlugField from "./SlugField";
@@ -39,6 +40,7 @@ export default function ContentForm({
 }) {
 	const isEdit = !!record;
 	const action = isEdit ? updateAction : createAction;
+	const formId = `cms-content-form-${modelLabel.toLowerCase().replace(/\s+/g, "-")}-${isEdit ? "edit" : "new"}`;
 
 	const [state, formAction, isPending] = useActionState(
 		async (_prev, formData) => {
@@ -53,6 +55,7 @@ export default function ContentForm({
 	);
 
 	const [title, setTitle] = useState(record?.title ?? "");
+	const [body, setBody] = useState(record?.body ?? "");
 	const [deleteOpen, setDeleteOpen] = useState(false);
 	const [isDeleting, startDeleteTransition] = useTransition();
 
@@ -64,15 +67,15 @@ export default function ContentForm({
 		modelLabel === "Page"
 			? "About, Pricing, Contact, Terms of Service"
 			: `${modelLabel} title`;
-	const excerptPlaceholder =
+	const _excerptPlaceholder =
 		modelLabel === "Page"
 			? "Summarize what this page covers and who it is for."
 			: "Short summary (optional)";
-	const bodyPlaceholder =
+	const _bodyPlaceholder =
 		modelLabel === "Page"
 			? "<h1>Headline</h1>\n<p>Lead paragraph that explains the page.</p>\n\n<h2>Key section</h2>\n<p>Add supporting details, proof, or a clear next step.</p>"
 			: "Write your content here…";
-	const bodyHelpText =
+	const _bodyHelpText =
 		modelLabel === "Page"
 			? "A strong page usually has a clear headline, a short intro, 2-3 supporting sections, and a next step. Plain text or basic HTML both work."
 			: "Supports plain text or basic HTML.";
@@ -93,7 +96,7 @@ export default function ContentForm({
 		<div className="flex flex-col gap-6 lg:flex-row lg:items-start">
 			{/* Main editor — takes 2/3 width on large screens */}
 			<div className="flex-1 min-w-0">
-				<form action={formAction} className="space-y-5">
+				<form id={formId} action={formAction} className="space-y-5">
 					{!isEdit && modelLabel === "Page" && (
 						<div className="rounded-[--radius-default] border border-border bg-surface px-4 py-3">
 							<p className="text-xs font-semibold uppercase tracking-widest text-text-faint">
@@ -132,84 +135,104 @@ export default function ContentForm({
 								name="excerpt"
 								defaultValue={record?.excerpt ?? ""}
 								rows={2}
-								placeholder={excerptPlaceholder}
+								placeholder="Short summary (optional)"
 							/>
 						</div>
 					)}
 
-					{/* Cover image picker */}
 					{hasCoverImage && (
-						<CoverImageField defaultValue={record?.coverImage ?? ""} />
+						<section className="rounded-[--radius-default] border border-border bg-surface p-4 shadow-sm sm:p-5">
+							<PanelHeader
+								title="Media"
+								description="Select or upload a cover image for this page."
+							/>
+							<CoverImageField defaultValue={record?.coverImage ?? ""} />
+						</section>
 					)}
 
-					{/* Body / sections */}
 					{isPageModel ? (
 						<div className="space-y-3">
-							<div>
-								<p className="text-xs font-semibold uppercase tracking-widest text-text-faint">
-									Page Builder
-								</p>
-								<p className="mt-1 text-sm text-text-muted">
-									Build the page with sections for rich text, media, and calls
-									to action.
-								</p>
-							</div>
 							<PageBuilder
 								defaultContent={record?.content}
 								defaultBody={record?.body ?? ""}
 								defaultLayout={record?.layout ?? "standard"}
 							/>
-							<p className="text-xs text-text-faint">
+							<p className="px-1 text-xs text-text-faint">
 								Use sections to shape the public page instead of writing one
 								long body field.
 							</p>
 						</div>
 					) : (
-						<div className="flex flex-col gap-1">
-							<Label htmlFor="cms-body">Body *</Label>
-							<Textarea
-								id="cms-body"
-								name="body"
-								defaultValue={record?.body ?? ""}
-								required
-								rows={16}
-								placeholder={bodyPlaceholder}
-								className="font-mono text-sm leading-relaxed resize-y"
+						<section className="rounded-[--radius-default] border border-border bg-surface p-4 shadow-sm sm:p-5">
+							<PanelHeader
+								title="Body"
+								description="Write and structure the full content body."
 							/>
-							<p className="text-xs text-text-faint">{bodyHelpText}</p>
-						</div>
+							<div className="flex flex-col gap-1">
+								<Label htmlFor="cms-body">Body *</Label>
+								<Textarea
+									id="cms-body"
+									name="body"
+									value={body}
+									required
+									rows={16}
+									placeholder="Write your content here…"
+									className="font-mono text-sm leading-relaxed resize-y"
+									onChange={(e) => setBody(e.target.value)}
+								/>
+								<p className="text-xs text-text-faint">
+									Supports plain text or basic HTML.
+								</p>
+							</div>
+						</section>
 					)}
 
-					<div className="flex items-center gap-3 pt-4 border-t border-border">
-						<Button type="submit" disabled={isPending}>
+					{state?.error && (
+						<p className="rounded-[--radius-default] border border-danger/40 bg-danger-muted px-4 py-3 text-sm text-danger">
+							{state.error}
+						</p>
+					)}
+				</form>
+			</div>
+
+			<aside className="space-y-4 lg:sticky lg:-top-2 lg:self-start">
+				<div className="rounded-[--radius-default] border border-border bg-surface p-4 shadow-sm sm:p-5">
+					<PanelHeader
+						title="Actions"
+						description={`Save changes or cancel this ${modelLabel.toLowerCase()} edit.`}
+					/>
+					<div className="flex flex-col gap-3">
+						<Button
+							type="submit"
+							form={formId}
+							disabled={isPending}
+							className="w-full justify-center"
+						>
 							{isPending
 								? "Saving…"
 								: isEdit
 									? "Save changes"
 									: `Create ${modelLabel}`}
 						</Button>
-						<a
-							href="./"
-							className="inline-flex items-center justify-center h-10 px-4 text-sm font-medium tracking-wide rounded-[--radius-default] text-text-faint hover:bg-surface-hover hover:text-text transition-all duration-200 linear"
+						<Button
+							type="button"
+							variant="danger"
+							className="w-full justify-center"
+							onClick={() => {
+								window.location.href = "./";
+							}}
 						>
 							Cancel
-						</a>
+						</Button>
 					</div>
+				</div>
 
-					{state?.error && <p className="text-sm text-danger">{state.error}</p>}
-				</form>
-			</div>
-
-			{/* Sidebar metadata panel */}
-			<aside className="lg:w-64 shrink-0 space-y-4">
-				{/* Status */}
 				<div className="rounded-[--radius-default] border border-border bg-surface p-4 space-y-3">
-					<div className="flex items-center justify-between">
-						<p className="text-xs font-semibold uppercase tracking-widest text-text-faint">
-							Status
-						</p>
-						{isEdit && <StatusBadge status={status} />}
-					</div>
+					<PanelHeader
+						title="Status"
+						description="Set the publishing state for this entry."
+						rightSlot={isEdit ? <StatusBadge status={status} /> : null}
+					/>
 
 					{isEdit && (
 						<div className="flex flex-col gap-2">
@@ -275,12 +298,12 @@ export default function ContentForm({
 					)}
 				</div>
 
-				{/* Timestamps (edit only) */}
 				{isEdit && (
 					<div className="rounded-[--radius-default] border border-border bg-surface p-4 space-y-2">
-						<p className="text-xs font-semibold uppercase tracking-widest text-text-faint">
-							Timestamps
-						</p>
+						<PanelHeader
+							title="Timestamps"
+							description="Review key lifecycle dates for this entry."
+						/>
 						<div className="space-y-1">
 							<MetaRow label="Created" value={formatDate(record.createdAt)} />
 							<MetaRow label="Updated" value={formatDate(record.updatedAt)} />
@@ -294,12 +317,12 @@ export default function ContentForm({
 					</div>
 				)}
 
-				{/* Danger zone */}
 				{isEdit && deleteAction && (
 					<div className="rounded-[--radius-default] border border-danger/30 bg-surface p-4 space-y-3">
-						<p className="text-xs font-semibold uppercase tracking-widest text-text-faint">
-							Danger Zone
-						</p>
+						<PanelHeader
+							title="Danger Zone"
+							description={`Permanently remove this ${modelLabel.toLowerCase()}.`}
+						/>
 						<Button
 							type="button"
 							variant="danger"
@@ -310,6 +333,8 @@ export default function ContentForm({
 						</Button>
 					</div>
 				)}
+
+				<ContentPreview body={isPageModel ? (record?.body ?? "") : body} />
 			</aside>
 
 			{isEdit && deleteAction && (
@@ -346,6 +371,20 @@ export default function ContentForm({
 					</div>
 				</Dialog>
 			)}
+		</div>
+	);
+}
+
+function PanelHeader({ title, description, rightSlot = null }) {
+	return (
+		<div className="mb-4 border-b border-border pb-3">
+			<div className="flex items-center justify-between gap-3">
+				<h2 className="text-xs font-semibold uppercase tracking-widest text-text-faint">
+					{title}
+				</h2>
+				{rightSlot}
+			</div>
+			<p className="mt-1 text-sm text-text-faint">{description}</p>
 		</div>
 	);
 }

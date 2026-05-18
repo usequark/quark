@@ -11,8 +11,10 @@ const SECTIONS = [
 	{ id: "table", label: "Table" },
 	{ id: "skeleton", label: "Skeleton" },
 	{ id: "dialog", label: "Dialog" },
-	{ id: "toast", label: "Notifications" },
-	{ id: "footer", label: "Footer" },
+	{ id: "toast", label: "Toast" },
+	{ id: "sections", label: "Sections" },
+	{ id: "navbar-footer", label: "Navbar & Footer" },
+	{ id: "animations", label: "Animations" },
 ];
 
 function NavItem({ id, label, index }) {

@@ -37,6 +37,20 @@ async function adminGuard(request) {
 		return NextResponse.redirect(signinUrl);
 	}
 
+	if (token.role === "admin") {
+		return null;
+	}
+
+	const isCmsPath =
+		pathname === "/admin/cms" || pathname.startsWith("/admin/cms/");
+	if (token.role === "editor" && isCmsPath) {
+		return null;
+	}
+
+	if (token.role === "editor" && pathname === "/admin") {
+		return NextResponse.redirect(new URL("/admin/cms", request.url));
+	}
+
 	if (token.role !== "admin") {
 		return NextResponse.redirect(new URL("/", request.url));
 	}

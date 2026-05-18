@@ -1,5 +1,14 @@
 "use client";
 import {
+	BackgroundAurora,
+	BackgroundDataStream,
+	BackgroundGrid,
+	BackgroundIsometric,
+	BackgroundPolygon,
+	BackgroundStars,
+	BackgroundStreaks,
+	BackgroundVapor,
+	BackgroundWaves,
 	Badge,
 	Button,
 	Card,
@@ -9,13 +18,12 @@ import {
 	CardTitle,
 	Checkbox,
 	Dialog,
-	ErrorBanner,
 	Footer,
 	Input,
 	Label,
 	MobileNavbar,
 	Navbar,
-	RichText,
+	Section,
 	Select,
 	Skeleton,
 	Table,
@@ -29,34 +37,84 @@ import {
 	Toast,
 	useToast,
 } from "@techstream/quark-ui";
-import { ArrowRight } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Sidebar } from "./_components/Sidebar";
+
+const ANIMATIONS = [
+	{
+		key: "aurora",
+		label: "Aurora",
+		Component: BackgroundAurora,
+		props: {
+			colors: {
+				a: "rgba(14, 165, 233, 0.6)",
+				b: "rgba(109, 40, 217, 0.5)",
+				c: "rgba(6, 182, 212, 0.55)",
+			},
+		},
+	},
+	{
+		key: "waves",
+		label: "Waves",
+		Component: BackgroundWaves,
+		props: {
+			colors: {
+				back: "rgba(14, 165, 233, 0.3)",
+				mid: "rgba(2, 132, 199, 0.4)",
+				front: "rgba(3, 105, 161, 0.5)",
+			},
+		},
+	},
+	{
+		key: "data-stream",
+		label: "Data Stream",
+		Component: BackgroundDataStream,
+		props: { variant: "light" },
+	},
+	{
+		key: "isometric",
+		label: "Isometric",
+		Component: BackgroundIsometric,
+		props: { color: "#818cf8", opacity: 0.55 },
+	},
+	{
+		key: "vapor",
+		label: "Vapor",
+		Component: BackgroundVapor,
+		props: {},
+	},
+	{
+		key: "polygon",
+		label: "Polygon",
+		Component: BackgroundPolygon,
+		props: {},
+		theme: "dark",
+	},
+	{
+		key: "stars",
+		label: "Stars",
+		Component: BackgroundStars,
+		props: {},
+		theme: "dark",
+	},
+	{
+		key: "streaks",
+		label: "Streaks",
+		Component: BackgroundStreaks,
+		props: {},
+		theme: "dark",
+	},
+	{
+		key: "grid",
+		label: "Grid",
+		Component: BackgroundGrid,
+		props: {},
+	},
+];
 
 const TABLE_DATA = [
 	{ name: "Alice", role: "Admin", status: "Active" },
 	{ name: "Bob", role: "Viewer", status: "Inactive" },
-];
-
-const NAV_LINKS = [
-	{ label: "Home", href: "#" },
-	{
-		label: "Services",
-		items: [
-			{ label: "Web Development", href: "#" },
-			{ label: "Design Systems", href: "#" },
-			{ label: "Consulting", href: "#" },
-		],
-	},
-	{ label: "Pricing", href: "#" },
-	{
-		label: "Company",
-		items: [
-			{ label: "About", href: "#" },
-			{ label: "Careers", href: "#" },
-			{ label: "Contact", href: "#" },
-		],
-	},
 ];
 
 function Group({ label, children }) {
@@ -94,97 +152,117 @@ export default function PlaygroundPage() {
 }
 
 function PlaygroundInner() {
+	const [animationKey, setAnimationKey] = useState("aurora");
 	const [dialogOpen, setDialogOpen] = useState(false);
-	const [previewType, setPreviewType] = useState(null);
-	const [sortState, setSortState] = useState({ key: null, direction: "none" });
+	const [layoutPreviewType, setLayoutPreviewType] = useState(null);
+	const [sectionPreviewType, setSectionPreviewType] = useState("hero");
 	const toast = useToast();
 
-	const rows = useMemo(() => {
-		if (!sortState.key || sortState.direction === "none")
-			return [...TABLE_DATA];
-		const sorted = [...TABLE_DATA].sort((a, b) => {
-			const left = String(a[sortState.key] ?? "").toLowerCase();
-			const right = String(b[sortState.key] ?? "").toLowerCase();
-			if (left === right) return 0;
-			return left > right ? 1 : -1;
-		});
+	const sectionPreviewTitle =
+		sectionPreviewType === "hero"
+			? "Hero Section Preview"
+			: sectionPreviewType === "default"
+				? "Default Page Section Preview"
+				: sectionPreviewType === "split"
+					? "Split Page Section Preview"
+					: "CTA Section Preview";
 
-		if (sortState.direction === "desc") sorted.reverse();
-		return sorted;
-	}, [sortState]);
-
-	function toggleSort(columnKey, nextDir) {
-		if (nextDir === "none") {
-			setSortState({ key: null, direction: "none" });
-		} else {
-			setSortState({ key: columnKey, direction: nextDir });
-		}
-	}
-
-	function getSortDirection(columnKey) {
-		return sortState.key === columnKey ? sortState.direction : "none";
-	}
-
-	const previewTitle =
-		previewType === "desktop-navbar"
+	const layoutPreviewTitle =
+		layoutPreviewType === "navbar"
 			? "Desktop Navbar Preview"
-			: previewType === "mobile-navbar"
+			: layoutPreviewType === "mobile-navbar"
 				? "Mobile Navbar Preview"
 				: "Footer Preview";
 
-	function renderPreviewBody() {
-		if (previewType === "desktop-navbar") {
-			return (
-				<div className="p-4 sm:p-6">
-					<div className="overflow-hidden rounded-[--radius-default] border border-border bg-bg">
-						<Navbar
-							logo="Quark Studio"
-							links={NAV_LINKS}
-							action={{ label: "Login", href: "#" }}
-							maxWidthClassName="max-w-5xl"
-						/>
-						<div className="h-48 border-t border-border bg-[radial-gradient(circle_at_top,rgba(120,160,255,0.08),transparent_48%),linear-gradient(180deg,rgba(255,255,255,0.02),transparent)] px-4 py-6 sm:px-6">
-							<p className="font-mono text-[11px] uppercase tracking-[0.2em] text-text-faint">
-								Desktop Canvas
-							</p>
-							<h3 className="mt-3 text-lg font-semibold text-text">
-								Centered navigation with dropdown support and right-side CTA.
-							</h3>
-							<p className="mt-2 max-w-2xl text-sm text-text-muted">
-								The navigation row is constrained with a max width so it does
-								not stretch edge to edge.
-							</p>
+	function renderSectionPreview() {
+		switch (sectionPreviewType) {
+			case "hero":
+				return (
+					<Section
+						type="hero"
+						title="Build Confidence With Every Release"
+						subtitle="Ship production-ready updates faster with a slim hero designed to orient users immediately."
+						backgroundMode="animation"
+						backgroundValue="Aurora"
+					/>
+				);
+			case "default":
+				return (
+					<Section
+						type="default"
+						eyebrow="Platform"
+						title="A simple section that keeps content readable"
+						body="The default page section keeps hierarchy clear with a compact eyebrow and heading pair above comfortable body copy.\n\nUse this layout for most paragraphs where clarity matters more than visual complexity."
+					/>
+				);
+			case "split":
+				return (
+					<Section
+						type="split"
+						eyebrow="Workflow"
+						title="Pair narrative copy with supporting media"
+						leftKind="text"
+						leftBody="Use text on one side to explain the message while the second side supports the story with visuals.\n\nThe layout stacks naturally on smaller viewports."
+						rightKind="image"
+						rightSrc="https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&w=1200&q=80"
+						rightAlt="Design collaboration workspace"
+					/>
+				);
+			case "cta":
+				return (
+					<Section
+						type="cta"
+						title="Ready to map your next release?"
+						subtitle="Use the CTA section at the bottom of pages to route users to their next high-value action."
+						primaryAction={{ label: "Book demo", href: "#" }}
+						secondaryAction={{ label: "View docs", href: "#" }}
+						backgroundMode="color"
+						backgroundValue="primary"
+					/>
+				);
+			default:
+				return null;
+		}
+	}
+
+	function renderLayoutPreview() {
+		switch (layoutPreviewType) {
+			case "navbar":
+				return (
+					<div className="bg-bg">
+						<Navbar logo="Quark" action={{ label: "Get Started", href: "#" }} />
+					</div>
+				);
+			case "mobile-navbar":
+				return (
+					<div className="bg-bg py-6 px-4">
+						<div className="mx-auto max-w-md overflow-hidden rounded-[--radius-default] border border-border bg-surface">
+							<MobileNavbar
+								logo="Quark"
+								action={{ label: "Get Started", href: "#" }}
+							/>
+							<div className="px-4 py-6 text-sm text-text-muted">
+								Open the menu icon to inspect the mobile navigation panel.
+							</div>
 						</div>
 					</div>
-				</div>
-			);
-		}
-
-		if (previewType === "mobile-navbar") {
-			return (
-				<div className="flex justify-center p-4 sm:p-6">
-					<div className="w-full max-w-sm overflow-hidden rounded-2xl border border-border bg-bg shadow-[0_10px_50px_rgba(0,0,0,0.25)]">
-						<MobileNavbar
-							logo="Quark Studio"
-							links={NAV_LINKS}
-							action={{ label: "Contact", href: "#" }}
-							maxWidthClassName="max-w-full"
+				);
+			case "footer":
+				return (
+					<div className="bg-bg">
+						<Footer
+							brandName="Quark"
+							brandDescription="Ship production-ready apps with a practical full-stack toolkit built for velocity."
+							ctaLabel="Start Building"
+							ctaHref="#"
+							poweredByText="Powered by Quark"
+							poweredByHref="#"
 						/>
-						<div className="h-64 border-t border-border bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent)] px-4 py-5">
-							<p className="font-mono text-[11px] uppercase tracking-[0.2em] text-text-faint">
-								Mobile Canvas
-							</p>
-							<p className="mt-3 text-sm text-text-muted">
-								Tap the burger icon, then expand a parent item to reveal
-								animated submenu links.
-							</p>
-						</div>
 					</div>
-				</div>
-			);
+				);
+			default:
+				return null;
 		}
-
-		return <Footer />;
 	}
 
 	return (
@@ -215,18 +293,12 @@ function PlaygroundInner() {
 								<Button variant="solid">Solid</Button>
 							</Group>
 							<Group label="size">
-								<Button size="sm">Small</Button>
+								<Button>Small</Button>
 								<Button size="md">Medium</Button>
 								<Button size="lg">Large</Button>
 							</Group>
 							<Group label="state">
 								<Button disabled>Disabled</Button>
-							</Group>
-							<Group label="icon">
-								<Button variant="outline" size="sm" icon={<ArrowRight />}>
-									Read docs
-								</Button>
-								<Button icon={<ArrowRight />}>Continue</Button>
 							</Group>
 						</ComponentSection>
 
@@ -234,7 +306,6 @@ function PlaygroundInner() {
 						<ComponentSection id="badge" index={2} title="Badge">
 							<Group label="variant">
 								<Badge>Default</Badge>
-								<Badge variant="primary">Primary</Badge>
 								<Badge variant="success">Success</Badge>
 								<Badge variant="warning">Warning</Badge>
 								<Badge variant="danger">Danger</Badge>
@@ -244,7 +315,7 @@ function PlaygroundInner() {
 
 						{/* ── 03 Form ── */}
 						<ComponentSection id="form" index={3} title="Form Controls">
-							<div className="max-w-2xl space-y-3">
+							<div className="max-w-xs space-y-3">
 								<div>
 									<Label htmlFor="inp">Input</Label>
 									<Input id="inp" placeholder="Enter text…" />
@@ -262,19 +333,15 @@ function PlaygroundInner() {
 									</Select>
 								</div>
 								<Checkbox id="chk" label="Accept terms" />
-								<div>
-									<Label htmlFor="rt">Rich Text</Label>
-									<RichText id="rt" placeholder="Start writing…" rows={8} />
-								</div>
 							</div>
 						</ComponentSection>
 
 						{/* ── 04 Card ── */}
 						<ComponentSection id="card" index={4} title="Card">
-							<div className="grid gap-3 md:grid-cols-2">
+							<div className="grid gap-4 sm:grid-cols-2">
 								<Card className="max-w-xs bg-surface shadow-sm">
 									<CardHeader>
-										<CardTitle>Default Card</CardTitle>
+										<CardTitle>Card Title</CardTitle>
 									</CardHeader>
 									<CardContent>
 										<p className="text-sm text-text-muted">
@@ -288,12 +355,18 @@ function PlaygroundInner() {
 
 								<Card
 									variant="collapsible"
-									collapsibleLabel="Collapsible Card"
+									collapsibleLabel="Expandable Card"
 									className="max-w-xs bg-surface shadow-sm"
 								>
-									<p className="text-sm">
-										This card variant can collapse and expand its body content.
-									</p>
+									<div className="space-y-3">
+										<p className="text-sm text-text-muted">
+											This card starts collapsed and expands to reveal
+											additional content.
+										</p>
+										<Button size="md" variant="secondary">
+											Learn More
+										</Button>
+									</div>
 								</Card>
 							</div>
 						</ComponentSection>
@@ -304,25 +377,13 @@ function PlaygroundInner() {
 								<Table>
 									<TableHeader>
 										<TableRow>
-											<TableHead
-												sortable
-												sortDirection={getSortDirection("name")}
-												onSort={(dir) => toggleSort("name", dir)}
-											>
-												Name
-											</TableHead>
-											<TableHead
-												sortable
-												sortDirection={getSortDirection("role")}
-												onSort={(dir) => toggleSort("role", dir)}
-											>
-												Role
-											</TableHead>
+											<TableHead>Name</TableHead>
+											<TableHead>Role</TableHead>
 											<TableHead>Status</TableHead>
 										</TableRow>
 									</TableHeader>
 									<TableBody>
-										{rows.map((r) => (
+										{TABLE_DATA.map((r) => (
 											<TableRow key={r.name}>
 												<TableCell>{r.name}</TableCell>
 												<TableCell>{r.role}</TableCell>
@@ -381,13 +442,10 @@ function PlaygroundInner() {
 							</Dialog>
 						</ComponentSection>
 
-						{/* ── 08 Notifications ── */}
-						<ComponentSection id="toast" index={8} title="Notifications">
+						{/* ── 08 Toast ── */}
+						<ComponentSection id="toast" index={8} title="Toast">
 							<Group label="trigger">
-								<Button
-									variant="success"
-									onClick={() => toast.show("Changes saved.", "success")}
-								>
+								<Button onClick={() => toast.show("Changes saved.", "success")}>
 									Success
 								</Button>
 								<Button
@@ -396,55 +454,166 @@ function PlaygroundInner() {
 								>
 									Error
 								</Button>
-								<Button onClick={() => toast.show("Notification sent.")}>
+								<Button
+									variant="secondary"
+									onClick={() => toast.show("Notification sent.")}
+								>
 									Default
 								</Button>
 							</Group>
 							<Toast {...toast.toastProps} />
-							<Group label="error banner">
-								<div className="w-full max-w-sm">
-									<ErrorBanner message="Something went wrong. Please try again." />
+						</ComponentSection>
+
+						{/* ── 09 Sections ── */}
+						<ComponentSection id="sections" index={9} title="Sections">
+							<Group label="preview overlays">
+								<Button
+									variant={
+										sectionPreviewType === "hero" ? "primary" : "secondary"
+									}
+									onClick={() => setSectionPreviewType("hero")}
+								>
+									Hero Section
+								</Button>
+								<Button
+									variant={
+										sectionPreviewType === "default" ? "primary" : "secondary"
+									}
+									onClick={() => setSectionPreviewType("default")}
+								>
+									Default Page Section
+								</Button>
+								<Button
+									variant={
+										sectionPreviewType === "split" ? "primary" : "secondary"
+									}
+									onClick={() => setSectionPreviewType("split")}
+								>
+									Split Page Section
+								</Button>
+								<Button
+									variant={
+										sectionPreviewType === "cta" ? "primary" : "secondary"
+									}
+									onClick={() => setSectionPreviewType("cta")}
+								>
+									CTA Section
+								</Button>
+							</Group>
+							<div className="mt-4 overflow-hidden rounded-[--radius-default] border border-border bg-surface">
+								<div className="flex items-center justify-between border-b border-border px-4 py-3">
+									<p className="font-mono text-[11px] uppercase tracking-[0.2em] text-text-faint">
+										{sectionPreviewTitle}
+									</p>
 								</div>
+								<div className="max-h-[70vh] overflow-y-auto p-4 sm:p-6">
+									{renderSectionPreview()}
+								</div>
+							</div>
+						</ComponentSection>
+						{/* ── 10 Navbar & Footer ── */}
+						<ComponentSection
+							id="navbar-footer"
+							index={10}
+							title="Navbar & Footer"
+						>
+							<Group label="open preview overlay">
+								<Button
+									variant={
+										layoutPreviewType === "navbar" ? "primary" : "secondary"
+									}
+									onClick={() => setLayoutPreviewType("navbar")}
+								>
+									Navbar
+								</Button>
+								<Button
+									variant={
+										layoutPreviewType === "mobile-navbar"
+											? "primary"
+											: "secondary"
+									}
+									onClick={() => setLayoutPreviewType("mobile-navbar")}
+								>
+									Mobile Navbar
+								</Button>
+								<Button
+									variant={
+										layoutPreviewType === "footer" ? "primary" : "secondary"
+									}
+									onClick={() => setLayoutPreviewType("footer")}
+								>
+									Footer
+								</Button>
 							</Group>
 						</ComponentSection>
 
-						{/* ── 09 Footer ── */}
-						<ComponentSection id="footer" index={9} title="Footer">
-							<Group label="preview">
-								<Button
-									variant="secondary"
-									onClick={() => setPreviewType("desktop-navbar")}
-								>
-									Desktop Navbar Preview
-								</Button>
-								<Button
-									variant="secondary"
-									onClick={() => setPreviewType("mobile-navbar")}
-								>
-									Mobile Navbar Preview
-								</Button>
-								<Button
-									variant="secondary"
-									onClick={() => setPreviewType("footer")}
-								>
-									Footer Preview
-								</Button>
+						{/* ── 11 Animations ── */}
+						<ComponentSection
+							id="animations"
+							index={11}
+							title="Background Animations"
+						>
+							<Group label="select animation">
+								{ANIMATIONS.map(({ key, label }) => (
+									<Button
+										key={key}
+										variant={animationKey === key ? "primary" : "secondary"}
+										onClick={() => setAnimationKey(key)}
+									>
+										{label}
+									</Button>
+								))}
 							</Group>
+							{(() => {
+								const active = ANIMATIONS.find((a) => a.key === animationKey);
+								const { Component, props: animProps, theme = "light" } = active;
+								const isDark = theme === "dark";
+								return (
+									<div
+										className={`relative overflow-hidden rounded-[--radius-default] border border-border h-72 ${isDark ? "bg-slate-950" : "bg-white"}`}
+									>
+										<Component className="z-0" {...animProps} />
+										<div className="relative z-10 flex h-full flex-col items-center justify-center gap-3 text-center px-6">
+											<p
+												className={`font-mono uppercase text-[11px] tracking-[0.2em] ${isDark ? "text-white/40" : "text-slate-400"}`}
+											>
+												Background · {active.label}
+											</p>
+											<h3
+												className={`text-2xl font-semibold ${isDark ? "text-white" : "text-slate-800"}`}
+											>
+												Text remains readable
+											</h3>
+											<p
+												className={`text-sm max-w-sm ${isDark ? "text-white/60" : "text-slate-500"}`}
+											>
+												Animations sit behind content without disrupting
+												legibility.
+											</p>
+										</div>
+									</div>
+								);
+							})()}
 						</ComponentSection>
 					</div>
 				</div>
 			</main>
 
-			<Dialog
-				open={Boolean(previewType)}
-				onClose={() => setPreviewType(null)}
-				title={previewTitle}
-				className="max-w-[min(96vw,72rem)]"
-			>
-				<div className="max-h-[70vh] overflow-y-auto overscroll-contain">
-					{previewType ? renderPreviewBody() : null}
+			{layoutPreviewType ? (
+				<div className="fixed inset-x-0 bottom-0 z-60 border-t border-border bg-bg/95 shadow-[0_-18px_40px_rgba(0,0,0,0.35)] backdrop-blur">
+					<div className="flex items-center justify-between border-b border-border px-4 py-3 sm:px-6 lg:px-8">
+						<p className="font-mono text-[11px] uppercase tracking-[0.2em] text-text-faint">
+							{layoutPreviewTitle}
+						</p>
+						<Button variant="ghost" onClick={() => setLayoutPreviewType(null)}>
+							Close
+						</Button>
+					</div>
+					<div className="max-h-[72vh] overflow-y-auto">
+						{renderLayoutPreview()}
+					</div>
 				</div>
-			</Dialog>
+			) : null}
 		</div>
 	);
 }

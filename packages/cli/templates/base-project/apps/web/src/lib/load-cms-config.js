@@ -1,54 +1,65 @@
-import { access } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 import path from "node:path";
-import { pathToFileURL } from "node:url";
+import { Script } from "node:vm";
 
-const DEFAULT_CMS_CONFIG_RELATIVE_PATHS = [
+const CMS_CONFIG_RELATIVE_PATHS = [
 	"packages/cms/src/config.js",
 	"../../packages/cms/src/config.js",
+	// In Next standalone, cwd becomes /app/apps/web/.next/standalone/apps/web.
 	"../../../../../../packages/cms/src/config.js",
 ];
 
 let cmsConfigPromise;
 
-// Turbopack rejects variable import() expressions in server code even when the
-// target is a local file URL discovered at runtime. Wrapping import() in a
-// Function keeps this optional file load on the Node side.
-const importModuleAtRuntime = new Function(
-	"specifier",
-	"return import(specifier);",
-);
-
-function getDefaultCmsConfigPaths() {
+function getCmsConfigPaths() {
 	return [
 		...new Set(
-			DEFAULT_CMS_CONFIG_RELATIVE_PATHS.map((relativePath) =>
+			CMS_CONFIG_RELATIVE_PATHS.map((relativePath) =>
 				path.resolve(process.cwd(), relativePath),
 			),
 		),
 	];
 }
 
-async function resolveCmsConfigPath() {
-	for (const candidatePath of getDefaultCmsConfigPaths()) {
+async function importCmsConfig() {
+	const candidatePaths = getCmsConfigPaths();
+
+	for (const candidatePath of candidatePaths) {
 		try {
 			await access(candidatePath);
-			return candidatePath;
-		} catch {}
+		} catch {
+			continue;
+		}
+
+		return await loadCmsConfigFromFile(candidatePath);
 	}
 
 	return null;
 }
 
-async function importCmsConfig() {
-	const cmsConfigPath = await resolveCmsConfigPath();
-	if (!cmsConfigPath) {
-		return null;
+async function loadCmsConfigFromFile(filePath) {
+	const source = await readFile(filePath, "utf-8");
+
+	if (/^\s*import\s+/m.test(source)) {
+		throw new Error(
+			`CMS config at ${filePath} cannot use import statements in runtime-loaded config.`,
+		);
 	}
 
-	const cmsModule = await importModuleAtRuntime(
-		pathToFileURL(cmsConfigPath).href,
+	const transformedSource = source.replace(
+		/^\s*export\s+const\s+cmsConfig\s*=/m,
+		"const cmsConfig =",
 	);
-	return cmsModule.cmsConfig ?? null;
+
+	if (transformedSource === source) {
+		throw new Error(`CMS config export not found at ${filePath}.`);
+	}
+
+	const script = new Script(`${transformedSource}\n;cmsConfig;`, {
+		filename: filePath,
+	});
+
+	return script.runInNewContext({});
 }
 
 export async function loadCmsConfig() {

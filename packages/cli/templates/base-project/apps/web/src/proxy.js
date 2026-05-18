@@ -30,11 +30,25 @@ async function adminGuard(request) {
 		return NextResponse.redirect(signinUrl);
 	}
 
+	if (token.role === "admin") {
+		return null; // authorized — continue
+	}
+
+	const isCmsPath =
+		pathname === "/admin/cms" || pathname.startsWith("/admin/cms/");
+	if (token.role === "editor" && isCmsPath) {
+		return null; // editors can manage CMS routes only
+	}
+
+	if (token.role === "editor" && pathname === "/admin") {
+		return NextResponse.redirect(new URL("/admin/cms", request.url));
+	}
+
 	if (token.role !== "admin") {
 		return NextResponse.redirect(new URL("/", request.url));
 	}
 
-	return null; // authorised — continue
+	return null;
 }
 
 // ─── 2. Metrics guard ────────────────────────────────────────────────────────

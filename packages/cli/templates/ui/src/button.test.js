@@ -78,3 +78,23 @@ test("Button - icon scales independently from text size", () => {
 	assert.match(result.props.className, /text-base/);
 	assert.match(result.props.children[0].props.className, /size-5/);
 });
+
+test("Button - renders anchor when href is provided", () => {
+	const result = Button({ href: "/docs", children: "Docs" });
+
+	assert.ok(result);
+	assert.equal(result.type, "a");
+	assert.equal(result.props.href, "/docs");
+});
+
+test("Button - adds noopener noreferrer for target blank links", () => {
+	const result = Button({
+		href: "https://example.com",
+		target: "_blank",
+		children: "External",
+	});
+
+	assert.ok(result);
+	assert.equal(result.type, "a");
+	assert.equal(result.props.rel, "noopener noreferrer");
+});

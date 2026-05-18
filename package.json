@@ -30,7 +30,7 @@
 		"changeset": "changeset",
 		"version-packages": "changeset version",
 		"release": "changeset publish",
-		"prepare": "git rev-parse --is-inside-work-tree > /dev/null 2>&1 && simple-git-hooks || true"
+		"prepare": "node scripts/prepare.mjs"
 	},
 	"keywords": [],
 	"author": "",
