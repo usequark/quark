@@ -22,8 +22,8 @@ export default async function NewRecordPage({ params }) {
 	if (overrides.readOnly) notFound();
 
 	return (
-		<div>
-			<div className="mb-6">
+		<div className="space-y-6">
+			<div>
 				<a
 					href={`/admin/${slug}`}
 					className="text-sm text-text-faint hover:text-text"
@@ -33,6 +33,10 @@ export default async function NewRecordPage({ params }) {
 				<h1 className="text-2xl font-bold mt-1 text-text">
 					Create {model.name}
 				</h1>
+				<p className="mt-2 text-sm text-text-faint">
+					Add a new record using focused sections for details, content, and
+					settings.
+				</p>
 			</div>
 			<ModelForm model={model} slug={slug} />
 		</div>

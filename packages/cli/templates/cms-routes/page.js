@@ -2,6 +2,7 @@ import { cmsConfig } from "@techstream/quark-cms";
 import { prisma } from "@techstream/quark-db";
 import {
 	Badge,
+	Button,
 	Card,
 	CardContent,
 	CardHeader,
@@ -57,9 +58,39 @@ export default async function CmsDashboard() {
 
 	return (
 		<div className="space-y-8">
-			<div>
-				<h1 className="text-2xl font-bold tracking-tight text-text">Content</h1>
-				<p className="mt-1 text-sm text-text-faint">Manage pages and media</p>
+			<div className="space-y-4">
+				<div>
+					<h1 className="text-2xl font-bold tracking-tight text-text">
+						Content
+					</h1>
+					<p className="mt-1 text-sm text-text-faint">Manage pages and media</p>
+				</div>
+
+				<div className="flex flex-wrap items-center gap-2 border-b border-border pb-3">
+					<a
+						href="/admin/cms"
+						className="rounded-[--radius-default] border border-border bg-surface px-3 py-1.5 text-sm font-medium text-text"
+					>
+						Overview
+					</a>
+					<a
+						href="/admin/cms/pages"
+						className="rounded-[--radius-default] border border-border px-3 py-1.5 text-sm font-medium text-text-muted hover:bg-surface-hover hover:text-text"
+					>
+						Pages
+					</a>
+					<a
+						href="/admin/cms/media"
+						className="rounded-[--radius-default] border border-border px-3 py-1.5 text-sm font-medium text-text-muted hover:bg-surface-hover hover:text-text"
+					>
+						Media
+					</a>
+					<div className="ml-auto">
+						<a href="/admin/cms/pages/new">
+							<Button size="sm">New Page</Button>
+						</a>
+					</div>
+				</div>
 			</div>
 
 			{/* Content type stats */}

@@ -20,8 +20,6 @@ const centerNavCls = "flex min-w-0 justify-center";
 const desktopListCls = "flex items-center gap-3";
 const desktopLinkCls =
 	"inline-flex h-10 items-center rounded-[--radius-default] px-3.5 text-base font-medium text-text-muted transition-colors hover:bg-surface hover:text-text";
-const desktopTriggerCls =
-	"flex h-10 items-center gap-2 rounded-[--radius-default] px-3.5 text-base font-medium text-text-muted transition-colors hover:bg-surface hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40";
 
 const desktopDropdownWrapCls =
 	"group inline-flex items-center rounded-[--radius-default] transition-colors hover:bg-surface";
@@ -210,22 +208,26 @@ export function Navbar({
 								{
 									key: `${link.label}-${index}`,
 									className: "relative",
-								onMouseEnter: () => {
-									if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current);
-									setOpenIndex(index);
-								},
-								onMouseLeave: () => {
-									leaveTimerRef.current = setTimeout(() => {
-										setOpenIndex((state) => (state === index ? null : state));
-									}, 150);
-								},
+									onMouseEnter: () => {
+										if (leaveTimerRef.current)
+											clearTimeout(leaveTimerRef.current);
+										setOpenIndex(index);
+									},
+									onMouseLeave: () => {
+										leaveTimerRef.current = setTimeout(() => {
+											setOpenIndex((state) => (state === index ? null : state));
+										}, 150);
+									},
 								},
 								React.createElement(
 									"div",
 									{ className: desktopDropdownWrapCls },
 									React.createElement(
 										"a",
-										{ href: link.href ?? "#", className: desktopDropdownLinkCls },
+										{
+											href: link.href ?? "#",
+											className: desktopDropdownLinkCls,
+										},
 										link.label,
 									),
 									React.createElement(
@@ -237,7 +239,9 @@ export function Navbar({
 											"aria-haspopup": "menu",
 											"aria-label": `${link.label} submenu`,
 											onClick: () => {
-												setOpenIndex((state) => (state === index ? null : index));
+												setOpenIndex((state) =>
+													state === index ? null : index,
+												);
 											},
 										},
 										React.createElement(Chevron, { open: isOpen }),

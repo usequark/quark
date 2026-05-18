@@ -27,8 +27,8 @@ export default async function EditRecordPage({ params }) {
 	if (!record) notFound();
 
 	return (
-		<div>
-			<div className="mb-6">
+		<div className="space-y-6">
+			<div>
 				<a
 					href={`/admin/${slug}`}
 					className="text-sm text-text-faint hover:text-text"
@@ -36,6 +36,10 @@ export default async function EditRecordPage({ params }) {
 					← {model.name}
 				</a>
 				<h1 className="text-2xl font-bold mt-1 text-text">Edit {model.name}</h1>
+				<p className="mt-2 text-sm text-text-faint">
+					Update this record through grouped sections so related fields stay
+					together.
+				</p>
 			</div>
 			<ModelForm
 				model={model}

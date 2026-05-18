@@ -20,8 +20,6 @@ const centerNavCls = "flex min-w-0 justify-center";
 const desktopListCls = "flex items-center gap-3";
 const desktopLinkCls =
 	"inline-flex h-10 items-center rounded-[--radius-default] px-3.5 text-base font-medium text-text-muted transition-colors hover:bg-surface hover:text-text";
-const desktopTriggerCls =
-	"flex h-10 items-center gap-2 rounded-[--radius-default] px-3.5 text-base font-medium text-text-muted transition-colors hover:bg-surface hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40";
 
 const desktopDropdownWrapCls =
 	"group inline-flex items-center rounded-[--radius-default] transition-colors hover:bg-surface";

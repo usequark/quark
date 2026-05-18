@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, Label } from "@techstream/quark-ui";
+import { Button, Card, CardContent, Input, Label } from "@techstream/quark-ui";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { cmsUploadMediaInline } from "../_actions/media";
 
@@ -191,16 +191,21 @@ export default function CoverImageField({
 								</p>
 							)}
 							{!loadingMedia && mediaAssets?.length === 0 && (
-								<p className="text-xs text-text-faint text-center py-6">
-									No images in the media library yet.{" "}
-									<button
-										type="button"
-										onClick={() => setTab("Upload")}
-										className="text-primary hover:opacity-75"
-									>
-										Upload one
-									</button>
-								</p>
+								<Card>
+									<CardContent className="py-6 text-center">
+										<p className="mb-3 text-xs text-text-faint">
+											No images in the media library yet.
+										</p>
+										<Button
+											type="button"
+											variant="secondary"
+											size="sm"
+											onClick={() => setTab("Upload")}
+										>
+											Upload one
+										</Button>
+									</CardContent>
+								</Card>
 							)}
 							{!loadingMedia && mediaAssets && mediaAssets.length > 0 && (
 								<div className="grid grid-cols-4 gap-2 max-h-64 overflow-y-auto">
@@ -228,7 +233,7 @@ export default function CoverImageField({
 					{/* Tab: Upload */}
 					{tab === "Upload" && (
 						<div className="p-3">
-							<form action={uploadAction} className="space-y-3">
+							<div className="space-y-3">
 								<button
 									type="button"
 									className="w-full rounded-[--radius-default] border-2 border-dashed border-border hover:border-border-hover transition-colors cursor-pointer flex flex-col items-center justify-center gap-2 py-6 text-sm text-text-faint"
@@ -273,10 +278,16 @@ export default function CoverImageField({
 								{uploadState?.error && (
 									<p className="text-xs text-danger">{uploadState.error}</p>
 								)}
-								<Button type="submit" disabled={isUploading} className="w-full">
+								<Button
+									type="submit"
+									formAction={uploadAction}
+									formNoValidate
+									disabled={isUploading}
+									className="w-full"
+								>
 									{isUploading ? "Uploading…" : "Upload & select"}
 								</Button>
-							</form>
+							</div>
 						</div>
 					)}
 

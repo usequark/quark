@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
+import { ChevronDown, ChevronsUpDown, ChevronUp } from "lucide-react";
 import React from "react";
 
 const wrapperCls =
@@ -37,7 +37,8 @@ function nextDirection(direction) {
 
 function sortIndicator(direction) {
 	if (direction === "asc") return React.createElement(ChevronUp, { size: 14 });
-	if (direction === "desc") return React.createElement(ChevronDown, { size: 14 });
+	if (direction === "desc")
+		return React.createElement(ChevronDown, { size: 14 });
 	return React.createElement(ChevronsUpDown, { size: 14 });
 }
 
@@ -116,7 +117,10 @@ export function TableHead({
 			"button",
 			{
 				type: "button",
-				onClick: typeof onSort === "function" ? () => onSort(nextDirection(direction)) : undefined,
+				onClick:
+					typeof onSort === "function"
+						? () => onSort(nextDirection(direction))
+						: undefined,
 				disabled: typeof onSort !== "function",
 				"aria-label": sortLabel ?? `Sort by ${headingText(children)}`,
 				className: `${sortButtonCls} ${typeof onSort !== "function" ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`,

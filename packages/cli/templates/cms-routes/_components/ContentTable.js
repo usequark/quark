@@ -1,5 +1,7 @@
 import {
 	Button,
+	Card,
+	CardContent,
 	Table,
 	TableBody,
 	TableCell,
@@ -19,14 +21,17 @@ import StatusBadge from "./StatusBadge";
 export default function ContentTable({ records, basePath }) {
 	if (records.length === 0) {
 		return (
-			<div className="rounded-[--radius-default] border border-border py-16 text-center">
-				<p className="text-sm text-text-faint mb-3">No content yet</p>
-				<a href={`${basePath}/new`}>
-					<Button variant="secondary" size="sm">
-						Create your first entry
-					</Button>
-				</a>
-			</div>
+			<Card>
+				<CardContent className="pt-14! pb-14 text-center flex flex-col items-center justify-center">
+					<p className="mb-2 text-sm font-medium text-text">No content yet</p>
+					<p className="mb-4 text-xs text-text-faint">
+						Create your first entry to start building this section.
+					</p>
+					<a href={`${basePath}/new`}>
+						<Button variant="secondary">Create your first entry</Button>
+					</a>
+				</CardContent>
+			</Card>
 		);
 	}
 
