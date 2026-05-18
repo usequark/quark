@@ -58,8 +58,9 @@ describe("CMS config resolution", () => {
 			const cmsConfig = await withCwd(join(fixture.root, "apps/web"), () =>
 				loadCmsConfig(),
 			);
+			const normalizedConfig = JSON.parse(JSON.stringify(cmsConfig));
 
-			assert.deepStrictEqual(cmsConfig, {
+			assert.deepStrictEqual(normalizedConfig, {
 				contentTypes: {
 					Page: {
 						label: "Pages",
