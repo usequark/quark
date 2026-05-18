@@ -21,9 +21,9 @@ const TABS = ["Media", "Upload", "URL"];
  * }} props
  */
 export default function CoverImageField({
+	label = "Cover Image",
 	defaultValue = "",
 	name = "coverImage",
-	label = "Cover Image",
 	disabled = false,
 	onChange,
 }) {
@@ -66,6 +66,15 @@ export default function CoverImageField({
 				.finally(() => setLoadingMedia(false));
 		}
 	}, [open, tab, mediaAssets, loadingMedia]);
+
+	useEffect(() => {
+		setValue(defaultValue);
+		setUrlInput(defaultValue);
+	}, [defaultValue]);
+
+	useEffect(() => {
+		onChange?.(value);
+	}, [value, onChange]);
 
 	function handleSelectMedia(asset) {
 		applyValue(`/api/media/${encodeURIComponent(asset.storageKey)}`);
@@ -281,7 +290,6 @@ export default function CoverImageField({
 									name="file"
 									accept="image/*"
 									className="sr-only"
-									required
 									onChange={handleUploadFileChange}
 								/>
 								{uploadState?.error && (

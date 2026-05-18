@@ -1,0 +1,3 @@
+ALTER TABLE "Page"
+ADD COLUMN "layout" TEXT NOT NULL DEFAULT 'standard',
+ADD COLUMN "content" JSONB;

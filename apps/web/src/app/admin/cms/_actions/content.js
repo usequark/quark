@@ -24,21 +24,24 @@ export async function cmsCreatePage(_prevState, formData) {
 		title,
 		slug: rawSlug,
 		body,
-		content,
 		excerpt,
 		layout,
+		content,
 	} = parsePageFormData(formData);
-	const slugCandidate = resolvePageSlugCandidate({ title, slug: rawSlug });
-	const slug = await ensureUniqueSlug(prisma, "Page", slugCandidate);
+	const slug = await ensureUniqueSlug(
+		prisma,
+		"Page",
+		rawSlug || generateSlug(title),
+	);
 
 	await prisma.page.create({
 		data: {
 			title,
 			slug,
 			body,
-			content,
 			excerpt: excerpt || null,
 			layout,
+			content,
 			authorId: session.user.id,
 		},
 	});
