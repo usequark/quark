@@ -60,7 +60,7 @@ const LAYOUT_CLASSES = {
 	immersive: "max-w-6xl",
 };
 
-const ALTERNATING_SECTION_BACKGROUNDS = ["bg-white", "bg-gray-50"];
+const ALTERNATING_SECTION_BACKGROUNDS = ["bg-surface", "bg-bg"];
 
 export function pageHasRenderableContent(content, fallbackBody = "") {
 	return hasRenderableContent(normalizePageContent(content, fallbackBody));

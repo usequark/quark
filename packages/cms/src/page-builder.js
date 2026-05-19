@@ -446,6 +446,9 @@ function normalizeIncomingBlock(block, index) {
 			return {
 				id,
 				type,
+				// Note: legacy CTA blocks may have had an `eyebrow` field. When both
+				// `title` and `eyebrow` are present, `eyebrow` is intentionally dropped
+				// here because the new `cta` schema has no eyebrow field.
 				title: getTrimmedString(block.title) || getTrimmedString(block.eyebrow),
 				subtitle: sanitizeRichTextHtml(
 					getStringValue(block.subtitle || block.body),
@@ -468,9 +471,7 @@ function normalizeIncomingBlock(block, index) {
 				type: "default",
 				eyebrow: "",
 				title: "",
-				body: stripHtml(
-					sanitizeRichTextHtml(getStringValue(block.html)),
-				).trim(),
+				body: sanitizeRichTextHtml(getStringValue(block.html)),
 			};
 		case "image":
 			return {

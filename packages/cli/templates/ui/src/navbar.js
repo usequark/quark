@@ -5,7 +5,8 @@ const shellCls =
 	"relative w-full border-b border-border bg-surface/95 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] backdrop-blur";
 const mobileShellCls =
 	"relative w-full border-b border-border bg-surface shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]";
-const mobileShellOpenCls = mobileShellCls;
+const mobileShellOpenCls =
+	"relative w-full border-b border-transparent bg-surface shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]";
 const containerCls = "mx-auto w-full px-4 sm:px-6 lg:px-8";
 const desktopInnerCls =
 	"grid h-[4.5rem] grid-cols-[auto_1fr_auto] items-center gap-6";
@@ -228,14 +229,26 @@ export function Navbar({
 								React.createElement(
 									"div",
 									{ className: desktopDropdownWrapCls },
-									React.createElement(
-										"a",
-										{
-											href: link.href ?? "#",
-											className: `${desktopDropdownLinkCls} rounded-l-[--radius-default] px-3.5 py-2`,
-										},
-										link.label,
-									),
+									link.href
+										? React.createElement(
+												"a",
+												{
+													href: link.href,
+													className: `${desktopDropdownLinkCls} rounded-l-[--radius-default] px-3.5 py-2`,
+												},
+												link.label,
+											)
+										: React.createElement(
+												"button",
+												{
+													type: "button",
+													className: `${desktopDropdownLinkCls} rounded-l-[--radius-default] px-3.5 py-2`,
+													onClick: () => toggleDesktopDropdown(index),
+													"aria-expanded": isOpen,
+													"aria-haspopup": "menu",
+												},
+												link.label,
+											),
 									React.createElement(
 										"button",
 										{

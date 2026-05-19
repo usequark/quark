@@ -200,13 +200,13 @@ export default function ContentForm({
 				</form>
 			</div>
 
-			<aside className="space-y-4 lg:sticky lg:-top-2 lg:self-start lg:w-full lg:max-w-176">
+			<aside className="space-y-4 lg:sticky lg:-top-2 lg:self-start">
 				<ContentPreview
 					title={isPageModel ? title : undefined}
 					excerpt={isPageModel ? excerpt : undefined}
 					layout={isPageModel ? pageLayout : undefined}
 					content={isPageModel ? pageContent : undefined}
-					body={isPageModel ? (record?.body ?? "") : body}
+					body={body}
 				/>
 
 				<div className="rounded-[--radius-default] border border-border bg-surface p-4 space-y-3">

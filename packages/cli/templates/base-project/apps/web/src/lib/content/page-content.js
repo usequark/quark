@@ -123,6 +123,9 @@ function normalizePageBlock(block, index) {
 			return {
 				id,
 				type: "cta",
+				// Note: legacy CTA blocks may have had an `eyebrow` field. When both
+				// `title` and `eyebrow` are present, `eyebrow` is intentionally dropped
+				// here because the new `cta` schema has no eyebrow field.
 				title: getTrimmedString(block.title) || getTrimmedString(block.eyebrow),
 				subtitle: sanitizeRichTextHtml(
 					getStringValue(block.subtitle || block.body),
@@ -145,9 +148,7 @@ function normalizePageBlock(block, index) {
 				type: "default",
 				eyebrow: "",
 				title: "",
-				body: stripHtml(
-					sanitizeRichTextHtml(getStringValue(block.html)),
-				).trim(),
+				body: sanitizeRichTextHtml(getStringValue(block.html)),
 			};
 		case "image":
 			return {
@@ -228,7 +229,7 @@ function sanitizeRichTextHtml(html) {
 		)
 		.replace(/\son[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
 		.replace(
-			/\s(href|src)\s*=\s*(?:(["])\s*javascript:[^"]*\2|javascript:[^\s>]+)/gi,
+			/\s(href|src)\s*=\s*(?:(["'])\s*javascript:[^"']*\2|javascript:[^\s>]+)/gi,
 			"",
 		)
 		.trim();

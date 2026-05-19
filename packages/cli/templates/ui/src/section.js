@@ -16,6 +16,10 @@ const BACKGROUND_TONES = {
 
 const EmptyBackgroundAnimation = () => null;
 
+// TODO: Replace EmptyBackgroundAnimation entries with the real animation
+// components (BackgroundAurora, BackgroundWaves, etc.) when they are available
+// in this package. For now these are intentional placeholders so the section
+// component can be used without a hard dependency on animation assets.
 const BACKGROUND_ANIMATIONS = {
 	"background-aurora": EmptyBackgroundAnimation,
 	"background-data-stream": EmptyBackgroundAnimation,

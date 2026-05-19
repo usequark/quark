@@ -463,7 +463,7 @@ function BackgroundFields({ block, updateBlock }) {
 									nextMode === "animation"
 										? DEFAULT_ANIMATION_BACKGROUND
 										: DEFAULT_COLOR_BACKGROUND,
-								backgroundTone: block.backgroundTone || DEFAULT_ANIMATION_TONE,
+								backgroundTone: block.backgroundTone,
 							});
 						}}
 					>
@@ -545,6 +545,7 @@ function RichTextField({ id, label, value, rows, placeholder, onChange }) {
 		<div className="flex flex-col gap-1">
 			<Label htmlFor={id}>{label}</Label>
 			<RichText
+				key={id}
 				id={id}
 				defaultValue={value}
 				rows={rows}
