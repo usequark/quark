@@ -1,20 +1,40 @@
+import { Section } from "@techstream/quark-ui";
 import { normalizePageContent } from "../../lib/content/page-content.js";
 
 function hasRenderableContent(blocks) {
 	return blocks.some((block) => {
 		switch (block?.type) {
-			case "richText":
-				return stripHtml(block.html ?? "").trim().length > 0;
-			case "image":
-				return Boolean(block.src);
-			case "mediaText":
-				return Boolean(block.src || block.eyebrow || block.title || block.body);
-			case "cta":
+			case "hero":
 				return Boolean(
 					block.eyebrow ||
 						block.title ||
-						block.body ||
-						(block.buttonLabel && block.buttonHref),
+						hasRenderableTextValue(block.subtitle),
+				);
+			case "default":
+				return Boolean(
+					block.eyebrow || block.title || hasRenderableTextValue(block.body),
+				);
+			case "split":
+				return Boolean(
+					block.eyebrow ||
+						block.title ||
+						hasRenderableSplitColumn(
+							block.leftKind,
+							block.leftBody,
+							block.leftSrc,
+						) ||
+						hasRenderableSplitColumn(
+							block.rightKind,
+							block.rightBody,
+							block.rightSrc,
+						),
+				);
+			case "cta":
+				return Boolean(
+					block.title ||
+						hasRenderableTextValue(block.subtitle) ||
+						(block.primaryLabel && block.primaryHref) ||
+						(block.secondaryLabel && block.secondaryHref),
 				);
 			default:
 				return false;
@@ -22,11 +42,25 @@ function hasRenderableContent(blocks) {
 	});
 }
 
+function hasRenderableSplitColumn(kind, body, src) {
+	if (kind === "image") {
+		return Boolean(src);
+	}
+
+	return hasRenderableTextValue(body);
+}
+
+function hasRenderableTextValue(value) {
+	return stripHtml(value).trim().length > 0;
+}
+
 const LAYOUT_CLASSES = {
 	standard: "max-w-5xl",
 	narrow: "max-w-3xl",
 	immersive: "max-w-6xl",
 };
+
+const ALTERNATING_SECTION_BACKGROUNDS = ["bg-white", "bg-gray-50"];
 
 export function pageHasRenderableContent(content, fallbackBody = "") {
 	return hasRenderableContent(normalizePageContent(content, fallbackBody));
@@ -72,12 +106,19 @@ export default function PageContentRenderer({
 					</header>
 				)}
 
-				<div className="space-y-10 pt-6 sm:space-y-14 sm:pt-8">
-					{blocks.map((block) => (
+				<div
+					className={
+						previewMode
+							? "divide-y divide-border pt-6 sm:pt-8"
+							: "space-y-10 pt-6 sm:space-y-14 sm:pt-8"
+					}
+				>
+					{blocks.map((block, index) => (
 						<PageBlock
 							key={block.id ?? `${block.type}-${JSON.stringify(block)}`}
 							block={block}
 							previewMode={previewMode}
+							sectionClassName={getAlternatingSectionClassName(blocks, index)}
 						/>
 					))}
 				</div>
@@ -86,133 +127,165 @@ export default function PageContentRenderer({
 	);
 }
 
-function PageBlock({ block, previewMode }) {
+function PageBlock({ block, previewMode, sectionClassName = "" }) {
+	const blockClassName = joinClassNames(
+		previewMode ? "rounded-none border-0" : "",
+		sectionClassName,
+	);
+
 	switch (block?.type) {
-		case "richText":
-			if (!stripHtml(block.html ?? "").trim()) return null;
+		case "hero":
+			if (!block.eyebrow && !block.title && !block.subtitle) return null;
 			return (
-				<section className="prose-like max-w-none text-text">
-					<div
-						className="space-y-4 text-base leading-7 text-text [&_a]:text-primary [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-text-muted [&_h1]:text-3xl [&_h1]:font-semibold [&_h1]:tracking-tight [&_h2]:text-2xl [&_h2]:font-semibold [&_h3]:text-xl [&_h3]:font-semibold [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-4 [&_pre]:overflow-x-auto [&_pre]:rounded-[--radius-default] [&_pre]:border [&_pre]:border-border [&_pre]:bg-surface [&_pre]:p-4 [&_ul]:list-disc [&_ul]:pl-5"
-						// biome-ignore lint/security/noDangerouslySetInnerHtml: rich text HTML is sanitized before persistence
-						dangerouslySetInnerHTML={{ __html: block.html ?? "" }}
-					/>
-				</section>
+				<Section
+					type="hero"
+					className={blockClassName}
+					eyebrow={block.eyebrow}
+					title={block.title}
+					subtitle={block.subtitle}
+					backgroundMode={block.backgroundMode}
+					backgroundValue={block.backgroundValue}
+					backgroundTone={block.backgroundTone}
+				/>
 			);
-		case "image":
-			if (!block.src) return null;
+		case "default":
+			if (!block.eyebrow && !block.title && !block.body) return null;
 			return (
-				<section className={imageSectionClass(block.width)}>
-					<figure className="overflow-hidden rounded-[--radius-default] border border-border bg-surface shadow-[0_12px_40px_rgba(15,23,42,0.12)]">
-						{/* biome-ignore lint/performance/noImgElement: image sources may be local media routes or external URLs */}
-						<img
-							src={block.src}
-							alt={block.alt || ""}
-							className="block h-auto w-full object-cover"
-						/>
-						{block.caption && (
-							<figcaption className="border-t border-border px-4 py-3 text-sm text-text-muted">
-								{block.caption}
-							</figcaption>
-						)}
-					</figure>
-				</section>
+				<Section
+					type="default"
+					className={blockClassName}
+					eyebrow={block.eyebrow}
+					title={block.title}
+					body={block.body}
+				/>
 			);
-		case "mediaText":
-			if (!block.src && !block.eyebrow && !block.title && !block.body)
-				return null;
-			return (
-				<section className="grid gap-6 rounded-[--radius-default] border border-border bg-surface p-5 sm:p-6 lg:grid-cols-2 lg:items-center lg:gap-10">
-					<div className={block.mediaPosition === "right" ? "lg:order-2" : ""}>
-						{block.src ? (
-							<div className="overflow-hidden rounded-[--radius-default] border border-border bg-surface-hover">
-								{/* biome-ignore lint/performance/noImgElement: image sources may be local media routes or external URLs */}
-								<img
-									src={block.src}
-									alt={block.alt || ""}
-									className="block h-full w-full object-cover"
-								/>
-							</div>
-						) : (
-							<div className="flex min-h-56 items-center justify-center rounded-[--radius-default] border border-dashed border-border bg-bg text-sm text-text-faint">
-								Add media to this section.
-							</div>
-						)}
-					</div>
-					<div className={block.mediaPosition === "right" ? "lg:order-1" : ""}>
-						{block.eyebrow && (
-							<p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-faint">
-								{block.eyebrow}
-							</p>
-						)}
-						{block.title && (
-							<h2 className="mt-2 text-2xl font-semibold tracking-tight text-text sm:text-3xl">
-								{block.title}
-							</h2>
-						)}
-						{block.body && (
-							<p className="mt-4 whitespace-pre-line text-base leading-7 text-text-muted">
-								{block.body}
-							</p>
-						)}
-					</div>
-				</section>
-			);
-		case "cta":
+		case "split":
 			if (
 				!block.eyebrow &&
 				!block.title &&
-				!block.body &&
-				!(block.buttonLabel && block.buttonHref)
+				!hasRenderableSplitColumn(
+					block.leftKind,
+					block.leftBody,
+					block.leftSrc,
+				) &&
+				!hasRenderableSplitColumn(
+					block.rightKind,
+					block.rightBody,
+					block.rightSrc,
+				)
 			) {
 				return null;
 			}
 			return (
-				<section className="rounded-[--radius-default] border border-border bg-[linear-gradient(135deg,var(--surface),rgba(20,32,54,0.96))] px-5 py-6 shadow-[0_12px_32px_rgba(15,23,42,0.18)] sm:px-6 sm:py-7">
-					<div className="max-w-3xl">
-						{block.eyebrow && (
-							<p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-faint">
-								{block.eyebrow}
-							</p>
-						)}
-						{block.title && (
-							<h2 className="mt-2 text-2xl font-semibold tracking-tight text-text sm:text-3xl">
-								{block.title}
-							</h2>
-						)}
-						{block.body && (
-							<p className="mt-3 whitespace-pre-line text-base leading-7 text-text-muted">
-								{block.body}
-							</p>
-						)}
-						{block.buttonLabel && block.buttonHref && (
-							<div className="mt-5">
-								{previewMode ? (
-									<span className="inline-flex h-11 items-center justify-center rounded-[--radius-default] border border-primary/40 bg-primary px-5 text-sm font-medium text-white">
-										{block.buttonLabel}
-									</span>
-								) : (
-									<a
-										href={block.buttonHref}
-										className="inline-flex h-11 items-center justify-center rounded-[--radius-default] border border-primary/40 bg-primary px-5 text-sm font-medium text-white transition-opacity hover:opacity-90"
-									>
-										{block.buttonLabel}
-									</a>
-								)}
-							</div>
-						)}
-					</div>
-				</section>
+				<Section
+					type="split"
+					className={blockClassName}
+					eyebrow={block.eyebrow}
+					title={block.title}
+					leftKind={block.leftKind}
+					leftBody={block.leftBody}
+					leftSrc={block.leftSrc}
+					leftAlt={block.leftAlt}
+					rightKind={block.rightKind}
+					rightBody={block.rightBody}
+					rightSrc={block.rightSrc}
+					rightAlt={block.rightAlt}
+				/>
 			);
+		case "cta": {
+			const primaryAction = toAction(
+				block.primaryLabel,
+				block.primaryHref,
+				previewMode,
+			);
+			const secondaryAction = toAction(
+				block.secondaryLabel,
+				block.secondaryHref,
+				previewMode,
+			);
+			if (
+				!block.title &&
+				!block.subtitle &&
+				!primaryAction &&
+				!secondaryAction
+			) {
+				return null;
+			}
+
+			return (
+				<Section
+					type="cta"
+					className={blockClassName}
+					title={block.title}
+					subtitle={block.subtitle}
+					primaryAction={primaryAction}
+					secondaryAction={secondaryAction}
+					backgroundMode={block.backgroundMode}
+					backgroundValue={block.backgroundValue}
+					backgroundTone={block.backgroundTone}
+				/>
+			);
+		}
 		default:
 			return null;
 	}
 }
 
-function imageSectionClass(width = "content") {
-	if (width === "full") return "-mx-5 sm:-mx-8";
-	if (width === "wide") return "sm:-mx-4";
-	return "";
+function toAction(label, href, previewMode) {
+	if (!label || !href) {
+		return null;
+	}
+
+	return {
+		label,
+		href: previewMode ? "#" : href,
+	};
+}
+
+function getAlternatingSectionClassName(blocks, index) {
+	if (!isRenderableAlternatingSection(blocks[index])) {
+		return "";
+	}
+
+	let alternatingCount = 0;
+	for (let currentIndex = 0; currentIndex <= index; currentIndex += 1) {
+		if (isRenderableAlternatingSection(blocks[currentIndex])) {
+			alternatingCount += 1;
+		}
+	}
+
+	return ALTERNATING_SECTION_BACKGROUNDS[(alternatingCount - 1) % 2];
+}
+
+function isAlternatingSectionType(type) {
+	return type === "default" || type === "split";
+}
+
+function isRenderableAlternatingSection(block) {
+	if (!isAlternatingSectionType(block?.type)) {
+		return false;
+	}
+
+	if (block.type === "default") {
+		return Boolean(
+			block.eyebrow || block.title || hasRenderableTextValue(block.body),
+		);
+	}
+
+	return Boolean(
+		block.eyebrow ||
+			block.title ||
+			hasRenderableSplitColumn(block.leftKind, block.leftBody, block.leftSrc) ||
+			hasRenderableSplitColumn(
+				block.rightKind,
+				block.rightBody,
+				block.rightSrc,
+			),
+	);
+}
+
+function joinClassNames(...values) {
+	return values.filter(Boolean).join(" ");
 }
 
 function stripHtml(value) {

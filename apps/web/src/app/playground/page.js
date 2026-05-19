@@ -42,18 +42,6 @@ import { Sidebar } from "./_components/Sidebar";
 
 const ANIMATIONS = [
 	{
-		key: "aurora",
-		label: "Aurora",
-		Component: BackgroundAurora,
-		props: {
-			colors: {
-				a: "rgba(14, 165, 233, 0.6)",
-				b: "rgba(109, 40, 217, 0.5)",
-				c: "rgba(6, 182, 212, 0.55)",
-			},
-		},
-	},
-	{
 		key: "waves",
 		label: "Waves",
 		Component: BackgroundWaves,
@@ -82,6 +70,18 @@ const ANIMATIONS = [
 		label: "Vapor",
 		Component: BackgroundVapor,
 		props: {},
+	},
+	{
+		key: "aurora",
+		label: "Aurora",
+		Component: BackgroundAurora,
+		props: {
+			colors: {
+				a: "rgba(14, 165, 233, 0.6)",
+				b: "rgba(109, 40, 217, 0.5)",
+				c: "rgba(6, 182, 212, 0.55)",
+			},
+		},
 	},
 	{
 		key: "polygon",
@@ -229,19 +229,22 @@ function PlaygroundInner() {
 		switch (layoutPreviewType) {
 			case "navbar":
 				return (
-					<div className="bg-bg">
+					<div className="bg-bg pb-56">
 						<Navbar logo="Quark" action={{ label: "Get Started", href: "#" }} />
+						<div className="px-4 pt-6 text-sm text-text-muted sm:px-6 lg:px-8">
+							Open "Services" or "Company" to inspect desktop dropdown menus.
+						</div>
 					</div>
 				);
 			case "mobile-navbar":
 				return (
 					<div className="bg-bg py-6 px-4">
-						<div className="mx-auto max-w-md overflow-hidden rounded-[--radius-default] border border-border bg-surface">
+						<div className="mx-auto max-w-md rounded-[--radius-default] border border-border bg-surface">
 							<MobileNavbar
 								logo="Quark"
 								action={{ label: "Get Started", href: "#" }}
 							/>
-							<div className="px-4 py-6 text-sm text-text-muted">
+							<div className="min-h-[28rem] px-4 py-6 text-sm text-text-muted">
 								Open the menu icon to inspect the mobile navigation panel.
 							</div>
 						</div>
@@ -605,11 +608,14 @@ function PlaygroundInner() {
 						<p className="font-mono text-[11px] uppercase tracking-[0.2em] text-text-faint">
 							{layoutPreviewTitle}
 						</p>
-						<Button variant="ghost" onClick={() => setLayoutPreviewType(null)}>
+						<Button
+							variant="secondary"
+							onClick={() => setLayoutPreviewType(null)}
+						>
 							Close
 						</Button>
 					</div>
-					<div className="max-h-[72vh] overflow-y-auto">
+					<div className="max-h-[88vh] overflow-y-auto">
 						{renderLayoutPreview()}
 					</div>
 				</div>

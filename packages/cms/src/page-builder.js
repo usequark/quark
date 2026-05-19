@@ -21,101 +21,218 @@ export const PAGE_LAYOUTS = [
 
 export const PAGE_LAYOUT_VALUES = PAGE_LAYOUTS.map((layout) => layout.value);
 
+export const PAGE_BACKGROUND_MODES = [
+	{
+		value: "color",
+		label: "Color",
+		description: "Use a semantic background tone.",
+	},
+	{
+		value: "animation",
+		label: "Animation",
+		description: "Use one of the animated visual backgrounds.",
+	},
+];
+
+export const PAGE_BACKGROUND_MODE_VALUES = PAGE_BACKGROUND_MODES.map(
+	(mode) => mode.value,
+);
+
+export const PAGE_BACKGROUND_TONES = [
+	{ value: "surface", label: "Surface" },
+	{ value: "muted", label: "Muted" },
+	{ value: "primary", label: "Primary" },
+	{ value: "info", label: "Info" },
+	{ value: "success", label: "Success" },
+	{ value: "warning", label: "Warning" },
+];
+
+export const PAGE_BACKGROUND_TONE_VALUES = PAGE_BACKGROUND_TONES.map(
+	(tone) => tone.value,
+);
+
+export const PAGE_BACKGROUND_ANIMATIONS = [
+	{ value: "background-waves", label: "Background Waves" },
+	{ value: "background-polygon", label: "Background Polygon" },
+	{ value: "background-grid", label: "Background Grid" },
+	{ value: "background-aurora", label: "Background Aurora" },
+	{ value: "background-data-stream", label: "Background Data Stream" },
+	{ value: "background-isometric", label: "Background Isometric" },
+	{ value: "background-stars", label: "Background Stars" },
+	{ value: "background-streaks", label: "Background Streaks" },
+	{ value: "background-vapor", label: "Background Vapor" },
+];
+
+export const PAGE_BACKGROUND_ANIMATION_VALUES = PAGE_BACKGROUND_ANIMATIONS.map(
+	(animation) => animation.value,
+);
+
+export const PAGE_SPLIT_COLUMN_KINDS = [
+	{ value: "text", label: "Text" },
+	{ value: "image", label: "Image" },
+];
+
+export const PAGE_SPLIT_COLUMN_KIND_VALUES = PAGE_SPLIT_COLUMN_KINDS.map(
+	(kind) => kind.value,
+);
+
 export const PAGE_BLOCK_TYPES = [
 	{
-		value: "richText",
-		label: "Rich Text",
-		description: "Formatted copy for the main body of the page.",
+		value: "hero",
+		label: "Hero",
+		description:
+			"A bold section opener with title, subtitle, and hero background.",
 	},
 	{
-		value: "image",
-		label: "Image",
-		description: "A standalone visual section with optional caption.",
+		value: "default",
+		label: "Default",
+		description:
+			"General purpose content section for heading and supporting copy.",
 	},
 	{
-		value: "mediaText",
-		label: "Media + Text",
-		description: "A side-by-side section for an image and supporting copy.",
+		value: "split",
+		label: "Split Page",
+		description: "Two-column section with text and image combinations.",
 	},
 	{
 		value: "cta",
-		label: "Call To Action",
-		description: "A closing conversion section with a button.",
+		label: "CTA",
+		description: "Call-to-action section with primary and secondary actions.",
 	},
 ];
 
 const DEFAULT_PAGE_BLOCK_IDS = {
-	initialRichText: "page-block-initial-rich-text",
+	initialDefault: "page-block-initial-default",
 	legacyBody: "page-block-legacy-body",
 };
 
 const BLOCK_ID_SCHEMA = z.string().min(1).max(100);
 const PAGE_LAYOUT_SCHEMA = z.enum(PAGE_LAYOUT_VALUES);
 
-const richTextBlockSchema = z.object({
+const heroBlockSchema = z
+	.object({
+		id: BLOCK_ID_SCHEMA,
+		type: z.literal("hero"),
+		eyebrow: z.preprocess(
+			(value) => getTrimmedString(value),
+			z.string().max(80),
+		),
+		title: z.preprocess(
+			(value) => getTrimmedString(value),
+			z.string().max(160),
+		),
+		subtitle: z.preprocess(
+			(value) => sanitizeRichTextHtml(getStringValue(value)),
+			z.string().max(2000),
+		),
+		backgroundMode: z.enum(PAGE_BACKGROUND_MODE_VALUES),
+		backgroundValue: z.preprocess(
+			(value) => getTrimmedString(value).toLowerCase(),
+			z.string().max(80),
+		),
+		backgroundTone: z.preprocess(
+			(value) => normalizeBackgroundToneValue(value),
+			z.enum(PAGE_BACKGROUND_TONE_VALUES),
+		),
+	})
+	.superRefine(validateBackgroundSelection);
+
+const defaultBlockSchema = z.object({
 	id: BLOCK_ID_SCHEMA,
-	type: z.literal("richText"),
-	html: z.preprocess(
+	type: z.literal("default"),
+	eyebrow: z.preprocess((value) => getTrimmedString(value), z.string().max(80)),
+	title: z.preprocess((value) => getTrimmedString(value), z.string().max(160)),
+	body: z.preprocess(
 		(value) => sanitizeRichTextHtml(getStringValue(value)),
-		z.string(),
+		z.string().max(4000),
 	),
 });
 
-const imageBlockSchema = z.object({
+const splitBlockSchema = z.object({
 	id: BLOCK_ID_SCHEMA,
-	type: z.literal("image"),
-	src: z.preprocess(
-		(value) => getTrimmedString(value),
-		z.string().refine((value) => !value || isSafePathOrUrl(value), {
-			message: "Image blocks must use an http(s) or root-relative URL",
-		}),
-	),
-	alt: z.preprocess((value) => getTrimmedString(value), z.string().max(200)),
-	caption: z.preprocess(
-		(value) => getTrimmedString(value),
-		z.string().max(500),
-	),
-	width: z.enum(["content", "wide", "full"]),
-});
-
-const mediaTextBlockSchema = z.object({
-	id: BLOCK_ID_SCHEMA,
-	type: z.literal("mediaText"),
-	src: z.preprocess(
-		(value) => getTrimmedString(value),
-		z.string().refine((value) => !value || isSafePathOrUrl(value), {
-			message: "Media sections must use an http(s) or root-relative URL",
-		}),
-	),
-	alt: z.preprocess((value) => getTrimmedString(value), z.string().max(200)),
+	type: z.literal("split"),
 	eyebrow: z.preprocess((value) => getTrimmedString(value), z.string().max(80)),
 	title: z.preprocess((value) => getTrimmedString(value), z.string().max(160)),
-	body: z.preprocess((value) => getTrimmedString(value), z.string().max(2000)),
-	mediaPosition: z.enum(["left", "right"]),
-});
-
-const ctaBlockSchema = z.object({
-	id: BLOCK_ID_SCHEMA,
-	type: z.literal("cta"),
-	eyebrow: z.preprocess((value) => getTrimmedString(value), z.string().max(80)),
-	title: z.preprocess((value) => getTrimmedString(value), z.string().max(160)),
-	body: z.preprocess((value) => getTrimmedString(value), z.string().max(1000)),
-	buttonLabel: z.preprocess(
-		(value) => getTrimmedString(value),
-		z.string().max(80),
+	leftKind: z.enum(PAGE_SPLIT_COLUMN_KIND_VALUES),
+	leftBody: z.preprocess(
+		(value) => sanitizeRichTextHtml(getStringValue(value)),
+		z.string().max(2000),
 	),
-	buttonHref: z.preprocess(
+	leftSrc: z.preprocess(
 		(value) => getTrimmedString(value),
 		z.string().refine((value) => !value || isSafePathOrUrl(value), {
-			message: "CTA links must use an http(s) or root-relative URL",
+			message: "Split section media must use an http(s) or root-relative URL",
 		}),
 	),
+	leftAlt: z.preprocess(
+		(value) => getTrimmedString(value),
+		z.string().max(200),
+	),
+	rightKind: z.enum(PAGE_SPLIT_COLUMN_KIND_VALUES),
+	rightBody: z.preprocess(
+		(value) => sanitizeRichTextHtml(getStringValue(value)),
+		z.string().max(2000),
+	),
+	rightSrc: z.preprocess(
+		(value) => getTrimmedString(value),
+		z.string().refine((value) => !value || isSafePathOrUrl(value), {
+			message: "Split section media must use an http(s) or root-relative URL",
+		}),
+	),
+	rightAlt: z.preprocess(
+		(value) => getTrimmedString(value),
+		z.string().max(200),
+	),
 });
+
+const ctaBlockSchema = z
+	.object({
+		id: BLOCK_ID_SCHEMA,
+		type: z.literal("cta"),
+		title: z.preprocess(
+			(value) => getTrimmedString(value),
+			z.string().max(160),
+		),
+		subtitle: z.preprocess(
+			(value) => sanitizeRichTextHtml(getStringValue(value)),
+			z.string().max(1000),
+		),
+		primaryLabel: z.preprocess(
+			(value) => getTrimmedString(value),
+			z.string().max(80),
+		),
+		primaryHref: z.preprocess(
+			(value) => getTrimmedString(value),
+			z.string().refine((value) => !value || isSafePathOrUrl(value), {
+				message: "CTA links must use an http(s) or root-relative URL",
+			}),
+		),
+		secondaryLabel: z.preprocess(
+			(value) => getTrimmedString(value),
+			z.string().max(80),
+		),
+		secondaryHref: z.preprocess(
+			(value) => getTrimmedString(value),
+			z.string().refine((value) => !value || isSafePathOrUrl(value), {
+				message: "CTA links must use an http(s) or root-relative URL",
+			}),
+		),
+		backgroundMode: z.enum(PAGE_BACKGROUND_MODE_VALUES),
+		backgroundValue: z.preprocess(
+			(value) => getTrimmedString(value).toLowerCase(),
+			z.string().max(80),
+		),
+		backgroundTone: z.preprocess(
+			(value) => normalizeBackgroundToneValue(value),
+			z.enum(PAGE_BACKGROUND_TONE_VALUES),
+		),
+	})
+	.superRefine(validateBackgroundSelection);
 
 export const pageBlockSchema = z.discriminatedUnion("type", [
-	richTextBlockSchema,
-	imageBlockSchema,
-	mediaTextBlockSchema,
+	heroBlockSchema,
+	defaultBlockSchema,
+	splitBlockSchema,
 	ctaBlockSchema,
 ]);
 
@@ -139,8 +256,8 @@ export function createPageBlock(type, overrides = {}) {
 export function createDefaultPageContent() {
 	return [
 		createDeterministicPageBlock(
-			"richText",
-			DEFAULT_PAGE_BLOCK_IDS.initialRichText,
+			"default",
+			DEFAULT_PAGE_BLOCK_IDS.initialDefault,
 		),
 	];
 }
@@ -159,7 +276,16 @@ export function parsePageBuilderInput(input) {
 }
 
 export function parseStoredPageContent(content) {
-	const result = pageContentSchema.safeParse(coerceJsonValue(content));
+	const value = coerceJsonValue(content);
+	if (!Array.isArray(value)) {
+		return null;
+	}
+
+	const normalizedBlocks = value
+		.map((block, index) => normalizeIncomingBlock(block, index))
+		.filter(Boolean);
+
+	const result = pageContentSchema.safeParse(normalizedBlocks);
 	return result.success ? result.data : null;
 }
 
@@ -169,13 +295,18 @@ export function normalizePageContent(content, fallbackBody = "") {
 		return parsedContent;
 	}
 
-	if (getTrimmedString(fallbackBody)) {
+	const legacyBody = stripHtml(
+		sanitizeRichTextHtml(getStringValue(fallbackBody)),
+	)
+		.replace(/\s+/g, " ")
+		.trim();
+	if (legacyBody) {
 		return [
 			createDeterministicPageBlock(
-				"richText",
+				"default",
 				DEFAULT_PAGE_BLOCK_IDS.legacyBody,
 				{
-					html: sanitizeRichTextHtml(fallbackBody),
+					body: legacyBody,
 				},
 			),
 		];
@@ -213,31 +344,172 @@ export function serializePageContentToPlainText(content) {
 
 function getDefaultBlockForType(type) {
 	switch (type) {
-		case "richText":
-			return { type, html: "" };
-		case "image":
-			return { type, src: "", alt: "", caption: "", width: "content" };
-		case "mediaText":
+		case "hero":
 			return {
 				type,
-				src: "",
-				alt: "",
+				eyebrow: "",
+				title: "",
+				subtitle: "",
+				backgroundMode: "color",
+				backgroundValue: "primary",
+				backgroundTone: "primary",
+			};
+		case "default":
+			return {
+				type,
 				eyebrow: "",
 				title: "",
 				body: "",
-				mediaPosition: "left",
+			};
+		case "split":
+			return {
+				type,
+				eyebrow: "",
+				title: "",
+				leftKind: "text",
+				leftBody: "",
+				leftSrc: "",
+				leftAlt: "",
+				rightKind: "image",
+				rightBody: "",
+				rightSrc: "",
+				rightAlt: "",
 			};
 		case "cta":
 			return {
 				type,
-				eyebrow: "",
 				title: "",
-				body: "",
-				buttonLabel: "",
-				buttonHref: "",
+				subtitle: "",
+				primaryLabel: "",
+				primaryHref: "",
+				secondaryLabel: "",
+				secondaryHref: "",
+				backgroundMode: "color",
+				backgroundValue: "primary",
+				backgroundTone: "primary",
 			};
 		default:
 			throw new ValidationError(`Unsupported page block type: ${type}`);
+	}
+}
+
+function normalizeIncomingBlock(block, index) {
+	if (!block || typeof block !== "object") {
+		return null;
+	}
+
+	const id = getTrimmedString(block.id) || `page-block-${index + 1}`;
+	const type = getTrimmedString(block.type);
+
+	switch (type) {
+		case "hero": {
+			const backgroundMode = normalizeBackgroundMode(block.backgroundMode);
+			return {
+				id,
+				type,
+				eyebrow: getTrimmedString(block.eyebrow),
+				title: getTrimmedString(block.title),
+				subtitle: sanitizeRichTextHtml(getStringValue(block.subtitle)),
+				backgroundMode,
+				backgroundValue: normalizeBackgroundValue(
+					backgroundMode,
+					block.backgroundValue,
+				),
+				backgroundTone: normalizeBackgroundToneValue(block.backgroundTone),
+			};
+		}
+		case "default":
+			return {
+				id,
+				type,
+				eyebrow: getTrimmedString(block.eyebrow),
+				title: getTrimmedString(block.title),
+				body: sanitizeRichTextHtml(getStringValue(block.body)),
+			};
+		case "split":
+			return {
+				id,
+				type,
+				eyebrow: getTrimmedString(block.eyebrow),
+				title: getTrimmedString(block.title),
+				leftKind: normalizeSplitKind(block.leftKind),
+				leftBody: sanitizeRichTextHtml(getStringValue(block.leftBody)),
+				leftSrc: sanitizePathOrUrl(block.leftSrc),
+				leftAlt: getTrimmedString(block.leftAlt),
+				rightKind: normalizeSplitKind(block.rightKind),
+				rightBody: sanitizeRichTextHtml(getStringValue(block.rightBody)),
+				rightSrc: sanitizePathOrUrl(block.rightSrc),
+				rightAlt: getTrimmedString(block.rightAlt),
+			};
+		case "cta": {
+			const backgroundMode = normalizeBackgroundMode(block.backgroundMode);
+			return {
+				id,
+				type,
+				title: getTrimmedString(block.title) || getTrimmedString(block.eyebrow),
+				subtitle: sanitizeRichTextHtml(
+					getStringValue(block.subtitle || block.body),
+				),
+				primaryLabel: getTrimmedString(block.primaryLabel || block.buttonLabel),
+				primaryHref: sanitizePathOrUrl(block.primaryHref || block.buttonHref),
+				secondaryLabel: getTrimmedString(block.secondaryLabel),
+				secondaryHref: sanitizePathOrUrl(block.secondaryHref),
+				backgroundMode,
+				backgroundValue: normalizeBackgroundValue(
+					backgroundMode,
+					block.backgroundValue,
+				),
+				backgroundTone: normalizeBackgroundToneValue(block.backgroundTone),
+			};
+		}
+		case "richText":
+			return {
+				id,
+				type: "default",
+				eyebrow: "",
+				title: "",
+				body: stripHtml(
+					sanitizeRichTextHtml(getStringValue(block.html)),
+				).trim(),
+			};
+		case "image":
+			return {
+				id,
+				type: "split",
+				eyebrow: "",
+				title: "",
+				leftKind: "image",
+				leftBody: "",
+				leftSrc: sanitizePathOrUrl(block.src),
+				leftAlt: getTrimmedString(block.alt),
+				rightKind: "text",
+				rightBody: sanitizeRichTextHtml(getStringValue(block.caption)),
+				rightSrc: "",
+				rightAlt: "",
+			};
+		case "mediaText": {
+			const mediaOnLeft = block.mediaPosition !== "right";
+			return {
+				id,
+				type: "split",
+				eyebrow: getTrimmedString(block.eyebrow),
+				title: getTrimmedString(block.title),
+				leftKind: mediaOnLeft ? "image" : "text",
+				leftBody: mediaOnLeft
+					? ""
+					: sanitizeRichTextHtml(getStringValue(block.body)),
+				leftSrc: mediaOnLeft ? sanitizePathOrUrl(block.src) : "",
+				leftAlt: mediaOnLeft ? getTrimmedString(block.alt) : "",
+				rightKind: mediaOnLeft ? "text" : "image",
+				rightBody: mediaOnLeft
+					? sanitizeRichTextHtml(getStringValue(block.body))
+					: "",
+				rightSrc: mediaOnLeft ? "" : sanitizePathOrUrl(block.src),
+				rightAlt: mediaOnLeft ? "" : getTrimmedString(block.alt),
+			};
+		}
+		default:
+			return null;
 	}
 }
 
@@ -276,22 +548,57 @@ function coerceJsonValue(value) {
 
 function hasRenderableBlockContent(block) {
 	switch (block.type) {
-		case "richText":
-			return stripHtml(block.html).trim().length > 0;
-		case "image":
-			return Boolean(block.src);
-		case "mediaText":
-			return Boolean(block.src || block.eyebrow || block.title || block.body);
-		case "cta":
+		case "hero":
 			return Boolean(
 				block.eyebrow ||
 					block.title ||
-					block.body ||
-					(block.buttonLabel && block.buttonHref),
+					hasRenderableRichTextContent(block.subtitle),
+			);
+		case "default":
+			return Boolean(
+				block.eyebrow ||
+					block.title ||
+					hasRenderableRichTextContent(block.body),
+			);
+		case "split":
+			return Boolean(
+				block.eyebrow ||
+					block.title ||
+					hasRenderableSplitColumn(
+						block.leftKind,
+						block.leftBody,
+						block.leftSrc,
+					) ||
+					hasRenderableSplitColumn(
+						block.rightKind,
+						block.rightBody,
+						block.rightSrc,
+					),
+			);
+		case "cta":
+			return Boolean(
+				block.title ||
+					hasRenderableRichTextContent(block.subtitle) ||
+					(block.primaryLabel && block.primaryHref) ||
+					(block.secondaryLabel && block.secondaryHref),
 			);
 		default:
 			return false;
 	}
+}
+
+function hasRenderableSplitColumn(kind, body, src) {
+	if (kind === "image") {
+		return Boolean(src);
+	}
+
+	return hasRenderableRichTextContent(body);
+}
+
+function hasRenderableRichTextContent(value) {
+	return (
+		stripHtml(sanitizeRichTextHtml(getStringValue(value))).trim().length > 0
+	);
 }
 
 function renderBlockToHtml(block) {
@@ -300,38 +607,57 @@ function renderBlockToHtml(block) {
 	}
 
 	switch (block.type) {
-		case "richText":
-			return sanitizeRichTextHtml(block.html);
-		case "image": {
-			const caption = block.caption
-				? `<figcaption>${escapeHtml(block.caption)}</figcaption>`
-				: "";
-			return `<figure><img src="${escapeAttribute(block.src)}" alt="${escapeAttribute(block.alt)}" />${caption}</figure>`;
-		}
-		case "mediaText": {
-			const body = renderTextParagraphs(block.body);
-			const image = block.src
-				? `<figure><img src="${escapeAttribute(block.src)}" alt="${escapeAttribute(block.alt)}" /></figure>`
-				: "";
-			const text = [
-				block.eyebrow ? `<p>${escapeHtml(block.eyebrow)}</p>` : "",
-				block.title ? `<h2>${escapeHtml(block.title)}</h2>` : "",
-				body,
-			]
-				.filter(Boolean)
-				.join("");
-			return `<section>${image}${text}</section>`;
-		}
-		case "cta": {
-			const button =
-				block.buttonLabel && block.buttonHref
-					? `<p><a href="${escapeAttribute(block.buttonHref)}">${escapeHtml(block.buttonLabel)}</a></p>`
-					: "";
+		case "hero":
 			return `<section>${[
 				block.eyebrow ? `<p>${escapeHtml(block.eyebrow)}</p>` : "",
 				block.title ? `<h2>${escapeHtml(block.title)}</h2>` : "",
-				renderTextParagraphs(block.body),
-				button,
+				renderRichText(block.subtitle),
+			]
+				.filter(Boolean)
+				.join("")}</section>`;
+		case "default":
+			return `<section>${[
+				block.eyebrow ? `<p>${escapeHtml(block.eyebrow)}</p>` : "",
+				block.title ? `<h2>${escapeHtml(block.title)}</h2>` : "",
+				renderRichText(block.body),
+			]
+				.filter(Boolean)
+				.join("")}</section>`;
+		case "split": {
+			const left = renderSplitColumnToHtml(
+				block.leftKind,
+				block.leftBody,
+				block.leftSrc,
+				block.leftAlt,
+			);
+			const right = renderSplitColumnToHtml(
+				block.rightKind,
+				block.rightBody,
+				block.rightSrc,
+				block.rightAlt,
+			);
+
+			return `<section>${[
+				block.eyebrow ? `<p>${escapeHtml(block.eyebrow)}</p>` : "",
+				block.title ? `<h2>${escapeHtml(block.title)}</h2>` : "",
+				left,
+				right,
+			]
+				.filter(Boolean)
+				.join("")}</section>`;
+		}
+		case "cta": {
+			const actions = [
+				renderActionToHtml(block.primaryLabel, block.primaryHref),
+				renderActionToHtml(block.secondaryLabel, block.secondaryHref),
+			]
+				.filter(Boolean)
+				.join("");
+
+			return `<section>${[
+				block.title ? `<h2>${escapeHtml(block.title)}</h2>` : "",
+				renderRichText(block.subtitle),
+				actions ? `<p>${actions}</p>` : "",
 			]
 				.filter(Boolean)
 				.join("")}</section>`;
@@ -347,17 +673,35 @@ function renderBlockToPlainText(block) {
 	}
 
 	switch (block.type) {
-		case "richText":
-			return stripHtml(block.html).trim();
-		case "image":
-			return [block.alt, block.caption].filter(Boolean).join("\n").trim();
-		case "mediaText":
+		case "hero":
+			return [block.eyebrow, block.title, block.subtitle]
+				.filter(Boolean)
+				.join("\n")
+				.trim();
+		case "default":
 			return [block.eyebrow, block.title, block.body]
 				.filter(Boolean)
 				.join("\n")
 				.trim();
+		case "split":
+			return [
+				block.eyebrow,
+				block.title,
+				block.leftKind === "text" ? stripHtml(block.leftBody) : block.leftAlt,
+				block.rightKind === "text"
+					? stripHtml(block.rightBody)
+					: block.rightAlt,
+			]
+				.filter(Boolean)
+				.join("\n")
+				.trim();
 		case "cta":
-			return [block.eyebrow, block.title, block.body, block.buttonLabel]
+			return [
+				block.title,
+				stripHtml(block.subtitle),
+				block.primaryLabel,
+				block.secondaryLabel,
+			]
 				.filter(Boolean)
 				.join("\n")
 				.trim();
@@ -366,10 +710,31 @@ function renderBlockToPlainText(block) {
 	}
 }
 
-function renderTextParagraphs(text) {
+function renderSplitColumnToHtml(kind, body, src, alt) {
+	if (kind === "image") {
+		if (!src) return "";
+		return `<figure><img src="${escapeAttribute(src)}" alt="${escapeAttribute(alt)}" /></figure>`;
+	}
+
+	return renderRichText(body);
+}
+
+function renderActionToHtml(label, href) {
+	if (!label || !href) {
+		return "";
+	}
+
+	return `<a href="${escapeAttribute(href)}">${escapeHtml(label)}</a>`;
+}
+
+function renderRichText(text) {
 	const trimmed = getTrimmedString(text);
 	if (!trimmed) {
 		return "";
+	}
+
+	if (/<[a-z][\s\S]*>/i.test(trimmed)) {
+		return sanitizeRichTextHtml(trimmed);
 	}
 
 	return trimmed
@@ -419,6 +784,84 @@ function sanitizeRichTextHtml(html) {
 			},
 		)
 		.trim();
+}
+
+function validateBackgroundSelection(block, ctx) {
+	if (block.backgroundMode === "color") {
+		if (!PAGE_BACKGROUND_TONE_VALUES.includes(block.backgroundValue)) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				path: ["backgroundValue"],
+				message: "Background color must be one of the supported tones",
+			});
+		}
+		return;
+	}
+
+	const normalizedAnimationValue = normalizeAnimationValue(
+		block.backgroundValue,
+	);
+	if (!PAGE_BACKGROUND_ANIMATION_VALUES.includes(normalizedAnimationValue)) {
+		ctx.addIssue({
+			code: z.ZodIssueCode.custom,
+			path: ["backgroundValue"],
+			message: "Background animation must be one of the supported options",
+		});
+	}
+}
+
+function normalizeBackgroundMode(value) {
+	return value === "animation" ? "animation" : "color";
+}
+
+function normalizeBackgroundValue(mode, value) {
+	if (mode === "animation") {
+		return normalizeAnimationValue(value);
+	}
+
+	const normalized = getTrimmedString(value).toLowerCase();
+	return PAGE_BACKGROUND_TONE_VALUES.includes(normalized)
+		? normalized
+		: "primary";
+}
+
+function normalizeBackgroundToneValue(value) {
+	const normalized = getTrimmedString(value).toLowerCase();
+	return PAGE_BACKGROUND_TONE_VALUES.includes(normalized)
+		? normalized
+		: "primary";
+}
+
+function normalizeAnimationValue(value) {
+	const normalized = getTrimmedString(value)
+		.toLowerCase()
+		.replaceAll("_", "-")
+		.replaceAll(/\s+/g, "-");
+	if (!normalized) {
+		return "background-aurora";
+	}
+
+	if (PAGE_BACKGROUND_ANIMATION_VALUES.includes(normalized)) {
+		return normalized;
+	}
+
+	if (!normalized.startsWith("background-")) {
+		const prefixed = `background-${normalized}`;
+		if (PAGE_BACKGROUND_ANIMATION_VALUES.includes(prefixed)) {
+			return prefixed;
+		}
+	}
+
+	return "background-aurora";
+}
+
+function normalizeSplitKind(value) {
+	return value === "image" ? "image" : "text";
+}
+
+function sanitizePathOrUrl(value) {
+	const normalized = getTrimmedString(value);
+	return isSafePathOrUrl(normalized) ? normalized : "";
 }
 
 function isSafePathOrUrl(value) {

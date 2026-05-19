@@ -5,8 +5,7 @@ const shellCls =
 	"relative w-full border-b border-border bg-surface/95 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] backdrop-blur";
 const mobileShellCls =
 	"relative w-full border-b border-border bg-surface shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]";
-const mobileShellOpenCls =
-	"relative w-full border-b border-transparent bg-surface shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]";
+const mobileShellOpenCls = mobileShellCls;
 const containerCls = "mx-auto w-full px-4 sm:px-6 lg:px-8";
 const desktopInnerCls =
 	"grid h-[4.5rem] grid-cols-[auto_1fr_auto] items-center gap-6";
@@ -34,9 +33,9 @@ const mobileInnerCls = "flex h-14 items-center justify-between gap-4";
 const mobileToggleCls =
 	"inline-flex h-10 w-10 items-center justify-center rounded-[--radius-default] text-text-muted transition-colors hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40";
 const mobilePanelWrapCls =
-	"fixed z-[80] overflow-y-auto overscroll-contain [touch-action:pan-y] [-webkit-overflow-scrolling:touch] transition-opacity duration-200";
+	"absolute inset-x-0 top-full z-[80] overflow-y-auto overscroll-contain [touch-action:pan-y] [-webkit-overflow-scrolling:touch] origin-top";
 const mobilePanelCls =
-	"border-y border-border bg-surface transition-[transform,opacity] duration-250";
+	"border-y border-border bg-surface will-change-transform transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]";
 const mobileLinkCls =
 	"flex min-h-12 w-full items-center justify-between px-4 text-left text-base font-medium text-text-muted transition-colors hover:bg-surface-hover hover:text-text";
 const mobileSubLinkCls =
@@ -229,26 +228,14 @@ export function Navbar({
 								React.createElement(
 									"div",
 									{ className: desktopDropdownWrapCls },
-									link.href
-										? React.createElement(
-												"a",
-												{
-													href: link.href,
-													className: desktopDropdownLinkCls,
-												},
-												link.label,
-											)
-										: React.createElement(
-												"button",
-												{
-													type: "button",
-													className: `${desktopDropdownLinkCls} rounded-l-[--radius-default] px-3.5 py-2`,
-													onClick: () => toggleDesktopDropdown(index),
-													"aria-expanded": isOpen,
-													"aria-haspopup": "menu",
-												},
-												link.label,
-											),
+									React.createElement(
+										"a",
+										{
+											href: link.href ?? "#",
+											className: `${desktopDropdownLinkCls} rounded-l-[--radius-default] px-3.5 py-2`,
+										},
+										link.label,
+									),
 									React.createElement(
 										"button",
 										{
@@ -268,7 +255,7 @@ export function Navbar({
 											{
 												role: "menu",
 												className:
-													"absolute left-full top-[calc(100%+0.6rem)] z-40 w-48 -translate-x-1/2 rounded-[--radius-default] border border-border bg-surface shadow-xl",
+													"absolute left-0 top-[calc(100%+0.6rem)] z-40 w-48 rounded-[--radius-default] border border-border bg-surface shadow-xl",
 											},
 											...(link.items ?? []).map((item, itemIndex) =>
 												React.createElement(
@@ -309,31 +296,47 @@ export function MobileNavbar({
 	maxWidthClassName = "max-w-6xl",
 }) {
 	const rootRef = useRef(null);
+	const barRef = useRef(null);
 	const [menuOpen, setMenuOpen] = useState(false);
+	const [isMenuVisible, setIsMenuVisible] = useState(false);
+	const [isPanelActive, setIsPanelActive] = useState(false);
 	const [openSubmenus, setOpenSubmenus] = useState({});
-	const [panelLayout, setPanelLayout] = useState({
-		top: 0,
-		left: 0,
-		width: 0,
-		maxHeight: 0,
-	});
+	const [panelMaxHeight, setPanelMaxHeight] = useState(0);
 	const navLinks = useMemo(() => safeLinks(links), [links]);
+	const menuAnimatingVisible = menuOpen || isMenuVisible;
+
+	useEffect(() => {
+		if (menuOpen) {
+			setIsMenuVisible(true);
+			let secondFrame = 0;
+			const firstFrame = requestAnimationFrame(() => {
+				secondFrame = requestAnimationFrame(() => {
+					setIsPanelActive(true);
+				});
+			});
+			return () => {
+				cancelAnimationFrame(firstFrame);
+				if (secondFrame) cancelAnimationFrame(secondFrame);
+			};
+		}
+
+		setIsPanelActive(false);
+		const closeTimer = setTimeout(() => {
+			setIsMenuVisible(false);
+			setOpenSubmenus({});
+		}, 320);
+		return () => clearTimeout(closeTimer);
+	}, [menuOpen]);
 
 	useEffect(() => {
 		if (!menuOpen) return;
 
 		function updatePanelLayout() {
-			if (!rootRef.current) return;
-			const rect = rootRef.current.getBoundingClientRect();
+			if (!barRef.current) return;
+			const rect = barRef.current.getBoundingClientRect();
 			const viewportHeight = window.innerHeight;
 			const availableHeight = Math.max(0, viewportHeight - rect.bottom);
-
-			setPanelLayout({
-				top: rect.bottom,
-				left: rect.left,
-				width: rect.width,
-				maxHeight: availableHeight,
-			});
+			setPanelMaxHeight(availableHeight);
 		}
 
 		updatePanelLayout();
@@ -351,13 +354,11 @@ export function MobileNavbar({
 		function onPointerDown(event) {
 			if (rootRef.current?.contains(event.target)) return;
 			setMenuOpen(false);
-			setOpenSubmenus({});
 		}
 
 		function onEscape(event) {
 			if (event.key === "Escape") {
 				setMenuOpen(false);
-				setOpenSubmenus({});
 			}
 		}
 
@@ -381,14 +382,14 @@ export function MobileNavbar({
 		{
 			ref: rootRef,
 			className:
-				`${menuOpen ? mobileShellOpenCls : mobileShellCls} ${className}`.trim(),
+				`${menuAnimatingVisible ? mobileShellOpenCls : mobileShellCls} ${className}`.trim(),
 		},
 		React.createElement(
 			"div",
 			{ className: `${containerCls} ${maxWidthClassName} relative`.trim() },
 			React.createElement(
 				"div",
-				{ className: mobileInnerCls },
+				{ ref: barRef, className: mobileInnerCls },
 				React.createElement(
 					"a",
 					{ href: logoHref, className: logoCls },
@@ -399,13 +400,12 @@ export function MobileNavbar({
 					{
 						type: "button",
 						className: mobileToggleCls,
-						"aria-label": menuOpen
+						"aria-label": menuAnimatingVisible
 							? "Close navigation menu"
 							: "Open navigation menu",
-						"aria-expanded": menuOpen,
+						"aria-expanded": menuAnimatingVisible,
 						onClick: () => {
 							setMenuOpen((state) => !state);
-							if (menuOpen) setOpenSubmenus({});
 						},
 					},
 					React.createElement(
@@ -416,32 +416,31 @@ export function MobileNavbar({
 						},
 						React.createElement("span", {
 							className: `absolute left-0 top-[2px] block h-[2px] w-4 bg-current transition-transform duration-200 ${
-								menuOpen ? "translate-y-[5px] rotate-45" : ""
+								menuAnimatingVisible ? "translate-y-[5px] rotate-45" : ""
 							}`,
 						}),
 						React.createElement("span", {
 							className: `absolute left-0 top-[7px] block h-[2px] w-4 bg-current transition-opacity duration-200 ${
-								menuOpen ? "opacity-0" : "opacity-100"
+								menuAnimatingVisible ? "opacity-0" : "opacity-100"
 							}`,
 						}),
 						React.createElement("span", {
 							className: `absolute left-0 top-[12px] block h-[2px] w-4 bg-current transition-transform duration-200 ${
-								menuOpen ? "-translate-y-[5px] -rotate-45" : ""
+								menuAnimatingVisible ? "-translate-y-[5px] -rotate-45" : ""
 							}`,
 						}),
 					),
 				),
 			),
-			menuOpen
+			isMenuVisible
 				? React.createElement(
 						"div",
 						{
-							className: `${mobilePanelWrapCls} pointer-events-auto opacity-100`,
+							className: `${mobilePanelWrapCls} ${
+								isPanelActive ? "pointer-events-auto" : "pointer-events-none"
+							}`,
 							style: {
-								top: `${panelLayout.top}px`,
-								left: `${panelLayout.left}px`,
-								width: `${panelLayout.width}px`,
-								maxHeight: `${panelLayout.maxHeight}px`,
+								maxHeight: `${panelMaxHeight}px`,
 								paddingBottom: "env(safe-area-inset-bottom)",
 							},
 						},
@@ -451,7 +450,11 @@ export function MobileNavbar({
 							React.createElement(
 								"nav",
 								{
-									className: `${mobilePanelCls} translate-y-0 opacity-100`,
+									className: `${mobilePanelCls} ${
+										isPanelActive
+											? "translate-y-0 opacity-100"
+											: "-translate-y-4 opacity-0"
+									}`,
 									"aria-label": "Mobile navigation",
 								},
 								React.createElement(

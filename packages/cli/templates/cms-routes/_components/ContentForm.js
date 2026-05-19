@@ -55,7 +55,10 @@ export default function ContentForm({
 	);
 
 	const [title, setTitle] = useState(record?.title ?? "");
+	const [excerpt, setExcerpt] = useState(record?.excerpt ?? "");
 	const [body, setBody] = useState(record?.body ?? "");
+	const [pageContent, setPageContent] = useState(record?.content ?? null);
+	const [pageLayout, setPageLayout] = useState(record?.layout ?? "standard");
 	const [deleteOpen, setDeleteOpen] = useState(false);
 	const [isDeleting, startDeleteTransition] = useTransition();
 
@@ -93,9 +96,8 @@ export default function ContentForm({
 	}
 
 	return (
-		<div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-			{/* Main editor — takes 2/3 width on large screens */}
-			<div className="flex-1 min-w-0">
+		<div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(38rem,44rem)] lg:items-start">
+			<div className="min-w-0">
 				<form id={formId} action={formAction} className="space-y-5">
 					{!isEdit && modelLabel === "Page" && (
 						<div className="rounded-[--radius-default] border border-border bg-surface px-4 py-3">
@@ -133,9 +135,10 @@ export default function ContentForm({
 							<Textarea
 								id="cms-excerpt"
 								name="excerpt"
-								defaultValue={record?.excerpt ?? ""}
+								value={excerpt}
 								rows={2}
 								placeholder="Short summary (optional)"
+								onChange={(e) => setExcerpt(e.target.value)}
 							/>
 						</div>
 					)}
@@ -156,6 +159,8 @@ export default function ContentForm({
 								defaultContent={record?.content}
 								defaultBody={record?.body ?? ""}
 								defaultLayout={record?.layout ?? "standard"}
+								onContentChange={setPageContent}
+								onLayoutChange={setPageLayout}
 							/>
 							<p className="px-1 text-xs text-text-faint">
 								Use sections to shape the public page instead of writing one
@@ -195,37 +200,14 @@ export default function ContentForm({
 				</form>
 			</div>
 
-			<aside className="space-y-4 lg:sticky lg:-top-2 lg:self-start">
-				<div className="rounded-[--radius-default] border border-border bg-surface p-4 shadow-sm sm:p-5">
-					<PanelHeader
-						title="Actions"
-						description={`Save changes or cancel this ${modelLabel.toLowerCase()} edit.`}
-					/>
-					<div className="flex flex-col gap-3">
-						<Button
-							type="submit"
-							form={formId}
-							disabled={isPending}
-							className="w-full justify-center"
-						>
-							{isPending
-								? "Saving…"
-								: isEdit
-									? "Save changes"
-									: `Create ${modelLabel}`}
-						</Button>
-						<Button
-							type="button"
-							variant="danger"
-							className="w-full justify-center"
-							onClick={() => {
-								window.location.href = "./";
-							}}
-						>
-							Cancel
-						</Button>
-					</div>
-				</div>
+			<aside className="space-y-4 lg:sticky lg:-top-2 lg:self-start lg:w-full lg:max-w-176">
+				<ContentPreview
+					title={isPageModel ? title : undefined}
+					excerpt={isPageModel ? excerpt : undefined}
+					layout={isPageModel ? pageLayout : undefined}
+					content={isPageModel ? pageContent : undefined}
+					body={isPageModel ? (record?.body ?? "") : body}
+				/>
 
 				<div className="rounded-[--radius-default] border border-border bg-surface p-4 space-y-3">
 					<PanelHeader
@@ -317,6 +299,37 @@ export default function ContentForm({
 					</div>
 				)}
 
+				<div className="rounded-[--radius-default] border border-border bg-surface p-4 shadow-sm sm:p-5">
+					<PanelHeader
+						title="Actions"
+						description={`Save changes or cancel this ${modelLabel.toLowerCase()} edit.`}
+					/>
+					<div className="flex flex-col gap-3">
+						<Button
+							type="submit"
+							form={formId}
+							disabled={isPending}
+							className="w-full justify-center"
+						>
+							{isPending
+								? "Saving…"
+								: isEdit
+									? "Save changes"
+									: `Create ${modelLabel}`}
+						</Button>
+						<Button
+							type="button"
+							variant="danger"
+							className="w-full justify-center"
+							onClick={() => {
+								window.location.href = "./";
+							}}
+						>
+							Cancel
+						</Button>
+					</div>
+				</div>
+
 				{isEdit && deleteAction && (
 					<div className="rounded-[--radius-default] border border-danger/30 bg-surface p-4 space-y-3">
 						<PanelHeader
@@ -333,8 +346,6 @@ export default function ContentForm({
 						</Button>
 					</div>
 				)}
-
-				<ContentPreview body={isPageModel ? (record?.body ?? "") : body} />
 			</aside>
 
 			{isEdit && deleteAction && (

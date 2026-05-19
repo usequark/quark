@@ -1,7 +1,28 @@
 const DEFAULT_PAGE_BLOCK_IDS = {
-	initialRichText: "page-block-initial-rich-text",
+	initialDefault: "page-block-initial-default",
 	legacyBody: "page-block-legacy-body",
 };
+
+const BACKGROUND_TONES = new Set([
+	"surface",
+	"muted",
+	"primary",
+	"info",
+	"success",
+	"warning",
+]);
+
+const BACKGROUND_ANIMATIONS = new Set([
+	"background-waves",
+	"background-polygon",
+	"background-grid",
+	"background-aurora",
+	"background-data-stream",
+	"background-isometric",
+	"background-stars",
+	"background-streaks",
+	"background-vapor",
+]);
 
 export function parseStoredPageContent(content) {
 	const value = coerceJsonValue(content);
@@ -22,21 +43,30 @@ export function normalizePageContent(content, fallbackBody = "") {
 		return parsedContent;
 	}
 
-	if (getTrimmedString(fallbackBody)) {
+	const legacyBody = stripHtml(
+		sanitizeRichTextHtml(getStringValue(fallbackBody)),
+	)
+		.replace(/\s+/g, " ")
+		.trim();
+	if (legacyBody) {
 		return [
 			{
 				id: DEFAULT_PAGE_BLOCK_IDS.legacyBody,
-				type: "richText",
-				html: sanitizeRichTextHtml(fallbackBody),
+				type: "default",
+				eyebrow: "",
+				title: "",
+				body: legacyBody,
 			},
 		];
 	}
 
 	return [
 		{
-			id: DEFAULT_PAGE_BLOCK_IDS.initialRichText,
-			type: "richText",
-			html: "",
+			id: DEFAULT_PAGE_BLOCK_IDS.initialDefault,
+			type: "default",
+			eyebrow: "",
+			title: "",
+			body: "",
 		},
 	];
 }
@@ -49,42 +79,112 @@ function normalizePageBlock(block, index) {
 	const id = getTrimmedString(block.id) || `page-block-${index + 1}`;
 
 	switch (block.type) {
+		case "hero": {
+			const backgroundMode = normalizeBackgroundMode(block.backgroundMode);
+			return {
+				id,
+				type: "hero",
+				eyebrow: getTrimmedString(block.eyebrow),
+				title: getTrimmedString(block.title),
+				subtitle: sanitizeRichTextHtml(getStringValue(block.subtitle)),
+				backgroundMode,
+				backgroundValue: normalizeBackgroundValue(
+					backgroundMode,
+					block.backgroundValue,
+				),
+				backgroundTone: normalizeBackgroundToneValue(block.backgroundTone),
+			};
+		}
+		case "default":
+			return {
+				id,
+				type: "default",
+				eyebrow: getTrimmedString(block.eyebrow),
+				title: getTrimmedString(block.title),
+				body: sanitizeRichTextHtml(getStringValue(block.body)),
+			};
+		case "split":
+			return {
+				id,
+				type: "split",
+				eyebrow: getTrimmedString(block.eyebrow),
+				title: getTrimmedString(block.title),
+				leftKind: block.leftKind === "image" ? "image" : "text",
+				leftBody: sanitizeRichTextHtml(getStringValue(block.leftBody)),
+				leftSrc: sanitizePathOrUrl(block.leftSrc),
+				leftAlt: getTrimmedString(block.leftAlt),
+				rightKind: block.rightKind === "image" ? "image" : "text",
+				rightBody: sanitizeRichTextHtml(getStringValue(block.rightBody)),
+				rightSrc: sanitizePathOrUrl(block.rightSrc),
+				rightAlt: getTrimmedString(block.rightAlt),
+			};
+		case "cta": {
+			const backgroundMode = normalizeBackgroundMode(block.backgroundMode);
+			return {
+				id,
+				type: "cta",
+				title: getTrimmedString(block.title) || getTrimmedString(block.eyebrow),
+				subtitle: sanitizeRichTextHtml(
+					getStringValue(block.subtitle || block.body),
+				),
+				primaryLabel: getTrimmedString(block.primaryLabel || block.buttonLabel),
+				primaryHref: sanitizePathOrUrl(block.primaryHref || block.buttonHref),
+				secondaryLabel: getTrimmedString(block.secondaryLabel),
+				secondaryHref: sanitizePathOrUrl(block.secondaryHref),
+				backgroundMode,
+				backgroundValue: normalizeBackgroundValue(
+					backgroundMode,
+					block.backgroundValue,
+				),
+				backgroundTone: normalizeBackgroundToneValue(block.backgroundTone),
+			};
+		}
 		case "richText":
 			return {
 				id,
-				type: "richText",
-				html: sanitizeRichTextHtml(getStringValue(block.html)),
+				type: "default",
+				eyebrow: "",
+				title: "",
+				body: stripHtml(
+					sanitizeRichTextHtml(getStringValue(block.html)),
+				).trim(),
 			};
 		case "image":
 			return {
 				id,
-				type: "image",
-				src: sanitizePathOrUrl(block.src),
-				alt: getTrimmedString(block.alt),
-				caption: getTrimmedString(block.caption),
-				width: getImageWidth(block.width),
+				type: "split",
+				eyebrow: "",
+				title: "",
+				leftKind: "image",
+				leftBody: "",
+				leftSrc: sanitizePathOrUrl(block.src),
+				leftAlt: getTrimmedString(block.alt),
+				rightKind: "text",
+				rightBody: sanitizeRichTextHtml(getStringValue(block.caption)),
+				rightSrc: "",
+				rightAlt: "",
 			};
-		case "mediaText":
+		case "mediaText": {
+			const mediaOnLeft = block.mediaPosition !== "right";
 			return {
 				id,
-				type: "mediaText",
-				src: sanitizePathOrUrl(block.src),
-				alt: getTrimmedString(block.alt),
+				type: "split",
 				eyebrow: getTrimmedString(block.eyebrow),
 				title: getTrimmedString(block.title),
-				body: getTrimmedString(block.body),
-				mediaPosition: block.mediaPosition === "right" ? "right" : "left",
+				leftKind: mediaOnLeft ? "image" : "text",
+				leftBody: mediaOnLeft
+					? ""
+					: sanitizeRichTextHtml(getStringValue(block.body)),
+				leftSrc: mediaOnLeft ? sanitizePathOrUrl(block.src) : "",
+				leftAlt: mediaOnLeft ? getTrimmedString(block.alt) : "",
+				rightKind: mediaOnLeft ? "text" : "image",
+				rightBody: mediaOnLeft
+					? sanitizeRichTextHtml(getStringValue(block.body))
+					: "",
+				rightSrc: mediaOnLeft ? "" : sanitizePathOrUrl(block.src),
+				rightAlt: mediaOnLeft ? "" : getTrimmedString(block.alt),
 			};
-		case "cta":
-			return {
-				id,
-				type: "cta",
-				eyebrow: getTrimmedString(block.eyebrow),
-				title: getTrimmedString(block.title),
-				body: getTrimmedString(block.body),
-				buttonLabel: getTrimmedString(block.buttonLabel),
-				buttonHref: sanitizePathOrUrl(block.buttonHref),
-			};
+		}
 		default:
 			return null;
 	}
@@ -115,14 +215,6 @@ function coerceJsonValue(value) {
 	}
 }
 
-function getImageWidth(width) {
-	if (width === "full" || width === "wide") {
-		return width;
-	}
-
-	return "content";
-}
-
 function sanitizePathOrUrl(value) {
 	const normalized = getTrimmedString(value);
 	return isSafePathOrUrl(normalized) ? normalized : "";
@@ -136,10 +228,57 @@ function sanitizeRichTextHtml(html) {
 		)
 		.replace(/\son[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
 		.replace(
-			/\s(href|src)\s*=\s*(?:(["'])\s*javascript:[^"']*\2|javascript:[^\s>]+)/gi,
+			/\s(href|src)\s*=\s*(?:(["])\s*javascript:[^"]*\2|javascript:[^\s>]+)/gi,
 			"",
 		)
 		.trim();
+}
+
+function stripHtml(value) {
+	return String(value ?? "")
+		.replace(/<[^>]*>/g, " ")
+		.replace(/\s+/g, " ");
+}
+
+function normalizeBackgroundMode(value) {
+	return value === "animation" ? "animation" : "color";
+}
+
+function normalizeBackgroundValue(mode, value) {
+	if (mode === "animation") {
+		return normalizeAnimationValue(value);
+	}
+
+	const normalized = getTrimmedString(value).toLowerCase();
+	return BACKGROUND_TONES.has(normalized) ? normalized : "primary";
+}
+
+function normalizeBackgroundToneValue(value) {
+	const normalized = getTrimmedString(value).toLowerCase();
+	return BACKGROUND_TONES.has(normalized) ? normalized : "primary";
+}
+
+function normalizeAnimationValue(value) {
+	const normalized = getTrimmedString(value)
+		.toLowerCase()
+		.replaceAll("_", "-")
+		.replaceAll(/\s+/g, "-");
+	if (!normalized) {
+		return "background-aurora";
+	}
+
+	if (BACKGROUND_ANIMATIONS.has(normalized)) {
+		return normalized;
+	}
+
+	if (!normalized.startsWith("background-")) {
+		const prefixed = `background-${normalized}`;
+		if (BACKGROUND_ANIMATIONS.has(prefixed)) {
+			return prefixed;
+		}
+	}
+
+	return "background-aurora";
 }
 
 function isSafePathOrUrl(value) {

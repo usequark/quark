@@ -3,19 +3,20 @@
 import {
 	createPageBlock,
 	normalizePageContent,
+	PAGE_BACKGROUND_ANIMATIONS,
+	PAGE_BACKGROUND_MODES,
+	PAGE_BACKGROUND_TONES,
 	PAGE_BLOCK_TYPES,
 	PAGE_LAYOUTS,
 } from "@techstream/quark-cms/page-builder";
-import {
-	Button,
-	Input,
-	Label,
-	RichText,
-	Select,
-	Textarea,
-} from "@techstream/quark-ui";
+import { Button, Input, Label, RichText, Select } from "@techstream/quark-ui";
 import { useEffect, useMemo, useState } from "react";
 import CoverImageField from "./CoverImageField";
+
+const DEFAULT_COLOR_BACKGROUND = "primary";
+const DEFAULT_ANIMATION_BACKGROUND =
+	PAGE_BACKGROUND_ANIMATIONS[0]?.value ?? "background-aurora";
+const DEFAULT_ANIMATION_TONE = "primary";
 
 export default function PageBuilder({
 	defaultContent,
@@ -69,7 +70,7 @@ export default function PageBuilder({
 	function removeBlock(id) {
 		setBlocks((currentBlocks) => {
 			if (currentBlocks.length === 1) {
-				return [createPageBlock("richText")];
+				return [createPageBlock("default")];
 			}
 
 			return currentBlocks.filter((block) => block.id !== id);
@@ -208,142 +209,102 @@ export default function PageBuilder({
 
 function BlockFields({ block, updateBlock }) {
 	switch (block.type) {
-		case "richText":
-			return (
-				<div className="flex flex-col gap-1">
-					<Label htmlFor={`block-${block.id}-html`}>Rich text</Label>
-					<RichText
-						id={`block-${block.id}-html`}
-						defaultValue={block.html}
-						rows={10}
-						placeholder="Add the main narrative, details, or supporting copy for this page section."
-						onChange={(html) => updateBlock(block.id, { html })}
-					/>
-				</div>
-			);
-		case "image":
+		case "hero":
 			return (
 				<div className="space-y-4">
-					<CoverImageField
-						label="Image"
-						name=""
-						defaultValue={block.src}
-						onChange={(src) => updateBlock(block.id, { src })}
-					/>
 					<div className="grid gap-4 lg:grid-cols-2">
-						<div className="flex flex-col gap-1">
-							<Label htmlFor={`block-${block.id}-alt`}>Alt text</Label>
-							<Input
-								id={`block-${block.id}-alt`}
-								value={block.alt}
-								onChange={(event) =>
-									updateBlock(block.id, { alt: event.target.value })
-								}
-								placeholder="Describe the image for accessibility"
-							/>
-						</div>
-						<div className="flex flex-col gap-1">
-							<Label htmlFor={`block-${block.id}-width`}>Width</Label>
-							<Select
-								id={`block-${block.id}-width`}
-								value={block.width}
-								onChange={(event) =>
-									updateBlock(block.id, { width: event.target.value })
-								}
-							>
-								<option value="content">Content width</option>
-								<option value="wide">Wide</option>
-								<option value="full">Full bleed</option>
-							</Select>
-						</div>
-					</div>
-					<div className="flex flex-col gap-1">
-						<Label htmlFor={`block-${block.id}-caption`}>Caption</Label>
-						<Textarea
-							id={`block-${block.id}-caption`}
-							rows={3}
-							value={block.caption}
-							onChange={(event) =>
-								updateBlock(block.id, { caption: event.target.value })
-							}
-							placeholder="Optional context shown beneath the image"
+						<TextField
+							id={`block-${block.id}-eyebrow`}
+							label="Eyebrow"
+							value={block.eyebrow}
+							placeholder="Optional short kicker"
+							onChange={(value) => updateBlock(block.id, { eyebrow: value })}
+						/>
+						<TextField
+							id={`block-${block.id}-title`}
+							label="Title"
+							value={block.title}
+							placeholder="Hero headline"
+							onChange={(value) => updateBlock(block.id, { title: value })}
 						/>
 					</div>
+					<RichTextField
+						id={`block-${block.id}-subtitle`}
+						label="Subtitle"
+						value={block.subtitle}
+						rows={4}
+						placeholder="Supporting hero copy"
+						onChange={(value) => updateBlock(block.id, { subtitle: value })}
+					/>
+					<BackgroundFields block={block} updateBlock={updateBlock} />
 				</div>
 			);
-		case "mediaText":
+		case "default":
 			return (
 				<div className="space-y-4">
-					<CoverImageField
-						label="Media"
-						name=""
-						defaultValue={block.src}
-						onChange={(src) => updateBlock(block.id, { src })}
+					<div className="grid gap-4 lg:grid-cols-2">
+						<TextField
+							id={`block-${block.id}-eyebrow`}
+							label="Eyebrow"
+							value={block.eyebrow}
+							placeholder="Optional short kicker"
+							onChange={(value) => updateBlock(block.id, { eyebrow: value })}
+						/>
+						<TextField
+							id={`block-${block.id}-title`}
+							label="Title"
+							value={block.title}
+							placeholder="Section title"
+							onChange={(value) => updateBlock(block.id, { title: value })}
+						/>
+					</div>
+					<RichTextField
+						id={`block-${block.id}-body`}
+						label="Body"
+						value={block.body}
+						rows={6}
+						placeholder="Main section content"
+						onChange={(value) => updateBlock(block.id, { body: value })}
 					/>
+				</div>
+			);
+		case "split":
+			return (
+				<div className="space-y-4">
 					<div className="grid gap-4 lg:grid-cols-2">
-						<div className="flex flex-col gap-1">
-							<Label htmlFor={`block-${block.id}-media-position`}>
-								Media position
-							</Label>
-							<Select
-								id={`block-${block.id}-media-position`}
-								value={block.mediaPosition}
-								onChange={(event) =>
-									updateBlock(block.id, {
-										mediaPosition: event.target.value,
-									})
-								}
-							>
-								<option value="left">Media on left</option>
-								<option value="right">Media on right</option>
-							</Select>
-						</div>
-						<div className="flex flex-col gap-1">
-							<Label htmlFor={`block-${block.id}-alt`}>Alt text</Label>
-							<Input
-								id={`block-${block.id}-alt`}
-								value={block.alt}
-								onChange={(event) =>
-									updateBlock(block.id, { alt: event.target.value })
-								}
-								placeholder="Describe the media if it adds meaning"
-							/>
-						</div>
+						<TextField
+							id={`block-${block.id}-eyebrow`}
+							label="Eyebrow"
+							value={block.eyebrow}
+							placeholder="Optional short kicker"
+							onChange={(value) => updateBlock(block.id, { eyebrow: value })}
+						/>
+						<TextField
+							id={`block-${block.id}-title`}
+							label="Title"
+							value={block.title}
+							placeholder="Split section headline"
+							onChange={(value) => updateBlock(block.id, { title: value })}
+						/>
 					</div>
-					<div className="grid gap-4 lg:grid-cols-2">
-						<div className="flex flex-col gap-1">
-							<Label htmlFor={`block-${block.id}-eyebrow`}>Eyebrow</Label>
-							<Input
-								id={`block-${block.id}-eyebrow`}
-								value={block.eyebrow}
-								onChange={(event) =>
-									updateBlock(block.id, { eyebrow: event.target.value })
-								}
-								placeholder="Optional section kicker"
-							/>
-						</div>
-						<div className="flex flex-col gap-1">
-							<Label htmlFor={`block-${block.id}-title`}>Title</Label>
-							<Input
-								id={`block-${block.id}-title`}
-								value={block.title}
-								onChange={(event) =>
-									updateBlock(block.id, { title: event.target.value })
-								}
-								placeholder="Section headline"
-							/>
-						</div>
-					</div>
-					<div className="flex flex-col gap-1">
-						<Label htmlFor={`block-${block.id}-body`}>Body</Label>
-						<Textarea
-							id={`block-${block.id}-body`}
-							rows={5}
-							value={block.body}
-							onChange={(event) =>
-								updateBlock(block.id, { body: event.target.value })
-							}
-							placeholder="Supporting copy for the paired media section"
+					<div className="grid gap-4 xl:grid-cols-2">
+						<SplitColumnFields
+							side="Left"
+							block={block}
+							kindField="leftKind"
+							bodyField="leftBody"
+							srcField="leftSrc"
+							altField="leftAlt"
+							updateBlock={updateBlock}
+						/>
+						<SplitColumnFields
+							side="Right"
+							block={block}
+							kindField="rightKind"
+							bodyField="rightBody"
+							srcField="rightSrc"
+							altField="rightAlt"
+							updateBlock={updateBlock}
 						/>
 					</div>
 				</div>
@@ -352,72 +313,244 @@ function BlockFields({ block, updateBlock }) {
 			return (
 				<div className="space-y-4">
 					<div className="grid gap-4 lg:grid-cols-2">
-						<div className="flex flex-col gap-1">
-							<Label htmlFor={`block-${block.id}-eyebrow`}>Eyebrow</Label>
-							<Input
-								id={`block-${block.id}-eyebrow`}
-								value={block.eyebrow}
-								onChange={(event) =>
-									updateBlock(block.id, { eyebrow: event.target.value })
-								}
-								placeholder="Optional kicker"
-							/>
-						</div>
-						<div className="flex flex-col gap-1">
-							<Label htmlFor={`block-${block.id}-title`}>Title</Label>
-							<Input
-								id={`block-${block.id}-title`}
-								value={block.title}
-								onChange={(event) =>
-									updateBlock(block.id, { title: event.target.value })
-								}
-								placeholder="Prompt the next action"
-							/>
-						</div>
-					</div>
-					<div className="flex flex-col gap-1">
-						<Label htmlFor={`block-${block.id}-body`}>Body</Label>
-						<Textarea
-							id={`block-${block.id}-body`}
-							rows={4}
-							value={block.body}
-							onChange={(event) =>
-								updateBlock(block.id, { body: event.target.value })
-							}
-							placeholder="Tell the reader why they should act now"
+						<TextField
+							id={`block-${block.id}-title`}
+							label="Title"
+							value={block.title}
+							placeholder="Prompt the next action"
+							onChange={(value) => updateBlock(block.id, { title: value })}
+						/>
+						<RichTextField
+							id={`block-${block.id}-subtitle`}
+							label="Subtitle"
+							value={block.subtitle}
+							rows={2}
+							placeholder="Support the CTA message"
+							onChange={(value) => updateBlock(block.id, { subtitle: value })}
 						/>
 					</div>
 					<div className="grid gap-4 lg:grid-cols-2">
-						<div className="flex flex-col gap-1">
-							<Label htmlFor={`block-${block.id}-button-label`}>
-								Button label
-							</Label>
-							<Input
-								id={`block-${block.id}-button-label`}
-								value={block.buttonLabel}
-								onChange={(event) =>
-									updateBlock(block.id, { buttonLabel: event.target.value })
-								}
-								placeholder="Contact sales"
-							/>
-						</div>
-						<div className="flex flex-col gap-1">
-							<Label htmlFor={`block-${block.id}-button-href`}>
-								Button link
-							</Label>
-							<Input
-								id={`block-${block.id}-button-href`}
-								value={block.buttonHref}
-								onChange={(event) =>
-									updateBlock(block.id, { buttonHref: event.target.value })
-								}
-								placeholder="/contact or https://example.com/demo"
-							/>
-						</div>
+						<TextField
+							id={`block-${block.id}-primary-label`}
+							label="Primary button label"
+							value={block.primaryLabel}
+							placeholder="Get started"
+							onChange={(value) =>
+								updateBlock(block.id, { primaryLabel: value })
+							}
+						/>
+						<TextField
+							id={`block-${block.id}-primary-href`}
+							label="Primary button link"
+							value={block.primaryHref}
+							placeholder="/contact or https://example.com/demo"
+							onChange={(value) =>
+								updateBlock(block.id, { primaryHref: value })
+							}
+						/>
 					</div>
+					<div className="grid gap-4 lg:grid-cols-2">
+						<TextField
+							id={`block-${block.id}-secondary-label`}
+							label="Secondary button label"
+							value={block.secondaryLabel}
+							placeholder="View docs"
+							onChange={(value) =>
+								updateBlock(block.id, { secondaryLabel: value })
+							}
+						/>
+						<TextField
+							id={`block-${block.id}-secondary-href`}
+							label="Secondary button link"
+							value={block.secondaryHref}
+							placeholder="/docs or https://example.com/docs"
+							onChange={(value) =>
+								updateBlock(block.id, { secondaryHref: value })
+							}
+						/>
+					</div>
+					<BackgroundFields block={block} updateBlock={updateBlock} />
 				</div>
 			);
 		default:
 			return null;
 	}
+}
+
+function SplitColumnFields({
+	side,
+	block,
+	kindField,
+	bodyField,
+	srcField,
+	altField,
+	updateBlock,
+}) {
+	const kind = block[kindField];
+
+	return (
+		<div className="rounded-[--radius-default] border border-border bg-bg/50 p-4 space-y-4">
+			<div className="flex flex-col gap-1">
+				<Label htmlFor={`block-${block.id}-${kindField}`}>
+					{side} column type
+				</Label>
+				<Select
+					id={`block-${block.id}-${kindField}`}
+					value={kind}
+					onChange={(event) =>
+						updateBlock(block.id, { [kindField]: event.target.value })
+					}
+				>
+					<option value="text">Text</option>
+					<option value="image">Image</option>
+				</Select>
+			</div>
+
+			{kind === "image" ? (
+				<>
+					<CoverImageField
+						label={`${side} image`}
+						name=""
+						defaultValue={block[srcField]}
+						onChange={(src) => updateBlock(block.id, { [srcField]: src })}
+					/>
+					<TextField
+						id={`block-${block.id}-${altField}`}
+						label={`${side} image alt text`}
+						value={block[altField]}
+						placeholder={`Describe the ${side.toLowerCase()} image`}
+						onChange={(value) => updateBlock(block.id, { [altField]: value })}
+					/>
+				</>
+			) : (
+				<RichTextField
+					id={`block-${block.id}-${bodyField}`}
+					label={`${side} text`}
+					value={block[bodyField]}
+					rows={5}
+					placeholder={`Add ${side.toLowerCase()} column copy`}
+					onChange={(value) => updateBlock(block.id, { [bodyField]: value })}
+				/>
+			)}
+		</div>
+	);
+}
+
+function BackgroundFields({ block, updateBlock }) {
+	const isAnimation = block.backgroundMode === "animation";
+
+	return (
+		<div className="rounded-[--radius-default] border border-border bg-bg/50 p-4 space-y-4">
+			<div
+				className={
+					isAnimation
+						? "grid gap-4 lg:grid-cols-3"
+						: "grid gap-4 lg:grid-cols-2"
+				}
+			>
+				<div className="flex flex-col gap-1">
+					<Label htmlFor={`block-${block.id}-background-mode`}>
+						Background mode
+					</Label>
+					<Select
+						id={`block-${block.id}-background-mode`}
+						value={block.backgroundMode}
+						onChange={(event) => {
+							const nextMode = event.target.value;
+							updateBlock(block.id, {
+								backgroundMode: nextMode,
+								backgroundValue:
+									nextMode === "animation"
+										? DEFAULT_ANIMATION_BACKGROUND
+										: DEFAULT_COLOR_BACKGROUND,
+								backgroundTone: block.backgroundTone || DEFAULT_ANIMATION_TONE,
+							});
+						}}
+					>
+						{PAGE_BACKGROUND_MODES.map((option) => (
+							<option key={option.value} value={option.value}>
+								{option.label}
+							</option>
+						))}
+					</Select>
+				</div>
+
+				<div className="flex flex-col gap-1">
+					<Label htmlFor={`block-${block.id}-background-value`}>
+						{isAnimation ? "Animation" : "Color tone"}
+					</Label>
+					<Select
+						id={`block-${block.id}-background-value`}
+						value={block.backgroundValue}
+						onChange={(event) =>
+							updateBlock(block.id, {
+								backgroundValue: event.target.value,
+							})
+						}
+					>
+						{(isAnimation
+							? PAGE_BACKGROUND_ANIMATIONS
+							: PAGE_BACKGROUND_TONES
+						).map((option) => (
+							<option key={option.value} value={option.value}>
+								{option.label}
+							</option>
+						))}
+					</Select>
+				</div>
+
+				{isAnimation ? (
+					<div className="flex flex-col gap-1">
+						<Label htmlFor={`block-${block.id}-background-tone`}>
+							Animation base color
+						</Label>
+						<Select
+							id={`block-${block.id}-background-tone`}
+							value={block.backgroundTone || DEFAULT_ANIMATION_TONE}
+							onChange={(event) =>
+								updateBlock(block.id, {
+									backgroundTone: event.target.value,
+								})
+							}
+						>
+							{PAGE_BACKGROUND_TONES.map((option) => (
+								<option key={option.value} value={option.value}>
+									{option.label}
+								</option>
+							))}
+						</Select>
+					</div>
+				) : null}
+			</div>
+		</div>
+	);
+}
+
+function TextField({ id, label, value, placeholder, onChange }) {
+	return (
+		<div className="flex flex-col gap-1">
+			<Label htmlFor={id}>{label}</Label>
+			<Input
+				id={id}
+				value={value}
+				onChange={(event) => onChange(event.target.value)}
+				placeholder={placeholder}
+			/>
+		</div>
+	);
+}
+
+function RichTextField({ id, label, value, rows, placeholder, onChange }) {
+	return (
+		<div className="flex flex-col gap-1">
+			<Label htmlFor={id}>{label}</Label>
+			<RichText
+				id={id}
+				defaultValue={value}
+				rows={rows}
+				onChange={onChange}
+				placeholder={placeholder}
+			/>
+		</div>
+	);
 }
