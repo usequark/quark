@@ -1,3 +1,3 @@
-ALTER TABLE "Page"
-ADD COLUMN "layout" TEXT NOT NULL DEFAULT 'standard',
-ADD COLUMN "content" JSONB;
+-- No-op migration.
+-- The Page "layout" and "content" columns were already introduced in
+-- 20260511214936_page_builder_layout_and_content.

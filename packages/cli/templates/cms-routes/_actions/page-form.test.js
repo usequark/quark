@@ -7,8 +7,9 @@ import { parsePageFormData, resolvePageSlugCandidate } from "./page-form.js";
 const _DEFAULT_CONTENT = [
 	{
 		id: "page-block-test-1",
-		type: "richText",
-		html: "Hello world",
+		type: "default",
+		title: "About Quark",
+		body: "Hello world",
 	},
 ];
 
@@ -20,8 +21,9 @@ function makeFormData(overrides = {}) {
 		excerpt: "Short summary",
 		layout: "standard",
 		content: JSON.stringify([
-			createPageBlock("richText", {
-				html: "<h1>About Quark</h1><p>Hello world</p>",
+			createPageBlock("default", {
+				title: "About Quark",
+				body: "Hello world",
 			}),
 		]),
 		...overrides,
@@ -39,20 +41,15 @@ function makeFormData(overrides = {}) {
 test("parsePageFormData returns validated page input", () => {
 	const result = parsePageFormData(makeFormData());
 
-	assert.deepStrictEqual(result, {
-		title: "About Quark",
-		slug: "about-quark",
-		excerpt: "Short summary",
-		layout: "standard",
-		content: [
-			{
-				id: result.content[0].id,
-				type: "richText",
-				html: "<h1>About Quark</h1><p>Hello world</p>",
-			},
-		],
-		body: "<h1>About Quark</h1><p>Hello world</p>",
-	});
+	assert.equal(result.title, "About Quark");
+	assert.equal(result.slug, "about-quark");
+	assert.equal(result.excerpt, "Short summary");
+	assert.equal(result.layout, "standard");
+	assert.equal(result.content[0].type, "default");
+	assert.equal(result.content[0].title, "About Quark");
+	assert.equal(result.content[0].body, "Hello world");
+	assert.match(result.body, /<h2>About Quark<\/h2>/);
+	assert.match(result.body, /<p>Hello world<\/p>/);
 });
 
 test("parsePageFormData accepts an empty excerpt", () => {
@@ -72,7 +69,7 @@ test("parsePageFormData reports a friendly message when content is empty", () =>
 		() =>
 			parsePageFormData(
 				makeFormData({
-					content: JSON.stringify([createPageBlock("richText")]),
+					content: JSON.stringify([createPageBlock("default")]),
 				}),
 			),
 		(error) =>

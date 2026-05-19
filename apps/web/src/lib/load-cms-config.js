@@ -1,6 +1,7 @@
 import { access, readFile } from "node:fs/promises";
 import path from "node:path";
 import { Script } from "node:vm";
+import { ValidationError } from "@techstream/quark-core";
 
 const CMS_CONFIG_RELATIVE_PATHS = [
 	"packages/cms/src/config.js",
@@ -41,7 +42,7 @@ async function loadCmsConfigFromFile(filePath) {
 	const source = await readFile(filePath, "utf-8");
 
 	if (/^\s*import\s+/m.test(source)) {
-		throw new Error(
+		throw new ValidationError(
 			`CMS config at ${filePath} cannot use import statements in runtime-loaded config.`,
 		);
 	}
@@ -52,7 +53,7 @@ async function loadCmsConfigFromFile(filePath) {
 	);
 
 	if (transformedSource === source) {
-		throw new Error(`CMS config export not found at ${filePath}.`);
+		throw new ValidationError(`CMS config export not found at ${filePath}.`);
 	}
 
 	const script = new Script(`${transformedSource}\n;cmsConfig;`, {

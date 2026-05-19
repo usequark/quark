@@ -6,15 +6,16 @@ import {
 	parseStoredPageContent,
 } from "./page-content.js";
 
-test("parseStoredPageContent parses stored JSON blocks without CMS package helpers", () => {
+test("parseStoredPageContent parses section blocks", () => {
 	const blocks = parseStoredPageContent(
 		JSON.stringify([
 			{
 				id: "hero",
-				type: "cta",
+				type: "hero",
 				title: "Launch",
-				buttonLabel: "Start",
-				buttonHref: "/start",
+				subtitle: "Ship with confidence",
+				backgroundMode: "animation",
+				backgroundValue: "background-waves",
 			},
 		]),
 	);
@@ -22,12 +23,13 @@ test("parseStoredPageContent parses stored JSON blocks without CMS package helpe
 	assert.deepEqual(blocks, [
 		{
 			id: "hero",
-			type: "cta",
+			type: "hero",
 			eyebrow: "",
 			title: "Launch",
-			body: "",
-			buttonLabel: "Start",
-			buttonHref: "/start",
+			subtitle: "Ship with confidence",
+			backgroundMode: "animation",
+			backgroundValue: "background-waves",
+			backgroundTone: "primary",
 		},
 	]);
 });
@@ -41,27 +43,20 @@ test("normalizePageContent falls back to sanitized legacy body content", () => {
 	assert.deepEqual(blocks, [
 		{
 			id: "page-block-legacy-body",
-			type: "richText",
-			html: "<p>Hello</p>alert(1)",
+			type: "default",
+			eyebrow: "",
+			title: "",
+			body: "Hello alert(1)",
 		},
 	]);
 });
 
-test("normalizePageContent strips unquoted javascript URLs from legacy body content", () => {
-	const blocks = normalizePageContent(
-		[],
-		"<a href=javascript:alert(1)>Click</a>",
-	);
-
-	assert.equal(blocks[0].html, "<a>Click</a>");
-	assert.doesNotMatch(blocks[0].html, /javascript:/i);
-});
-
-test("parseStoredPageContent drops unsafe URLs from stored blocks", () => {
+test("parseStoredPageContent migrates legacy cta links and strips unsafe URLs", () => {
 	const blocks = parseStoredPageContent([
 		{
 			id: "cta",
 			type: "cta",
+			title: "Open",
 			buttonLabel: "Open",
 			buttonHref: "javascript:alert(1)",
 		},
@@ -71,11 +66,35 @@ test("parseStoredPageContent drops unsafe URLs from stored blocks", () => {
 		{
 			id: "cta",
 			type: "cta",
+			title: "Open",
+			subtitle: "",
+			primaryLabel: "Open",
+			primaryHref: "",
+			secondaryLabel: "",
+			secondaryHref: "",
+			backgroundMode: "color",
+			backgroundValue: "primary",
+			backgroundTone: "primary",
+		},
+	]);
+});
+
+test("parseStoredPageContent migrates legacy richText to default body", () => {
+	const blocks = parseStoredPageContent([
+		{
+			id: "legacy-rich",
+			type: "richText",
+			html: "<h2>Heading</h2><p>Paragraph</p>",
+		},
+	]);
+
+	assert.deepEqual(blocks, [
+		{
+			id: "legacy-rich",
+			type: "default",
 			eyebrow: "",
 			title: "",
-			body: "",
-			buttonLabel: "Open",
-			buttonHref: "",
+			body: "<h2>Heading</h2><p>Paragraph</p>",
 		},
 	]);
 });

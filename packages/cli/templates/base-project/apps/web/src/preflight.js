@@ -1,7 +1,10 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadConfig } from "@techstream/quark-config";
+import { createLogger } from "@techstream/quark-core";
 import { pingDatabase } from "@techstream/quark-db";
+
+const logger = createLogger("web-preflight");
 
 export const DEFAULT_DEV_PREFLIGHT_TIMEOUT = 1500;
 
@@ -23,24 +26,24 @@ export function formatWebPreflightFailure(result) {
 
 async function main() {
 	if (process.env.QUARK_SKIP_DEV_PREFLIGHT === "1") {
-		console.log("Skipping web dev preflight (QUARK_SKIP_DEV_PREFLIGHT=1)");
+		logger.info("Skipping web dev preflight (QUARK_SKIP_DEV_PREFLIGHT=1)");
 		return;
 	}
 
-	console.log("Running web dev preflight...");
+	logger.info("Running web dev preflight...");
 
 	try {
 		const result = await runWebPreflight();
 
 		if (result.status === "ok") {
-			console.log(`Database ready (${result.latencyMs}ms)`);
+			logger.info(`Database ready (${result.latencyMs}ms)`);
 			return;
 		}
 
-		console.error(formatWebPreflightFailure(result));
+		logger.error(formatWebPreflightFailure(result));
 		process.exit(1);
 	} catch (error) {
-		console.error(error?.message ?? String(error));
+		logger.error(error?.message ?? String(error));
 		process.exit(1);
 	}
 }

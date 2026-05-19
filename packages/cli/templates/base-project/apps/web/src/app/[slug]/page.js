@@ -8,8 +8,20 @@ import PageContentRenderer from "../_components/PageContentRenderer";
 export const revalidate = 3600;
 
 export async function generateStaticParams() {
-	const records = await getPublishedPageSlugs();
-	return records.map(({ slug }) => ({ slug }));
+	try {
+		const records = await getPublishedPageSlugs();
+		return records.map(({ slug }) => ({ slug }));
+	} catch (error) {
+		if (
+			error instanceof Error &&
+			error.message.includes("Missing required database environment variables")
+		) {
+			// CI build jobs may not expose DB credentials; skip prerender params in that case.
+			return [];
+		}
+
+		throw error;
+	}
 }
 
 export async function generateMetadata({ params }) {

@@ -14,6 +14,24 @@ const BACKGROUND_TONES = {
 	warning: "bg-warning-muted/30",
 };
 
+const EmptyBackgroundAnimation = () => null;
+
+// TODO: Replace EmptyBackgroundAnimation entries with the real animation
+// components (BackgroundAurora, BackgroundWaves, etc.) when they are available
+// in this package. For now these are intentional placeholders so the section
+// component can be used without a hard dependency on animation assets.
+const BACKGROUND_ANIMATIONS = {
+	"background-aurora": EmptyBackgroundAnimation,
+	"background-data-stream": EmptyBackgroundAnimation,
+	"background-grid": EmptyBackgroundAnimation,
+	"background-isometric": EmptyBackgroundAnimation,
+	"background-polygon": EmptyBackgroundAnimation,
+	"background-stars": EmptyBackgroundAnimation,
+	"background-streaks": EmptyBackgroundAnimation,
+	"background-vapor": EmptyBackgroundAnimation,
+	"background-waves": EmptyBackgroundAnimation,
+};
+
 export const SECTION_VARIANTS = ["hero", "default", "split", "cta"];
 
 export function Section({ type = "default", ...props }) {
@@ -74,13 +92,10 @@ export function SectionHero({
 					},
 					title,
 				),
-				subtitle
-					? React.createElement(
-							"p",
-							{ className: "mt-3 text-sm text-white/85 sm:text-base" },
-							subtitle,
-						)
-					: null,
+				...createContentNodes(
+					subtitle,
+					"mt-3 text-sm text-white/85 sm:text-base",
+				),
 			),
 		),
 	);
@@ -116,7 +131,7 @@ export function SectionDefault({
 					{ className: "mt-2 text-2xl font-semibold tracking-tight text-text" },
 					title,
 				),
-				...createParagraphNodes(body, "mt-4 text-sm leading-7 text-text-muted"),
+				...createContentNodes(body, "mt-4 text-sm leading-7 text-text-muted"),
 			),
 		),
 	);
@@ -219,13 +234,10 @@ export function SectionCta({
 					},
 					title,
 				),
-				subtitle
-					? React.createElement(
-							"p",
-							{ className: "mt-3 text-sm text-text-muted sm:text-base" },
-							subtitle,
-						)
-					: null,
+				...createContentNodes(
+					subtitle,
+					"mt-3 text-sm text-text-muted sm:text-base",
+				),
 				React.createElement(
 					"div",
 					{
@@ -260,7 +272,7 @@ function createSplitColumn({ kind, body, src, alt, fallbackLabel }) {
 		{
 			className: "min-w-0",
 		},
-		...createParagraphNodes(
+		...createContentNodes(
 			body || `Add ${fallbackLabel} column text.`,
 			"text-sm leading-7 text-text-muted",
 		),
@@ -306,20 +318,23 @@ function createBackgroundLayer({
 	}
 
 	if (backgroundMode === "animation") {
-		const label = backgroundValue || "Aurora";
+		const AnimationComponent = resolveAnimationComponent(backgroundValue);
+		if (!AnimationComponent) {
+			return React.createElement("div", {
+				className: `absolute inset-0 ${getToneClass(backgroundTone)}`,
+			});
+		}
+
 		return React.createElement(
 			"div",
-			{
-				className:
-					"absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(120,160,255,0.4),transparent_38%),radial-gradient(circle_at_80%_90%,rgba(255,135,110,0.25),transparent_46%),linear-gradient(120deg,rgba(255,255,255,0.08),rgba(255,255,255,0))]",
-			},
+			{ className: "absolute inset-0" },
+			React.createElement("div", {
+				className: `absolute inset-0 ${getToneClass(backgroundTone)}`,
+			}),
 			React.createElement(
-				"p",
-				{
-					className:
-						"absolute right-3 top-3 font-mono text-[10px] uppercase tracking-[0.22em] text-text-faint",
-				},
-				`${label} animation`,
+				"div",
+				{ className: "absolute inset-0" },
+				React.createElement(AnimationComponent, null),
 			),
 			showOverlay
 				? React.createElement("div", {
@@ -334,10 +349,25 @@ function createBackgroundLayer({
 	});
 }
 
-function createParagraphNodes(text, className) {
+function createContentNodes(text, className) {
 	const value = typeof text === "string" ? text.trim() : "";
 	if (!value) {
 		return [];
+	}
+
+	if (/<[a-z][\s\S]*>/i.test(value)) {
+		const sanitized = sanitizeRichTextHtml(value);
+		if (!sanitized) {
+			return [];
+		}
+
+		return [
+			React.createElement("div", {
+				key: "rich-text",
+				className,
+				dangerouslySetInnerHTML: { __html: sanitized },
+			}),
+		];
 	}
 
 	return value
@@ -349,6 +379,30 @@ function createParagraphNodes(text, className) {
 				paragraph.trim(),
 			),
 		);
+}
+
+function sanitizeRichTextHtml(html) {
+	return html
+		.replace(
+			/<\s*\/?\s*(script|style|iframe|object|embed|form|input|textarea|select|button|link|meta)[^>]*>/gi,
+			"",
+		)
+		.replace(/\son[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
+		.replace(
+			/\s(href|src)\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi,
+			(match, _attr, value) => {
+				const normalizedValue = value
+					.trim()
+					.replace(/^['"]|['"]$/g, "")
+					.replace(/\s/g, "")
+					.toLowerCase();
+
+				return /^(javascript|vbscript|data):/.test(normalizedValue)
+					? ""
+					: match;
+			},
+		)
+		.trim();
 }
 
 function renderAction(action, variant) {
@@ -375,4 +429,34 @@ function renderAction(action, variant) {
 
 function getToneClass(tone) {
 	return BACKGROUND_TONES[tone] ?? BACKGROUND_TONES.surface;
+}
+
+function resolveAnimationComponent(backgroundValue) {
+	const normalized = normalizeAnimationValue(backgroundValue);
+	if (!normalized) {
+		return BACKGROUND_ANIMATIONS["background-aurora"];
+	}
+
+	if (BACKGROUND_ANIMATIONS[normalized]) {
+		return BACKGROUND_ANIMATIONS[normalized];
+	}
+
+	if (!normalized.startsWith("background-")) {
+		const prefixed = `background-${normalized}`;
+		return BACKGROUND_ANIMATIONS[prefixed] ?? null;
+	}
+
+	return null;
+}
+
+function normalizeAnimationValue(value) {
+	if (typeof value !== "string") {
+		return "";
+	}
+
+	return value
+		.trim()
+		.toLowerCase()
+		.replaceAll("_", "-")
+		.replaceAll(/\s+/g, "-");
 }
