@@ -94,7 +94,7 @@ test("parseStoredPageContent migrates legacy richText to default body", () => {
 			type: "default",
 			eyebrow: "",
 			title: "",
-			body: "Heading Paragraph",
+			body: "<h2>Heading</h2><p>Paragraph</p>",
 		},
 	]);
 });
