@@ -143,6 +143,10 @@ pnpm dev
 
 ## Development
 
+- **Cleanup check**: `pnpm clean:check`
+- **Cleanup build artifacts**: `pnpm clean`
+- **Cleanup build artifacts + temp workspaces**: `pnpm clean:deep`
+- **Dev auto-clean opt-out**: `QUARK_SKIP_AUTO_CLEAN=1 pnpm dev`
 - **Linting**: `pnpm lint`
 - **Testing**: `pnpm test`
 - **Building**: `pnpm build`

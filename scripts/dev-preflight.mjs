@@ -4,6 +4,7 @@ import {
 	formatWebPreflightFailure,
 	runWebPreflight,
 } from "../apps/web/src/preflight.js";
+import { maybeAutoClean } from "./clean-workspace.mjs";
 
 export async function runDevPreflight({ logger = console } = {}) {
 	if (process.env.QUARK_SKIP_DEV_PREFLIGHT === "1") {
@@ -17,6 +18,13 @@ export async function runDevPreflight({ logger = console } = {}) {
 
 	if (result.status === "ok") {
 		logger.log(`Database ready (${result.latencyMs}ms)`);
+		try {
+			maybeAutoClean({ logger });
+		} catch (error) {
+			logger.warn?.(
+				`Quark auto-clean failed: ${error?.message ?? String(error)}`,
+			);
+		}
 		return result;
 	}
 

@@ -1,5 +1,11 @@
 -- CreateEnum
+CREATE TYPE "UserRole" AS ENUM ('admin', 'editor', 'viewer');
+
+-- CreateEnum
 CREATE TYPE "JobStatus" AS ENUM ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'FAILED', 'CANCELLED');
+
+-- CreateEnum
+CREATE TYPE "ContentStatus" AS ENUM ('DRAFT', 'PUBLISHED', 'ARCHIVED');
 
 -- CreateTable
 CREATE TABLE "User" (
@@ -7,24 +13,13 @@ CREATE TABLE "User" (
     "email" TEXT NOT NULL,
     "emailVerified" TIMESTAMP(3),
     "name" TEXT,
+    "password" TEXT,
     "image" TEXT,
+    "role" "UserRole" NOT NULL DEFAULT 'viewer',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "Post" (
-    "id" TEXT NOT NULL,
-    "title" TEXT NOT NULL,
-    "content" TEXT,
-    "published" BOOLEAN NOT NULL DEFAULT false,
-    "authorId" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "Post_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -41,6 +36,8 @@ CREATE TABLE "Account" (
     "scope" TEXT,
     "id_token" TEXT,
     "session_state" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Account_pkey" PRIMARY KEY ("id")
 );
@@ -85,6 +82,22 @@ CREATE TABLE "Job" (
 );
 
 -- CreateTable
+CREATE TABLE "File" (
+    "id" TEXT NOT NULL,
+    "filename" TEXT NOT NULL,
+    "originalName" TEXT NOT NULL,
+    "mimeType" TEXT NOT NULL,
+    "size" INTEGER NOT NULL,
+    "storageKey" TEXT NOT NULL,
+    "storageProvider" TEXT NOT NULL DEFAULT 'local',
+    "uploadedById" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "File_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "AuditLog" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
@@ -98,6 +111,41 @@ CREATE TABLE "AuditLog" (
     CONSTRAINT "AuditLog_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "Page" (
+    "id" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "slug" TEXT NOT NULL,
+    "body" TEXT NOT NULL,
+    "content" JSONB,
+    "excerpt" TEXT,
+    "layout" TEXT NOT NULL DEFAULT 'standard',
+    "status" "ContentStatus" NOT NULL DEFAULT 'DRAFT',
+    "publishedAt" TIMESTAMP(3),
+    "authorId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Page_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "MediaAsset" (
+    "id" TEXT NOT NULL,
+    "filename" TEXT NOT NULL,
+    "storageKey" TEXT NOT NULL,
+    "mimeType" TEXT NOT NULL,
+    "size" INTEGER NOT NULL,
+    "width" INTEGER,
+    "height" INTEGER,
+    "alt" TEXT,
+    "uploadedById" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "MediaAsset_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
@@ -106,15 +154,6 @@ CREATE INDEX "User_email_idx" ON "User"("email");
 
 -- CreateIndex
 CREATE INDEX "User_createdAt_idx" ON "User"("createdAt");
-
--- CreateIndex
-CREATE INDEX "Post_authorId_idx" ON "Post"("authorId");
-
--- CreateIndex
-CREATE INDEX "Post_published_idx" ON "Post"("published");
-
--- CreateIndex
-CREATE INDEX "Post_createdAt_idx" ON "Post"("createdAt");
 
 -- CreateIndex
 CREATE INDEX "Account_userId_idx" ON "Account"("userId");
@@ -129,6 +168,9 @@ CREATE UNIQUE INDEX "Session_sessionToken_key" ON "Session"("sessionToken");
 CREATE INDEX "Session_userId_idx" ON "Session"("userId");
 
 -- CreateIndex
+CREATE INDEX "Session_expires_idx" ON "Session"("expires");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "VerificationToken_token_key" ON "VerificationToken"("token");
 
 -- CreateIndex
@@ -136,6 +178,9 @@ CREATE INDEX "VerificationToken_token_idx" ON "VerificationToken"("token");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "VerificationToken_identifier_token_key" ON "VerificationToken"("identifier", "token");
+
+-- CreateIndex
+CREATE INDEX "VerificationToken_expires_idx" ON "VerificationToken"("expires");
 
 -- CreateIndex
 CREATE INDEX "Job_queue_idx" ON "Job"("queue");
@@ -147,7 +192,22 @@ CREATE INDEX "Job_status_idx" ON "Job"("status");
 CREATE INDEX "Job_runAt_idx" ON "Job"("runAt");
 
 -- CreateIndex
+CREATE INDEX "Job_status_runAt_idx" ON "Job"("status", "runAt");
+
+-- CreateIndex
 CREATE INDEX "Job_createdAt_idx" ON "Job"("createdAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "File_storageKey_key" ON "File"("storageKey");
+
+-- CreateIndex
+CREATE INDEX "File_uploadedById_idx" ON "File"("uploadedById");
+
+-- CreateIndex
+CREATE INDEX "File_mimeType_idx" ON "File"("mimeType");
+
+-- CreateIndex
+CREATE INDEX "File_createdAt_idx" ON "File"("createdAt");
 
 -- CreateIndex
 CREATE INDEX "AuditLog_userId_idx" ON "AuditLog"("userId");
@@ -161,8 +221,32 @@ CREATE INDEX "AuditLog_entity_idx" ON "AuditLog"("entity");
 -- CreateIndex
 CREATE INDEX "AuditLog_createdAt_idx" ON "AuditLog"("createdAt");
 
--- AddForeignKey
-ALTER TABLE "Post" ADD CONSTRAINT "Post_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+-- CreateIndex
+CREATE UNIQUE INDEX "Page_slug_key" ON "Page"("slug");
+
+-- CreateIndex
+CREATE INDEX "Page_status_idx" ON "Page"("status");
+
+-- CreateIndex
+CREATE INDEX "Page_slug_idx" ON "Page"("slug");
+
+-- CreateIndex
+CREATE INDEX "Page_authorId_idx" ON "Page"("authorId");
+
+-- CreateIndex
+CREATE INDEX "Page_createdAt_idx" ON "Page"("createdAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "MediaAsset_storageKey_key" ON "MediaAsset"("storageKey");
+
+-- CreateIndex
+CREATE INDEX "MediaAsset_uploadedById_idx" ON "MediaAsset"("uploadedById");
+
+-- CreateIndex
+CREATE INDEX "MediaAsset_mimeType_idx" ON "MediaAsset"("mimeType");
+
+-- CreateIndex
+CREATE INDEX "MediaAsset_createdAt_idx" ON "MediaAsset"("createdAt");
 
 -- AddForeignKey
 ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -171,4 +255,13 @@ ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId"
 ALTER TABLE "Session" ADD CONSTRAINT "Session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "File" ADD CONSTRAINT "File_uploadedById_fkey" FOREIGN KEY ("uploadedById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "AuditLog" ADD CONSTRAINT "AuditLog_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Page" ADD CONSTRAINT "Page_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "MediaAsset" ADD CONSTRAINT "MediaAsset_uploadedById_fkey" FOREIGN KEY ("uploadedById") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

@@ -63,6 +63,10 @@ __QUARK_FEATURE_GUIDES__
 pnpm build    # Build all packages
 pnpm test     # Run all tests (requires Docker)
 pnpm lint     # Lint + format check (Biome)
+pnpm clean:check  # Review reclaimable build artifacts
+pnpm clean        # Remove local build artifacts
+pnpm clean:deep   # Also remove repo-local temp workspaces
+QUARK_SKIP_AUTO_CLEAN=1 pnpm dev  # Disable dev auto-clean for this run
 npx @techstream/quark-create-app update --scaffold-check                 # Review scaffold-managed drift
 npx @techstream/quark-create-app update --scaffold-check --fail-on-drift # CI-friendly drift check
 ```
@@ -101,7 +105,7 @@ Railway auto-deploys on every push to `main`. Migrations run automatically befor
 
 > **Important:** Root Directory must be `/` (not `apps/web`) so Railpack can resolve pnpm workspace dependencies. The **Config as Code Path** tells Railway where to find the `railway.json` — without it, the config is silently ignored and Railway falls back to defaults.
 >
-> The production start command is `node apps/web/.next/standalone/apps/web/server.js` (configured in `railway.json`). The `pnpm start` script uses `next start` which requires full `node_modules` — it's for local testing only.
+> Railway starts the web service with `pnpm --dir apps/web start:deploy` (configured in `railway.json`), which delegates to the standalone entrypoint `node .next/standalone/apps/web/server.js`. The `pnpm start` script uses `next start` which requires full `node_modules` — it's for local testing only.
 
 ## AI-Assisted Development
 

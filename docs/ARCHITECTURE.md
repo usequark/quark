@@ -571,7 +571,15 @@ pnpm test:e2e:full
 
 # With build verification
 QUARK_CLI_BUILD_TEST=1 pnpm test:build
+
+# With generated image security scanning
+QUARK_CLI_BUILD_TEST=1 QUARK_CLI_SCAN_IMAGES=1 pnpm test:build
 ```
+
+Container runtime selection follows two rules:
+
+- Pin the runtime version before changing the base image used by scaffolded deploy artifacts.
+- Validate the full web and worker images; base-image scan results alone are not enough to change Quark's deploy contract.
 
 ### CI/CD Integration
 
@@ -586,6 +594,8 @@ For continuous integration pipelines:
     pnpm test:e2e          # Scaffolding validation
     # pnpm test:e2e:full   # Optional: full lifecycle (slow, needs Docker)
 ```
+
+Quark keeps required PR-time image scanning focused on the source Dockerfiles in [ci.yml](../.github/workflows/ci.yml). Generated scaffold image scanning uses the same `test-build.js` harness and runs separately as a non-blocking workflow so the deploy contract stays validated without making every PR pay the full scaffold/build/scan cost.
 
 ### Non-Interactive Testing
 

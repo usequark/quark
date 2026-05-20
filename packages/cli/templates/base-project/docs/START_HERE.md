@@ -57,3 +57,15 @@ If you want CI to fail when scaffold-managed files drift, use:
 ```bash
 npx @techstream/quark-create-app update --scaffold-check --fail-on-drift
 ```
+
+## Recover disk space
+
+When local build artifacts pile up, run these from the project root:
+
+```bash
+pnpm clean:check   # Preview reclaimable build artifacts
+pnpm clean         # Remove .turbo, .next, build, dist, and coverage output
+pnpm clean:deep    # Also remove repo-local temp workspaces
+```
+
+`pnpm dev` also auto-cleans stale oversized local artifacts at most once per day. Set `QUARK_SKIP_AUTO_CLEAN=1` if you want to skip that behavior for a run.

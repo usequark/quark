@@ -9,6 +9,7 @@
 		"clean": "rm -rf dist",
 		"test": "node ../../scripts/run-tests.mjs src",
 		"dev": "tsx watch src/index.js",
+		"start:deploy": "node src/index.js",
 		"preflight": "node src/index.js --preflight",
 		"lint": "biome format --write && biome check --write"
 	},

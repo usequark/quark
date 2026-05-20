@@ -5,7 +5,9 @@
 	"description": "",
 	"main": "index.js",
 	"scripts": {
-		"clean": "turbo run clean && rm -rf .turbo",
+		"clean": "node scripts/clean-workspace.mjs",
+		"clean:check": "node scripts/clean-workspace.mjs --check",
+		"clean:deep": "node scripts/clean-workspace.mjs --deep",
 		"build": "dotenv -- turbo run build",
 		"dev": "dotenv -- node scripts/dev-preflight.mjs && dotenv -- turbo run dev",
 		"lint": "biome format --write && biome check --write",
@@ -23,6 +25,7 @@
 		"docker:clean": "docker compose down -v",
 		"db:generate": "turbo run db:generate",
 		"db:migrate": "pnpm --filter ./packages/db db:migrate",
+		"db:migrate:deploy": "pnpm --filter ./packages/db db:migrate:deploy",
 		"db:push": "turbo run db:push",
 		"db:seed": "turbo run db:seed",
 		"format": "biome format --write",
@@ -43,6 +46,8 @@
 			}
 		},
 		"overrides": {
+				"fast-xml-builder@<1.1.7": ">=1.1.7",
+				"fast-xml-parser@<5.5.6": ">=5.5.6",
 			"lodash@>=4.0.0 <=4.17.22": ">=4.17.23",
 			"hono@<4.11.7": ">=4.11.7"
 		}
@@ -58,7 +63,7 @@
 		"baseline-browser-mapping": "^2.10.8",
 		"dotenv-cli": "^11.0.0",
 		"nano-staged": "^0.9.0",
-		"prisma": "^7.5.0",
+		"prisma": "^7.8.0",
 		"simple-git-hooks": "^2.13.1",
 		"tsx": "^4.21.0",
 		"turbo": "^2.9.6"
@@ -75,6 +80,6 @@
 		]
 	},
 	"dependencies": {
-		"@prisma/client": "^7.5.0"
+		"@prisma/client": "^7.8.0"
 	}
 }

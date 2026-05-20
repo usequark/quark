@@ -26,6 +26,7 @@ tmp-npm-smoke/
 # misc
 .DS_Store
 *.pem
+.quark-auto-clean.json
 
 # debug
 npm-debug.log*

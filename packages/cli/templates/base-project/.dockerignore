@@ -7,10 +7,8 @@ coverage
 .env
 .env.*
 !.env.example
-tmp-test-project
 *.log
 .DS_Store
 .idea
 .vscode
 docs
-packages/cli/templates

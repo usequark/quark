@@ -7,14 +7,17 @@
 		"clean": "rm -rf .next",
 		"dev": "next dev",
 		"build": "next build",
+		"prepare:standalone": "node ./scripts/prepare-standalone.mjs",
+		"build:deploy": "pnpm build && pnpm prepare:standalone",
 		"start": "next start",
+		"start:deploy": "node .next/standalone/apps/web/server.js",
 		"test": "node ../../scripts/run-tests.mjs src --exclude=integration.test.js",
 		"test:integration": "node --test src/app/api/integration.test.js",
 		"lint": "biome format --write && biome check --write"
 	},
 	"dependencies": {
 		"@auth/prisma-adapter": "^2.11.1",
-		"@prisma/client": "^7.4.2",
+		"@prisma/client": "^7.8.0",
 		"@techstream/quark-admin": "workspace:*",
 		"@techstream/quark-cms": "workspace:*",
 		"@techstream/quark-config": "workspace:*",

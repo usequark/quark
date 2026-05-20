@@ -81,6 +81,15 @@ const SYNC_DIRS = [
  * Individual file mappings: monorepo source → template destination.
  */
 const SYNC_FILES = [
+	{ src: ".dockerignore", dest: "base-project/.dockerignore" },
+	{
+		src: "scripts/dev-preflight.mjs",
+		dest: "base-project/scripts/dev-preflight.mjs",
+	},
+	{
+		src: "scripts/clean-workspace.mjs",
+		dest: "base-project/scripts/clean-workspace.mjs",
+	},
 	{ src: "turbo.json", dest: "base-project/turbo.json" },
 	{ src: "docker-compose.yml", dest: "base-project/docker-compose.yml" },
 	{
@@ -152,8 +161,6 @@ const TEMPLATE_ONLY = new Set([
 	"base-project/.github/dependabot.yml",
 	// Scaffold starter README (different from monorepo README)
 	"base-project/README.md",
-	// Web railway.json — scaffold uses a path filter for migrations; monorepo uses the package name
-	"base-project/apps/web/railway.json",
 	// Template .gitignore (includes .env, .next, etc.)
 	"base-project/.gitignore",
 	// Root package.json with @myquark scope placeholder
@@ -163,9 +170,9 @@ const TEMPLATE_ONLY = new Set([
 	"base-project/apps/web/biome.json",
 	// Migrations: template maintains its own squashed initial migration
 	"base-project/packages/db/prisma/migrations",
-	// Doctor script is hand-authored for scaffolded projects — not synced from monorepo
-	"base-project/scripts/",
+	// Doctor and prepare scripts are hand-authored for scaffolded projects
 	"base-project/scripts/doctor.js",
+	"base-project/scripts/prepare.js",
 ]);
 
 // ─── Transforms ────────────────────────────────────────────────────────────────
@@ -179,6 +186,7 @@ const TEMPLATE_ONLY = new Set([
  * @techstream/quark-core from npm and use specific naming conventions).
  */
 const TRANSFORMS = {
+	"base-project/.dockerignore": transformScaffoldDockerIgnore,
 	// Apps: adjust dependency references for scaffold context
 	"base-project/apps/web/package.json": transformWebPackageJson,
 	"worker/package.json": transformWorkerPackageJson,
@@ -193,6 +201,18 @@ const TRANSFORMS = {
 	"admin/package.json": transformOptionalPackageJson,
 	"cms/package.json": transformOptionalPackageJson,
 };
+
+function transformScaffoldDockerIgnore(content) {
+	const lines = content
+		.split(/\r?\n/)
+		.filter(
+			(line) =>
+				line.trim() !== "tmp-test-project" &&
+				line.trim() !== "packages/cli/templates",
+		);
+
+	return `${lines.join("\n").replace(/\n+$/, "")}\n`;
+}
 
 function transformWebPackageJson(content) {
 	const pkg = JSON.parse(content);
@@ -517,7 +537,7 @@ function shouldSyncForPreCommit() {
 			encoding: "utf-8",
 		});
 		const sourceDirPattern =
-			/^(apps\/|packages\/(db|config|ui|jobs|admin)\/|turbo\.json|docker-compose(\.override)?\.yml|pnpm-workspace\.yaml)/;
+			/^(scripts\/|apps\/|packages\/(db|config|ui|jobs|admin)\/|turbo\.json|docker-compose(\.override)?\.yml|pnpm-workspace\.yaml)/;
 		return staged.split("\n").some((f) => sourceDirPattern.test(f));
 	} catch {
 		return false;

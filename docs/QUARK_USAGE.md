@@ -173,12 +173,21 @@ jobs:
 #### Docker
 
 ```dockerfile
-FROM node:24-alpine
+FROM node:22-alpine
 
 WORKDIR /app
 COPY . .
 RUN pnpm install
 ```
+
+Production note: the scaffolded deploy images use the generated [apps/web/Dockerfile](apps/web/Dockerfile) and [apps/worker/Dockerfile](apps/worker/Dockerfile), not this minimal example.
+
+Quark currently pins `node:22-alpine` for those Dockerfiles instead of using unversioned `cgr.dev/chainguard/node:latest`.
+
+- The deploy contract is currently Node 22, and `latest` can silently move that contract.
+- During evaluation, `cgr.dev/chainguard/node:latest` resolved to Node 26, which would have changed the runtime major without an explicit Quark release decision.
+- A pinned Alpine image keeps builds reproducible, matches the runtime validated by the scaffold build harness and CI image scans, and still gives Quark a small low-surface runtime.
+- Revisit Chainguard once a versioned Node 22 tag is available and validated against Quark's web and worker images.
 
 #### Cloning Repo to New Environment
 
