@@ -5,16 +5,16 @@
 
 */
 -- DropForeignKey
-ALTER TABLE "Post" DROP CONSTRAINT "Post_authorId_fkey";
+ALTER TABLE IF EXISTS "Post" DROP CONSTRAINT IF EXISTS "Post_authorId_fkey";
 
 -- AlterTable
 ALTER TABLE "Account" ALTER COLUMN "updatedAt" DROP DEFAULT;
 
 -- DropTable
-DROP TABLE "Post";
+DROP TABLE IF EXISTS "Post";
 
 -- CreateTable
-CREATE TABLE "File" (
+CREATE TABLE IF NOT EXISTS "File" (
     "id" TEXT NOT NULL,
     "filename" TEXT NOT NULL,
     "originalName" TEXT NOT NULL,
@@ -30,16 +30,26 @@ CREATE TABLE "File" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "File_storageKey_key" ON "File"("storageKey");
+CREATE UNIQUE INDEX IF NOT EXISTS "File_storageKey_key" ON "File"("storageKey");
 
 -- CreateIndex
-CREATE INDEX "File_uploadedById_idx" ON "File"("uploadedById");
+CREATE INDEX IF NOT EXISTS "File_uploadedById_idx" ON "File"("uploadedById");
 
 -- CreateIndex
-CREATE INDEX "File_mimeType_idx" ON "File"("mimeType");
+CREATE INDEX IF NOT EXISTS "File_mimeType_idx" ON "File"("mimeType");
 
 -- CreateIndex
-CREATE INDEX "File_createdAt_idx" ON "File"("createdAt");
+CREATE INDEX IF NOT EXISTS "File_createdAt_idx" ON "File"("createdAt");
 
--- AddForeignKey
-ALTER TABLE "File" ADD CONSTRAINT "File_uploadedById_fkey" FOREIGN KEY ("uploadedById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+-- AddForeignKey (guarded for idempotency)
+DO $$
+BEGIN
+  IF to_regclass('"File"') IS NOT NULL
+     AND NOT EXISTS (
+       SELECT 1 FROM pg_constraint WHERE conname = 'File_uploadedById_fkey'
+     ) THEN
+    ALTER TABLE "File" ADD CONSTRAINT "File_uploadedById_fkey"
+      FOREIGN KEY ("uploadedById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+  END IF;
+END
+$$;

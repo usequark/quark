@@ -175,6 +175,7 @@ model Page {
   content     Json?
   excerpt     String?
   layout      String        @default("standard")
+  showHeader  Boolean       @default(false)
   status      ContentStatus @default(DRAFT)
   publishedAt DateTime?
   authorId    String

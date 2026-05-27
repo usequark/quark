@@ -54,6 +54,7 @@ export default async function PublishedPage({ params }) {
 				content={page.content}
 				fallbackBody={page.body}
 				layout={page.layout}
+				showHeader={page.showHeader}
 			/>
 		</main>
 	);

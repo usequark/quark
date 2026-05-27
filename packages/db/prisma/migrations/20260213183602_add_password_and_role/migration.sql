@@ -1,3 +1,3 @@
 -- AlterTable
-ALTER TABLE "User" ADD COLUMN     "password" TEXT,
-ADD COLUMN     "role" TEXT NOT NULL DEFAULT 'viewer';
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "password" TEXT,
+ADD COLUMN IF NOT EXISTS "role" TEXT NOT NULL DEFAULT 'viewer';

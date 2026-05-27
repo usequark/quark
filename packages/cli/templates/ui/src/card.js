@@ -1,5 +1,7 @@
+"use client";
+
 import { ChevronDown } from "lucide-react";
-import React from "react";
+import React, { useState } from "react";
 
 const cardCls =
 	"border border-border bg-surface transition-colors duration-200 linear";
@@ -12,15 +14,61 @@ const contentCls = "p-6 pt-0";
 
 const footerCls = "flex items-center p-6 pt-0";
 
-const collapsibleSummaryCls =
-	"flex cursor-pointer list-none items-center justify-between p-6 text-text transition-colors duration-200 hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 [&::-webkit-details-marker]:hidden";
+const collapsibleTriggerCls =
+	"flex w-full cursor-pointer items-center justify-between p-6 text-text transition-colors duration-200 hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40";
 
-const collapsibleChevronCls =
-	"pointer-events-none ml-3 shrink-0 rotate-0 text-text-faint transition-transform duration-300 ease-in-out group-open:rotate-180";
+function CollapsibleCard({
+	className = "",
+	collapsibleLabel = "Card Details",
+	defaultOpen = false,
+	children,
+	...props
+}) {
+	const [isOpen, setIsOpen] = useState(defaultOpen);
 
-const collapsiblePanelCls = "border-t border-border text-text-muted";
-
-const collapsibleInnerCls = "block p-6";
+	return React.createElement(
+		"div",
+		{
+			className:
+				`${cardCls} h-fit self-start rounded-[--radius-default] ${className}`.trim(),
+			...props,
+		},
+		React.createElement(
+			"button",
+			{
+				type: "button",
+				className: collapsibleTriggerCls,
+				onClick: () => setIsOpen((prev) => !prev),
+				"aria-expanded": isOpen,
+			},
+			React.createElement(
+				"div",
+				{ className: "text-base font-bold tracking-tight flex" },
+				React.createElement("span", null, collapsibleLabel),
+			),
+			React.createElement(
+				"span",
+				{
+					"aria-hidden": "true",
+					className: `pointer-events-none ml-3 shrink-0 text-text-faint transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${isOpen ? "rotate-180" : "rotate-0"}`,
+				},
+				React.createElement(ChevronDown, { size: 16 }),
+			),
+		),
+		React.createElement(
+			"div",
+			{
+				className: `border-t border-border text-text-muted grid transition-[grid-template-rows,opacity,transform] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] motion-reduce:transition-none ${isOpen ? "translate-y-0 opacity-100" : "-translate-y-2 opacity-0"}`,
+				style: { gridTemplateRows: isOpen ? "1fr" : "0fr" },
+			},
+			React.createElement(
+				"div",
+				{ className: "overflow-hidden min-h-0" },
+				React.createElement("div", { className: "p-6" }, children),
+			),
+		),
+	);
+}
 
 export function Card({
 	className = "",
@@ -31,43 +79,13 @@ export function Card({
 	...props
 }) {
 	if (variant === "collapsible") {
-		return React.createElement(
-			"details",
-			{
-				className:
-					`${cardCls} group h-fit self-start rounded-[--radius-default] ${className}`.trim(),
-				open: defaultOpen,
-				...props,
-			},
-			React.createElement(
-				"summary",
-				{ className: collapsibleSummaryCls },
-				React.createElement(
-					"div",
-					{ className: "text-base font-bold tracking-tight flex" },
-					React.createElement("span", null, collapsibleLabel),
-				),
-				React.createElement(
-					"span",
-					{
-						"aria-hidden": "true",
-						"data-chevron": "true",
-						className: collapsibleChevronCls,
-					},
-					React.createElement(ChevronDown, { size: 16 }),
-				),
-			),
-
-			React.createElement(
-				"div",
-				{ className: collapsiblePanelCls },
-				React.createElement(
-					"div",
-					{ className: collapsibleInnerCls },
-					children,
-				),
-			),
-		);
+		return React.createElement(CollapsibleCard, {
+			className,
+			collapsibleLabel,
+			defaultOpen,
+			children,
+			...props,
+		});
 	}
 
 	return React.createElement(

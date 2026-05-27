@@ -65,5 +65,7 @@ test("Card - supports collapsible variant", () => {
 		children: "Body",
 	});
 	assert.ok(result);
-	assert.strictEqual(result.type, "details");
+	assert.strictEqual(typeof result.type, "function");
+	assert.strictEqual(result.props.collapsibleLabel, "Details");
+	assert.strictEqual(result.props.children, "Body");
 });

@@ -1,6 +1,13 @@
 "use client";
 
-import { Button, Dialog, Input, Label, Textarea } from "@techstream/quark-ui";
+import {
+	Button,
+	Checkbox,
+	Dialog,
+	Input,
+	Label,
+	Textarea,
+} from "@techstream/quark-ui";
 import { useActionState, useState, useTransition } from "react";
 import ContentPreview from "./ContentPreview";
 import CoverImageField from "./CoverImageField";
@@ -56,6 +63,7 @@ export default function ContentForm({
 
 	const [title, setTitle] = useState(record?.title ?? "");
 	const [excerpt, setExcerpt] = useState(record?.excerpt ?? "");
+	const [showHeader, setShowHeader] = useState(record?.showHeader ?? false);
 	const [body, setBody] = useState(record?.body ?? "");
 	const [pageContent, setPageContent] = useState(record?.content ?? null);
 	const [pageLayout, setPageLayout] = useState(record?.layout ?? "standard");
@@ -111,37 +119,67 @@ export default function ContentForm({
 						</div>
 					)}
 
-					{/* Title */}
-					<div className="flex flex-col gap-1">
-						<Label htmlFor="cms-title">Title *</Label>
-						<Input
-							id="cms-title"
-							type="text"
-							name="title"
-							defaultValue={record?.title ?? ""}
-							required
-							placeholder={titlePlaceholder}
-							onChange={(e) => setTitle(e.target.value)}
+					{/* Page Identity */}
+					<section className="rounded-[--radius-default] border border-border bg-surface p-4 shadow-sm sm:p-5">
+						<PanelHeader
+							title="Page Details"
+							description="The title and slug identify this page publicly."
 						/>
-					</div>
+						<div className="space-y-4">
+							<div className="flex flex-col gap-1">
+								<Label htmlFor="cms-title">Title *</Label>
+								<Input
+									id="cms-title"
+									type="text"
+									name="title"
+									defaultValue={record?.title ?? ""}
+									required
+									placeholder={titlePlaceholder}
+									onChange={(e) => setTitle(e.target.value)}
+								/>
+							</div>
 
-					{/* Slug — auto-generated from title */}
-					<SlugField title={title} defaultSlug={record?.slug ?? ""} required />
-
-					{/* Excerpt */}
-					{hasExcerpt && (
-						<div className="flex flex-col gap-1">
-							<Label htmlFor="cms-excerpt">Excerpt</Label>
-							<Textarea
-								id="cms-excerpt"
-								name="excerpt"
-								value={excerpt}
-								rows={2}
-								placeholder="Short summary (optional)"
-								onChange={(e) => setExcerpt(e.target.value)}
+							<SlugField
+								title={title}
+								defaultSlug={record?.slug ?? ""}
+								required
 							/>
+
+							{hasExcerpt && (
+								<div className="flex flex-col gap-1">
+									<Label htmlFor="cms-excerpt">Excerpt</Label>
+									<Textarea
+										id="cms-excerpt"
+										name="excerpt"
+										value={excerpt}
+										rows={2}
+										placeholder="Short summary (optional)"
+										onChange={(e) => setExcerpt(e.target.value)}
+									/>
+								</div>
+							)}
+
+							{isPageModel && (
+								<div className="border-t border-border pt-4">
+									<input
+										type="hidden"
+										name="showHeader"
+										value={showHeader ? "on" : ""}
+									/>
+									<Checkbox
+										id="cms-show-header"
+										label="Show title and excerpt above sections"
+										checked={showHeader}
+										onChange={(e) => setShowHeader(e.target.checked)}
+									/>
+									<p className="mt-1.5 pl-6 text-xs text-text-faint">
+										By default the title and excerpt are hidden on the live page
+										— use a Hero section instead.
+									</p>
+								</div>
+							)}
 						</div>
-					)}
+					</section>
 
 					{hasCoverImage && (
 						<section className="rounded-[--radius-default] border border-border bg-surface p-4 shadow-sm sm:p-5">
@@ -234,7 +272,7 @@ export default function ContentForm({
 							)}
 							{canArchive && archiveAction && (
 								<form action={archiveAction}>
-									<Button type="submit" className="w-full" variant="secondary">
+									<Button type="submit" className="w-full" variant="warning">
 										Archive
 									</Button>
 								</form>

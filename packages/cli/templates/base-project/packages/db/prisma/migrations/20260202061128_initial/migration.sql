@@ -120,6 +120,7 @@ CREATE TABLE "Page" (
     "content" JSONB,
     "excerpt" TEXT,
     "layout" TEXT NOT NULL DEFAULT 'standard',
+    "showHeader" BOOLEAN NOT NULL DEFAULT false,
     "status" "ContentStatus" NOT NULL DEFAULT 'DRAFT',
     "publishedAt" TIMESTAMP(3),
     "authorId" TEXT NOT NULL,

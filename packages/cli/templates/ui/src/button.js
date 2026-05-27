@@ -1,3 +1,4 @@
+import Link from "next/link.js";
 import React from "react";
 
 const base =
@@ -91,7 +92,7 @@ export function Button({
 		const anchorRel =
 			target === "_blank" ? (rel ?? "noopener noreferrer") : rel;
 		return React.createElement(
-			"a",
+			Link,
 			{
 				href,
 				target,

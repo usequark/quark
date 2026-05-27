@@ -1,4 +1,5 @@
 import React from "react";
+import { BackgroundAnimation } from "./background-animation.js";
 import { Button } from "./button.js";
 
 const shellCls =
@@ -14,23 +15,17 @@ const BACKGROUND_TONES = {
 	warning: "bg-warning-muted/30",
 };
 
-const EmptyBackgroundAnimation = () => null;
-
-// TODO: Replace EmptyBackgroundAnimation entries with the real animation
-// components (BackgroundAurora, BackgroundWaves, etc.) when they are available
-// in this package. For now these are intentional placeholders so the section
-// component can be used without a hard dependency on animation assets.
-const BACKGROUND_ANIMATIONS = {
-	"background-aurora": EmptyBackgroundAnimation,
-	"background-data-stream": EmptyBackgroundAnimation,
-	"background-grid": EmptyBackgroundAnimation,
-	"background-isometric": EmptyBackgroundAnimation,
-	"background-polygon": EmptyBackgroundAnimation,
-	"background-stars": EmptyBackgroundAnimation,
-	"background-streaks": EmptyBackgroundAnimation,
-	"background-vapor": EmptyBackgroundAnimation,
-	"background-waves": EmptyBackgroundAnimation,
-};
+const BACKGROUND_ANIMATION_NAMES = new Set([
+	"background-aurora",
+	"background-data-stream",
+	"background-grid",
+	"background-isometric",
+	"background-polygon",
+	"background-stars",
+	"background-streaks",
+	"background-vapor",
+	"background-waves",
+]);
 
 export const SECTION_VARIANTS = ["hero", "default", "split", "cta"];
 
@@ -318,8 +313,8 @@ function createBackgroundLayer({
 	}
 
 	if (backgroundMode === "animation") {
-		const AnimationComponent = resolveAnimationComponent(backgroundValue);
-		if (!AnimationComponent) {
+		const animationName = resolveAnimationName(backgroundValue);
+		if (!animationName) {
 			return React.createElement("div", {
 				className: `absolute inset-0 ${getToneClass(backgroundTone)}`,
 			});
@@ -334,7 +329,7 @@ function createBackgroundLayer({
 			React.createElement(
 				"div",
 				{ className: "absolute inset-0" },
-				React.createElement(AnimationComponent, null),
+				React.createElement(BackgroundAnimation, { name: animationName }),
 			),
 			showOverlay
 				? React.createElement("div", {
@@ -431,19 +426,19 @@ function getToneClass(tone) {
 	return BACKGROUND_TONES[tone] ?? BACKGROUND_TONES.surface;
 }
 
-function resolveAnimationComponent(backgroundValue) {
+function resolveAnimationName(backgroundValue) {
 	const normalized = normalizeAnimationValue(backgroundValue);
 	if (!normalized) {
-		return BACKGROUND_ANIMATIONS["background-aurora"];
+		return "background-aurora";
 	}
 
-	if (BACKGROUND_ANIMATIONS[normalized]) {
-		return BACKGROUND_ANIMATIONS[normalized];
+	if (BACKGROUND_ANIMATION_NAMES.has(normalized)) {
+		return normalized;
 	}
 
 	if (!normalized.startsWith("background-")) {
 		const prefixed = `background-${normalized}`;
-		return BACKGROUND_ANIMATIONS[prefixed] ?? null;
+		return BACKGROUND_ANIMATION_NAMES.has(prefixed) ? prefixed : null;
 	}
 
 	return null;

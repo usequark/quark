@@ -53,6 +53,10 @@ export const pageSchema = z.object({
 		(value) => getStringValue(value).trim(),
 		z.string().max(500).optional().or(z.literal("")),
 	),
+	showHeader: z.preprocess(
+		(value) => value === "on" || value === "true",
+		z.boolean(),
+	),
 });
 
 export function parsePageFormData(formData) {
@@ -76,6 +80,7 @@ export function parsePageFormData(formData) {
 	return {
 		...result.data,
 		layout,
+		showHeader: result.data.showHeader ?? false,
 		content,
 		body: serializePageContentToBody(content),
 	};

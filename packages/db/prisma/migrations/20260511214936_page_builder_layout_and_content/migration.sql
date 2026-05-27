@@ -1,3 +1,3 @@
 -- AlterTable
-ALTER TABLE "Page" ADD COLUMN     "content" JSONB,
-ADD COLUMN     "layout" TEXT NOT NULL DEFAULT 'standard';
+ALTER TABLE "Page" ADD COLUMN IF NOT EXISTS "content" JSONB,
+ADD COLUMN IF NOT EXISTS "layout" TEXT NOT NULL DEFAULT 'standard';

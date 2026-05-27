@@ -26,6 +26,7 @@ export async function cmsCreatePage(_prevState, formData) {
 		body,
 		excerpt,
 		layout,
+		showHeader,
 		content,
 	} = parsePageFormData(formData);
 	const slug = await ensureUniqueSlug(
@@ -41,6 +42,7 @@ export async function cmsCreatePage(_prevState, formData) {
 			body,
 			excerpt: excerpt || null,
 			layout,
+			showHeader,
 			content,
 			authorId: session.user.id,
 		},
@@ -61,13 +63,22 @@ export async function cmsUpdatePage(id, _prevState, formData) {
 		content,
 		excerpt,
 		layout,
+		showHeader,
 	} = parsePageFormData(formData);
 	const slugCandidate = resolvePageSlugCandidate({ title, slug: rawSlug });
 	const slug = await ensureUniqueSlug(prisma, "Page", slugCandidate, id);
 
 	await prisma.page.update({
 		where: { id },
-		data: { title, slug, body, content, excerpt: excerpt || null, layout },
+		data: {
+			title,
+			slug,
+			body,
+			content,
+			excerpt: excerpt || null,
+			layout,
+			showHeader,
+		},
 	});
 
 	await revalidatePublicContent();

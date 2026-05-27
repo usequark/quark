@@ -73,6 +73,7 @@ export default function PageContentRenderer({
 	fallbackBody = "",
 	layout = "standard",
 	previewMode = false,
+	showHeader = false,
 }) {
 	const blocks = normalizePageContent(content, fallbackBody);
 	const hasContent = hasRenderableContent(blocks);
@@ -91,7 +92,7 @@ export default function PageContentRenderer({
 			<div
 				className={`mx-auto w-full ${layoutClass} px-5 py-8 sm:px-8 sm:py-12`}
 			>
-				{(title || excerpt) && (
+				{showHeader && (title || excerpt) && (
 					<header className="border-b border-border pb-6">
 						{title && (
 							<h1 className="text-3xl font-semibold tracking-tight text-text sm:text-4xl">
@@ -109,8 +110,8 @@ export default function PageContentRenderer({
 				<div
 					className={
 						previewMode
-							? "divide-y divide-border pt-6 sm:pt-8"
-							: "space-y-10 pt-6 sm:space-y-14 sm:pt-8"
+							? `divide-y divide-border ${showHeader ? "pt-6 sm:pt-8" : ""}`
+							: ""
 					}
 				>
 					{blocks.map((block, index) => (
@@ -129,7 +130,8 @@ export default function PageContentRenderer({
 
 function PageBlock({ block, previewMode, sectionClassName = "" }) {
 	const blockClassName = joinClassNames(
-		previewMode ? "rounded-none border-0" : "",
+		"rounded-none border-0",
+		previewMode ? "" : "",
 		sectionClassName,
 	);
 

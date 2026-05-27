@@ -22,6 +22,7 @@ const loadPublishedPageBySlug = unstable_cache(
 				body: true,
 				content: true,
 				layout: true,
+				showHeader: true,
 			},
 		}),
 	["public-content", "page-by-slug"],

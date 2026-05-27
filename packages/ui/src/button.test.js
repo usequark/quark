@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import { test } from "node:test";
+import Link from "next/link.js";
 import React from "react";
 import { Button } from "./button.js";
 
@@ -79,11 +80,11 @@ test("Button - icon scales independently from text size", () => {
 	assert.match(result.props.children[0].props.className, /size-5/);
 });
 
-test("Button - renders anchor when href is provided", () => {
+test("Button - renders Next Link when href is provided", () => {
 	const result = Button({ href: "/docs", children: "Docs" });
 
 	assert.ok(result);
-	assert.equal(result.type, "a");
+	assert.equal(result.type, Link);
 	assert.equal(result.props.href, "/docs");
 });
 
@@ -95,6 +96,6 @@ test("Button - adds noopener noreferrer for target blank links", () => {
 	});
 
 	assert.ok(result);
-	assert.equal(result.type, "a");
+	assert.equal(result.type, Link);
 	assert.equal(result.props.rel, "noopener noreferrer");
 });

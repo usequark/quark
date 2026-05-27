@@ -17,6 +17,7 @@ export * from "./checkbox.js";
 export * from "./dialog.js";
 export * from "./error-banner.js";
 export * from "./footer.js";
+export * from "./form.js";
 export * from "./input.js";
 export * from "./label.js";
 export * from "./logo.js";

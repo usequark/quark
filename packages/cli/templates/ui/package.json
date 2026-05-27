@@ -8,7 +8,8 @@
 		"./theme-constants": "./src/theme-constants.js"
 	},
 	"dependencies": {
-		"lucide-react": "^1.14.0"
+		"lucide-react": "^1.14.0",
+		"next": "16.1.6"
 	},
 	"devDependencies": {
 		"@types/react": "^19.2.14",

@@ -18,7 +18,8 @@
 	"license": "ISC",
 	"packageManager": "pnpm@10.12.1",
 	"dependencies": {
-		"lucide-react": "^1.14.0"
+		"lucide-react": "^1.14.0",
+		"next": "16.1.6"
 	},
 	"devDependencies": {
 		"@techstream/quark-config": "workspace:*",

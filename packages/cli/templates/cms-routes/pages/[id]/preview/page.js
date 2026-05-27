@@ -1,4 +1,5 @@
 import { prisma } from "@techstream/quark-db";
+import { Button } from "@techstream/quark-ui";
 import { notFound } from "next/navigation";
 import PageContentRenderer from "@/app/_components/PageContentRenderer";
 import { requireRole } from "@/lib/auth-middleware";
@@ -22,6 +23,7 @@ export default async function PreviewPagePage({ params }) {
 			layout: true,
 			status: true,
 			slug: true,
+			showHeader: true,
 		},
 	});
 
@@ -46,21 +48,18 @@ export default async function PreviewPagePage({ params }) {
 						</p>
 					</div>
 					<div className="flex flex-wrap gap-2">
-						<a
-							href={`/admin/cms/pages/${id}`}
-							className="inline-flex h-10 items-center justify-center rounded-[--radius-default] border border-border bg-surface px-4 text-sm font-medium tracking-wide text-text-muted transition-all duration-200 linear hover:border-border-hover hover:text-text"
-						>
-							BACK TO EDITOR
-						</a>
+						<Button href={`/admin/cms/pages/${id}`} variant="secondary">
+							Back to Editor
+						</Button>
 						{record.status === "PUBLISHED" && record.slug ? (
-							<a
+							<Button
 								href={`/${record.slug}`}
 								target="_blank"
 								rel="noopener noreferrer"
-								className="inline-flex h-10 items-center justify-center rounded-[--radius-default] border border-border bg-surface px-4 text-sm font-medium tracking-wide text-text-muted transition-all duration-200 linear hover:border-border-hover hover:text-text"
+								variant="primary"
 							>
-								VIEW LIVE PAGE
-							</a>
+								View Live Page
+							</Button>
 						) : null}
 					</div>
 				</div>
@@ -73,6 +72,8 @@ export default async function PreviewPagePage({ params }) {
 					content={record.content}
 					fallbackBody={record.body}
 					layout={record.layout}
+					showHeader={record.showHeader}
+					previewMode
 				/>
 			</div>
 		</div>

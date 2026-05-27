@@ -19,6 +19,7 @@ import {
 	Checkbox,
 	Dialog,
 	Footer,
+	Form,
 	Input,
 	Label,
 	MobileNavbar,
@@ -597,6 +598,120 @@ function PlaygroundInner() {
 									</div>
 								);
 							})()}
+						</ComponentSection>
+
+						{/* ── 12 Forms ── */}
+						<ComponentSection id="forms" index={12} title="Forms">
+							<div className="grid gap-8 sm:grid-cols-2">
+								{/* Contact / inquiry form — mirrors the reference design */}
+								<div className="rounded-[--radius-default] border border-border bg-surface p-6 shadow-sm">
+									<p className="font-mono uppercase text-[11px] tracking-[0.2em] text-text-faint mb-5">
+										Contact form
+									</p>
+									<Form
+										onSubmit={(values) =>
+											alert(JSON.stringify(values, null, 2))
+										}
+										fields={[
+											{
+												type: "text",
+												name: "name",
+												label: "Name",
+												placeholder: "John Doe",
+											},
+											{
+												type: "row",
+												hint: "Provide an email, phone, or both",
+												fields: [
+													{
+														type: "text",
+														name: "email",
+														label: "Email",
+														placeholder: "john@company.com",
+													},
+													{
+														type: "text",
+														name: "phone",
+														label: "Phone",
+														placeholder: "+64 27 000 0000",
+													},
+												],
+											},
+											{
+												type: "text",
+												name: "projectType",
+												label: "Project Type",
+												placeholder: "e.g. Residential Topography",
+											},
+											{
+												type: "textarea",
+												name: "message",
+												label: "Message",
+												placeholder: "Tell us about your project requirements…",
+											},
+											{ type: "submit", label: "SEND REQUEST" },
+										]}
+									/>
+								</div>
+
+								{/* Service enquiry — dropdown + number */}
+								<div className="rounded-[--radius-default] border border-border bg-surface p-6 shadow-sm">
+									<p className="font-mono uppercase text-[11px] tracking-[0.2em] text-text-faint mb-5">
+										Service enquiry
+									</p>
+									<Form
+										submitLabel="Submit Enquiry"
+										onSubmit={(values) =>
+											alert(JSON.stringify(values, null, 2))
+										}
+										fields={[
+											{
+												type: "row",
+												fields: [
+													{
+														type: "text",
+														name: "firstName",
+														label: "First Name",
+														placeholder: "Jane",
+													},
+													{
+														type: "text",
+														name: "lastName",
+														label: "Last Name",
+														placeholder: "Smith",
+													},
+												],
+											},
+											{
+												type: "dropdown",
+												name: "service",
+												label: "Service",
+												placeholder: "Select a service…",
+												options: [
+													{ value: "topo", label: "Topographic Survey" },
+													{ value: "boundary", label: "Boundary Survey" },
+													{ value: "feature", label: "Feature Survey" },
+													{ value: "drone", label: "Drone / Aerial Survey" },
+												],
+											},
+											{
+												type: "number",
+												name: "budget",
+												label: "Budget (NZD)",
+												placeholder: "5000",
+											},
+											{
+												type: "textarea",
+												name: "details",
+												label: "Additional Details",
+												placeholder:
+													"Any specific requirements or constraints…",
+												rows: 3,
+											},
+										]}
+									/>
+								</div>
+							</div>
 						</ComponentSection>
 					</div>
 				</div>

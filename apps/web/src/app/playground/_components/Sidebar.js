@@ -15,6 +15,7 @@ const SECTIONS = [
 	{ id: "sections", label: "Sections" },
 	{ id: "navbar-footer", label: "Navbar & Footer" },
 	{ id: "animations", label: "Animations" },
+	{ id: "forms", label: "Forms" },
 ];
 
 function NavItem({ id, label, index }) {
