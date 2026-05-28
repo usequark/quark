@@ -252,9 +252,11 @@ test("feature name", async (t) => {
 Railway with two services: **web** (`apps/web`) and **worker** (`apps/worker`).
 
 - Migrations run automatically on every deploy via `releaseCommand` in `apps/web/railway.json`.
+- Use `.env.railway.example` as the default Railway variable template for non-local settings.
+- Wire `DATABASE_URL` and `REDIS_URL` into the web and worker services via Railway shared/service variables or Railway service references, then replace the remaining placeholders in the Railway dashboard.
 - Environment variables live in Railway dashboard — never in committed files.
 - Staging: auto-deploys on push to `main`. Production: deploy from a version tag.
-- Generate a production seed: `SEED_PROFILE=minimal pnpm db:seed`.
+- For a remote production seed, run `SEED_PROFILE=minimal pnpm db:seed` inside Railway or from a machine using Railway's externally reachable database credentials.
 
 ### Railway Config as Code
 
@@ -267,12 +269,13 @@ Each service needs its **Config as Code Path** set in the Railway dashboard:
 
 Root Directory **must** be `/` so Railpack can resolve pnpm workspace dependencies. Without the Config as Code Path, Railway ignores the `railway.json` files and falls back to defaults.
 
-The canonical production Railway start command is `pnpm --dir apps/web start:deploy`, which delegates to `node .next/standalone/apps/web/server.js`. The `pnpm start` / `next start` script is for local testing only — it requires full `node_modules` and skips the standalone build.
+The canonical production Railway start command is `HOSTNAME=0.0.0.0 pnpm --dir apps/web start:deploy`, which delegates to `node .next/standalone/apps/web/server.js` and forces the standalone Next server to bind on Railway's network interface. The `pnpm start` / `next start` script is for local testing only — it requires full `node_modules` and skips the standalone build.
 
 ## Key Files
 
 | File | Purpose |
 |---|---|
+| `.env.railway.example` | Default Railway variable template — copy values into Railway shared/service variables |
 | `packages/db/prisma/schema.prisma` | Database schema — edit this to add models |
 | `packages/db/src/queries.js` | Database query functions — add helpers here |
 | `packages/config/src/validate-env.js` | Environment variable validation — register new vars here |

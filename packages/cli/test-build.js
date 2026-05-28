@@ -45,7 +45,7 @@ const REQUIRED_WEB_DEPLOY_SCRIPTS = {
 const REQUIRED_WEB_RAILWAY_COMMANDS = {
 	buildCommand:
 		"pnpm install --frozen-lockfile && pnpm db:generate && pnpm --dir apps/web build:deploy",
-	startCommand: "pnpm --dir apps/web start:deploy",
+	startCommand: "HOSTNAME=0.0.0.0 pnpm --dir apps/web start:deploy",
 };
 const REQUIRED_WEB_DOCKERFILE_SNIPPETS = [
 	`FROM ${PINNED_NODE_BASE_IMAGE} AS builder`,

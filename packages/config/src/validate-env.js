@@ -344,6 +344,16 @@ export function validateEnv(service = "web") {
 		}
 	}
 
+	const appUrl = process.env.APP_URL?.trim();
+	if (appUrl && !isAbsoluteHttpUrl(appUrl)) {
+		errors.push("APP_URL must be an absolute http(s) URL");
+	}
+
+	const nextAuthUrl = process.env.NEXTAUTH_URL?.trim();
+	if (nextAuthUrl && !isAbsoluteHttpUrl(nextAuthUrl)) {
+		errors.push("NEXTAUTH_URL must be an absolute http(s) URL");
+	}
+
 	const umamiUrl = process.env.NEXT_PUBLIC_UMAMI_URL?.trim();
 	const umamiWebsiteId = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID?.trim();
 	const umamiReplayEnabled =

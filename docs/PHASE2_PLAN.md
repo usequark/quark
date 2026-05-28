@@ -1,4 +1,14 @@
-# Phase 2: Admin Package — Implementation Plan
+# Archived Phase 2: Admin Package — Historical Plan
+
+> **Not the active Phase 2.** The current deployment roadmap is:
+>
+> 1. Phase 1 — deploy foundation (complete)
+> 2. Phase 2 — user-facing `quark deploy` CLI + Railway
+> 3. Phase 3 — AWS
+> 4. Phase 4 — self-hosted/provider expansion
+> 5. Phase 5 — Quark Cloud
+>
+> Keep the admin package material below as historical exploration only. The current authoritative summaries are [../PLAN_SUMMARY.md](../PLAN_SUMMARY.md) and [../PLAN.md](../PLAN.md).
 
 ## Overview
 

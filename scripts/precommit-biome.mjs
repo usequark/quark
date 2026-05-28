@@ -2,7 +2,9 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 
 const SCOPE_PATTERN = /^(apps|packages|docs|scripts)\//;
-const EXT_PATTERN = /\.(js|mjs|ts|tsx|json|css)$/i;
+const EXT_PATTERN = /\.(js|jsx|mjs|json|css)$/i;
+const IGNORED_STAGE_PATTERN =
+	/^(apps\/[^/]+\/\.next\/|packages\/db\/src\/generated\/)/;
 const MAX_ARGS_LENGTH = 2000;
 
 function getStagedFiles() {
@@ -21,7 +23,8 @@ function getStagedFiles() {
 		.split(/\r?\n/)
 		.map((line) => line.trim())
 		.filter(Boolean)
-		.filter((file) => SCOPE_PATTERN.test(file) && EXT_PATTERN.test(file));
+		.filter((file) => SCOPE_PATTERN.test(file) && EXT_PATTERN.test(file))
+		.filter((file) => !IGNORED_STAGE_PATTERN.test(file));
 }
 
 function chunkFiles(files) {

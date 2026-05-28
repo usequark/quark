@@ -66,6 +66,24 @@ describe("app-url", () => {
 			clearEnvKeys();
 			assert.equal(getAppUrl(), "http://localhost:3000");
 		});
+
+		it("throws a clear error for APP_URL without a scheme", () => {
+			clearEnvKeys();
+			process.env.APP_URL = "example.com";
+			assert.throws(
+				() => getAppUrl(),
+				/APP_URL must be an absolute http\(s\) URL/,
+			);
+		});
+
+		it("throws a clear error for NEXTAUTH_URL without a scheme", () => {
+			clearEnvKeys();
+			process.env.NEXTAUTH_URL = "example.com";
+			assert.throws(
+				() => getAppUrl(),
+				/NEXTAUTH_URL must be an absolute http\(s\) URL/,
+			);
+		});
 	});
 
 	// --- getAllowedOrigins ---

@@ -5,6 +5,7 @@ Quark's recommended default is a dormant Umami baseline in every scaffolded Next
 ## Recommendation
 
 - Load `script.js` from `NEXT_PUBLIC_UMAMI_URL` in the root layout head.
+- Enable Umami Performance on the main tracker by default when base analytics is already enabled.
 - Keep Umami helpers app-local in `apps/web/src/lib/analytics/*` and sync them into the scaffold templates. Do not move vendor-specific code into `@techstream/quark-core`.
 - Use a local `rrweb` client component for replay uploads instead of Umami's hosted `recorder.js`.
 - Gate replay separately behind `NEXT_PUBLIC_UMAMI_REPLAY_ENABLED`.
@@ -22,6 +23,7 @@ Behavior rules:
 
 - Base analytics is enabled only when URL and website ID are both present.
 - Base analytics disables cleanly when either value is absent.
+- Performance rides on the same base analytics gate via `data-performance="true"` on the main tracker.
 - Replay requires the full base analytics contract plus `NEXT_PUBLIC_UMAMI_REPLAY_ENABLED=true`.
 - Validation should warn when only one of URL or website ID is set.
 
@@ -35,7 +37,7 @@ The generated web app should include these surfaces:
 | `apps/web/src/lib/analytics/umami.js` | Thin client wrapper for `track()`, `identify()`, and optional revenue helpers |
 | `apps/web/src/lib/analytics/umami-replay.js` | Replay defaults, buffering, session-cache waiting, and `/api/record` payload helpers |
 | `apps/web/src/app/_components/UmamiReplayRecorder.js` | Local rrweb recorder that waits for `window.umami.getSession().cache`, batches events, flushes on hidden/pagehide, and checkpoints across App Router transitions |
-| `apps/web/src/app/layout.js` | Adds preconnect, dns-prefetch, `script.js`, and conditionally mounts the replay recorder |
+| `apps/web/src/app/layout.js` | Adds preconnect, dns-prefetch, `script.js` with `data-performance="true"`, and conditionally mounts the replay recorder |
 | `apps/web/src/proxy.js` and `apps/web/next.config.js` | Derive Umami CSP allowlists from shared config instead of hardcoded hosts |
 | `packages/config/src/validate-env.js` | Validates the three-variable contract and replay preconditions |
 | `apps/web/.env.example` | Documents the public Umami setup without adding extra env sprawl |
@@ -74,6 +76,7 @@ Those can be added later by projects that need them, but they should not widen t
 ## Implementation Notes
 
 - Use `next/script` in the layout head for `script.js`.
+- Add `data-performance="true"` to the main tracker when a site is already opted into Umami analytics.
 - Derive `script-src` and `connect-src` from the normalized Umami origin.
 - Preserve development-only `unsafe-eval` where Turbopack still requires it.
 - Do not send PII in events, replay metadata, or session properties.

@@ -1,157 +1,84 @@
-# Quark Plan — Executive Summary
+# Quark Deployment Roadmap — Active Summary
 
-## The Core Issue
+> **Status update (May 2026):** This summary replaces the older admin/observe phase table as the active execution plan. Older phase notes are historical and are no longer the authoritative sequence for Quark's current work.
 
-Quark's `packages/ui` template was never built out properly. It contains one `Button` component and has been ignored. Every admin/observability proposal assumed Tailwind + Shadcn components existed — they don't.
+## Current Status
 
-**Solution:** Expand the UI template to ~12 primitives (Phase 0). Admin is scaffolded as a local workspace package that depends on it — no publishing required.
+Phase 1 is complete. Quark now has a provider-neutral deploy substrate and an explicit OCI/runtime contract:
 
----
-
-## Seven-Phase Build Plan
-
-| Phase | Work | Effort | New Deps | Status |
-|-------|------|--------|----------|--------|
-| **0** | Expand UI template to ~12 primitives | 1 week | None | ✅ Complete |
-| **1** | Queue metrics + health checks in `@techstream/quark-core` | 3 days | None | ✅ Complete |
-| **2** | Scaffold `packages/admin/` via CLI — self-scaling CRUD UI | 2–3 weeks | None | Planning |
-| **3** | Alerting engine + adapters in `@techstream/quark-core` | 2 weeks | None | Planning |
-| **4** | `@techstream/quark-ai` — AI provider abstraction (published npm) | 2 weeks | `ai` SDK (optional peer) | Planning |
-| **5** | Quark Observe — open-source observability (self-hostable) | 6–8 weeks | Separate repo | Planning |
-| **6** | Quark Cloud — managed infra + compute | 8–12 weeks | Partner APIs | Planning |
-
-**Phases 0–4: ~8–9 weeks (pre-monetization framework work)**
-**Phases 5–6: ~14–20 weeks (monetization products)**
-
-**Documentation deliverables (parallel with Phases 0–4):**
-- **First-feature guide** — 20-min walkthrough from scaffold to working feature
-- **Incremental adoption guide** — add `quark-core` to an existing Next.js app in 20 min
+- `packages/cli/src/deploy/contract.js` and `packages/cli/src/deploy/discovery.js` define and discover deployable Quark services.
+- Web and worker use normalized deploy scripts: `build:deploy`, `start:deploy`, and `db:migrate:deploy`.
+- Web and worker Dockerfiles are pinned to the Node 22 Alpine runtime contract.
+- Railway config uses the same build, release, and start contract as the Docker path.
+- CI scans source images, and the scaffold build harness can optionally build and scan generated images too.
 
 ---
 
-## Package Distribution
+## Five-Phase Deployment Plan
 
-| Package | Type | Optional? | Requires |
-|---|---|---|---|
-| `@techstream/quark-core` | Published (npm) | No | — |
-| `@techstream/quark-create-app` | Published (npm) | No | — |
-| `@techstream/quark-ai` | Published (npm) | **Yes** | `quark-core` |
-| `@yourapp/config` | Scaffolded (CLI) | No | — |
-| `@yourapp/db` | Scaffolded (CLI) | No | — |
-| `@yourapp/ui` | Scaffolded (CLI) | **Yes** | — |
-| `@yourapp/jobs` + `@yourapp/worker` | Scaffolded (CLI) | **Yes** | — |
-| `@yourapp/admin` | Scaffolded (CLI) | **Yes** | **`db`, `ui`** |
+| Phase | Work | Effort | Status |
+|-------|------|--------|--------|
+| **1** | Provider-neutral deploy substrate + OCI/runtime contract | 1-2 weeks | ✅ Complete |
+| **2** | User-facing `quark deploy` CLI + Railway adapter | 1-2 weeks | Next |
+| **3** | AWS adapter (`quark deploy aws`) | 2-3 weeks | Planning |
+| **4** | Self-hosted / Docker CLI polish + provider expansion | 1 week | Planning |
+| **5** | Quark Cloud (managed path built on the same contract) | 8-12 weeks | Deferred |
 
 ---
 
-## What Gets Built
+## Phase Details
 
-### Phase 0: UI Template Expansion (~1 week)
+### Phase 1: Deploy Foundation (Complete)
 
-Expand the scaffolded `packages/ui/` template. Components Tailwind-only, dependency-free, Server Component safe. Included automatically when `admin` is selected by the CLI.
+- Internal deploy contract and discovery in the CLI.
+- Explicit web and worker entrypoints plus healthcheck expectations.
+- Standardized `build:deploy`, `start:deploy`, and `db:migrate:deploy` contracts.
+- Pinned web and worker Docker images with trimmed runtime surfaces.
+- Required source-image scanning in CI.
+- Optional generated-image build/scan harness for scaffolds.
 
-```
-Button (exists), Input, Select, Checkbox, Badge, Card, Table, Dialog, Toast, Label, Textarea, Skeleton
-```
+### Phase 2: CLI UX + Railway (Next)
 
-Admin depends on this as a workspace package (`@yourapp/ui`). No npm publishing needed.
+- Add a user-facing `deploy` command to `quark-create-app`.
+- Support `quark deploy` inspection, validation, and dry-run behavior.
+- Implement `quark deploy railway` on top of the existing `railway.json` and normalized scripts.
+- Keep Dockerfiles and package scripts as the source of truth; the adapter should orchestrate them, not replace them.
 
-### Phase 1: Queue Metrics (~3 days)
+### Phase 3: AWS (Planned)
 
-Add three missing metrics to `quark-core`:
-- Job queue depth (how many jobs are waiting)
-- Jobs processed total (counter)
-- Job processing duration (histogram)
+- Implement `quark deploy aws`.
+- Target ECR + ECS/Fargate + ALB + secrets/env wiring.
+- Preserve the same web and worker images and the same release migration contract used elsewhere.
+- Treat AWS as the stress test for the provider abstraction, not a parallel bespoke deployment path.
 
-Auto-instrument the queue worker. Metrics exposed via `/api/metrics`.
+### Phase 4: Self-Hosted / Provider Expansion (Planned)
 
-### Phase 2: Admin Package (~2–3 weeks)
+- Formalize a `quark deploy docker` or equivalent export-oriented self-hosted flow.
+- Make self-hosted deployment first-class in docs.
+- Add other provider adapters only after the CLI/provider API is stable.
 
-New CLI feature: `admin`. Scaffolds `packages/admin/` as a local workspace package. Requires `ui`.
+### Phase 5: Quark Cloud (Deferred)
 
-**How it works:**
-1. Reads Prisma schema at runtime from `prisma._dmmf` (no new deps)
-2. Discovers all models automatically
-3. Generates CRUD pages with tables, forms, edit dialogs
-4. Smart field rendering: Strings → text inputs, Dates → datetime inputs, Enums → dropdowns, FKs → related model select
-5. Hides sensitive fields (`password`, `@admin.hidden`)
-6. Two route files scaffolded in `apps/web/src/app/admin/`
-7. Selecting `admin` in the CLI automatically includes `ui` (cannot be deselected)
-
-Refresh browser after adding a new model to `schema.prisma` → admin page appears automatically.
-
-### Phase 3: Alerting (~2 weeks)
-
-Framework in `@techstream/quark-core`. Adapter pattern (same as error-reporter).
-
-Built-in adapters: Email, Webhook, Slack, PagerDuty.
-
-```javascript
-alerting.use(emailAdapter({ from: '...' }));
-alerting.addRule({ 
-  condition: snap => snap.get('app_errors_total') > 50,
-  actions: ['email'],
-  throttle: 300_000
-});
-```
-
-### Phase 4: Quark Observe (Deferred → Phase 5–6)
-
-**Quark Observe (Phase 5):** Open-source observability platform — self-hostable with `docker compose up`, SaaS for zero-ops. Modules ship incrementally: error tracking → metrics → uptime → analytics → AI metrics. Priced at $19/mo flat (Pro) for indie devs.
-
-**Quark Cloud (Phase 6):** Managed full-stack infrastructure — web, worker, Postgres, Redis, storage. One-click deploy via CLI. Convenience product, not necessity. $39/mo flat bundle.
-
-**`@techstream/quark-ai` (Phase 4):** Published npm package. Thin AI provider abstraction — unified API for OpenAI, Anthropic, Google, Ollama. Streaming, token counting, structured outputs, embeddings. Free and optional.
+- Build Quark Cloud only after Railway and AWS prove the contract.
+- Position Cloud as convenience, not lock-in.
+- Keep Railway, Docker, and self-hosted equally valid paths in docs and CLI.
 
 ---
 
-## Answers to Key Questions
+## Recommended Order
 
-| Q | A |
-|---|---|
-| Should admin/observe use the UI package? | **Yes.** The UI template is expanded in Phase 0. Admin depends on it as a workspace package. |
-| Is `quark-admin` published to npm? | **No.** Scaffolded via CLI, same model as `ui`, `config`, `jobs`. Project owns the code. |
-| Is `@techstream/quark-ai` published? | **Yes.** Published to npm, optional. Free. |
-| How does admin discover models? | Reads `prisma._dmmf` from the instantiated client at runtime. Zero new dependencies. |
-| What was wrong with previous proposals? | Proposed publishing admin to npm (should be scaffolded). Assumed Observe needed full detail now. Ignored the empty UI template. |
-| When is Observe planned in detail? | Phase 5 — after AI package ships and Phases 1–3 are live. Open-source first, self-hostable. |
-| When is Cloud planned in detail? | Phase 6 — after Observe MVP is live. |
-| Is there an incremental adoption path? | **Yes.** "Add `quark-core` to an existing Next.js project in 20 minutes" guide. Ships before open-source launch. |
-| Should multi-tenant scaffolding be included? | **Yes, as a lightweight CLI option alongside Admin (Phase 2).** `--multi-tenant` flag. |
+1. Railway first because the repo already has normalized scripts, Railway config, and validated deploy images.
+2. AWS second because it exercises the abstraction against the highest-complexity mainstream target.
+3. Quark Cloud after those two so the managed product inherits a proven contract instead of defining it prematurely.
 
 ---
 
-## What Changes For Quark
+## Out Of Scope For The Active Phases
 
-**Distribution model: unchanged.** All packages except `quark-core`, `quark-create-app`, and `quark-ai` are scaffolded locally via the CLI. Admin follows the same pattern.
-
-**Published packages (now 3):**
-- `@techstream/quark-core` — add queue metrics + alerting
-- `@techstream/quark-create-app` — add `admin` feature prompt + expanded UI template
-- `@techstream/quark-ai` — AI provider abstraction (new, optional)
-
-**Scaffolded features (increases from 2 to 3):**
-- Old: `jobs`, `ui` (optional); `worker` always scaffolded
-- New: `jobs` + `worker` (paired optional), `ui`, `admin` — selecting `admin` requires and auto-enables `db` + `ui`
-
-**CLI template changes:**
-- `templates/ui/` expanded from 1 to ~12 components
-- New `templates/admin/` directory added
-- `apps/worker/` extracted from base-project into `templates/worker/` — scaffolded only when `jobs` selected
-- Selecting `admin` auto-selects and locks `ui` (cannot be deselected)
-- Two admin route files scaffolded into `apps/web/src/app/admin/`
+- Reopening the older admin/observe sequence as the primary implementation roadmap.
+- Treating Quark Cloud as the default deployment story before external-provider support is proven.
+- Bundling the pnpm 11 migration into deploy work; that should stay a separate migration task.
 
 ---
 
-## Risks & Mitigations
-
-| Risk | Mitigation |
-|------|-----------|
-| `prisma._dmmf` is internal API | Pin `@prisma/client` version; add integration test; monitor Prisma majors |
-| Admin routing conflict with project routes | Admin namespaced under `/admin/*`; low conflict risk |
-| Alert in-memory state lost on restart | Design choice. Persistent history is Observe's job. |
-| UI template is a one-time scaffold — no auto-updates | Known tradeoff of the model. Document clearly. Bug fixes applied manually from updated template. |
-
----
-
-**Reference:** See [PLAN.md](PLAN.md) for full details, rationale, and component specs.
+**Reference:** See [PLAN.md](PLAN.md) for the detailed active deployment note and the retained historical planning archive.

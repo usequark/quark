@@ -22,13 +22,40 @@
  * @returns {string} The canonical URL (no trailing slash)
  */
 export function getAppUrl() {
-	const raw =
-		process.env.APP_URL ||
-		process.env.NEXTAUTH_URL ||
-		`http://localhost:${process.env.PORT || "3000"}`;
+	const configuredAppUrl = process.env.APP_URL?.trim();
+	if (configuredAppUrl) {
+		return normalizeAppUrl(configuredAppUrl, "APP_URL");
+	}
 
-	// Strip trailing slash for consistency
-	return raw.replace(/\/+$/, "");
+	const configuredNextAuthUrl = process.env.NEXTAUTH_URL?.trim();
+	if (configuredNextAuthUrl) {
+		return normalizeAppUrl(configuredNextAuthUrl, "NEXTAUTH_URL");
+	}
+
+	return normalizeAppUrl(
+		`http://localhost:${process.env.PORT || "3000"}`,
+		"derived APP_URL",
+	);
+}
+
+function normalizeAppUrl(rawUrl, label) {
+	let parsedUrl;
+
+	try {
+		parsedUrl = new URL(rawUrl);
+	} catch {
+		throw new Error(
+			`${label} must be an absolute http(s) URL. Received: ${rawUrl}`,
+		);
+	}
+
+	if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+		throw new Error(
+			`${label} must use http:// or https://. Received: ${rawUrl}`,
+		);
+	}
+
+	return parsedUrl.toString().replace(/\/+$/, "");
 }
 
 /**

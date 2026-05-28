@@ -74,7 +74,7 @@
 	},
 	"nano-staged": {
 		"packages/cli/templates/**": [],
-		"{apps,packages,docs,scripts}/**/*.{js,mjs,ts,tsx,json,css}": [
+		"{apps,packages,docs,scripts}/**/*.{js,jsx,mjs,json,css}": [
 			"biome format --no-errors-on-unmatched --write",
 			"biome check --no-errors-on-unmatched --write"
 		]

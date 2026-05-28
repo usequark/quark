@@ -33,9 +33,9 @@
 		"pre-push": "pnpm test"
 	},
 	"nano-staged": {
-		"**/*.{js,mjs,ts,tsx,json,css}": [
-			"biome format --write",
-			"biome check --write"
+		"**/*.{js,jsx,mjs,json,css}": [
+			"biome format --no-errors-on-unmatched --write",
+			"biome check --no-errors-on-unmatched --write"
 		]
 	},
 	"keywords": [],

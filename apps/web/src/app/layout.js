@@ -3,13 +3,11 @@ import {
 	THEME_ATTR,
 	THEME_STORAGE_KEY,
 } from "@techstream/quark-ui/theme-constants";
-import { headers } from "next/headers";
 import Script from "next/script";
 import { getUmamiConfig } from "../lib/analytics/umami-config.js";
 import { getSiteMetadata } from "../lib/seo/site-metadata.js";
 import UmamiReplayRecorder from "./_components/UmamiReplayRecorder.js";
-export async function generateMetadata() {
-	await headers();
+export function generateMetadata() {
 	return getSiteMetadata();
 }
 
@@ -33,6 +31,7 @@ export default function RootLayout({ children }) {
 						/>
 						<link href={umamiConfig.dnsPrefetchHref} rel="dns-prefetch" />
 						<Script
+							data-performance="true"
 							data-website-id={umamiConfig.websiteId}
 							src={umamiConfig.scriptUrl}
 							strategy="afterInteractive"

@@ -5,6 +5,8 @@
 
 **Design principle:** AI tools must understand the *whole system* — not just code style, but UI/UX patterns, DB conventions, auth flow, DevOps topology, testing approach, and the relationships between all layers. An AI that knows the scope and ESM rules but doesn't know how Server Actions, Zod, the ui package, and Prisma compose together will still produce inconsistent code.
 
+> **Status update (May 2026):** The active execution roadmap is now deployment, not the older admin/observe sequence that appears in some historical notes below. The current authoritative phase order is: **Phase 1** deploy foundation (complete), **Phase 2** user-facing `quark deploy` CLI + Railway, **Phase 3** AWS, **Phase 4** self-hosted/provider expansion, **Phase 5** Quark Cloud. Treat older references to an admin-focused Phase 2 as archival unless they are explicitly revived.
+
 ---
 
 ## The Problem
@@ -651,49 +653,40 @@ A single-page decision document (not an implementation plan) that records:
 
 ---
 
-## Part 8: Revised Phase Plan
+## Part 8: Active Deployment Roadmap (May 2026 Update)
 
-| Phase | What | Touches | Effort | New Deps | Prerequisite |
-|-------|------|---------|--------|----------|--------------|
-| **0** | **Expand UI package to ~12 primitives + home page + playground** | `packages/ui/`, `apps/web/`, `packages/cli/` | **1 week** | None (native HTML + Tailwind) | None |
-| **1** | Queue metrics + auto-instrumentation + queue health | `quark-core` | 3 days | None | None |
-| **2** | Scaffold `packages/admin/` + CLI `admin` feature prompt | `packages/admin/`, `packages/cli/` | **2–3 weeks** | None (uses `prisma._dmmf`) | Phase 0 |
-| **3** | Alerting engine + adapters; scaffolded config | `quark-core` + `quark-create-app` | 2 weeks | None | Phase 1 |
-| **4** | **`@techstream/quark-ai` — AI provider abstraction (published npm)** | New npm package | **2 weeks** | `ai` SDK (optional peer) | None |
-| **5** | **Quark Observe (separate repo, open-source first)** | `quark-observe` (new repo) | **6–8 weeks** (phased modules) | Separate repo deps | Phases 1–3 live |
-| **6** | **Quark Cloud — managed infra + compute** | `quark-cloud` (new repo/service) | **8–12 weeks** | Partner APIs (Neon, Upstash, R2) | Phase 5 MVP live |
+The current execution plan is deployment, not the older admin/observe sequence. Phase 1 is complete: Quark now has a provider-neutral deploy substrate, normalized runtime scripts, pinned Node 22 Alpine web and worker images, template sync coverage, scaffold build validation, and required source-image security scanning in CI.
 
-### Package distribution alignment
+| Phase | What | Touches | Effort | Why This Order | Status |
+|-------|------|---------|--------|----------------|--------|
+| **1** | **Provider-neutral deploy substrate + OCI/runtime contract** | `packages/cli/src/deploy/`, `apps/web/`, `apps/worker/`, root scripts, CI, scaffold templates | 1-2 weeks | Establish one explicit deploy contract before provider adapters | **✅ Complete** |
+| **2** | **User-facing `quark deploy` CLI + Railway adapter** | `quark-create-app` CLI, docs, tests | 1-2 weeks | Railway already matches the normalized build/start/release contract and is the lowest-friction first adapter | **Next** |
+| **3** | **AWS adapter (`quark deploy aws`)** | CLI + AWS integration surface + docs/tests | 2-3 weeks | Exercises the abstraction against the highest-complexity mainstream target: ECR, ECS/Fargate, ALB, and secrets | Planning |
+| **4** | **Self-hosted / Docker CLI polish + provider expansion** | CLI, docs, templates | 1 week | Add a first-class self-hosted flow only after the provider API stabilizes | Planning |
+| **5** | **Quark Cloud** | New service/repo + provider adapters | 8-12 weeks | Build the managed path after external providers prove the contract; Cloud remains convenience, not lock-in | Deferred |
 
-| Package | Type | Optional? | Requires | Notes |
-|---|---|---|---|---|
-| `@techstream/quark-core` | Published (npm) | No | — | Core framework runtime |
-| `@techstream/quark-create-app` | Published (npm) | No | — | CLI scaffolder |
-| `@techstream/quark-ai` | **Published (npm)** | **Yes** | `quark-core` | AI provider abstraction — thin, no lock-in |
-| `@yourapp/config` | Scaffolded (CLI) | No | — | Environment config |
-| `@yourapp/db` | Scaffolded (CLI) | No | — | Prisma schema + client |
-| `@yourapp/ui` | Scaffolded (CLI) | **Yes** | — | ~12 Tailwind primitives when selected |
-| `@yourapp/jobs` + `@yourapp/worker` | Scaffolded (CLI) | **Yes** | — | BullMQ job definitions + worker process (paired) |
-| `@yourapp/admin` | Scaffolded (CLI) | **Yes** | **`db`, `ui`** | Self-scaling CRUD admin UI |
+### Phase 1 definition of done
+
+- Deploy contract and discovery exist in the CLI.
+- Web and worker share one explicit runtime contract.
+- `build:deploy`, `start:deploy`, and `db:migrate:deploy` are normalized across source and scaffolded projects.
+- Docker is the canonical OCI contract for web and worker.
+- Source images are scanned in required CI, and scaffolded images can be validated by the shared build harness.
 
 ### Critical path
 
 ```
-Phase 0 (UI primitives) ─┬─→ Phase 2 (Admin UI)
-                          │                       ╲
-Phase 1 (Queue metrics)  ─┴─→ Phase 3 (Alerting)  ─→ Phase 5 (Observe) → Phase 6 (Cloud)
-                                                    ╱
-Phase 4 (AI package) ─────────────────────────────╱
+Phase 1 (foundation) -> Phase 2 (CLI + Railway) -> Phase 3 (AWS) -> Phase 4 (self-hosted/provider expansion) -> Phase 5 (Cloud)
 ```
 
-Phases 0 and 1 can run in parallel. Phase 4 (AI package) can run in parallel with Phases 0–3. Phase 5 depends on Phases 1–3 (metrics and alerting must be live). Phase 6 depends on Phase 5 MVP.
+### Guardrails
 
-**Documentation deliverables (parallel with Phases 0–4):**
-- **First-feature guide** — 20-minute walkthrough from `npx @techstream/quark-create-app` to a working feature (contacts CRUD + auth + email notification + background job). Task-oriented, not architecture-oriented. Ship before open-source launch.
-- **Incremental adoption guide** — how to install `@techstream/quark-core` into an existing Next.js project and progressively adopt auth, email, jobs, error reporting. This is the highest-leverage documentation addition — it expands the addressable audience from greenfield-only to every Next.js developer.
+- Docker and OCI artifacts remain the deploy contract.
+- Provider adapters orchestrate the same scripts and images; they do not invent hidden alternative build paths.
+- Quark Cloud stays behind Railway and AWS so Quark does not accidentally turn managed hosting into the only "real" path.
+- The pnpm 11 migration is separate work and should not be folded into provider implementation.
 
-**Total estimated effort for Phases 0–4: ~8–9 weeks (pre-monetization)**
-**Total estimated effort for Phases 5–6: ~14–20 weeks (monetization products)**
+> **Archive note:** Parts 9-12 below were written for the earlier admin/observe exploration. Keep them only as historical context unless that product plan is explicitly revived.
 
 ---
 

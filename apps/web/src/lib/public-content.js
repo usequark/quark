@@ -1,5 +1,6 @@
 import { prisma } from "@techstream/quark-db";
 import { unstable_cache } from "next/cache";
+import { loadPublishedResultWithFallback } from "./public-content-cache.js";
 import {
 	getPublicContentPath,
 	getPublicContentRouteByModel,
@@ -10,21 +11,34 @@ import {
 export const PUBLIC_CONTENT_TAG = "public-content";
 export const PUBLIC_CONTENT_REVALIDATE_SECONDS = 3600;
 const PAGE_MODEL = "Page";
+const PUBLISHED_PAGE_SELECT = {
+	title: true,
+	slug: true,
+	excerpt: true,
+	body: true,
+	content: true,
+	layout: true,
+	showHeader: true,
+};
+const PUBLISHED_SLUG_QUERY = {
+	where: { status: "PUBLISHED" },
+	select: { slug: true },
+	orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
+};
+
+async function fetchPublishedPageBySlug(slug) {
+	return prisma.page.findFirst({
+		where: { slug, status: "PUBLISHED" },
+		select: PUBLISHED_PAGE_SELECT,
+	});
+}
+
+async function fetchPublishedSlugsForModel(model) {
+	return getPublicContentDelegate(model).findMany(PUBLISHED_SLUG_QUERY);
+}
 
 const loadPublishedPageBySlug = unstable_cache(
-	async (slug) =>
-		prisma.page.findFirst({
-			where: { slug, status: "PUBLISHED" },
-			select: {
-				title: true,
-				slug: true,
-				excerpt: true,
-				body: true,
-				content: true,
-				layout: true,
-				showHeader: true,
-			},
-		}),
+	fetchPublishedPageBySlug,
 	["public-content", "page-by-slug"],
 	{
 		revalidate: PUBLIC_CONTENT_REVALIDATE_SECONDS,
@@ -33,12 +47,7 @@ const loadPublishedPageBySlug = unstable_cache(
 );
 
 const loadPublishedSlugsForModel = unstable_cache(
-	async (model) =>
-		getPublicContentDelegate(model).findMany({
-			where: { status: "PUBLISHED" },
-			select: { slug: true },
-			orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
-		}),
+	fetchPublishedSlugsForModel,
 	["public-content", "published-slugs-by-model"],
 	{
 		revalidate: PUBLIC_CONTENT_REVALIDATE_SECONDS,
@@ -52,13 +61,19 @@ function getPublicContentDelegate(model) {
 }
 
 export async function getPublishedPageBySlug(slug) {
-	return loadPublishedPageBySlug(slug);
+	return loadPublishedResultWithFallback(slug, {
+		loadCached: loadPublishedPageBySlug,
+		loadDirect: fetchPublishedPageBySlug,
+	});
 }
 
 export async function getPublishedPageSlugs() {
 	const [route, records] = await Promise.all([
 		getPublicContentRouteByModel(PAGE_MODEL),
-		loadPublishedSlugsForModel(PAGE_MODEL),
+		loadPublishedResultWithFallback(PAGE_MODEL, {
+			loadCached: loadPublishedSlugsForModel,
+			loadDirect: fetchPublishedSlugsForModel,
+		}),
 	]);
 
 	return records.filter(
@@ -70,7 +85,10 @@ export async function getPublicContentSitemapEntries() {
 	const routes = await getPublicContentRoutes();
 	const entryGroups = await Promise.all(
 		routes.map(async (route) => {
-			const records = await loadPublishedSlugsForModel(route.model);
+			const records = await loadPublishedResultWithFallback(route.model, {
+				loadCached: loadPublishedSlugsForModel,
+				loadDirect: fetchPublishedSlugsForModel,
+			});
 
 			return records
 				.filter((record) => !isReservedPublicSlug(route, record.slug))

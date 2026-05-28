@@ -1,12 +1,12 @@
 # Quark Monorepo Expansion Roadmap
 
-> **⚠️ Partially Superseded** — This document predates the V2 MVP and the business strategy. For the current authoritative plans, see:
+> **⚠️ Partially Superseded** — This document predates the active deployment roadmap and the later business strategy. For the current authoritative plans, see:
 >
-> - **[../PLAN.md](../PLAN.md)** — Consolidated build plan (Phases 0–6: UI, Admin, Alerting, AI, Observe, Cloud)
-> - **[../PLAN_SUMMARY.md](../PLAN_SUMMARY.md)** — Executive summary of the build plan
-> - **[BUSINESS_PITCH.md](BUSINESS_PITCH.md)** — Monetization strategy, pricing, and go-to-market
+> - **[../PLAN.md](../PLAN.md)** — Active deployment roadmap plus archived planning notes
+> - **[../PLAN_SUMMARY.md](../PLAN_SUMMARY.md)** — Executive summary of the active deployment roadmap
+> - **[BUSINESS_PITCH.md](BUSINESS_PITCH.md)** — Product positioning, pricing, and go-to-market context
 >
-> This roadmap remains useful for **implementation details** (Prisma schema options, config expansion, NextAuth setup) that are referenced by the consolidated plan. The phase numbers and timelines below are outdated — defer to PLAN.md for current sequencing.
+> This roadmap remains useful for **implementation details** (Prisma schema options, config expansion, NextAuth setup) from the older expansion work. The phase numbers and timelines below are outdated — defer to PLAN.md and PLAN_SUMMARY.md for the current sequence.
 >
 > **Current package distribution model:**
 > | Package | Type | Optional? | Requires |

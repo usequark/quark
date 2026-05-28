@@ -13,7 +13,8 @@
 			"!**/dist",
 			"!**/.turbo",
 			"!**/coverage",
-			"!packages/cli/templates"
+			"!packages/cli/templates",
+			"!packages/db/src/generated"
 		]
 	},
 	"formatter": {
