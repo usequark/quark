@@ -7,7 +7,7 @@
 
 JavaScript has two module systems: CommonJS (CJS) and ECMAScript Modules (ESM). The Node.js ecosystem has been transitioning to ESM for several years. Mixing both systems in a single project creates friction: dual-mode packages require extra build configuration, `require()` of ESM modules fails, and interop shims add maintenance burden.
 
-Quark targets Node.js 20+ and Next.js 15+, both of which have first-class ESM support.
+Quark targets Node.js 22+ and Next.js 16+, both of which have first-class ESM support.
 
 ## Decision
 

@@ -102,6 +102,18 @@ function disableWorkerInDev() {
 	}
 }
 
+export async function waitForWorkerReady(
+	queueWorker,
+	queueName,
+	loggerInstance,
+) {
+	await queueWorker.waitUntilReady();
+	loggerInstance.info(
+		`Queue "${queueName}" worker started (concurrency: ${queueWorker.opts.concurrency})`,
+	);
+	return queueWorker;
+}
+
 /**
  * Waits for Redis to be ready with retries
  * @param {Function} healthCheck - Async function that returns boolean or throws
@@ -209,7 +221,7 @@ async function preflight() {
  * Generic queue processor — dispatches jobs to registered handlers
  * @param {string} queueName
  */
-function createQueueWorker(queueName) {
+async function createQueueWorker(queueName) {
 	const queueWorker = createWorker(
 		queueName,
 		async (bullJob) => {
@@ -253,11 +265,7 @@ function createQueueWorker(queueName) {
 		});
 	});
 
-	logger.info(
-		`Queue "${queueName}" worker started (concurrency: ${queueWorker.opts.concurrency})`,
-	);
-
-	return queueWorker;
+	return waitForWorkerReady(queueWorker, queueName, logger);
 }
 
 /**
@@ -280,9 +288,11 @@ async function startWorker() {
 
 		logger.info("Redis connected", { address: getRedisUrl() });
 		// Register a worker for each queue
-		for (const queueName of Object.values(JOB_QUEUES)) {
-			createQueueWorker(queueName);
-		}
+		await Promise.all(
+			Object.values(JOB_QUEUES).map((queueName) =>
+				createQueueWorker(queueName),
+			),
+		);
 
 		// Schedule repeating cleanup job (runs every 24 hours)
 		const filesQueue = createQueue(JOB_QUEUES.FILES);

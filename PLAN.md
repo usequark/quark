@@ -1,5 +1,7 @@
 # PLAN: AI Tools Integration Layer
 
+> **Start here if you are orienting yourself:** [PLAN_SUMMARY.md](./PLAN_SUMMARY.md) is the active roadmap overview. This file keeps the detailed plan plus archived historical context.
+
 **Date:** March 20, 2026
 **Goal:** Make every Quark-scaffolded project immediately productive with any AI coding tool — Claude Code, GitHub Copilot, Cursor, Continue.dev, Cody, etc. — from the first `pnpm dev`, with zero developer configuration.
 

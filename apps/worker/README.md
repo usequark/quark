@@ -355,7 +355,7 @@ metadata:
 spec:
   containers:
   - name: worker
-    image: node:20-alpine
+    image: node:22-alpine
     command: ["node", "src/index.js"]
     readinessProbe:
       exec:

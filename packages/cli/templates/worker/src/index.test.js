@@ -11,6 +11,7 @@ import {
 	isConnectionError,
 	throttledError,
 	waitForRedis,
+	waitForWorkerReady,
 } from "./index.js";
 
 // ---------------------------------------------------------------------------
@@ -576,5 +577,53 @@ describe("waitForRedis", () => {
 			process.env.WORKER_HEALTH_RETRIES = originalRetries;
 			process.env.WORKER_HEALTH_INTERVAL_MS = originalInterval;
 		}
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Worker readiness
+// ---------------------------------------------------------------------------
+
+describe("waitForWorkerReady", () => {
+	test("waits for worker readiness before logging success", async () => {
+		const logger = createMockLogger();
+		let resolveReady;
+		const ready = new Promise((resolve) => {
+			resolveReady = resolve;
+		});
+		const worker = {
+			opts: { concurrency: 7 },
+			waitUntilReady: mock.fn(async () => ready),
+		};
+
+		const pending = waitForWorkerReady(worker, "email-queue", logger);
+
+		assert.strictEqual(worker.waitUntilReady.mock.callCount(), 1);
+		assert.strictEqual(logger.info.mock.callCount(), 0);
+
+		resolveReady();
+		const result = await pending;
+
+		assert.strictEqual(result, worker);
+		assert.strictEqual(logger.info.mock.callCount(), 1);
+		const [message] = logger.info.mock.calls[0].arguments;
+		assert.match(message, /Queue "email-queue" worker started/);
+	});
+
+	test("propagates readiness failures without logging success", async () => {
+		const logger = createMockLogger();
+		const worker = {
+			opts: { concurrency: 3 },
+			waitUntilReady: mock.fn(async () => {
+				throw new Error("Redis unavailable");
+			}),
+		};
+
+		await assert.rejects(
+			() => waitForWorkerReady(worker, "files-queue", logger),
+			/Redis unavailable/,
+		);
+
+		assert.strictEqual(logger.info.mock.callCount(), 0);
 	});
 });

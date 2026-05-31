@@ -330,7 +330,7 @@ Defined in [.github/workflows/ci.yml](.github/workflows/ci.yml):
 └─────────────────────────────────────────────────────────────┘
                           ↓
 ┌──────────────────────────────────────────────────────────────┐
-│ Job 1: LINT (all platforms, Node 24)                        │
+│ Job 1: LINT (all platforms, Node 22)                        │
 │ - Biome format check                                        │
 │ - Biome lint                                                │
 │ Run time: ~1-2 min                                          │
@@ -344,7 +344,7 @@ Defined in [.github/workflows/ci.yml](.github/workflows/ci.yml):
 └──────────────────────────────────────────────────────────────┘
                           ↓
 ┌──────────────────────────────────────────────────────────────┐
-│ Job 3: TEST + SERVICES (ubuntu-latest, Node 24)            │
+│ Job 3: TEST + SERVICES (ubuntu-latest, Node 22)            │
 │ Services:                                                   │
 │   - PostgreSQL 16 (quark_test DB)                          │
 │   - Redis 7                                                │
@@ -990,7 +990,7 @@ export async function setupAuthenticatedUser() {
 
 #### P4: Enable Test Parallelization
 
-Node 20.8+ supports `--test --concurrency`:
+Quark's Node 22 baseline supports `--test --concurrency`:
 
 ```bash
 node --test --concurrency 4 src/**/*.test.js

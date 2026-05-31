@@ -7,8 +7,9 @@
 import { generateCsrfToken } from "@techstream/quark-core";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { getCsrfCookieOptions } from "@/lib/csrf-cookie";
 
-export async function GET() {
+export async function GET(request) {
 	try {
 		const session = await auth();
 
@@ -23,14 +24,11 @@ export async function GET() {
 
 		// Store the token in a secure HTTP-only cookie so the server can
 		// validate it on subsequent state-changing requests.
-		const isProduction = process.env.NODE_ENV === "production";
-		response.cookies.set("csrf_token", csrfToken, {
-			httpOnly: true,
-			secure: isProduction,
-			sameSite: "strict",
-			path: "/",
-			maxAge: 60 * 60, // 1 hour
-		});
+		response.cookies.set(
+			"csrf_token",
+			csrfToken,
+			getCsrfCookieOptions(request),
+		);
 
 		return response;
 	} catch (_error) {

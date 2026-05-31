@@ -37,11 +37,16 @@ Entry point: [../README.md](../README.md)
 | [CLAUDE.md](../CLAUDE.md) | Monorepo Claude Code contributor context |
 | [.cursor/rules/quark.mdc](../.cursor/rules/quark.mdc) | Monorepo Cursor contributor rules |
 
-## Planning and Status
+## Active Plans
 
 | Document | Purpose |
 |----------|---------|
-| [ROADMAP.md](./ROADMAP.md) | Long-term expansion planning; partially superseded by newer plan docs |
+| [../PLAN_SUMMARY.md](../PLAN_SUMMARY.md) | Current roadmap and status summary; start here for active work |
+| [../PLAN.md](../PLAN.md) | Detailed active plan plus retained historical notes |
 | [IMPLEMENTATION_CHECKLIST.md](./IMPLEMENTATION_CHECKLIST.md) | Task tracker with progress percentages |
-| [../PLAN.md](../PLAN.md) | Consolidated implementation plan |
-| [../PLAN_SUMMARY.md](../PLAN_SUMMARY.md) | Executive summary of the current plan |
+
+## Historical Archive
+
+| Document | Purpose |
+|----------|---------|
+| [ARCHIVE.md](./ARCHIVE.md) | Entry point for older planning material and why it was archived |

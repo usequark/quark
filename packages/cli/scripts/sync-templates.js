@@ -34,6 +34,13 @@ const TEMPLATES = path.join(ROOT, "packages/cli/templates");
 const CHECK_MODE = process.argv.includes("--check");
 const PRE_COMMIT_MODE = process.argv.includes("--pre-commit");
 
+function validateTemplateMigration() {
+	execSync("node packages/cli/scripts/validate-template-migration.js", {
+		cwd: ROOT,
+		stdio: "inherit",
+	});
+}
+
 // Derive quark-core version pin from the actual package (e.g. "2.3.0" → "^2.0.0")
 const coreVersion = JSON.parse(
 	fs.readFileSync(path.join(ROOT, "packages/core/package.json"), "utf8"),
@@ -577,6 +584,7 @@ function main() {
 
 	// Report results
 	if (allChanges.length === 0) {
+		validateTemplateMigration();
 		console.log("✅ Templates are in sync with monorepo source.\n");
 		process.exit(0);
 	}
@@ -607,18 +615,7 @@ function main() {
 	}
 
 	console.log("");
-
-	// Schema drift warning
-	const schemaChanged = allChanges.some(
-		(c) => c.file.includes("schema.prisma") && c.action !== "deleted",
-	);
-	if (schemaChanged) {
-		console.log("⚠️  schema.prisma was updated. You may need to regenerate the");
-		console.log("   template's initial migration to match the new schema.");
-		console.log(
-			"   See: packages/cli/templates/base-project/packages/db/prisma/migrations/\n",
-		);
-	}
+	validateTemplateMigration();
 
 	if (CHECK_MODE) {
 		process.exit(1);

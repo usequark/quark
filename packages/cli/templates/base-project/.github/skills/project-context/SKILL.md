@@ -33,7 +33,7 @@ __QUARK_OPTIONAL_PACKAGES__├── docker-compose.yml
 
 | Layer | Technology |
 |---|---|
-| Runtime | Node.js 24, ES Modules |
+| Runtime | Node.js 22, ES Modules |
 | Package manager | pnpm (workspaces) |
 | Monorepo | Turborepo |
 | Web | Next.js 16 (App Router) |
