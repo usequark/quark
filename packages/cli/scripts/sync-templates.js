@@ -277,10 +277,10 @@ function transformDbPackageJson(content) {
 	// Remove private flag — scaffolded packages use custom scope
 	delete pkg.private;
 
-	// Replace bash subshell glob with a cross-platform Node.js native glob
-	// so `pnpm test` works on Windows (cmd.exe/PowerShell) as well as Unix.
+	// DB tests need a generated Prisma client on fresh installs, and the Node.js
+	// native glob keeps the scaffold script cross-platform.
 	if (pkg.scripts?.test) {
-		pkg.scripts.test = "node --test 'src/**/*.test.js'";
+		pkg.scripts.test = "pnpm run db:generate && node --test 'src/**/*.test.js'";
 	}
 
 	return `${JSON.stringify(pkg, null, "\t")}\n`;
