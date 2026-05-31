@@ -28,7 +28,23 @@
 		},
 		"test": {
 			"dependsOn": ["^build"],
-			"outputs": []
+			"outputs": [],
+			"passThroughEnv": [
+				"DATABASE_URL",
+				"POSTGRES_HOST",
+				"POSTGRES_PORT",
+				"POSTGRES_USER",
+				"POSTGRES_PASSWORD",
+				"POSTGRES_DB",
+				"REDIS_URL",
+				"REDIS_HOST",
+				"REDIS_PORT",
+				"NEXTAUTH_SECRET",
+				"AUTH_SECRET",
+				"APP_URL",
+				"ALLOW_INDEXING",
+				"PORT"
+			]
 		},
 		"db:generate": {
 			"cache": false,
