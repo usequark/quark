@@ -41,6 +41,18 @@ Kill the conflicting process or change the port mapping in `docker-compose.yml`.
 
 Ensure the `SMTP_HOST` in your `.env` points to `localhost` and `SMTP_PORT` is `1025`. Open http://localhost:8025 to view captured emails.
 
+### Web container starts but is unreachable
+
+If a Docker, Railway, or other container deployment boots but health checks fail or requests never connect, the standalone Next.js web server is probably bound to `localhost` inside the container.
+
+Set:
+
+```bash
+HOSTNAME=0.0.0.0
+```
+
+Then use the standalone web entrypoint (`pnpm --dir apps/web start:deploy` in scaffolded apps) and let the platform inject `PORT` when possible. Quark's generated web Dockerfile and Railway config already set `HOSTNAME=0.0.0.0`; this usually only breaks when the start command or environment was customized.
+
 ---
 
 ## 2. Prisma & Database

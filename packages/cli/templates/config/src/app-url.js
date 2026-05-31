@@ -32,10 +32,18 @@ export function getAppUrl() {
 		return normalizeAppUrl(configuredNextAuthUrl, "NEXTAUTH_URL");
 	}
 
-	return normalizeAppUrl(
-		`http://localhost:${process.env.PORT || "3000"}`,
-		"derived APP_URL",
-	);
+	const fallbackPort = resolveLocalPort(process.env.PORT);
+
+	return normalizeAppUrl(`http://localhost:${fallbackPort}`, "derived APP_URL");
+}
+
+function resolveLocalPort(value) {
+	const parsedPort = Number.parseInt(value, 10);
+	if (Number.isInteger(parsedPort) && parsedPort > 0) {
+		return String(parsedPort);
+	}
+
+	return "3000";
 }
 
 function normalizeAppUrl(rawUrl, label) {

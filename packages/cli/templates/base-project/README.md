@@ -19,6 +19,12 @@ pnpm dev               # Start the app (and worker, if included)
 
 Open [http://localhost:3000](http://localhost:3000)
 
+## UI References
+
+- `apps/web/src/app/example-page/page.js` - production-style public page built from the shared UI package
+- `apps/web/src/app/playground/page.js` - full component reference route
+- `packages/ui/README.md` - supported component surface and props
+
 ## Included in This Project
 
 | Area | Status | Where to start |

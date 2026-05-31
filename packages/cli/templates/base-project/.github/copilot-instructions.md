@@ -42,10 +42,12 @@ Components from `@__QUARK_SCOPE__/ui` — Tailwind-only, Server Component safe:
 `Button`, `Input`, `Label`, `Textarea`, `Select`, `Checkbox`, `Badge`,
 `Card`/`CardHeader`/`CardTitle`/`CardContent`/`CardFooter`,
 `Table`/`TableHeader`/`TableBody`/`TableRow`/`TableHead`/`TableCell`,
-`Skeleton`, `QuarkLogo` *(server)*, `Dialog` *(client)*, `Toast`/`useToast` *(client)*,
+`Skeleton`, `ErrorBanner`, `Footer`, `Navbar`/`MobileNavbar`, `RichText`,
+`QuarkLogo` *(server)*, `Dialog` *(client)*, `Toast`/`useToast` *(client)*,
 `ThemeProvider`/`useTheme` *(client)* — dark/light mode context.
 
 All accept `className`. Never import from `@/components/ui/*`.
+Inspect `apps/web/src/app/example-page/page.js`, `apps/web/src/app/playground/page.js`, and `packages/ui/README.md` before creating bespoke public-page layout primitives.
 
 ## Standard Patterns
 

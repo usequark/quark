@@ -90,6 +90,10 @@ All UI components come from `@__QUARK_SCOPE__/ui`. They are Tailwind-only, depen
 - `Card` / `CardHeader` / `CardTitle` / `CardContent` / `CardFooter` — content containers
 - `Table` / `TableHeader` / `TableBody` / `TableRow` / `TableHead` / `TableCell` — data tables
 - `Skeleton` — loading placeholders
+- `ErrorBanner` — inline error feedback
+- `Footer` — public site footer layout
+- `Navbar` / `MobileNavbar` — public navigation shells
+- `RichText` *(client)* — dependency-free rich text editor
 - `QuarkLogo` *(server)* — inline SVG logo, dark-mode aware
 - `Dialog` *(client)* — modal dialogs
 - `Toast` / `useToast` *(client)* — notifications
@@ -99,6 +103,7 @@ All UI components come from `@__QUARK_SCOPE__/ui`. They are Tailwind-only, depen
 - All styling via Tailwind CSS utility classes. No inline styles, no CSS modules.
 - Import from `@__QUARK_SCOPE__/ui` — never from `@/components/ui/*` or direct paths.
 - Every component accepts `className` for Tailwind overrides.
+- For public-page references, inspect `apps/web/src/app/example-page/page.js`, `apps/web/src/app/playground/page.js`, and `packages/ui/README.md` before building bespoke layout primitives.
 - Loading states → `<Skeleton>` / `<Suspense>`.
 - User feedback → `useToast()` hook (client component).
 - Modals → `<Dialog>` (mark parent as `"use client"`).

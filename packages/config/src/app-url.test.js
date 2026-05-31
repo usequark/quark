@@ -67,6 +67,12 @@ describe("app-url", () => {
 			assert.equal(getAppUrl(), "http://localhost:3000");
 		});
 
+		it("ignores invalid PORT values in the localhost fallback", () => {
+			clearEnvKeys();
+			process.env.PORT = "abc";
+			assert.equal(getAppUrl(), "http://localhost:3000");
+		});
+
 		it("throws a clear error for APP_URL without a scheme", () => {
 			clearEnvKeys();
 			process.env.APP_URL = "example.com";

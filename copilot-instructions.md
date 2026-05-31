@@ -43,6 +43,14 @@ quark/
 - **DB models** — always include `createdAt` and `updatedAt`.
 - **Tests** — co-located `*.test.js`, `node --test`. Postgres + Redis required.
 
+## UI & Design System
+
+Import from `@techstream/quark-ui` in the monorepo or `@<scope>/ui` in scaffolded projects — never from `@/components/ui/*`.
+
+Available exports: `Button`, `Input`, `Label`, `Textarea`, `Select`, `Checkbox`, `Badge`, `Card`/`CardHeader`/`CardTitle`/`CardContent`/`CardFooter`, `Table`/`TableHeader`/`TableBody`/`TableRow`/`TableHead`/`TableCell`, `Skeleton`, `ErrorBanner`, `Footer`, `Navbar`/`MobileNavbar`, `RichText`, `QuarkLogo` *(server)*, `Dialog` *(client)*, `Toast`/`useToast` *(client)*, `ThemeProvider`/`useTheme` *(client)*.
+
+For public-page references, inspect `apps/web/src/app/example-page/page.js`, `apps/web/src/app/playground/page.js`, and `packages/ui/README.md` before creating bespoke layout primitives. Prefer extending the shared package with `className` or local package edits first.
+
 ## Commands
 
 ```bash

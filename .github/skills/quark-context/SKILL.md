@@ -49,7 +49,8 @@ Scaffolded (local-only) packages:
 
 - **Imports:** Use `@techstream/` scope for published packages. Scaffolded packages use project scope (`@<app>/`).
 - **Database:** Prisma + Postgres. Always include `createdAt`/`updatedAt` on models.
-- **UI:** Tailwind CSS. Keep components atomic. When the `ui` package is selected, use components from `@<app>/ui`. Available exports: `Button`, `Input`, `Label`, `Textarea`, `Select`, `Checkbox`, `Badge`, `Card`/`CardHeader`/`CardTitle`/`CardContent`/`CardFooter`, `Table`/`TableHeader`/`TableBody`/`TableRow`/`TableHead`/`TableCell`, `Skeleton`, `QuarkLogo` (server), `Dialog` (client), `Toast`/`useToast` (client), `ThemeProvider`/`useTheme` (client). All accept `className` for overrides. Do **not** import from `@/components/ui/*` — that Shadcn path convention is not used.
+- **UI:** Tailwind CSS. Keep components atomic. When the `ui` package is selected, use components from `@<app>/ui`. Available exports: `Button`, `Input`, `Label`, `Textarea`, `Select`, `Checkbox`, `Badge`, `Card`/`CardHeader`/`CardTitle`/`CardContent`/`CardFooter`, `Table`/`TableHeader`/`TableBody`/`TableRow`/`TableHead`/`TableCell`, `Skeleton`, `ErrorBanner`, `Footer`, `Navbar`/`MobileNavbar`, `RichText`, `QuarkLogo` (server), `Dialog` (client), `Toast`/`useToast` (client), `ThemeProvider`/`useTheme` (client). All accept `className` for overrides. Do **not** import from `@/components/ui/*` — that Shadcn path convention is not used.
+- **UI workflow:** Before building Quark frontend pages, inspect `packages/ui/src/index.js`, `packages/ui/README.md`, `apps/web/src/app/example-page/page.js`, and `apps/web/src/app/playground/page.js`. Prefer shared `@<app>/ui` exports for public layouts, navigation, cards, forms, feedback, and rich content. Extend the scaffolded UI package before creating one-off replacements.
 - **Validation:** Zod is mandatory for all Server Actions and API routes.
 - **Errors:** Use `AppError` / `ValidationError` from `@techstream/quark-core/errors` in app/runtime code. Native `Error` is acceptable in library, bootstrap, CLI, and test code.
 - **Environment:** All env vars validated via `validate-env.js` in the config package. Environment-specific defaults managed by `environment.js`. Centralized config loading via `loadConfig()` from `load-config.js`.
@@ -57,7 +58,7 @@ Scaffolded (local-only) packages:
 - **Metrics:** Use `metrics` singleton from `@techstream/quark-core` for counters, gauges, histograms. Pre-registered HTTP metrics: `httpRequestsTotal`, `httpRequestDuration`, `httpRequestsInFlight`, `appErrorsTotal`. Prometheus format exported at `/api/metrics`.
 - **Logging:** Use `createLogger(name)` from `@techstream/quark-core` in app/runtime code. Console output is acceptable in bootstrap, CLI, and test code.
 - **Config:** Use `loadConfig()` from `@<app>/config` for centralized configuration. Supports per-environment defaults (dev/test/staging/prod) with env-var overrides.
-- **Analytics:** Optional Umami support stays app-local in `apps/web/src/lib/analytics/*`. The scaffolded public contract is only `NEXT_PUBLIC_UMAMI_URL`, `NEXT_PUBLIC_UMAMI_WEBSITE_ID`, and `NEXT_PUBLIC_UMAMI_REPLAY_ENABLED`; replay uses a local rrweb recorder rather than hosted `recorder.js`.
+- **Analytics:** Optional Umami support stays app-local in `apps/web/src/lib/analytics/*`. The scaffolded public contract is only `NEXT_PUBLIC_UMAMI_URL`, `NEXT_PUBLIC_UMAMI_WEBSITE_ID`, and `NEXT_PUBLIC_UMAMI_REPLAY_ENABLED`; replay uses a local rrweb recorder rather than hosted `recorder.js`, and dormant helpers exist for dashboard-generated Umami Links, Pixels, and marketing-email snippets without adding extra env vars.
 
 ## CI/CD Pipeline
 

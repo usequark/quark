@@ -60,6 +60,12 @@ pnpm dev
 
 🎉 **Open http://localhost:3000**
 
+### Deployment note
+
+Quark's generated web app uses a Next.js standalone deploy path for container platforms. For Docker, Railway, and other self-hosted container deployments, the web process must bind `HOSTNAME=0.0.0.0` so it listens on the container interface instead of `localhost`.
+
+Scaffolded projects already include this in the generated web Dockerfile, `apps/web/railway.json`, and `.env.railway.example`. If a deploy starts but is unreachable externally, check `HOSTNAME` first and let the platform provide `PORT`.
+
 ---
 
 ## Start Here
@@ -67,6 +73,12 @@ pnpm dev
 - **[Start Here](./docs/START_HERE.md)** - the current onboarding path for creating, running, and learning a Quark project
 - **[First Feature Guide](./docs/FIRST_FEATURE.md)** - add your first domain model, query helper, and page without reverse-engineering the scaffold
 - **[Documentation Index](./docs/INDEX.md)** - the full map of reference docs, feature guides, and planning docs
+
+## UI References
+
+- **[Public example page](./apps/web/src/app/example-page/page.js)** - the production-style public route built from the shared UI package
+- **[UI package README](./packages/ui/README.md)** - the supported component surface and props
+- **[Playground route](./apps/web/src/app/playground/page.js)** - the full component reference page inside the reference app
 
 ---
 

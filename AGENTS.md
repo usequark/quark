@@ -34,6 +34,8 @@ Tests will fail silently or with connection errors if Postgres/Redis aren't up.
 ### UI imports — no deep imports
 Import from `@techstream/quark-ui` (monorepo) or `@<scope>/ui` (scaffolded projects).
 Never use `@/components/ui/*` — that Shadcn convention is not used here.
+Shared exports also include `ErrorBanner`, `Footer`, `Navbar`/`MobileNavbar`, and `RichText`; extend them with `className` before inventing one-off replacements.
+For public-page work, inspect `apps/web/src/app/example-page/page.js`, `apps/web/src/app/playground/page.js`, and `packages/ui/README.md` first.
 
 ### Two packages are published; everything else is scaffolded
 - **Published:** `@techstream/quark-core`, `@techstream/quark-create-app`

@@ -53,6 +53,23 @@ describe("public content route normalization", () => {
 		assert.equal(routes[1].sitemap.priority, 0.6);
 	});
 
+	test("keeps non-Page content out of public routes until opted in", () => {
+		const routes = normalizePublicContentRoutes({
+			contentTypes: {
+				Page: {
+					label: "Pages",
+					publicRoute: { pathPrefix: "" },
+				},
+				Post: {
+					label: "Posts",
+				},
+			},
+		});
+
+		assert.equal(routes.length, 1);
+		assert.equal(routes[0].model, "Page");
+	});
+
 	test("builds concrete paths and respects reserved slugs", () => {
 		const [pageRoute, postRoute] = normalizePublicContentRoutes({
 			contentTypes: {
@@ -73,6 +90,7 @@ describe("public content route normalization", () => {
 			"/blog/release-notes",
 		);
 		assert.equal(isReservedPublicSlug(pageRoute, "admin"), true);
+		assert.equal(isReservedPublicSlug(pageRoute, "example-page"), true);
 		assert.equal(isReservedPublicSlug(postRoute, "admin"), false);
 	});
 });

@@ -3,7 +3,6 @@ import {
 	THEME_ATTR,
 	THEME_STORAGE_KEY,
 } from "@techstream/quark-ui/theme-constants";
-import Script from "next/script";
 import { getUmamiConfig } from "../lib/analytics/umami-config.js";
 import { getSiteMetadata } from "../lib/seo/site-metadata.js";
 import UmamiReplayRecorder from "./_components/UmamiReplayRecorder.js";
@@ -30,11 +29,11 @@ export default function RootLayout({ children }) {
 							rel="preconnect"
 						/>
 						<link href={umamiConfig.dnsPrefetchHref} rel="dns-prefetch" />
-						<Script
+						<script
+							defer
 							data-performance="true"
 							data-website-id={umamiConfig.websiteId}
 							src={umamiConfig.scriptUrl}
-							strategy="afterInteractive"
 						/>
 					</>
 				) : null}

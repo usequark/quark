@@ -9,6 +9,9 @@ export const cmsConfig = {
 			label: "Pages",
 			slugSource: "title",
 			excerptField: "excerpt",
+			// Page is the only default public-content route in Quark. Keep the
+			// base CMS package page-first, and let dedicated CLI packages introduce
+			// richer vertical routes when a project explicitly needs them.
 			publicRoute: {
 				pathPrefix: "",
 				sitemap: {

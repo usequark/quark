@@ -11,7 +11,7 @@ The Quark CMS is **not Strapi, not Payload, not WordPress**. It follows the Quar
 - **Scaffold-and-own** — The CMS package is scaffolded into your project. You own the code, the schema, the routes.
 - **Admin-native** — CMS routes live under `/admin/cms/` and share the admin layout, auth guard, and sidebar.
 - **No runtime content-type builder** — Content types are defined in `schema.prisma`, not in a web UI. Migrations are the source of truth.
-- **Progressive** — Start with Pages. Add Blog Posts, Media Library, or custom content types as your schema grows.
+- **Progressive** — Start with Pages and Media. Add custom content types only when your schema or a dedicated package actually needs them.
 
 ## Architecture
 
@@ -34,7 +34,7 @@ apps/web/src/app/admin/cms/      # CMS routes (nested under admin layout)
 │   ├── page.js                  # List all pages
 │   ├── [id]/page.js             # Edit page
 │   └── new/page.js              # Create page
-├── posts/                       # Blog post management (optional model)
+├── [custom-model]/              # Optional package-owned content routes
 │   ├── page.js
 │   ├── [id]/page.js
 │   └── new/page.js
@@ -66,7 +66,7 @@ CLI enforcement: `quark add cms` auto-adds `admin` and `ui` if not present.
 
 | Concern | Admin | CMS |
 |---------|-------|-----|
-| What it manages | All Prisma models (generic CRUD) | Content-specific models (Pages, Posts, Media) |
+| What it manages | All Prisma models (generic CRUD) | Content-specific models (Pages, Media, explicitly opted-in models) |
 | Schema awareness | `introspect.js` parses all models | Reuses admin introspection + adds content-specific logic |
 | Query layer | `query.js` — generic findMany/create/update/delete | `content-query.js` — extends with publish/archive/version/slug ops |
 | Route location | `/admin/` | `/admin/cms/` (nested under admin layout) |
@@ -93,25 +93,6 @@ model Page {
   updatedAt   DateTime    @updatedAt
 
   @@index([status])
-  @@index([slug])
-}
-
-/// CMS: Blog posts (optional — remove if not needed)
-model Post {
-  id          String      @id @default(cuid())
-  title       String
-  slug        String      @unique
-  body        String      @db.Text
-  excerpt     String?
-  coverImage  String?
-  status      ContentStatus @default(DRAFT)
-  publishedAt DateTime?
-  authorId    String
-  author      User        @relation(fields: [authorId], references: [id])
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-
-  @@index([status, publishedAt])
   @@index([slug])
 }
 
@@ -163,14 +144,12 @@ export const cmsConfig = {
       icon: "file-text",       // Mapped to an icon in the sidebar
       slugSource: "title",     // Which field auto-generates the slug
       excerptField: "excerpt", // Optional summary field
+      publicRoute: {
+        pathPrefix: "",
+      },
     },
-    Post: {
-      label: "Blog Posts",
-      icon: "pen-line",
-      slugSource: "title",
-      excerptField: "excerpt",
-      hasCoverImage: true,
-    },
+    // Additional public content models should come from your own schema or
+    // from dedicated CLI packages, not from a default second CMS model.
   },
 
   /** Media library configuration */
@@ -374,12 +353,11 @@ export default async function DynamicPage({ params }) {
 - [ ] CLI: `quark add cms` with schema append
 - [ ] Template sync integration
 
-### Phase 2 — Blog + Media Browser
+### Phase 2 — Media Browser + Package Hooks
 
-- [ ] Post model and routes
 - [ ] Media Browser component (grid, search, preview)
 - [ ] Editor ↔ Media Browser integration (insert image from library)
-- [ ] Cover image picker for Posts
+- [ ] Package hooks for dedicated vertical content packages
 
 ### Phase 3 — Polish
 
@@ -402,6 +380,6 @@ export default async function DynamicPage({ params }) {
 
 2. **Editor dependency:** Scaffold Tiptap as vendored code (full ownership) or install as a `dependency` (simpler updates)? Recommendation: **Install as dependency** — editors are complex and benefit from upstream bug fixes. This is the one exception to "scaffold-and-own" because rich text editing is not a domain developers typically customize at the library level.
 
-3. **Post model inclusion:** Should `Post` be scaffolded by default or opt-in? Recommendation: **Include by default** with a comment "remove this model if you don't need a blog." Easier to delete than to add.
+3. **Additional domain model inclusion:** Should richer public content ship in the base CMS or in dedicated packages? Recommendation: **Dedicated packages**. Quark should keep the base CMS page-first and let packages like booking, ecommerce, payments, or AI introduce their own richer flows.
 
 4. **Admin sidebar integration:** Should CMS models appear in the main admin sidebar (alongside generic CRUD models) or in a separate "Content" section? Recommendation: **Separate "Content" section** in the sidebar with its own heading, visually distinct from the generic model list.

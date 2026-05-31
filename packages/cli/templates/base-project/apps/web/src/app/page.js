@@ -14,6 +14,10 @@ export default function Home() {
 
 				{/* Navigation */}
 				<nav className="flex items-center gap-2">
+					<a href="/example-page" className="quark-home-link">
+						example page
+					</a>
+					<span className="quark-home-sep">·</span>
 					<a href="/playground" className="quark-home-link">
 						playground
 					</a>

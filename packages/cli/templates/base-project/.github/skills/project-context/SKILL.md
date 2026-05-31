@@ -57,7 +57,7 @@ __QUARK_OPTIONAL_PACKAGES__├── docker-compose.yml
 - **Logging:** Use `createLogger(name)` from `@techstream/quark-core` in app/runtime code. Console output is acceptable in bootstrap, CLI, and test code.
 - **Database models:** Always include `createdAt`/`updatedAt`.
 - **Environment:** All env vars validated in `packages/config/src/validate-env.js`.
-- **Analytics:** Optional Umami support lives in `apps/web/src/lib/analytics/*`. The public env contract uses only `NEXT_PUBLIC_UMAMI_URL`, `NEXT_PUBLIC_UMAMI_WEBSITE_ID`, and `NEXT_PUBLIC_UMAMI_REPLAY_ENABLED`; replay uses a local rrweb recorder.
+- **Analytics:** Optional Umami support lives in `apps/web/src/lib/analytics/*`. The public env contract uses only `NEXT_PUBLIC_UMAMI_URL`, `NEXT_PUBLIC_UMAMI_WEBSITE_ID`, and `NEXT_PUBLIC_UMAMI_REPLAY_ENABLED`; replay uses a local rrweb recorder, and dormant helpers exist for dashboard-generated Umami Links, Pixels, and marketing-email snippets.
 
 ## Common Commands
 

@@ -35,6 +35,7 @@ const TRIVY_SEVERITY = process.env.QUARK_TRIVY_SEVERITY || "HIGH,CRITICAL";
 const REQUIRED_ANALYTICS_FILES = [
 	"apps/web/src/app/_components/UmamiReplayRecorder.js",
 	"apps/web/src/lib/analytics/umami-config.js",
+	"apps/web/src/lib/analytics/umami-marketing.js",
 	"apps/web/src/lib/analytics/umami-replay.js",
 	"apps/web/src/lib/analytics/umami.js",
 ];

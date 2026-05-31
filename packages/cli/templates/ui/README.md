@@ -42,6 +42,13 @@ Composable table. `Table` wraps in a scrollable container. All parts accept `cla
 ### Skeleton
 Props: `className` (use to set width/height for the placeholder shape).
 
+### ErrorBanner
+Props: `message`, `className`. Returns `null` when `message` is empty.
+
+### RichText
+`"use client"` — dependency-free rich text editor built on `contentEditable`.
+Props: `id`, `name`, `defaultValue`, `placeholder`, `disabled`, `required`, `rows`, `className`, `onChange`.
+
 ### Dialog
 `"use client"` — Props: `open` (bool), `onClose` (fn), `title` (string), `children`, `className`.
 
@@ -77,3 +84,7 @@ return (
 - All components accept `className` for overrides.
 - Client-only components: `Dialog`, `Toast`, `useToast`, `Select`, `RichText`, `Navbar`, `MobileNavbar`, `ThemeProvider`, `useTheme`.
 - Accessible: ARIA attributes, focus management on interactive elements.
+
+## Example references
+- Public-page example: `apps/web/src/app/example-page/page.js`
+- Full component reference: `apps/web/src/app/playground/page.js`

@@ -4,6 +4,7 @@ export const RESERVED_ROOT_PUBLIC_SLUGS = Object.freeze([
 	"admin",
 	"api",
 	"auth",
+	"example-page",
 	"playground",
 ]);
 

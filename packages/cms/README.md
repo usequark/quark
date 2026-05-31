@@ -27,6 +27,18 @@ The paired CMS routes live in:
 2. `packages/db/prisma/schema.prisma` - define or extend the content models
 3. `apps/web/src/app/admin/cms/` - adjust the editorial UI if your workflow needs it
 
+## Public route philosophy
+
+Quark keeps `Page` as the only default public content model.
+
+If your project needs additional public content routes, opt into them
+explicitly in your own schema and `cmsConfig`. The base CMS package should stay
+generic and avoid shipping product assumptions.
+
+If a future Quark feature needs richer flows like booking, ecommerce, payments,
+or AI-specific experiences, those should land as dedicated CLI packages rather
+than as default CMS models.
+
 ## Relationship to the admin package
 
 The CMS builds on the same local-first philosophy as the admin package:
