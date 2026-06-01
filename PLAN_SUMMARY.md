@@ -2,6 +2,8 @@
 
 > **Status update (May 2026):** This summary replaces the older admin/observe phase table as the active execution plan. Older phase notes are historical and are no longer the authoritative sequence for Quark's current work.
 
+> **Package note (June 2026):** Deployment remains the active execution roadmap. If package expansion resumes, the current direction is local-first: prefer scaffolded workspace packages over new published packages, keep `payment` as an optional integration for `booking` and `ecommerce`, require `jobs` for `crm`, `payment`, `booking`, `ecommerce`, and `ai`, and only promote UI into `packages/ui` when it is a reusable cross-package primitive. See the June 2026 package spec in [PLAN.md](PLAN.md).
+
 ## Current Status
 
 Phase 1 is complete. Quark now has a provider-neutral deploy substrate and an explicit OCI/runtime contract:
@@ -78,6 +80,15 @@ Phase 1 is complete. Quark now has a provider-neutral deploy substrate and an ex
 - Reopening the older admin/observe sequence as the primary implementation roadmap.
 - Treating Quark Cloud as the default deployment story before external-provider support is proven.
 - Bundling the pnpm 11 migration into deploy work; that should stay a separate migration task.
+
+---
+
+## Related Package Direction
+
+- The currently discussed package set is `crm`, `payment`, `booking`, `ecommerce`, `ai`, and `multi-tenant`.
+- The package direction is local-first: scaffold package code into the project unless a shared infrastructure layer proves reusable enough to justify publication.
+- `payment` is treated as an optional integration layer for `booking` and `ecommerce`, not as the primary platform package.
+- Complex workflow UI should stay package-local first; only generic primitives such as shared date or panel components should graduate into `packages/ui`.
 
 ---
 

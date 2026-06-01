@@ -20,7 +20,101 @@ When a developer opens a fresh Quark project in their AI tool of choice, the too
 - The monorepo itself has no `CLAUDE.md` for contributors using Claude Code.
 - Critically: no tool knows the full design system — which components exist, how DB queries compose with Server Actions, how auth intersects with API routes, or how the deployment model affects environment handling.
 
-This plan adds a zero-config AI context layer into the scaffold and into the monorepo itself. **This is NOT `@techstream/quark-ai`** — that is a separate published package for AI app integration. This is about the developer experience with AI *coding tools*.
+This plan adds a zero-config AI context layer into the scaffold and into the monorepo itself. **This is not the scaffolded AI feature package discussed in later package-planning notes.** This section is about the developer experience with AI *coding tools*.
+
+> **Status update (June 2026):** Package expansion is revived with a local-first rule set. Default to scaffolded workspace packages, avoid new published packages unless a shared infrastructure layer proves itself across multiple packages, keep `payment` as an optional integration for `booking` and `ecommerce`, require `jobs` for `crm`, `payment`, `booking`, `ecommerce`, and `ai`, and only promote UI into `packages/ui` when it is a generic primitive reused across package boundaries. Older references below to a separate published AI package or split commerce packages should be treated as archival.
+
+## June 2026: Local-First Package Spec
+
+### Package Direction
+
+| Package | Purpose | Hard requires | Optional integrations | UI policy | Notes |
+|---|---|---|---|---|---|
+| `crm` | Contacts, companies, pipeline, activity, reminders | `admin`, `jobs` | `payment`, `booking`, `ecommerce`, `ai` | Keep Kanban and activity timeline package-local first | First expansion package |
+| `payment` | Billing, checkout, invoices, refunds, subscriptions | `ui`, `jobs` | `booking`, `ecommerce`, `crm`, `ai` | Billing workflows stay package-local; reuse shared form primitives from `ui` | Scaffolded integration package, not a published platform package |
+| `booking` | Services, slots, appointments, reminders | `admin`, `jobs` | `payment`, `crm`, `ai` | Promote only generic calendar/date primitives to `ui`; keep scheduling workflows local | Build with deposits in mind, ship v1 narrowly |
+| `ecommerce` | Catalog, cart, checkout, orders, fulfillment | `admin`, `jobs` | `payment`, `crm`, `ai` | Keep checkout, fulfillment, and merch workflows local | Single package, internally modular, not split into multiple public packages |
+| `ai` | Agents, tools, conversations, approvals, cost tracking | `admin`, `ui`, `jobs` | `crm`, `payment`, `booking`, `ecommerce` | Agent console and approval flows stay package-local | Scaffold provider adapters and tools into the project; no separate published AI package by default |
+| `multi-tenant` | Tenant and organization isolation in one deployed app | `admin` | `crm`, `booking`, `ecommerce`, `ai` | Minimal UI initially | Later cross-cutting package for SaaS/agency builds, not first-wave required |
+
+### Combination Rules
+
+| Combination | Expected behavior |
+|---|---|
+| `booking + payment` | Adds deposits, pay-links, refunds, and booking payment status into booking routes and admin surfaces |
+| `ecommerce + payment` | Adds checkout, coupons, subscriptions, shipping/tax charge flows, and refund handling into ecommerce routes and admin surfaces |
+| `booking + crm + payment` | Adds customer timeline context, reminder/invoice automation, and booking-to-payment visibility |
+| `ecommerce + crm + payment` | Adds customer/order/payment timeline, abandoned-cart follow-up, and support context |
+| `any package + ai` | AI receives explicit permissioned tools for that package rather than unrestricted database access |
+
+### Shared UI Boundary
+
+- Add to `packages/ui` only when the component is a generic primitive reused across packages, for example `Slideover` and a base calendar/date picker.
+- Keep workflow-heavy surfaces inside the owning package first, for example CRM Kanban boards, booking schedulers, checkout steppers, and agent consoles.
+- Promote package-local UI into `packages/ui` only after the shape stabilizes across at least two packages.
+
+### Initial Implementation Order
+
+1. `crm`
+2. `payment`
+3. `booking`
+4. `ecommerce`
+5. `ai`
+
+### Requirement Diagram
+
+```mermaid
+graph TD
+  core[core]
+  db[db]
+  config[config]
+  ui[ui]
+  admin[admin]
+  jobs[jobs]
+
+  ui --> admin
+
+  core --> crm[crm]
+  db --> crm
+  config --> crm
+  admin --> crm
+  jobs --> crm
+
+  core --> payment[payment]
+  db --> payment
+  config --> payment
+  ui --> payment
+  jobs --> payment
+
+  core --> booking[booking]
+  db --> booking
+  config --> booking
+  admin --> booking
+  jobs --> booking
+
+  core --> ecommerce[ecommerce]
+  db --> ecommerce
+  config --> ecommerce
+  admin --> ecommerce
+  jobs --> ecommerce
+
+  core --> ai[ai]
+  db --> ai
+  config --> ai
+  admin --> ai
+  ui --> ai
+  jobs --> ai
+
+  payment -. optional integration .-> booking
+  payment -. optional integration .-> ecommerce
+  crm -. optional integration .-> booking
+  crm -. optional integration .-> ecommerce
+
+  crm -. permissioned tools .-> ai
+  payment -. permissioned tools .-> ai
+  booking -. permissioned tools .-> ai
+  ecommerce -. permissioned tools .-> ai
+```
 
 ---
 
@@ -189,7 +283,7 @@ G (docs/AI_TOOLS.md)
 
 ## Out of Scope
 
-- `@techstream/quark-ai` package — separate effort, separate plan
+- The scaffolded `ai` feature package described in the June 2026 local-first package spec — separate effort, separate plan from this AI coding-tools context work
 - `.windsurfrc`, `.agentrc`, or other niche tool-specific configs — add reactively as usage warrants
 - AI context validation in CI — future enhancement
 
@@ -649,7 +743,7 @@ A single-page decision document (not an implementation plan) that records:
 | Integration model? | Push (SDK sends events to Observe ingest API) + Pull (optional scrape `/api/metrics` and `/api/health`) |
 | Projects opt-in how? | `QUARK_OBSERVE_URL` env var (self-hosted) or `QUARK_OBSERVE_KEY` (SaaS) |
 | Self-hostable? | Yes — same codebase as SaaS — single `docker compose up` |
-| When to build? | Phase 5 — after AI package ships and at least 2 Quark projects are deployed |
+| When to build? | Phase 5 — after the AI feature direction is proven and at least 2 Quark projects are deployed |
 
 **Detailed Observe planning should resume after Phases 0–3 are live and real projects are generating metrics.** Module rollout: error tracking + app metrics (Month 3), uptime monitoring + alerting (Month 4), web analytics + AI metrics (Month 5).
 
@@ -689,10 +783,11 @@ Phase 1 (foundation) -> Phase 2 (CLI + Railway) -> Phase 3 (AWS) -> Phase 4 (sel
 - The pnpm 11 migration is separate work and should not be folded into provider implementation.
 
 > **Archive note:** Parts 9-12 below were written for the earlier admin/observe exploration. Keep them only as historical context unless that product plan is explicitly revived.
+> **Reading rule:** labels such as `Phase 0`, `Phase 0.5`, and `Phase 1` in Parts 9-12 belong to that archived package exploration. They do not override the active deployment roadmap above or the June 2026 local-first package spec near the top of this file.
 
 ---
 
-## Part 9: Things the Previous Documents Got Wrong (Corrections)
+## Part 9: Archived Admin/Observe Corrections
 
 | Claim in previous docs | Reality | Correction |
 |------------------------|---------|------------|
@@ -714,11 +809,11 @@ No existing doc describes the UI component API or usage patterns:
 - `docs/QUARK_USAGE.md` — mentions `@yourscope/ui` as optional, gives no component list or import examples
 - `.github/skills/quark-context/SKILL.md` — lists "Tailwind CSS + Shadcn" which is aspirational, not actual; no listing of available components
 
-**Phase 0 deliverable must include:** a `packages/ui/README.md` that lists every exported component with its props and an import example. The quark-context SKILL.md "Tech Stack" row for UI must be updated from "Tailwind CSS + Shadcn" to "Tailwind CSS + custom primitives (`packages/ui`)" and the component list added to the coding standards section.
+**Archived Phase 0 deliverable must include:** a `packages/ui/README.md` that lists every exported component with its props and an import example. The quark-context SKILL.md "Tech Stack" row for UI must be updated from "Tailwind CSS + Shadcn" to "Tailwind CSS + custom primitives (`packages/ui`)" and the component list added to the coding standards section.
 
 ---
 
-## Part 10: Phase 0 — Implementation Detail
+## Part 10: Archived Phase 0 — Implementation Detail
 
 ### How CLI templates actually work (critical context)
 
@@ -730,7 +825,7 @@ There are two distinct tiers, and confusing them breaks the plan.
 **Tier 2 — User project scaffolding:**
 When a user runs `quark-create-app` and selects `ui`, the CLI copies `packages/cli/templates/ui/` into their project as `packages/ui/`. From that moment the copy is **entirely theirs**. There is no connection back to Quark — no auto-sync, no version drift checks. They can modify, delete, or replace any component freely. This is the intentional Quark philosophy: scaffolded packages are owned by the project.
 
-**Implication for Phase 0:** Build all components in `packages/ui/src/`. Run `pnpm --filter @techstream/quark-create-app sync-templates` to update `packages/cli/templates/ui/`. The CI drift check enforces that the template snapshot stays current with the monorepo source before any CLI release. User projects are unaffected.
+**Implication for archived Phase 0:** Build all components in `packages/ui/src/`. Run `pnpm --filter @techstream/quark-create-app sync-templates` to update `packages/cli/templates/ui/`. The CI drift check enforces that the template snapshot stays current with the monorepo source before any CLI release. User projects are unaffected.
 
 ### Three implementation constraints the original plan missed
 
@@ -738,7 +833,7 @@ When a user runs `quark-create-app` and selects `ui`, the CLI copies `packages/c
 
 The monorepo `apps/web/next.config.js` hardcodes `@techstream/quark-ui` (and `@techstream/quark-jobs`) in `transpilePackages` unconditionally. When the CLI scaffolds a project without `ui`, `replaceDepsScope` correctly strips the dep from `package.json` — but `next.config.js` is never patched. The resulting project references a package that doesn't exist.
 
-**Fix required in Phase 0:** Add a post-scaffold step to the CLI (alongside the existing `replaceDepsScope` function) that rewrites `transpilePackages` in `next.config.js` to only include entries matching the selected features. This is a CLI change, not a template change.
+**Fix required in archived Phase 0:** Add a post-scaffold step to the CLI (alongside the existing `replaceDepsScope` function) that rewrites `transpilePackages` in `next.config.js` to only include entries matching the selected features. This is a CLI change, not a template change.
 
 ```javascript
 // packages/cli/src/index.js — new helper (alongside replaceDepsScope)
@@ -781,7 +876,7 @@ This requires two additions:
 
 ### Updated impact table
 
-| | Current | After Phase 0 |
+| | Current | After archived Phase 0 |
 |---|---|---|
 | `packages/ui/src/` | 1 Button via `React.createElement` | ~12 components via JSX |
 | `packages/ui/src/index.js` | exports `Button` only | barrel for all ~12 |
@@ -798,7 +893,7 @@ Existing projects are unaffected. If a developer wants to add `ui` to an existin
 
 ---
 
-## Part 11: Risk Assessment
+## Part 11: Archived Risk Assessment
 
 | Risk | Severity | Mitigation |
 |------|----------|-----------|
@@ -812,7 +907,7 @@ Existing projects are unaffected. If a developer wants to add `ui` to an existin
 
 ---
 
-## Part 12: Open Questions
+## Part 12: Archived Open Questions
 
 | # | Question | Recommendation |
 |---|----------|---------------|
@@ -822,15 +917,17 @@ Existing projects are unaffected. If a developer wants to add `ui` to an existin
 | 4 | What Prisma versions does admin support? | **Prisma 7 only.** Pin `@prisma/client` version range in `packages/admin/package.json`. DMMF shape is stable within a major version. |
 | 5 | Should alert adapters be in `quark-core` or a separate package? | **In `quark-core`.** Matches `error-reporter.js` pattern. Avoids package proliferation. Zero new deps. |
 | 6 | Should existing projects get admin via `quark update`? | **Yes.** The CLI `update` command should offer to scaffold the admin package into existing projects. |
-| 7 | Should the repo go public before or after Phase 0–3 ships? | **After.** Clean up the codebase as planned. Making it public doesn't change the distribution model; the main consideration on going public is OSS governance for `quark-core` (contribution guide, issue templates, semver discipline). |
+| 7 | Should the repo go public before or after the archived package phases ship? | **After.** Clean up the codebase as planned. Making it public doesn't change the distribution model; the main consideration on going public is OSS governance for `quark-core` (contribution guide, issue templates, semver discipline). |
 
 ---
 
-## Overview Summary
+## Archived Overview Summary
+
+> **Archived note:** This section preserves the older admin/observe planning snapshot. Where any package direction below differs from the June 2026 local-first package spec near the top of this file, the June 2026 section wins.
 
 ### What is being built
 
-Four things, in order:
+Six things, in order:
 
 1. **An expanded UI package** (`packages/ui/`) — ~12 Tailwind-styled primitives with JSX, tests, and a `README.md` documenting the component API. Source-of-truth in the monorepo; snapshotted into `packages/cli/templates/ui/` via `sync-templates.js` for distribution. Once scaffolded into a user project, the copy is theirs — no connection back to Quark. The playground page in `apps/web/` is scaffolded conditionally only when `ui` is selected.
 
@@ -840,11 +937,13 @@ Four things, in order:
 
 4. **Quark Observe** (separate repo, open-source first) — open-source observability platform, self-hostable with `docker compose up`. SaaS version adds multi-project aggregation, longer retention, and zero-ops. Modules ship incrementally: error tracking → metrics → uptime → analytics → AI metrics.
 
-5. **`@techstream/quark-ai`** (published npm package) — thin AI provider abstraction. Unified API for OpenAI, Anthropic, Google, Ollama. Streaming, token counting, structured outputs, embeddings, prompt versioning. Free and optional.
+5. **A scaffolded `packages/ai/` feature** (current direction) — local-first AI agents, provider adapters, streaming helpers, token accounting, structured outputs, embeddings, prompt versioning, and permissioned tools live in the scaffolded project unless a future shared infrastructure layer proves worthy of publication.
 
 6. **Quark Cloud** (managed infrastructure + compute) — one-click deploy of web, worker, Postgres, Redis, and storage. Convenience product, not a necessity — the CLI shows Railway, Docker, and self-hosted as equally prominent options.
 
-### Summary table
+### Archived summary table
+
+> **Phase label note:** The phase numbers in the table below belong to the archived admin/observe package exploration and do not replace the active deployment phases in Part 8.
 
 | Phase | Name | Effort | New Deps | Deliverable |
 |-------|------|--------|----------|-------------|
@@ -853,7 +952,7 @@ Four things, in order:
 | 1 | Queue Metrics | 3 days | None | `@techstream/quark-core` (minor bump) |
 | 2 | Admin Package | 2–3 weeks | None | `packages/admin/` in monorepo; CLI `admin` feature; `pnpm sync-templates` generates template |
 | 3 | Alerting | 2 weeks | None | `@techstream/quark-core` (minor bump) |
-| 4 | AI Package | 2 weeks | `ai` SDK (optional peer) | `@techstream/quark-ai` published to npm |
+| 4 | AI Feature Scaffold | 2–4 weeks | provider SDK only if needed | `packages/ai/` scaffold + CLI feature prototype |
 | 5 | Quark Observe | 6–8 weeks | Separate repo | `quark-observe` (new repo, open-source first, self-hostable + SaaS) |
 | 6 | Quark Cloud | 8–12 weeks | Partner APIs | `quark-cloud` (managed infra + compute platform) |
 
@@ -863,11 +962,11 @@ Four things, in order:
 |----------|--------|
 | Should admin/observe use the UI package? | **Yes. `packages/ui/` is expanded in Phase 0. Admin depends on it as a workspace package.** |
 | Is admin a published npm package? | **No.** Scaffolded via CLI, same as `ui`, `config`, `jobs`. Locally owned. Requires `db` + `ui`. |
-| Is `@techstream/quark-ai` published to npm? | **Yes.** Published, optional. Teams install it when they want AI features. Free. |
+| Is AI published to npm by default? | **No.** Current direction is a scaffolded local-first `ai` package. Publish a shared layer later only if it proves reusable across multiple packages without creating unnecessary maintenance overhead. |
 | How does admin discover models? | `prisma._dmmf` at runtime. No `@prisma/internals`. Zero new deps. |
 | Is `worker` always scaffolded? | **No.** `apps/worker/` is extracted from base-project and paired with `jobs`. Selecting `jobs` scaffolds both `packages/jobs/` and `apps/worker/`. |
 | Where does alerting live? | Inside `quark-core`. Adapter pattern. Zero new deps. |
-| When is Quark Observe planned in detail? | Phase 5 — after AI package ships and Phases 1–3 are live. Open-source first, self-hostable. |
+| When is Quark Observe planned in detail? | Phase 5 — after the AI feature direction is proven and Phases 1–3 are live. Open-source first, self-hostable. |
 | When is Quark Cloud planned in detail? | Phase 6 — after Observe MVP is live. Convenience product, not necessity. |
 | What was wrong with the previous proposals? | Proposed publishing admin as an npm package (should be scaffolded). Assumed Observe needed full detail before any production usage. Ignored the empty UI template. |
 | How do CLI templates stay in sync with UI changes? | **Automated snapshot.** `sync-templates.js` generates `packages/cli/templates/ui/` from `packages/ui/` source before each CLI release. Once a user scaffolds, their copy is disconnected — they own it entirely. No auto-updates, by design. |
