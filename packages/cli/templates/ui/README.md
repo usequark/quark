@@ -60,6 +60,12 @@ Props: `id`, `name`, `defaultValue`, `placeholder`, `disabled`, `required`, `row
 Standardized multi-column site footer with brand block, CTA, links, and legal bottom bar.
 Props include: `brandName`, `brandDescription`, `ctaLabel`, `ctaHref`, `columns` (3-column array), `copyrightText`, `legalLinks`, `poweredByText`, `poweredByHref`, `mark`, `className`.
 
+### PhotoGallery
+`"use client"` responsive image gallery with optional lightbox overlay.
+Props include: `images` (array of image objects or strings), `columns` (1-4), `lightbox` (bool), `showCounter` (bool), `className`, `thumbnailClassName`.
+Image object shape: `{ src, thumbnailSrc?, alt?, caption? }`.
+Keyboard support in lightbox: `Escape`, `ArrowLeft`, `ArrowRight`.
+
 ### Navbar
 `"use client"` desktop navigation bar with three-zone layout: logo (left), centered nav links (middle), and action button (right). Supports dropdown sub-navigation on parent items.
 Props include: `logo`, `logoHref`, `links`, `action`, `maxWidthClassName`, `className`.

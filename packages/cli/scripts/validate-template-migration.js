@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { execFileSync } from "node:child_process";
+import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -27,20 +27,8 @@ function normalizeSqlStatements(sql) {
 }
 
 function renderSchemaSql() {
-	return execFileSync(
-		"pnpm",
-		[
-			"--filter",
-			"@techstream/quark-db",
-			"exec",
-			"prisma",
-			"migrate",
-			"diff",
-			"--from-empty",
-			"--to-schema",
-			"prisma/schema.prisma",
-			"--script",
-		],
+	return execSync(
+		"pnpm --filter @techstream/quark-db exec prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script",
 		{
 			cwd: ROOT,
 			encoding: "utf8",

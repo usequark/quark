@@ -105,7 +105,7 @@ export default function PageBuilder({
 
 			<div className="rounded-[--radius-default] border border-border bg-surface p-4">
 				<Label htmlFor="page-layout">Layout</Label>
-				<div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-center">
+				<div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-center">
 					<Select
 						id="page-layout"
 						aria-describedby="page-layout-description"
@@ -189,7 +189,7 @@ export default function PageBuilder({
 				<p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-faint">
 					Add Section
 				</p>
-				<div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+				<div className="mt-3 flex flex-wrap gap-2">
 					{PAGE_BLOCK_TYPES.map((blockType) => (
 						<Button
 							key={blockType.value}
@@ -212,7 +212,7 @@ function BlockFields({ block, updateBlock }) {
 		case "hero":
 			return (
 				<div className="space-y-4">
-					<div className="grid gap-4 lg:grid-cols-2">
+					<div className="flex flex-wrap gap-4 [&>*]:flex-1 [&>*]:min-w-[10rem]">
 						<TextField
 							id={`block-${block.id}-eyebrow`}
 							label="Eyebrow"
@@ -242,7 +242,7 @@ function BlockFields({ block, updateBlock }) {
 		case "default":
 			return (
 				<div className="space-y-4">
-					<div className="grid gap-4 lg:grid-cols-2">
+					<div className="flex flex-wrap gap-4 [&>*]:flex-1 [&>*]:min-w-[10rem]">
 						<TextField
 							id={`block-${block.id}-eyebrow`}
 							label="Eyebrow"
@@ -271,7 +271,7 @@ function BlockFields({ block, updateBlock }) {
 		case "split":
 			return (
 				<div className="space-y-4">
-					<div className="grid gap-4 lg:grid-cols-2">
+					<div className="flex flex-wrap gap-4 [&>*]:flex-1 [&>*]:min-w-[10rem]">
 						<TextField
 							id={`block-${block.id}-eyebrow`}
 							label="Eyebrow"
@@ -287,7 +287,7 @@ function BlockFields({ block, updateBlock }) {
 							onChange={(value) => updateBlock(block.id, { title: value })}
 						/>
 					</div>
-					<div className="grid gap-4 xl:grid-cols-2">
+					<div className="flex flex-wrap gap-4 [&>*]:flex-1 [&>*]:min-w-[14rem]">
 						<SplitColumnFields
 							side="Left"
 							block={block}
@@ -312,24 +312,22 @@ function BlockFields({ block, updateBlock }) {
 		case "cta":
 			return (
 				<div className="space-y-4">
-					<div className="grid gap-4 lg:grid-cols-2">
-						<TextField
-							id={`block-${block.id}-title`}
-							label="Title"
-							value={block.title}
-							placeholder="Prompt the next action"
-							onChange={(value) => updateBlock(block.id, { title: value })}
-						/>
-						<RichTextField
-							id={`block-${block.id}-subtitle`}
-							label="Subtitle"
-							value={block.subtitle}
-							rows={2}
-							placeholder="Support the CTA message"
-							onChange={(value) => updateBlock(block.id, { subtitle: value })}
-						/>
-					</div>
-					<div className="grid gap-4 lg:grid-cols-2">
+					<TextField
+						id={`block-${block.id}-title`}
+						label="Title"
+						value={block.title}
+						placeholder="Prompt the next action"
+						onChange={(value) => updateBlock(block.id, { title: value })}
+					/>
+					<RichTextField
+						id={`block-${block.id}-subtitle`}
+						label="Subtitle"
+						value={block.subtitle}
+						rows={2}
+						placeholder="Support the CTA message"
+						onChange={(value) => updateBlock(block.id, { subtitle: value })}
+					/>
+					<div className="flex flex-wrap gap-4 [&>*]:flex-1">
 						<TextField
 							id={`block-${block.id}-primary-label`}
 							label="Primary button label"
@@ -349,7 +347,7 @@ function BlockFields({ block, updateBlock }) {
 							}
 						/>
 					</div>
-					<div className="grid gap-4 lg:grid-cols-2">
+					<div className="flex flex-wrap gap-4 [&>*]:flex-1">
 						<TextField
 							id={`block-${block.id}-secondary-label`}
 							label="Secondary button label"
@@ -389,7 +387,7 @@ function SplitColumnFields({
 	const kind = block[kindField];
 
 	return (
-		<div className="rounded-[--radius-default] border border-border bg-bg/50 p-4 space-y-4">
+		<div className="rounded-[--radius-default] border border-border bg-bg/50 p-4 space-y-4 min-w-0 overflow-hidden">
 			<div className="flex flex-col gap-1">
 				<Label htmlFor={`block-${block.id}-${kindField}`}>
 					{side} column type
@@ -441,14 +439,8 @@ function BackgroundFields({ block, updateBlock }) {
 
 	return (
 		<div className="rounded-[--radius-default] border border-border bg-bg/50 p-4 space-y-4">
-			<div
-				className={
-					isAnimation
-						? "grid gap-4 lg:grid-cols-3"
-						: "grid gap-4 lg:grid-cols-2"
-				}
-			>
-				<div className="flex flex-col gap-1">
+			<div className="flex flex-wrap gap-4 [&>*]:flex-1">
+				<div className="flex flex-col gap-1 flex-1 min-w-[12rem]">
 					<Label htmlFor={`block-${block.id}-background-mode`}>
 						Background mode
 					</Label>
@@ -475,7 +467,7 @@ function BackgroundFields({ block, updateBlock }) {
 					</Select>
 				</div>
 
-				<div className="flex flex-col gap-1">
+				<div className="flex flex-col gap-1 flex-1 min-w-[12rem]">
 					<Label htmlFor={`block-${block.id}-background-value`}>
 						{isAnimation ? "Animation" : "Color tone"}
 					</Label>
@@ -500,7 +492,7 @@ function BackgroundFields({ block, updateBlock }) {
 				</div>
 
 				{isAnimation ? (
-					<div className="flex flex-col gap-1">
+					<div className="flex flex-col gap-1 flex-1 min-w-[12rem]">
 						<Label htmlFor={`block-${block.id}-background-tone`}>
 							Animation base color
 						</Label>

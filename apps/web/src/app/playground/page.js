@@ -24,6 +24,7 @@ import {
 	Label,
 	MobileNavbar,
 	Navbar,
+	PhotoGallery,
 	Section,
 	Select,
 	Skeleton,
@@ -118,6 +119,37 @@ const TABLE_DATA = [
 	{ name: "Bob", role: "Viewer", status: "Inactive" },
 ];
 
+const GALLERY_IMAGES = [
+	{
+		src: "https://picsum.photos/id/1015/1800/1100",
+		alt: "Snow-capped mountain range above a winding lake",
+		caption: "Wide landscape sample",
+	},
+	{
+		src: "https://picsum.photos/id/1027/1000/1500",
+		alt: "Portrait image of a dog in golden light",
+		caption: "Portrait sample",
+	},
+	{
+		src: "https://picsum.photos/id/1035/1600/950",
+		alt: "Colorful cliffs meeting the sea",
+		caption: "Panoramic sample",
+	},
+	{
+		src: "https://picsum.photos/id/1043/1100/1100",
+		alt: "Square aerial view of ocean shallows",
+		caption: "Square sample",
+	},
+];
+
+const SINGLE_GALLERY_IMAGE = [
+	{
+		src: "https://picsum.photos/id/1069/1280/840",
+		alt: "A solo image preview used for single-image lightbox behavior",
+		caption: "Single image mode",
+	},
+];
+
 function Group({ label, children }) {
 	return (
 		<div className="space-y-2.5">
@@ -184,7 +216,8 @@ function PlaygroundInner() {
 						title="Build Confidence With Every Release"
 						subtitle="Ship production-ready updates faster with a slim hero designed to orient users immediately."
 						backgroundMode="animation"
-						backgroundValue="Aurora"
+						backgroundValue="Waves"
+						backgroundTone="surface"
 					/>
 				);
 			case "default":
@@ -217,8 +250,9 @@ function PlaygroundInner() {
 						subtitle="Use the CTA section at the bottom of pages to route users to their next high-value action."
 						primaryAction={{ label: "Book demo", href: "#" }}
 						secondaryAction={{ label: "View docs", href: "#" }}
-						backgroundMode="color"
-						backgroundValue="primary"
+						backgroundMode="animation"
+						backgroundValue="data-stream"
+						backgroundTone="muted"
 					/>
 				);
 			default:
@@ -600,8 +634,48 @@ function PlaygroundInner() {
 							})()}
 						</ComponentSection>
 
-						{/* ── 12 Forms ── */}
-						<ComponentSection id="forms" index={12} title="Forms">
+						{/* ── 12 Gallery ── */}
+						<ComponentSection id="gallery" index={12} title="Photo Gallery">
+							<p className="text-sm leading-6 text-text-muted">
+								Tap or click any image to open the lightbox. Use Previous and
+								Next controls or keyboard arrows to navigate, with an index
+								counter showing which image is active.
+							</p>
+							<div className="grid gap-4 xl:grid-cols-2">
+								<Card className="bg-surface/90">
+									<CardHeader className="space-y-2">
+										<CardTitle className="text-lg text-text">
+											Multiple image gallery
+										</CardTitle>
+										<p className="text-sm text-text-muted">
+											Mixed aspect ratios remain readable with object-contain
+											scaling.
+										</p>
+									</CardHeader>
+									<CardContent>
+										<PhotoGallery images={GALLERY_IMAGES} columns={2} />
+									</CardContent>
+								</Card>
+
+								<Card className="bg-surface/90">
+									<CardHeader className="space-y-2">
+										<CardTitle className="text-lg text-text">
+											Single image lightbox
+										</CardTitle>
+										<p className="text-sm text-text-muted">
+											Single images open with the same responsive overlay and
+											counter.
+										</p>
+									</CardHeader>
+									<CardContent>
+										<PhotoGallery images={SINGLE_GALLERY_IMAGE} columns={1} />
+									</CardContent>
+								</Card>
+							</div>
+						</ComponentSection>
+
+						{/* ── 13 Forms ── */}
+						<ComponentSection id="forms" index={13} title="Forms">
 							<div className="grid gap-8 sm:grid-cols-2">
 								{/* Contact / inquiry form — mirrors the reference design */}
 								<div className="rounded-[--radius-default] border border-border bg-surface p-6 shadow-sm">

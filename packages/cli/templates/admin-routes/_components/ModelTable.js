@@ -20,6 +20,26 @@ const STATUS_VARIANTS = {
 };
 
 /**
+ * Convert camelCase / snake_case field names to human-readable column headers.
+ * e.g. "firstName" → "First Name", "createdAt" → "Created At"
+ */
+function humanize(name) {
+	if (/^[A-Z][A-Z0-9_]*$/.test(name)) {
+		return name
+			.replace(/_/g, " ")
+			.toLowerCase()
+			.replace(/\b\w/g, (c) => c.toUpperCase());
+	}
+	return name
+		.replace(/([A-Z])/g, " $1")
+		.replace(/[_-]/g, " ")
+		.trim()
+		.replace(/\b\w/g, (c) => c.toUpperCase())
+		.replace(/\bId\b/g, "ID")
+		.replace(/\bUrl\b/g, "URL");
+}
+
+/**
  * Determine column width class based on field characteristics.
  * @param {{ name: string, type: string, isId: boolean }} field
  * @returns {string}
@@ -84,7 +104,7 @@ export default function ModelTable({ model, records, slug, readOnly }) {
 							key={field.name}
 							className={`${getColumnWidth(field)} truncate`}
 						>
-							{field.name}
+							{humanize(field.name)}
 						</TableHead>
 					))}
 					{canEdit && (
@@ -97,9 +117,32 @@ export default function ModelTable({ model, records, slug, readOnly }) {
 					<TableRow>
 						<TableCell
 							colSpan={visibleFields.length + (canEdit ? 1 : 0)}
-							className="text-center text-text-faint py-10"
+							className="py-12 text-center"
 						>
-							No records found
+							<div className="flex flex-col items-center gap-2">
+								<svg
+									aria-hidden="true"
+									className="h-8 w-8 text-text-faint"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
+									strokeWidth="1.5"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+									/>
+								</svg>
+								<p className="text-sm font-medium text-text-faint">
+									No records found
+								</p>
+								{canEdit && (
+									<p className="text-xs text-text-faint">
+										Create your first record to get started.
+									</p>
+								)}
+							</div>
 						</TableCell>
 					</TableRow>
 				) : (
@@ -119,7 +162,7 @@ export default function ModelTable({ model, records, slug, readOnly }) {
 								<TableCell className="text-right">
 									<a
 										href={`/admin/${slug}/${record.id}`}
-										className="text-sm text-primary hover:opacity-75"
+										className="inline-flex items-center gap-1 rounded-[--radius-default] px-2.5 py-1 text-xs font-medium text-primary ring-1 ring-inset ring-primary/20 hover:bg-primary/5 transition-colors"
 									>
 										Edit
 									</a>

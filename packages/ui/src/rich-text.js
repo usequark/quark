@@ -27,15 +27,15 @@ import { Input } from "./input.js";
  */
 
 const wrapperCls =
-	"rounded-[--radius-default] border border-border bg-surface text-sm text-text transition-colors duration-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 overflow-hidden";
+	"rounded-[--radius-default] border border-border bg-surface-hover text-sm text-text transition-colors duration-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 overflow-hidden";
 
 const toolbarCls =
-	"flex flex-wrap items-center gap-0.5 border-b border-border bg-surface-hover px-2 py-1.5";
+	"flex flex-wrap items-center gap-0.5 border-b border-border bg-surface px-2 py-1.5";
 
 const btnBase =
-	"inline-flex items-center justify-center w-7 h-7 rounded-[--radius-default] text-text-muted transition-colors cursor-pointer hover:bg-surface hover:text-text disabled:opacity-30 disabled:cursor-not-allowed";
+	"inline-flex items-center justify-center w-7 h-7 rounded-[--radius-default] text-text-muted transition-colors cursor-pointer hover:bg-surface-hover hover:text-text disabled:opacity-30 disabled:cursor-not-allowed";
 
-const btnActive = "bg-surface text-text";
+const btnActive = "bg-surface-hover text-text";
 
 const separatorCls = "w-px h-5 bg-border mx-1";
 

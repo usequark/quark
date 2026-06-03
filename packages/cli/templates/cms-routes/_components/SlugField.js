@@ -75,7 +75,18 @@ export default function SlugField({
 	return (
 		<div className="flex flex-col gap-1">
 			<div className="flex items-center justify-between">
-				<Label htmlFor={id}>Slug{required && " *"}</Label>
+				<Label htmlFor={id}>
+					Slug
+					{required && (
+						<span
+							className="ml-0.5 text-danger"
+							aria-hidden="true"
+							title="Required field"
+						>
+							*
+						</span>
+					)}
+				</Label>
 				{!disabled && (
 					<button
 						type="button"

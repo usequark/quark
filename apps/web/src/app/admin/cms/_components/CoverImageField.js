@@ -226,7 +226,7 @@ export default function CoverImageField({
 								</Card>
 							)}
 							{!loadingMedia && mediaAssets && mediaAssets.length > 0 && (
-								<div className="grid grid-cols-4 gap-2 max-h-64 overflow-y-auto">
+								<div className="grid grid-cols-[repeat(auto-fill,minmax(3.5rem,1fr))] gap-2 max-h-64 overflow-y-auto">
 									{mediaAssets.map((asset) => (
 										<button
 											key={asset.id}

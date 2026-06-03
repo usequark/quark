@@ -62,7 +62,23 @@ export default async function ModelListPage({ params, searchParams }) {
 				</div>
 				{canCreate && (
 					<a href={`/admin/${slug}/new`}>
-						<Button>Create {model.name}</Button>
+						<Button>
+							<svg
+								aria-hidden="true"
+								className="mr-1.5 h-4 w-4"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+								strokeWidth="2.5"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									d="M12 4v16m8-8H4"
+								/>
+							</svg>
+							Create {model.name}
+						</Button>
 					</a>
 				)}
 			</div>
@@ -105,9 +121,23 @@ export default async function ModelListPage({ params, searchParams }) {
 					{currentPage > 1 && (
 						<a
 							href={`/admin/${slug}?page=${currentPage - 1}${search ? `&q=${encodeURIComponent(search)}` : ""}`}
-							className="hover:text-text"
+							className="flex items-center gap-1 hover:text-text"
 						>
-							← Previous
+							<svg
+								aria-hidden="true"
+								className="h-4 w-4"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+								strokeWidth="2"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									d="M15 19l-7-7 7-7"
+								/>
+							</svg>
+							Previous
 						</a>
 					)}
 					<span>
@@ -116,9 +146,23 @@ export default async function ModelListPage({ params, searchParams }) {
 					{currentPage < totalPages && (
 						<a
 							href={`/admin/${slug}?page=${currentPage + 1}${search ? `&q=${encodeURIComponent(search)}` : ""}`}
-							className="hover:text-text"
+							className="flex items-center gap-1 hover:text-text"
 						>
-							Next →
+							Next
+							<svg
+								aria-hidden="true"
+								className="h-4 w-4"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+								strokeWidth="2"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									d="M9 5l7 7-7 7"
+								/>
+							</svg>
 						</a>
 					)}
 				</div>

@@ -16,7 +16,6 @@ export const metadata = { title: "Content Overview" };
 export default async function CmsDashboard() {
 	const contentTypes = Object.entries(cmsConfig.contentTypes);
 
-	// Fetch counts per model per status in parallel
 	const stats = await Promise.all(
 		contentTypes.map(async ([model, cfg]) => {
 			const delegate = getDelegate(prisma, model);
@@ -57,47 +56,74 @@ export default async function CmsDashboard() {
 	]);
 
 	return (
-		<div className="space-y-8">
-			<div className="space-y-4">
-				<div>
-					<h1 className="text-2xl font-bold tracking-tight text-text">
-						Content
-					</h1>
-					<p className="mt-1 text-sm text-text-faint">Manage pages and media</p>
-				</div>
-
-				<div className="flex flex-wrap items-center gap-2 border-b border-border pb-3">
-					<a
-						href="/admin/cms"
-						className="rounded-[--radius-default] border border-border bg-surface px-3 py-1.5 text-sm font-medium text-text"
-					>
-						Overview
-					</a>
-					<a
-						href="/admin/cms/pages"
-						className="rounded-[--radius-default] border border-border px-3 py-1.5 text-sm font-medium text-text-muted hover:bg-surface-hover hover:text-text"
-					>
-						Pages
-					</a>
-					<a
-						href="/admin/cms/media"
-						className="rounded-[--radius-default] border border-border px-3 py-1.5 text-sm font-medium text-text-muted hover:bg-surface-hover hover:text-text"
-					>
-						Media
-					</a>
-					<div className="ml-auto">
-						<a href="/admin/cms/pages/new">
-							<Button size="sm">New Page</Button>
-						</a>
+		<div className="space-y-10">
+			{/* ── Page header ── */}
+			<div className="relative overflow-hidden border border-border bg-surface p-6 sm:p-8">
+				<div className="absolute inset-0 bg-gradient-to-br from-primary/[0.03] to-transparent" />
+				<div className="relative flex items-center gap-4">
+					<div className="flex h-11 w-11 items-center justify-center border border-primary/20 bg-primary-muted">
+						<svg
+							aria-hidden="true"
+							className="h-5 w-5 text-primary"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							strokeWidth="2"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
+							/>
+						</svg>
+					</div>
+					<div>
+						<h1 className="text-2xl font-bold tracking-tight text-text">
+							Content
+						</h1>
+						<p className="mt-0.5 text-sm text-text-faint">
+							Manage pages and media
+						</p>
 					</div>
 				</div>
 			</div>
 
-			{/* Content type stats */}
+			{/* ── Sub-nav ── */}
+			<div className="flex flex-wrap items-center gap-2 border-b border-border pb-3">
+				<a
+					href="/admin/cms"
+					className="border border-border bg-surface px-3 py-1.5 text-sm font-medium text-text"
+				>
+					Overview
+				</a>
+				<a
+					href="/admin/cms/pages"
+					className="border border-border px-3 py-1.5 text-sm font-medium text-text-muted hover:bg-surface-hover hover:text-text"
+				>
+					Pages
+				</a>
+				<a
+					href="/admin/cms/media"
+					className="border border-border px-3 py-1.5 text-sm font-medium text-text-muted hover:bg-surface-hover hover:text-text"
+				>
+					Media
+				</a>
+				<div className="ml-auto">
+					<a href="/admin/cms/pages/new">
+						<Button size="sm">New Page</Button>
+					</a>
+				</div>
+			</div>
+
+			{/* ── Content Types ── */}
 			<section>
-				<h2 className="text-xs font-semibold uppercase tracking-widest text-text-faint mb-3">
-					Content Types
-				</h2>
+				<div className="mb-4 flex items-center gap-3">
+					<div className="h-px flex-1 bg-border" />
+					<h2 className="text-xs font-semibold uppercase tracking-widest text-text-faint">
+						Content Types
+					</h2>
+					<div className="h-px flex-1 bg-border" />
+				</div>
 				<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
 					{stats.map(({ model, label, total, drafts, published, archived }) => (
 						<a
@@ -105,7 +131,8 @@ export default async function CmsDashboard() {
 							href={`/admin/cms/${model.toLowerCase()}s`}
 							className="block group h-full"
 						>
-							<Card className="transition-colors hover:border-border-hover hover:bg-surface-hover h-full flex flex-col">
+							<Card className="transition-all duration-200 hover:border-primary/40 hover:shadow-[0_0_24px_-4px_rgba(55,125,255,0.12)] h-full flex flex-col">
+								<div className="h-0.5 bg-gradient-to-r from-primary/60 to-primary/20" />
 								<CardHeader className="pb-2">
 									<CardTitle className="text-sm font-semibold text-text-muted uppercase tracking-widest">
 										{label}
@@ -139,7 +166,8 @@ export default async function CmsDashboard() {
 
 					{/* Media card */}
 					<a href="/admin/cms/media" className="block group h-full">
-						<Card className="transition-colors hover:border-border-hover hover:bg-surface-hover h-full flex flex-col">
+						<Card className="transition-all duration-200 hover:border-primary/40 hover:shadow-[0_0_24px_-4px_rgba(55,125,255,0.12)] h-full flex flex-col">
+							<div className="h-0.5 bg-gradient-to-r from-primary/60 to-primary/20" />
 							<CardHeader className="pb-2">
 								<CardTitle className="text-sm font-semibold text-text-muted uppercase tracking-widest">
 									Media Library
@@ -158,18 +186,22 @@ export default async function CmsDashboard() {
 				</div>
 			</section>
 
-			{/* Recent media */}
+			{/* ── Recent Media ── */}
 			{recentMedia.length > 0 && (
 				<section>
-					<div className="flex items-center justify-between mb-3">
+					<div className="mb-4 flex items-center gap-3">
+						<div className="h-px flex-1 bg-border" />
 						<h2 className="text-xs font-semibold uppercase tracking-widest text-text-faint">
 							Recent Media
 						</h2>
+						<div className="h-px flex-1 bg-border" />
+					</div>
+					<div className="flex items-center justify-end mb-3">
 						<a
 							href="/admin/cms/media"
 							className="text-xs text-primary hover:opacity-75"
 						>
-							View all →
+							View all &rarr;
 						</a>
 					</div>
 					<div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -186,21 +218,25 @@ export default async function CmsDashboard() {
 				</section>
 			)}
 
-			{/* Recent pages */}
+			{/* ── Recent Pages ── */}
 			{recentPages.length > 0 && (
 				<section>
-					<div className="flex items-center justify-between mb-3">
+					<div className="mb-4 flex items-center gap-3">
+						<div className="h-px flex-1 bg-border" />
 						<h2 className="text-xs font-semibold uppercase tracking-widest text-text-faint">
 							Recent Pages
 						</h2>
+						<div className="h-px flex-1 bg-border" />
+					</div>
+					<div className="flex items-center justify-end mb-3">
 						<a
 							href="/admin/cms/pages"
 							className="text-xs text-primary hover:opacity-75"
 						>
-							View all →
+							View all &rarr;
 						</a>
 					</div>
-					<div className="rounded-[--radius-default] border border-border bg-surface divide-y divide-border">
+					<div className="border border-border bg-surface divide-y divide-border">
 						{recentPages.map((page) => (
 							<a
 								key={page.id}

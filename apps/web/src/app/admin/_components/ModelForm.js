@@ -1,8 +1,8 @@
-"use client";
+﻿"use client";
 
 import { getInputType, isEditable } from "@techstream/quark-admin/field-map";
-import { Button } from "@techstream/quark-ui";
-import { useActionState } from "react";
+import { Button, Dialog } from "@techstream/quark-ui";
+import { useActionState, useState, useTransition } from "react";
 import { adminCreate, adminDelete, adminUpdate } from "../_actions/crud";
 import FieldRenderer from "./FieldRenderer";
 
@@ -161,6 +161,9 @@ export default function ModelForm({ model, slug, record, readOnly = false }) {
 		initialState,
 	);
 
+	const [deleteOpen, setDeleteOpen] = useState(false);
+	const [isDeleting, startDeleteTransition] = useTransition();
+
 	const editableFields = model.fields.filter(isEditable);
 
 	const groups = {};
@@ -205,9 +208,26 @@ export default function ModelForm({ model, slug, record, readOnly = false }) {
 					))}
 
 					{state?.error && (
-						<p className="rounded-[--radius-default] border border-danger/40 bg-danger-muted px-4 py-3 text-sm text-danger">
-							{state.error}
-						</p>
+						<div
+							role="alert"
+							className="flex items-start gap-3 rounded-[--radius-default] border border-danger/40 bg-danger-muted px-4 py-3"
+						>
+							<svg
+								aria-hidden="true"
+								className="mt-0.5 h-4 w-4 shrink-0 text-danger"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+								strokeWidth="2"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+								/>
+							</svg>
+							<p className="text-sm text-danger">{state.error}</p>
+						</div>
 					)}
 				</form>
 
@@ -221,21 +241,21 @@ export default function ModelForm({ model, slug, record, readOnly = false }) {
 								<Button
 									type="submit"
 									form={formId}
+									variant="primary"
 									disabled={isPending}
 									className="w-full justify-center"
 								>
 									{isPending ? "Saving…" : isEdit ? "Save changes" : "Create"}
 								</Button>
-								<Button
-									type="button"
-									variant="danger"
-									className="w-full justify-center"
-									onClick={() => {
-										window.location.href = `/admin/${slug}`;
-									}}
-								>
-									Cancel
-								</Button>
+								<a href={`/admin/${slug}`} className="block w-full">
+									<Button
+										type="button"
+										variant="secondary"
+										className="w-full justify-center"
+									>
+										Cancel
+									</Button>
+								</a>
 							</div>
 						</div>
 
@@ -247,31 +267,56 @@ export default function ModelForm({ model, slug, record, readOnly = false }) {
 								<p className="mt-1 text-sm text-text-faint">
 									Delete this record permanently. This action cannot be undone.
 								</p>
-								<form
-									action={adminDelete.bind(null, slug, record.id)}
-									className="mt-4"
-								>
+								<div className="mt-4">
 									<Button
-										type="submit"
+										type="button"
 										variant="danger"
-										onClick={(e) => {
-											if (
-												!confirm(
-													`Delete this ${model.name}? This cannot be undone.`,
-												)
-											) {
-												e.preventDefault();
-											}
-										}}
+										onClick={() => setDeleteOpen(true)}
 									>
 										Delete {model.name}
 									</Button>
-								</form>
+								</div>
 							</div>
 						)}
 					</div>
 				)}
 			</div>
+
+			{isEdit && model.fields.some((f) => f.isId) && (
+				<Dialog
+					open={deleteOpen}
+					onClose={() => setDeleteOpen(false)}
+					title={`Delete ${model.name}`}
+				>
+					<div className="space-y-4">
+						<p className="text-sm text-text-muted">
+							Are you sure you want to permanently delete this{" "}
+							{model.name.toLowerCase()}? This action cannot be undone and all
+							data will be lost.
+						</p>
+						<div className="flex gap-2 justify-end pt-4 border-t border-border -mx-5 px-5">
+							<Button
+								variant="secondary"
+								onClick={() => setDeleteOpen(false)}
+								disabled={isDeleting}
+							>
+								Keep it
+							</Button>
+							<Button
+								variant="danger"
+								disabled={isDeleting}
+								onClick={() => {
+									startDeleteTransition(async () => {
+										await adminDelete(slug, record.id);
+									});
+								}}
+							>
+								{isDeleting ? "Deleting…" : "Yes, delete"}
+							</Button>
+						</div>
+					</div>
+				</Dialog>
+			)}
 		</div>
 	);
 }

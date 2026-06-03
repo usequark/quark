@@ -7,6 +7,15 @@ const SENSITIVE_FIELD_NAMES = new Set([
 	"privateKey",
 ]);
 
+const IMAGE_FIELD_SUFFIXES = [
+	"image",
+	"photo",
+	"avatar",
+	"thumbnail",
+	"banner",
+	"logo",
+];
+
 const LONG_TEXT_FIELD_NAMES = new Set([
 	"description",
 	"content",
@@ -52,6 +61,13 @@ export function getInputType(field) {
 
 	// Email heuristic
 	if (field.name === "email" && field.type === "String") return "email";
+
+	// Image URL heuristic — fields whose names end with an image-related word
+	if (field.type === "String") {
+		const lower = field.name.toLowerCase();
+		if (IMAGE_FIELD_SUFFIXES.some((s) => lower === s || lower.endsWith(s)))
+			return "image";
+	}
 
 	// Long text fields → rich text editor
 	if (field.type === "String" && LONG_TEXT_FIELD_NAMES.has(field.name))

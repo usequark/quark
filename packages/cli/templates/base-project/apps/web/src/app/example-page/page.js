@@ -11,6 +11,7 @@ import {
 	Label,
 	MobileNavbar,
 	Navbar,
+	PhotoGallery,
 	Textarea,
 } from "@techstream/quark-ui";
 
@@ -23,10 +24,12 @@ export const metadata = {
 const NAV_LINKS = [
 	{ label: "Why Quark", href: "#why-quark" },
 	{ label: "Reference", href: "#reference" },
+	{ label: "Gallery", href: "#gallery" },
 	{
 		label: "Packages",
 		items: [
 			{ label: "UI primitives", href: "#reference" },
+			{ label: "Gallery", href: "#gallery" },
 			{ label: "Playground", href: "/playground" },
 			{ label: "Home", href: "/" },
 		],
@@ -73,6 +76,32 @@ const REFERENCE_CARDS = [
 		title: "Use example routes as the first reference",
 		copy: "This page complements /playground by showing how shared primitives combine into a production-style public page instead of an isolated component catalog.",
 		badge: "warning",
+	},
+];
+
+const GALLERY_IMAGES = [
+	{
+		src: "https://picsum.photos/id/1011/1800/1100",
+		alt: "Rock shoreline meeting calm water during sunrise",
+		caption: "Wide composition",
+	},
+	{
+		src: "https://picsum.photos/id/1025/1200/1700",
+		alt: "Portrait crop of a dog facing left",
+		caption: "Portrait composition",
+	},
+	{
+		src: "https://picsum.photos/id/1040/1100/1100",
+		alt: "Square crop of forest and distant mountain",
+		caption: "Square composition",
+	},
+];
+
+const SINGLE_GALLERY_IMAGE = [
+	{
+		src: "https://picsum.photos/id/1005/1600/900",
+		alt: "Single image sample with balanced horizon",
+		caption: "Single-image lightbox",
 	},
 ];
 
@@ -301,6 +330,49 @@ export default function ExamplePage() {
 								</CardContent>
 							</Card>
 						))}
+					</div>
+				</section>
+
+				<section
+					id="gallery"
+					className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8 lg:pb-20"
+				>
+					<SectionIntro
+						eyebrow="Photo Gallery"
+						title="Responsive gallery + lightbox with simple controls."
+						copy="This preview demonstrates mixed aspect ratios, keyboard navigation, previous or next controls, and an index indicator that tracks the active image."
+					/>
+					<div className="mt-8 grid gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+						<Card className="bg-surface/92">
+							<CardHeader className="space-y-2">
+								<CardTitle className="text-xl text-text">
+									Multi-image gallery
+								</CardTitle>
+								<p className="text-sm leading-6 text-text-muted">
+									Open any image to launch the lightbox. Images scale with
+									object-contain to stay legible across very wide, very tall,
+									and square ratios.
+								</p>
+							</CardHeader>
+							<CardContent>
+								<PhotoGallery images={GALLERY_IMAGES} columns={3} />
+							</CardContent>
+						</Card>
+
+						<Card className="bg-surface/92">
+							<CardHeader className="space-y-2">
+								<CardTitle className="text-xl text-text">
+									Single-image mode
+								</CardTitle>
+								<p className="text-sm leading-6 text-text-muted">
+									The same component also handles individual photos with a
+									focused overlay experience.
+								</p>
+							</CardHeader>
+							<CardContent>
+								<PhotoGallery images={SINGLE_GALLERY_IMAGE} columns={1} />
+							</CardContent>
+						</Card>
 					</div>
 				</section>
 

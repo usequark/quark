@@ -10,7 +10,7 @@ import React, {
 } from "react";
 
 const triggerCls =
-	"flex h-10 w-full items-center justify-between rounded-[--radius-default] border border-border bg-surface px-3 text-sm text-text shadow-sm transition-all duration-200 cursor-pointer hover:border-border-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50";
+	"flex h-10 w-full items-center justify-between rounded-[--radius-default] border border-border bg-surface-hover px-3 text-sm text-text shadow-sm transition-all duration-200 cursor-pointer hover:border-border-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50";
 
 const panelCls =
 	"absolute z-30 max-h-60 w-full overflow-auto rounded-[--radius-default] border border-border bg-surface shadow-xl origin-top transition-all duration-200 ease-out";

@@ -22,6 +22,7 @@ export * from "./input.js";
 export * from "./label.js";
 export * from "./logo.js";
 export * from "./navbar.js";
+export * from "./photo-gallery.js";
 export * from "./rich-text.js";
 export * from "./section.js";
 export * from "./select.js";

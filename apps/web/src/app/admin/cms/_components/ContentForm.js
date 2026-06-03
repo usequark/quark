@@ -9,7 +9,6 @@ import {
 	Textarea,
 } from "@techstream/quark-ui";
 import { useActionState, useState, useTransition } from "react";
-import ContentPreview from "./ContentPreview";
 import CoverImageField from "./CoverImageField";
 import PageBuilder from "./PageBuilder";
 import SlugField from "./SlugField";
@@ -17,22 +16,6 @@ import StatusBadge from "./StatusBadge";
 
 const initialState = { error: null };
 
-/**
- * Generic create/edit form for CMS content (Page, Post).
- *
- * @param {{
- *   record?: object,
- *   createAction: (prevState: object, formData: FormData) => Promise<object>,
- *   updateAction?: (prevState: object, formData: FormData) => Promise<object>,
- *   deleteAction?: () => Promise<void>,
- *   publishAction?: () => Promise<void>,
- *   archiveAction?: () => Promise<void>,
- *   unpublishAction?: () => Promise<void>,
- *   hasExcerpt?: boolean,
- *   hasCoverImage?: boolean,
- *   modelLabel?: string
- * }} props
- */
 export default function ContentForm({
 	record,
 	createAction,
@@ -74,23 +57,8 @@ export default function ContentForm({
 	const canPublish = status === "DRAFT";
 	const canArchive = status === "PUBLISHED";
 	const canUnpublish = status === "PUBLISHED";
-	const titlePlaceholder =
-		modelLabel === "Page"
-			? "About, Pricing, Contact, Terms of Service"
-			: `${modelLabel} title`;
-	const _excerptPlaceholder =
-		modelLabel === "Page"
-			? "Summarize what this page covers and who it is for."
-			: "Short summary (optional)";
-	const _bodyPlaceholder =
-		modelLabel === "Page"
-			? "<h1>Headline</h1>\n<p>Lead paragraph that explains the page.</p>\n\n<h2>Key section</h2>\n<p>Add supporting details, proof, or a clear next step.</p>"
-			: "Write your content here…";
-	const _bodyHelpText =
-		modelLabel === "Page"
-			? "A strong page usually has a clear headline, a short intro, 2-3 supporting sections, and a next step. Plain text or basic HTML both work."
-			: "Supports plain text or basic HTML.";
 	const isPageModel = modelLabel === "Page";
+
 	const previewHref =
 		isPageModel && isEdit ? `/admin/cms/pages/${record.id}/preview` : null;
 	const livePageHref =
@@ -104,39 +72,78 @@ export default function ContentForm({
 	}
 
 	return (
-		<div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(38rem,44rem)] lg:items-start">
+		<div className="flex flex-col gap-6 xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(36rem,42rem)] xl:items-start">
 			<div className="min-w-0">
-				<form id={formId} action={formAction} className="space-y-5">
-					{!isEdit && modelLabel === "Page" && (
-						<div className="rounded-[--radius-default] border border-border bg-surface px-4 py-3">
-							<p className="text-xs font-semibold uppercase tracking-widest text-text-faint">
-								Starter Checklist
-							</p>
-							<p className="mt-2 text-sm text-text-muted">
-								Give the page a descriptive title, keep the excerpt to one or
-								two sentences, and use the body for the full structure.
-							</p>
+				<form id={formId} action={formAction} className="space-y-6">
+					{/* Page identity */}
+					<section className="border border-border bg-surface">
+						<div className="flex items-center gap-2 border-b border-border px-5 py-3">
+							<svg
+								aria-hidden="true"
+								className="h-4 w-4 text-text-faint"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+								strokeWidth="2"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+								/>
+							</svg>
+							<h2 className="text-xs font-semibold uppercase tracking-widest text-text-faint">
+								Page Details
+							</h2>
 						</div>
-					)}
+						<div className="space-y-5 p-5">
+							{!isEdit && modelLabel === "Page" && (
+								<div className="border border-primary/20 bg-primary-muted px-4 py-3">
+									<p className="text-xs font-semibold text-primary">
+										Getting started
+									</p>
+									<ul className="mt-2 space-y-1">
+										<li className="flex items-start gap-2 text-sm text-primary/80">
+											<span className="mt-0.5 text-primary">&#x2022;</span>
+											<span>
+												Give your page a clear title — this becomes the page
+												heading and browser tab label.
+											</span>
+										</li>
+										<li className="flex items-start gap-2 text-sm text-primary/80">
+											<span className="mt-0.5 text-primary">&#x2022;</span>
+											<span>
+												Add sections below to build the page content (hero,
+												text, images, call-to-action).
+											</span>
+										</li>
+									</ul>
+								</div>
+							)}
 
-					{/* Page Identity */}
-					<section className="rounded-[--radius-default] border border-border bg-surface p-4 shadow-sm sm:p-5">
-						<PanelHeader
-							title="Page Details"
-							description="The title and slug identify this page publicly."
-						/>
-						<div className="space-y-4">
-							<div className="flex flex-col gap-1">
-								<Label htmlFor="cms-title">Title *</Label>
+							<div className="flex flex-col gap-1.5">
+								<Label htmlFor="cms-title">
+									{modelLabel === "Page" ? "Page title" : `${modelLabel} title`}{" "}
+									*
+								</Label>
 								<Input
 									id="cms-title"
 									type="text"
 									name="title"
 									defaultValue={record?.title ?? ""}
 									required
-									placeholder={titlePlaceholder}
+									placeholder={
+										modelLabel === "Page"
+											? "e.g. About Us, Pricing, Contact"
+											: `e.g. My ${modelLabel}`
+									}
 									onChange={(e) => setTitle(e.target.value)}
 								/>
+								<p className="text-xs text-text-faint">
+									{modelLabel === "Page"
+										? "Appears at the top of the page and in browser tabs. Use clear, descriptive titles."
+										: "A short, descriptive title for this entry."}
+								</p>
 							</div>
 
 							<SlugField
@@ -146,21 +153,30 @@ export default function ContentForm({
 							/>
 
 							{hasExcerpt && (
-								<div className="flex flex-col gap-1">
+								<div className="flex flex-col gap-1.5">
 									<Label htmlFor="cms-excerpt">Excerpt</Label>
 									<Textarea
 										id="cms-excerpt"
 										name="excerpt"
 										value={excerpt}
 										rows={2}
-										placeholder="Short summary (optional)"
+										placeholder={
+											modelLabel === "Page"
+												? "A short summary of what this page is about"
+												: "Brief summary (optional)"
+										}
 										onChange={(e) => setExcerpt(e.target.value)}
 									/>
+									<p className="text-xs text-text-faint">
+										{modelLabel === "Page"
+											? "Shown in search results and page previews. Keep it to 1-2 sentences."
+											: "Optional short description for listings."}
+									</p>
 								</div>
 							)}
 
 							{isPageModel && (
-								<div className="border-t border-border pt-4">
+								<div className="border-t border-border pt-5">
 									<input
 										type="hidden"
 										name="showHeader"
@@ -168,13 +184,14 @@ export default function ContentForm({
 									/>
 									<Checkbox
 										id="cms-show-header"
-										label="Show title and excerpt above sections"
+										label="Show the page title and excerpt at the top"
 										checked={showHeader}
 										onChange={(e) => setShowHeader(e.target.checked)}
 									/>
 									<p className="mt-1.5 pl-6 text-xs text-text-faint">
-										By default the title and excerpt are hidden on the live page
-										— use a Hero section instead.
+										By default the title is hidden — use a Hero section instead
+										for a more polished look. Check this if you want a simple
+										title bar.
 									</p>
 								</div>
 							)}
@@ -182,12 +199,29 @@ export default function ContentForm({
 					</section>
 
 					{hasCoverImage && (
-						<section className="rounded-[--radius-default] border border-border bg-surface p-4 shadow-sm sm:p-5">
-							<PanelHeader
-								title="Media"
-								description="Select or upload a cover image for this page."
-							/>
-							<CoverImageField defaultValue={record?.coverImage ?? ""} />
+						<section className="border border-border bg-surface">
+							<div className="flex items-center gap-2 border-b border-border px-5 py-3">
+								<svg
+									aria-hidden="true"
+									className="h-4 w-4 text-text-faint"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
+									strokeWidth="2"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+									/>
+								</svg>
+								<h2 className="text-xs font-semibold uppercase tracking-widest text-text-faint">
+									Media
+								</h2>
+							</div>
+							<div className="p-5">
+								<CoverImageField defaultValue={record?.coverImage ?? ""} />
+							</div>
 						</section>
 					)}
 
@@ -200,149 +234,250 @@ export default function ContentForm({
 								onContentChange={setPageContent}
 								onLayoutChange={setPageLayout}
 							/>
-							<p className="px-1 text-xs text-text-faint">
-								Use sections to shape the public page instead of writing one
-								long body field.
-							</p>
 						</div>
 					) : (
-						<section className="rounded-[--radius-default] border border-border bg-surface p-4 shadow-sm sm:p-5">
-							<PanelHeader
-								title="Body"
-								description="Write and structure the full content body."
-							/>
-							<div className="flex flex-col gap-1">
-								<Label htmlFor="cms-body">Body *</Label>
-								<Textarea
-									id="cms-body"
-									name="body"
-									value={body}
-									required
-									rows={16}
-									placeholder="Write your content here…"
-									className="font-mono text-sm leading-relaxed resize-y"
-									onChange={(e) => setBody(e.target.value)}
-								/>
-								<p className="text-xs text-text-faint">
-									Supports plain text or basic HTML.
-								</p>
+						<section className="border border-border bg-surface">
+							<div className="flex items-center gap-2 border-b border-border px-5 py-3">
+								<svg
+									aria-hidden="true"
+									className="h-4 w-4 text-text-faint"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
+									strokeWidth="2"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+									/>
+								</svg>
+								<h2 className="text-xs font-semibold uppercase tracking-widest text-text-faint">
+									Body Content
+								</h2>
+							</div>
+							<div className="p-5 space-y-3">
+								<div className="flex flex-col gap-1.5">
+									<Label htmlFor="cms-body">Content *</Label>
+									<Textarea
+										id="cms-body"
+										name="body"
+										value={body}
+										required
+										rows={16}
+										placeholder="Write your content here. Plain text or basic HTML works."
+										className="font-mono text-sm leading-relaxed resize-y"
+										onChange={(e) => setBody(e.target.value)}
+									/>
+									<p className="text-xs text-text-faint">
+										Supports plain text or basic HTML.
+									</p>
+								</div>
 							</div>
 						</section>
 					)}
 
+					{/* Save / Cancel inline — visible on mobile */}
+					<div className="flex items-center gap-3 lg:hidden">
+						<Button
+							type="submit"
+							form={formId}
+							disabled={isPending}
+							className="flex-1 justify-center"
+						>
+							{isPending
+								? "Saving\u2026"
+								: isEdit
+									? "Save changes"
+									: `Create ${modelLabel}`}
+						</Button>
+						<Button
+							type="button"
+							variant="secondary"
+							className="flex-1 justify-center"
+							onClick={() => {
+								window.location.href = "./";
+							}}
+						>
+							Cancel
+						</Button>
+					</div>
+
 					{state?.error && (
-						<p className="rounded-[--radius-default] border border-danger/40 bg-danger-muted px-4 py-3 text-sm text-danger">
+						<p className="border border-danger/40 bg-danger-muted px-4 py-3 text-sm text-danger">
 							{state.error}
 						</p>
 					)}
 				</form>
 			</div>
 
-			<aside className="space-y-4 lg:sticky lg:-top-2 lg:self-start">
-				<ContentPreview
-					title={isPageModel ? title : undefined}
-					excerpt={isPageModel ? excerpt : undefined}
-					layout={isPageModel ? pageLayout : undefined}
-					content={isPageModel ? pageContent : undefined}
-					body={body}
-				/>
-
-				<div className="rounded-[--radius-default] border border-border bg-surface p-4 space-y-3">
-					<PanelHeader
-						title="Status"
-						description="Set the publishing state for this entry."
-						rightSlot={isEdit ? <StatusBadge status={status} /> : null}
-					/>
-
-					{isEdit && (
-						<div className="flex flex-col gap-2">
-							{canPublish && publishAction && (
-								<form action={publishAction}>
-									<Button type="submit" className="w-full" variant="primary">
-										Publish
-									</Button>
-								</form>
-							)}
-							{canUnpublish && unpublishAction && (
-								<form action={unpublishAction}>
-									<Button type="submit" className="w-full" variant="secondary">
-										Revert to Draft
-									</Button>
-								</form>
-							)}
-							{canArchive && archiveAction && (
-								<form action={archiveAction}>
-									<Button type="submit" className="w-full" variant="warning">
-										Archive
-									</Button>
-								</form>
-							)}
+			<aside className="space-y-4 lg:sticky lg:top-4 lg:self-start">
+				{/* Publishing */}
+				<div className="border border-border bg-surface">
+					<div className="flex items-center gap-2 border-b border-border px-4 py-3">
+						<svg
+							aria-hidden="true"
+							className="h-4 w-4 text-text-faint"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							strokeWidth="2"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+							/>
+						</svg>
+						<h2 className="text-xs font-semibold uppercase tracking-widest text-text-faint">
+							Status
+						</h2>
+						<div className="ml-auto">
+							{isEdit && <StatusBadge status={status} />}
 						</div>
-					)}
+					</div>
+					<div className="space-y-3 p-4">
+						{isEdit && (
+							<div className="flex flex-col gap-2">
+								{canPublish && publishAction && (
+									<form action={publishAction}>
+										<Button type="submit" className="w-full" variant="primary">
+											Publish
+										</Button>
+									</form>
+								)}
+								{canUnpublish && unpublishAction && (
+									<form action={unpublishAction}>
+										<Button
+											type="submit"
+											className="w-full"
+											variant="secondary"
+										>
+											Revert to Draft
+										</Button>
+									</form>
+								)}
+								{canArchive && archiveAction && (
+									<form action={archiveAction}>
+										<Button type="submit" className="w-full" variant="warning">
+											Archive
+										</Button>
+									</form>
+								)}
+							</div>
+						)}
 
-					{!isEdit && (
-						<p className="text-xs text-text-faint">
-							Saved as <strong>Draft</strong> — publish after creating.
-						</p>
-					)}
+						{!isEdit && (
+							<p className="text-xs text-text-faint">
+								Saved as <strong>Draft</strong> — publish after creating.
+							</p>
+						)}
 
-					{isPageModel && (
-						<div className="space-y-2 border-t border-border pt-3">
+						{isEdit && (
+							<div className="border-t border-border pt-3 space-y-2">
+								<div className="flex items-center justify-between gap-2">
+									<span className="text-xs text-text-faint">Created</span>
+									<span className="text-xs text-text-muted tabular-nums">
+										{formatDate(record.createdAt)}
+									</span>
+								</div>
+								<div className="flex items-center justify-between gap-2">
+									<span className="text-xs text-text-faint">Updated</span>
+									<span className="text-xs text-text-muted tabular-nums">
+										{formatDate(record.updatedAt)}
+									</span>
+								</div>
+								{record.publishedAt && (
+									<div className="flex items-center justify-between gap-2">
+										<span className="text-xs text-text-faint">Published</span>
+										<span className="text-xs text-text-muted tabular-nums">
+											{formatDate(record.publishedAt)}
+										</span>
+									</div>
+								)}
+							</div>
+						)}
+					</div>
+				</div>
+
+				{/* Page links */}
+				{isPageModel && (
+					<div className="border border-border bg-surface p-4 space-y-2">
+						<div className="flex items-center gap-2">
+							<svg
+								aria-hidden="true"
+								className="h-4 w-4 text-text-faint"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+								strokeWidth="2"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+								/>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+								/>
+							</svg>
+							<h2 className="text-xs font-semibold uppercase tracking-widest text-text-faint">
+								Preview &amp; View
+							</h2>
+						</div>
+						<Button
+							type="button"
+							variant="secondary"
+							className="w-full"
+							disabled={!previewHref}
+							onClick={() => openInNewTab(previewHref)}
+						>
+							Preview page
+						</Button>
+
+						{livePageHref ? (
 							<Button
 								type="button"
 								variant="secondary"
 								className="w-full"
-								disabled={!previewHref}
-								onClick={() => openInNewTab(previewHref)}
+								onClick={() => openInNewTab(livePageHref)}
 							>
-								PREVIEW
+								View live page
 							</Button>
+						) : null}
 
-							{livePageHref ? (
-								<Button
-									type="button"
-									variant="secondary"
-									className="w-full"
-									onClick={() => openInNewTab(livePageHref)}
-								>
-									VIEW LIVE PAGE
-								</Button>
-							) : null}
-
-							<p className="text-xs leading-5 text-text-faint">
-								{previewHref
-									? "Preview opens the most recently saved version in a protected admin view."
-									: "Save this page once to open a protected preview in a new tab."}
-							</p>
-						</div>
-					)}
-				</div>
-
-				{isEdit && (
-					<div className="rounded-[--radius-default] border border-border bg-surface p-4 space-y-2">
-						<PanelHeader
-							title="Timestamps"
-							description="Review key lifecycle dates for this entry."
-						/>
-						<div className="space-y-1">
-							<MetaRow label="Created" value={formatDate(record.createdAt)} />
-							<MetaRow label="Updated" value={formatDate(record.updatedAt)} />
-							{record.publishedAt && (
-								<MetaRow
-									label="Published"
-									value={formatDate(record.publishedAt)}
-								/>
-							)}
-						</div>
+						<p className="text-xs leading-5 text-text-faint">
+							{previewHref
+								? "Preview opens the last saved version in a protected admin view."
+								: "Save once to enable preview."}
+						</p>
 					</div>
 				)}
 
-				<div className="rounded-[--radius-default] border border-border bg-surface p-4 shadow-sm sm:p-5">
-					<PanelHeader
-						title="Actions"
-						description={`Save changes or cancel this ${modelLabel.toLowerCase()} edit.`}
-					/>
-					<div className="flex flex-col gap-3">
+				{/* Save / Cancel */}
+				<div className="border border-border bg-surface p-4 space-y-3">
+					<div className="flex items-center gap-2">
+						<svg
+							aria-hidden="true"
+							className="h-4 w-4 text-text-faint"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							strokeWidth="2"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
+							/>
+						</svg>
+						<h2 className="text-xs font-semibold uppercase tracking-widest text-text-faint">
+							Actions
+						</h2>
+					</div>
+					<div className="flex flex-col gap-2">
 						<Button
 							type="submit"
 							form={formId}
@@ -350,14 +485,14 @@ export default function ContentForm({
 							className="w-full justify-center"
 						>
 							{isPending
-								? "Saving…"
+								? "Saving\u2026"
 								: isEdit
 									? "Save changes"
 									: `Create ${modelLabel}`}
 						</Button>
 						<Button
 							type="button"
-							variant="danger"
+							variant="secondary"
 							className="w-full justify-center"
 							onClick={() => {
 								window.location.href = "./";
@@ -368,12 +503,32 @@ export default function ContentForm({
 					</div>
 				</div>
 
+				{/* Delete */}
 				{isEdit && deleteAction && (
-					<div className="rounded-[--radius-default] border border-danger/30 bg-surface p-4 space-y-3">
-						<PanelHeader
-							title="Danger Zone"
-							description={`Permanently remove this ${modelLabel.toLowerCase()}.`}
-						/>
+					<div className="border border-danger/20 bg-surface p-4 space-y-3">
+						<div className="flex items-center gap-2">
+							<svg
+								aria-hidden="true"
+								className="h-4 w-4 text-danger"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+								strokeWidth="2"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+								/>
+							</svg>
+							<h2 className="text-xs font-semibold uppercase tracking-widest text-danger">
+								Delete
+							</h2>
+						</div>
+						<p className="text-xs text-text-faint">
+							Permanently remove this {modelLabel.toLowerCase()}. This cannot be
+							undone.
+						</p>
 						<Button
 							type="button"
 							variant="danger"
@@ -424,32 +579,9 @@ export default function ContentForm({
 	);
 }
 
-function PanelHeader({ title, description, rightSlot = null }) {
-	return (
-		<div className="mb-4 border-b border-border pb-3">
-			<div className="flex items-center justify-between gap-3">
-				<h2 className="text-xs font-semibold uppercase tracking-widest text-text-faint">
-					{title}
-				</h2>
-				{rightSlot}
-			</div>
-			<p className="mt-1 text-sm text-text-faint">{description}</p>
-		</div>
-	);
-}
-
-function MetaRow({ label, value }) {
-	return (
-		<div className="flex items-center justify-between gap-2">
-			<span className="text-xs text-text-faint">{label}</span>
-			<span className="text-xs text-text-muted tabular-nums">{value}</span>
-		</div>
-	);
-}
-
 function formatDate(date) {
-	if (!date) return "—";
-	return new Date(date).toLocaleDateString(undefined, {
+	if (!date) return "\u2014";
+	return new Date(date).toLocaleDateString("en-GB", {
 		month: "short",
 		day: "numeric",
 		year: "numeric",

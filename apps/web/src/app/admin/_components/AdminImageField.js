@@ -2,43 +2,40 @@
 
 import { Button, Card, CardContent, Input, Label } from "@techstream/quark-ui";
 import { useActionState, useEffect, useRef, useState } from "react";
-import { cmsUploadMediaInline } from "../_actions/media";
+import { cmsUploadMediaInline } from "../cms/_actions/media";
 
 const TABS = ["Media", "Upload", "URL"];
 
 /**
- * Cover image field with three selection modes:
+ * Image field for admin model forms with three selection modes:
  * - Media: pick from existing uploaded media assets
  * - Upload: upload a new file directly to the media library
  * - URL: paste an external image URL
  *
- * Submits the image URL under `name` (default "coverImage") as a hidden input.
+ * Submits the image URL as a hidden input under `name`.
  *
  * @param {{
+ *   label: string,
+ *   name: string,
  *   defaultValue?: string,
- *   name?: string,
  *   disabled?: boolean
  * }} props
  */
-export default function CoverImageField({
-	label = "Cover Image",
+export default function AdminImageField({
+	label,
+	name,
 	defaultValue = "",
-	name = "coverImage",
 	disabled = false,
-	onChange,
 }) {
 	function applyValue(nextValue) {
-		setValue((currentValue) =>
-			currentValue === nextValue ? currentValue : nextValue,
-		);
-		onChange?.(nextValue);
+		setValue((current) => (current === nextValue ? current : nextValue));
 	}
 
 	const [value, setValue] = useState(defaultValue);
 	const [open, setOpen] = useState(false);
 	const [tab, setTab] = useState("Media");
 	const [urlInput, setUrlInput] = useState(defaultValue);
-	const [mediaAssets, setMediaAssets] = useState(null); // null = not loaded
+	const [mediaAssets, setMediaAssets] = useState(null);
 	const [loadingMedia, setLoadingMedia] = useState(false);
 	const [uploadState, uploadAction, isUploading] = useActionState(
 		async (_prev, formData) => {
@@ -55,7 +52,6 @@ export default function CoverImageField({
 	const uploadInputRef = useRef(null);
 	const [uploadPreview, setUploadPreview] = useState(null);
 
-	// Fetch media assets when the Media tab is opened
 	useEffect(() => {
 		if (open && tab === "Media" && mediaAssets === null && !loadingMedia) {
 			setLoadingMedia(true);
@@ -71,10 +67,6 @@ export default function CoverImageField({
 		setValue(defaultValue);
 		setUrlInput(defaultValue);
 	}, [defaultValue]);
-
-	useEffect(() => {
-		onChange?.(value);
-	}, [value, onChange]);
 
 	function handleSelectMedia(asset) {
 		applyValue(`/api/media/${encodeURIComponent(asset.storageKey)}`);
@@ -98,7 +90,7 @@ export default function CoverImageField({
 	const isApiMedia = value?.startsWith("/api/media/");
 
 	return (
-		<div className="flex flex-col gap-1">
+		<div className="flex flex-col gap-1.5">
 			<Label>{label}</Label>
 
 			{/* Current value preview */}
@@ -109,7 +101,7 @@ export default function CoverImageField({
 							// biome-ignore lint/performance/noImgElement: dynamic/blob URL
 							<img
 								src={value}
-								alt="Cover preview"
+								alt="Selected field value"
 								className="w-full h-full object-cover"
 							/>
 						) : (
@@ -119,7 +111,9 @@ export default function CoverImageField({
 						)}
 					</div>
 					<div className="flex flex-col gap-1.5 pt-1">
-						<p className="text-xs text-text-muted truncate max-w-50">{value}</p>
+						<p className="text-xs text-text-muted truncate max-w-[12rem]">
+							{value}
+						</p>
 						<div className="flex gap-2">
 							{!disabled && (
 								<button
@@ -163,17 +157,17 @@ export default function CoverImageField({
 								d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
 							/>
 						</svg>
-						Choose cover image
+						Choose image
 					</button>
 				)
 			)}
 
 			{/* Hidden input carries the value into the form */}
-			{name ? <input type="hidden" name={name} value={value} /> : null}
+			<input type="hidden" name={name} value={value} />
 
 			{/* Picker panel */}
 			{open && (
-				<div className="mt-2 rounded-[--radius-default] border border-border bg-surface shadow-lg overflow-hidden">
+				<div className="rounded-[--radius-default] border border-border bg-surface shadow-lg overflow-hidden">
 					{/* Tabs */}
 					<div className="flex border-b border-border">
 						{TABS.map((t) => (
