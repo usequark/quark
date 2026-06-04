@@ -1,5 +1,17 @@
 # @techstream/quark-create-app
 
+## 1.15.0
+
+### Minor Changes
+
+- [`9e85dba`](https://github.com/Bobnoddle/quark/commit/9e85dba8de2031c91eb129c459110cb105d87fce) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Refactor CMS page builder by removing background animation support in favor of a simpler color-only background model, add HTML sanitization utilities, and replace the `section`/`photo-gallery`/`form` UI components with more focused `container`/`lightbox`/`form-field` alternatives across scaffolded projects.
+
+- [`ad311a8`](https://github.com/Bobnoddle/quark/commit/ad311a8967c32b13c5f5d16303f6cc57dc2abd3a) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Improve the scaffold DX in `quark-create-app` with clearer onboarding docs, feature-specific scaffold guidance, and a read-only scaffold drift checker with CI-friendly failure mode.
+
+### Patch Changes
+
+- [#54](https://github.com/Bobnoddle/quark/pull/54) [`799f9ba`](https://github.com/Bobnoddle/quark/commit/799f9ba87f8797d75ce3526ac5379975417cd7c1) Thanks [@Mattyfegan](https://github.com/Mattyfegan)! - Fix scaffolded route generation and tests for page-content migration behavior, and align build-time slug prerendering with CI environments that do not provide database variables.
+
 ## 1.14.0
 
 ### Minor Changes
