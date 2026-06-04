@@ -185,7 +185,7 @@ export default function PageBuilder({
 				})}
 			</div>
 
-			<div className="rounded-[--radius-default] border border-dashed border-border bg-surface px-4 py-4">
+			<div className="rounded-[--radius-default] border border-border bg-surface px-4 py-4">
 				<p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-faint">
 					Add Section
 				</p>

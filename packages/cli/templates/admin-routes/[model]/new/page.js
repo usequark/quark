@@ -5,6 +5,8 @@ import {
 } from "@techstream/quark-admin";
 import { notFound } from "next/navigation";
 import ModelForm from "../../_components/ModelForm";
+import { cmsCreatePage } from "../../cms/_actions/content";
+import ContentForm from "../../cms/_components/ContentForm";
 
 export async function generateMetadata({ params }) {
 	const { model: slug } = await params;
@@ -38,7 +40,11 @@ export default async function NewRecordPage({ params }) {
 					settings.
 				</p>
 			</div>
-			<ModelForm model={model} slug={slug} />
+			{model.name === "Page" ? (
+				<ContentForm createAction={cmsCreatePage} modelLabel="Page" />
+			) : (
+				<ModelForm model={model} slug={slug} />
+			)}
 		</div>
 	);
 }

@@ -48,8 +48,8 @@ export default function ContentForm({
 	const [excerpt, setExcerpt] = useState(record?.excerpt ?? "");
 	const [showHeader, setShowHeader] = useState(record?.showHeader ?? false);
 	const [body, setBody] = useState(record?.body ?? "");
-	const [pageContent, setPageContent] = useState(record?.content ?? null);
-	const [pageLayout, setPageLayout] = useState(record?.layout ?? "standard");
+	const [_pageContent, setPageContent] = useState(record?.content ?? null);
+	const [_pageLayout, setPageLayout] = useState(record?.layout ?? "standard");
 	const [deleteOpen, setDeleteOpen] = useState(false);
 	const [isDeleting, startDeleteTransition] = useTransition();
 
@@ -341,7 +341,7 @@ export default function ContentForm({
 							<div className="flex flex-col gap-2">
 								{canPublish && publishAction && (
 									<form action={publishAction}>
-										<Button type="submit" className="w-full" variant="primary">
+										<Button type="submit" className="w-full" variant="outline">
 											Publish
 										</Button>
 									</form>
@@ -482,6 +482,7 @@ export default function ContentForm({
 							type="submit"
 							form={formId}
 							disabled={isPending}
+							variant="outline"
 							className="w-full justify-center"
 						>
 							{isPending
@@ -493,7 +494,7 @@ export default function ContentForm({
 						<Button
 							type="button"
 							variant="secondary"
-							className="w-full justify-center"
+							className="w-full justify-center border-red-500! text-red-500! hover:bg-red-50!"
 							onClick={() => {
 								window.location.href = "./";
 							}}

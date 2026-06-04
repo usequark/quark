@@ -1,0 +1,8 @@
+{
+	"chat.tools.terminal.autoApprove": {
+		"/^Get-Content \"apps\\\\web\\\\src\\\\app\\\\admin\\\\``\\[model``\\]\\\\new\\\\page\\.js\" \\| ForEach-Object \\{ \"\\[\\$_\\]\" \\} \\| Select-Object -Last 20$/": {
+			"approve": true,
+			"matchCommandLine": true
+		}
+	}
+}

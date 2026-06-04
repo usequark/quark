@@ -8,6 +8,14 @@ import {
 import { prisma } from "@techstream/quark-db";
 import { notFound } from "next/navigation";
 import ModelForm from "../../_components/ModelForm";
+import {
+	cmsArchivePage,
+	cmsDeletePage,
+	cmsPublishPage,
+	cmsUnpublishPage,
+	cmsUpdatePage,
+} from "../../cms/_actions/content";
+import ContentForm from "../../cms/_components/ContentForm";
 
 export async function generateMetadata({ params }) {
 	const { model: slug, _id } = await params;
@@ -41,12 +49,24 @@ export default async function EditRecordPage({ params }) {
 					together.
 				</p>
 			</div>
-			<ModelForm
-				model={model}
-				record={record}
-				slug={slug}
-				readOnly={!!overrides.readOnly}
-			/>
+			{model.name === "Page" ? (
+				<ContentForm
+					record={record}
+					updateAction={cmsUpdatePage.bind(null, id)}
+					publishAction={cmsPublishPage.bind(null, id)}
+					archiveAction={cmsArchivePage.bind(null, id)}
+					unpublishAction={cmsUnpublishPage.bind(null, id)}
+					deleteAction={cmsDeletePage.bind(null, id)}
+					modelLabel="Page"
+				/>
+			) : (
+				<ModelForm
+					model={model}
+					record={record}
+					slug={slug}
+					readOnly={!!overrides.readOnly}
+				/>
+			)}
 		</div>
 	);
 }
