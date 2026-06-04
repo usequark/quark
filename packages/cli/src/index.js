@@ -2227,4 +2227,65 @@ program
 		}
 	});
 
+// ---------------------------------------------------------------------------
+// quark deploy — Deploy and inspect
+// ---------------------------------------------------------------------------
+
+const deployCmd = program
+	.command("deploy")
+	.description("Deploy a Quark project to Railway");
+
+deployCmd
+	.command("railway")
+	.description("Deploy to Railway (web + worker + Postgres + Redis)")
+	.option(
+		"--project-name <name>",
+		"Railway project name (creates a new project)",
+	)
+	.option("--project-id <id>", "Existing Railway project ID to link to")
+	.option("--environment <env>", "Railway environment (default: production)")
+	.option("--no-provision", "Skip provisioning PostgreSQL and Redis plugins")
+	.option("--dry-run", "Validate configuration without deploying")
+	.action(async (options) => {
+		const { deployToRailway } = await import("./deploy/deploy.js");
+
+		if (options.dryRun) {
+			const { inspectProject } = await import("./deploy/inspect.js");
+			console.log(
+				chalk.yellow("\n⚠  Dry run — validating deployment configuration\n"),
+			);
+			await inspectProject({ cwd: process.cwd() });
+			console.log(
+				chalk.green(
+					"✔ Configuration valid. Run without --dry-run to deploy.\n",
+				),
+			);
+			return;
+		}
+
+		await deployToRailway({
+			cwd: process.cwd(),
+			projectName: options.projectName,
+			projectId: options.projectId,
+			environment: options.environment,
+			provision: options.provision,
+		});
+	});
+
+deployCmd
+	.command("inspect")
+	.description("Inspect project deployment readiness")
+	.action(async () => {
+		const { inspectProject } = await import("./deploy/inspect.js");
+		await inspectProject({ cwd: process.cwd() });
+	});
+
+deployCmd
+	.command("status")
+	.description("Check deployed service status")
+	.action(async () => {
+		const { inspectProject } = await import("./deploy/inspect.js");
+		await inspectProject({ cwd: process.cwd() });
+	});
+
 program.parse();
