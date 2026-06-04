@@ -1,3 +1,8 @@
+import {
+	sanitizeRichTextHtml,
+	stripHtml,
+} from "@techstream/quark-cms/sanitize";
+
 const DEFAULT_PAGE_BLOCK_IDS = {
 	initialDefault: "page-block-initial-default",
 	legacyBody: "page-block-legacy-body",
@@ -10,18 +15,6 @@ const BACKGROUND_TONES = new Set([
 	"info",
 	"success",
 	"warning",
-]);
-
-const BACKGROUND_ANIMATIONS = new Set([
-	"background-waves",
-	"background-polygon",
-	"background-grid",
-	"background-aurora",
-	"background-data-stream",
-	"background-isometric",
-	"background-stars",
-	"background-streaks",
-	"background-vapor",
 ]);
 
 export function parseStoredPageContent(content) {
@@ -123,9 +116,6 @@ function normalizePageBlock(block, index) {
 			return {
 				id,
 				type: "cta",
-				// Note: legacy CTA blocks may have had an `eyebrow` field. When both
-				// `title` and `eyebrow` are present, `eyebrow` is intentionally dropped
-				// here because the new `cta` schema has no eyebrow field.
 				title: getTrimmedString(block.title) || getTrimmedString(block.eyebrow),
 				subtitle: sanitizeRichTextHtml(
 					getStringValue(block.subtitle || block.body),
@@ -221,35 +211,11 @@ function sanitizePathOrUrl(value) {
 	return isSafePathOrUrl(normalized) ? normalized : "";
 }
 
-function sanitizeRichTextHtml(html) {
-	return getStringValue(html)
-		.replace(
-			/<\s*\/?\s*(script|style|iframe|object|embed|form|input|textarea|select|button|link|meta)[^>]*>/gi,
-			"",
-		)
-		.replace(/\son[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
-		.replace(
-			/\s(href|src)\s*=\s*(?:(["'])\s*javascript:[^"']*\2|javascript:[^\s>]+)/gi,
-			"",
-		)
-		.trim();
-}
-
-function stripHtml(value) {
-	return String(value ?? "")
-		.replace(/<[^>]*>/g, " ")
-		.replace(/\s+/g, " ");
-}
-
 function normalizeBackgroundMode(value) {
-	return value === "animation" ? "animation" : "color";
+	return "color";
 }
 
 function normalizeBackgroundValue(mode, value) {
-	if (mode === "animation") {
-		return normalizeAnimationValue(value);
-	}
-
 	const normalized = getTrimmedString(value).toLowerCase();
 	return BACKGROUND_TONES.has(normalized) ? normalized : "primary";
 }
@@ -257,29 +223,6 @@ function normalizeBackgroundValue(mode, value) {
 function normalizeBackgroundToneValue(value) {
 	const normalized = getTrimmedString(value).toLowerCase();
 	return BACKGROUND_TONES.has(normalized) ? normalized : "primary";
-}
-
-function normalizeAnimationValue(value) {
-	const normalized = getTrimmedString(value)
-		.toLowerCase()
-		.replaceAll("_", "-")
-		.replaceAll(/\s+/g, "-");
-	if (!normalized) {
-		return "background-aurora";
-	}
-
-	if (BACKGROUND_ANIMATIONS.has(normalized)) {
-		return normalized;
-	}
-
-	if (!normalized.startsWith("background-")) {
-		const prefixed = `background-${normalized}`;
-		if (BACKGROUND_ANIMATIONS.has(prefixed)) {
-			return prefixed;
-		}
-	}
-
-	return "background-aurora";
 }
 
 function isSafePathOrUrl(value) {

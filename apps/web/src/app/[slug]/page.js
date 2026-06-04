@@ -16,7 +16,19 @@ export async function generateStaticParams() {
 			error instanceof Error &&
 			error.message.includes("Missing required database environment variables")
 		) {
-			// CI build jobs may not expose DB credentials; skip prerender params in that case.
+			// CI build jobs may not expose DB credentials; skip prerender params.
+			return [];
+		}
+
+		// Railway build network can't reach postgres.railway.internal,
+		// and local builds may not have a running Postgres.
+		// Skip pre-rendering; the page will render on-demand via ISR.
+		const { Prisma } = await import("@techstream/quark-db");
+		const isConnectionError =
+			error instanceof Prisma.PrismaClientInitializationError ||
+			(error instanceof Prisma.PrismaClientKnownRequestError &&
+				error.code?.startsWith("P1"));
+		if (isConnectionError) {
 			return [];
 		}
 

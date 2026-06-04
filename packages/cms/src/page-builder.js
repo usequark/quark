@@ -1,5 +1,12 @@
 import { ValidationError } from "@techstream/quark-core/errors";
 import { z } from "zod";
+import {
+	escapeAttribute,
+	escapeHtml,
+	renderRichText,
+	sanitizeRichTextHtml,
+	stripHtml,
+} from "./sanitize.js";
 
 export const PAGE_LAYOUTS = [
 	{
@@ -27,11 +34,6 @@ export const PAGE_BACKGROUND_MODES = [
 		label: "Color",
 		description: "Use a semantic background tone.",
 	},
-	{
-		value: "animation",
-		label: "Animation",
-		description: "Use one of the animated visual backgrounds.",
-	},
 ];
 
 export const PAGE_BACKGROUND_MODE_VALUES = PAGE_BACKGROUND_MODES.map(
@@ -49,22 +51,6 @@ export const PAGE_BACKGROUND_TONES = [
 
 export const PAGE_BACKGROUND_TONE_VALUES = PAGE_BACKGROUND_TONES.map(
 	(tone) => tone.value,
-);
-
-export const PAGE_BACKGROUND_ANIMATIONS = [
-	{ value: "background-waves", label: "Background Waves" },
-	{ value: "background-polygon", label: "Background Polygon" },
-	{ value: "background-grid", label: "Background Grid" },
-	{ value: "background-aurora", label: "Background Aurora" },
-	{ value: "background-data-stream", label: "Background Data Stream" },
-	{ value: "background-isometric", label: "Background Isometric" },
-	{ value: "background-stars", label: "Background Stars" },
-	{ value: "background-streaks", label: "Background Streaks" },
-	{ value: "background-vapor", label: "Background Vapor" },
-];
-
-export const PAGE_BACKGROUND_ANIMATION_VALUES = PAGE_BACKGROUND_ANIMATIONS.map(
-	(animation) => animation.value,
 );
 
 export const PAGE_SPLIT_COLUMN_KINDS = [
@@ -109,33 +95,29 @@ const DEFAULT_PAGE_BLOCK_IDS = {
 const BLOCK_ID_SCHEMA = z.string().min(1).max(100);
 const PAGE_LAYOUT_SCHEMA = z.enum(PAGE_LAYOUT_VALUES);
 
-const heroBlockSchema = z
-	.object({
-		id: BLOCK_ID_SCHEMA,
-		type: z.literal("hero"),
-		eyebrow: z.preprocess(
-			(value) => getTrimmedString(value),
-			z.string().max(80),
-		),
-		title: z.preprocess(
-			(value) => getTrimmedString(value),
-			z.string().max(160),
-		),
-		subtitle: z.preprocess(
-			(value) => sanitizeRichTextHtml(getStringValue(value)),
-			z.string().max(2000),
-		),
-		backgroundMode: z.enum(PAGE_BACKGROUND_MODE_VALUES),
-		backgroundValue: z.preprocess(
-			(value) => getTrimmedString(value).toLowerCase(),
-			z.string().max(80),
-		),
-		backgroundTone: z.preprocess(
+const heroBlockSchema = z.object({
+	id: BLOCK_ID_SCHEMA,
+	type: z.literal("hero"),
+	eyebrow: z.preprocess((value) => getTrimmedString(value), z.string().max(80)),
+	title: z.preprocess((value) => getTrimmedString(value), z.string().max(160)),
+	subtitle: z.preprocess(
+		(value) => sanitizeRichTextHtml(getStringValue(value)),
+		z.string().max(2000),
+	),
+	backgroundMode: z.enum(PAGE_BACKGROUND_MODE_VALUES),
+	backgroundValue: z
+		.preprocess(
 			(value) => normalizeBackgroundToneValue(value),
 			z.enum(PAGE_BACKGROUND_TONE_VALUES),
-		),
-	})
-	.superRefine(validateBackgroundSelection);
+		)
+		.default("primary"),
+	backgroundTone: z
+		.preprocess(
+			(value) => normalizeBackgroundToneValue(value),
+			z.enum(PAGE_BACKGROUND_TONE_VALUES),
+		)
+		.default("primary"),
+});
 
 const defaultBlockSchema = z.object({
 	id: BLOCK_ID_SCHEMA,
@@ -185,49 +167,48 @@ const splitBlockSchema = z.object({
 	),
 });
 
-const ctaBlockSchema = z
-	.object({
-		id: BLOCK_ID_SCHEMA,
-		type: z.literal("cta"),
-		title: z.preprocess(
-			(value) => getTrimmedString(value),
-			z.string().max(160),
-		),
-		subtitle: z.preprocess(
-			(value) => sanitizeRichTextHtml(getStringValue(value)),
-			z.string().max(1000),
-		),
-		primaryLabel: z.preprocess(
-			(value) => getTrimmedString(value),
-			z.string().max(80),
-		),
-		primaryHref: z.preprocess(
-			(value) => getTrimmedString(value),
-			z.string().refine((value) => !value || isSafePathOrUrl(value), {
-				message: "CTA links must use an http(s) or root-relative URL",
-			}),
-		),
-		secondaryLabel: z.preprocess(
-			(value) => getTrimmedString(value),
-			z.string().max(80),
-		),
-		secondaryHref: z.preprocess(
-			(value) => getTrimmedString(value),
-			z.string().refine((value) => !value || isSafePathOrUrl(value), {
-				message: "CTA links must use an http(s) or root-relative URL",
-			}),
-		),
-		backgroundMode: z.enum(PAGE_BACKGROUND_MODE_VALUES),
-		backgroundValue: z.preprocess(
-			(value) => getTrimmedString(value).toLowerCase(),
-			z.string().max(80),
-		),
-		backgroundTone: z.preprocess(
+const ctaBlockSchema = z.object({
+	id: BLOCK_ID_SCHEMA,
+	type: z.literal("cta"),
+	title: z.preprocess((value) => getTrimmedString(value), z.string().max(160)),
+	subtitle: z.preprocess(
+		(value) => sanitizeRichTextHtml(getStringValue(value)),
+		z.string().max(1000),
+	),
+	primaryLabel: z.preprocess(
+		(value) => getTrimmedString(value),
+		z.string().max(80),
+	),
+	primaryHref: z.preprocess(
+		(value) => getTrimmedString(value),
+		z.string().refine((value) => !value || isSafePathOrUrl(value), {
+			message: "CTA links must use an http(s) or root-relative URL",
+		}),
+	),
+	secondaryLabel: z.preprocess(
+		(value) => getTrimmedString(value),
+		z.string().max(80),
+	),
+	secondaryHref: z.preprocess(
+		(value) => getTrimmedString(value),
+		z.string().refine((value) => !value || isSafePathOrUrl(value), {
+			message: "CTA links must use an http(s) or root-relative URL",
+		}),
+	),
+	backgroundMode: z.enum(PAGE_BACKGROUND_MODE_VALUES),
+	backgroundValue: z
+		.preprocess(
 			(value) => normalizeBackgroundToneValue(value),
 			z.enum(PAGE_BACKGROUND_TONE_VALUES),
-		),
-	})
-	.superRefine(validateBackgroundSelection);
+		)
+		.default("primary"),
+	backgroundTone: z
+		.preprocess(
+			(value) => normalizeBackgroundToneValue(value),
+			z.enum(PAGE_BACKGROUND_TONE_VALUES),
+		)
+		.default("primary"),
+});
 
 export const pageBlockSchema = z.discriminatedUnion("type", [
 	heroBlockSchema,
@@ -728,98 +709,14 @@ function renderActionToHtml(label, href) {
 	return `<a href="${escapeAttribute(href)}">${escapeHtml(label)}</a>`;
 }
 
-function renderRichText(text) {
-	const trimmed = getTrimmedString(text);
-	if (!trimmed) {
-		return "";
-	}
-
-	if (/<[a-z][\s\S]*>/i.test(trimmed)) {
-		return sanitizeRichTextHtml(trimmed);
-	}
-
-	return trimmed
-		.split(/\n{2,}/)
-		.map(
-			(paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, "<br />")}</p>`,
-		)
-		.join("");
-}
-
-function escapeHtml(value) {
-	return value
-		.replaceAll("&", "&amp;")
-		.replaceAll("<", "&lt;")
-		.replaceAll(">", "&gt;")
-		.replaceAll('"', "&quot;")
-		.replaceAll("'", "&#39;");
-}
-
-function escapeAttribute(value) {
-	return escapeHtml(value);
-}
-
-function stripHtml(value) {
-	return value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ");
-}
-
-function sanitizeRichTextHtml(html) {
-	return html
-		.replace(
-			/<\s*\/?\s*(script|style|iframe|object|embed|form|input|textarea|select|button|link|meta)[^>]*>/gi,
-			"",
-		)
-		.replace(/\son[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
-		.replace(
-			/\s(href|src)\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi,
-			(match, _attr, value) => {
-				const normalizedValue = value
-					.trim()
-					.replace(/^['"]|['"]$/g, "")
-					.replace(/\s/g, "")
-					.toLowerCase();
-
-				return /^(javascript|vbscript|data):/.test(normalizedValue)
-					? ""
-					: match;
-			},
-		)
-		.trim();
-}
-
-function validateBackgroundSelection(block, ctx) {
-	if (block.backgroundMode === "color") {
-		if (!PAGE_BACKGROUND_TONE_VALUES.includes(block.backgroundValue)) {
-			ctx.addIssue({
-				code: z.ZodIssueCode.custom,
-				path: ["backgroundValue"],
-				message: "Background color must be one of the supported tones",
-			});
-		}
-		return;
-	}
-
-	const normalizedAnimationValue = normalizeAnimationValue(
-		block.backgroundValue,
-	);
-	if (!PAGE_BACKGROUND_ANIMATION_VALUES.includes(normalizedAnimationValue)) {
-		ctx.addIssue({
-			code: z.ZodIssueCode.custom,
-			path: ["backgroundValue"],
-			message: "Background animation must be one of the supported options",
-		});
-	}
-}
+// renderRichText, escapeHtml, escapeAttribute, stripHtml, sanitizeRichTextHtml
+// are imported from ./sanitize.js
 
 function normalizeBackgroundMode(value) {
-	return value === "animation" ? "animation" : "color";
+	return "color";
 }
 
 function normalizeBackgroundValue(mode, value) {
-	if (mode === "animation") {
-		return normalizeAnimationValue(value);
-	}
-
 	const normalized = getTrimmedString(value).toLowerCase();
 	return PAGE_BACKGROUND_TONE_VALUES.includes(normalized)
 		? normalized
@@ -831,29 +728,6 @@ function normalizeBackgroundToneValue(value) {
 	return PAGE_BACKGROUND_TONE_VALUES.includes(normalized)
 		? normalized
 		: "primary";
-}
-
-function normalizeAnimationValue(value) {
-	const normalized = getTrimmedString(value)
-		.toLowerCase()
-		.replaceAll("_", "-")
-		.replaceAll(/\s+/g, "-");
-	if (!normalized) {
-		return "background-aurora";
-	}
-
-	if (PAGE_BACKGROUND_ANIMATION_VALUES.includes(normalized)) {
-		return normalized;
-	}
-
-	if (!normalized.startsWith("background-")) {
-		const prefixed = `background-${normalized}`;
-		if (PAGE_BACKGROUND_ANIMATION_VALUES.includes(prefixed)) {
-			return prefixed;
-		}
-	}
-
-	return "background-aurora";
 }
 
 function normalizeSplitKind(value) {

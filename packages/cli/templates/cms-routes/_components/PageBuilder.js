@@ -3,8 +3,6 @@
 import {
 	createPageBlock,
 	normalizePageContent,
-	PAGE_BACKGROUND_ANIMATIONS,
-	PAGE_BACKGROUND_MODES,
 	PAGE_BACKGROUND_TONES,
 	PAGE_BLOCK_TYPES,
 	PAGE_LAYOUTS,
@@ -14,9 +12,6 @@ import { useEffect, useMemo, useState } from "react";
 import CoverImageField from "./CoverImageField";
 
 const DEFAULT_COLOR_BACKGROUND = "primary";
-const DEFAULT_ANIMATION_BACKGROUND =
-	PAGE_BACKGROUND_ANIMATIONS[0]?.value ?? "background-aurora";
-const DEFAULT_ANIMATION_TONE = "primary";
 
 export default function PageBuilder({
 	defaultContent,
@@ -435,84 +430,31 @@ function SplitColumnFields({
 }
 
 function BackgroundFields({ block, updateBlock }) {
-	const isAnimation = block.backgroundMode === "animation";
-
 	return (
 		<div className="rounded-[--radius-default] border border-border bg-bg/50 p-4 space-y-4">
 			<div className="flex flex-wrap gap-4 [&>*]:flex-1">
 				<div className="flex flex-col gap-1 flex-1 min-w-[12rem]">
-					<Label htmlFor={`block-${block.id}-background-mode`}>
-						Background mode
-					</Label>
-					<Select
-						id={`block-${block.id}-background-mode`}
-						value={block.backgroundMode}
-						onChange={(event) => {
-							const nextMode = event.target.value;
-							updateBlock(block.id, {
-								backgroundMode: nextMode,
-								backgroundValue:
-									nextMode === "animation"
-										? DEFAULT_ANIMATION_BACKGROUND
-										: DEFAULT_COLOR_BACKGROUND,
-								backgroundTone: block.backgroundTone,
-							});
-						}}
-					>
-						{PAGE_BACKGROUND_MODES.map((option) => (
-							<option key={option.value} value={option.value}>
-								{option.label}
-							</option>
-						))}
-					</Select>
-				</div>
-
-				<div className="flex flex-col gap-1 flex-1 min-w-[12rem]">
 					<Label htmlFor={`block-${block.id}-background-value`}>
-						{isAnimation ? "Animation" : "Color tone"}
+						Background tone
 					</Label>
 					<Select
 						id={`block-${block.id}-background-value`}
-						value={block.backgroundValue}
+						value={block.backgroundValue || DEFAULT_COLOR_BACKGROUND}
 						onChange={(event) =>
 							updateBlock(block.id, {
+								backgroundMode: "color",
 								backgroundValue: event.target.value,
+								backgroundTone: event.target.value,
 							})
 						}
 					>
-						{(isAnimation
-							? PAGE_BACKGROUND_ANIMATIONS
-							: PAGE_BACKGROUND_TONES
-						).map((option) => (
+						{PAGE_BACKGROUND_TONES.map((option) => (
 							<option key={option.value} value={option.value}>
 								{option.label}
 							</option>
 						))}
 					</Select>
 				</div>
-
-				{isAnimation ? (
-					<div className="flex flex-col gap-1 flex-1 min-w-[12rem]">
-						<Label htmlFor={`block-${block.id}-background-tone`}>
-							Animation base color
-						</Label>
-						<Select
-							id={`block-${block.id}-background-tone`}
-							value={block.backgroundTone || DEFAULT_ANIMATION_TONE}
-							onChange={(event) =>
-								updateBlock(block.id, {
-									backgroundTone: event.target.value,
-								})
-							}
-						>
-							{PAGE_BACKGROUND_TONES.map((option) => (
-								<option key={option.value} value={option.value}>
-									{option.label}
-								</option>
-							))}
-						</Select>
-					</div>
-				) : null}
 			</div>
 		</div>
 	);

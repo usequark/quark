@@ -11,6 +11,7 @@
 	},
 	"scripts": {
 		"test": "node ../../scripts/run-tests.mjs src",
+		"test:integration": "node --test --test-force-exit src/lightbox.integration-test.js src/form-field.integration-test.js",
 		"lint": "biome format --write && biome check --write"
 	},
 	"keywords": [],
@@ -25,6 +26,7 @@
 		"@techstream/quark-config": "workspace:*",
 		"@types/react": "^19.2.14",
 		"@types/react-dom": "^19.2.3",
+		"jsdom": "^29.1.1",
 		"react": "19.2.4",
 		"react-dom": "19.2.4"
 	}

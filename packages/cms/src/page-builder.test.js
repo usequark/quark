@@ -18,8 +18,8 @@ test("parsePageBuilderInput parses JSON content and preserves layout", () => {
 			createPageBlock("hero", {
 				title: "Welcome",
 				subtitle: "Hello",
-				backgroundMode: "animation",
-				backgroundValue: "background-waves",
+				backgroundMode: "color",
+				backgroundValue: "info",
 				backgroundTone: "info",
 			}),
 		]),
@@ -27,7 +27,7 @@ test("parsePageBuilderInput parses JSON content and preserves layout", () => {
 
 	assert.equal(result.layout, "immersive");
 	assert.equal(result.content[0].type, "hero");
-	assert.equal(result.content[0].backgroundValue, "background-waves");
+	assert.equal(result.content[0].backgroundValue, "info");
 	assert.equal(result.content[0].backgroundTone, "info");
 });
 
@@ -95,8 +95,8 @@ test("serializePageContentToBody renders all supported block types", () => {
 		createPageBlock("hero", {
 			title: "Hero title",
 			subtitle: "Hero subtitle",
-			backgroundMode: "animation",
-			backgroundValue: "background-waves",
+			backgroundMode: "color",
+			backgroundValue: "primary",
 		}),
 		createPageBlock("default", {
 			eyebrow: "Overview",
