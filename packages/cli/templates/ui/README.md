@@ -13,7 +13,7 @@ import { Button, Card, Badge } from '@yourscope/ui';
 ## Components
 
 ### Button
-Props: `variant` ('primary' | 'secondary' | 'danger' | 'ghost', default: 'primary'), `size` ('sm' | 'md' | 'lg', default: 'md'), `className`, all native button attributes.
+Props: `variant` ('primary' | 'secondary' | 'danger' | 'ghost' | 'success' | 'warning' | 'info' | 'outline' | 'solid', default: 'primary'), `size` ('sm' | 'md' | 'lg', default: 'md'), `icon` (React element or string rendered inline alongside children), `href` (renders as Next.js Link), `className`, all native button attributes.
 
 ### Input
 Props: `className`, all native input attributes.
@@ -35,6 +35,17 @@ Props: `variant` ('default' | 'primary' | 'success' | 'warning' | 'danger' | 'in
 
 ### Card / CardHeader / CardTitle / CardContent / CardFooter
 Composable card container. All parts accept `className`.
+
+### Container
+Minimal wrapper that provides the outer shell styling (rounded, border, surface background). Accepts `className` and `children`.
+
+### Lightbox
+`"use client"` — Overlay image viewer with optional previous/next navigation and keyboard support.
+Props: `src` (string), `alt`, `caption`, `open` (bool), `onClose` (fn), `onPrevious` (fn), `onNext` (fn), `showPrevious` (bool), `showNext` (bool), `currentIndex` (number), `totalCount` (number), `className`.
+
+### FormField
+`"use client"` — Composible field wrapper for label + input + error display.
+Props: `label` (string), `name` (string), `error` (string, optional), `children` (custom input, optional — defaults to `<Input>`), `className`, all native input attributes when no children.
 
 ### Table / TableHeader / TableBody / TableRow / TableHead / TableCell
 Composable table. `Table` wraps in a scrollable container. All parts accept `className`.
@@ -60,12 +71,6 @@ Props: `id`, `name`, `defaultValue`, `placeholder`, `disabled`, `required`, `row
 Standardized multi-column site footer with brand block, CTA, links, and legal bottom bar.
 Props include: `brandName`, `brandDescription`, `ctaLabel`, `ctaHref`, `columns` (3-column array), `copyrightText`, `legalLinks`, `poweredByText`, `poweredByHref`, `mark`, `className`.
 
-### PhotoGallery
-`"use client"` responsive image gallery with optional lightbox overlay.
-Props include: `images` (array of image objects or strings), `columns` (1-4), `lightbox` (bool), `showCounter` (bool), `className`, `thumbnailClassName`.
-Image object shape: `{ src, thumbnailSrc?, alt?, caption? }`.
-Keyboard support in lightbox: `Escape`, `ArrowLeft`, `ArrowRight`.
-
 ### Navbar
 `"use client"` desktop navigation bar with three-zone layout: logo (left), centered nav links (middle), and action button (right). Supports dropdown sub-navigation on parent items.
 Props include: `logo`, `logoHref`, `links`, `action`, `maxWidthClassName`, `className`.
@@ -88,7 +93,7 @@ return (
 ## Design notes
 - Tailwind CSS only. No CSS-in-JS, no external dependencies.
 - All components accept `className` for overrides.
-- Client-only components: `Dialog`, `Toast`, `useToast`, `Select`, `RichText`, `Navbar`, `MobileNavbar`, `ThemeProvider`, `useTheme`.
+- Client-only components: `Dialog`, `Toast`, `useToast`, `Select`, `Lightbox`, `FormField`, `RichText`, `Navbar`, `MobileNavbar`, `ThemeProvider`, `useTheme`.
 - Accessible: ARIA attributes, focus management on interactive elements.
 
 ## Example references

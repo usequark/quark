@@ -6,17 +6,16 @@ import { useEffect, useState } from "react";
 const SECTIONS = [
 	{ id: "button", label: "Button" },
 	{ id: "badge", label: "Badge" },
-	{ id: "form", label: "Form" },
+	{ id: "form-controls", label: "Form Controls" },
+	{ id: "formfield", label: "FormField" },
 	{ id: "card", label: "Card" },
-	{ id: "table", label: "Table" },
-	{ id: "skeleton", label: "Skeleton" },
+	{ id: "container", label: "Container" },
+	{ id: "lightbox", label: "Lightbox" },
 	{ id: "dialog", label: "Dialog" },
 	{ id: "toast", label: "Toast" },
-	{ id: "sections", label: "Sections" },
+	{ id: "skeleton", label: "Skeleton" },
+	{ id: "table", label: "Table" },
 	{ id: "navbar-footer", label: "Navbar & Footer" },
-	{ id: "animations", label: "Animations" },
-	{ id: "gallery", label: "Gallery" },
-	{ id: "forms", label: "Forms" },
 ];
 
 function NavItem({ id, label, index }) {

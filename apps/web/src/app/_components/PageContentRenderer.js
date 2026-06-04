@@ -1,4 +1,9 @@
-import { Section } from "@techstream/quark-ui";
+import {
+	sanitizeRichTextHtml,
+	stripHtml,
+} from "@techstream/quark-cms/sanitize";
+import { Button } from "@techstream/quark-ui";
+import React from "react";
 import { normalizePageContent } from "../../lib/content/page-content.js";
 
 function hasRenderableContent(blocks) {
@@ -60,7 +65,7 @@ const LAYOUT_CLASSES = {
 	immersive: "max-w-6xl",
 };
 
-const ALTERNATING_SECTION_BACKGROUNDS = ["bg-surface", "bg-bg"];
+const ALTERNATING_BACKGROUNDS = ["bg-surface", "bg-bg"];
 
 export function pageHasRenderableContent(content, fallbackBody = "") {
 	return hasRenderableContent(normalizePageContent(content, fallbackBody));
@@ -119,7 +124,7 @@ export default function PageContentRenderer({
 							key={block.id ?? `${block.type}-${JSON.stringify(block)}`}
 							block={block}
 							previewMode={previewMode}
-							sectionClassName={getAlternatingSectionClassName(blocks, index)}
+							sectionBg={getAlternatingBg(blocks, index)}
 						/>
 					))}
 				</div>
@@ -128,38 +133,53 @@ export default function PageContentRenderer({
 	);
 }
 
-function PageBlock({ block, previewMode, sectionClassName = "" }) {
-	const blockClassName = joinClassNames(
-		"rounded-none border-0",
-		previewMode ? "" : "",
-		sectionClassName,
-	);
-
+function PageBlock({ block, previewMode, sectionBg = "" }) {
 	switch (block?.type) {
 		case "hero":
 			if (!block.eyebrow && !block.title && !block.subtitle) return null;
 			return (
-				<Section
-					type="hero"
-					className={blockClassName}
-					eyebrow={block.eyebrow}
-					title={block.title}
-					subtitle={block.subtitle}
-					backgroundMode={block.backgroundMode}
-					backgroundValue={block.backgroundValue}
-					backgroundTone={block.backgroundTone}
-				/>
+				<div className={`${sectionBg}`.trim()}>
+					<div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 py-12 sm:py-14">
+						<div className="max-w-3xl">
+							{block.eyebrow && (
+								<p className="font-mono text-[11px] uppercase tracking-[0.2em] text-text-faint">
+									{block.eyebrow}
+								</p>
+							)}
+							<h2
+								className={`${block.eyebrow ? "mt-2 " : ""}text-2xl font-semibold tracking-tight text-text sm:text-3xl`}
+							>
+								{block.title}
+							</h2>
+							{renderRichContent(
+								block.subtitle,
+								"mt-3 text-sm text-text-muted sm:text-base",
+							)}
+						</div>
+					</div>
+				</div>
 			);
 		case "default":
 			if (!block.eyebrow && !block.title && !block.body) return null;
 			return (
-				<Section
-					type="default"
-					className={blockClassName}
-					eyebrow={block.eyebrow}
-					title={block.title}
-					body={block.body}
-				/>
+				<div className={`${sectionBg}`.trim()}>
+					<div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+						<div className="max-w-3xl">
+							{block.eyebrow && (
+								<p className="font-mono text-[11px] uppercase tracking-[0.2em] text-text-faint">
+									{block.eyebrow}
+								</p>
+							)}
+							<h3 className="mt-2 text-2xl font-semibold tracking-tight text-text">
+								{block.title}
+							</h3>
+							{renderRichContent(
+								block.body,
+								"mt-4 text-sm leading-7 text-text-muted",
+							)}
+						</div>
+					</div>
+				</div>
 			);
 		case "split":
 			if (
@@ -179,53 +199,80 @@ function PageBlock({ block, previewMode, sectionClassName = "" }) {
 				return null;
 			}
 			return (
-				<Section
-					type="split"
-					className={blockClassName}
-					eyebrow={block.eyebrow}
-					title={block.title}
-					leftKind={block.leftKind}
-					leftBody={block.leftBody}
-					leftSrc={block.leftSrc}
-					leftAlt={block.leftAlt}
-					rightKind={block.rightKind}
-					rightBody={block.rightBody}
-					rightSrc={block.rightSrc}
-					rightAlt={block.rightAlt}
-				/>
+				<div className={`${sectionBg}`.trim()}>
+					<div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+						<div className="max-w-3xl">
+							{block.eyebrow && (
+								<p className="font-mono text-[11px] uppercase tracking-[0.2em] text-text-faint">
+									{block.eyebrow}
+								</p>
+							)}
+							<h3 className="mt-2 text-2xl font-semibold tracking-tight text-text">
+								{block.title}
+							</h3>
+						</div>
+						<div className="mt-6 grid gap-4 md:grid-cols-2">
+							{renderSplitColumn(
+								block.leftKind,
+								block.leftBody,
+								block.leftSrc,
+								block.leftAlt,
+								"left",
+							)}
+							{renderSplitColumn(
+								block.rightKind,
+								block.rightBody,
+								block.rightSrc,
+								block.rightAlt,
+								"right",
+							)}
+						</div>
+					</div>
+				</div>
 			);
 		case "cta": {
-			const primaryAction = toAction(
-				block.primaryLabel,
-				block.primaryHref,
-				previewMode,
-			);
-			const secondaryAction = toAction(
-				block.secondaryLabel,
-				block.secondaryHref,
-				previewMode,
-			);
 			if (
 				!block.title &&
 				!block.subtitle &&
-				!primaryAction &&
-				!secondaryAction
+				!block.primaryLabel &&
+				!block.secondaryLabel
 			) {
 				return null;
 			}
-
 			return (
-				<Section
-					type="cta"
-					className={blockClassName}
-					title={block.title}
-					subtitle={block.subtitle}
-					primaryAction={primaryAction}
-					secondaryAction={secondaryAction}
-					backgroundMode={block.backgroundMode}
-					backgroundValue={block.backgroundValue}
-					backgroundTone={block.backgroundTone}
-				/>
+				<div className={`${sectionBg}`.trim()}>
+					<div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 py-12 sm:py-14">
+						<div className="mx-auto max-w-3xl text-center">
+							<h3 className="text-2xl font-semibold tracking-tight text-text sm:text-3xl">
+								{block.title}
+							</h3>
+							{renderRichContent(
+								block.subtitle,
+								"mt-3 text-sm text-text-muted sm:text-base",
+							)}
+							{(block.primaryLabel || block.secondaryLabel) && (
+								<div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+									{block.primaryLabel && block.primaryHref && (
+										<Button
+											href={previewMode ? "#" : block.primaryHref}
+											variant="primary"
+										>
+											{block.primaryLabel}
+										</Button>
+									)}
+									{block.secondaryLabel && block.secondaryHref && (
+										<Button
+											href={previewMode ? "#" : block.secondaryHref}
+											variant="secondary"
+										>
+											{block.secondaryLabel}
+										</Button>
+									)}
+								</div>
+							)}
+						</div>
+					</div>
+				</div>
 			);
 		}
 		default:
@@ -233,30 +280,65 @@ function PageBlock({ block, previewMode, sectionClassName = "" }) {
 	}
 }
 
-function toAction(label, href, previewMode) {
-	if (!label || !href) {
-		return null;
+function renderSplitColumn(kind, body, src, alt, fallbackLabel) {
+	if (kind === "image" && src) {
+		return (
+			<figure className="overflow-hidden rounded-[--radius-default] border border-border bg-bg">
+				<img
+					src={src}
+					alt={alt || `${fallbackLabel} media`}
+					className="h-full min-h-56 w-full object-cover"
+				/>
+			</figure>
+		);
 	}
 
-	return {
-		label,
-		href: previewMode ? "#" : href,
-	};
+	return (
+		<div className="min-w-0">
+			{renderRichContent(
+				body || `Add ${fallbackLabel} column text.`,
+				"text-sm leading-7 text-text-muted",
+			)}
+		</div>
+	);
 }
 
-function getAlternatingSectionClassName(blocks, index) {
+function renderRichContent(text, className) {
+	const value = typeof text === "string" ? text.trim() : "";
+	if (!value) return null;
+
+	if (/<[a-z][\s\S]*>/i.test(value)) {
+		const sanitized = sanitizeRichTextHtml(value);
+		if (!sanitized) return null;
+		return React.createElement("div", {
+			className,
+			dangerouslySetInnerHTML: { __html: sanitized },
+		});
+	}
+
+	return value.split(/\n{2,}/).map((paragraph, index) => (
+		<p
+			key={paragraph.slice(0, 32).replace(/\s+/g, "-") || `p-${index}`}
+			className={className}
+		>
+			{paragraph.trim()}
+		</p>
+	));
+}
+
+function getAlternatingBg(blocks, index) {
 	if (!isRenderableAlternatingSection(blocks[index])) {
 		return "";
 	}
 
-	let alternatingCount = 0;
-	for (let currentIndex = 0; currentIndex <= index; currentIndex += 1) {
-		if (isRenderableAlternatingSection(blocks[currentIndex])) {
-			alternatingCount += 1;
+	let count = 0;
+	for (let i = 0; i <= index; i += 1) {
+		if (isRenderableAlternatingSection(blocks[i])) {
+			count += 1;
 		}
 	}
 
-	return ALTERNATING_SECTION_BACKGROUNDS[(alternatingCount - 1) % 2];
+	return ALTERNATING_BACKGROUNDS[(count - 1) % 2];
 }
 
 function isAlternatingSectionType(type) {
@@ -286,12 +368,4 @@ function isRenderableAlternatingSection(block) {
 	);
 }
 
-function joinClassNames(...values) {
-	return values.filter(Boolean).join(" ");
-}
-
-function stripHtml(value) {
-	return String(value ?? "")
-		.replace(/<[^>]*>/g, " ")
-		.replace(/\s+/g, " ");
-}
+// stripHtml is imported from @techstream/quark-cms/sanitize

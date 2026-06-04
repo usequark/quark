@@ -1,14 +1,5 @@
 "use client";
 import {
-	BackgroundAurora,
-	BackgroundDataStream,
-	BackgroundGrid,
-	BackgroundIsometric,
-	BackgroundPolygon,
-	BackgroundStars,
-	BackgroundStreaks,
-	BackgroundVapor,
-	BackgroundWaves,
 	Badge,
 	Button,
 	Card,
@@ -17,15 +8,15 @@ import {
 	CardHeader,
 	CardTitle,
 	Checkbox,
+	Container,
 	Dialog,
 	Footer,
-	Form,
+	FormField,
 	Input,
 	Label,
+	Lightbox,
 	MobileNavbar,
 	Navbar,
-	PhotoGallery,
-	Section,
 	Select,
 	Skeleton,
 	Table,
@@ -42,112 +33,9 @@ import {
 import { useState } from "react";
 import { Sidebar } from "./_components/Sidebar";
 
-const ANIMATIONS = [
-	{
-		key: "waves",
-		label: "Waves",
-		Component: BackgroundWaves,
-		props: {
-			colors: {
-				back: "rgba(14, 165, 233, 0.3)",
-				mid: "rgba(2, 132, 199, 0.4)",
-				front: "rgba(3, 105, 161, 0.5)",
-			},
-		},
-	},
-	{
-		key: "data-stream",
-		label: "Data Stream",
-		Component: BackgroundDataStream,
-		props: { variant: "light" },
-	},
-	{
-		key: "isometric",
-		label: "Isometric",
-		Component: BackgroundIsometric,
-		props: { color: "#818cf8", opacity: 0.55 },
-	},
-	{
-		key: "vapor",
-		label: "Vapor",
-		Component: BackgroundVapor,
-		props: {},
-	},
-	{
-		key: "aurora",
-		label: "Aurora",
-		Component: BackgroundAurora,
-		props: {
-			colors: {
-				a: "rgba(14, 165, 233, 0.6)",
-				b: "rgba(109, 40, 217, 0.5)",
-				c: "rgba(6, 182, 212, 0.55)",
-			},
-		},
-	},
-	{
-		key: "polygon",
-		label: "Polygon",
-		Component: BackgroundPolygon,
-		props: {},
-		theme: "dark",
-	},
-	{
-		key: "stars",
-		label: "Stars",
-		Component: BackgroundStars,
-		props: {},
-		theme: "dark",
-	},
-	{
-		key: "streaks",
-		label: "Streaks",
-		Component: BackgroundStreaks,
-		props: {},
-		theme: "dark",
-	},
-	{
-		key: "grid",
-		label: "Grid",
-		Component: BackgroundGrid,
-		props: {},
-	},
-];
-
 const TABLE_DATA = [
 	{ name: "Alice", role: "Admin", status: "Active" },
 	{ name: "Bob", role: "Viewer", status: "Inactive" },
-];
-
-const GALLERY_IMAGES = [
-	{
-		src: "https://picsum.photos/id/1015/1800/1100",
-		alt: "Snow-capped mountain range above a winding lake",
-		caption: "Wide landscape sample",
-	},
-	{
-		src: "https://picsum.photos/id/1027/1000/1500",
-		alt: "Portrait image of a dog in golden light",
-		caption: "Portrait sample",
-	},
-	{
-		src: "https://picsum.photos/id/1035/1600/950",
-		alt: "Colorful cliffs meeting the sea",
-		caption: "Panoramic sample",
-	},
-	{
-		src: "https://picsum.photos/id/1043/1100/1100",
-		alt: "Square aerial view of ocean shallows",
-		caption: "Square sample",
-	},
-];
-
-const SINGLE_GALLERY_IMAGE = [
-	{
-		src: "https://picsum.photos/id/1069/1280/840",
-		alt: "A solo image preview used for single-image lightbox behavior",
-		caption: "Single image mode",
-	},
 ];
 
 function Group({ label, children }) {
@@ -185,20 +73,10 @@ export default function PlaygroundPage() {
 }
 
 function PlaygroundInner() {
-	const [animationKey, setAnimationKey] = useState("aurora");
 	const [dialogOpen, setDialogOpen] = useState(false);
 	const [layoutPreviewType, setLayoutPreviewType] = useState(null);
-	const [sectionPreviewType, setSectionPreviewType] = useState("hero");
+	const [lightboxOpen, setLightboxOpen] = useState(false);
 	const toast = useToast();
-
-	const sectionPreviewTitle =
-		sectionPreviewType === "hero"
-			? "Hero Section Preview"
-			: sectionPreviewType === "default"
-				? "Default Page Section Preview"
-				: sectionPreviewType === "split"
-					? "Split Page Section Preview"
-					: "CTA Section Preview";
 
 	const layoutPreviewTitle =
 		layoutPreviewType === "navbar"
@@ -207,59 +85,6 @@ function PlaygroundInner() {
 				? "Mobile Navbar Preview"
 				: "Footer Preview";
 
-	function renderSectionPreview() {
-		switch (sectionPreviewType) {
-			case "hero":
-				return (
-					<Section
-						type="hero"
-						title="Build Confidence With Every Release"
-						subtitle="Ship production-ready updates faster with a slim hero designed to orient users immediately."
-						backgroundMode="animation"
-						backgroundValue="Waves"
-						backgroundTone="surface"
-					/>
-				);
-			case "default":
-				return (
-					<Section
-						type="default"
-						eyebrow="Platform"
-						title="A simple section that keeps content readable"
-						body="The default page section keeps hierarchy clear with a compact eyebrow and heading pair above comfortable body copy.\n\nUse this layout for most paragraphs where clarity matters more than visual complexity."
-					/>
-				);
-			case "split":
-				return (
-					<Section
-						type="split"
-						eyebrow="Workflow"
-						title="Pair narrative copy with supporting media"
-						leftKind="text"
-						leftBody="Use text on one side to explain the message while the second side supports the story with visuals.\n\nThe layout stacks naturally on smaller viewports."
-						rightKind="image"
-						rightSrc="https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&w=1200&q=80"
-						rightAlt="Design collaboration workspace"
-					/>
-				);
-			case "cta":
-				return (
-					<Section
-						type="cta"
-						title="Ready to map your next release?"
-						subtitle="Use the CTA section at the bottom of pages to route users to their next high-value action."
-						primaryAction={{ label: "Book demo", href: "#" }}
-						secondaryAction={{ label: "View docs", href: "#" }}
-						backgroundMode="animation"
-						backgroundValue="data-stream"
-						backgroundTone="muted"
-					/>
-				);
-			default:
-				return null;
-		}
-	}
-
 	function renderLayoutPreview() {
 		switch (layoutPreviewType) {
 			case "navbar":
@@ -267,7 +92,8 @@ function PlaygroundInner() {
 					<div className="bg-bg pb-56">
 						<Navbar logo="Quark" action={{ label: "Get Started", href: "#" }} />
 						<div className="px-4 pt-6 text-sm text-text-muted sm:px-6 lg:px-8">
-							Open "Services" or "Company" to inspect desktop dropdown menus.
+							Open &ldquo;Services&rdquo; or &ldquo;Company&rdquo; to inspect
+							desktop dropdown menus.
 						</div>
 					</div>
 				);
@@ -309,7 +135,6 @@ function PlaygroundInner() {
 
 			<main className="min-h-screen">
 				<div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-12 py-10">
-					{/* Page label */}
 					<p className="font-mono uppercase mb-6 text-xs tracking-[0.15em] text-text-faint">
 						quark-ui · component reference
 					</p>
@@ -322,8 +147,6 @@ function PlaygroundInner() {
 								<Button variant="secondary">Secondary</Button>
 								<Button variant="danger">Danger</Button>
 								<Button variant="ghost">Ghost</Button>
-							</Group>
-							<Group label="themed">
 								<Button variant="success">Success</Button>
 								<Button variant="warning">Warning</Button>
 								<Button variant="info">Info</Button>
@@ -331,7 +154,7 @@ function PlaygroundInner() {
 								<Button variant="solid">Solid</Button>
 							</Group>
 							<Group label="size">
-								<Button>Small</Button>
+								<Button size="sm">Small</Button>
 								<Button size="md">Medium</Button>
 								<Button size="lg">Large</Button>
 							</Group>
@@ -351,8 +174,12 @@ function PlaygroundInner() {
 							</Group>
 						</ComponentSection>
 
-						{/* ── 03 Form ── */}
-						<ComponentSection id="form" index={3} title="Form Controls">
+						{/* ── 03 Form Controls ── */}
+						<ComponentSection
+							id="form-controls"
+							index={3}
+							title="Form Controls"
+						>
 							<div className="max-w-xs space-y-3">
 								<div>
 									<Label htmlFor="inp">Input</Label>
@@ -374,8 +201,25 @@ function PlaygroundInner() {
 							</div>
 						</ComponentSection>
 
-						{/* ── 04 Card ── */}
-						<ComponentSection id="card" index={4} title="Card">
+						{/* ── 04 FormField ── */}
+						<ComponentSection id="formfield" index={4} title="FormField">
+							<div className="max-w-xs space-y-4">
+								<FormField label="Name" name="name" placeholder="Your name" />
+								<FormField
+									label="Email"
+									name="email"
+									type="email"
+									placeholder="you@example.com"
+									error="Please enter a valid email"
+								/>
+								<FormField label="Message" name="message">
+									<Textarea placeholder="Write your message…" rows={3} />
+								</FormField>
+							</div>
+						</ComponentSection>
+
+						{/* ── 05 Card ── */}
+						<ComponentSection id="card" index={5} title="Card">
 							<div className="grid gap-4 sm:grid-cols-2">
 								<Card className="max-w-xs bg-surface shadow-sm">
 									<CardHeader>
@@ -409,8 +253,100 @@ function PlaygroundInner() {
 							</div>
 						</ComponentSection>
 
-						{/* ── 05 Table ── */}
-						<ComponentSection id="table" index={5} title="Table">
+						{/* ── 06 Container ── */}
+						<ComponentSection id="container" index={6} title="Container">
+							<Container className="max-w-sm p-6">
+								<p className="text-sm font-semibold text-text">
+									Container shell
+								</p>
+								<p className="mt-1 text-sm text-text-muted">
+									A minimal wrapper with rounded corners, border, and surface
+									background. Compose with any content.
+								</p>
+							</Container>
+						</ComponentSection>
+
+						{/* ── 07 Lightbox ── */}
+						<ComponentSection id="lightbox" index={7} title="Lightbox">
+							<p className="text-sm leading-6 text-text-muted">
+								A bare overlay image viewer. Compose your own thumbnail grid
+								from Card/Button, then open the Lightbox on click.
+							</p>
+							<Button onClick={() => setLightboxOpen(true)}>
+								Open Lightbox
+							</Button>
+							<Lightbox
+								src="https://picsum.photos/id/1015/1800/1100"
+								alt="Snow-capped mountain range above a winding lake"
+								caption="Wide landscape sample"
+								open={lightboxOpen}
+								onClose={() => setLightboxOpen(false)}
+							/>
+						</ComponentSection>
+
+						{/* ── 08 Dialog ── */}
+						<ComponentSection id="dialog" index={8} title="Dialog">
+							<Button onClick={() => setDialogOpen(true)}>Open Dialog</Button>
+							<Dialog
+								open={dialogOpen}
+								onClose={() => setDialogOpen(false)}
+								title="Confirm Action"
+							>
+								<p className="text-sm text-text-muted">
+									Are you sure you want to continue? This action cannot be
+									undone.
+								</p>
+								<div className="mt-5 flex justify-end gap-2">
+									<Button onClick={() => setDialogOpen(false)}>Confirm</Button>
+									<Button
+										variant="secondary"
+										onClick={() => setDialogOpen(false)}
+									>
+										Cancel
+									</Button>
+								</div>
+							</Dialog>
+						</ComponentSection>
+
+						{/* ── 09 Toast ── */}
+						<ComponentSection id="toast" index={9} title="Toast">
+							<Group label="trigger">
+								<Button onClick={() => toast.show("Changes saved.", "success")}>
+									Success
+								</Button>
+								<Button
+									variant="danger"
+									onClick={() => toast.show("Request failed.", "error")}
+								>
+									Error
+								</Button>
+								<Button
+									variant="secondary"
+									onClick={() => toast.show("Notification sent.")}
+								>
+									Default
+								</Button>
+							</Group>
+							<Toast {...toast.toastProps} />
+						</ComponentSection>
+
+						{/* ── 10 Skeleton ── */}
+						<ComponentSection id="skeleton" index={10} title="Skeleton">
+							<div className="space-y-3 max-w-xs">
+								<Skeleton className="h-4 w-40" />
+								<div className="flex items-center gap-3">
+									<Skeleton className="h-9 w-9 rounded-full" />
+									<div className="space-y-1.5 flex-1">
+										<Skeleton className="h-3 w-3/4" />
+										<Skeleton className="h-3 w-1/2" />
+									</div>
+								</div>
+								<Skeleton className="h-20 w-full" />
+							</div>
+						</ComponentSection>
+
+						{/* ── 11 Table ── */}
+						<ComponentSection id="table" index={11} title="Table">
 							<div className="bg-surface overflow-hidden rounded-md border border-border">
 								<Table>
 									<TableHeader>
@@ -441,118 +377,10 @@ function PlaygroundInner() {
 							</div>
 						</ComponentSection>
 
-						{/* ── 06 Skeleton ── */}
-						<ComponentSection id="skeleton" index={6} title="Skeleton">
-							<div className="space-y-3 max-w-xs">
-								<Skeleton className="h-4 w-40" />
-								<div className="flex items-center gap-3">
-									<Skeleton className="h-9 w-9 rounded-full" />
-									<div className="space-y-1.5 flex-1">
-										<Skeleton className="h-3 w-3/4" />
-										<Skeleton className="h-3 w-1/2" />
-									</div>
-								</div>
-								<Skeleton className="h-20 w-full" />
-							</div>
-						</ComponentSection>
-
-						{/* ── 07 Dialog ── */}
-						<ComponentSection id="dialog" index={7} title="Dialog">
-							<Button onClick={() => setDialogOpen(true)}>Open Dialog</Button>
-							<Dialog
-								open={dialogOpen}
-								onClose={() => setDialogOpen(false)}
-								title="Confirm Action"
-							>
-								<p className="text-sm text-text-muted">
-									Are you sure you want to continue? This action cannot be
-									undone.
-								</p>
-								<div className="mt-5 flex justify-end gap-2">
-									<Button onClick={() => setDialogOpen(false)}>Confirm</Button>
-									<Button
-										variant="secondary"
-										onClick={() => setDialogOpen(false)}
-									>
-										Cancel
-									</Button>
-								</div>
-							</Dialog>
-						</ComponentSection>
-
-						{/* ── 08 Toast ── */}
-						<ComponentSection id="toast" index={8} title="Toast">
-							<Group label="trigger">
-								<Button onClick={() => toast.show("Changes saved.", "success")}>
-									Success
-								</Button>
-								<Button
-									variant="danger"
-									onClick={() => toast.show("Request failed.", "error")}
-								>
-									Error
-								</Button>
-								<Button
-									variant="secondary"
-									onClick={() => toast.show("Notification sent.")}
-								>
-									Default
-								</Button>
-							</Group>
-							<Toast {...toast.toastProps} />
-						</ComponentSection>
-
-						{/* ── 09 Sections ── */}
-						<ComponentSection id="sections" index={9} title="Sections">
-							<Group label="preview overlays">
-								<Button
-									variant={
-										sectionPreviewType === "hero" ? "primary" : "secondary"
-									}
-									onClick={() => setSectionPreviewType("hero")}
-								>
-									Hero Section
-								</Button>
-								<Button
-									variant={
-										sectionPreviewType === "default" ? "primary" : "secondary"
-									}
-									onClick={() => setSectionPreviewType("default")}
-								>
-									Default Page Section
-								</Button>
-								<Button
-									variant={
-										sectionPreviewType === "split" ? "primary" : "secondary"
-									}
-									onClick={() => setSectionPreviewType("split")}
-								>
-									Split Page Section
-								</Button>
-								<Button
-									variant={
-										sectionPreviewType === "cta" ? "primary" : "secondary"
-									}
-									onClick={() => setSectionPreviewType("cta")}
-								>
-									CTA Section
-								</Button>
-							</Group>
-							<div className="mt-4 overflow-hidden rounded-[--radius-default] border border-border bg-surface">
-								<div className="flex items-center justify-between border-b border-border px-4 py-3">
-									<p className="font-mono text-[11px] uppercase tracking-[0.2em] text-text-faint">
-										{sectionPreviewTitle}
-									</p>
-								</div>
-								<div className="max-h-[70vh] overflow-y-auto p-4 sm:p-6">
-									{renderSectionPreview()}
-								</div>
-							</div>
-						</ComponentSection>
-						{/* ── 10 Navbar & Footer ── */}
+						{/* ── 12 Navbar & Footer ── */}
 						<ComponentSection
 							id="navbar-footer"
-							index={10}
+							index={12}
 							title="Navbar & Footer"
 						>
 							<Group label="open preview overlay">
@@ -583,209 +411,6 @@ function PlaygroundInner() {
 									Footer
 								</Button>
 							</Group>
-						</ComponentSection>
-
-						{/* ── 11 Animations ── */}
-						<ComponentSection
-							id="animations"
-							index={11}
-							title="Background Animations"
-						>
-							<Group label="select animation">
-								{ANIMATIONS.map(({ key, label }) => (
-									<Button
-										key={key}
-										variant={animationKey === key ? "primary" : "secondary"}
-										onClick={() => setAnimationKey(key)}
-									>
-										{label}
-									</Button>
-								))}
-							</Group>
-							{(() => {
-								const active = ANIMATIONS.find((a) => a.key === animationKey);
-								const { Component, props: animProps, theme = "light" } = active;
-								const isDark = theme === "dark";
-								return (
-									<div
-										className={`relative overflow-hidden rounded-[--radius-default] border border-border h-72 ${isDark ? "bg-slate-950" : "bg-white"}`}
-									>
-										<Component className="z-0" {...animProps} />
-										<div className="relative z-10 flex h-full flex-col items-center justify-center gap-3 text-center px-6">
-											<p
-												className={`font-mono uppercase text-[11px] tracking-[0.2em] ${isDark ? "text-white/40" : "text-slate-400"}`}
-											>
-												Background · {active.label}
-											</p>
-											<h3
-												className={`text-2xl font-semibold ${isDark ? "text-white" : "text-slate-800"}`}
-											>
-												Text remains readable
-											</h3>
-											<p
-												className={`text-sm max-w-sm ${isDark ? "text-white/60" : "text-slate-500"}`}
-											>
-												Animations sit behind content without disrupting
-												legibility.
-											</p>
-										</div>
-									</div>
-								);
-							})()}
-						</ComponentSection>
-
-						{/* ── 12 Gallery ── */}
-						<ComponentSection id="gallery" index={12} title="Photo Gallery">
-							<p className="text-sm leading-6 text-text-muted">
-								Tap or click any image to open the lightbox. Use Previous and
-								Next controls or keyboard arrows to navigate, with an index
-								counter showing which image is active.
-							</p>
-							<div className="grid gap-4 xl:grid-cols-2">
-								<Card className="bg-surface/90">
-									<CardHeader className="space-y-2">
-										<CardTitle className="text-lg text-text">
-											Multiple image gallery
-										</CardTitle>
-										<p className="text-sm text-text-muted">
-											Mixed aspect ratios remain readable with object-contain
-											scaling.
-										</p>
-									</CardHeader>
-									<CardContent>
-										<PhotoGallery images={GALLERY_IMAGES} columns={2} />
-									</CardContent>
-								</Card>
-
-								<Card className="bg-surface/90">
-									<CardHeader className="space-y-2">
-										<CardTitle className="text-lg text-text">
-											Single image lightbox
-										</CardTitle>
-										<p className="text-sm text-text-muted">
-											Single images open with the same responsive overlay and
-											counter.
-										</p>
-									</CardHeader>
-									<CardContent>
-										<PhotoGallery images={SINGLE_GALLERY_IMAGE} columns={1} />
-									</CardContent>
-								</Card>
-							</div>
-						</ComponentSection>
-
-						{/* ── 13 Forms ── */}
-						<ComponentSection id="forms" index={13} title="Forms">
-							<div className="grid gap-8 sm:grid-cols-2">
-								{/* Contact / inquiry form — mirrors the reference design */}
-								<div className="rounded-[--radius-default] border border-border bg-surface p-6 shadow-sm">
-									<p className="font-mono uppercase text-[11px] tracking-[0.2em] text-text-faint mb-5">
-										Contact form
-									</p>
-									<Form
-										onSubmit={(values) =>
-											alert(JSON.stringify(values, null, 2))
-										}
-										fields={[
-											{
-												type: "text",
-												name: "name",
-												label: "Name",
-												placeholder: "John Doe",
-											},
-											{
-												type: "row",
-												hint: "Provide an email, phone, or both",
-												fields: [
-													{
-														type: "text",
-														name: "email",
-														label: "Email",
-														placeholder: "john@company.com",
-													},
-													{
-														type: "text",
-														name: "phone",
-														label: "Phone",
-														placeholder: "+64 27 000 0000",
-													},
-												],
-											},
-											{
-												type: "text",
-												name: "projectType",
-												label: "Project Type",
-												placeholder: "e.g. Residential Topography",
-											},
-											{
-												type: "textarea",
-												name: "message",
-												label: "Message",
-												placeholder: "Tell us about your project requirements…",
-											},
-											{ type: "submit", label: "SEND REQUEST" },
-										]}
-									/>
-								</div>
-
-								{/* Service enquiry — dropdown + number */}
-								<div className="rounded-[--radius-default] border border-border bg-surface p-6 shadow-sm">
-									<p className="font-mono uppercase text-[11px] tracking-[0.2em] text-text-faint mb-5">
-										Service enquiry
-									</p>
-									<Form
-										submitLabel="Submit Enquiry"
-										onSubmit={(values) =>
-											alert(JSON.stringify(values, null, 2))
-										}
-										fields={[
-											{
-												type: "row",
-												fields: [
-													{
-														type: "text",
-														name: "firstName",
-														label: "First Name",
-														placeholder: "Jane",
-													},
-													{
-														type: "text",
-														name: "lastName",
-														label: "Last Name",
-														placeholder: "Smith",
-													},
-												],
-											},
-											{
-												type: "dropdown",
-												name: "service",
-												label: "Service",
-												placeholder: "Select a service…",
-												options: [
-													{ value: "topo", label: "Topographic Survey" },
-													{ value: "boundary", label: "Boundary Survey" },
-													{ value: "feature", label: "Feature Survey" },
-													{ value: "drone", label: "Drone / Aerial Survey" },
-												],
-											},
-											{
-												type: "number",
-												name: "budget",
-												label: "Budget (NZD)",
-												placeholder: "5000",
-											},
-											{
-												type: "textarea",
-												name: "details",
-												label: "Additional Details",
-												placeholder:
-													"Any specific requirements or constraints…",
-												rows: 3,
-											},
-										]}
-									/>
-								</div>
-							</div>
 						</ComponentSection>
 					</div>
 				</div>

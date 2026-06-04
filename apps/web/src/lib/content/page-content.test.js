@@ -6,7 +6,7 @@ import {
 	parseStoredPageContent,
 } from "./page-content.js";
 
-test("parseStoredPageContent parses section blocks", () => {
+test("parseStoredPageContent normalizes legacy animation backgrounds to color", () => {
 	const blocks = parseStoredPageContent(
 		JSON.stringify([
 			{
@@ -27,8 +27,8 @@ test("parseStoredPageContent parses section blocks", () => {
 			eyebrow: "",
 			title: "Launch",
 			subtitle: "Ship with confidence",
-			backgroundMode: "animation",
-			backgroundValue: "background-waves",
+			backgroundMode: "color",
+			backgroundValue: "primary",
 			backgroundTone: "primary",
 		},
 	]);
