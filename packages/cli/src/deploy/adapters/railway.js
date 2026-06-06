@@ -2,6 +2,7 @@ import path from "node:path";
 import chalk from "chalk";
 import { execa } from "execa";
 import fs from "fs-extra";
+import { sleep } from "../../utils.js";
 
 export const RAILWAY = "railway";
 
@@ -11,10 +12,6 @@ export const DIAGNOSTIC_CODES = Object.freeze({
 	RAILWAY_LINK_FAILED: "railway_link_failed",
 	RAILWAY_DEPLOY_FAILED: "railway_deploy_failed",
 });
-
-function sleep(ms) {
-	return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 export class RailwayError extends Error {
 	constructor(message, code, meta) {
@@ -37,7 +34,7 @@ export async function checkRailwayCLI() {
 export async function checkRailwayLogin() {
 	try {
 		const { stdout } = await execa(RAILWAY, ["whoami"], { timeout: 10_000 });
-		const emailMatch = stdout.match(/\(([^)]+@[^)]+)\)/);
+		const emailMatch = stdout.trim().match(/\(([^)]+@[^)]+)\)/);
 		return emailMatch ? emailMatch[1] : stdout.trim();
 	} catch {
 		return null;
@@ -191,7 +188,11 @@ export async function ensurePlugin(pluginName, { cwd } = {}) {
 		if (stderr.includes("already exists") || stderr.includes("already")) {
 			return { added: false, exists: true };
 		}
-		return { added: false, exists: false };
+		throw new RailwayError(
+			`Failed to provision ${pluginName}: ${error.message}`,
+			DIAGNOSTIC_CODES.RAILWAY_DEPLOY_FAILED,
+			{ pluginName, stderr },
+		);
 	}
 }
 
@@ -320,14 +321,6 @@ export async function deployService(serviceName, { cwd, environment } = {}) {
 	}
 }
 
-export async function setPluginReference(
-	key,
-	{ pluginServiceName, pluginVariableKey, cwd, environment, serviceName } = {},
-) {
-	const value = `\${{${pluginServiceName}.${pluginVariableKey}}}`;
-	return setProjectVariable(key, value, { cwd, environment, serviceName });
-}
-
 export async function deleteService(serviceName, { cwd, environment } = {}) {
 	const args = [
 		"service",
@@ -453,22 +446,31 @@ export async function setProjectVariables(
 		const errMsg = error.stderr?.trim() || error.shortMessage || error.message;
 
 		// Check if variables were actually set despite the timeout
-		// by verifying a sample key (the last one is likely to have been
-		// processed last).
-		const lastKey = vars.length > 0 ? vars[vars.length - 1].key : null;
-		if (lastKey) {
+		// by verifying the first and last keys.
+		const sampleKeys = [];
+		if (vars.length > 0) {
+			sampleKeys.push(vars[0].key);
+			if (vars.length > 1) {
+				sampleKeys.push(vars[vars.length - 1].key);
+			}
+		}
+		let allSet = sampleKeys.length > 0;
+		for (const key of sampleKeys) {
 			try {
-				const existing = await getExistingVariable(lastKey, {
+				const existing = await getExistingVariable(key, {
 					cwd,
 					environment,
 					serviceName,
 				});
-				if (existing) {
-					return true;
+				if (!existing) {
+					allSet = false;
 				}
 			} catch {
-				// Fall through to throw below
+				allSet = false;
 			}
+		}
+		if (allSet) {
+			return true;
 		}
 
 		throw new RailwayError(

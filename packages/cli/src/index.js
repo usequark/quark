@@ -20,8 +20,8 @@ const SCAFFOLD_CHECK_IGNORED_FILES = new Set([".env", ".quark-link.json"]);
 const program = new Command();
 
 program
-	.name("quark-create-app")
-	.description("Scaffold a new project from the Quark monorepo")
+	.name("quark")
+	.description("Quark CLI — scaffold, update, and deploy Quark projects")
 	.version(pkg.version);
 
 /**
@@ -2263,13 +2263,18 @@ deployCmd
 			return;
 		}
 
-		await deployToRailway({
-			cwd: process.cwd(),
-			projectName: options.projectName,
-			projectId: options.projectId,
-			environment: options.environment,
-			provision: options.provision,
-		});
+		try {
+			await deployToRailway({
+				cwd: process.cwd(),
+				projectName: options.projectName,
+				projectId: options.projectId,
+				environment: options.environment,
+				provision: options.provision,
+			});
+		} catch (error) {
+			console.error(chalk.red(`\n✖ Deploy failed: ${error.message}\n`));
+			process.exit(1);
+		}
 	});
 
 deployCmd

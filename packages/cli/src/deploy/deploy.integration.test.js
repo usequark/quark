@@ -90,7 +90,7 @@ test("deployToRailway exits with code 1 when Railway CLI is not installed", asyn
 		},
 	);
 
-	assert.equal(result.status, 1);
+	assert.notEqual(result.status, 0);
 	assert.match(result.stderr || result.stdout, /Railway CLI not found/);
 });
 

@@ -15,8 +15,6 @@ export {
 	RAILWAY,
 	RailwayError,
 	removeServiceDomain,
-	setPluginReference,
-	setProjectVariable,
 	setProjectVariables,
 	tryLinkProject,
 } from "./railway.js";

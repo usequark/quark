@@ -47,6 +47,18 @@ quark/
 | `pnpm --filter @techstream/quark-create-app sync-templates` | Sync scaffold templates from monorepo source |
 | `pnpm --filter @techstream/quark-create-app sync-templates:check` | Check for template drift without modifying |
 
+## Deploy CLI
+
+`packages/cli/src/deploy/` provides Railway deployment commands:
+
+| Command | Purpose |
+|---|---|
+| `quark deploy railway` | Deploy all services to Railway |
+| `quark deploy inspect` | Inspect project diagnostics (env, services, domains) |
+| `quark deploy status` | Check deployment status |
+
+Import from `@techstream/quark-create-app/deploy` in monorepo or use the CLI binary in scaffolded projects.
+
 ## Coding Conventions
 
 - **ESM only** — `import`/`export`. Never `require()` or `module.exports`.
@@ -55,7 +67,9 @@ quark/
 - **Validation** — Zod for all Server Actions and API routes. No exceptions.
 - **Errors** — `AppError` / `ValidationError` from `@techstream/quark-core/errors` in app/runtime code. Native `Error` is acceptable in library, bootstrap, CLI, and test code.
 - **Logging** — `createLogger(name)` from `@techstream/quark-core` in app/runtime code. Console output is acceptable in bootstrap, CLI, and test code.
-- **Metrics** — `metrics` singleton from `@techstream/quark-core` for counters, gauges, histograms.
+- **Metrics** — `metrics` singleton from `@techstream/quark-core` for counters, gauges, histograms. Example: `metrics.counter({ name: "requests_total", help: "Total requests", labelNames: ["method"] }).inc({ method: "GET" })`.
+- **Edge middleware** — Use `proxy.js` in `apps/web/src/` (Next.js 16 convention) for edge guards (auth, rate-limiting, CORS, CSP headers). Not `middleware.js`.
+- **Config loading** — `loadConfig()` from `@<scope>/config` for centralized, env-validated config with caching. Call once, returns merged env + defaults + overrides.
 - **DB models** — Always include `createdAt DateTime @default(now())` and `updatedAt DateTime @updatedAt` on every Prisma model.
 - **Tests** — Co-located `*.test.js` files, run with `node --test`. Postgres + Redis required.
 
@@ -66,6 +80,40 @@ The `packages/ui` directory contains Tailwind-only, dependency-free Server Compo
 Available exports: `Button`, `Input`, `Label`, `Textarea`, `Select`, `Checkbox`, `Badge`, `Card`/`CardHeader`/`CardTitle`/`CardContent`/`CardFooter`, `Table`/`TableHeader`/`TableBody`/`TableRow`/`TableHead`/`TableCell`, `Skeleton`, `ErrorBanner`, `Footer`, `Navbar`/`MobileNavbar`, `RichText`, `QuarkLogo` (server), `Dialog` (client), `Toast`/`useToast` (client), `ThemeProvider`/`useTheme` (client).
 
 All components accept `className` for Tailwind overrides. Import from `@techstream/quark-ui` (monorepo) or `@<scope>/ui` (scaffolded projects) — never deep-import (`@/components/ui/*`).
+
+Usage examples:
+
+```jsx
+// Dialog (client component)
+import { Dialog, Button } from "@techstream/quark-ui";
+function MyDialog() {
+  const [open, setOpen] = useState(false);
+  return <><Button onClick={() => setOpen(true)}>Open</Button><Dialog open={open} onClose={() => setOpen(false)} title="Confirm"><p>Are you sure?</p></Dialog></>;
+}
+```
+
+```jsx
+// Toast (client component)
+import { Toast, useToast, Button } from "@techstream/quark-ui";
+function MyForm() {
+  const { show, toastProps } = useToast();
+  return <><Button onClick={() => show("Saved!", "success")}>Save</Button><Toast {...toastProps} /></>;
+}
+```
+
+```jsx
+// RichText (client component)
+import { RichText } from "@techstream/quark-ui";
+<RichText name="content" defaultValue="<p>Hello</p>" onChange={(html) => setValue(html)} />
+```
+
+```jsx
+// ThemeProvider (client component, wrap root layout)
+import { ThemeProvider } from "@techstream/quark-ui";
+// In root layout: <ThemeProvider><App /></ThemeProvider>
+// In any component: import { useTheme } from "@techstream/quark-ui";
+//   const { theme, setTheme } = useTheme(); // "light" | "dark" | "system"
+```
 
 For public-page references, inspect `apps/web/src/app/example-page/page.js`, `apps/web/src/app/playground/page.js`, and `packages/ui/README.md` before building bespoke layout primitives.
 
@@ -105,6 +153,55 @@ pnpm test             # Run all tests
 ```
 
 Test utilities and factories live in `packages/core/src/testing/`.
+
+## Key Patterns
+
+### Error Handling
+```js
+import { AppError, ValidationError } from "@techstream/quark-core/errors";
+
+// In Server Actions / API routes:
+throw new ValidationError("Email is required");
+throw new AppError("Not found", 404, "NOT_FOUND");
+```
+
+### Auth Session
+```js
+import { auth } from "@/lib/auth";
+
+// In Server Components / Server Actions:
+const session = await auth();
+if (!session) redirect("/auth/signin");
+// session.user.email, session.user.role
+```
+
+### Config Loading
+```js
+import { loadConfig } from "@techstream/quark-config";
+
+const config = loadConfig();
+// config.appUrl, config.allowedOrigins, config.redis.url, config.postgres.url
+// Accepts overrides: loadConfig({ cache: { defaultTtl: 300 } })
+```
+
+### Deploy Flow
+```js
+import { deployToRailway, inspectProject } from "@techstream/quark-create-app/deploy";
+
+await deployToRailway();                    // Deploy all services
+const diag = await inspectProject();        // Inspect project state
+```
+
+### Metrics
+```js
+import { metrics, httpRequestsTotal } from "@techstream/quark-core";
+
+// Pre-registered: httpRequestsTotal, httpRequestDuration, appErrorsTotal
+const myCounter = metrics.counter({ name: "signups_total", help: "Total signups" });
+myCounter.inc({ plan: "pro" });
+
+// Expose at /api/metrics for Prometheus scraping
+```
 
 ## Architecture Decisions
 

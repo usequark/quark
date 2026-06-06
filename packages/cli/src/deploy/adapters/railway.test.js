@@ -230,24 +230,3 @@ test("deleteService forwards --environment flag", async () => {
 		assert.ok(log.includes("staging"), `Expected staging in args: ${log}`);
 	});
 });
-
-test("setPluginReference forwards --environment flag", async () => {
-	await withMockRailway(async (tmpDir, argsLog) => {
-		const { setPluginReference } = await import("./railway.js");
-
-		await setPluginReference("DATABASE_URL", {
-			cwd: tmpDir,
-			environment: "staging",
-			serviceName: "web",
-			pluginServiceName: "Postgres",
-			pluginVariableKey: "DATABASE_URL",
-		});
-
-		const log = await fs.readFile(argsLog, "utf-8");
-		assert.ok(
-			log.includes("--environment"),
-			`Expected --environment in args: ${log}`,
-		);
-		assert.ok(log.includes("staging"), `Expected staging in args: ${log}`);
-	});
-});

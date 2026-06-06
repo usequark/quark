@@ -62,7 +62,7 @@ function createDiscoveredService(projectDir, serviceContract, packageJson) {
 }
 
 export function formatQuarkDeployDiagnostics(diagnostics) {
-	return diagnostics.map((diagnostic) => diagnostic.message).join(" ");
+	return diagnostics.map((diagnostic) => diagnostic.message).join(". ");
 }
 
 export async function discoverQuarkDeployProject(projectDir) {
