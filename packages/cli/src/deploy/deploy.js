@@ -59,6 +59,19 @@ async function healthCheckService(url) {
 	return false;
 }
 
+async function validateProject(cwd, discovery) {
+	const issues = [];
+	for (const service of discovery.services) {
+		const rjPath = path.join(cwd, service.relativeRootDir, "railway.json");
+		if (!fs.existsSync(rjPath)) {
+			issues.push(
+				`Service "${service.name}" missing railway.json at ${path.join(service.relativeRootDir, "railway.json")}`,
+			);
+		}
+	}
+	return issues;
+}
+
 export async function deployToRailway(options = {}) {
 	const {
 		cwd = process.cwd(),
