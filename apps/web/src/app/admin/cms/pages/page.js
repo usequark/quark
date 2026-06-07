@@ -32,42 +32,17 @@ export default async function PagesListPage({ searchParams }) {
 	return (
 		<div className="space-y-8">
 			{/* Header */}
-			<div className="relative overflow-hidden border border-border bg-surface p-6 sm:p-8">
-				<div className="absolute inset-0 bg-gradient-to-br from-primary/[0.03] to-transparent" />
-				<div className="relative flex items-center gap-4">
-					<div className="flex h-11 w-11 items-center justify-center border border-primary/20 bg-primary-muted">
-						<svg
-							aria-hidden="true"
-							className="h-5 w-5 text-primary"
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke="currentColor"
-							strokeWidth="2"
-						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-							/>
-						</svg>
-					</div>
-					<div className="flex-1">
-						<div className="flex items-center justify-between">
-							<div>
-								<h1 className="text-2xl font-bold tracking-tight text-text">
-									Pages
-								</h1>
-								<p className="mt-0.5 text-sm text-text-faint">
-									{total} page{total !== 1 ? "s" : ""}
-									{status !== "ALL" ? ` \u00b7 ${status.toLowerCase()}` : ""}
-								</p>
-							</div>
-							<a href="/admin/cms/pages/new">
-								<Button>New Page</Button>
-							</a>
-						</div>
-					</div>
+			<div className="flex items-center justify-between mb-6">
+				<div>
+					<h1 className="text-2xl font-bold text-text">Pages</h1>
+					<p className="text-sm text-text-faint mt-1">
+						{total} page{total !== 1 ? "s" : ""}
+						{status !== "ALL" ? ` \u00b7 ${status.toLowerCase()}` : ""}
+					</p>
 				</div>
+				<a href="/admin/cms/pages/new">
+					<Button>New Page</Button>
+				</a>
 			</div>
 
 			{/* Status filter tabs */}

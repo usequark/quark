@@ -14,13 +14,13 @@ after(async () => {
 	);
 });
 
-async function makeTempDir() {
+async function _makeTempDir() {
 	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "deploy-test-"));
 	temporaryDirectories.push(dir);
 	return dir;
 }
 
-async function writeJson(filePath, value) {
+async function _writeJson(filePath, value) {
 	await fs.mkdir(path.dirname(filePath), { recursive: true });
 	await fs.writeFile(filePath, JSON.stringify(value, null, "\t"));
 }

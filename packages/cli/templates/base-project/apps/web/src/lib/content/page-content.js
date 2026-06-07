@@ -211,11 +211,11 @@ function sanitizePathOrUrl(value) {
 	return isSafePathOrUrl(normalized) ? normalized : "";
 }
 
-function normalizeBackgroundMode(value) {
+function normalizeBackgroundMode(_value) {
 	return "color";
 }
 
-function normalizeBackgroundValue(mode, value) {
+function normalizeBackgroundValue(_mode, value) {
 	const normalized = getTrimmedString(value).toLowerCase();
 	return BACKGROUND_TONES.has(normalized) ? normalized : "primary";
 }

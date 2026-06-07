@@ -1,6 +1,7 @@
 "use client";
 
 import { Button, Input, Label } from "@techstream/quark-ui";
+import { X } from "lucide-react";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { cmsUploadMediaInline } from "../cms/_actions/media";
 

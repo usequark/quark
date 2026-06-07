@@ -712,11 +712,11 @@ function renderActionToHtml(label, href) {
 // renderRichText, escapeHtml, escapeAttribute, stripHtml, sanitizeRichTextHtml
 // are imported from ./sanitize.js
 
-function normalizeBackgroundMode(value) {
+function normalizeBackgroundMode(_value) {
 	return "color";
 }
 
-function normalizeBackgroundValue(mode, value) {
+function normalizeBackgroundValue(_mode, value) {
 	const normalized = getTrimmedString(value).toLowerCase();
 	return PAGE_BACKGROUND_TONE_VALUES.includes(normalized)
 		? normalized

@@ -66,33 +66,12 @@ export default async function AdminDashboard() {
 	return (
 		<div className="space-y-10">
 			{/* ── Page header ── */}
-			<div className="relative overflow-hidden border border-border bg-surface p-6 sm:p-8">
-				<div className="absolute inset-0 bg-gradient-to-br from-primary/[0.03] to-transparent" />
-				<div className="relative flex items-center gap-4">
-					<div className="flex h-11 w-11 items-center justify-center border border-primary/20 bg-primary-muted">
-						<svg
-							aria-hidden="true"
-							className="h-5 w-5 text-primary"
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke="currentColor"
-							strokeWidth="2"
-						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-							/>
-						</svg>
-					</div>
-					<div>
-						<h1 className="text-2xl font-bold tracking-tight text-text">
-							Dashboard
-						</h1>
-						<p className="mt-0.5 text-sm text-text-faint">
-							System overview and application data
-						</p>
-					</div>
+			<div className="flex items-center justify-between mb-6">
+				<div>
+					<h1 className="text-2xl font-bold text-text">Dashboard</h1>
+					<p className="text-sm text-text-faint mt-1">
+						System overview and application data
+					</p>
 				</div>
 			</div>
 

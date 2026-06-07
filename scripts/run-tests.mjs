@@ -54,8 +54,12 @@ if (files.length === 0) {
 	process.exit(1);
 }
 
-const result = spawnSync(process.execPath, ["--test", ...files], {
-	stdio: "inherit",
-});
+const result = spawnSync(
+	process.execPath,
+	["--import", "tsx/esm", "--test", ...files],
+	{
+		stdio: "inherit",
+	},
+);
 
 process.exit(result.status ?? 1);

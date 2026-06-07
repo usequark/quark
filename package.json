@@ -9,7 +9,7 @@
 		"clean:check": "node scripts/clean-workspace.mjs --check",
 		"clean:deep": "node scripts/clean-workspace.mjs --deep",
 		"build": "dotenv -- turbo run build",
-		"dev": "dotenv -- node scripts/dev-preflight.mjs && dotenv -- turbo run dev",
+		"dev": "dotenv -- tsx scripts/dev-preflight.mjs && dotenv -- turbo run dev",
 		"lint": "biome format --write && biome check --write",
 		"lint:unsafe": "biome format --write && biome check --write --unsafe",
 		"lint:all": "turbo run lint",

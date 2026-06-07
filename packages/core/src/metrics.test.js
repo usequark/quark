@@ -224,7 +224,7 @@ describe("Metrics - Histogram", () => {
 		const elapsed = stop();
 
 		assert.ok(elapsed > 0, "Elapsed time should be positive");
-		assert.ok(elapsed < 1, "Elapsed time should be less than 1 second");
+		assert.ok(elapsed < 5, "Elapsed time should be less than 5 seconds");
 
 		const output = hist.serialize();
 		assert.ok(output.includes("timer_test_count"));

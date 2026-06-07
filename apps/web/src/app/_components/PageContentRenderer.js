@@ -3,6 +3,7 @@ import {
 	stripHtml,
 } from "@techstream/quark-cms/sanitize";
 import { Button } from "@techstream/quark-ui";
+import Image from "next/image";
 import React from "react";
 import { normalizePageContent } from "../../lib/content/page-content.js";
 
@@ -284,9 +285,11 @@ function renderSplitColumn(kind, body, src, alt, fallbackLabel) {
 	if (kind === "image" && src) {
 		return (
 			<figure className="overflow-hidden rounded-[--radius-default] border border-border bg-bg">
-				<img
+				<Image
 					src={src}
 					alt={alt || `${fallbackLabel} media`}
+					width={800}
+					height={600}
 					className="h-full min-h-56 w-full object-cover"
 				/>
 			</figure>
