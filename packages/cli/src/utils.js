@@ -1,6 +1,20 @@
+import crypto from "node:crypto";
+
 /**
  * Shared utilities for @techstream/quark-create-app
  */
+
+export function sleep(ms) {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export function generateSecret(length = 32) {
+	return crypto
+		.randomBytes(length)
+		.toString("base64")
+		.replace(/[/+=]/g, "")
+		.substring(0, length);
+}
 
 /**
  * Format a project slug into a human-friendly application name.

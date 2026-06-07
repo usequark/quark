@@ -430,8 +430,8 @@ This document contains a comprehensive list of all missing features, issues, and
   - Run lint, test, build on every push
 
 - [ ] **Create deployment workflow**
-  - Files: `.github/workflows/deploy.yml` (create)
-  - Deploy to hosting platform (Vercel, Railway, etc.)
+  - Use `quark deploy railway` CLI (see `packages/cli/src/deploy/`)
+  - Or: `.github/workflows/deploy.yml` for CI-based deployment
 
 - [ ] **Add Docker image configuration**
   - Files: `Dockerfile` (create)

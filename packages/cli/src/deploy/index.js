@@ -14,7 +14,6 @@ export {
 	RAILWAY_DIAGNOSTIC_CODES,
 	RailwayError,
 	removeServiceDomain,
-	setPluginReference,
 	setProjectVariables,
 	tryLinkProject,
 } from "./adapters/index.js";

@@ -3,6 +3,7 @@
 	"version": "1.15.0",
 	"type": "module",
 	"bin": {
+		"quark": "src/index.js",
 		"quark-create-app": "src/index.js",
 		"create-quark-app": "src/index.js",
 		"quark-update": "src/index.js"
@@ -16,7 +17,7 @@
 		"sync-templates": "node scripts/sync-templates.js",
 		"sync-templates:check": "node scripts/sync-templates.js --check",
 		"smoke:published": "node scripts/smoke-published.js",
-		"test": "node test-cli.js && node --test src/utils.test.js",
+		"test": "node test-cli.js && node --test src/utils.test.js && node --test 'src/deploy/**/*.test.js' && node --test 'src/deploy/**/*.integration.test.js'",
 		"test:build": "node test-build.js",
 		"test:e2e": "node test-e2e.js",
 		"test:e2e:full": "node test-e2e-full.js",

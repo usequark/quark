@@ -1,7 +1,7 @@
-import crypto from "node:crypto";
 import path from "node:path";
 import chalk from "chalk";
 import fs from "fs-extra";
+import { generateSecret, sleep } from "../utils.js";
 import {
 	checkRailwayCLI,
 	checkRailwayLogin,
@@ -16,18 +16,6 @@ import {
 	setProjectVariables,
 } from "./adapters/index.js";
 import { resolveQuarkDeployProject } from "./discovery.js";
-
-function generateSecret(length = 32) {
-	return crypto
-		.randomBytes(length)
-		.toString("base64")
-		.replace(/[/+=]/g, "")
-		.substring(0, length);
-}
-
-function sleep(ms) {
-	return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 async function healthCheckService(url) {
 	const healthUrl = `${url.replace(/\/$/, "")}/api/health`;
@@ -59,6 +47,19 @@ async function healthCheckService(url) {
 	return false;
 }
 
+async function validateProject(cwd, discovery) {
+	const issues = [];
+	for (const service of discovery.services) {
+		const rjPath = path.join(cwd, service.relativeRootDir, "railway.json");
+		if (!fs.existsSync(rjPath)) {
+			issues.push(
+				`Service "${service.name}" missing railway.json at ${path.join(service.relativeRootDir, "railway.json")}`,
+			);
+		}
+	}
+	return issues;
+}
+
 export async function deployToRailway(options = {}) {
 	const {
 		cwd = process.cwd(),
@@ -79,7 +80,7 @@ export async function deployToRailway(options = {}) {
 		console.error(
 			chalk.yellow("  Or:     brew install railwayhq/brew/railway"),
 		);
-		process.exit(1);
+		throw new Error("Railway CLI is required but was not found");
 	}
 	console.log(chalk.green(`  ✔ Railway CLI detected (${version})`));
 
@@ -89,7 +90,7 @@ export async function deployToRailway(options = {}) {
 	if (!user) {
 		console.error(chalk.red("  ✖ Not logged into Railway."));
 		console.error(chalk.yellow("  Run: railway login"));
-		process.exit(1);
+		throw new Error("Not logged into Railway");
 	}
 	console.log(chalk.green(`  ✔ Logged in as ${user}`));
 
@@ -100,7 +101,7 @@ export async function deployToRailway(options = {}) {
 		discovery = await resolveQuarkDeployProject(cwd);
 	} catch (error) {
 		console.error(chalk.red(`  ✖ ${error.message}`));
-		process.exit(1);
+		throw new Error(`Project discovery failed: ${error.message}`);
 	}
 	console.log(
 		chalk.green(
@@ -114,7 +115,9 @@ export async function deployToRailway(options = {}) {
 		for (const issue of issues) {
 			console.error(chalk.red(`  ✖ ${issue}`));
 		}
-		process.exit(1);
+		throw new Error(
+			"Pre-deploy validation failed — missing railway.json files",
+		);
 	}
 
 	// --- Step 4: Ensure Railway project ---
@@ -134,7 +137,7 @@ export async function deployToRailway(options = {}) {
 		console.error(
 			chalk.red(`  ✖ Failed to link Railway project: ${error.message}`),
 		);
-		process.exit(1);
+		throw new Error(`Project linking failed: ${error.message}`);
 	}
 
 	// --- Step 5: Provision plugins ---
@@ -382,7 +385,9 @@ export async function deployToRailway(options = {}) {
 		}
 		console.log(chalk.white(""));
 		console.log(
-			chalk.white("  3. Run `quark deploy status` to check deploy status\n"),
+			chalk.white(
+				"  3. Run `quark deploy status` to check deployment status\n",
+			),
 		);
 	} else {
 		console.log(chalk.red.bold("\n❌ Deploy failed — see errors above\n"));
