@@ -181,6 +181,12 @@ function PageBlock({
 			return (
 				<section
 					className={`${hasBgImage ? "relative overflow-hidden bg-cover bg-center bg-no-repeat h-[calc(100vh-73px)] flex items-center justify-center" : ""} ${!hasBgImage ? toneBg : ""}`.trim()}
+					role={hasBgImage && block.backgroundImageAlt ? "img" : undefined}
+					aria-label={
+						hasBgImage && block.backgroundImageAlt
+							? block.backgroundImageAlt
+							: undefined
+					}
 					style={
 						hasBgImage
 							? { backgroundImage: `url(${block.backgroundImage})` }
