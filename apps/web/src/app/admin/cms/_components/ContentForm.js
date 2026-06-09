@@ -38,6 +38,12 @@ export default function ContentForm({
 				await action(_prev, formData);
 				return { error: null };
 			} catch (err) {
+				if (
+					typeof err?.digest === "string" &&
+					err.digest.startsWith("NEXT_REDIRECT")
+				) {
+					throw err;
+				}
 				return { error: err?.message ?? "An error occurred" };
 			}
 		},
@@ -48,6 +54,9 @@ export default function ContentForm({
 	const [excerpt, setExcerpt] = useState(record?.excerpt ?? "");
 	const [showHeader, setShowHeader] = useState(record?.showHeader ?? false);
 	const [body, setBody] = useState(record?.body ?? "");
+	const [coverImageAlt, setCoverImageAlt] = useState(
+		record?.coverImageAlt ?? "",
+	);
 	const [_pageContent, setPageContent] = useState(record?.content ?? null);
 	const [_pageLayout, setPageLayout] = useState(record?.layout ?? "standard");
 	const [deleteOpen, setDeleteOpen] = useState(false);
@@ -219,8 +228,22 @@ export default function ContentForm({
 									Media
 								</h2>
 							</div>
-							<div className="p-5">
-								<CoverImageField defaultValue={record?.coverImage ?? ""} />
+							<div className="p-5 space-y-4">
+								<CoverImageField
+									defaultValue={record?.coverImage ?? ""}
+									onAltChange={setCoverImageAlt}
+								/>
+								<div className="flex flex-col gap-1.5">
+									<Label htmlFor="cms-cover-image-alt">Image Alt text</Label>
+									<Input
+										id="cms-cover-image-alt"
+										type="text"
+										name="coverImageAlt"
+										value={coverImageAlt}
+										onChange={(e) => setCoverImageAlt(e.target.value)}
+										placeholder="Describe the image for screen readers"
+									/>
+								</div>
 							</div>
 						</section>
 					)}

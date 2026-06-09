@@ -4,6 +4,7 @@ import {
 	getPublishedPageSlugs,
 } from "@/lib/public-content.js";
 import PageContentRenderer from "../_components/PageContentRenderer";
+import PublicLayout from "../_components/PublicLayout";
 
 export const revalidate = 3600;
 
@@ -59,7 +60,7 @@ export default async function PublishedPage({ params }) {
 	}
 
 	return (
-		<main className="min-h-screen bg-bg text-text">
+		<PublicLayout>
 			<PageContentRenderer
 				title={page.title}
 				excerpt={page.excerpt}
@@ -68,6 +69,6 @@ export default async function PublishedPage({ params }) {
 				layout={page.layout}
 				showHeader={page.showHeader}
 			/>
-		</main>
+		</PublicLayout>
 	);
 }

@@ -22,7 +22,7 @@ export default function MediaAssetCard({ asset, href, deleteAction }) {
 	const isImage = asset.mimeType.startsWith("image/");
 	const assetUrl = `/api/media/${encodeURIComponent(asset.storageKey)}`;
 	const card = (
-		<div className="group relative rounded-[--radius-default] border border-border bg-surface overflow-hidden hover:border-border-hover transition-colors">
+		<div className="group relative rounded-[--radius-default] border border-border bg-surface overflow-hidden hover:border-primary transition-colors">
 			<div className="relative aspect-square bg-surface-hover flex items-center justify-center overflow-hidden">
 				{isImage && !isSvg ? (
 					<Image

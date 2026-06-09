@@ -8,6 +8,7 @@ import {
 import { prisma } from "@techstream/quark-db";
 import { Button, Input } from "@techstream/quark-ui";
 import { notFound } from "next/navigation";
+import AdminActionToast from "../_components/AdminActionToast";
 import ModelTable from "../_components/ModelTable";
 
 export async function generateMetadata({ params }) {
@@ -18,7 +19,7 @@ export async function generateMetadata({ params }) {
 
 export default async function ModelListPage({ params, searchParams }) {
 	const { model: slug } = await params;
-	const { page, q } = await searchParams;
+	const { page, q, toast } = await searchParams;
 
 	const model = getModelBySlug(slug);
 	if (!model) notFound();
@@ -52,6 +53,7 @@ export default async function ModelListPage({ params, searchParams }) {
 
 	return (
 		<div>
+			<AdminActionToast toastKey={toast} resourceLabel={model.name} />
 			<div className="flex items-center justify-between mb-6">
 				<div>
 					<h1 className="text-2xl font-bold text-text">{model.name}</h1>

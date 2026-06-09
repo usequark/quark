@@ -1,11 +1,12 @@
 import { prisma } from "@techstream/quark-db";
 import { Button, Card, CardContent } from "@techstream/quark-ui";
-import { cmsDeleteMedia } from "../_actions/media";
+import AdminActionToast from "../../_components/AdminActionToast";
 import MediaAssetCard from "../_components/MediaAssetCard";
 
 export const metadata = { title: "Media Library" };
 
-export default async function MediaPage() {
+export default async function MediaPage({ searchParams }) {
+	const { toast } = await searchParams;
 	const [assets, total] = await Promise.all([
 		prisma.mediaAsset.findMany({
 			orderBy: { createdAt: "desc" },
@@ -16,6 +17,11 @@ export default async function MediaPage() {
 
 	return (
 		<div>
+			<AdminActionToast
+				toastKey={toast}
+				resourceLabel="Media"
+				messageOverrides={{ uploaded: "{resource} uploaded." }}
+			/>
 			<div className="flex items-center justify-between mb-6">
 				<div>
 					<h1 className="text-2xl font-bold text-text">Media Library</h1>
@@ -49,7 +55,7 @@ export default async function MediaPage() {
 							<MediaAssetCard
 								key={asset.id}
 								asset={asset}
-								deleteAction={cmsDeleteMedia.bind(null, asset.id)}
+								href={`/admin/cms/media/edit/${asset.id}`}
 							/>
 						);
 					})}

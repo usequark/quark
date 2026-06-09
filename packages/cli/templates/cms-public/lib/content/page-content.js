@@ -86,6 +86,18 @@ function normalizePageBlock(block, index) {
 					block.backgroundValue,
 				),
 				backgroundTone: normalizeBackgroundToneValue(block.backgroundTone),
+				backgroundImage:
+					backgroundMode === "image"
+						? sanitizePathOrUrl(block.backgroundImage)
+						: "",
+				backgroundImageAlt:
+					backgroundMode === "image"
+						? getTrimmedString(block.backgroundImageAlt)
+						: "",
+				primaryCtaLabel: getTrimmedString(block.primaryCtaLabel),
+				primaryCtaHref: sanitizePathOrUrl(block.primaryCtaHref),
+				secondaryCtaLabel: getTrimmedString(block.secondaryCtaLabel),
+				secondaryCtaHref: sanitizePathOrUrl(block.secondaryCtaHref),
 			};
 		}
 		case "default":
@@ -211,7 +223,9 @@ function sanitizePathOrUrl(value) {
 	return isSafePathOrUrl(normalized) ? normalized : "";
 }
 
-function normalizeBackgroundMode(_value) {
+function normalizeBackgroundMode(value) {
+	const normalized = getTrimmedString(value).toLowerCase();
+	if (normalized === "image") return "image";
 	return "color";
 }
 

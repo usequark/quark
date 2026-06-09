@@ -155,6 +155,12 @@ export default function ModelForm({ model, slug, record, readOnly = false }) {
 				await action(formData);
 				return { error: null };
 			} catch (err) {
+				if (
+					typeof err?.digest === "string" &&
+					err.digest.startsWith("NEXT_REDIRECT")
+				) {
+					throw err;
+				}
 				return { error: err?.message ?? "An error occurred" };
 			}
 		},

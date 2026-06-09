@@ -30,6 +30,12 @@ test("parseStoredPageContent normalizes legacy animation backgrounds to color", 
 			backgroundMode: "color",
 			backgroundValue: "primary",
 			backgroundTone: "primary",
+			backgroundImage: "",
+			backgroundImageAlt: "",
+			primaryCtaLabel: "",
+			primaryCtaHref: "",
+			secondaryCtaLabel: "",
+			secondaryCtaHref: "",
 		},
 	]);
 });

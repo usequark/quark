@@ -61,14 +61,37 @@ export default function Sidebar({
 	const sidebar = (
 		<aside className="h-full w-56 shrink-0 bg-surface border-r border-border p-4 flex flex-col">
 			{/* Header */}
-			<div className="mb-4 flex items-center gap-2">
-				<QuarkLogo size={24} />
-				<a
-					href={isCmsOnly ? "/admin/cms" : "/admin"}
-					className="text-lg font-semibold text-text hover:text-text-muted"
+			<div className="mb-4 flex items-center justify-between gap-2">
+				<div className="flex items-center gap-2">
+					<QuarkLogo size={24} />
+					<a
+						href={isCmsOnly ? "/admin/cms" : "/admin"}
+						className="text-lg font-semibold text-text hover:text-text-muted"
+					>
+						{title}
+					</a>
+				</div>
+				<button
+					type="button"
+					onClick={() => setOpen(false)}
+					className="p-1 rounded-[--radius-default] text-text-muted hover:text-text hover:bg-surface-hover lg:hidden"
+					aria-label="Close menu"
 				>
-					{title}
-				</a>
+					<svg
+						aria-hidden="true"
+						className="w-5 h-5"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+						strokeWidth="2"
+					>
+						<path
+							strokeLinecap="round"
+							strokeLinejoin="round"
+							d="M6 18L18 6M6 6l12 12"
+						/>
+					</svg>
+				</button>
 			</div>
 
 			{/* Dashboard — admin only */}
@@ -166,12 +189,14 @@ export default function Sidebar({
 
 	return (
 		<>
-			{/* Mobile menu button */}
+			{/* Mobile/tablet/small-desktop menu button */}
 			<button
 				type="button"
 				onClick={() => setOpen(true)}
-				className="group fixed top-3 left-3 z-40 p-2 rounded-[--radius-default] bg-surface border border-border text-text-muted hover:text-text hover:scale-105 active:scale-95 sm:hidden cursor-pointer transition-transform duration-150"
+				className="group fixed top-3 left-3 z-40 p-2 rounded-[--radius-default] bg-surface border border-border text-text-muted hover:text-text hover:scale-105 active:scale-95 lg:hidden cursor-pointer transition-transform duration-150"
 				aria-label="Open menu"
+				aria-expanded={open}
+				aria-controls="admin-sidebar-overlay"
 			>
 				<svg
 					aria-hidden="true"
@@ -190,20 +215,32 @@ export default function Sidebar({
 			</button>
 
 			{/* Desktop sidebar */}
-			<div className="hidden sm:flex h-full">{sidebar}</div>
+			<div className="hidden lg:flex h-full">{sidebar}</div>
 
-			{/* Mobile overlay */}
-			{open && (
-				<div className="fixed inset-0 z-50 sm:hidden">
-					{/* biome-ignore lint/a11y/noStaticElementInteractions: backdrop dismiss */}
-					<div
-						className="absolute inset-0 bg-black/40"
-						onClick={() => setOpen(false)}
-						role="presentation"
-					/>
-					<div className="relative h-full w-56">{sidebar}</div>
+			{/* Mobile/tablet/small-desktop overlay */}
+			<div
+				id="admin-sidebar-overlay"
+				className={`fixed inset-0 z-50 lg:hidden transition-opacity duration-200 ${
+					open
+						? "opacity-100 pointer-events-auto"
+						: "opacity-0 pointer-events-none"
+				}`}
+				aria-hidden={!open}
+			>
+				{/* biome-ignore lint/a11y/noStaticElementInteractions: backdrop dismiss */}
+				<div
+					className="absolute inset-0 bg-black/40"
+					onClick={() => setOpen(false)}
+					role="presentation"
+				/>
+				<div
+					className={`relative h-full w-56 transition-transform duration-300 ease-out ${
+						open ? "translate-x-0" : "-translate-x-full"
+					}`}
+				>
+					{sidebar}
 				</div>
-			)}
+			</div>
 		</>
 	);
 }

@@ -34,6 +34,11 @@ export const PAGE_BACKGROUND_MODES = [
 		label: "Color",
 		description: "Use a semantic background tone.",
 	},
+	{
+		value: "image",
+		label: "Image",
+		description: "Use a background image with overlay.",
+	},
 ];
 
 export const PAGE_BACKGROUND_MODE_VALUES = PAGE_BACKGROUND_MODES.map(
@@ -117,6 +122,48 @@ const heroBlockSchema = z.object({
 			z.enum(PAGE_BACKGROUND_TONE_VALUES),
 		)
 		.default("primary"),
+	backgroundImage: z.preprocess(
+		(value) => getTrimmedString(value),
+		z.string().refine((value) => !value || isSafePathOrUrl(value), {
+			message: "Background image must use an http(s) or root-relative URL",
+		}),
+	),
+	backgroundImageAlt: z.preprocess(
+		(value) => getTrimmedString(value),
+		z.string().max(200),
+	),
+	primaryCtaLabel: z.preprocess(
+		(value) => getTrimmedString(value),
+		z.string().max(80),
+	),
+	primaryCtaHref: z.preprocess(
+		(value) => getTrimmedString(value),
+		z.string().refine((value) => !value || isSafePathOrUrl(value), {
+			message: "CTA links must use an http(s) or root-relative URL",
+		}),
+	),
+	secondaryCtaLabel: z.preprocess(
+		(value) => getTrimmedString(value),
+		z.string().max(80),
+	),
+	secondaryCtaHref: z.preprocess(
+		(value) => getTrimmedString(value),
+		z.string().refine((value) => !value || isSafePathOrUrl(value), {
+			message: "CTA links must use an http(s) or root-relative URL",
+		}),
+	),
+}).superRefine((block, ctx) => {
+	if (
+		block.backgroundMode === "image" &&
+		block.backgroundImage &&
+		!block.backgroundImageAlt
+	) {
+		ctx.addIssue({
+			code: z.ZodIssueCode.custom,
+			path: ["backgroundImageAlt"],
+			message: "Alt text is required when using a background image",
+		});
+	}
 });
 
 const defaultBlockSchema = z.object({
@@ -334,6 +381,12 @@ function getDefaultBlockForType(type) {
 				backgroundMode: "color",
 				backgroundValue: "primary",
 				backgroundTone: "primary",
+				backgroundImage: "",
+				backgroundImageAlt: "",
+				primaryCtaLabel: "",
+				primaryCtaHref: "",
+				secondaryCtaLabel: "",
+				secondaryCtaHref: "",
 			};
 		case "default":
 			return {
@@ -397,6 +450,18 @@ function normalizeIncomingBlock(block, index) {
 					block.backgroundValue,
 				),
 				backgroundTone: normalizeBackgroundToneValue(block.backgroundTone),
+				backgroundImage:
+					backgroundMode === "image"
+						? sanitizePathOrUrl(block.backgroundImage)
+						: "",
+				backgroundImageAlt:
+					backgroundMode === "image"
+						? getTrimmedString(block.backgroundImageAlt)
+						: "",
+				primaryCtaLabel: getTrimmedString(block.primaryCtaLabel),
+				primaryCtaHref: sanitizePathOrUrl(block.primaryCtaHref),
+				secondaryCtaLabel: getTrimmedString(block.secondaryCtaLabel),
+				secondaryCtaHref: sanitizePathOrUrl(block.secondaryCtaHref),
 			};
 		}
 		case "default":
@@ -532,9 +597,12 @@ function hasRenderableBlockContent(block) {
 	switch (block.type) {
 		case "hero":
 			return Boolean(
-				block.eyebrow ||
+				block.backgroundImage ||
+					block.eyebrow ||
 					block.title ||
-					hasRenderableRichTextContent(block.subtitle),
+					hasRenderableRichTextContent(block.subtitle) ||
+					(block.primaryCtaLabel && block.primaryCtaHref) ||
+					(block.secondaryCtaLabel && block.secondaryCtaHref),
 			);
 		case "default":
 			return Boolean(
@@ -589,14 +657,30 @@ function renderBlockToHtml(block) {
 	}
 
 	switch (block.type) {
-		case "hero":
-			return `<section>${[
+		case "hero": {
+			const style =
+				block.backgroundMode === "image" && block.backgroundImage
+					? ` style="background-image:url(${escapeAttribute(block.backgroundImage)});background-size:cover;background-position:center;position:relative;"`
+					: "";
+			const overlay =
+				block.backgroundMode === "image" && block.backgroundImage
+					? '<div style="position:absolute;inset:0;background:rgba(0,0,0,0.5);pointer-events:none" aria-hidden="true"></div>'
+					: "";
+			const actions = [
+				renderActionToHtml(block.primaryCtaLabel, block.primaryCtaHref),
+				renderActionToHtml(block.secondaryCtaLabel, block.secondaryCtaHref),
+			]
+				.filter(Boolean)
+				.join("");
+			return `<section${style}><div style="position:relative;z-index:1">${overlay}${[
 				block.eyebrow ? `<p>${escapeHtml(block.eyebrow)}</p>` : "",
 				block.title ? `<h2>${escapeHtml(block.title)}</h2>` : "",
 				renderRichText(block.subtitle),
+				actions ? `<p>${actions}</p>` : "",
 			]
 				.filter(Boolean)
-				.join("")}</section>`;
+				.join("")}</div></section>`;
+		}
 		case "default":
 			return `<section>${[
 				block.eyebrow ? `<p>${escapeHtml(block.eyebrow)}</p>` : "",
@@ -656,7 +740,13 @@ function renderBlockToPlainText(block) {
 
 	switch (block.type) {
 		case "hero":
-			return [block.eyebrow, block.title, block.subtitle]
+			return [
+				block.eyebrow,
+				block.title,
+				block.subtitle,
+				block.primaryCtaLabel,
+				block.secondaryCtaLabel,
+			]
 				.filter(Boolean)
 				.join("\n")
 				.trim();
@@ -712,7 +802,9 @@ function renderActionToHtml(label, href) {
 // renderRichText, escapeHtml, escapeAttribute, stripHtml, sanitizeRichTextHtml
 // are imported from ./sanitize.js
 
-function normalizeBackgroundMode(_value) {
+function normalizeBackgroundMode(value) {
+	const normalized = getTrimmedString(value).toLowerCase();
+	if (normalized === "image") return "image";
 	return "color";
 }
 
