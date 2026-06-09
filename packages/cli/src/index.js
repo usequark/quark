@@ -823,6 +823,18 @@ program
 						console.log(chalk.green(`    ✓ cms routes (paired with cms)`));
 					}
 				}
+
+				if (pairedTemplates.includes("cms-public")) {
+					const cmsPublicTemplatePath = path.join(templatesDir, "cms-public");
+					if (await fs.pathExists(cmsPublicTemplatePath)) {
+						const cmsPublicDir = path.join(targetDir, "apps", "web", "src");
+						await fs.ensureDir(cmsPublicDir);
+						await copyTemplate("cms-public", cmsPublicDir);
+						console.log(
+							chalk.green(`    ✓ cms public pages (paired with cms)`),
+						);
+					}
+				}
 			}
 
 			// Step 7: Update all package.json dependencies to use correct scope
@@ -1375,7 +1387,7 @@ const FEATURE_META = {
 	cms: {
 		requires: ["admin"],
 		packages: ["cms"],
-		pairs: ["cms-routes"],
+		pairs: ["cms-routes", "cms-public"],
 	},
 };
 
@@ -1901,6 +1913,15 @@ program
 								),
 							);
 						}
+					} else if (pair === "cms-public") {
+						const cmsPublicDir = path.join(projectDir, "apps", "web", "src");
+						await copyTemplate("cms-public", cmsPublicDir);
+						await replaceImportsInSourceFiles(cmsPublicDir, scope);
+						console.log(
+							chalk.green(
+								`    ✓ apps/web/src (cms public pages, paired with cms)`,
+							),
+						);
 					}
 				}
 

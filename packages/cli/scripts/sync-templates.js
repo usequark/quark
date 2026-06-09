@@ -60,7 +60,23 @@ const SYNC_DIRS = [
 		src: "apps/web",
 		dest: "base-project/apps/web",
 		// Admin routes are scaffolded conditionally via admin-routes template — exclude from base project
-		localExcludes: [/^apps\/web\/src\/app\/admin\//],
+		// CMS public files are scaffolded conditionally via cms-public template
+		localExcludes: [
+			/^apps\/web\/src\/app\/admin\//,
+			/^apps\/web\/src\/lib\/content\//,
+			/^apps\/web\/src\/lib\/load-cms-config\.js$/,
+			/^apps\/web\/src\/lib\/public-content-routes\.js$/,
+			/^apps\/web\/src\/lib\/public-content\.js$/,
+			/^apps\/web\/src\/lib\/public-content-cache\.js$/,
+			/^apps\/web\/src\/lib\/public-content-revalidation\.js$/,
+			/^apps\/web\/src\/lib\/public-content\.test\.js$/,
+			/^apps\/web\/src\/lib\/public-content-routes\.test\.js$/,
+			/^apps\/web\/src\/lib\/load-cms-config\.test\.js$/,
+			/^apps\/web\/src\/adminIntrospect\.test\.js$/,
+			/^apps\/web\/src\/app\/_components\/PageContentRenderer\.js$/,
+			/^apps\/web\/src\/app\/\[slug\]\//,
+			/^apps\/web\/src\/app\/api\/cms\//,
+		],
 	},
 	{ src: "apps/worker", dest: "worker" },
 	{ src: "packages/db", dest: "base-project/packages/db" },
@@ -106,6 +122,65 @@ const SYNC_FILES = [
 	{
 		src: "pnpm-workspace.yaml",
 		dest: "base-project/pnpm-workspace.yaml",
+	},
+	// CMS public files — scaffolded conditionally alongside CMS package,
+	// synced individually since they're interleaved with non-CMS files
+	{ src: "apps/web/src/app/sitemap.js", dest: "cms-public/app/sitemap.js" },
+	{
+		src: "apps/web/src/app/[slug]/page.js",
+		dest: "cms-public/app/[slug]/page.js",
+	},
+	{
+		src: "apps/web/src/app/_components/PageContentRenderer.js",
+		dest: "cms-public/app/_components/PageContentRenderer.js",
+	},
+	{
+		src: "apps/web/src/app/api/cms/media/route.js",
+		dest: "cms-public/app/api/cms/media/route.js",
+	},
+	{
+		src: "apps/web/src/lib/content/page-content.js",
+		dest: "cms-public/lib/content/page-content.js",
+	},
+	{
+		src: "apps/web/src/lib/content/page-content.test.js",
+		dest: "cms-public/lib/content/page-content.test.js",
+	},
+	{
+		src: "apps/web/src/lib/load-cms-config.js",
+		dest: "cms-public/lib/load-cms-config.js",
+	},
+	{
+		src: "apps/web/src/lib/load-cms-config.test.js",
+		dest: "cms-public/lib/load-cms-config.test.js",
+	},
+	{
+		src: "apps/web/src/lib/public-content-routes.js",
+		dest: "cms-public/lib/public-content-routes.js",
+	},
+	{
+		src: "apps/web/src/lib/public-content-routes.test.js",
+		dest: "cms-public/lib/public-content-routes.test.js",
+	},
+	{
+		src: "apps/web/src/lib/public-content.js",
+		dest: "cms-public/lib/public-content.js",
+	},
+	{
+		src: "apps/web/src/lib/public-content.test.js",
+		dest: "cms-public/lib/public-content.test.js",
+	},
+	{
+		src: "apps/web/src/lib/public-content-cache.js",
+		dest: "cms-public/lib/public-content-cache.js",
+	},
+	{
+		src: "apps/web/src/lib/public-content-revalidation.js",
+		dest: "cms-public/lib/public-content-revalidation.js",
+	},
+	{
+		src: "apps/web/src/adminIntrospect.test.js",
+		dest: "cms-public/adminIntrospect.test.js",
 	},
 ];
 
@@ -180,6 +255,9 @@ const TEMPLATE_ONLY = new Set([
 	// Doctor and prepare scripts are hand-authored for scaffolded projects
 	"base-project/scripts/doctor.js",
 	"base-project/scripts/prepare.js",
+	// Base-project sitemap is a simpler version (no CMS dependency);
+	// the CMS-capable sitemap lives in cms-public template
+	"base-project/apps/web/src/app/sitemap.js",
 ]);
 
 // ─── Transforms ────────────────────────────────────────────────────────────────
