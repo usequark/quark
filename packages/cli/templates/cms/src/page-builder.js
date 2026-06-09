@@ -152,6 +152,18 @@ const heroBlockSchema = z.object({
 			message: "CTA links must use an http(s) or root-relative URL",
 		}),
 	),
+}).superRefine((block, ctx) => {
+	if (
+		block.backgroundMode === "image" &&
+		block.backgroundImage &&
+		!block.backgroundImageAlt
+	) {
+		ctx.addIssue({
+			code: z.ZodIssueCode.custom,
+			path: ["backgroundImageAlt"],
+			message: "Alt text is required when using a background image",
+		});
+	}
 });
 
 const defaultBlockSchema = z.object({
