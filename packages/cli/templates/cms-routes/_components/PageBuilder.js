@@ -9,6 +9,7 @@ import {
 } from "@techstream/quark-cms/page-builder";
 import { Button, Input, Label, RichText, Select } from "@techstream/quark-ui";
 import { useEffect, useMemo, useState } from "react";
+import AdminImagePicker from "../../_components/AdminImagePicker";
 import CoverImageField from "./CoverImageField";
 
 const DEFAULT_COLOR_BACKGROUND = "primary";
@@ -231,6 +232,46 @@ function BlockFields({ block, updateBlock }) {
 						placeholder="Supporting hero copy"
 						onChange={(value) => updateBlock(block.id, { subtitle: value })}
 					/>
+					<div className="flex flex-wrap gap-4 [&>*]:flex-1">
+						<TextField
+							id={`block-${block.id}-primary-cta-label`}
+							label="Primary CTA label"
+							value={block.primaryCtaLabel || ""}
+							placeholder="Get started"
+							onChange={(value) =>
+								updateBlock(block.id, { primaryCtaLabel: value })
+							}
+						/>
+						<TextField
+							id={`block-${block.id}-primary-cta-href`}
+							label="Primary CTA link"
+							value={block.primaryCtaHref || ""}
+							placeholder="/demo or https://example.com"
+							onChange={(value) =>
+								updateBlock(block.id, { primaryCtaHref: value })
+							}
+						/>
+					</div>
+					<div className="flex flex-wrap gap-4 [&>*]:flex-1">
+						<TextField
+							id={`block-${block.id}-secondary-cta-label`}
+							label="Secondary CTA label"
+							value={block.secondaryCtaLabel || ""}
+							placeholder="View docs"
+							onChange={(value) =>
+								updateBlock(block.id, { secondaryCtaLabel: value })
+							}
+						/>
+						<TextField
+							id={`block-${block.id}-secondary-cta-href`}
+							label="Secondary CTA link"
+							value={block.secondaryCtaHref || ""}
+							placeholder="/docs or https://example.com"
+							onChange={(value) =>
+								updateBlock(block.id, { secondaryCtaHref: value })
+							}
+						/>
+					</div>
 					<BackgroundFields block={block} updateBlock={updateBlock} />
 				</div>
 			);
@@ -406,6 +447,7 @@ function SplitColumnFields({
 						name=""
 						defaultValue={block[srcField]}
 						onChange={(src) => updateBlock(block.id, { [srcField]: src })}
+						onAltChange={(alt) => updateBlock(block.id, { [altField]: alt })}
 					/>
 					<TextField
 						id={`block-${block.id}-${altField}`}
@@ -430,10 +472,43 @@ function SplitColumnFields({
 }
 
 function BackgroundFields({ block, updateBlock }) {
+	const mode = block.backgroundMode || "color";
+
 	return (
 		<div className="rounded-[--radius-default] border border-border bg-bg/50 p-4 space-y-4">
-			<div className="flex flex-wrap gap-4 [&>*]:flex-1">
-				<div className="flex flex-col gap-1 flex-1 min-w-[12rem]">
+			<div className="flex flex-col gap-1">
+				<Label htmlFor={`block-${block.id}-background-mode`}>
+					Background type
+				</Label>
+				<Select
+					id={`block-${block.id}-background-mode`}
+					value={mode}
+					onChange={(event) => {
+						const newMode = event.target.value;
+						if (newMode === "image") {
+							updateBlock(block.id, {
+								backgroundMode: "image",
+								backgroundValue: "",
+								backgroundTone: "primary",
+							});
+						} else {
+							updateBlock(block.id, {
+								backgroundMode: "color",
+								backgroundValue:
+									block.backgroundValue || DEFAULT_COLOR_BACKGROUND,
+								backgroundTone:
+									block.backgroundTone || DEFAULT_COLOR_BACKGROUND,
+							});
+						}
+					}}
+				>
+					<option value="color">Color</option>
+					<option value="image">Image</option>
+				</Select>
+			</div>
+
+			{mode === "color" ? (
+				<div className="flex flex-col gap-1">
 					<Label htmlFor={`block-${block.id}-background-value`}>
 						Background tone
 					</Label>
@@ -442,7 +517,6 @@ function BackgroundFields({ block, updateBlock }) {
 						value={block.backgroundValue || DEFAULT_COLOR_BACKGROUND}
 						onChange={(event) =>
 							updateBlock(block.id, {
-								backgroundMode: "color",
 								backgroundValue: event.target.value,
 								backgroundTone: event.target.value,
 							})
@@ -455,7 +529,28 @@ function BackgroundFields({ block, updateBlock }) {
 						))}
 					</Select>
 				</div>
-			</div>
+			) : (
+				<div className="space-y-4">
+					<AdminImagePicker
+						label="Background image"
+						name=""
+						defaultValue={block.backgroundImage || ""}
+						onChange={(src) => updateBlock(block.id, { backgroundImage: src })}
+						onAltChange={(alt) =>
+							updateBlock(block.id, { backgroundImageAlt: alt })
+						}
+					/>
+					<TextField
+						id={`block-${block.id}-background-image-alt`}
+						label="Background image alt text"
+						value={block.backgroundImageAlt || ""}
+						placeholder="Describe the background image"
+						onChange={(value) =>
+							updateBlock(block.id, { backgroundImageAlt: value })
+						}
+					/>
+				</div>
+			)}
 		</div>
 	);
 }

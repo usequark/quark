@@ -1,7 +1,6 @@
 "use client";
 
-import { Button, Input, Label } from "@techstream/quark-ui";
-import { X } from "lucide-react";
+import { Button, Dialog, Input, Label, Lightbox } from "@techstream/quark-ui";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { cmsUploadMediaInline } from "../cms/_actions/media";
 
@@ -29,9 +28,11 @@ export default function AdminImagePicker({
 	defaultValue = "",
 	disabled = false,
 	onChange,
+	onAltChange,
 }) {
 	const [value, setValue] = useState(defaultValue);
 	const [open, setOpen] = useState(false);
+	const [lightboxOpen, setLightboxOpen] = useState(false);
 	const [urlInput, setUrlInput] = useState("");
 	const [mediaAssets, setMediaAssets] = useState(null);
 	const [loadingMedia, setLoadingMedia] = useState(false);
@@ -75,6 +76,7 @@ export default function AdminImagePicker({
 
 	function handleSelectMedia(asset) {
 		applyValue(`/api/media/${encodeURIComponent(asset.storageKey)}`);
+		onAltChange?.(asset.alt ?? "");
 		setOpen(false);
 	}
 
@@ -111,20 +113,25 @@ export default function AdminImagePicker({
 			{/* ── Selected state ─────────────────────────────── */}
 			{value && (
 				<div className="flex items-stretch gap-3 p-2.5 rounded-[--radius-default] border border-border bg-surface">
-					<div className="w-28 h-16 rounded border border-border bg-surface-hover overflow-hidden shrink-0 flex items-center justify-center">
+					<button
+						type="button"
+						onClick={() => setLightboxOpen(true)}
+						className="w-44 h-32 rounded border border-border bg-surface-hover overflow-hidden shrink-0 flex items-center justify-center cursor-pointer"
+						aria-label="Open image preview"
+					>
 						{showImage ? (
 							// biome-ignore lint/performance/noImgElement: dynamic/blob URL
 							<img
 								src={value}
 								alt="Selected"
-								className="w-full h-full object-cover"
+								className="w-full h-full object-contain"
 							/>
 						) : (
 							<span className="text-[10px] font-mono text-text-faint text-center break-all px-2">
 								URL
 							</span>
 						)}
-					</div>
+					</button>
 					<div className="flex flex-col justify-center gap-1.5 min-w-0 flex-1">
 						<p className="text-[11px] font-mono text-text-muted truncate leading-none">
 							{value}
@@ -183,26 +190,26 @@ export default function AdminImagePicker({
 			{/* Hidden form input */}
 			{name ? <input type="hidden" name={name} value={value} /> : null}
 
-			{/* ── Picker panel ────────────────────────────────── */}
-			{open && (
-				<div className="rounded-[--radius-default] border border-border bg-surface shadow-xl overflow-hidden">
-					{/* Header */}
-					<div className="flex items-center justify-between pl-3 pr-2 py-2 border-b border-border bg-surface-hover">
-						<span className="text-[11px] font-semibold tracking-widest uppercase text-text-muted select-none">
-							Image Library
-						</span>
-						<button
-							type="button"
-							onClick={handleClose}
-							className="flex items-center justify-center w-6 h-6 rounded text-text-faint hover:text-text hover:bg-border/40 transition-colors cursor-pointer"
-							aria-label="Close image picker"
-						>
-							<X size={15} strokeWidth={2} />
-						</button>
-					</div>
+			{/* ── Lightbox ────────────────────────────────────── */}
+			{showImage && (
+				<Lightbox
+					src={value}
+					alt="Selected image"
+					open={lightboxOpen}
+					onClose={() => setLightboxOpen(false)}
+				/>
+			)}
 
+			{/* ── Picker dialog ───────────────────────────────── */}
+			<Dialog
+				open={open}
+				onClose={handleClose}
+				title="Choose Image"
+				className="max-w-xl!"
+			>
+				<div className="flex flex-col">
 					{/* Media grid */}
-					<div className="p-3 min-h-24 max-h-52 overflow-y-auto">
+					<div className="min-h-24 max-h-60 overflow-y-auto">
 						{loadingMedia && (
 							<div className="grid grid-cols-[repeat(auto-fill,minmax(4rem,1fr))] gap-2">
 								{Array.from({ length: 10 }).map((_, i) => (
@@ -372,7 +379,7 @@ export default function AdminImagePicker({
 						</div>
 					</div>
 				</div>
-			)}
+			</Dialog>
 		</div>
 	);
 }

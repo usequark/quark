@@ -8,6 +8,7 @@ export default function CoverImageField({
 	name = "coverImage",
 	disabled = false,
 	onChange,
+	onAltChange,
 }) {
 	return (
 		<AdminImagePicker
@@ -16,6 +17,7 @@ export default function CoverImageField({
 			defaultValue={defaultValue}
 			disabled={disabled}
 			onChange={onChange}
+			onAltChange={onAltChange}
 		/>
 	);
 }

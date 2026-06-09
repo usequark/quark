@@ -18,6 +18,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@techstream/quark-ui";
+import { ChevronRight } from "lucide-react";
 import { hasCmsFeature } from "@/lib/load-cms-config";
 import {
 	getJobStats,
@@ -141,7 +142,7 @@ export default async function AdminDashboard() {
 					</h2>
 					<div className="h-px flex-1 bg-border" />
 				</div>
-				<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+				<div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
 					<Card>
 						<CardHeader>
 							<CardTitle className="text-base">Job Queue</CardTitle>
@@ -302,8 +303,9 @@ export default async function AdminDashboard() {
 											<p className="text-3xl font-bold tabular-nums text-text">
 												{count}
 											</p>
-											<span className="mb-1 text-sm text-text-faint transition-colors group-hover:text-primary">
-												records &rarr;
+											<span className="inline-flex items-center gap-0.5 text-sm text-text-muted transition-colors group-hover:text-text">
+												records
+												<ChevronRight size={15} />
 											</span>
 										</div>
 									</CardContent>
@@ -346,8 +348,9 @@ function CmsStatCard({ label, href, total, published, drafts }) {
 					</p>
 					<div className="mt-3 flex items-end justify-between">
 						<p className="text-3xl font-bold tabular-nums text-text">{total}</p>
-						<span className="mb-1 text-sm text-text-faint transition-colors group-hover:text-primary">
-							{isMedia ? "assets \u2192" : "items \u2192"}
+						<span className="inline-flex items-center gap-0.5 text-sm text-text-muted transition-colors group-hover:text-text">
+							{isMedia ? "assets" : "items"}
+							<ChevronRight size={15} />
 						</span>
 					</div>
 					{!isMedia && (

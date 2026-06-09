@@ -61,7 +61,32 @@ export async function cmsUploadMedia(_prevState, formData) {
 	});
 
 	revalidatePath("/admin/cms/media");
-	redirect("/admin/cms/media");
+	redirect("/admin/cms/media?toast=uploaded");
+}
+
+/**
+ * Server Action: update alt text for an existing MediaAsset.
+ * @param {string} id
+ * @param {FormData} formData
+ */
+export async function cmsUpdateMedia(id, _prevState, formData) {
+	await requireRole(["admin", "editor"]);
+
+	const altResult = uploadSchema.safeParse({ alt: formData.get("alt") });
+	if (!altResult.success) {
+		throw new ValidationError("Alt text must be 200 characters or less");
+	}
+
+	const alt = altResult.data.alt || null;
+
+	await prisma.mediaAsset.update({
+		where: { id },
+		data: { alt },
+	});
+
+	revalidatePath("/admin/cms/media");
+	revalidatePath(`/admin/cms/media/edit/${id}`);
+	redirect("/admin/cms/media?toast=updated");
 }
 
 /**
@@ -133,5 +158,5 @@ export async function cmsDeleteMedia(id) {
 	await prisma.mediaAsset.delete({ where: { id } });
 
 	revalidatePath("/admin/cms/media");
-	redirect("/admin/cms/media");
+	redirect("/admin/cms/media?toast=deleted");
 }

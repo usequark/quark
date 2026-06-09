@@ -8,10 +8,9 @@ const mobileShellCls =
 const mobileShellOpenCls =
 	"relative w-full border-b border-transparent bg-surface shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]";
 const containerCls = "mx-auto w-full px-4 sm:px-6 lg:px-8";
-const desktopInnerCls =
-	"grid h-[4.5rem] grid-cols-[auto_1fr_auto] items-center gap-6";
-const leftZoneCls = "flex items-center";
-const rightZoneCls = "flex items-center justify-end";
+const desktopInnerCls = "flex h-[4.5rem] items-center justify-center gap-6";
+const leftZoneCls = "flex items-center mr-auto";
+const rightZoneCls = "flex items-center justify-end ml-auto";
 const logoCls =
 	"inline-flex items-center gap-2.5 rounded-[--radius-default] px-1.5 py-1 text-base font-semibold tracking-wide text-text transition-colors hover:text-primary";
 const markCls =
@@ -22,7 +21,7 @@ const desktopLinkCls =
 	"inline-flex h-10 items-center rounded-[--radius-default] px-3.5 text-base font-medium text-text-muted transition-colors hover:bg-surface hover:text-text";
 
 const desktopDropdownWrapCls =
-	"group inline-flex items-center rounded-[--radius-default] transition-colors hover:bg-surface";
+	"group inline-flex cursor-pointer items-center rounded-[--radius-default] transition-colors hover:bg-surface";
 const desktopDropdownLinkCls =
 	"flex items-center text-base font-medium text-text-muted transition-colors group-hover:text-text";
 const desktopDropdownChevronCls =
@@ -36,7 +35,7 @@ const mobileToggleCls =
 const mobilePanelWrapCls =
 	"absolute inset-x-0 top-full z-[80] overflow-y-auto overscroll-contain [touch-action:pan-y] [-webkit-overflow-scrolling:touch] origin-top";
 const mobilePanelCls =
-	"border-y border-border bg-surface will-change-transform transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]";
+	"border-y border-border bg-surface will-change-transform transition-all duration-300 ease-out";
 const mobileLinkCls =
 	"flex min-h-12 w-full items-center justify-between px-4 text-left text-base font-medium text-text-muted transition-colors hover:bg-surface-hover hover:text-text";
 const mobileSubLinkCls =
@@ -229,26 +228,14 @@ export function Navbar({
 								React.createElement(
 									"div",
 									{ className: desktopDropdownWrapCls },
-									link.href
-										? React.createElement(
-												"a",
-												{
-													href: link.href,
-													className: `${desktopDropdownLinkCls} rounded-l-[--radius-default] px-3.5 py-2`,
-												},
-												link.label,
-											)
-										: React.createElement(
-												"button",
-												{
-													type: "button",
-													className: `${desktopDropdownLinkCls} rounded-l-[--radius-default] px-3.5 py-2`,
-													onClick: () => toggleDesktopDropdown(index),
-													"aria-expanded": isOpen,
-													"aria-haspopup": "menu",
-												},
-												link.label,
-											),
+									React.createElement(
+										"a",
+										{
+											href: link.href ?? "#",
+											className: `${desktopDropdownLinkCls} rounded-l-[--radius-default] px-3.5 py-2`,
+										},
+										link.label,
+									),
 									React.createElement(
 										"button",
 										{
@@ -413,10 +400,10 @@ export function MobileNavbar({
 					{
 						type: "button",
 						className: mobileToggleCls,
-						"aria-label": menuAnimatingVisible
+						"aria-label": menuOpen
 							? "Close navigation menu"
 							: "Open navigation menu",
-						"aria-expanded": menuAnimatingVisible,
+						"aria-expanded": menuOpen,
 						onClick: () => {
 							setMenuOpen((state) => !state);
 						},
@@ -428,18 +415,18 @@ export function MobileNavbar({
 							className: "relative block h-4 w-4",
 						},
 						React.createElement("span", {
-							className: `absolute left-0 top-[2px] block h-[2px] w-4 bg-current transition-transform duration-200 ${
-								menuAnimatingVisible ? "translate-y-[5px] rotate-45" : ""
+							className: `absolute left-0 top-[2px] block h-[2px] w-4 bg-current transition-all duration-200 ease-out ${
+								menuOpen ? "translate-y-[5px] rotate-45" : ""
 							}`,
 						}),
 						React.createElement("span", {
-							className: `absolute left-0 top-[7px] block h-[2px] w-4 bg-current transition-opacity duration-200 ${
-								menuAnimatingVisible ? "opacity-0" : "opacity-100"
+							className: `absolute left-0 top-[7px] block h-[2px] w-4 bg-current transition-all duration-200 ease-out ${
+								menuOpen ? "opacity-0" : "opacity-100"
 							}`,
 						}),
 						React.createElement("span", {
-							className: `absolute left-0 top-[12px] block h-[2px] w-4 bg-current transition-transform duration-200 ${
-								menuAnimatingVisible ? "-translate-y-[5px] -rotate-45" : ""
+							className: `absolute left-0 top-[12px] block h-[2px] w-4 bg-current transition-all duration-200 ease-out ${
+								menuOpen ? "-translate-y-[5px] -rotate-45" : ""
 							}`,
 						}),
 					),
@@ -466,7 +453,7 @@ export function MobileNavbar({
 									className: `${mobilePanelCls} ${
 										isPanelActive
 											? "translate-y-0 opacity-100"
-											: "-translate-y-4 opacity-0"
+											: "-translate-y-6 opacity-0"
 									}`,
 									"aria-label": "Mobile navigation",
 								},
@@ -508,41 +495,43 @@ export function MobileNavbar({
 													className: "h-4 w-4",
 												}),
 											),
-											submenuOpen
-												? React.createElement(
-														"div",
-														{
-															className:
-																"grid grid-rows-[1fr] opacity-100 translate-y-0",
-														},
-														React.createElement(
-															"div",
-															{ className: "overflow-hidden" },
+											React.createElement(
+												"div",
+												{
+													className:
+														"grid transition-all duration-200 ease-out",
+													style: {
+														gridTemplateRows: submenuOpen ? "1fr" : "0fr",
+														opacity: submenuOpen ? 1 : 0,
+													},
+												},
+												React.createElement(
+													"div",
+													{ className: "overflow-hidden" },
+													React.createElement(
+														"ul",
+														{ className: "space-y-0 pb-2 pt-1" },
+														...(link.items ?? []).map((item, itemIndex) =>
 															React.createElement(
-																"ul",
-																{ className: "space-y-0 pb-2 pt-1" },
-																...(link.items ?? []).map((item, itemIndex) =>
-																	React.createElement(
-																		"li",
-																		{ key: `${item.label}-${itemIndex}` },
-																		React.createElement(
-																			"a",
-																			{
-																				href: item.href ?? "#",
-																				className: mobileSubLinkCls,
-																				onClick: () => {
-																					setMenuOpen(false);
-																					setOpenSubmenus({});
-																				},
-																			},
-																			item.label,
-																		),
-																	),
+																"li",
+																{ key: `${item.label}-${itemIndex}` },
+																React.createElement(
+																	"a",
+																	{
+																		href: item.href ?? "#",
+																		className: mobileSubLinkCls,
+																		onClick: () => {
+																			setMenuOpen(false);
+																			setOpenSubmenus({});
+																		},
+																	},
+																	item.label,
 																),
 															),
 														),
-													)
-												: null,
+													),
+												),
+											),
 										);
 									}),
 								),

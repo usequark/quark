@@ -1,4 +1,5 @@
 import { prisma } from "@techstream/quark-db";
+import { ChevronLeft } from "lucide-react";
 import { notFound } from "next/navigation";
 import {
 	cmsArchivePage,
@@ -29,16 +30,13 @@ export default async function EditPagePage({ params }) {
 			{/* Header */}
 			<div className="flex items-center justify-between mb-6">
 				<div>
-					<div className="flex items-center gap-2 text-sm text-text-faint">
-						<a
-							href="/admin/cms/pages"
-							className="hover:text-text transition-colors"
-						>
-							Pages
-						</a>
-						<span aria-hidden="true">/</span>
-						<span className="text-text-muted">Edit</span>
-					</div>
+					<a
+						href="/admin/cms/pages"
+						className="inline-flex items-center gap-1 text-sm font-medium text-text-muted hover:text-text bg-surface border border-border hover:border-border-hover px-3 py-1.5 rounded-[--radius-default] transition-colors mb-2"
+					>
+						<ChevronLeft size={15} />
+						Pages
+					</a>
 					<h1 className="text-2xl font-bold text-text mt-1">Edit Page</h1>
 				</div>
 			</div>

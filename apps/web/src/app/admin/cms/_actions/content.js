@@ -50,7 +50,7 @@ export async function cmsCreatePage(_prevState, formData) {
 
 	await revalidatePublicContent();
 	revalidatePath("/admin/cms/pages");
-	redirect("/admin/cms/pages");
+	redirect("/admin/cms/pages?toast=created");
 }
 
 export async function cmsUpdatePage(id, _prevState, formData) {
@@ -84,7 +84,7 @@ export async function cmsUpdatePage(id, _prevState, formData) {
 	await revalidatePublicContent();
 	revalidatePath("/admin/cms/pages");
 	revalidatePath(`/admin/cms/pages/${id}`);
-	redirect("/admin/cms/pages");
+	redirect("/admin/cms/pages?toast=updated");
 }
 
 export async function cmsPublishPage(id) {
@@ -116,5 +116,5 @@ export async function cmsDeletePage(id) {
 	await prisma.page.delete({ where: { id } });
 	await revalidatePublicContent();
 	revalidatePath("/admin/cms/pages");
-	redirect("/admin/cms/pages");
+	redirect("/admin/cms/pages?toast=deleted");
 }

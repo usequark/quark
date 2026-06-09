@@ -12,9 +12,12 @@ function hasRenderableContent(blocks) {
 		switch (block?.type) {
 			case "hero":
 				return Boolean(
-					block.eyebrow ||
+					block.backgroundImage ||
+						block.eyebrow ||
 						block.title ||
-						hasRenderableTextValue(block.subtitle),
+						hasRenderableTextValue(block.subtitle) ||
+						(block.primaryCtaLabel && block.primaryCtaHref) ||
+						(block.secondaryCtaLabel && block.secondaryCtaHref),
 				);
 			case "default":
 				return Boolean(
@@ -61,12 +64,27 @@ function hasRenderableTextValue(value) {
 }
 
 const LAYOUT_CLASSES = {
-	standard: "max-w-5xl",
+	standard: "max-w-none px-0",
 	narrow: "max-w-3xl",
 	immersive: "max-w-6xl",
 };
 
+const SECTION_INNER_CLASSES = {
+	standard: "max-w-[80%] mx-auto",
+	narrow: "max-w-3xl mx-auto",
+	immersive: "max-w-6xl mx-auto",
+};
+
 const ALTERNATING_BACKGROUNDS = ["bg-surface", "bg-bg"];
+
+const TONE_BG_CLASSES = {
+	surface: "bg-surface",
+	muted: "bg-bg",
+	primary: "bg-primary-muted",
+	info: "bg-info-muted",
+	success: "bg-success-muted",
+	warning: "bg-warning-muted",
+};
 
 export function pageHasRenderableContent(content, fallbackBody = "") {
 	return hasRenderableContent(normalizePageContent(content, fallbackBody));
@@ -94,12 +112,12 @@ export default function PageContentRenderer({
 	}
 
 	return (
-		<article className="bg-bg text-text">
-			<div
-				className={`mx-auto w-full ${layoutClass} px-5 py-8 sm:px-8 sm:py-12`}
-			>
+		<section className="bg-bg text-text">
+			<div className={`mx-auto w-full ${layoutClass}`}>
 				{showHeader && (title || excerpt) && (
-					<header className="border-b border-border pb-6">
+					<header
+						className={`border-b border-border pb-6 ${layout === "standard" ? "mx-auto w-full max-w-5xl px-5 sm:px-8" : ""}`}
+					>
 						{title && (
 							<h1 className="text-3xl font-semibold tracking-tight text-text sm:text-4xl">
 								{title}
@@ -126,61 +144,125 @@ export default function PageContentRenderer({
 							block={block}
 							previewMode={previewMode}
 							sectionBg={getAlternatingBg(blocks, index)}
+							sectionInnerClass={
+								SECTION_INNER_CLASSES[layout] ?? SECTION_INNER_CLASSES.standard
+							}
 						/>
 					))}
 				</div>
 			</div>
-		</article>
+		</section>
 	);
 }
 
-function PageBlock({ block, previewMode, sectionBg = "" }) {
+function PageBlock({
+	block,
+	previewMode,
+	sectionBg = "",
+	sectionInnerClass = "w-full",
+}) {
 	switch (block?.type) {
-		case "hero":
-			if (!block.eyebrow && !block.title && !block.subtitle) return null;
+		case "hero": {
+			if (
+				!block.eyebrow &&
+				!block.title &&
+				!block.subtitle &&
+				!block.backgroundImage &&
+				!(block.primaryCtaLabel && block.primaryCtaHref) &&
+				!(block.secondaryCtaLabel && block.secondaryCtaHref)
+			)
+				return null;
+			const hasBgImage =
+				block.backgroundMode === "image" && block.backgroundImage;
+			const toneBg =
+				!hasBgImage && block.backgroundMode === "color"
+					? TONE_BG_CLASSES[block.backgroundValue] || sectionBg
+					: sectionBg;
 			return (
-				<div className={`${sectionBg}`.trim()}>
-					<div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 py-12 sm:py-14">
-						<div className="max-w-3xl">
+				<section
+					className={`${hasBgImage ? "relative overflow-hidden bg-cover bg-center bg-no-repeat h-[calc(100vh-73px)] flex items-center justify-center" : ""} ${!hasBgImage ? toneBg : ""}`.trim()}
+					style={
+						hasBgImage
+							? { backgroundImage: `url(${block.backgroundImage})` }
+							: undefined
+					}
+				>
+					{hasBgImage && (
+						<div
+							className="absolute inset-0 bg-black/50 pointer-events-none"
+							aria-hidden="true"
+						/>
+					)}
+					<div
+						className={`relative z-10 w-full ${sectionInnerClass} px-4 sm:px-6 lg:px-8 py-12 sm:py-14 ${hasBgImage ? "min-h-[60vh] flex items-center justify-center" : ""}`}
+					>
+						<div className="mx-auto max-w-3xl text-center">
 							{block.eyebrow && (
-								<p className="font-mono text-[11px] uppercase tracking-[0.2em] text-text-faint">
+								<p
+									className={`font-mono text-[12px] uppercase tracking-[0.2em] ${hasBgImage ? "text-white/70" : "text-text-faint"}`}
+								>
 									{block.eyebrow}
 								</p>
 							)}
 							<h2
-								className={`${block.eyebrow ? "mt-2 " : ""}text-2xl font-semibold tracking-tight text-text sm:text-3xl`}
+								className={`${block.eyebrow ? "mt-2 " : ""} text-4xl font-semibold tracking-tight sm:text-5xl lg:text-[4rem] ${hasBgImage ? "text-white" : "text-text"}`}
 							>
 								{block.title}
 							</h2>
 							{renderRichContent(
 								block.subtitle,
-								"mt-3 text-sm text-text-muted sm:text-base",
+								`mt-3 text-sm sm:text-xl ${hasBgImage ? "text-white/80" : "text-text-muted"}`,
+							)}
+							{(block.primaryCtaLabel || block.secondaryCtaLabel) && (
+								<div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+									{block.primaryCtaLabel && block.primaryCtaHref && (
+										<Button
+											href={previewMode ? "#" : block.primaryCtaHref}
+											variant="primary"
+											size="lg"
+										>
+											{block.primaryCtaLabel}
+										</Button>
+									)}
+									{block.secondaryCtaLabel && block.secondaryCtaHref && (
+										<Button
+											href={previewMode ? "#" : block.secondaryCtaHref}
+											variant="secondary"
+											size="lg"
+										>
+											{block.secondaryCtaLabel}
+										</Button>
+									)}
+								</div>
 							)}
 						</div>
 					</div>
-				</div>
+				</section>
 			);
+		}
 		case "default":
 			if (!block.eyebrow && !block.title && !block.body) return null;
 			return (
-				<div className={`${sectionBg}`.trim()}>
-					<div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
-						<div className="max-w-3xl">
+				<section className={`${sectionBg}`.trim()}>
+					<div
+						className={`w-full ${sectionInnerClass} px-4 sm:px-6 lg:px-8 py-10 sm:py-12`}
+					>
+						<div className="">
 							{block.eyebrow && (
-								<p className="font-mono text-[11px] uppercase tracking-[0.2em] text-text-faint">
+								<p className="font-mono text-[12px] uppercase tracking-[0.2em] text-text-faint">
 									{block.eyebrow}
 								</p>
 							)}
-							<h3 className="mt-2 text-2xl font-semibold tracking-tight text-text">
+							<h3 className="mt-2 text-2xl sm:text-4xl font-semibold tracking-tight text-text">
 								{block.title}
 							</h3>
 							{renderRichContent(
 								block.body,
-								"mt-4 text-sm leading-7 text-text-muted",
+								"mt-4 text-sm sm:text-base leading-7 text-text-muted",
 							)}
 						</div>
 					</div>
-				</div>
+				</section>
 			);
 		case "split":
 			if (
@@ -200,15 +282,17 @@ function PageBlock({ block, previewMode, sectionBg = "" }) {
 				return null;
 			}
 			return (
-				<div className={`${sectionBg}`.trim()}>
-					<div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+				<section className={`${sectionBg}`.trim()}>
+					<div
+						className={`w-full ${sectionInnerClass} px-4 sm:px-6 lg:px-8 py-10 sm:py-12`}
+					>
 						<div className="max-w-3xl">
 							{block.eyebrow && (
-								<p className="font-mono text-[11px] uppercase tracking-[0.2em] text-text-faint">
+								<p className="font-mono text-[12px] uppercase tracking-[0.2em] text-text-faint">
 									{block.eyebrow}
 								</p>
 							)}
-							<h3 className="mt-2 text-2xl font-semibold tracking-tight text-text">
+							<h3 className="mt-2 text-2xl sm:text-4xl font-semibold tracking-tight text-text">
 								{block.title}
 							</h3>
 						</div>
@@ -229,7 +313,7 @@ function PageBlock({ block, previewMode, sectionBg = "" }) {
 							)}
 						</div>
 					</div>
-				</div>
+				</section>
 			);
 		case "cta": {
 			if (
@@ -240,9 +324,15 @@ function PageBlock({ block, previewMode, sectionBg = "" }) {
 			) {
 				return null;
 			}
+			const ctaBg =
+				block.backgroundMode === "color"
+					? TONE_BG_CLASSES[block.backgroundValue] || sectionBg
+					: sectionBg;
 			return (
-				<div className={`${sectionBg}`.trim()}>
-					<div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 py-12 sm:py-14">
+				<section className={`${ctaBg}`.trim()}>
+					<div
+						className={`w-full ${sectionInnerClass} px-4 sm:px-6 lg:px-8 py-12 sm:py-14`}
+					>
 						<div className="mx-auto max-w-3xl text-center">
 							<h3 className="text-2xl font-semibold tracking-tight text-text sm:text-3xl">
 								{block.title}
@@ -273,7 +363,7 @@ function PageBlock({ block, previewMode, sectionBg = "" }) {
 							)}
 						</div>
 					</div>
-				</div>
+				</section>
 			);
 		}
 		default:
@@ -288,9 +378,9 @@ function renderSplitColumn(kind, body, src, alt, fallbackLabel) {
 				<Image
 					src={src}
 					alt={alt || `${fallbackLabel} media`}
-					width={800}
-					height={600}
-					className="h-full min-h-56 w-full object-cover"
+					width={600}
+					height={400}
+					className="min-h-20 w-full object-cover"
 				/>
 			</figure>
 		);
@@ -300,7 +390,7 @@ function renderSplitColumn(kind, body, src, alt, fallbackLabel) {
 		<div className="min-w-0">
 			{renderRichContent(
 				body || `Add ${fallbackLabel} column text.`,
-				"text-sm leading-7 text-text-muted",
+				"text-sm sm:text-base leading-7 text-text-muted",
 			)}
 		</div>
 	);
@@ -314,7 +404,9 @@ function renderRichContent(text, className) {
 		const sanitized = sanitizeRichTextHtml(value);
 		if (!sanitized) return null;
 		return React.createElement("div", {
-			className,
+			className:
+				`${className} [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-2 [&_li]:my-0.5`.trim(),
+			// biome-ignore lint/security/noDangerouslySetInnerHtml: rich text HTML is sanitized
 			dangerouslySetInnerHTML: { __html: sanitized },
 		});
 	}

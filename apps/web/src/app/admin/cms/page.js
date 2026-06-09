@@ -58,34 +58,14 @@ export default async function CmsDashboard() {
 	return (
 		<div className="space-y-10">
 			{/* ── Page header ── */}
-			<div className="relative overflow-hidden border border-border bg-surface p-6 sm:p-8">
-				<div className="absolute inset-0 bg-gradient-to-br from-primary/[0.03] to-transparent" />
-				<div className="relative flex items-center gap-4">
-					<div className="flex h-11 w-11 items-center justify-center border border-primary/20 bg-primary-muted">
-						<svg
-							aria-hidden="true"
-							className="h-5 w-5 text-primary"
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke="currentColor"
-							strokeWidth="2"
-						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
-							/>
-						</svg>
-					</div>
-					<div>
-						<h1 className="text-2xl font-bold tracking-tight text-text">
-							Content
-						</h1>
-						<p className="mt-0.5 text-sm text-text-faint">
-							Manage pages and media
-						</p>
-					</div>
+			<div className="flex items-center justify-between mb-6">
+				<div>
+					<h1 className="text-2xl font-bold text-text">Content</h1>
+					<p className="text-sm text-text-faint mt-1">Manage pages and media</p>
 				</div>
+				<a href="/admin/cms/pages/new">
+					<Button>New Page</Button>
+				</a>
 			</div>
 
 			{/* ── Sub-nav ── */}
@@ -108,11 +88,6 @@ export default async function CmsDashboard() {
 				>
 					Media
 				</a>
-				<div className="ml-auto">
-					<a href="/admin/cms/pages/new">
-						<Button size="sm">New Page</Button>
-					</a>
-				</div>
 			</div>
 
 			{/* ── Content Types ── */}

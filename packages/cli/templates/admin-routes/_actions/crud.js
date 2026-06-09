@@ -86,7 +86,7 @@ export async function adminCreate(slug, formData) {
 	}
 
 	revalidatePath(`/admin/${slug}`);
-	redirect(`/admin/${slug}`);
+	redirect(`/admin/${slug}?toast=created`);
 }
 
 /**
@@ -112,7 +112,7 @@ export async function adminUpdate(slug, id, formData) {
 
 	revalidatePath(`/admin/${slug}`);
 	revalidatePath(`/admin/${slug}/${id}`);
-	redirect(`/admin/${slug}`);
+	redirect(`/admin/${slug}?toast=updated`);
 }
 
 /**
@@ -135,5 +135,5 @@ export async function adminDelete(slug, id) {
 	}
 
 	revalidatePath(`/admin/${slug}`);
-	redirect(`/admin/${slug}`);
+	redirect(`/admin/${slug}?toast=deleted`);
 }

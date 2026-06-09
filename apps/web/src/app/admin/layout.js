@@ -47,7 +47,7 @@ export default async function AdminLayout({ children }) {
 				contentLinks={cmsLinks}
 				userRole={role}
 			/>
-			<main className="flex-1 overflow-auto p-4 pt-14 sm:p-6 sm:pt-6">
+			<main className="flex-1 overflow-auto p-4 pt-14 lg:p-6 lg:pt-6">
 				{children}
 			</main>
 		</div>

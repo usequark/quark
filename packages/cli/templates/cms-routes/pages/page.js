@@ -1,5 +1,6 @@
 import { prisma } from "@techstream/quark-db";
 import { Button } from "@techstream/quark-ui";
+import AdminActionToast from "../../_components/AdminActionToast";
 import ContentTable from "../_components/ContentTable";
 
 export const metadata = { title: "Pages" };
@@ -7,7 +8,7 @@ export const metadata = { title: "Pages" };
 const STATUS_FILTERS = ["ALL", "DRAFT", "PUBLISHED", "ARCHIVED"];
 
 export default async function PagesListPage({ searchParams }) {
-	const { status = "ALL" } = await searchParams;
+	const { status = "ALL", toast } = await searchParams;
 	const where = status !== "ALL" ? { status } : undefined;
 
 	const [records, total, draftCount, publishedCount, archivedCount] =
@@ -31,6 +32,7 @@ export default async function PagesListPage({ searchParams }) {
 
 	return (
 		<div className="space-y-8">
+			<AdminActionToast toastKey={toast} resourceLabel="Page" />
 			{/* Header */}
 			<div className="flex items-center justify-between mb-6">
 				<div>
