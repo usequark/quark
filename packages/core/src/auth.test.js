@@ -72,6 +72,80 @@ test("Auth Module", async (t) => {
 		assert(config.secret === "test-secret");
 	});
 
+	await t.test("createAuthConfig sets trustHost=true on Railway", () => {
+		const key = "RAILWAY_SERVICE_ID";
+		const orig = process.env[key];
+		process.env[key] = "service-abc";
+		try {
+			const config = createAuthConfig({ secret: "test-secret" });
+			assert.equal(config.trustHost, true);
+		} finally {
+			if (orig !== undefined) process.env[key] = orig;
+			else delete process.env[key];
+		}
+	});
+
+	await t.test(
+		"createAuthConfig sets trustHost=true for non-localhost NEXTAUTH_URL",
+		() => {
+			const key = "NEXTAUTH_URL";
+			const orig = process.env[key];
+			process.env[key] = "https://myapp.com";
+			try {
+				const config = createAuthConfig({ secret: "test-secret" });
+				assert.equal(config.trustHost, true);
+			} finally {
+				if (orig !== undefined) process.env[key] = orig;
+				else delete process.env[key];
+			}
+		},
+	);
+
+	await t.test(
+		"createAuthConfig sets trustHost=false for localhost NEXTAUTH_URL in production",
+		() => {
+			const urlKey = "NEXTAUTH_URL";
+			const nodeEnvKey = "NODE_ENV";
+			const origUrl = process.env[urlKey];
+			const origNodeEnv = process.env[nodeEnvKey];
+			process.env[urlKey] = "http://localhost:3000";
+			process.env[nodeEnvKey] = "production";
+			try {
+				const config = createAuthConfig({ secret: "test-secret" });
+				assert.equal(config.trustHost, false);
+			} finally {
+				if (origUrl !== undefined) process.env[urlKey] = origUrl;
+				else delete process.env[urlKey];
+				if (origNodeEnv !== undefined) process.env[nodeEnvKey] = origNodeEnv;
+				else delete process.env[nodeEnvKey];
+			}
+		},
+	);
+
+	await t.test("createAuthConfig trusts user trustHost:true override", () => {
+		const config = createAuthConfig({
+			secret: "test-secret",
+			trustHost: true,
+		});
+		assert.equal(config.trustHost, true);
+	});
+
+	await t.test("createAuthConfig trusts user trustHost:false override", () => {
+		const key = "RAILWAY_SERVICE_ID";
+		const orig = process.env[key];
+		process.env[key] = "service-abc";
+		try {
+			const config = createAuthConfig({
+				secret: "test-secret",
+				trustHost: false,
+			});
+			assert.equal(config.trustHost, false);
+		} finally {
+			if (orig !== undefined) process.env[key] = orig;
+			else delete process.env[key];
+		}
+	});
+
 	await t.test("isAuthenticated returns true for valid session", () => {
 		const session = {
 			user: { email: "test@example.com", id: "123" },

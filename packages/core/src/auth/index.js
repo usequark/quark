@@ -20,13 +20,30 @@ export const getAuthSecret = () => {
 };
 
 /**
- * Creates a next-auth configuration object with sensible defaults
- * Designed to be extended by applications
+ * Detects whether the app is running on a deployed (non-local) environment.
+ * @returns {boolean}
+ */
+function isDeployed() {
+	const url = process.env.AUTH_URL || process.env.NEXTAUTH_URL;
+	if (url && !/localhost|127\.0\.0\.1|0\.0\.0\.0/.test(url)) return true;
+	return !!(
+		process.env.VERCEL ||
+		process.env.CF_PAGES ||
+		process.env.RAILWAY_SERVICE_ID ||
+		process.env.AUTH_TRUST_HOST ||
+		process.env.NODE_ENV !== "production"
+	);
+}
+
+/**
+ * Creates a next-auth configuration object with sensible defaults.
+ * Designed to be extended by applications.
  * @param {Object} options - Configuration options
  * @param {Array} options.providers - Next-auth providers (GitHub, Google, etc.)
  * @param {Object} options.callbacks - next-auth callbacks (jwt, session, etc.)
  * @param {Object} options.session - Session configuration
  * @param {string} options.secret - NEXTAUTH_SECRET (defaults to env var)
+ * @param {string} options.trustHost - When false, next-auth rejects requests from unknown hosts
  * @returns {Object} Complete next-auth configuration
  */
 export const createAuthConfig = (options = {}) => {
@@ -43,6 +60,8 @@ export const createAuthConfig = (options = {}) => {
 			"NEXTAUTH_SECRET or AUTH_SECRET must be set (env var or options.secret)",
 		);
 	}
+
+	const trustHost = rest.trustHost ?? isDeployed();
 
 	return {
 		secret,
@@ -68,8 +87,6 @@ export const createAuthConfig = (options = {}) => {
 					session.user.id = token.id;
 					session.user.role = token.role;
 				}
-				// Note: NextAuth v5+ includes CSRF token in session automatically
-				// For older versions, you can add: session.csrfToken = token.csrfToken;
 				return session;
 			},
 			...callbacks,
@@ -78,6 +95,7 @@ export const createAuthConfig = (options = {}) => {
 			signIn: "/auth/signin",
 			error: "/auth/error",
 		},
+		trustHost,
 		...rest,
 	};
 };
