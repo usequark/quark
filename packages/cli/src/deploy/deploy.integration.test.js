@@ -69,8 +69,6 @@ test("deployToRailway exits with code 1 when Railway CLI is not installed", asyn
 	const result = spawnSync(
 		process.execPath,
 		[
-			"--import",
-			`data:text/javascript,import { setFlagsFromString } from "node:v8"; setFlagsFromString("--allow-worker");`,
 			"-e",
 			`
 				import { deployToRailway } from "${path.join(__dirname, "deploy.js")}";
@@ -86,7 +84,11 @@ test("deployToRailway exits with code 1 when Railway CLI is not installed", asyn
 		{
 			encoding: "utf8",
 			timeout: 15_000,
-			env: { ...process.env, PATH: "/dev/null" },
+			env: {
+				...process.env,
+				NODE_OPTIONS: "--allow-worker",
+				PATH: "/dev/null",
+			},
 		},
 	);
 
