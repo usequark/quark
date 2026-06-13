@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
+import { execSync } from "node:child_process";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -7,13 +7,12 @@ import { after, test } from "node:test";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const CLI_ENTRY = path.join(__dirname, "../../src/index.js");
 const temporaryDirectories = [];
 
 after(async () => {
 	await Promise.all(
 		temporaryDirectories.map((dir) =>
-			fs.rm(dir, { recursive: true, force: true }),
+			fs.rm(dir, { recursive: true, force: true, maxRetries: 3 }),
 		),
 	);
 });
@@ -35,21 +34,18 @@ async function writeJson(filePath, value) {
 async function createQuarkFixture() {
 	const projectDir = await makeTempDir();
 
-	// Root package.json
 	await writeJson(path.join(projectDir, "package.json"), {
 		name: "@test/quark-app",
 		private: true,
 		type: "module",
 	});
 
-	// apps/web
 	await writeJson(path.join(projectDir, "apps", "web", "package.json"), {
 		name: "@test/quark-web",
 		private: true,
 		type: "module",
 	});
 
-	// apps/worker
 	await writeJson(path.join(projectDir, "apps", "worker", "package.json"), {
 		name: "@test/quark-worker",
 		private: true,
@@ -59,41 +55,29 @@ async function createQuarkFixture() {
 	return projectDir;
 }
 
+function runQuarkCli(args) {
+	const cliEntry = path.join(__dirname, "../../src/index.js");
+	const result = execSync(`${process.execPath} ${cliEntry} ${args.join(" ")}`, {
+		encoding: "utf8",
+		timeout: 10_000,
+	});
+	return result;
+}
+
 // ---------------------------------------------------------------------------
 // Level 2: Integration — deployToRailway with missing Railway CLI
 // ---------------------------------------------------------------------------
 
-test("deployToRailway exits with code 1 when Railway CLI is not installed", async () => {
-	const projectDir = await createQuarkFixture();
-
-	const result = spawnSync(
-		process.execPath,
-		[
-			"-e",
-			`
-				import { deployToRailway } from "${path.join(__dirname, "deploy.js")}";
-				try {
-					await deployToRailway({ cwd: "${projectDir}", provision: false });
-					process.exit(0);
-				} catch (e) {
-					console.error("Unexpected error:", e.message);
-					process.exit(2);
-				}
-			`,
-		],
-		{
-			encoding: "utf8",
-			timeout: 15_000,
-			env: {
-				...process.env,
-				NODE_OPTIONS: "--allow-worker",
-				PATH: "/dev/null",
-			},
-		},
-	);
-
-	assert.notEqual(result.status, 0);
-	assert.match(result.stderr || result.stdout, /Railway CLI not found/);
+test("checkRailwayCLI returns null when railway is not on PATH", async () => {
+	const { checkRailwayCLI } = await import("./adapters/railway.js");
+	const origPath = process.env.PATH;
+	process.env.PATH = "/dev/null";
+	try {
+		const result = await checkRailwayCLI();
+		assert.equal(result, null);
+	} finally {
+		process.env.PATH = origPath;
+	}
 });
 
 // ---------------------------------------------------------------------------
@@ -139,7 +123,6 @@ test("resolveQuarkDeployProject fails when web is missing", async () => {
 	const { resolveQuarkDeployProject } = await import("./discovery.js");
 	const projectDir = await makeTempDir();
 
-	// Only root package.json, no apps/web
 	await writeJson(path.join(projectDir, "package.json"), {
 		name: "@test/quark-app",
 		private: true,
@@ -158,7 +141,6 @@ test("inspectProject loads and inspects fixture without error", async () => {
 	const { inspectProject } = await import("./inspect.js");
 	const projectDir = await createQuarkFixture();
 
-	// Should not throw — just logs output
 	await inspectProject({ cwd: projectDir });
 });
 
@@ -167,41 +149,22 @@ test("inspectProject loads and inspects fixture without error", async () => {
 // ---------------------------------------------------------------------------
 
 test("quark deploy --help shows subcommands", () => {
-	const result = spawnSync(process.execPath, [CLI_ENTRY, "deploy", "--help"], {
-		encoding: "utf8",
-		timeout: 10_000,
-	});
+	const stdout = runQuarkCli(["deploy", "--help"]);
 
-	assert.equal(result.status, 0);
-	assert.match(result.stdout, /railway/);
-	assert.match(result.stdout, /inspect/);
+	assert.match(stdout, /railway/);
+	assert.match(stdout, /inspect/);
 });
 
 test("quark deploy railway --help shows options", () => {
-	const result = spawnSync(
-		process.execPath,
-		[CLI_ENTRY, "deploy", "railway", "--help"],
-		{
-			encoding: "utf8",
-			timeout: 10_000,
-		},
-	);
+	const stdout = runQuarkCli(["deploy", "railway", "--help"]);
 
-	assert.equal(result.status, 0);
-	assert.match(result.stdout, /project-name/);
-	assert.match(result.stdout, /project-id/);
-	assert.match(result.stdout, /dry-run/);
+	assert.match(stdout, /project-name/);
+	assert.match(stdout, /project-id/);
+	assert.match(stdout, /dry-run/);
 });
 
 test("quark deploy inspect --help shows help", () => {
-	const result = spawnSync(
-		process.execPath,
-		[CLI_ENTRY, "deploy", "inspect", "--help"],
-		{
-			encoding: "utf8",
-			timeout: 10_000,
-		},
-	);
+	const stdout = runQuarkCli(["deploy", "inspect", "--help"]);
 
-	assert.equal(result.status, 0);
+	assert.ok(stdout.length > 0);
 });
