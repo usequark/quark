@@ -72,6 +72,9 @@ importers:
       '@techstream/quark-core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@techstream/quark-crm':
+        specifier: workspace:*
+        version: link:../../packages/crm
       '@techstream/quark-db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -209,6 +212,15 @@ importers:
       '@types/node':
         specifier: ^25.3.5
         version: 25.3.5
+
+  packages/crm:
+    dependencies:
+      '@techstream/quark-core':
+        specifier: workspace:*
+        version: link:../core
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
 
   packages/db:
     dependencies:
