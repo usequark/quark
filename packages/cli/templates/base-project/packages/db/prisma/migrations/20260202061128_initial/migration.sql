@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "UserRole" AS ENUM ('admin', 'editor', 'viewer');
+CREATE TYPE "UserRole" AS ENUM ('admin', 'client_admin', 'editor', 'viewer');
 
 -- CreateEnum
 CREATE TYPE "JobStatus" AS ENUM ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'FAILED', 'CANCELLED');
@@ -266,3 +266,67 @@ ALTER TABLE "Page" ADD CONSTRAINT "Page_authorId_fkey" FOREIGN KEY ("authorId") 
 
 -- AddForeignKey
 ALTER TABLE "MediaAsset" ADD CONSTRAINT "MediaAsset_uploadedById_fkey" FOREIGN KEY ("uploadedById") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- CreateTable
+CREATE TABLE "Company" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "website" TEXT,
+    "industry" TEXT,
+    "size" TEXT,
+    "notes" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Company_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Contact" (
+    "id" TEXT NOT NULL,
+    "firstName" TEXT NOT NULL,
+    "lastName" TEXT NOT NULL,
+    "email" TEXT,
+    "phone" TEXT,
+    "position" TEXT,
+    "notes" TEXT,
+    "companyId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Contact_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Deal" (
+    "id" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "value" DECIMAL(65,30) NOT NULL DEFAULT 0,
+    "stage" TEXT NOT NULL DEFAULT 'LEAD',
+    "probability" INTEGER NOT NULL DEFAULT 10,
+    "expectedCloseDate" TIMESTAMP(3),
+    "notes" TEXT,
+    "contactId" TEXT,
+    "companyId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Deal_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE INDEX "Company_name_idx" ON "Company"("name");
+CREATE INDEX "Company_createdAt_idx" ON "Company"("createdAt");
+CREATE INDEX "Contact_email_idx" ON "Contact"("email");
+CREATE INDEX "Contact_companyId_idx" ON "Contact"("companyId");
+CREATE INDEX "Contact_createdAt_idx" ON "Contact"("createdAt");
+CREATE INDEX "Contact_lastName_idx" ON "Contact"("lastName");
+CREATE INDEX "Deal_stage_idx" ON "Deal"("stage");
+CREATE INDEX "Deal_contactId_idx" ON "Deal"("contactId");
+CREATE INDEX "Deal_companyId_idx" ON "Deal"("companyId");
+CREATE INDEX "Deal_createdAt_idx" ON "Deal"("createdAt");
+
+-- AddForeignKey
+ALTER TABLE "Contact" ADD CONSTRAINT "Contact_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Deal" ADD CONSTRAINT "Deal_contactId_fkey" FOREIGN KEY ("contactId") REFERENCES "Contact"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Deal" ADD CONSTRAINT "Deal_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE SET NULL ON UPDATE CASCADE;

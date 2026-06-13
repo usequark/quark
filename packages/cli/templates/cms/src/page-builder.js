@@ -100,71 +100,79 @@ const DEFAULT_PAGE_BLOCK_IDS = {
 const BLOCK_ID_SCHEMA = z.string().min(1).max(100);
 const PAGE_LAYOUT_SCHEMA = z.enum(PAGE_LAYOUT_VALUES);
 
-const heroBlockSchema = z.object({
-	id: BLOCK_ID_SCHEMA,
-	type: z.literal("hero"),
-	eyebrow: z.preprocess((value) => getTrimmedString(value), z.string().max(80)),
-	title: z.preprocess((value) => getTrimmedString(value), z.string().max(160)),
-	subtitle: z.preprocess(
-		(value) => sanitizeRichTextHtml(getStringValue(value)),
-		z.string().max(2000),
-	),
-	backgroundMode: z.enum(PAGE_BACKGROUND_MODE_VALUES),
-	backgroundValue: z
-		.preprocess(
-			(value) => normalizeBackgroundToneValue(value),
-			z.enum(PAGE_BACKGROUND_TONE_VALUES),
-		)
-		.default("primary"),
-	backgroundTone: z
-		.preprocess(
-			(value) => normalizeBackgroundToneValue(value),
-			z.enum(PAGE_BACKGROUND_TONE_VALUES),
-		)
-		.default("primary"),
-	backgroundImage: z.preprocess(
-		(value) => getTrimmedString(value),
-		z.string().refine((value) => !value || isSafePathOrUrl(value), {
-			message: "Background image must use an http(s) or root-relative URL",
-		}),
-	),
-	backgroundImageAlt: z.preprocess(
-		(value) => getTrimmedString(value),
-		z.string().max(200),
-	),
-	primaryCtaLabel: z.preprocess(
-		(value) => getTrimmedString(value),
-		z.string().max(80),
-	),
-	primaryCtaHref: z.preprocess(
-		(value) => getTrimmedString(value),
-		z.string().refine((value) => !value || isSafePathOrUrl(value), {
-			message: "CTA links must use an http(s) or root-relative URL",
-		}),
-	),
-	secondaryCtaLabel: z.preprocess(
-		(value) => getTrimmedString(value),
-		z.string().max(80),
-	),
-	secondaryCtaHref: z.preprocess(
-		(value) => getTrimmedString(value),
-		z.string().refine((value) => !value || isSafePathOrUrl(value), {
-			message: "CTA links must use an http(s) or root-relative URL",
-		}),
-	),
-}).superRefine((block, ctx) => {
-	if (
-		block.backgroundMode === "image" &&
-		block.backgroundImage &&
-		!block.backgroundImageAlt
-	) {
-		ctx.addIssue({
-			code: z.ZodIssueCode.custom,
-			path: ["backgroundImageAlt"],
-			message: "Alt text is required when using a background image",
-		});
-	}
-});
+const heroBlockSchema = z
+	.object({
+		id: BLOCK_ID_SCHEMA,
+		type: z.literal("hero"),
+		eyebrow: z.preprocess(
+			(value) => getTrimmedString(value),
+			z.string().max(80),
+		),
+		title: z.preprocess(
+			(value) => getTrimmedString(value),
+			z.string().max(160),
+		),
+		subtitle: z.preprocess(
+			(value) => sanitizeRichTextHtml(getStringValue(value)),
+			z.string().max(2000),
+		),
+		backgroundMode: z.enum(PAGE_BACKGROUND_MODE_VALUES),
+		backgroundValue: z
+			.preprocess(
+				(value) => normalizeBackgroundToneValue(value),
+				z.enum(PAGE_BACKGROUND_TONE_VALUES),
+			)
+			.default("primary"),
+		backgroundTone: z
+			.preprocess(
+				(value) => normalizeBackgroundToneValue(value),
+				z.enum(PAGE_BACKGROUND_TONE_VALUES),
+			)
+			.default("primary"),
+		backgroundImage: z.preprocess(
+			(value) => getTrimmedString(value),
+			z.string().refine((value) => !value || isSafePathOrUrl(value), {
+				message: "Background image must use an http(s) or root-relative URL",
+			}),
+		),
+		backgroundImageAlt: z.preprocess(
+			(value) => getTrimmedString(value),
+			z.string().max(200),
+		),
+		primaryCtaLabel: z.preprocess(
+			(value) => getTrimmedString(value),
+			z.string().max(80),
+		),
+		primaryCtaHref: z.preprocess(
+			(value) => getTrimmedString(value),
+			z.string().refine((value) => !value || isSafePathOrUrl(value), {
+				message: "CTA links must use an http(s) or root-relative URL",
+			}),
+		),
+		secondaryCtaLabel: z.preprocess(
+			(value) => getTrimmedString(value),
+			z.string().max(80),
+		),
+		secondaryCtaHref: z.preprocess(
+			(value) => getTrimmedString(value),
+			z.string().refine((value) => !value || isSafePathOrUrl(value), {
+				message: "CTA links must use an http(s) or root-relative URL",
+			}),
+		),
+	})
+	.superRefine((block, ctx) => {
+		if (
+			block.backgroundMode === "image" &&
+			block.backgroundImage &&
+			!block.backgroundImageAlt
+		) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				path: ["backgroundImageAlt"],
+				message: "Alt text is required when using a background image",
+			});
+		}
+	});
 
 const defaultBlockSchema = z.object({
 	id: BLOCK_ID_SCHEMA,

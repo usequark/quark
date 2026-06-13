@@ -67,11 +67,30 @@ export const user = {
 	},
 };
 
-// Note: Job tracking is handled by BullMQ's built-in Redis persistence.
-// The Prisma Job model is retained in the schema for optional audit/reporting
-// but these query helpers have been removed to avoid confusion with BullMQ.
-// If you need database-backed job auditing, re-add job queries here and wire
-// the worker to write status updates to the Job table.
+// Job queries
+export const job = {
+	findAll: (options = {}) => {
+		const { skip = 0, take = 50, where = {} } = options;
+		return prisma.job.findMany({
+			skip,
+			take,
+			where,
+			orderBy: { createdAt: "desc" },
+		});
+	},
+
+	findById: (id) => {
+		return prisma.job.findUnique({ where: { id } });
+	},
+
+	upsert: (id, data) => {
+		return prisma.job.upsert({
+			where: { id },
+			create: { id, ...data },
+			update: data,
+		});
+	},
+};
 
 // Account queries (NextAuth)
 export const account = {

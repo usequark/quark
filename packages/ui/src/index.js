@@ -12,6 +12,7 @@ export * from "./label.js";
 export * from "./lightbox.js";
 export * from "./logo.js";
 export * from "./navbar.js";
+export * from "./password-input.js";
 export * from "./rich-text.js";
 export * from "./select.js";
 export * from "./skeleton.js";

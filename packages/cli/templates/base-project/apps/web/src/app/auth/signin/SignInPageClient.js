@@ -5,6 +5,7 @@ import {
 	ErrorBanner,
 	Input,
 	Label,
+	PasswordInput,
 	QuarkLogo,
 } from "@techstream/quark-ui";
 import Link from "next/link";
@@ -153,9 +154,8 @@ function SignInForm({ allowSignup }) {
 									Forgot?
 								</Link>
 							</div>
-							<Input
+							<PasswordInput
 								id="password"
-								type="password"
 								autoComplete="current-password"
 								required
 								value={password}

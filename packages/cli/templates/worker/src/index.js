@@ -13,7 +13,7 @@ import {
 	updateQueueDepths,
 } from "@techstream/quark-core";
 import { AppError } from "@techstream/quark-core/errors";
-import { prisma } from "@techstream/quark-db";
+import { job, prisma } from "@techstream/quark-db";
 import { JOB_NAMES, JOB_QUEUES } from "@techstream/quark-jobs";
 import { jobHandlers } from "./handlers/index.js";
 
@@ -236,19 +236,47 @@ async function createQueueWorker(queueName) {
 
 	workers.push(queueWorker);
 
-	queueWorker.on("completed", (job, result) => {
-		logger.info(`Job ${job.id} (${job.name}) completed`, { result });
+	async function persistJob(bullJob, status, extra = {}) {
+		try {
+			await job.upsert(bullJob.id, {
+				queue: queueName,
+				name: bullJob.name,
+				data: bullJob.data,
+				attempts: bullJob.attemptsMade,
+				status,
+				...extra,
+			});
+		} catch (error) {
+			logger.error("Failed to persist job event", {
+				error: error.message,
+				jobId: bullJob.id,
+				status,
+			});
+		}
+	}
+
+	queueWorker.on("active", (bullJob) => {
+		persistJob(bullJob, "IN_PROGRESS", { startedAt: new Date() });
 	});
 
-	queueWorker.on("failed", (job, error) => {
+	queueWorker.on("completed", (bullJob, result) => {
+		logger.info(`Job ${bullJob.id} (${bullJob.name}) completed`, { result });
+		persistJob(bullJob, "COMPLETED", { completedAt: new Date() });
+	});
+
+	queueWorker.on("failed", (bullJob, error) => {
 		logger.error(
-			`Job ${job.id} (${job.name}) failed after ${job.attemptsMade} attempts`,
+			`Job ${bullJob.id} (${bullJob.name}) failed after ${bullJob.attemptsMade} attempts`,
 			{
 				error: error.message,
-				jobName: job.name,
-				attemptsMade: job.attemptsMade,
+				jobName: bullJob.name,
+				attemptsMade: bullJob.attemptsMade,
 			},
 		);
+		persistJob(bullJob, "FAILED", {
+			error: error.message,
+			completedAt: new Date(),
+		});
 	});
 
 	queueWorker.on("stalled", (jobId) => {

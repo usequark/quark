@@ -1,0 +1,17 @@
+{
+	"name": "@techstream/quark-crm",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"main": "src/index.js",
+	"exports": {
+		".": "./src/index.js",
+		"./config": "./src/config.js",
+		"./queries": "./src/queries.js",
+		"./validation": "./src/validation.js"
+	},
+	"dependencies": {
+		"@techstream/quark-core": "workspace:*",
+		"zod": "^4.3.6"
+	}
+}

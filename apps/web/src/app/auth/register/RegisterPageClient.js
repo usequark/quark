@@ -5,6 +5,7 @@ import {
 	ErrorBanner,
 	Input,
 	Label,
+	PasswordInput,
 	QuarkLogo,
 } from "@techstream/quark-ui";
 import Link from "next/link";
@@ -207,9 +208,8 @@ function RegisterForm() {
 
 						<div className="space-y-2">
 							<Label htmlFor="password">Password</Label>
-							<Input
+							<PasswordInput
 								id="password"
-								type="password"
 								autoComplete="new-password"
 								required
 								value={password}
@@ -258,9 +258,8 @@ function RegisterForm() {
 
 						<div className="space-y-2">
 							<Label htmlFor="confirm-password">Confirm password</Label>
-							<Input
+							<PasswordInput
 								id="confirm-password"
-								type="password"
 								autoComplete="new-password"
 								required
 								value={confirmPassword}
