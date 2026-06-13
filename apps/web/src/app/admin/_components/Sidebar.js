@@ -30,6 +30,7 @@ export default function Sidebar({
 	const coreModels = models.filter((m) => !m.readOnly);
 	const systemModels = models.filter((m) => m.readOnly);
 	const isCmsOnly = hasCms && userRole === "editor";
+	const isClientAdmin = userRole === "client_admin";
 
 	/**
 	 * Render a nav link. Uses exact matching for the root admin and CMS overview
@@ -94,7 +95,7 @@ export default function Sidebar({
 				</button>
 			</div>
 
-			{/* Dashboard — admin only */}
+			{/* Dashboard — hidden for editor-only mode */}
 			{!isCmsOnly && (
 				<nav className="flex flex-col gap-1 mb-3 shrink-0">
 					{navLink(
@@ -145,8 +146,8 @@ export default function Sidebar({
 				</>
 			)}
 
-			{/* Scrollable model sections — admin only */}
-			{!isCmsOnly && (
+			{/* Scrollable model sections — hidden for client_admin and editors */}
+			{!isCmsOnly && !isClientAdmin && (
 				<>
 					<div className="border-t border-border mb-3 shrink-0" />
 					<div className="flex-1 flex flex-col gap-4 overflow-y-auto min-h-0">

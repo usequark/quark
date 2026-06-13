@@ -22,6 +22,7 @@
 		"@techstream/quark-cms": "workspace:*",
 		"@techstream/quark-config": "workspace:*",
 		"@techstream/quark-core": "workspace:*",
+		"@techstream/quark-crm": "workspace:*",
 		"@techstream/quark-db": "workspace:*",
 		"@techstream/quark-jobs": "workspace:*",
 		"@techstream/quark-ui": "workspace:*",

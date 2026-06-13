@@ -15,6 +15,7 @@ datasource db {
 
 enum UserRole {
   admin
+  client_admin
   editor
   viewer
 }
@@ -155,6 +156,70 @@ model AuditLog {
   @@index([userId])
   @@index([action])
   @@index([entity])
+  @@index([createdAt])
+}
+
+// ─── CRM Models ──────────────────────────────────────────────────────────────
+
+/// CRM: Company — business or organization
+model Company {
+  id        String   @id @default(cuid())
+  name      String
+  website   String?
+  industry  String?
+  size      String?
+  notes     String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contacts  Contact[]
+  deals     Deal[]
+
+  @@index([name])
+  @@index([createdAt])
+}
+
+/// CRM: Contact — person associated with zero or one company
+model Contact {
+  id         String   @id @default(cuid())
+  firstName  String
+  lastName   String
+  email      String?
+  phone      String?
+  position   String?
+  notes      String?  @db.Text
+  companyId  String?
+  company    Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  deals      Deal[]
+
+  @@index([email])
+  @@index([companyId])
+  @@index([createdAt])
+  @@index([lastName])
+}
+
+/// CRM: Deal — sales opportunity in a pipeline stage
+model Deal {
+  id               String    @id @default(cuid())
+  title            String
+  value            Decimal   @default(0)
+  stage            String    @default("LEAD")
+  probability      Int       @default(10)
+  expectedCloseDate DateTime?
+  notes            String?   @db.Text
+  contactId        String?
+  contact     Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  companyId   String?
+  company     Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([stage])
+  @@index([contactId])
+  @@index([companyId])
   @@index([createdAt])
 }
 

@@ -30,7 +30,8 @@ async function adminGuard(request) {
 		return NextResponse.redirect(signinUrl);
 	}
 
-	if (token.role === "admin") {
+	const isAdmin = token.role === "admin" || token.role === "client_admin";
+	if (isAdmin) {
 		return null; // authorized — continue
 	}
 
@@ -44,11 +45,7 @@ async function adminGuard(request) {
 		return NextResponse.redirect(new URL("/admin/cms", request.url));
 	}
 
-	if (token.role !== "admin") {
-		return NextResponse.redirect(new URL("/", request.url));
-	}
-
-	return null;
+	return NextResponse.redirect(new URL("/", request.url));
 }
 
 // ─── 2. Metrics guard ────────────────────────────────────────────────────────

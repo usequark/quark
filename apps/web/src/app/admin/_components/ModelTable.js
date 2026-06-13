@@ -8,6 +8,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@techstream/quark-ui";
+import { formatEnumLabel } from "../_lib/display";
 
 /** Map JobStatus-style enum values to Badge variants */
 const STATUS_VARIANTS = {
@@ -78,7 +79,7 @@ function formatValue(value, field) {
 
 	if (field.kind === "enum" && typeof value === "string") {
 		const variant = STATUS_VARIANTS[value] ?? "default";
-		return <Badge variant={variant}>{value}</Badge>;
+		return <Badge variant={variant}>{formatEnumLabel(value)}</Badge>;
 	}
 
 	if (value instanceof Date) return value.toLocaleString();

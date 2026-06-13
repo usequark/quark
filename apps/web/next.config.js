@@ -54,6 +54,7 @@ const nextConfig = {
 	transpilePackages: [
 		"@techstream/quark-admin",
 		"@techstream/quark-cms",
+		"@techstream/quark-crm",
 		"@techstream/quark-core",
 		"@techstream/quark-db",
 		"@techstream/quark-ui",

@@ -349,7 +349,15 @@ async function patchNextConfig(webDir, scope, selectedPackages) {
  * Registry packages (@techstream/quark-core) are left untouched.
  */
 async function replaceImportsInSourceFiles(dir, scope) {
-	const workspacePackages = ["db", "jobs", "ui", "config", "admin", "cms"];
+	const workspacePackages = [
+		"db",
+		"jobs",
+		"ui",
+		"config",
+		"admin",
+		"cms",
+		"crm",
+	];
 	const entries = await fs.readdir(dir, { withFileTypes: true });
 
 	for (const entry of entries) {
@@ -684,6 +692,11 @@ program
 								value: "cms",
 								selected: false,
 							},
+							{
+								title: "CRM (packages/crm + /admin/crm) [requires: admin, ui]",
+								value: "crm",
+								selected: false,
+							},
 						],
 					},
 				]);
@@ -833,6 +846,24 @@ program
 						console.log(
 							chalk.green(`    ✓ cms public pages (paired with cms)`),
 						);
+					}
+				}
+
+				if (pairedTemplates.includes("crm-routes")) {
+					const crmRoutesTemplatePath = path.join(templatesDir, "crm-routes");
+					if (await fs.pathExists(crmRoutesTemplatePath)) {
+						const crmRoutesDir = path.join(
+							targetDir,
+							"apps",
+							"web",
+							"src",
+							"app",
+							"admin",
+							"crm",
+						);
+						await fs.ensureDir(crmRoutesDir);
+						await copyTemplate("crm-routes", crmRoutesDir);
+						console.log(chalk.green(`    ✓ crm routes (paired with crm)`));
 					}
 				}
 			}
@@ -1389,6 +1420,11 @@ const FEATURE_META = {
 		packages: ["cms"],
 		pairs: ["cms-routes", "cms-public"],
 	},
+	crm: {
+		requires: ["admin"],
+		packages: ["crm"],
+		pairs: ["crm-routes"],
+	},
 };
 
 function resolveFeatureSelection(features) {
@@ -1922,6 +1958,31 @@ program
 								`    ✓ apps/web/src (cms public pages, paired with cms)`,
 							),
 						);
+					} else if (pair === "crm-routes") {
+						const crmRoutesDir = path.join(
+							projectDir,
+							"apps",
+							"web",
+							"src",
+							"app",
+							"admin",
+							"crm",
+						);
+						if (await fs.pathExists(crmRoutesDir)) {
+							console.log(
+								chalk.dim(
+									`    · apps/web/src/app/admin/crm already exists — skipping copy`,
+								),
+							);
+						} else {
+							await copyTemplate("crm-routes", crmRoutesDir);
+							await replaceImportsInSourceFiles(crmRoutesDir, scope);
+							console.log(
+								chalk.green(
+									`    ✓ apps/web/src/app/admin/crm (paired with crm)`,
+								),
+							);
+						}
 					}
 				}
 
@@ -2005,6 +2066,15 @@ program
 				console.log(
 					chalk.white(
 						"  3. Edit packages/cms/src/config.js to customize content types\n",
+					),
+				);
+			} else if (feature === "crm") {
+				console.log(chalk.cyan("Next steps:"));
+				console.log(chalk.white("  1. pnpm dev"));
+				console.log(chalk.white("  2. Visit http://localhost:3000/admin/crm"));
+				console.log(
+					chalk.white(
+						"  3. Edit packages/crm/src/config.js to customize pipeline stages\n",
 					),
 				);
 			}

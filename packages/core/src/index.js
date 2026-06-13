@@ -37,6 +37,8 @@ export * from "./rate-limiter.js";
 export * from "./redis.js";
 // Request logger exports
 export * from "./request-logger.js";
+// SMS service exports
+export * from "./sms.js";
 // Storage exports
 export * from "./storage.js";
 

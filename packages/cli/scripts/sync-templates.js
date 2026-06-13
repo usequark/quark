@@ -88,8 +88,11 @@ const SYNC_DIRS = [
 	{
 		src: "apps/web/src/app/admin",
 		dest: "admin-routes",
-		// CMS routes are scaffolded separately via cms-routes template
-		localExcludes: [/^apps\/web\/src\/app\/admin\/cms\//],
+		// CMS/CRM routes are scaffolded separately via their own templates
+		localExcludes: [
+			/^apps\/web\/src\/app\/admin\/cms\//,
+			/^apps\/web\/src\/app\/admin\/crm\//,
+		],
 	},
 	// CMS package (content models, slug helpers, status lifecycle)
 	{ src: "packages/cms", dest: "cms" },
@@ -97,6 +100,13 @@ const SYNC_DIRS = [
 	{
 		src: "apps/web/src/app/admin/cms",
 		dest: "cms-routes",
+	},
+	// CRM package (contacts, companies, pipeline)
+	{ src: "packages/crm", dest: "crm" },
+	// CRM admin routes — scaffolded conditionally alongside the CRM package
+	{
+		src: "apps/web/src/app/admin/crm",
+		dest: "crm-routes",
 	},
 ];
 
