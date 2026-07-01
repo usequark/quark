@@ -203,6 +203,43 @@ myCounter.inc({ plan: "pro" });
 // Expose at /api/metrics for Prometheus scraping
 ```
 
+## Optimistic Updates (instant UI)
+
+Use React 19 built-ins only — `useOptimistic` or local `useState` with `startTransition`. Never add TanStack Query or SWR.
+
+```javascript
+// Pattern: useOptimistic for list/board data
+const [realData, setRealData] = useState(serverData);
+const [optimisticData, addOptimistic] = useOptimistic(realData, applyUpdate);
+useEffect(() => { setRealData(serverData); }, [serverData]);
+
+const handleMutation = (update) => {
+  startTransition(async () => {
+    addOptimistic(update);
+    try {
+      await serverAction(update);
+      setRealData(prev => applyUpdate(prev, update));
+    } catch { setRealData(serverData); }
+  });
+};
+// Render from optimisticData
+
+// Pattern: local state for single fields
+const prev = optimisticValue;
+setOptimisticValue(newValue);
+startTransition(async () => {
+  try { await onChange(newValue); }
+  catch { setOptimisticValue(prev); }
+});
+
+// Pattern: optimistic close for create dialogs
+onClose();
+try { await createAction(formData); router.refresh(); }
+catch { setError(err.message); }
+```
+
+**Rules:** Capture pre-optimistic value, revert on error. `revalidatePath` + `router.refresh()` for server sync. No external deps.
+
 ## Architecture Decisions
 
 - **Why no TypeScript?** Lower barrier to contribution; Zod provides runtime type safety at all system boundaries.

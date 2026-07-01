@@ -74,7 +74,7 @@ export const createQueue = (name, options = {}) => {
 				type: "exponential",
 				delay: 2000,
 			},
-			removeOnComplete: true,
+			removeOnComplete: { age: 60, count: 100 },
 		},
 		...queueOptions
 	} = options;

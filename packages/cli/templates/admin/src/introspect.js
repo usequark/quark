@@ -22,18 +22,26 @@ const SCALAR_TYPES = new Set([
 	"Bytes",
 ]);
 
+const CACHE_TTL_MS = 5_000;
+
 /** @type {{ models: import('./types.js').Model[], enums: import('./types.js').EnumDef[] } | null} */
 let _parsed = null;
 
+/** @type {number} */
+let _parsedAt = 0;
+
 /**
  * Parse the Prisma schema and return models + enums.
- * Result is cached after the first call.
+ * Result is cached with a 5-second TTL so schema changes are picked up
+ * without requiring a full process restart.
  * @param {string} [schemaPath]
  */
 export function getParsedSchema(schemaPath) {
-	if (_parsed) return _parsed;
+	const now = Date.now();
+	if (_parsed && now - _parsedAt < CACHE_TTL_MS) return _parsed;
 	const text = readSchemaText(schemaPath);
 	_parsed = parseSchema(text);
+	_parsedAt = now;
 	return _parsed;
 }
 
@@ -84,6 +92,7 @@ function resolveSchemaPath(schemaPath) {
  */
 export function resetSchemaCache() {
 	_parsed = null;
+	_parsedAt = 0;
 }
 
 /**

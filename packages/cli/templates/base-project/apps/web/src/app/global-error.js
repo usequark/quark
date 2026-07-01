@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 export default function GlobalError({ reset }) {
 	return (
 		<html lang="en">
@@ -42,9 +44,9 @@ export default function GlobalError({ reset }) {
 							try again
 						</button>
 						<span style={{ color: "#2a2a3a" }}>·</span>
-						<a href="/" className="quark-home-link">
+						<Link href="/" className="quark-home-link">
 							← home
-						</a>
+						</Link>
 					</nav>
 				</main>
 			</body>

@@ -7,6 +7,7 @@ import {
 } from "@techstream/quark-admin";
 import { prisma } from "@techstream/quark-db";
 import { Button, Input } from "@techstream/quark-ui";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import AdminActionToast from "../_components/AdminActionToast";
 import ModelTable from "../_components/ModelTable";
@@ -63,7 +64,7 @@ export default async function ModelListPage({ params, searchParams }) {
 					</p>
 				</div>
 				{canCreate && (
-					<a href={`/admin/${slug}/new`}>
+					<Link href={`/admin/${slug}/new`}>
 						<Button>
 							<svg
 								aria-hidden="true"
@@ -81,7 +82,7 @@ export default async function ModelListPage({ params, searchParams }) {
 							</svg>
 							Create {model.name}
 						</Button>
-					</a>
+					</Link>
 				)}
 			</div>
 
@@ -102,11 +103,11 @@ export default async function ModelListPage({ params, searchParams }) {
 						Search
 					</Button>
 					{search && (
-						<a href={`/admin/${slug}`}>
+						<Link href={`/admin/${slug}`}>
 							<Button type="button" variant="ghost">
 								Clear
 							</Button>
-						</a>
+						</Link>
 					)}
 				</form>
 			)}
@@ -121,7 +122,7 @@ export default async function ModelListPage({ params, searchParams }) {
 			{totalPages > 1 && (
 				<div className="flex items-center gap-3 mt-4 text-sm text-text-muted">
 					{currentPage > 1 && (
-						<a
+						<Link
 							href={`/admin/${slug}?page=${currentPage - 1}${search ? `&q=${encodeURIComponent(search)}` : ""}`}
 							className="flex items-center gap-1 hover:text-text"
 						>
@@ -140,13 +141,13 @@ export default async function ModelListPage({ params, searchParams }) {
 								/>
 							</svg>
 							Previous
-						</a>
+						</Link>
 					)}
 					<span>
 						Page {currentPage} of {totalPages}
 					</span>
 					{currentPage < totalPages && (
-						<a
+						<Link
 							href={`/admin/${slug}?page=${currentPage + 1}${search ? `&q=${encodeURIComponent(search)}` : ""}`}
 							className="flex items-center gap-1 hover:text-text"
 						>
@@ -165,7 +166,7 @@ export default async function ModelListPage({ params, searchParams }) {
 									d="M9 5l7 7-7 7"
 								/>
 							</svg>
-						</a>
+						</Link>
 					)}
 				</div>
 			)}

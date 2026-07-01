@@ -104,7 +104,16 @@ All UI components come from `@__QUARK_SCOPE__/ui`. They are Tailwind-only, depen
 - Import from `@__QUARK_SCOPE__/ui` — never from `@/components/ui/*` or direct paths.
 - Every component accepts `className` for Tailwind overrides.
 - For public-page references, inspect `apps/web/src/app/example-page/page.js`, `apps/web/src/app/playground/page.js`, and `packages/ui/README.md` before building bespoke layout primitives.
-- Loading states → `<Skeleton>` / `<Suspense>`.
+- **Loading states** → `<Skeleton>` / `<Suspense>`. Every async page that fetches from the database must have a sibling `loading.js` using `<Skeleton>` from `@__QUARK_SCOPE__/ui`.
+  - **loading.js** — single-entity pages (detail, form, edit). Shows skeleton immediately, replaced when data resolves.
+  - **Suspense streaming** — pages with multiple independent sections where some fetches are slower than others. Extract each section as an async server component wrapped in `<Suspense>` with a skeleton fallback.
+  - **No bare `<Suspense>`** — always provide a `fallback` prop.
+  - **Per-section error handling** — each streamed section should wrap data fetching in try/catch and return an error fallback rather than crashing the page.
+- Run the loading-state audit to find gaps: `pnpm check:loading`.
+- **Page checklist** — every new route should include:
+  - `export const metadata` — title and description.
+  - `loading.js` — sibling loading.js using `<Skeleton>` from `@__QUARK_SCOPE__/ui` for all async DB-fetching pages.
+  - `error.js` — route-level error boundary with a user-facing fallback.
 - User feedback → `useToast()` hook (client component).
 - Modals → `<Dialog>` (mark parent as `"use client"`).
 - Server Components are the default — only add `"use client"` when the component uses hooks, browser APIs, or the marked client components above.
@@ -138,6 +147,119 @@ export async function createExample(formData) {
   return result;
 }
 ```
+
+## Optimistic Updates (instant UI after mutations)
+
+Use React 19's built-in `useOptimistic` or local `useState` with `startTransition`. **Never add TanStack Query, SWR, or any other caching library.** React builtins are sufficient.
+
+### Pattern 1: `useOptimistic` for list/board data (reset on navigation)
+
+```javascript
+"use client";
+import { startTransition, useOptimistic, useState } from "react";
+
+function updateItem(items, { id, changes }) {
+  return items.map((i) => (i.id === id ? { ...i, ...changes } : i));
+}
+
+export default function List({ serverItems }) {
+  const [realItems, setRealItems] = useState(serverItems);
+  const [optimisticItems, addOptimistic] = useOptimistic(realItems, updateItem);
+
+  // Re-sync when server data changes (e.g., back navigation)
+  useEffect(() => { setRealItems(serverItems); }, [serverItems]);
+
+  const handleChange = (id, changes) => {
+    startTransition(async () => {
+      addOptimistic({ id, changes });
+      try {
+        await serverAction(id, changes);
+        setRealItems((prev) => updateItem(prev, { id, changes }));
+      } catch {
+        setRealItems(serverItems); // revert to server state
+      }
+    });
+  };
+
+  return <div>{optimisticItems.map(renderItem)}</div>;
+}
+```
+
+### Pattern 2: Local state for single-field edits (dropdowns, toggles)
+
+```javascript
+"use client";
+import { startTransition, useState } from "react";
+
+export default function StatusSelect({ serverValue, onChange }) {
+  const [optimisticValue, setOptimisticValue] = useState(serverValue);
+
+  const handleChange = (newValue) => {
+    const prev = optimisticValue;
+    setOptimisticValue(newValue);
+    startTransition(async () => {
+      try {
+        await onChange(newValue);
+      } catch {
+        setOptimisticValue(prev); // revert on error
+      }
+    });
+  };
+
+  return <select value={optimisticValue} onChange={handleChange}>...</select>;
+}
+```
+
+### Pattern 3: `useOptimistic` for status toggles (publishing, archiving)
+
+```javascript
+"use client";
+import { startTransition, useOptimistic } from "react";
+
+export default function StatusPanel({ record, publishAction, archiveAction }) {
+  const [optimisticStatus, addOptimisticStatus] = useOptimistic(
+    record.status,
+    (_, next) => next,
+  );
+
+  const handlePublish = () => {
+    const prev = optimisticStatus;
+    startTransition(async () => {
+      addOptimisticStatus("PUBLISHED");
+      try { await publishAction(); }
+      catch { addOptimisticStatus(prev); }
+    });
+  };
+
+  // Button visibility and badges read from optimisticStatus
+  const canPublish = optimisticStatus === "DRAFT";
+  // ...
+}
+```
+
+### Pattern 4: Optimistic close for create dialogs
+
+```javascript
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  const formData = new FormData(e.target);
+  onClose();                              // close dialog immediately
+  try {
+    await createAction(formData);
+    router.refresh();                     // refresh page data in background
+  } catch (err) {
+    setError(err.message);                // show error (only if dialog re-opens)
+  }
+};
+```
+
+**Rules:**
+- `useOptimistic` for list/board data where items have stable IDs
+- Local `useState` for single-value fields (status, priority, toggles)
+- The `startTransition` wrapper lets React show the optimistic state before the async work completes
+- Always capture the previous value before the optimistic update — revert to it on error
+- `revalidatePath` in the server action + `router.refresh()` in the client handles eventual consistency with the server
+- No external caching libraries needed — React 19 builtins do everything
 
 ## API Routes
 

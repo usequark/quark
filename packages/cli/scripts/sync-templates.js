@@ -108,6 +108,11 @@ const SYNC_DIRS = [
 		src: "apps/web/src/app/admin/crm",
 		dest: "crm-routes",
 	},
+	// OpenCode server config — scaffolded conditionally when --features ai is selected
+	{
+		src: "packages/opencode/deploy",
+		dest: "opencode",
+	},
 ];
 
 /**
@@ -632,7 +637,7 @@ function shouldSyncForPreCommit() {
 			encoding: "utf-8",
 		});
 		const sourceDirPattern =
-			/^(scripts\/|apps\/|packages\/(db|config|ui|jobs|admin)\/|turbo\.json|docker-compose(\.override)?\.yml|pnpm-workspace\.yaml)/;
+			/^(scripts\/|apps\/|packages\/(db|config|ui|jobs|admin|opencode)\/|turbo\.json|docker-compose(\.override)?\.yml|pnpm-workspace\.yaml)/;
 		return staged.split("\n").some((f) => sourceDirPattern.test(f));
 	} catch {
 		return false;

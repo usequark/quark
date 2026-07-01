@@ -8,6 +8,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@techstream/quark-ui";
+import Link from "next/link";
 import MediaAssetCard from "./_components/MediaAssetCard";
 import StatusBadge from "./_components/StatusBadge";
 
@@ -63,31 +64,31 @@ export default async function CmsDashboard() {
 					<h1 className="text-2xl font-bold text-text">Content</h1>
 					<p className="text-sm text-text-faint mt-1">Manage pages and media</p>
 				</div>
-				<a href="/admin/cms/pages/new">
+				<Link href="/admin/cms/pages/new">
 					<Button>New Page</Button>
-				</a>
+				</Link>
 			</div>
 
 			{/* ── Sub-nav ── */}
 			<div className="flex flex-wrap items-center gap-2 border-b border-border pb-3">
-				<a
+				<Link
 					href="/admin/cms"
 					className="border border-border bg-surface px-3 py-1.5 text-sm font-medium text-text"
 				>
 					Overview
-				</a>
-				<a
+				</Link>
+				<Link
 					href="/admin/cms/pages"
 					className="border border-border px-3 py-1.5 text-sm font-medium text-text-muted hover:bg-surface-hover hover:text-text"
 				>
 					Pages
-				</a>
-				<a
+				</Link>
+				<Link
 					href="/admin/cms/media"
 					className="border border-border px-3 py-1.5 text-sm font-medium text-text-muted hover:bg-surface-hover hover:text-text"
 				>
 					Media
-				</a>
+				</Link>
 			</div>
 
 			{/* ── Content Types ── */}
@@ -101,7 +102,7 @@ export default async function CmsDashboard() {
 				</div>
 				<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
 					{stats.map(({ model, label, total, drafts, published, archived }) => (
-						<a
+						<Link
 							key={model}
 							href={`/admin/cms/${model.toLowerCase()}s`}
 							className="block group h-full"
@@ -136,11 +137,11 @@ export default async function CmsDashboard() {
 									</div>
 								</CardContent>
 							</Card>
-						</a>
+						</Link>
 					))}
 
 					{/* Media card */}
-					<a href="/admin/cms/media" className="block group h-full">
+					<Link href="/admin/cms/media" className="block group h-full">
 						<Card className="transition-all duration-200 hover:border-primary/40 hover:shadow-[0_0_24px_-4px_rgba(55,125,255,0.12)] h-full flex flex-col">
 							<div className="h-0.5 bg-gradient-to-r from-primary/60 to-primary/20" />
 							<CardHeader className="pb-2">
@@ -157,7 +158,7 @@ export default async function CmsDashboard() {
 								</p>
 							</CardContent>
 						</Card>
-					</a>
+					</Link>
 				</div>
 			</section>
 
@@ -172,12 +173,12 @@ export default async function CmsDashboard() {
 						<div className="h-px flex-1 bg-border" />
 					</div>
 					<div className="flex items-center justify-end mb-3">
-						<a
+						<Link
 							href="/admin/cms/media"
 							className="text-xs text-primary hover:opacity-75"
 						>
 							View all &rarr;
-						</a>
+						</Link>
 					</div>
 					<div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
 						{recentMedia.map((asset) => {
@@ -204,16 +205,16 @@ export default async function CmsDashboard() {
 						<div className="h-px flex-1 bg-border" />
 					</div>
 					<div className="flex items-center justify-end mb-3">
-						<a
+						<Link
 							href="/admin/cms/pages"
 							className="text-xs text-primary hover:opacity-75"
 						>
 							View all &rarr;
-						</a>
+						</Link>
 					</div>
 					<div className="border border-border bg-surface divide-y divide-border">
 						{recentPages.map((page) => (
-							<a
+							<Link
 								key={page.id}
 								href={`/admin/cms/pages/${page.id}`}
 								className="flex items-center justify-between px-4 py-3 hover:bg-surface-hover transition-colors"
@@ -227,7 +228,7 @@ export default async function CmsDashboard() {
 									</p>
 								</div>
 								<StatusBadge status={page.status} />
-							</a>
+							</Link>
 						))}
 					</div>
 				</section>

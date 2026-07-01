@@ -1,5 +1,6 @@
 import { FileText } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import DeleteMediaButton from "./DeleteMediaButton";
 
 /**
@@ -85,9 +86,9 @@ export default function MediaAssetCard({ asset, href, deleteAction }) {
 	);
 
 	return href ? (
-		<a href={href} className="block">
+		<Link href={href} className="block">
 			{card}
-		</a>
+		</Link>
 	) : (
 		card
 	);

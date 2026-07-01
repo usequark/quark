@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { after, before, describe, it } from "node:test";
+import { adminConfig } from "./config.js";
 import {
 	getInputType,
 	isEditable,
@@ -135,6 +136,30 @@ describe("getInputType", () => {
 			"text",
 		);
 	});
+
+	it("returns password for password field when model overrides hiddenFields", () => {
+		adminConfig.modelOverrides.User = { hiddenFields: [] };
+		try {
+			assert.equal(
+				getInputType(field({ name: "password", type: "String" }), "User"),
+				"password",
+			);
+		} finally {
+			delete adminConfig.modelOverrides.User;
+		}
+	});
+
+	it("returns hidden for password field when model has hiddenFields including password", () => {
+		adminConfig.modelOverrides.AuditLog = { hiddenFields: ["password"] };
+		try {
+			assert.equal(
+				getInputType(field({ name: "password", type: "String" }), "AuditLog"),
+				"hidden",
+			);
+		} finally {
+			delete adminConfig.modelOverrides.AuditLog;
+		}
+	});
 });
 
 describe("isListVisible", () => {
@@ -159,6 +184,18 @@ describe("isListVisible", () => {
 			isListVisible(field({ kind: "enum", type: "JobStatus" })),
 			true,
 		);
+	});
+
+	it("shows password field in list when model overrides hiddenFields", () => {
+		adminConfig.modelOverrides.User = { hiddenFields: [] };
+		try {
+			assert.equal(
+				isListVisible(field({ name: "password", type: "String" }), "User"),
+				true,
+			);
+		} finally {
+			delete adminConfig.modelOverrides.User;
+		}
 	});
 });
 
@@ -215,6 +252,25 @@ describe("isEditable", () => {
 		assert.equal(
 			isEditable(field({ name: "bio", type: "String", isRequired: false })),
 			true,
+		);
+	});
+
+	it("includes password field when model overrides hiddenFields with empty array", () => {
+		adminConfig.modelOverrides.User = { hiddenFields: [] };
+		try {
+			assert.equal(
+				isEditable(field({ name: "password", type: "String" }), "User"),
+				true,
+			);
+		} finally {
+			delete adminConfig.modelOverrides.User;
+		}
+	});
+
+	it("excludes password field for non-override models", () => {
+		assert.equal(
+			isEditable(field({ name: "password", type: "String" })),
+			false,
 		);
 	});
 });

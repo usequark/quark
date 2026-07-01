@@ -178,7 +178,7 @@ async function updatePackageJsonName(filePath, scope) {
 
 	packageJson.name = `@${scope}/${packageName}`;
 
-	await fs.writeFile(filePath, `${JSON.stringify(packageJson, null, 2)}\n`);
+	await fs.writeFile(filePath, `${JSON.stringify(packageJson, null, "	")}\n`);
 }
 
 function getWorkspacePackagesForFeatures(features) {
@@ -220,6 +220,7 @@ function buildFeatureRows(features) {
 		admin:
 			"| Admin panel | Included | `packages/admin/README.md`, `apps/web/src/app/admin/` |",
 		cms: "| CMS | Included | `packages/cms/README.md`, `apps/web/src/app/admin/cms/` |",
+		ai: "| AI agent integration | Included | `apps/opencode/`, `@opencode-ai/sdk` in worker |",
 	};
 
 	const selectedRows = features
@@ -234,11 +235,14 @@ function buildFeatureRows(features) {
 }
 
 function buildOptionalAppLines(features) {
-	if (!features.includes("jobs")) {
-		return "";
+	const lines = [];
+	if (features.includes("jobs")) {
+		lines.push("│   └── worker/               # BullMQ background worker\n");
 	}
-
-	return "│   └── worker/               # BullMQ background worker\n";
+	if (features.includes("ai")) {
+		lines.push("│   └── opencode/              # OpenCode AI agent server\n");
+	}
+	return lines.join("");
 }
 
 function buildFirstEditLines(features) {
@@ -248,6 +252,7 @@ function buildFirstEditLines(features) {
 		admin:
 			"- `packages/admin/src/config.js` and `apps/web/src/app/admin/` - tune model labels, hidden fields, and admin pages",
 		cms: "- `packages/cms/src/config.js` and `apps/web/src/app/admin/cms/` - choose managed content types and editorial flows",
+		ai: "- `apps/opencode/config/opencode.json` - configure agents, permissions, and MCP servers for the OpenCode AI server",
 	};
 
 	const selectedLines = features
@@ -268,6 +273,7 @@ function buildFeatureGuideLines(features) {
 		admin:
 			"- `packages/admin/README.md` - admin configuration, model overrides, and route ownership",
 		cms: "- `packages/cms/README.md` - content types, media rules, and CMS/admin boundaries",
+		ai: "- `apps/opencode/README.md` - OpenCode server setup, agent configuration, and skill management",
 	};
 
 	const selectedLines = features
@@ -609,7 +615,7 @@ program
 				pkgJson.name = `@${scope}/${reqPkg}`;
 				await fs.writeFile(
 					pkgJsonPath,
-					`${JSON.stringify(pkgJson, null, 2)}\n`,
+					`${JSON.stringify(pkgJson, null, "	")}\n`,
 				);
 				console.log(chalk.green(`    ✓ ${reqPkg} (required)`));
 			}
@@ -656,7 +662,7 @@ program
 			} else if (!options.prompts) {
 				// Use defaults when --no-prompts is set without --features
 				console.log(chalk.cyan("\n  🎯 Configuring optional features..."));
-				features = ["ui", "jobs"]; // Default to ui + jobs (not admin)
+				features = ["ui", "jobs"]; // Default to ui + jobs (not admin, cms, crm, ai)
 				console.log(
 					chalk.green(
 						`  Using default features: ${features.join(", ")} (non-interactive mode)`,
@@ -695,6 +701,12 @@ program
 							{
 								title: "CRM (packages/crm + /admin/crm) [requires: admin, ui]",
 								value: "crm",
+								selected: false,
+							},
+							{
+								title:
+									"AI Agent Integration (apps/opencode + @opencode-ai/sdk) [requires: jobs]",
+								value: "ai",
 								selected: false,
 							},
 						],
@@ -866,6 +878,33 @@ program
 						console.log(chalk.green(`    ✓ crm routes (paired with crm)`));
 					}
 				}
+
+				if (pairedTemplates.includes("opencode")) {
+					const opencodeDir = path.join(targetDir, "apps", "opencode");
+					await fs.ensureDir(opencodeDir);
+					await copyTemplate("opencode", opencodeDir);
+					console.log(chalk.green(`    ✓ opencode server (paired with ai)`));
+				}
+			}
+
+			// If AI selected, add @opencode-ai/sdk to worker dependencies
+			if (features.includes("ai")) {
+				const workerPkgPath = path.join(
+					targetDir,
+					"apps",
+					"worker",
+					"package.json",
+				);
+				if (await fs.pathExists(workerPkgPath)) {
+					const workerPkg = await fs.readJSON(workerPkgPath);
+					workerPkg.dependencies = workerPkg.dependencies || {};
+					workerPkg.dependencies["@opencode-ai/sdk"] = "^1.17.0";
+					await fs.writeFile(
+						workerPkgPath,
+						`${JSON.stringify(workerPkg, null, "	")}\n`,
+					);
+					console.log(chalk.green(`    ✓ @opencode-ai/sdk added to worker`));
+				}
 			}
 
 			// Step 7: Update all package.json dependencies to use correct scope
@@ -877,6 +916,10 @@ program
 				// Worker is only present when jobs is selected
 				...(features.includes("jobs")
 					? [path.join(targetDir, "apps", "worker", "package.json")]
+					: []),
+				// OpenCode server is only present when ai is selected
+				...(features.includes("ai")
+					? [path.join(targetDir, "apps", "opencode", "package.json")]
 					: []),
 				// Also update cross-dependencies in scaffolded packages (e.g. db → config)
 				...[...REQUIRED_PACKAGES, ...scaffoldPackages].map((pkg) =>
@@ -894,7 +937,7 @@ program
 					}
 					replaceDepsScope(pkg.dependencies, scope, scaffoldPackages);
 					replaceDepsScope(pkg.devDependencies, scope, scaffoldPackages);
-					await fs.writeFile(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
+					await fs.writeFile(pkgPath, `${JSON.stringify(pkg, null, "	")}\n`);
 				}
 			}
 
@@ -905,7 +948,7 @@ program
 				rootPkg.name = `@${scope}/root`;
 				await fs.writeFile(
 					rootPkgPath,
-					`${JSON.stringify(rootPkg, null, 2)}\n`,
+					`${JSON.stringify(rootPkg, null, "	")}\n`,
 				);
 			}
 
@@ -1219,7 +1262,7 @@ STORAGE_PROVIDER=local
 			};
 			await fs.writeFile(
 				path.join(targetDir, ".quark-link.json"),
-				JSON.stringify(quarkLinkJson, null, 2),
+				JSON.stringify(quarkLinkJson, null, "	"),
 			);
 			console.log(chalk.green(`    ✓ .quark-link.json`));
 
@@ -1424,6 +1467,11 @@ const FEATURE_META = {
 		requires: ["admin"],
 		packages: ["crm"],
 		pairs: ["crm-routes"],
+	},
+	ai: {
+		requires: ["jobs"],
+		packages: [],
+		pairs: ["opencode"],
 	},
 };
 
@@ -1742,7 +1790,7 @@ async function addWorkspaceDep(pkgJsonPath, depName) {
 	pkg.dependencies = pkg.dependencies || {};
 	if (pkg.dependencies[depName]) return; // already present
 	pkg.dependencies[depName] = "workspace:*";
-	await fs.writeFile(pkgJsonPath, `${JSON.stringify(pkg, null, 2)}\n`);
+	await fs.writeFile(pkgJsonPath, `${JSON.stringify(pkg, null, "	")}\n`);
 }
 
 async function rewriteWorkspaceDeps(pkgJsonPath, scope, workspacePackages) {
@@ -1750,12 +1798,12 @@ async function rewriteWorkspaceDeps(pkgJsonPath, scope, workspacePackages) {
 	const pkg = await fs.readJSON(pkgJsonPath);
 	replaceDepsScope(pkg.dependencies, scope, workspacePackages);
 	replaceDepsScope(pkg.devDependencies, scope, workspacePackages);
-	await fs.writeFile(pkgJsonPath, `${JSON.stringify(pkg, null, 2)}\n`);
+	await fs.writeFile(pkgJsonPath, `${JSON.stringify(pkg, null, "	")}\n`);
 }
 
 program
 	.command("add")
-	.argument("<feature>", "Feature to add (ui, jobs, admin, cms)")
+	.argument("<feature>", "Feature to add (ui, jobs, admin, cms, crm, ai)")
 	.description("Add an optional package to an existing Quark project")
 	.option("--force", "Skip safety checks (uncommitted changes)")
 	.action(async (feature, options) => {
@@ -1983,6 +2031,17 @@ program
 								),
 							);
 						}
+					} else if (pair === "opencode") {
+						const opencodeDir = path.join(projectDir, "apps", "opencode");
+						if (await fs.pathExists(opencodeDir)) {
+							console.log(
+								chalk.dim(`    · apps/opencode already exists — skipping copy`),
+							);
+						} else {
+							await copyTemplate("opencode", opencodeDir);
+							await replaceImportsInSourceFiles(opencodeDir, scope);
+							console.log(chalk.green(`    ✓ apps/opencode (paired with ai)`));
+						}
 					}
 				}
 
@@ -2006,6 +2065,47 @@ program
 						`@${scope}/jobs`,
 					);
 				}
+
+				// If adding ai, add @opencode-ai/sdk to worker
+				if (feat === "ai") {
+					const workerPkgPath = path.join(
+						projectDir,
+						"apps",
+						"worker",
+						"package.json",
+					);
+					if (await fs.pathExists(workerPkgPath)) {
+						const workerPkg = await fs.readJSON(workerPkgPath);
+						workerPkg.dependencies = workerPkg.dependencies || {};
+						workerPkg.dependencies["@opencode-ai/sdk"] = "^1.17.0";
+						await fs.writeFile(
+							workerPkgPath,
+							`${JSON.stringify(workerPkg, null, "	")}\n`,
+						);
+						console.log(chalk.green(`    ✓ @opencode-ai/sdk added to worker`));
+					}
+				}
+
+				// If adding ai, migrate worker with AI job definitions + handler
+				if (feat === "ai") {
+					try {
+						const { default: migrateWorker } = await import(
+							"../../opencode/script/migrate-worker.js"
+						);
+						const result = await migrateWorker(projectDir);
+						if (result === "DONE") {
+							console.log(
+								chalk.green(
+									`    ✓ AI job definitions + handler added to worker`,
+								),
+							);
+						}
+					} catch (error) {
+						console.warn(
+							chalk.yellow(`    ⚠️  Could not migrate worker: ${error.message}`),
+						);
+					}
+				}
 			}
 
 			// --- Update .quark-link.json ---
@@ -2014,7 +2114,7 @@ program
 			quarkLink.hasWorker = allFeatures.includes("jobs");
 			quarkLink.lastAddedFeature = feature;
 			quarkLink.lastModifiedDate = new Date().toISOString();
-			await fs.writeFile(quarkLinkPath, JSON.stringify(quarkLink, null, 2));
+			await fs.writeFile(quarkLinkPath, JSON.stringify(quarkLink, null, "	"));
 			console.log(chalk.green(`\n  ✓ .quark-link.json updated`));
 
 			// --- Run pnpm install ---
@@ -2288,7 +2388,7 @@ program
 				after["@techstream/quark-core"] ?? quarkLink.quarkVersion;
 			quarkLink.quarkVersion = newCoreVersion;
 			quarkLink.updatedDate = new Date().toISOString();
-			await fs.writeFile(quarkLinkPath, JSON.stringify(quarkLink, null, 2));
+			await fs.writeFile(quarkLinkPath, JSON.stringify(quarkLink, null, "	"));
 
 			// Run lint to surface any API breakage from the update
 			console.log(chalk.cyan("\n🔍 Running lint to check for breakage...\n"));

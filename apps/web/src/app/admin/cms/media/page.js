@@ -1,5 +1,6 @@
 import { prisma } from "@techstream/quark-db";
 import { Button, Card, CardContent } from "@techstream/quark-ui";
+import Link from "next/link";
 import AdminActionToast from "../../_components/AdminActionToast";
 import MediaAssetCard from "../_components/MediaAssetCard";
 
@@ -29,9 +30,9 @@ export default async function MediaPage({ searchParams }) {
 						{total} asset{total !== 1 ? "s" : ""}
 					</p>
 				</div>
-				<a href="/admin/cms/media/upload">
+				<Link href="/admin/cms/media/upload">
 					<Button>Upload</Button>
-				</a>
+				</Link>
 			</div>
 
 			{assets.length === 0 ? (
@@ -43,9 +44,9 @@ export default async function MediaPage({ searchParams }) {
 						<p className="mb-4 text-xs text-text-faint">
 							Upload your first asset to build a reusable media library.
 						</p>
-						<a href="/admin/cms/media/upload">
+						<Link href="/admin/cms/media/upload">
 							<Button variant="secondary">Upload your first file</Button>
-						</a>
+						</Link>
 					</CardContent>
 				</Card>
 			) : (

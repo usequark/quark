@@ -9,6 +9,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@techstream/quark-ui";
+import Link from "next/link";
 import StatusBadge from "./StatusBadge";
 
 /**
@@ -43,9 +44,9 @@ export default function ContentTable({ records, basePath }) {
 					<p className="mb-4 text-xs text-text-faint">
 						Create your first entry to start building this section.
 					</p>
-					<a href={`${basePath}/new`}>
+					<Link href={`${basePath}/new`}>
 						<Button variant="secondary">Create your first entry</Button>
-					</a>
+					</Link>
 				</CardContent>
 			</Card>
 		);
@@ -66,12 +67,12 @@ export default function ContentTable({ records, basePath }) {
 					{records.map((record) => (
 						<TableRow key={record.id}>
 							<TableCell className="font-medium text-text">
-								<a
+								<Link
 									href={`${basePath}/${record.id}`}
 									className="hover:text-primary transition-colors"
 								>
 									{record.title}
-								</a>
+								</Link>
 								{record.excerpt && (
 									<p className="text-xs text-text-faint mt-0.5 truncate max-w-[320px]">
 										{record.excerpt}
@@ -89,12 +90,12 @@ export default function ContentTable({ records, basePath }) {
 								})}
 							</TableCell>
 							<TableCell className="text-right">
-								<a
+								<Link
 									href={`${basePath}/${record.id}`}
 									className="inline-flex items-center gap-1 border border-border px-2.5 py-1 text-xs font-medium text-text-muted hover:border-border-hover hover:text-text transition-colors"
 								>
 									Edit
-								</a>
+								</Link>
 							</TableCell>
 						</TableRow>
 					))}

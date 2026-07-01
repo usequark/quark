@@ -19,6 +19,7 @@ export const adminConfig = {
 	 *   readOnly?: boolean,
 	 *   label?: string,
 	 *   hiddenFields?: string[],
+	 *   fkTargets?: Record<string, string>,
 	 * }>}
 	 *
 	 * @example
@@ -26,6 +27,10 @@ export const adminConfig = {
 	 *   AuditLog: { readOnly: true },
 	 *   User: { hiddenFields: ['password'] },
 	 * }
+	 *
+	 * Use `fkTargets` when an FK field name by convention
+	 * (e.g. `leadId` → "Lead") doesn't match the actual model.
+	 * User: { fkTargets: { leadId: "User" } }
 	 */
 	modelOverrides: {
 		// NextAuth internal models — shown read-only to prevent accidental changes

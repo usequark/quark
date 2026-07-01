@@ -1,0 +1,93 @@
+{
+	"$schema": "https://opencode.ai/config.json",
+	"model": {
+		"default": "openrouter/deepseek/deepseek-v4-flash"
+	},
+	"provider": {
+		"openrouter": {
+			"apiKey": "${OPENROUTER_API_KEY}"
+		}
+	},
+	"agent": {
+		"build": { "disable": true },
+		"plan": { "disable": true },
+		"orchestrator": {
+			"mode": "primary",
+			"description": "Orchestrator — classifies incoming jobs and delegates to specialist sub-agents. Composes final outputs.",
+			"model": "openrouter/deepseek/deepseek-v4-pro",
+			"temperature": 0.3,
+			"permission": {
+				"task": {
+					"*": "allow"
+				}
+			}
+		},
+		"strategist": {
+			"mode": "subagent",
+			"description": "Brand strategy, content planning, audience analysis",
+			"model": "openrouter/deepseek/deepseek-v4-pro",
+			"temperature": 0.3,
+			"permission": {
+				"read": "allow",
+				"bash": "deny",
+				"edit": "deny"
+			},
+			"prompt": "{file:./prompts/strategist.txt}"
+		},
+		"producer": {
+			"mode": "subagent",
+			"description": "Asset generation — copy, images, layouts",
+			"model": "openrouter/deepseek/deepseek-v4-flash",
+			"temperature": 0.3,
+			"permission": {
+				"read": "allow",
+				"edit": "allow",
+				"bash": "deny"
+			},
+			"prompt": "{file:./prompts/producer.txt}"
+		},
+		"reviewer": {
+			"mode": "subagent",
+			"description": "Quality gate — brand consistency, SEO, accessibility, visual QA",
+			"model": "openrouter/google/gemini-3.5-flash",
+			"temperature": 0.4,
+			"permission": {
+				"read": "allow",
+				"bash": "deny",
+				"edit": "deny"
+			},
+			"prompt": "{file:./prompts/reviewer.txt}"
+		},
+		"publisher": {
+			"mode": "subagent",
+			"description": "CMS publishing, scheduling, distribution",
+			"model": "openrouter/deepseek/deepseek-v4-flash",
+			"temperature": 0.2,
+			"permission": {
+				"read": "allow",
+				"edit": "allow",
+				"bash": "ask"
+			},
+			"prompt": "{file:./prompts/publisher.txt}"
+		},
+		"analyst": {
+			"mode": "subagent",
+			"description": "Performance data, SEO audits, conversion metrics",
+			"model": "openrouter/deepseek/deepseek-v4-flash",
+			"temperature": 0.1,
+			"permission": {
+				"read": "allow",
+				"bash": "deny",
+				"edit": "deny"
+			},
+			"prompt": "{file:./prompts/analyst.txt}"
+		}
+	},
+	"permission": {
+		"edit": "ask",
+		"bash": "ask",
+		"skill": {
+			"internal-*": "deny"
+		}
+	}
+}

@@ -3,7 +3,7 @@
 import { ThemeProvider, useTheme } from "@techstream/quark-ui";
 import { useState } from "react";
 
-function ThemeToggleButton() {
+function ThemeToggleButton({ collapsed = false }) {
 	const { theme, setTheme } = useTheme();
 	const isDark = theme === "dark";
 	// Increment to retrigger the spin animation on each click
@@ -17,8 +17,9 @@ function ThemeToggleButton() {
 	return (
 		<button
 			type="button"
-			className="flex items-center gap-2 px-3 py-2 rounded-[--radius-default] text-sm text-text-faint hover:bg-surface-hover hover:text-text transition-colors duration-300 w-full text-left cursor-pointer"
+			className="flex items-center gap-2 px-3 py-2 rounded-[--radius-default] text-sm text-text-faint hover:bg-surface-hover hover:text-text transition-all duration-150 w-full text-left cursor-pointer"
 			aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+			title={collapsed ? (isDark ? "Light Mode" : "Dark Mode") : undefined}
 			onClick={handleToggle}
 		>
 			<svg
@@ -44,15 +45,21 @@ function ThemeToggleButton() {
 					/>
 				)}
 			</svg>
-			<span>{isDark ? "Dark Mode" : "Light Mode"}</span>
+			<span
+				className={`whitespace-nowrap transition-opacity duration-200 ${
+					collapsed ? "opacity-0" : "opacity-100"
+				}`}
+			>
+				{isDark ? "Dark Mode" : "Light Mode"}
+			</span>
 		</button>
 	);
 }
 
-export default function AdminThemeToggle() {
+export default function AdminThemeToggle({ collapsed = false }) {
 	return (
 		<ThemeProvider>
-			<ThemeToggleButton />
+			<ThemeToggleButton collapsed={collapsed} />
 		</ThemeProvider>
 	);
 }

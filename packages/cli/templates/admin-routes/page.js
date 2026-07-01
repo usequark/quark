@@ -18,6 +18,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@techstream/quark-ui";
+import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { hasCmsFeature } from "@/lib/load-cms-config";
 import {
@@ -308,7 +309,11 @@ export default async function AdminDashboard() {
 					) : (
 						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 							{rows.map(({ name, slug, count }) => (
-								<a key={name} href={`/admin/${slug}`} className="block group">
+								<Link
+									key={name}
+									href={`/admin/${slug}`}
+									className="block group"
+								>
 									<Card className="transition-all duration-200 hover:border-primary/40 hover:shadow-[0_0_24px_-4px_rgba(55,125,255,0.12)]">
 										<div className="h-0.5 bg-gradient-to-r from-primary/60 to-primary/20" />
 										<CardContent className="pt-5">
@@ -325,7 +330,7 @@ export default async function AdminDashboard() {
 											</div>
 										</CardContent>
 									</Card>
-								</a>
+								</Link>
 							))}
 						</div>
 					)}
@@ -355,7 +360,7 @@ async function getCmsStats() {
 function CmsStatCard({ label, href, total, published, drafts }) {
 	const isMedia = published === undefined;
 	return (
-		<a href={href} className="block group">
+		<Link href={href} className="block group">
 			<Card className="transition-all duration-200 hover:border-primary/40 hover:shadow-[0_0_24px_-4px_rgba(55,125,255,0.12)] h-full">
 				<div className="h-0.5 bg-gradient-to-r from-primary/60 to-primary/20" />
 				<CardContent className="pt-5 flex flex-col h-full">
@@ -380,7 +385,7 @@ function CmsStatCard({ label, href, total, published, drafts }) {
 					)}
 				</CardContent>
 			</Card>
-		</a>
+		</Link>
 	);
 }
 

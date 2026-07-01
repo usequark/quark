@@ -1,0 +1,60 @@
+{
+	"$schema": "https://opencode.ai/config.json",
+	"model": "openrouter/deepseek/deepseek-v4-flash",
+	"provider": {
+		"openrouter": {
+			"apiKey": "${OPENROUTER_API_KEY}"
+		}
+	},
+	"agent": {
+		"build": { "disable": true },
+		"plan": { "disable": true },
+		"assistant": {
+			"mode": "primary",
+			"description": "Text-only AI assistant. Can only respond with text — no file access, no tool execution, no sub-agent spawning.",
+			"model": "openrouter/deepseek/deepseek-v4-flash",
+			"temperature": 0.3,
+			"permission": {
+				"read": "deny",
+				"edit": "deny",
+				"write": "deny",
+				"bash": "deny",
+				"glob": "deny",
+				"grep": "deny",
+				"list": "deny",
+				"task": "deny",
+				"todowrite": "deny",
+				"webfetch": "deny",
+				"skill": "deny"
+			}
+		},
+		"researcher": {
+			"mode": "subagent",
+			"description": "Read-only research agent. Gathers information, reads files, fetches web pages, and analyzes data. Cannot edit files or run commands.",
+			"model": "openrouter/deepseek/deepseek-v4-flash",
+			"temperature": 0.2,
+			"permission": {
+				"read": "allow",
+				"glob": "allow",
+				"grep": "allow",
+				"list": "allow",
+				"webfetch": "allow",
+				"skill": "allow",
+				"edit": "deny",
+				"bash": "deny"
+			},
+			"prompt": "{file:./prompts/researcher.txt}"
+		}
+	},
+	"mcp": {
+		"db-tools": {
+			"type": "local",
+			"command": ["node", "/app/mcp/db-server.js"],
+			"enabled": true
+		}
+	},
+	"permission": {
+		"edit": "ask",
+		"bash": "ask"
+	}
+}

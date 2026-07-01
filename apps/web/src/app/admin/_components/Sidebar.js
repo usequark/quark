@@ -1,8 +1,9 @@
 "use client";
 
 import { QuarkLogo } from "@techstream/quark-ui";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AdminThemeToggle from "./AdminThemeToggle";
 import SignOutButton from "./SignOutButton";
 
@@ -26,6 +27,15 @@ export default function Sidebar({
 }) {
 	const pathname = usePathname();
 	const [open, setOpen] = useState(false);
+	const [collapsed, setCollapsed] = useState(() => {
+		if (typeof window !== "undefined") {
+			return localStorage.getItem("admin-sidebar-collapsed") === "true";
+		}
+		return false;
+	});
+	useEffect(() => {
+		localStorage.setItem("admin-sidebar-collapsed", String(collapsed));
+	}, [collapsed]);
 
 	const coreModels = models.filter((m) => !m.readOnly);
 	const systemModels = models.filter((m) => m.readOnly);
@@ -33,74 +43,226 @@ export default function Sidebar({
 	const isClientAdmin = userRole === "client_admin";
 
 	/**
-	 * Render a nav link. Uses exact matching for the root admin and CMS overview
-	 * to prevent both from highlighting when on a sub-page.
-	 * All other links match if the pathname equals or starts with `href/`.
+	 * Create a navLink function bound to a specific collapse state.
+	 * This ensures mobile overlay always renders expanded even if desktop is collapsed.
 	 */
-	function navLink(href, label, icon, exact = false) {
-		const isExact = exact || href === "/admin" || href === "/admin/cms";
-		const isActive = isExact
-			? pathname === href
-			: pathname === href || pathname.startsWith(`${href}/`);
-		return (
-			<a
-				key={href}
-				href={href}
-				onClick={() => setOpen(false)}
-				className={`flex items-center gap-2 px-3 py-2 rounded-[--radius-default] text-sm transition-colors ${
-					isActive
-						? "bg-surface-hover text-text border-l-2 border-primary -ml-px"
-						: "text-text-muted hover:bg-surface-hover hover:text-text"
-				}`}
-			>
-				{icon}
-				{label}
-			</a>
-		);
+	function createNavLink(isCollapsed) {
+		return function navLink(href, label, icon, exact = false) {
+			const isExact = exact || href === "/admin" || href === "/admin/cms";
+			const isActive = isExact
+				? pathname === href
+				: pathname === href || pathname.startsWith(`${href}/`);
+			return (
+				<Link
+					key={href}
+					href={href}
+					onClick={() => setOpen(false)}
+					className={`flex items-center gap-2 px-3 py-2 rounded-[--radius-default] text-sm transition-all duration-150 ${
+						isActive
+							? "bg-surface-hover text-text border-l-2 border-primary -ml-px"
+							: "text-text-muted hover:bg-surface-hover hover:text-text"
+					}`}
+					title={isCollapsed ? label : undefined}
+				>
+					{icon}
+					<span
+						className={`whitespace-nowrap transition-opacity duration-200 ${
+							isCollapsed ? "opacity-0" : "opacity-100"
+						}`}
+					>
+						{label}
+					</span>
+				</Link>
+			);
+		};
 	}
 
-	const sidebar = (
-		<aside className="h-full w-56 shrink-0 bg-surface border-r border-border p-4 flex flex-col">
-			{/* Header */}
-			<div className="mb-4 flex items-center justify-between gap-2">
-				<div className="flex items-center gap-2">
-					<QuarkLogo size={24} />
-					<a
-						href={isCmsOnly ? "/admin/cms" : "/admin"}
-						className="text-lg font-semibold text-text hover:text-text-muted"
-					>
-						{title}
-					</a>
-				</div>
-				<button
-					type="button"
-					onClick={() => setOpen(false)}
-					className="p-1 rounded-[--radius-default] text-text-muted hover:text-text hover:bg-surface-hover lg:hidden"
-					aria-label="Close menu"
-				>
-					<svg
-						aria-hidden="true"
-						className="w-5 h-5"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor"
-						strokeWidth="2"
-					>
-						<path
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							d="M6 18L18 6M6 6l12 12"
-						/>
-					</svg>
-				</button>
-			</div>
+	function renderSidebarContent(isCollapsed) {
+		const navLink = createNavLink(isCollapsed);
 
-			{/* Dashboard — hidden for editor-only mode */}
-			{!isCmsOnly && (
-				<nav className="flex flex-col gap-1 mb-3 shrink-0">
-					{navLink(
-						"/admin",
-						"Dashboard",
+		return (
+			<aside
+				className={`h-full ${
+					isCollapsed ? "w-[72px]" : "w-56"
+				} shrink-0 bg-surface border-r border-border p-4 flex flex-col transition-[width] duration-200 ease-in-out overflow-hidden`}
+				onClick={(e) => {
+					if (isCollapsed && e.target === e.currentTarget) {
+						setCollapsed(false);
+					}
+				}}
+				onKeyDown={(e) => {
+					if (
+						isCollapsed &&
+						e.target === e.currentTarget &&
+						(e.key === "Enter" || e.key === " ")
+					) {
+						e.preventDefault();
+						setCollapsed(false);
+					}
+				}}
+			>
+				{/* Header */}
+				<div
+					className={`mb-4 flex items-center gap-2 ${
+						isCollapsed ? "justify-center" : "px-3"
+					}`}
+				>
+					{!isCollapsed && <QuarkLogo size={24} />}
+					{!isCollapsed && (
+						<Link
+							href={isCmsOnly ? "/admin/cms" : "/admin"}
+							className="text-lg font-semibold text-text hover:text-text-muted whitespace-nowrap"
+						>
+							{title}
+						</Link>
+					)}
+					{/* Close button — mobile/tablet only */}
+					<button
+						type="button"
+						onClick={() => setOpen(false)}
+						className="p-1 rounded-[--radius-default] text-text-muted hover:text-text hover:bg-surface-hover lg:hidden"
+						aria-label="Close menu"
+					>
+						<svg
+							aria-hidden="true"
+							className="w-5 h-5"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							strokeWidth="2"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								d="M6 18L18 6M6 6l12 12"
+							/>
+						</svg>
+					</button>
+					{/* Collapse chevron — desktop only */}
+					<button
+						type="button"
+						onClick={() => setCollapsed(!collapsed)}
+						className={`p-2 rounded-[--radius-default] text-text-muted hover:bg-surface-hover hover:text-text cursor-pointer transition-all duration-150 hidden lg:flex ${
+							isCollapsed ? "" : "ml-auto"
+						}`}
+						aria-label={isCollapsed ? "Expand menu" : "Collapse menu"}
+					>
+						<svg
+							aria-hidden="true"
+							className="w-4 h-4"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							strokeWidth="2"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								d={isCollapsed ? "M9 18l6-6-6-6" : "M15 18l-6-6 6-6"}
+							/>
+						</svg>
+					</button>
+				</div>
+
+				{/* Dashboard — hidden for editor-only mode */}
+				{!isCmsOnly && (
+					<nav className="flex flex-col gap-1 mb-3 shrink-0">
+						{navLink(
+							"/admin",
+							"Dashboard",
+							<svg
+								aria-hidden="true"
+								className="w-4 h-4 shrink-0"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+								strokeWidth="2"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									d="M4 5a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 13a1 1 0 011-1h4a1 1 0 011 1v6a1 1 0 01-1 1h-4a1 1 0 01-1-1v-6z"
+								/>
+							</svg>,
+						)}
+					</nav>
+				)}
+
+				{!isCollapsed && customLinks.length > 0 && (
+					<div className="border-t border-border mb-3 shrink-0" />
+				)}
+
+				{/* Custom links (e.g. Projects) */}
+				{customLinks.length > 0 && (
+					<nav className="flex flex-col gap-1 mb-3 shrink-0">
+						{customLinks.map((link) =>
+							navLink(link.href, link.label, link.icon ?? null),
+						)}
+					</nav>
+				)}
+
+				{!isCollapsed && contentLinks.length > 0 && (
+					<div className="border-t border-border mb-3 shrink-0" />
+				)}
+
+				{/* Content section (CMS) */}
+				{contentLinks.length > 0 && (
+					<div className="shrink-0">
+						{!isCollapsed && (
+							<p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-widest text-text-faint">
+								Content
+							</p>
+						)}
+						<nav className="flex flex-col gap-0.5 mb-3">
+							{navLink("/admin/cms", "Overview", null, true)}
+							{contentLinks.map((link) => navLink(link.href, link.label))}
+							{navLink("/admin/cms/media", "Media")}
+						</nav>
+					</div>
+				)}
+
+				{!isCollapsed && !isCmsOnly && !isClientAdmin && (
+					<div className="border-t border-border mb-3 shrink-0" />
+				)}
+
+				{/* Scrollable model sections — hidden for client_admin and editors */}
+				{!isCollapsed ? (
+					!isCmsOnly &&
+					!isClientAdmin && (
+						<div className="flex-1 flex flex-col gap-4 overflow-y-auto min-h-0">
+							{coreModels.length > 0 && (
+								<ModelSection
+									label="Models"
+									models={coreModels}
+									navLink={navLink}
+								/>
+							)}
+							{coreModels.length > 0 && systemModels.length > 0 && (
+								<div className="border-t border-border" />
+							)}
+							{systemModels.length > 0 && (
+								<ModelSection
+									label="System"
+									models={systemModels}
+									navLink={navLink}
+								/>
+							)}
+						</div>
+					)
+				) : (
+					<div className="flex-1" />
+				)}
+
+				{isCmsOnly && !isCollapsed && <div className="flex-1" />}
+
+				{/* Footer */}
+				<div className="border-t border-border pt-3 mt-3 flex flex-col gap-1 shrink-0">
+					<AdminThemeToggle collapsed={isCollapsed} />
+					<Link
+						href="/"
+						className="flex items-center gap-2 px-3 py-2 rounded-[--radius-default] text-sm text-text-faint hover:bg-surface-hover hover:text-text transition-all duration-150"
+						title={isCollapsed ? "Back to Home" : undefined}
+					>
 						<svg
 							aria-hidden="true"
 							className="w-4 h-4 shrink-0"
@@ -112,81 +274,22 @@ export default function Sidebar({
 							<path
 								strokeLinecap="round"
 								strokeLinejoin="round"
-								d="M4 5a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 13a1 1 0 011-1h4a1 1 0 011 1v6a1 1 0 01-1 1h-4a1 1 0 01-1-1v-6z"
+								d="M10 19l-7-7m0 0l7-7m-7 7h18"
 							/>
-						</svg>,
-					)}
-				</nav>
-			)}
-
-			{customLinks.length > 0 && (
-				<>
-					<div className="border-t border-border mb-3 shrink-0" />
-					<nav className="flex flex-col gap-1 mb-3 shrink-0">
-						{customLinks.map((link) =>
-							navLink(link.href, link.label, link.icon ?? null),
-						)}
-					</nav>
-				</>
-			)}
-
-			{contentLinks.length > 0 && (
-				<>
-					<div className="border-t border-border mb-3 shrink-0" />
-					<div className="shrink-0">
-						<p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-widest text-text-faint">
-							Content
-						</p>
-						<nav className="flex flex-col gap-0.5 mb-3">
-							{navLink("/admin/cms", "Overview")}
-							{contentLinks.map((link) => navLink(link.href, link.label))}
-							{navLink("/admin/cms/media", "Media")}
-						</nav>
-					</div>
-				</>
-			)}
-
-			{/* Scrollable model sections — hidden for client_admin and editors */}
-			{!isCmsOnly && !isClientAdmin && (
-				<>
-					<div className="border-t border-border mb-3 shrink-0" />
-					<div className="flex-1 flex flex-col gap-4 overflow-y-auto min-h-0">
-						{coreModels.length > 0 && (
-							<ModelSection
-								label="Models"
-								models={coreModels}
-								navLink={navLink}
-							/>
-						)}
-						{coreModels.length > 0 && systemModels.length > 0 && (
-							<div className="border-t border-border" />
-						)}
-						{systemModels.length > 0 && (
-							<ModelSection
-								label="System"
-								models={systemModels}
-								navLink={navLink}
-							/>
-						)}
-					</div>
-				</>
-			)}
-
-			{isCmsOnly && <div className="flex-1" />}
-
-			{/* Footer */}
-			<div className="border-t border-border pt-3 mt-3 flex flex-col gap-1 shrink-0">
-				<AdminThemeToggle />
-				<a
-					href="/"
-					className="flex items-center gap-2 px-3 py-2 rounded-[--radius-default] text-sm text-text-faint hover:bg-surface-hover hover:text-text transition-colors"
-				>
-					Back to Home
-				</a>
-				<SignOutButton />
-			</div>
-		</aside>
-	);
+						</svg>
+						<span
+							className={`whitespace-nowrap transition-opacity duration-200 ${
+								isCollapsed ? "opacity-0" : "opacity-100"
+							}`}
+						>
+							Back to Home
+						</span>
+					</Link>
+					<SignOutButton collapsed={isCollapsed} />
+				</div>
+			</aside>
+		);
+	}
 
 	return (
 		<>
@@ -216,7 +319,9 @@ export default function Sidebar({
 			</button>
 
 			{/* Desktop sidebar */}
-			<div className="hidden lg:flex h-full">{sidebar}</div>
+			<div className="hidden lg:flex h-full">
+				{renderSidebarContent(collapsed)}
+			</div>
 
 			{/* Mobile/tablet/small-desktop overlay */}
 			<div
@@ -239,7 +344,7 @@ export default function Sidebar({
 						open ? "translate-x-0" : "-translate-x-full"
 					}`}
 				>
-					{sidebar}
+					{renderSidebarContent(false)}
 				</div>
 			</div>
 		</>

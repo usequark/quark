@@ -8,6 +8,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@techstream/quark-ui";
+import Link from "next/link";
 import { formatEnumLabel } from "../_lib/display";
 
 /** Map JobStatus-style enum values to Badge variants */
@@ -161,12 +162,12 @@ export default function ModelTable({ model, records, slug, readOnly }) {
 							))}
 							{canEdit && (
 								<TableCell className="text-right">
-									<a
+									<Link
 										href={`/admin/${slug}/${record.id}`}
 										className="inline-flex items-center gap-1 rounded-[--radius-default] px-2.5 py-1 text-xs font-medium text-primary ring-1 ring-inset ring-primary/20 hover:bg-primary/5 transition-colors"
 									>
 										Edit
-									</a>
+									</Link>
 								</TableCell>
 							)}
 						</TableRow>

@@ -1,0 +1,18 @@
+{
+	"$schema": "https://railway.com/railway.schema.json",
+	"build": {
+		"builder": "DOCKERFILE",
+		"watchPatterns": [
+			"config/**",
+			"skills/**",
+			"mcp/**",
+			"Dockerfile",
+			"railway.json"
+		]
+	},
+	"deploy": {
+		"startCommand": "opencode serve --port 4096 --hostname 0.0.0.0",
+		"restartPolicyType": "ON_FAILURE",
+		"restartPolicyMaxRetries": 5
+	}
+}

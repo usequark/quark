@@ -13,6 +13,7 @@
 		"dev": "dotenv -- node scripts/dev-preflight.mjs && dotenv -- turbo run dev",
 		"lint": "turbo run lint",
 		"standards": "node scripts/check-standards.mjs",
+		"check:loading": "node scripts/check-loading.mjs",
 		"test": "turbo run test",
 		"docker:up": "docker compose up -d",
 		"docker:down": "docker compose down",
@@ -30,7 +31,7 @@
 	},
 	"simple-git-hooks": {
 		"pre-commit": "pnpm nano-staged",
-		"pre-push": "pnpm test"
+		"pre-push": "pnpm check:loading && pnpm test"
 	},
 	"nano-staged": {
 		"**/*.{js,jsx,mjs,json,css}": [

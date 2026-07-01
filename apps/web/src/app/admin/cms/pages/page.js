@@ -1,5 +1,6 @@
 import { prisma } from "@techstream/quark-db";
 import { Button } from "@techstream/quark-ui";
+import Link from "next/link";
 import AdminActionToast from "../../_components/AdminActionToast";
 import ContentTable from "../_components/ContentTable";
 
@@ -42,15 +43,15 @@ export default async function PagesListPage({ searchParams }) {
 						{status !== "ALL" ? ` \u00b7 ${status.toLowerCase()}` : ""}
 					</p>
 				</div>
-				<a href="/admin/cms/pages/new">
+				<Link href="/admin/cms/pages/new">
 					<Button>New Page</Button>
-				</a>
+				</Link>
 			</div>
 
 			{/* Status filter tabs */}
 			<div className="flex gap-1 border-b border-border">
 				{STATUS_FILTERS.map((f) => (
-					<a
+					<Link
 						key={f}
 						href={
 							f === "ALL" ? "/admin/cms/pages" : `/admin/cms/pages?status=${f}`
@@ -67,7 +68,7 @@ export default async function PagesListPage({ searchParams }) {
 								{statusCounts[f]}
 							</span>
 						)}
-					</a>
+					</Link>
 				))}
 			</div>
 

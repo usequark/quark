@@ -2,6 +2,7 @@
 
 import { getInputType, isEditable } from "@techstream/quark-admin/field-map";
 import { Button, Dialog } from "@techstream/quark-ui";
+import Link from "next/link";
 import { useActionState, useState, useTransition } from "react";
 import { adminCreate, adminDelete, adminUpdate } from "../_actions/crud";
 import FieldRenderer from "./FieldRenderer";
@@ -253,7 +254,7 @@ export default function ModelForm({ model, slug, record, readOnly = false }) {
 								>
 									{isPending ? "Saving…" : isEdit ? "Save changes" : "Create"}
 								</Button>
-								<a href={`/admin/${slug}`} className="block w-full">
+								<Link href={`/admin/${slug}`} className="block w-full">
 									<Button
 										type="button"
 										variant="secondary"
@@ -261,7 +262,7 @@ export default function ModelForm({ model, slug, record, readOnly = false }) {
 									>
 										Cancel
 									</Button>
-								</a>
+								</Link>
 							</div>
 						</div>
 

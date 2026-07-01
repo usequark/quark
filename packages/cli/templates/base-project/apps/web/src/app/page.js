@@ -1,3 +1,4 @@
+import Link from "next/link";
 import HealthIndicator from "./_components/HealthIndicator.js";
 import QuarkAnimation from "./_components/QuarkAnimation.js";
 
@@ -14,18 +15,18 @@ export default function Home() {
 
 				{/* Navigation */}
 				<nav className="flex items-center gap-2">
-					<a href="/example-page" className="quark-home-link">
+					<Link href="/example-page" className="quark-home-link">
 						example page
-					</a>
+					</Link>
 					<span className="quark-home-sep">·</span>
-					<a href="/playground" className="quark-home-link">
+					<Link href="/playground" className="quark-home-link">
 						playground
-					</a>
+					</Link>
 					{/* @quark:start:admin */}
 					<span className="quark-home-sep">·</span>
-					<a href="/admin" className="quark-home-link">
+					<Link href="/admin" className="quark-home-link">
 						admin
-					</a>
+					</Link>
 					{/* @quark:end:admin */}
 					<span className="quark-home-sep">·</span>
 					<a

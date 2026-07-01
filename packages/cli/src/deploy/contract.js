@@ -3,6 +3,7 @@ export const QUARK_DEPLOY_PROJECT_KIND = "quark";
 export const QUARK_SERVICE_KINDS = Object.freeze({
 	WEB: "web",
 	WORKER: "worker",
+	OPENCODE: "opencode",
 });
 
 const webServiceContract = Object.freeze({
@@ -30,12 +31,26 @@ const workerServiceContract = Object.freeze({
 	}),
 });
 
+const opencodeServiceContract = Object.freeze({
+	kind: QUARK_SERVICE_KINDS.OPENCODE,
+	name: "opencode",
+	required: false,
+	relativeRootDir: "apps/opencode",
+	relativePackageJsonPath: "apps/opencode/package.json",
+	runtime: Object.freeze({
+		type: "node",
+		relativeEntrypoint: "apps/opencode/Dockerfile",
+	}),
+});
+
 export const QUARK_SERVICE_CONTRACTS = Object.freeze({
 	[QUARK_SERVICE_KINDS.WEB]: webServiceContract,
 	[QUARK_SERVICE_KINDS.WORKER]: workerServiceContract,
+	[QUARK_SERVICE_KINDS.OPENCODE]: opencodeServiceContract,
 });
 
 export const SUPPORTED_QUARK_SERVICE_KINDS = Object.freeze([
 	QUARK_SERVICE_KINDS.WEB,
 	QUARK_SERVICE_KINDS.WORKER,
+	QUARK_SERVICE_KINDS.OPENCODE,
 ]);
