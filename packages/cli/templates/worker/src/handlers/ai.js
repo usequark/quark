@@ -164,7 +164,7 @@ export async function handleAiHealthCheck(bullJob, logger) {
 		const response = await fetch(`${baseUrl}/health`);
 
 		if (!response.ok) {
-			throw new Error(
+			throw new AppError(
 				`Health check returned ${response.status}: ${response.statusText}`,
 			);
 		}
