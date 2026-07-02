@@ -51,12 +51,7 @@
 			"prisma",
 			"simple-git-hooks",
 			"sharp"
-		],
-		"peerDependencyRules": {
-			"allowedVersions": {
-				"nodemailer": "*"
-			}
-		}
+		]
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.4.0",
