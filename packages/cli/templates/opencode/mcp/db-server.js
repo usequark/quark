@@ -90,6 +90,17 @@ const GetRelevantContextSchema = z.object({
 	maxRecords: z.number().int().min(1).max(50).optional().default(15),
 });
 
+const TasksFilterSchema = PaginationSchema.extend({
+	status: z
+		.enum(["TODO", "IN_PROGRESS", "IN_REVIEW", "BLOCKED", "DONE", "CANCELLED"])
+		.optional(),
+	priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]).optional(),
+	assigneeId: z.string().optional(),
+	companyId: z.string().optional(),
+	dueDateNull: z.boolean().optional(),
+	search: z.string().max(200).optional(),
+});
+
 // ── Server Setup ────────────────────────────────────────────────────
 
 const server = new Server(
@@ -353,6 +364,53 @@ server.setRequestHandler("tools/list", async () => {
 						},
 					},
 					required: ["question"],
+				},
+			},
+			{
+				name: "getTasks",
+				description:
+					"List tasks, optionally filtered by status, priority, assignee, company, and due date. Use dueDateNull: true to find tasks missing due dates.",
+				inputSchema: {
+					type: "object",
+					properties: {
+						status: {
+							type: "string",
+							enum: [
+								"TODO",
+								"IN_PROGRESS",
+								"IN_REVIEW",
+								"BLOCKED",
+								"DONE",
+								"CANCELLED",
+							],
+							description: "Filter by status",
+						},
+						priority: {
+							type: "string",
+							enum: ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+							description: "Filter by priority",
+						},
+						assigneeId: {
+							type: "string",
+							description: "Filter by assignee user ID",
+						},
+						companyId: { type: "string", description: "Filter by company ID" },
+						dueDateNull: {
+							type: "boolean",
+							description: "Set to true to find tasks with no due date",
+						},
+						search: { type: "string", description: "Search in title" },
+						limit: {
+							type: "number",
+							description: "Max results (1-100)",
+							default: 50,
+						},
+						offset: {
+							type: "number",
+							description: "Pagination offset",
+							default: 0,
+						},
+					},
 				},
 			},
 		],
@@ -718,6 +776,54 @@ server.setRequestHandler("tools/call", async (request) => {
 									: "No relevant context found for this question.",
 						},
 					],
+				};
+			}
+
+			// -----------------------------------------------------------------------
+			// getTasks
+			// -----------------------------------------------------------------------
+			case "getTasks": {
+				const {
+					status,
+					priority,
+					assigneeId,
+					companyId,
+					dueDateNull,
+					search,
+					limit,
+					offset,
+				} = TasksFilterSchema.parse(args || {});
+
+				let query = sql`
+					SELECT t.id, t.title, t.description, t.status, t.priority,
+						t."assigneeId", u.name AS "assigneeName",
+						t."companyId", co.name AS "companyName",
+						t."dueDate", t."createdAt", t."updatedAt"
+					FROM "Task" t
+					LEFT JOIN "User" u ON u.id = t."assigneeId"
+					LEFT JOIN "Company" co ON co.id = t."companyId"
+					WHERE 1=1
+				`;
+
+				const conditions = [];
+				if (status) conditions.push(sql`t.status = ${status}`);
+				if (priority) conditions.push(sql`t.priority = ${priority}`);
+				if (assigneeId) conditions.push(sql`t."assigneeId" = ${assigneeId}`);
+				if (companyId) conditions.push(sql`t."companyId" = ${companyId}`);
+				if (dueDateNull === true) conditions.push(sql`t."dueDate" IS NULL`);
+				if (dueDateNull === false)
+					conditions.push(sql`t."dueDate" IS NOT NULL`);
+				if (search) conditions.push(sql`t.title ILIKE ${"%" + search + "%"}`);
+
+				if (conditions.length > 0) {
+					query = sql`${query} AND ${sql.join(conditions, " AND ")}`;
+				}
+
+				query = sql`${query} ORDER BY t."createdAt" DESC LIMIT ${limit} OFFSET ${offset}`;
+				const rows = await query;
+
+				return {
+					content: [{ type: "text", text: JSON.stringify(rows, null, 2) }],
 				};
 			}
 
