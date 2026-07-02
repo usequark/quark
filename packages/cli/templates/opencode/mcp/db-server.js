@@ -608,6 +608,8 @@ server.setRequestHandler("tools/call", async (request) => {
 						"$",
 						"rate",
 						"fee",
+						"subscription",
+						"plan",
 						"charge",
 					],
 					client: [
@@ -618,6 +620,8 @@ server.setRequestHandler("tools/call", async (request) => {
 						"organization",
 						"project",
 						"account",
+						"partner",
+						"vendor",
 					],
 					task: [
 						"task",
@@ -630,6 +634,8 @@ server.setRequestHandler("tools/call", async (request) => {
 						"priority",
 						"deadline",
 						"due",
+						"complete",
+						"pipeline",
 					],
 					tech_note: [
 						"tech",
@@ -642,6 +648,8 @@ server.setRequestHandler("tools/call", async (request) => {
 						"bug",
 						"fix",
 						"setup",
+						"migration",
+						"database",
 					],
 					process: [
 						"process",
@@ -652,6 +660,8 @@ server.setRequestHandler("tools/call", async (request) => {
 						"procedure",
 						"guideline",
 						"step",
+						"method",
+						"standard",
 					],
 					preference: [
 						"prefer",
@@ -662,6 +672,7 @@ server.setRequestHandler("tools/call", async (request) => {
 						"communication",
 						"contact",
 						"schedule",
+						"frequency",
 					],
 				};
 
