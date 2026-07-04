@@ -15,6 +15,7 @@ datasource db {
 
 enum UserRole {
   admin
+  lead_dev
   client_admin
   editor
   viewer
@@ -37,6 +38,7 @@ model User {
   files         File[]
   pages         Page[]
   mediaAssets   MediaAsset[]
+  aiConversations AiConversation[]
 
   @@index([email])
   @@index([createdAt])
@@ -271,5 +273,52 @@ model MediaAsset {
 
   @@index([uploadedById])
   @@index([mimeType])
+  @@index([createdAt])
+}
+
+// ─── AI Models ───────────────────────────────────────────────────────────────
+
+enum AiRole {
+  user
+  assistant
+  system
+  tool
+}
+
+/// AI: Persistent conversations with the AI assistant
+model AiConversation {
+  id               String     @id @default(cuid())
+  title            String     @default("New Conversation")
+  userId           String
+  user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deletedAt        DateTime?
+  summary          String?    @db.Text
+  summaryTokens    Int?
+  summaryUpdatedAt DateTime?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  messages         AiMessage[]
+
+  @@index([userId])
+  @@index([updatedAt])
+  @@index([deletedAt])
+}
+
+/// AI: Individual messages within a conversation
+model AiMessage {
+  id             String         @id @default(cuid())
+  conversationId String
+  conversation   AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           AiRole
+  content        String         @db.Text
+  toolCalls      Json?
+  toolResults    Json?
+  cost           Decimal?
+  tokens         Int?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([conversationId])
+  @@index([role])
   @@index([createdAt])
 }

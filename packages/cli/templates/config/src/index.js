@@ -11,4 +11,6 @@ export {
 	resolveEnvironment,
 } from "./environment.js";
 export { getConfig, loadConfig, resetConfig } from "./load-config.js";
+export { applyRateLimit, rateLimit } from "./rate-limit.js";
+export { closeSharedRedisClient, getSharedRedisClient } from "./redis.js";
 export { loadEnv } from "./validate-env.js";
