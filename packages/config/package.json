@@ -7,14 +7,19 @@
 	"main": "src/index.js",
 	"exports": {
 		".": "./src/index.js",
+		"./rate-limit": "./src/rate-limit.js",
 		"./app-url": "./src/app-url.js",
 		"./environment": "./src/environment.js",
 		"./load-config": "./src/load-config.js",
-		"./validate-env": "./src/validate-env.js"
+		"./validate-env": "./src/validate-env.js",
+		"./redis": "./src/redis.js"
 	},
 	"scripts": {
 		"test": "node --test $(find src -name '*.test.js')",
 		"lint": "biome format --write && biome check --write"
+	},
+	"dependencies": {
+		"@techstream/quark-core": "workspace:*"
 	},
 	"keywords": [],
 	"author": "",

@@ -5,11 +5,7 @@
  */
 
 import { JOB_NAMES } from "@techstream/quark-jobs";
-import {
-	handleAiAgentTask,
-	handleAiHealthCheck,
-	handleAiSessionCreate,
-} from "./ai.js";
+import { handleAiAgentTask } from "./ai.js";
 import {
 	handleSendResetPasswordEmail,
 	handleSendWelcomeEmail,
@@ -21,6 +17,4 @@ export const jobHandlers = {
 	[JOB_NAMES.SEND_RESET_PASSWORD_EMAIL]: handleSendResetPasswordEmail,
 	[JOB_NAMES.CLEANUP_ORPHANED_FILES]: handleCleanupOrphanedFiles,
 	[JOB_NAMES.AI_AGENT_TASK]: handleAiAgentTask,
-	[JOB_NAMES.AI_SESSION_CREATE]: handleAiSessionCreate,
-	[JOB_NAMES.AI_HEALTH_CHECK]: handleAiHealthCheck,
 };
