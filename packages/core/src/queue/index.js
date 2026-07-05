@@ -173,16 +173,50 @@ export const createQueueEvents = (queueName, options = {}) => {
 };
 
 /**
- * Utility to add a job to a queue with error handling
+ * Utility to add a job to a queue with error handling.
+ * Supports optional deduplication via a caller-provided dedupKey.
+ * When dedupKey is set, uses Redis SET NX to atomically check-and-set,
+ * preventing duplicate job creation within the dedupTTL window.
+ *
  * @param {Queue} queue - BullMQ Queue instance
  * @param {string} jobName - Job name/type (e.g., 'send-welcome-email')
  * @param {Object} data - Job data
  * @param {Object} jobOptions - Job-specific options
- * @returns {Promise<Job>} Queued job
+ * @param {string} [jobOptions.dedupKey] - Unique key for deduplication. If set, only one job
+ *   with this key will be created within the dedupTTL window.
+ * @param {number} [jobOptions.dedupTTL=86400] - TTL in seconds for the dedup key (default 24h).
+ *   The dedup key auto-expires, allowing legitimate re-sends after the TTL.
+ * @returns {Promise<Job|null>} Queued job, or null if a duplicate was detected and skipped.
+ * @throws {ServiceError} When the job fails to queue (not on dedup skip).
  */
 export const addJob = async (queue, jobName, data, jobOptions = {}) => {
+	// Extract dedup options before passing to BullMQ — it doesn't recognize them
+	const { dedupKey, dedupTTL, ...bullOptions } = jobOptions;
+
+	// Optional deduplication: caller provides a key that identifies unique work.
+	// Uses Redis SET NX for atomic check-and-set — no race conditions.
+	if (dedupKey) {
+		try {
+			const client = await queue.client;
+			const dedupRedisKey = `job:dedup:${queue.name}:${jobName}:${dedupKey}`;
+			const ttl = dedupTTL ?? 86_400; // 24h default
+			const acquired = await client.set(dedupRedisKey, "1", "NX", "EX", ttl);
+			if (!acquired) {
+				return null; // Duplicate detected, silently skip
+			}
+		} catch (error) {
+			// Dedup is best-effort — if Redis fails, let the job through rather than block
+			const logger = createLogger("queue:addJob");
+			logger.warn("Dedup check failed, allowing job through", {
+				error: error.message,
+				jobName,
+				dedupKey,
+			});
+		}
+	}
+
 	try {
-		const job = await queue.add(jobName, data, jobOptions);
+		const job = await queue.add(jobName, data, bullOptions);
 		return job;
 	} catch (error) {
 		throw new ServiceError(
@@ -191,6 +225,34 @@ export const addJob = async (queue, jobName, data, jobOptions = {}) => {
 			500,
 		);
 	}
+};
+
+/**
+ * Atomically registers or updates a repeatable job scheduler.
+ * Uses BullMQ's upsertJobScheduler (Redis Lua script) to prevent duplicate
+ * schedulers on worker restart — unlike queue.add() + repeat which is not atomic.
+ *
+ * @param {Queue} queue - BullMQ Queue instance
+ * @param {string} schedulerId - Unique identifier for this scheduler (e.g. 'cleanup-orphaned-files')
+ * @param {string} jobName - Job name/type (e.g., 'cleanup-orphaned-files')
+ * @param {Object} data - Job data passed to each execution
+ * @param {Object} repeatOptions - BullMQ repeat options (pattern or every + optional tz)
+ * @param {string} [repeatOptions.pattern] - Cron pattern (e.g. '0 8 * * *')
+ * @param {number} [repeatOptions.every] - Interval in milliseconds (e.g. 86400000)
+ * @param {string} [repeatOptions.tz] - Timezone for cron pattern (e.g. 'Pacific/Auckland')
+ * @returns {Promise<JobScheduler>} The upserted job scheduler
+ */
+export const addRepeatableJob = async (
+	queue,
+	schedulerId,
+	jobName,
+	data,
+	repeatOptions,
+) => {
+	return queue.upsertJobScheduler(schedulerId, repeatOptions, {
+		name: jobName,
+		data,
+	});
 };
 
 /**

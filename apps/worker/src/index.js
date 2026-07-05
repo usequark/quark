@@ -323,14 +323,12 @@ async function startWorker() {
 		);
 
 		// Schedule repeating cleanup job (runs every 24 hours)
+		// Uses upsertJobScheduler for atomic registration — prevents duplicate schedulers on worker restart
 		const filesQueue = createQueue(JOB_QUEUES.FILES);
-		await filesQueue.add(
-			JOB_NAMES.CLEANUP_ORPHANED_FILES,
-			{ retentionHours: 24 },
-			{
-				repeat: { every: 24 * 60 * 60 * 1000 }, // 24h
-				jobId: "cleanup-orphaned-files-repeat",
-			},
+		await filesQueue.upsertJobScheduler(
+			"cleanup-orphaned-files",
+			{ every: 24 * 60 * 60 * 1000 },
+			{ name: JOB_NAMES.CLEANUP_ORPHANED_FILES, data: { retentionHours: 24 } },
 		);
 
 		// Keep job_queue_depth gauge current for Prometheus scraping.
