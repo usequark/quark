@@ -88,10 +88,11 @@ const SYNC_DIRS = [
 	{
 		src: "apps/web/src/app/admin",
 		dest: "admin-routes",
-		// CMS/CRM routes are scaffolded separately via their own templates
+		// CMS/CRM/AI routes are scaffolded separately via their own templates
 		localExcludes: [
 			/^apps\/web\/src\/app\/admin\/cms\//,
 			/^apps\/web\/src\/app\/admin\/crm\//,
+			/^apps\/web\/src\/app\/admin\/ai\//,
 		],
 	},
 	// CMS package (content models, slug helpers, status lifecycle)
@@ -112,6 +113,11 @@ const SYNC_DIRS = [
 	{
 		src: "packages/opencode/deploy",
 		dest: "opencode",
+	},
+	// AI chat admin routes — scaffolded conditionally alongside the ai feature
+	{
+		src: "apps/web/src/app/admin/ai",
+		dest: "ai-routes",
 	},
 ];
 

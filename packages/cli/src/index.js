@@ -220,7 +220,7 @@ function buildFeatureRows(features) {
 		admin:
 			"| Admin panel | Included | `packages/admin/README.md`, `apps/web/src/app/admin/` |",
 		cms: "| CMS | Included | `packages/cms/README.md`, `apps/web/src/app/admin/cms/` |",
-		ai: "| AI agent integration | Included | `apps/opencode/`, `@opencode-ai/sdk` in worker |",
+		ai: "| AI chat assistant | Included | `apps/web/src/app/admin/ai/` |",
 	};
 
 	const selectedRows = features
@@ -240,7 +240,7 @@ function buildOptionalAppLines(features) {
 		lines.push("│   └── worker/               # BullMQ background worker\n");
 	}
 	if (features.includes("ai")) {
-		lines.push("│   └── opencode/              # OpenCode AI agent server\n");
+		lines.push("│   └── ai/                    # AI chat assistant\n");
 	}
 	return lines.join("");
 }
@@ -252,7 +252,7 @@ function buildFirstEditLines(features) {
 		admin:
 			"- `packages/admin/src/config.js` and `apps/web/src/app/admin/` - tune model labels, hidden fields, and admin pages",
 		cms: "- `packages/cms/src/config.js` and `apps/web/src/app/admin/cms/` - choose managed content types and editorial flows",
-		ai: "- `apps/opencode/config/opencode.json` - configure agents, permissions, and MCP servers for the OpenCode AI server",
+		ai: "- `apps/web/src/app/admin/ai/` - AI chat assistant with session management and tool calling",
 	};
 
 	const selectedLines = features
@@ -273,7 +273,7 @@ function buildFeatureGuideLines(features) {
 		admin:
 			"- `packages/admin/README.md` - admin configuration, model overrides, and route ownership",
 		cms: "- `packages/cms/README.md` - content types, media rules, and CMS/admin boundaries",
-		ai: "- `apps/opencode/README.md` - OpenCode server setup, agent configuration, and skill management",
+		ai: "- `apps/web/src/app/admin/ai/page.js` - AI chat page with streaming, tool calls, and conversation management",
 	};
 
 	const selectedLines = features
@@ -705,7 +705,7 @@ program
 							},
 							{
 								title:
-									"AI Agent Integration (apps/opencode + @opencode-ai/sdk) [requires: jobs]",
+									"AI Chat Assistant (admin AI agent with sessions, streaming, and tool calling) [requires: admin, jobs]",
 								value: "ai",
 								selected: false,
 							},
@@ -879,31 +879,22 @@ program
 					}
 				}
 
-				if (pairedTemplates.includes("opencode")) {
-					const opencodeDir = path.join(targetDir, "apps", "opencode");
-					await fs.ensureDir(opencodeDir);
-					await copyTemplate("opencode", opencodeDir);
-					console.log(chalk.green(`    ✓ opencode server (paired with ai)`));
-				}
-			}
-
-			// If AI selected, add @opencode-ai/sdk to worker dependencies
-			if (features.includes("ai")) {
-				const workerPkgPath = path.join(
-					targetDir,
-					"apps",
-					"worker",
-					"package.json",
-				);
-				if (await fs.pathExists(workerPkgPath)) {
-					const workerPkg = await fs.readJSON(workerPkgPath);
-					workerPkg.dependencies = workerPkg.dependencies || {};
-					workerPkg.dependencies["@opencode-ai/sdk"] = "^1.17.0";
-					await fs.writeFile(
-						workerPkgPath,
-						`${JSON.stringify(workerPkg, null, "	")}\n`,
+				if (pairedTemplates.includes("ai-routes")) {
+					const aiRoutesDir = path.join(
+						targetDir,
+						"apps",
+						"web",
+						"src",
+						"app",
+						"admin",
+						"ai",
 					);
-					console.log(chalk.green(`    ✓ @opencode-ai/sdk added to worker`));
+					await fs.ensureDir(aiRoutesDir);
+					const aiTplDir = path.join(templatesDir, "ai-routes");
+					if (await fs.pathExists(aiTplDir)) {
+						await copyTemplate("ai-routes", aiRoutesDir);
+						console.log(chalk.green(`    ✓ AI chat UI (paired with ai)`));
+					}
 				}
 			}
 
@@ -917,10 +908,7 @@ program
 				...(features.includes("jobs")
 					? [path.join(targetDir, "apps", "worker", "package.json")]
 					: []),
-				// OpenCode server is only present when ai is selected
-				...(features.includes("ai")
-					? [path.join(targetDir, "apps", "opencode", "package.json")]
-					: []),
+
 				// Also update cross-dependencies in scaffolded packages (e.g. db → config)
 				...[...REQUIRED_PACKAGES, ...scaffoldPackages].map((pkg) =>
 					path.join(targetDir, "packages", pkg, "package.json"),
@@ -1469,9 +1457,9 @@ const FEATURE_META = {
 		pairs: ["crm-routes"],
 	},
 	ai: {
-		requires: ["jobs"],
+		requires: ["admin", "jobs"],
 		packages: [],
-		pairs: ["opencode"],
+		pairs: ["ai-routes"],
 	},
 };
 
@@ -2031,16 +2019,27 @@ program
 								),
 							);
 						}
-					} else if (pair === "opencode") {
-						const opencodeDir = path.join(projectDir, "apps", "opencode");
-						if (await fs.pathExists(opencodeDir)) {
+					} else if (pair === "ai-routes") {
+						const aiRoutesDir = path.join(
+							projectDir,
+							"apps",
+							"web",
+							"src",
+							"app",
+							"admin",
+							"ai",
+						);
+						if (await fs.pathExists(aiRoutesDir)) {
 							console.log(
-								chalk.dim(`    · apps/opencode already exists — skipping copy`),
+								chalk.dim(`    · admin/ai already exists — skipping copy`),
 							);
 						} else {
-							await copyTemplate("opencode", opencodeDir);
-							await replaceImportsInSourceFiles(opencodeDir, scope);
-							console.log(chalk.green(`    ✓ apps/opencode (paired with ai)`));
+							const aiTplDir = path.join(templatesDir, "ai-routes");
+							if (await fs.pathExists(aiTplDir)) {
+								await copyTemplate("ai-routes", aiRoutesDir);
+								await replaceImportsInSourceFiles(aiRoutesDir, scope);
+								console.log(chalk.green(`    ✓ AI chat UI (paired with ai)`));
+							}
 						}
 					}
 				}
@@ -2064,47 +2063,6 @@ program
 						path.join(projectDir, "apps", "worker", "package.json"),
 						`@${scope}/jobs`,
 					);
-				}
-
-				// If adding ai, add @opencode-ai/sdk to worker
-				if (feat === "ai") {
-					const workerPkgPath = path.join(
-						projectDir,
-						"apps",
-						"worker",
-						"package.json",
-					);
-					if (await fs.pathExists(workerPkgPath)) {
-						const workerPkg = await fs.readJSON(workerPkgPath);
-						workerPkg.dependencies = workerPkg.dependencies || {};
-						workerPkg.dependencies["@opencode-ai/sdk"] = "^1.17.0";
-						await fs.writeFile(
-							workerPkgPath,
-							`${JSON.stringify(workerPkg, null, "	")}\n`,
-						);
-						console.log(chalk.green(`    ✓ @opencode-ai/sdk added to worker`));
-					}
-				}
-
-				// If adding ai, migrate worker with AI job definitions + handler
-				if (feat === "ai") {
-					try {
-						const { default: migrateWorker } = await import(
-							"../../opencode/script/migrate-worker.js"
-						);
-						const result = await migrateWorker(projectDir);
-						if (result === "DONE") {
-							console.log(
-								chalk.green(
-									`    ✓ AI job definitions + handler added to worker`,
-								),
-							);
-						}
-					} catch (error) {
-						console.warn(
-							chalk.yellow(`    ⚠️  Could not migrate worker: ${error.message}`),
-						);
-					}
 				}
 			}
 
