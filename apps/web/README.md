@@ -1,4 +1,4 @@
-# Quark — Web App
+# Quark - Web App
 
 The Next.js 16 reference application for the Quark monorepo. App Router, Server Actions, Tailwind v4, and full auth/admin out of the box.
 
@@ -29,8 +29,8 @@ The most important values to set:
 
 | Variable | Description |
 |---|---|
-| `NEXTAUTH_URL` | Full URL the app runs on — must match exactly, no trailing slash |
-| `NEXTAUTH_SECRET` | Long random secret — `node --input-type=module -e "import { randomBytes } from 'node:crypto'; console.log(randomBytes(32).toString('hex'))"` |
+| `NEXTAUTH_URL` | Full URL the app runs on - must match exactly, no trailing slash |
+| `NEXTAUTH_SECRET` | Long random secret - `node --input-type=module -e "import { randomBytes } from 'node:crypto'; console.log(randomBytes(32).toString('hex'))"` |
 | `POSTGRES_*` | Match your `docker-compose.yml` defaults |
 | `REDIS_HOST` / `REDIS_PORT` | Match your `docker-compose.yml` defaults |
 
@@ -50,7 +50,7 @@ After running `pnpm db:seed`:
 | `/` | Public home page |
 | `/auth/signin` | Sign in (credentials + optional OAuth) |
 | `/auth/register` | Create a new account |
-| `/admin` | Admin dashboard — requires `role: "admin"` |
+| `/admin` | Admin dashboard - requires `role: "admin"` |
 | `/admin/[model]` | Auto-generated CRUD for every Prisma model |
 
 ## Structure
@@ -71,7 +71,7 @@ src/
 
 Auth is provided by NextAuth v5 with credentials + optional GitHub/Google OAuth.
 
-To enable OAuth, set the provider env vars (see `.env.example`) — the providers are already wired in `src/lib/auth.js`.
+To enable OAuth, set the provider env vars (see `.env.example`) - the providers are already wired in `src/lib/auth.js`.
 
 To protect a page, call `auth()` at the top of a Server Component:
 
@@ -99,8 +99,8 @@ The register page creates accounts for any user. To add customer-facing protecte
 1. Add your route, e.g. `src/app/dashboard/page.js`
 2. Call `auth()` and redirect unauthenticated visitors to `/auth/signin`
 3. Use `session.user.id` to scope all queries to the current user
-4. No role check needed — admin routes separately guard via `role !== "admin"`
+4. No role check needed - admin routes separately guard via `role !== "admin"`
 
 ## Rebranding
 
-All design tokens live in `src/app/globals.css` inside the `@theme inline` block. Change `--color-primary` and `--radius-default` — nothing else needs touching. See `docs/ARCHITECTURE.md` for the full rebranding checklist.
+All design tokens live in `src/app/globals.css` inside the `@theme inline` block. Change `--color-primary` and `--radius-default` - nothing else needs touching. See `docs/ARCHITECTURE.md` for the full rebranding checklist.

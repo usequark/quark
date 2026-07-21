@@ -148,7 +148,7 @@ const CORS_CONFIG = {
  *
  * In development, Turbopack's hot-reload runtime uses eval() for module
  * evaluation. 'unsafe-eval' is therefore added to script-src only when
- * NODE_ENV is not 'production' — it must never reach a production build.
+ * NODE_ENV is not 'production' - it must never reach a production build.
  */
 const SECURITY_HEADERS = {
 	"X-DNS-Prefetch-Control": "on",

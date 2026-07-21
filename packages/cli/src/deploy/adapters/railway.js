@@ -88,7 +88,7 @@ export async function ensureRailwayProject({
 			await execa(RAILWAY, ["status"], { cwd, timeout: 15_000 });
 			return { created: false, linked: true, projectName: null };
 		} catch {
-			// Stale link — clean up so we don't create an orphan project
+			// Stale link - clean up so we don't create an orphan project
 			const railwayDir = path.join(cwd, ".railway");
 			await fs.rm(railwayDir, { recursive: true, force: true });
 		}

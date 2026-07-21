@@ -215,7 +215,7 @@ export default function FieldRenderer({ field, value, disabled = false }) {
 					aria-required={required || undefined}
 					aria-describedby={helpId}
 				>
-					{!required && <option value="">— Select an option —</option>}
+					{!required && <option value="">- Select an option -</option>}
 					{options.map((opt) => (
 						<option key={opt} value={opt}>
 							{humanize(opt)}

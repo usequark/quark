@@ -2,7 +2,7 @@ import { faker } from "@faker-js/faker";
 import bcrypt from "bcryptjs";
 import { prisma } from "../src/index.js";
 
-// Deterministic output — change this integer to get a different but consistent dataset
+// Deterministic output - change this integer to get a different but consistent dataset
 faker.seed(42);
 
 const PROFILE = process.env.SEED_PROFILE ?? "dev";
@@ -62,7 +62,7 @@ async function seedUsers() {
 			password: adminPassword,
 		},
 		{
-			// Dev-only sample account — password is randomly generated and logged once.
+			// Dev-only sample account - password is randomly generated and logged once.
 			email: "viewer@example.com",
 			name: "Viewer User",
 			role: "viewer",
@@ -72,7 +72,7 @@ async function seedUsers() {
 
 	const seeded = [];
 	for (const userData of users) {
-		// Skip hashing if the user already exists — upsert update:{} won't use it anyway.
+		// Skip hashing if the user already exists - upsert update:{} won't use it anyway.
 		const existing = await prisma.user.findUnique({
 			where: { email: userData.email },
 		});
@@ -98,7 +98,7 @@ async function seedUsers() {
 }
 
 async function seedDevData(users) {
-	// Audit logs — representative actions per user
+	// Audit logs - representative actions per user
 	const actions = ["user.login", "user.update", "file.upload"];
 	const userIds = users.map((u) => u.id);
 	// Scoped to seeded user IDs so real audit entries in a shared dev DB are not wiped.

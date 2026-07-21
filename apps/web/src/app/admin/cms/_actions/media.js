@@ -144,7 +144,7 @@ export async function cmsUploadMediaInline(_prevState, formData) {
 
 /**
  * Server Action: delete a MediaAsset and remove from storage.
- * Any admin can delete any media asset — the CMS media library is a shared
+ * Any admin can delete any media asset - the CMS media library is a shared
  * resource accessible to all admins (no per-user ownership enforcement).
  * @param {string} id
  */

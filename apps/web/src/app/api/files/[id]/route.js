@@ -18,7 +18,7 @@ import { handleError } from "../../error-handler";
 /**
  * GET /api/files/[id]
  * Serve / download a file by its database ID.
- * Public endpoint (no auth required) — access control is by knowledge of ID.
+ * Public endpoint (no auth required) - access control is by knowledge of ID.
  */
 export async function GET(_request, { params }) {
 	try {

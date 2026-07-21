@@ -6,9 +6,9 @@ import { PrismaClient } from "./generated/prisma/client.ts";
  * Returns the connection pool configuration for the `pg` driver.
  *
  * Reads from environment variables with sensible defaults:
- * - `DB_POOL_MAX` — maximum number of connections (default: 10 in production, 5 in development)
- * - `DB_POOL_IDLE_TIMEOUT` — milliseconds before an idle connection is closed (default: 30 000)
- * - `DB_POOL_CONNECTION_TIMEOUT` — milliseconds to wait for a new connection (default: 5 000)
+ * - `DB_POOL_MAX` - maximum number of connections (default: 10 in production, 5 in development)
+ * - `DB_POOL_IDLE_TIMEOUT` - milliseconds before an idle connection is closed (default: 30 000)
+ * - `DB_POOL_CONNECTION_TIMEOUT` - milliseconds to wait for a new connection (default: 5 000)
  *
  * @returns {{ max: number, idleTimeoutMillis: number, connectionTimeoutMillis: number }}
  */
@@ -22,7 +22,7 @@ export function getPoolConfig() {
 	};
 }
 
-// Lazy singleton — the client is created on first property access, not at import time.
+// Lazy singleton - the client is created on first property access, not at import time.
 // This allows Next.js to import the module at build time without requiring DB env vars.
 const globalForPrisma = globalThis;
 

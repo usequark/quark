@@ -45,11 +45,11 @@ Quark uses a **lightweight, dependency-free testing approach** built on Node.js 
 
 ### Why Node.js Native Test Runner?
 
-- **Zero external dependencies** — aligns with Quark's ESM-only, minimal-dependency philosophy
-- **Built-in to Node 18+** — no additional install surface
-- **Fast startup** — native runner vs. Jest/Vitest bootstrap overhead
-- **Clear assertions** — `node:assert/strict` catches subtle bugs
-- **Familiar pattern** — `describe()`, `test()`, `beforeEach()`, `afterEach()`
+- **Zero external dependencies** - aligns with Quark's ESM-only, minimal-dependency philosophy
+- **Built-in to Node 18+** - no additional install surface
+- **Fast startup** - native runner vs. Jest/Vitest bootstrap overhead
+- **Clear assertions** - `node:assert/strict` catches subtle bugs
+- **Familiar pattern** - `describe()`, `test()`, `beforeEach()`, `afterEach()`
 
 See [ADR-002: No TypeScript](docs/adr/002-no-typescript.md) for Quark's philosophy on simplicity.
 
@@ -97,7 +97,7 @@ describe("User model", () => {
 
 ### Breakdown by Package
 
-#### `packages/core/` — **21 test files** (Most comprehensive)
+#### `packages/core/` - **21 test files** (Most comprehensive)
 
 Core library contains infrastructure tests for auth, caching, queuing, logging, rate limiting, etc.
 
@@ -125,7 +125,7 @@ Core library contains infrastructure tests for auth, caching, queuing, logging, 
 | Request Logger | `request-logger.test.js` | HTTP middleware logging |
 | Testing Utilities | `testing/testing.test.js` | Mock/factory functions |
 
-#### `packages/ui/` — **13 test files** (Component tests)
+#### `packages/ui/` - **13 test files** (Component tests)
 
 Server Component-safe primitives tested for:
 - Prop validation
@@ -135,7 +135,7 @@ Server Component-safe primitives tested for:
 
 Components: Button, Input, Checkbox, Label, Table, Select, Badge, Card, Dialog, Toast, Textarea, Rich-Text, Skeleton
 
-#### `packages/config/` — **4 test files**
+#### `packages/config/` - **4 test files**
 
 | Test File | Purpose |
 |-----------|---------|
@@ -144,27 +144,27 @@ Components: Button, Input, Checkbox, Label, Table, Select, Badge, Card, Dialog, 
 | `load-config.test.js` | Configuration loading order |
 | `app-url.test.js` | URL formatting logic |
 
-#### `packages/db/` — **2 test files**
+#### `packages/db/` - **2 test files**
 
 | Test File | Purpose |
 |-----------|---------|
 | `connection.test.js` | Prisma client initialization, env var priority |
 | `queries.test.js` | Database query assertions |
 
-#### `packages/admin/` — **2 test files**
+#### `packages/admin/` - **2 test files**
 
 | Test File | Purpose |
 |-----------|---------|
 | `introspect.test.js` | Prisma schema introspection |
 | `field-map.test.js` | Admin field type mapping |
 
-#### `packages/jobs/` — **1 test file**
+#### `packages/jobs/` - **1 test file**
 
 | Test File | Purpose |
 |-----------|---------|
 | `definitions.test.js` | Job type definitions, serialization |
 
-#### `packages/cli/` — **1 unit test + custom CLI tests**
+#### `packages/cli/` - **1 unit test + custom CLI tests**
 
 | Test | Purpose |
 |------|---------|
@@ -172,13 +172,13 @@ Components: Button, Input, Checkbox, Label, Table, Select, Badge, Card, Dialog, 
 | `test-cli.js` | Custom E2E test for scaffold generation |
 | `test-build.js`, `test-e2e*.js`, `test-integration.js` | Specialized CLI test scripts |
 
-#### `apps/worker/` — **1 test file**
+#### `apps/worker/` - **1 test file**
 
 | Test File | Purpose |
 |-----------|---------|
 | `index.test.js` | BullMQ job handler registration |
 
-#### `apps/web/` — **4 tests (limited coverage)**
+#### `apps/web/` - **4 tests (limited coverage)**
 
 | Test File | Purpose |
 |-----------|---------|
@@ -210,10 +210,10 @@ describe("Module", () => {
 
 ### Why No Jest/Vitest?
 
-1. **Zero dependency footprint** — reduces supply chain risk
-2. **Faster CI startup** — native runner bootstraps instantly
-3. **Alignment with architecture** — Quark minimizes dependencies throughout
-4. **Good enough for monorepo** — native test runner covers 90% of use cases
+1. **Zero dependency footprint** - reduces supply chain risk
+2. **Faster CI startup** - native runner bootstraps instantly
+3. **Alignment with architecture** - Quark minimizes dependencies throughout
+4. **Good enough for monorepo** - native test runner covers 90% of use cases
 
 **Trade-offs:**
 - No built-in: snapshot testing, parallel test isolation, advanced mocking
@@ -231,7 +231,7 @@ describe("Module", () => {
 pnpm test
 ```
 
-Runs `turbo run test` — executes test scripts across all packages sequentially, stops on first failure.
+Runs `turbo run test` - executes test scripts across all packages sequentially, stops on first failure.
 
 #### Run Tests for Specific Package
 
@@ -369,8 +369,8 @@ Defined in [.github/workflows/ci.yml](.github/workflows/ci.yml):
 
 | Job | Command | Depends On | Triggers | Services |
 |-----|---------|------------|----------|----------|
-| **Lint** | `pnpm lint` | — | Push, PR | None |
-| **Template Drift** | `pnpm sync-templates:check` | — | Push, PR | None |
+| **Lint** | `pnpm lint` | - | Push, PR | None |
+| **Template Drift** | `pnpm sync-templates:check` | - | Push, PR | None |
 | **Test** | `pnpm test` | lint, template-drift | Push, PR | Postgres 16, Redis 7 |
 | **Build** | `pnpm build` | lint, template-drift, test | Push, PR | None |
 
@@ -411,9 +411,9 @@ Separate CI job for full E2E testing of scaffold generation:
 Located in [packages/core/src/testing/](packages/core/src/testing/), exported from `@techstream/quark-core/testing`.
 
 Utilities provide:
-- **Factories** — Generate test data with sensible defaults
-- **Mocks** — Zero-dependency stand-in objects
-- **Helpers** — Common assertion and control-flow patterns
+- **Factories** - Generate test data with sensible defaults
+- **Mocks** - Zero-dependency stand-in objects
+- **Helpers** - Common assertion and control-flow patterns
 
 ### Import Pattern
 
@@ -1041,12 +1041,12 @@ npx husky add .husky/pre-commit "pnpm test"
 ## Related Documentation
 
 - [Architecture Decision Records](docs/adr/README.md)
-  - [ADR-002: No TypeScript](docs/adr/002-no-typescript.md) — philosophy on simplicity
-  - [ADR-005: BullMQ Job Queue](docs/adr/005-bullmq-job-queue.md) — job testing patterns
-- [Contributing Guidelines](CLAUDE.md) — coding conventions, linting, error handling
-- [Database Documentation](DATABASE.md) — Prisma schema, migrations, connection
-- [CI/CD Reference](https://github.com/Bobnoddle/quark/blob/main/.github/workflows/ci.yml) — Complete workflow definition
-- [Troubleshooting](TROUBLESHOOTING.md) — Common test failures and fixes
+  - [ADR-002: No TypeScript](docs/adr/002-no-typescript.md) - philosophy on simplicity
+  - [ADR-005: BullMQ Job Queue](docs/adr/005-bullmq-job-queue.md) - job testing patterns
+- [Contributing Guidelines](CLAUDE.md) - coding conventions, linting, error handling
+- [Database Documentation](DATABASE.md) - Prisma schema, migrations, connection
+- [CI/CD Reference](https://github.com/Bobnoddle/quark/blob/main/.github/workflows/ci.yml) - Complete workflow definition
+- [Troubleshooting](TROUBLESHOOTING.md) - Common test failures and fixes
 
 ---
 

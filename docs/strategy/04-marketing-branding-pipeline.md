@@ -4,7 +4,7 @@
 > **Audience:** Internal team (Techstream)  
 > **Delivery model:** AI-generated → AI-reviewed → Human-reviewed → Client (email/messaging)  
 > **Platform:** OpenCode deployment with BullMQ job orchestration  
-> **OpenCode fork:** Lives in a separate `opencode-techstream` repo — all agent, model routing, and delegation logic is developed there before integration
+> **OpenCode fork:** Lives in a separate `opencode-techstream` repo - all agent, model routing, and delegation logic is developed there before integration
 
 ---
 
@@ -16,7 +16,7 @@
 | **Human is the gate** | No AI output reaches a client without human review and personalization |
 | **Personal touch is the value-add** | AI handles production volume and consistency; humans handle relationship, nuance, and final polish |
 | **No self-serve portal** | Results delivered via email or messaging to maintain personal connection |
-| **Iterative by design** | Revision cycles are expected and budgeted — not treated as failures |
+| **Iterative by design** | Revision cycles are expected and budgeted - not treated as failures |
 
 ---
 
@@ -53,7 +53,7 @@
 | **Agent** | N/A (human) |
 | **Inputs** | AI-generated Kanban task |
 | **Outputs** | Adjusted task details (if needed), approved task ready for execution |
-| **Human touchpoint** | Yes — review, adjust, approve |
+| **Human touchpoint** | Yes - review, adjust, approve |
 
 ### Step 4: Work Execution
 
@@ -100,7 +100,7 @@
 | **Agent** | N/A (human) |
 | **Inputs** | Client intake form, initial consult notes |
 | **Outputs** | Structured discovery doc (brand preferences, competitors, audience, tone, must-haves) |
-| **Human touchpoint** | Yes — this is the call itself |
+| **Human touchpoint** | Yes - this is the call itself |
 
 ### Step 2: Brand Strategy
 
@@ -169,7 +169,7 @@
 | **Agent** | N/A (human) |
 | **Inputs** | Built site, design review report, content draft |
 | **Outputs** | Final polish, personalization notes, launch checklist |
-| **Human touchpoint** | Yes — final review, client walkthrough, launch |
+| **Human touchpoint** | Yes - final review, client walkthrough, launch |
 
 ---
 
@@ -308,7 +308,7 @@
 | **Agent** | N/A (human) |
 | **Inputs** | All generated content, both review reports |
 | **Outputs** | Finalized content package with personal touches, client-specific notes |
-| **Human touchpoint** | Yes — the review itself |
+| **Human touchpoint** | Yes - the review itself |
 
 #### Step 5: Delivery
 
@@ -317,7 +317,7 @@
 | **Agent** | N/A (human) |
 | **Inputs** | Finalized content package |
 | **Outputs** | Email to client with summary, links, and next-month preview |
-| **Human touchpoint** | Yes — personal email |
+| **Human touchpoint** | Yes - personal email |
 
 ---
 
@@ -409,7 +409,7 @@
 | **Agent** | N/A (human) |
 | **Inputs** | Annotated strategy, talking points |
 | **Outputs** | Call notes, agreed action items, revised strategy (if client pivots) |
-| **Human touchpoint** | Yes — the call itself |
+| **Human touchpoint** | Yes - the call itself |
 
 ---
 
@@ -561,8 +561,8 @@ content_planning
 
 **Worker Behavior:**
 
-1. `data_collection`: `@analytics` with Flash — fetch from all sources, normalize, store
-2. `report_generation`: `@developer` with Flash — build formatted report from data
+1. `data_collection`: `@analytics` with Flash - fetch from all sources, normalize, store
+2. `report_generation`: `@developer` with Flash - build formatted report from data
 3. `human_review`: enqueue to `review-queue`
 
 ### Queue: `strategy-queue`
@@ -594,8 +594,8 @@ content_planning
 
 **Worker Behavior:**
 
-1. `performance_analysis`: `@architect` with Pro — deep analysis of 3 months of data
-2. `strategy_document`: `@architect` with Pro — build updated strategy from analysis
+1. `performance_analysis`: `@architect` with Pro - deep analysis of 3 months of data
+2. `strategy_document`: `@architect` with Pro - build updated strategy from analysis
 3. `human_review`: enqueue to `review-queue`
 
 ### Queue: `review-queue`
@@ -765,10 +765,10 @@ A simple internal dashboard for the team to manage the review pipeline. Not clie
 
 ### Model Selection Rules
 
-1. **Default to Flash** for generation tasks — it's faster and cheaper
+1. **Default to Flash** for generation tasks - it's faster and cheaper
 2. **Use Pro** when the task requires multi-step reasoning, synthesis across sources, or strategic judgment
 3. **Use Gemini** for visual review and nuanced language assessment
-4. **Never use the same model** for generation and review of the same output — always cross-validate with a different model
+4. **Never use the same model** for generation and review of the same output - always cross-validate with a different model
 5. **Fallback chain**: If primary model is unavailable → try Flash (if Pro was primary) or Pro (if Flash was primary) → flag for human if both fail
 
 ---

@@ -3,9 +3,9 @@
  * Handles auth guards, rate limiting, CORS, and security headers.
  *
  * Guards (in order):
- *   1. Admin route guard    — verifies JWT role at the edge before any layout
+ *   1. Admin route guard    - verifies JWT role at the edge before any layout
  *                             or Server Action under /admin is reached.
- *   2. Metrics guard        — optionally protects /api/metrics with a bearer
+ *   2. Metrics guard        - optionally protects /api/metrics with a bearer
  *                             token. Set METRICS_TOKEN in env to enable.
  *   3. Rate limiting, CORS, security headers for all API routes.
  */
@@ -32,7 +32,7 @@ async function adminGuard(request) {
 
 	const isAdmin = token.role === "admin" || token.role === "client_admin";
 	if (isAdmin) {
-		return null; // authorized — continue
+		return null; // authorized - continue
 	}
 
 	const isCmsPath =
@@ -68,7 +68,7 @@ function metricsGuard(request) {
 		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 	}
 
-	return null; // authorised — continue
+	return null; // authorised - continue
 }
 
 // Simple in-memory rate limiter (use Redis for production)
@@ -157,7 +157,7 @@ const CORS_CONFIG = {
  *
  * In development, Turbopack's hot-reload runtime uses eval() for module
  * evaluation. 'unsafe-eval' is therefore added to script-src only when
- * NODE_ENV is not 'production' — it must never reach a production build.
+ * NODE_ENV is not 'production' - it must never reach a production build.
  */
 const SECURITY_HEADERS = {
 	"X-DNS-Prefetch-Control": "on",

@@ -1,7 +1,7 @@
 import { prisma } from "./client.js";
 
 /**
- * Safe select for user queries — excludes sensitive fields (password).
+ * Safe select for user queries - excludes sensitive fields (password).
  * Use this on any query whose result is returned to the client.
  */
 const USER_SAFE_SELECT = {
@@ -28,7 +28,7 @@ export const user = {
 
 	/**
 	 * findByEmail returns ALL fields including password.
-	 * Only use for internal auth — never expose the result directly to clients.
+	 * Only use for internal auth - never expose the result directly to clients.
 	 */
 	findByEmail: (email) => {
 		return prisma.user.findUnique({

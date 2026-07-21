@@ -218,7 +218,7 @@ async function preflight() {
 }
 
 /**
- * Generic queue processor — dispatches jobs to registered handlers
+ * Generic queue processor - dispatches jobs to registered handlers
  * @param {string} queueName
  */
 async function createQueueWorker(queueName) {
@@ -323,7 +323,7 @@ async function startWorker() {
 		);
 
 		// Schedule repeating cleanup job (runs every 24 hours)
-		// Uses upsertJobScheduler for atomic registration — prevents duplicate schedulers on worker restart
+		// Uses upsertJobScheduler for atomic registration - prevents duplicate schedulers on worker restart
 		const filesQueue = createQueue(JOB_QUEUES.FILES);
 		await filesQueue.upsertJobScheduler(
 			"cleanup-orphaned-files",
@@ -347,7 +347,7 @@ async function startWorker() {
 		logger.info("Worker service ready");
 	} catch (error) {
 		if (isDevMode && isConnectionError(error)) {
-			logger.warn("Redis unavailable — worker disabled in dev", {
+			logger.warn("Redis unavailable - worker disabled in dev", {
 				action:
 					"Start Redis and restart the worker when background jobs are needed.",
 			});

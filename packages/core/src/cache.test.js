@@ -172,7 +172,7 @@ describe("createCache", () => {
 
 			const second = await cachedFn(5);
 			assert.equal(second, 10);
-			assert.equal(calls, 1); // Cache hit — factory not called again
+			assert.equal(calls, 1); // Cache hit - factory not called again
 		});
 
 		it("uses keyGenerator when provided", async () => {

@@ -1,6 +1,6 @@
 ---
 name: project-context
-description: Project-specific context and conventions. This skill evolves with your project — update it as your architecture grows.
+description: Project-specific context and conventions. This skill evolves with your project - update it as your architecture grows.
 ---
 
 # Project Context
@@ -48,8 +48,8 @@ __QUARK_OPTIONAL_PACKAGES__├── docker-compose.yml
 
 ## Coding Conventions
 
-- **ESM only** — use `import`/`export`, never `require`.
-- **No authored TypeScript** — plain `.js` and `.jsx` files. Generated code may emit typed artifacts, but project code should not add `.ts` or `.tsx` sources.
+- **ESM only** - use `import`/`export`, never `require`.
+- **No authored TypeScript** - plain `.js` and `.jsx` files. Generated code may emit typed artifacts, but project code should not add `.ts` or `.tsx` sources.
 - **Imports:** Use `@techstream/quark-core` for published utilities. Use `@__QUARK_SCOPE__/*` for local packages (db, config, ui, jobs).
 - **Tests:** Co-located `*.test.js` files, run with `node --test`.
 - **Validation:** Zod schemas for all Server Actions and API routes.
@@ -74,13 +74,13 @@ docker compose up -d  # Start infrastructure
 
 ## Key Files to Know
 
-- `packages/db/prisma/schema.prisma` — Database schema (edit this to add models)
-- `packages/db/src/queries.js` — Database query functions
-- `packages/config/src/validate-env.js` — Environment variable validation
-- `apps/web/src/app/` — Next.js App Router pages and API routes
-- `apps/web/src/lib/auth.js` — Authentication configuration
-- `apps/web/src/lib/analytics/umami-config.js` — Optional Umami URL and replay gating
-- `apps/worker/src/handlers/` — Background job handlers
+- `packages/db/prisma/schema.prisma` - Database schema (edit this to add models)
+- `packages/db/src/queries.js` - Database query functions
+- `packages/config/src/validate-env.js` - Environment variable validation
+- `apps/web/src/app/` - Next.js App Router pages and API routes
+- `apps/web/src/lib/auth.js` - Authentication configuration
+- `apps/web/src/lib/analytics/umami-config.js` - Optional Umami URL and replay gating
+- `apps/worker/src/handlers/` - Background job handlers
 
 ## Updating Quark Core
 
@@ -94,8 +94,8 @@ pnpm update @techstream/quark-core        # Or update directly
 ## Maintaining This Skill
 
 > **Important:** When you make changes that affect this project's architecture,
-> conventions, or structure — such as adding new packages, models, API patterns,
-> environment variables, deployment targets, or team conventions — **update this
+> conventions, or structure - such as adding new packages, models, API patterns,
+> environment variables, deployment targets, or team conventions - **update this
 > skill file** to reflect those changes. This ensures future AI interactions
 > always have accurate, up-to-date context.
 >

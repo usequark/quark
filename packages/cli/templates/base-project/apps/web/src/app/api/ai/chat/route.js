@@ -1,5 +1,5 @@
 import { applyRateLimit } from "@techstream/quark-config";
-import { validateBody } from "@techstream/quark-core";
+import { createQueue, validateBody } from "@techstream/quark-core";
 import { prisma } from "@techstream/quark-db";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -55,9 +55,7 @@ export async function POST(request) {
 			});
 		}
 
-		// Enqueue AI agent task
-		const { default: Queue } = await import("bullmq");
-		const queue = new Queue("ai-queue");
+		const queue = createQueue("ai-queue");
 		const job = await queue.add("ai-agent-task", {
 			conversationId: data.conversationId,
 			userId: session.user?.id,

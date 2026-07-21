@@ -359,7 +359,7 @@ NEXTAUTH_SECRET=<strong-secret-from-vault>
 GITHUB_ID=<production-oauth-id>
 GITHUB_SECRET=<production-oauth-secret>
 
-# Additional CORS origins (optional — APP_URL is always included)
+# Additional CORS origins (optional - APP_URL is always included)
 # ALLOWED_ORIGINS=https://admin.yourdomain.com,https://app.yourdomain.com
 
 # Monitoring

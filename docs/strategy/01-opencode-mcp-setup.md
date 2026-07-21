@@ -1,4 +1,4 @@
-# OpenCode MCP Setup — Techstream Asset Production Pipeline
+# OpenCode MCP Setup - Techstream Asset Production Pipeline
 
 > **This document tracks the original OpenCode MCP strategy for the Techstream asset production pipeline. The implementation has been merged into the Quark monorepo as `packages/opencode/`. See that directory for the current source of truth, and `packages/cli/` for the `--features ai` scaffolding. This document is kept as an ADR-style reference for the architectural decisions and migration path.**
 
@@ -6,13 +6,13 @@
 **Last updated:** 2026-06-26  
 **Audience:** Platform engineers, DevOps, Techstream leadership
 
-> **Architecture note:** This strategy uses unmodified upstream OpenCode — no fork. All Techstream-specific behavior is implemented via configuration, plugins, and the TypeScript SDK. The Quark monorepo (`quark`) contains the BullMQ job router, worker infrastructure, and platform services that dispatch work to the upstream OpenCode server.
+> **Architecture note:** This strategy uses unmodified upstream OpenCode - no fork. All Techstream-specific behavior is implemented via configuration, plugins, and the TypeScript SDK. The Quark monorepo (`quark`) contains the BullMQ job router, worker infrastructure, and platform services that dispatch work to the upstream OpenCode server.
 
 ---
 
 ## 1. Architecture Overview
 
-The upstream OpenCode server runs as a standalone HTTP service on the Techstream platform. BullMQ workers dispatch jobs to it via the TypeScript SDK. Custom agents, skills, and MCP servers are configured declaratively — no source code modification to OpenCode itself.
+The upstream OpenCode server runs as a standalone HTTP service on the Techstream platform. BullMQ workers dispatch jobs to it via the TypeScript SDK. Custom agents, skills, and MCP servers are configured declaratively - no source code modification to OpenCode itself.
 
 ### Deployment Modes
 
@@ -121,36 +121,36 @@ Instead of forking OpenCode, we leverage its existing extensibility surface: dec
 
 | What We Need | How OpenCode Provides It |
 |---|---|
-| **Custom agents** (strategist, producer, etc.) | Agent markdown files in `~/.config/opencode/agents/` — custom prompts, models, permissions |
-| **Custom skills** (brand-voice, copywriter, etc.) | `SKILL.md` files in `~/.config/opencode/skills/` — loaded on-demand by the skill tool |
-| **Output composition** (stitch sub-agent outputs) | Plugin hook `experimental.chat.messages.transform` — transform final output before delivery |
-| **Iterative refinement** (reviewer triggers revision loops) | Plugin hook `experimental.session.compacting` — inject refinement context |
+| **Custom agents** (strategist, producer, etc.) | Agent markdown files in `~/.config/opencode/agents/` - custom prompts, models, permissions |
+| **Custom skills** (brand-voice, copywriter, etc.) | `SKILL.md` files in `~/.config/opencode/skills/` - loaded on-demand by the skill tool |
+| **Output composition** (stitch sub-agent outputs) | Plugin hook `experimental.chat.messages.transform` - transform final output before delivery |
+| **Iterative refinement** (reviewer triggers revision loops) | Plugin hook `experimental.session.compacting` - inject refinement context |
 | **Custom tools** (publish-to-cms, etc.) | Plugin `tool:` definition with Zod schema |
-| **Per-project isolation** | Native `.opencode/` directory support — project-overridable config, agents, skills |
-| **Model routing by task type** | Per-agent `model:` config — assign different models to different agents |
-| **Structured output** | SDK's `format: { type: "json_schema", schema: {...} }` — validated JSON output |
+| **Per-project isolation** | Native `.opencode/` directory support - project-overridable config, agents, skills |
+| **Model routing by task type** | Per-agent `model:` config - assign different models to different agents |
+| **Structured output** | SDK's `format: { type: "json_schema", schema: {...} }` - validated JSON output |
 
 ### What the Techstream Plugin Handles
 
 The Techstream plugin (`techstream.js`) is a single file placed in `~/.config/opencode/plugins/`. It implements:
 
-1. **Output composition hook** — listens for the orchestrator's final message and transforms it into a deliverable package (copy + metadata + image references)
-2. **Refinement loop hook** — on compaction, injects context about the iteration budget and quality thresholds
-3. **Custom tool registration** — `publish-to-cms`, `schedule-content`, `check-brand-compliance`
-4. **Event logging** — logs job completion events to the Techstream platform for cost tracking
+1. **Output composition hook** - listens for the orchestrator's final message and transforms it into a deliverable package (copy + metadata + image references)
+2. **Refinement loop hook** - on compaction, injects context about the iteration budget and quality thresholds
+3. **Custom tool registration** - `publish-to-cms`, `schedule-content`, `check-brand-compliance`
+4. **Event logging** - logs job completion events to the Techstream platform for cost tracking
 
 No code is removed, no internals are modified, nothing is patched.
 
 ### Repository Structure
 
-The Techstream OpenCode configuration lives inside the Quark monorepo at `packages/opencode/`. This eliminates sync burden between two repos while maintaining agnosticism — `packages/opencode/` has no dependency on other Quark packages and can be used independently.
+The Techstream OpenCode configuration lives inside the Quark monorepo at `packages/opencode/`. This eliminates sync burden between two repos while maintaining agnosticism - `packages/opencode/` has no dependency on other Quark packages and can be used independently.
 
 ```
 packages/opencode/
 ├── package.json              # Scoped @techstream/quark-opencode (private)
 ├── README.md                 # Plugin usage instructions
 ├── src/
-│   ├── index.js              # Plugin entry — registers hooks, tools
+│   ├── index.js              # Plugin entry - registers hooks, tools
 │   ├── hooks/
 │   │   ├── output-composer.js    # Stitch sub-agent outputs into deliverables
 │   │   └── refinement-loop.js    # Iterative refinement with quality scoring
@@ -276,69 +276,69 @@ If all models fail, the BullMQ job is re-queued with exponential backoff.
 
 ## 4. MCP Server Setup
 
-> **Deferred:** MCP server implementation is deferred until after the core OpenCode server is built and proven with internal task management (Phase 0). The MCP integrations described below are the target architecture — they will be implemented incrementally once the server is stable and handling internal workflows reliably.
+> **Deferred:** MCP server implementation is deferred until after the core OpenCode server is built and proven with internal task management (Phase 0). The MCP integrations described below are the target architecture - they will be implemented incrementally once the server is stable and handling internal workflows reliably.
 
-MCP servers are configured in `opencode.json` — no custom code needed. OpenCode's native MCP client handles connection lifecycle.
+MCP servers are configured in `opencode.json` - no custom code needed. OpenCode's native MCP client handles connection lifecycle.
 
 ### Core MCPs (Build First)
 
 #### `playwright-mcp`
-- **Purpose:** Browser automation — screenshot capture, page testing, visual regression
+- **Purpose:** Browser automation - screenshot capture, page testing, visual regression
 - **Used by:** `reviewer`, `producer`
 - **Key tools:**
-  - `browser_navigate` — open a URL
-  - `browser_screenshot` — capture viewport or full page
-  - `browser_click`, `browser_fill` — interact with pages
-  - `browser_evaluate` — run JS in page context
+  - `browser_navigate` - open a URL
+  - `browser_screenshot` - capture viewport or full page
+  - `browser_click`, `browser_fill` - interact with pages
+  - `browser_evaluate` - run JS in page context
 - **Transport:** stdio
 
 #### `github-mcp`
-- **Purpose:** Repository operations — content versioning, PR-based review workflows
+- **Purpose:** Repository operations - content versioning, PR-based review workflows
 - **Used by:** `publisher`, `reviewer`
 - **Key tools:**
-  - `create_or_update_file` — commit content to repo
-  - `create_pull_request` — open a review PR
-  - `search_repositories`, `get_file_contents` — read existing content
-  - `create_branch` — isolate changes per task
+  - `create_or_update_file` - commit content to repo
+  - `create_pull_request` - open a review PR
+  - `search_repositories`, `get_file_contents` - read existing content
+  - `create_branch` - isolate changes per task
 - **Transport:** HTTP (GitHub API)
 
 #### `postgres-mcp`
-- **Purpose:** Direct database access — query client data, content history, analytics
+- **Purpose:** Direct database access - query client data, content history, analytics
 - **Used by:** `analyst`, `strategist`, `publisher`
 - **Key tools:**
-  - `query` — run read-only SQL
-  - `list_tables`, `describe_table` — schema introspection
+  - `query` - run read-only SQL
+  - `list_tables`, `describe_table` - schema introspection
 - **Transport:** stdio (local `psql` connection string)
 - **Security:** Read-only connection string; write operations go through the app API, not MCP.
 
 #### `cms-mcp`
-- **Purpose:** Content publishing — create, update, schedule content in the CMS
+- **Purpose:** Content publishing - create, update, schedule content in the CMS
 - **Used by:** `publisher`
 - **Key tools:**
-  - `create_post` — publish a new article/page
-  - `update_post` — revise existing content
-  - `schedule_post` — set future publish date
-  - `list_posts`, `get_post` — read existing content
-  - `upload_media` — upload images/assets
+  - `create_post` - publish a new article/page
+  - `update_post` - revise existing content
+  - `schedule_post` - set future publish date
+  - `list_posts`, `get_post` - read existing content
+  - `upload_media` - upload images/assets
 - **Transport:** HTTP (CMS REST API)
 
 #### `analytics-mcp`
-- **Purpose:** Performance data — GA4 and Umami metrics for reporting and optimization
+- **Purpose:** Performance data - GA4 and Umami metrics for reporting and optimization
 - **Used by:** `analyst`, `strategist`
 - **Key tools:**
-  - `get_page_metrics` — pageviews, bounce rate, session duration
-  - `get_conversion_data` — goal completions, funnel analysis
-  - `get_realtime` — current active users
-  - `run_report` — custom GA4/Umami report
+  - `get_page_metrics` - pageviews, bounce rate, session duration
+  - `get_conversion_data` - goal completions, funnel analysis
+  - `get_realtime` - current active users
+  - `run_report` - custom GA4/Umami report
 - **Transport:** HTTP (GA4 Data API / Umami API)
 
 #### `email-mcp`
-- **Purpose:** Client communication — send reports, deliverables, notifications
+- **Purpose:** Client communication - send reports, deliverables, notifications
 - **Used by:** `publisher`, `orchestrator`
 - **Key tools:**
-  - `send_email` — send transactional email
-  - `send_report` — attach and send a formatted report
-  - `get_templates` — list available email templates
+  - `send_email` - send transactional email
+  - `send_report` - attach and send a formatted report
+  - `get_templates` - list available email templates
 - **Transport:** HTTP (Resend / SendGrid API)
 
 ### Expansion MCPs (Phase 3)
@@ -401,7 +401,7 @@ MCP servers are configured in `opencode.json` — no custom code needed. OpenCod
 
 ## 5. Per-Project Deployment
 
-Each client project gets a dedicated `.opencode/` directory at the project root. OpenCode natively discovers and loads these — no custom code needed.
+Each client project gets a dedicated `.opencode/` directory at the project root. OpenCode natively discovers and loads these - no custom code needed.
 
 ### Directory Structure
 
@@ -604,7 +604,7 @@ The main OpenCode config file lives at `~/.config/opencode/opencode.json`. This 
     "plan": { "disable": true },
     "orchestrator": {
       "mode": "primary",
-      "description": "Orchestrator — classifies incoming jobs and delegates to specialist sub-agents. Composes final outputs.",
+      "description": "Orchestrator - classifies incoming jobs and delegates to specialist sub-agents. Composes final outputs.",
       "model": "openrouter/deepseek/deepseek-v4-pro",
       "temperature": 0.3,
       "permission": {
@@ -627,7 +627,7 @@ The main OpenCode config file lives at `~/.config/opencode/opencode.json`. This 
     },
     "producer": {
       "mode": "subagent",
-      "description": "Asset generation — copy, images, layouts",
+      "description": "Asset generation - copy, images, layouts",
       "model": "openrouter/deepseek/deepseek-v4-flash",
       "temperature": 0.3,
       "permission": {
@@ -639,7 +639,7 @@ The main OpenCode config file lives at `~/.config/opencode/opencode.json`. This 
     },
     "reviewer": {
       "mode": "subagent",
-      "description": "Quality gate — brand consistency, SEO, accessibility, visual QA",
+      "description": "Quality gate - brand consistency, SEO, accessibility, visual QA",
       "model": "openrouter/google/gemini-3.5-flash",
       "temperature": 0.4,
       "permission": {
@@ -732,7 +732,7 @@ The main OpenCode config file lives at `~/.config/opencode/opencode.json`. This 
 
 ## 8. Implementation Phases
 
-### Phase 0 — Foundation & Internal Dogfooding (Weeks 1–2)
+### Phase 0 - Foundation & Internal Dogfooding (Weeks 1–2)
 
 **Phase 0 complete.** All Phase 0 tasks below have been delivered. The plugin repo was created, then migrated into the Quark monorepo as `packages/opencode/`. The BullMQ job router, CLI scaffolding (`--features ai`, `quark add ai`), and Railway auto-discovery are all operational. See `packages/opencode/` for the current source of truth.
 
@@ -752,7 +752,7 @@ The main OpenCode config file lives at `~/.config/opencode/opencode.json`. This 
 | Build status tracking workflow | Orchestrator monitors progress, updates statuses, flags blockers |
 | Build daily standup report | Analyst generates daily summary via session prompt |
 
-### Phase 1 — Single Production Flow (Weeks 3–4)
+### Phase 1 - Single Production Flow (Weeks 3–4)
 
 **Goal:** One MCP, one end-to-end client job.
 
@@ -764,7 +764,7 @@ The main OpenCode config file lives at `~/.config/opencode/opencode.json`. This 
 | Structured output support | SDK `json_schema` format for validated output |
 | Cost tracking (usage logging via plugin) | Token usage logged per session for billing |
 
-### Phase 2 — Core MCPs & Per-Project (Weeks 5–6)
+### Phase 2 - Core MCPs & Per-Project (Weeks 5–6)
 
 **Goal:** All core MCPs operational, per-project isolation working.
 
@@ -779,7 +779,7 @@ The main OpenCode config file lives at `~/.config/opencode/opencode.json`. This 
 | Per-client API keys via environment variables | Cost tracking per project, budget enforcement |
 | Central cost dashboard (MVP) | Daily/weekly/monthly spend per project, alert thresholds |
 
-### Phase 3 — Expansion & Polish (Weeks 7–8)
+### Phase 3 - Expansion & Polish (Weeks 7–8)
 
 **Goal:** Creative MCPs, full cost dashboard, production hardening.
 
@@ -801,11 +801,11 @@ The main OpenCode config file lives at `~/.config/opencode/opencode.json`. This 
 
 If the fork approach was already started (e.g., an `opencode-techstream` repo exists), here's the migration path:
 
-1. **Archive** the `opencode-techstream` repo — do not delete, but mark as superseded
+1. **Archive** the `opencode-techstream` repo - do not delete, but mark as superseded
 2. **Install** upstream OpenCode via npm/Docker
-3. **Extract** custom agents, skills, and prompts from the fork — these move to config files and markdown definitions
-4. **Extract** custom logic from the fork — this becomes the Techstream plugin
+3. **Extract** custom agents, skills, and prompts from the fork - these move to config files and markdown definitions
+4. **Extract** custom logic from the fork - this becomes the Techstream plugin
 5. **Deploy** the upstream server with the new config and plugin
-6. **Delete** the fork — it is no longer needed
+6. **Delete** the fork - it is no longer needed
 
 The migration is low-risk because the fork's customizations (agents, skills, routing) were already at the config/definition level in the original plan. No core logic was modified that cannot be expressed through upstream extension points.

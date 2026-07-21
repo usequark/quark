@@ -365,11 +365,11 @@ describe("throttledError", () => {
 		throttle(new Error("Redis unavailable"));
 		assert.strictEqual(logger.warn.mock.callCount(), 1);
 
-		// Same error within window — should be suppressed
+		// Same error within window - should be suppressed
 		throttle(new Error("Redis unavailable"));
 		assert.strictEqual(logger.warn.mock.callCount(), 1);
 
-		// Different error within window — should log
+		// Different error within window - should log
 		throttle(new Error("Redis timeout"));
 		assert.strictEqual(logger.warn.mock.callCount(), 2);
 	});
@@ -381,14 +381,14 @@ describe("throttledError", () => {
 		throttle(new Error("Redis unavailable"));
 		assert.strictEqual(logger.warn.mock.callCount(), 1);
 
-		// Same error within window — suppressed
+		// Same error within window - suppressed
 		throttle(new Error("Redis unavailable"));
 		assert.strictEqual(logger.warn.mock.callCount(), 1);
 
 		// Wait for window to expire
 		await new Promise((resolve) => setTimeout(resolve, 60));
 
-		// Same error after window — logged again
+		// Same error after window - logged again
 		throttle(new Error("Redis unavailable"));
 		assert.strictEqual(logger.warn.mock.callCount(), 2);
 	});
@@ -565,7 +565,7 @@ describe("waitForRedis", () => {
 				throw new Error("ECONNREFUSED");
 			});
 
-			// Call without explicit config — should use env defaults
+			// Call without explicit config - should use env defaults
 			await assert.rejects(
 				() => waitForRedis(healthCheck),
 				/Redis unavailable at .+ after 2 attempts/,

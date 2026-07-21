@@ -1,6 +1,6 @@
 # @yourscope/ui
 
-Scaffolded UI primitives for your Quark project. These components are **yours** — modify, extend, or replace them freely.
+Scaffolded UI primitives for your Quark project. These components are **yours** - modify, extend, or replace them freely.
 
 > This package is scaffolded via `quark-create-app`. There is no version sync back to Quark after scaffolding.
 
@@ -40,12 +40,12 @@ Composable card container. All parts accept `className`.
 Minimal wrapper that provides the outer shell styling (rounded, border, surface background). Accepts `className` and `children`.
 
 ### Lightbox
-`"use client"` — Overlay image viewer with optional previous/next navigation and keyboard support.
+`"use client"` - Overlay image viewer with optional previous/next navigation and keyboard support.
 Props: `src` (string), `alt`, `caption`, `open` (bool), `onClose` (fn), `onPrevious` (fn), `onNext` (fn), `showPrevious` (bool), `showNext` (bool), `currentIndex` (number), `totalCount` (number), `className`.
 
 ### FormField
-`"use client"` — Composible field wrapper for label + input + error display.
-Props: `label` (string), `name` (string), `error` (string, optional), `children` (custom input, optional — defaults to `<Input>`), `className`, all native input attributes when no children.
+`"use client"` - Composible field wrapper for label + input + error display.
+Props: `label` (string), `name` (string), `error` (string, optional), `children` (custom input, optional - defaults to `<Input>`), `className`, all native input attributes when no children.
 
 ### Table / TableHeader / TableBody / TableRow / TableHead / TableCell
 Composable table. `Table` wraps in a scrollable container. All parts accept `className`.
@@ -57,14 +57,14 @@ Props: `className` (use to set width/height for the placeholder shape).
 Props: `message`, `className`. Returns `null` when `message` is empty.
 
 ### RichText
-`"use client"` — dependency-free rich text editor built on `contentEditable`.
+`"use client"` - dependency-free rich text editor built on `contentEditable`.
 Props: `id`, `name`, `defaultValue`, `placeholder`, `disabled`, `required`, `rows`, `className`, `onChange`.
 
 ### Dialog
-`"use client"` — Props: `open` (bool), `onClose` (fn), `title` (string), `children`, `className`.
+`"use client"` - Props: `open` (bool), `onClose` (fn), `title` (string), `children`, `className`.
 
 ### Toast / useToast
-`"use client"` — `Toast` props: `message`, `variant` ('default' | 'success' | 'error'), `onClose` (fn), `visible` (bool).  
+`"use client"` - `Toast` props: `message`, `variant` ('default' | 'success' | 'error'), `onClose` (fn), `visible` (bool).  
 `useToast()` returns `{ show(message, variant?), hide, toastProps }`. Spread `toastProps` onto `<Toast />`.
 
 ### Footer

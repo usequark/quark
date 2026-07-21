@@ -7,10 +7,10 @@ Conduct systematic audience research to build actionable personas and market seg
 
 ## Persona Template Structure
 Each persona should include:
-- **Name and role** (e.g., "Marketing Maria — Senior Growth Manager").
+- **Name and role** (e.g., "Marketing Maria - Senior Growth Manager").
 - **Demographics**: age range, location, income bracket, education level, job title.
 - **Goals**: what they want to achieve (professional and personal).
-- **Pain points**: obstacles preventing goal achievement — emotional and practical.
+- **Pain points**: obstacles preventing goal achievement - emotional and practical.
 - **Information sources**: where they consume content (LinkedIn, podcasts, niche blogs, industry reports).
 - **Decision criteria**: what factors matter most (price, trust, speed, social proof, authority).
 - **Objections**: common reasons they might say no.
@@ -29,7 +29,7 @@ Each persona should include:
 - Use the VALs framework or similar psychographic models for structured categorization.
 
 ## Synthesizing Research Into Actionable Insights
-- For each persona, produce 3-5 "so what" statements — specific implications for content, messaging, and product.
+- For each persona, produce 3-5 "so what" statements - specific implications for content, messaging, and product.
 - Identify segment overlaps (e.g., personas that share pain points) to prioritize messaging.
-- Map personas to funnel stages: awareness, consideration, decision — to target content accordingly.
+- Map personas to funnel stages: awareness, consideration, decision - to target content accordingly.
 - Surface gaps: unanswered questions, underserved segments, or assumptions needing validation.

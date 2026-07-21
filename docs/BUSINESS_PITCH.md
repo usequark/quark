@@ -10,14 +10,14 @@
 
 Quark is a **full-stack JavaScript framework** that solves the most painful problem in modern web development: **infrastructure consistency across projects**. Instead of wiring together auth, queues, validation, storage, and security from scratch for every new app, teams scaffold a production-ready monorepo in under 60 seconds and own 100% of the code.
 
-**Where we are today:** Quark is not a concept. The framework is at **V2 MVP** with two packages live on npm (`@techstream/quark-core` v2.2.0, `@techstream/quark-create-app`). Auth, queues, validation, email, storage, error handling, metrics, logging, rate limiting, CSRF — all shipping. The foundation is built. This pitch is about **monetizing an existing product**, not building one from scratch.
+**Where we are today:** Quark is not a concept. The framework is at **V2 MVP** with two packages live on npm (`@techstream/quark-core` v2.2.0, `@techstream/quark-create-app`). Auth, queues, validation, email, storage, error handling, metrics, logging, rate limiting, CSRF - all shipping. The foundation is built. This pitch is about **monetizing an existing product**, not building one from scratch.
 
-**The opportunity:** AI is transforming what apps can do, but teams still spend weeks on boilerplate before writing a single AI feature. Quark eliminates that gap — and its consistent, predictable project structure makes it the ideal foundation for AI coding tools to build on.
+**The opportunity:** AI is transforming what apps can do, but teams still spend weeks on boilerplate before writing a single AI feature. Quark eliminates that gap - and its consistent, predictable project structure makes it the ideal foundation for AI coding tools to build on.
 
 **The business model:** Quark is fully open-source (MIT). Revenue comes from two self-serve products, launched sequentially:
 
-1. **Quark Observe** — Open-source observability platform (self-hostable). SaaS version for teams that want zero-ops monitoring. Clean, affordable, does 90% of what you need — in one dashboard.
-2. **Quark Cloud** — Managed full-stack infrastructure (web, worker, Postgres, Redis, storage). One-click deploy via CLI.
+1. **Quark Observe** - Open-source observability platform (self-hostable). SaaS version for teams that want zero-ops monitoring. Clean, affordable, does 90% of what you need - in one dashboard.
+2. **Quark Cloud** - Managed full-stack infrastructure (web, worker, Postgres, Redis, storage). One-click deploy via CLI.
 
 **Launch sequence:**
 - **Phase 1 (Month 1–2):** Official open-source launch with existing framework + `@techstream/quark-ai`
@@ -64,7 +64,7 @@ cd my-app && docker compose up -d && pnpm dev
 - CSRF protection, rate limiting, security headers
 - Structured logging + Prometheus metrics
 - S3-compatible file storage (local dev, R2/S3 production)
-- Email service (Mailpit for dev; pluggable providers — SMTP, Zeptomail, Resend)
+- Email service (Mailpit for dev; pluggable providers - SMTP, Zeptomail, Resend)
 - GitHub Actions CI/CD (lint, test, build, deploy)
 - Turborepo build orchestration
 
@@ -75,12 +75,12 @@ cd my-app && docker compose up -d && pnpm dev
 │  Your Application (you own this code)             │
 │  ├── apps/web          (Next.js)                  │
 │  ├── apps/worker       (BullMQ)                   │
-│  ├── packages/db       (Prisma — your models)     │
+│  ├── packages/db       (Prisma - your models)     │
 │  ├── packages/config   (your env config)          │
 │  ├── packages/jobs     (your job handlers)        │
 │  └── packages/ui       (your components)          │
 ├───────────────────────────────────────────────────┤
-│  @techstream/quark-core (from npm — we maintain)  │
+│  @techstream/quark-core (from npm - we maintain)  │
 │  auth | queues | validation | errors | storage    │
 │  metrics | logging | rate-limiting | CSRF | email │
 ├───────────────────────────────────────────────────┤
@@ -96,7 +96,7 @@ cd my-app && docker compose up -d && pnpm dev
 
 Quark publishes the infrastructure and scaffolds the domain. You get centralized updates for the hard parts (`pnpm update @techstream/quark-core`) and full ownership of the custom parts.
 
-**No lock-in.** A Quark project is a standard Node.js monorepo. Remove `@techstream/quark-core` from `package.json` and replace the 8 imports — you've ejected. There is no proprietary runtime, no custom build system, no platform dependency.
+**No lock-in.** A Quark project is a standard Node.js monorepo. Remove `@techstream/quark-core` from `package.json` and replace the 8 imports - you've ejected. There is no proprietary runtime, no custom build system, no platform dependency.
 
 ### Current Status (V2 MVP)
 
@@ -104,11 +104,11 @@ Quark publishes the infrastructure and scaffolds the domain. You get centralized
 |---|---|---|
 | `@techstream/quark-core` | **✅ Published (v2.2.0)** | Auth, queues, errors, validation, email, storage, metrics, logging, rate limiting, CSRF |
 | `@techstream/quark-create-app` | **✅ Published** | CLI scaffolder with feature selection |
-| `@yourapp/ui` template | ⚠️ Minimal | 1 Button component — expansion planned (Phase 0 in PLAN.md) |
-| `@yourapp/admin` template | 🔲 Planned | Self-scaling CRUD admin UI — depends on expanded UI package |
-| `@techstream/quark-ai` | 🔲 Planned | AI provider abstraction — target: Phase 1 launch |
-| Quark Observe | 🔲 Planned | Observability platform — target: Phase 2 |
-| Quark Cloud | 🔲 Planned | Managed infrastructure — target: Phase 3 |
+| `@yourapp/ui` template | ⚠️ Minimal | 1 Button component - expansion planned (Phase 0 in PLAN.md) |
+| `@yourapp/admin` template | 🔲 Planned | Self-scaling CRUD admin UI - depends on expanded UI package |
+| `@techstream/quark-ai` | 🔲 Planned | AI provider abstraction - target: Phase 1 launch |
+| Quark Observe | 🔲 Planned | Observability platform - target: Phase 2 |
+| Quark Cloud | 🔲 Planned | Managed infrastructure - target: Phase 3 |
 
 **Framework expansion plan (pre-monetization):**
 
@@ -151,7 +151,7 @@ Building a modern full-stack JavaScript application requires wiring together 10+
 
 ### The AI Opportunity
 
-The rise of AI applications has made this problem worse, not better. Teams that want to build AI-powered features (chatbots, document analysis, content generation, intelligent agents) still need the same infrastructure foundation — plus additional concerns:
+The rise of AI applications has made this problem worse, not better. Teams that want to build AI-powered features (chatbots, document analysis, content generation, intelligent agents) still need the same infrastructure foundation - plus additional concerns:
 
 | AI-Specific Concern | What's Needed |
 |---|---|
@@ -166,7 +166,7 @@ The rise of AI applications has made this problem worse, not better. Teams that 
 
 ### AI Compliance: The Framework AI Coding Tools Build On
 
-This is not a secondary benefit — it is a **first-class differentiator** with its own product roadmap.
+This is not a secondary benefit - it is a **first-class differentiator** with its own product roadmap.
 
 AI coding assistants (Claude Code, GitHub Copilot, Cursor) work best with predictable, well-documented codebases. Quark is deliberately designed to be the ideal substrate:
 
@@ -176,7 +176,7 @@ AI coding assistants (Claude Code, GitHub Copilot, Cursor) work best with predic
 | **Clear boundaries** | Monorepo packages have explicit import paths (`@yourapp/db`, `@techstream/quark-core`) |
 | **Typed validation** | Zod schemas serve as machine-readable contracts |
 | **Documented conventions** | `copilot-instructions.md`, `ARCHITECTURE.md`, skill files |
-| **Standard tooling** | Biome (linting), Node.js test runner, Turborepo — all well-known to LLMs |
+| **Standard tooling** | Biome (linting), Node.js test runner, Turborepo - all well-known to LLMs |
 | **No magic** | No custom compilers, no proprietary DSLs, no hidden build steps |
 
 #### Concrete Artifacts (Shipped with Every Quark Project)
@@ -223,7 +223,7 @@ Because Claude Code knows:
 
 | Framework | Strengths | Weaknesses | AI Story |
 |---|---|---|---|
-| **Next.js (Vercel)** | Market leader, excellent DX, massive ecosystem | Frontend-focused — backend is DIY. No auth, no queues, no jobs, no email, no storage out of the box | Vercel AI SDK (frontend streaming only) |
+| **Next.js (Vercel)** | Market leader, excellent DX, massive ecosystem | Frontend-focused - backend is DIY. No auth, no queues, no jobs, no email, no storage out of the box | Vercel AI SDK (frontend streaming only) |
 | **Ruby on Rails** | Mature, opinionated, "convention over configuration" | Aging frontend (Hotwire), no modern observability, Ruby ecosystem shrinking | None (community gems) |
 | **Laravel** | PHP ecosystem leader, excellent docs | PHP-only, no JS/TS, limited modern frontend | None |
 | **Wasp** | React + Node scaffold, similar concept | Immature (small team), limited ecosystem, custom DSL (lock-in risk) | Built-in OpenAI helpers |
@@ -259,12 +259,12 @@ This is the most common objection from experienced developers, and it's legitima
 
 | Concern | Laravel/Rails | Quark |
 |---|---|---|
-| **Language** | PHP (Laravel) or Ruby (Rails) | JavaScript/TypeScript end-to-end — same language for frontend, backend, jobs, and infra config |
-| **Frontend** | Blade + Livewire (Laravel) or Hotwire (Rails) — bolted-on JS when needed | Next.js App Router — native React, Server Components, streaming |
-| **Job queue** | Horizon (Laravel) or Sidekiq (Rails) — excellent, but different language from frontend | BullMQ — same language, same debugging tools, same ecosystem |
-| **Type safety** | Partial (PHP 8 types, Ruby Sorbet) | Zod + TypeScript end-to-end — validated at runtime, typed at dev time |
-| **AI ecosystem** | Community packages, no first-class story | `@techstream/quark-ai` + Zod schemas + pgvector — AI-native from scaffold |
-| **Modern deployment** | Forge/Vapor (Laravel), Heroku (Rails) | Vercel, Railway, Render, Fly — modern JS-native platforms |
+| **Language** | PHP (Laravel) or Ruby (Rails) | JavaScript/TypeScript end-to-end - same language for frontend, backend, jobs, and infra config |
+| **Frontend** | Blade + Livewire (Laravel) or Hotwire (Rails) - bolted-on JS when needed | Next.js App Router - native React, Server Components, streaming |
+| **Job queue** | Horizon (Laravel) or Sidekiq (Rails) - excellent, but different language from frontend | BullMQ - same language, same debugging tools, same ecosystem |
+| **Type safety** | Partial (PHP 8 types, Ruby Sorbet) | Zod + TypeScript end-to-end - validated at runtime, typed at dev time |
+| **AI ecosystem** | Community packages, no first-class story | `@techstream/quark-ai` + Zod schemas + pgvector - AI-native from scaffold |
+| **Modern deployment** | Forge/Vapor (Laravel), Heroku (Rails) | Vercel, Railway, Render, Fly - modern JS-native platforms |
 | **Hiring** | PHP/Ruby developers (shrinking pool) | JavaScript developers (largest pool, still growing) |
 | **AI coding tools** | AI tools produce worse PHP/Ruby than JS/TS (smaller training data, less common patterns) | Purpose-built for AI-assisted development (context files, predictable structure) |
 
@@ -275,7 +275,7 @@ This is the most common objection from experienced developers, and it's legitima
 - Better documentation (Laravel especially)
 - Convention over configuration at a deeper level (migrations, seeders, factories)
 
-**Bottom line:** If your team is already proficient in PHP or Ruby and doesn't need modern React frontends or AI features, Laravel or Rails is a perfectly valid choice. Quark is for teams that want to stay in the JavaScript ecosystem and get the same "batteries included" experience that Laravel/Rails developers enjoy — with the addition of AI-readiness and modern frontend tooling.
+**Bottom line:** If your team is already proficient in PHP or Ruby and doesn't need modern React frontends or AI features, Laravel or Rails is a perfectly valid choice. Quark is for teams that want to stay in the JavaScript ecosystem and get the same "batteries included" experience that Laravel/Rails developers enjoy - with the addition of AI-readiness and modern frontend tooling.
 
 ### Infrastructure Competitors (Managed Services)
 
@@ -303,7 +303,7 @@ Quark Observe aims to consolidate the functionality teams currently need 4–5 s
 | **Web analytics** | Umami / Plausible | $9–$19/mo | ✅ Included |
 | **AI/LLM tracking** | Langfuse / Helicone | $59–$120/mo | ✅ Included |
 | **Infrastructure metrics** | Prometheus + Grafana | Free (self-host) / $29/mo (cloud) | ✅ Included |
-| **Combined cost** | — | **$125–$275/mo** | **$19/mo** |
+| **Combined cost** | - | **$125–$275/mo** | **$19/mo** |
 
 **Full comparison:**
 
@@ -319,7 +319,7 @@ Quark Observe aims to consolidate the functionality teams currently need 4–5 s
 | **Helicone** | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | $88–$120/mo |
 | **Quark Observe** | **✅** | **✅** | **✅** | **✅** | **✅** | **✅** | **$19/mo** |
 
-**Key insight:** Today, a team running a Quark app with AI features typically uses Sentry ($26) + Better Stack ($25) + Grafana ($29) + Plausible ($9) + Langfuse ($59) = **$148/mo across 5 dashboards**. Quark Observe doesn't claim feature parity with Sentry or Datadog. The positioning is deliberate: open-source first, self-hostable, clean UI, does 90% of what you need, in one place, at a fraction of the cost. Good enough for most — and that's a feature, not a limitation.
+**Key insight:** Today, a team running a Quark app with AI features typically uses Sentry ($26) + Better Stack ($25) + Grafana ($29) + Plausible ($9) + Langfuse ($59) = **$148/mo across 5 dashboards**. Quark Observe doesn't claim feature parity with Sentry or Datadog. The positioning is deliberate: open-source first, self-hostable, clean UI, does 90% of what you need, in one place, at a fraction of the cost. Good enough for most - and that's a feature, not a limitation.
 
 ---
 
@@ -327,7 +327,7 @@ Quark Observe aims to consolidate the functionality teams currently need 4–5 s
 
 ### Can Quark Run on Vercel?
 
-**Short answer:** Yes — with a redesigned worker strategy.
+**Short answer:** Yes - with a redesigned worker strategy.
 
 The Next.js web app runs natively on Vercel. The challenge is the BullMQ worker, which is a long-running Node.js process. Vercel has no persistent compute. Here's the solution:
 
@@ -416,10 +416,10 @@ const nextConfig = {
 Everything described in Part 1. Fully open-source (MIT). This is the adoption engine.
 
 **Includes (bundled in scaffold, not premium):**
-- **Admin UI** — Auto-generated CRUD dashboard from Prisma schema (scaffolded via CLI)
-- **Integrations** — Pre-built connectors for Stripe, Twilio, Slack, SendGrid, Airtable (scaffolded via CLI)
-- **AI Templates** — RAG chat, document analysis, content generator, streaming UI (scaffolded via CLI)
-- **Deployment configs** — Railway, Render, Vercel, Fly.io, Docker, AWS templates
+- **Admin UI** - Auto-generated CRUD dashboard from Prisma schema (scaffolded via CLI)
+- **Integrations** - Pre-built connectors for Stripe, Twilio, Slack, SendGrid, Airtable (scaffolded via CLI)
+- **AI Templates** - RAG chat, document analysis, content generator, streaming UI (scaffolded via CLI)
+- **Deployment configs** - Railway, Render, Vercel, Fly.io, Docker, AWS templates
 
 **Why free?** Admin UI and Integrations are core value propositions that drive adoption. Gating them reduces onboarding conversion. Every team that scaffolds a Quark project should see immediate value.
 
@@ -456,17 +456,17 @@ quark deploy cloud        # Quark Cloud (managed hosting)
 
 ### What We Sell (Self-Serve, Scalable)
 
-#### Product 1: Quark Observe — Open-Source Observability Platform
+#### Product 1: Quark Observe - Open-Source Observability Platform
 
 **Positioning:** *"Open-source observability for full-stack teams. Self-hostable, clean, affordable. One dashboard for errors, uptime, metrics, analytics, and AI costs."*
 
-Quark Observe does not aim to replace Sentry or compete with Datadog. It aims to be **good enough for 90% of teams**, in one place, with a clean UI and an honest price. Teams that outgrow it can export data and move to specialized tools — no lock-in.
+Quark Observe does not aim to replace Sentry or compete with Datadog. It aims to be **good enough for 90% of teams**, in one place, with a clean UI and an honest price. Teams that outgrow it can export data and move to specialized tools - no lock-in.
 
 **The open-source-first model:**
 - Open-source (MIT). Self-host with a single `docker compose up`.
 - SaaS version for teams that want zero-ops: managed hosting, longer retention, multi-region uptime checks.
 - Priced for indie developers and small teams, not enterprises with six-figure budgets.
-- Each module is useful on its own. Ship incrementally — error tracking first, then metrics, then analytics.
+- Each module is useful on its own. Ship incrementally - error tracking first, then metrics, then analytics.
 
 **What it does:**
 
@@ -516,7 +516,7 @@ Your Quark App                          Quark Observe
                                                 └───────────────┘
 ```
 
-**Self-hostable:** Yes — and this is non-negotiable. The `@techstream/quark-observe` package includes the full collector + dashboard. Deploy it the same way you deploy any Quark app:
+**Self-hostable:** Yes - and this is non-negotiable. The `@techstream/quark-observe` package includes the full collector + dashboard. Deploy it the same way you deploy any Quark app:
 
 ```bash
 # Self-hosted Observe (same codebase as SaaS)
@@ -533,7 +533,7 @@ The self-hosted version uses the same codebase as the SaaS. If the open-source v
 
 The SaaS version adds: multi-project aggregation, longer retention, managed uptime checks from multiple regions, team management, and zero-ops maintenance.
 
-**Pricing — Two Models:**
+**Pricing - Two Models:**
 
 We offer both flat-rate and usage-based pricing. Teams choose whichever is more predictable for their situation.
 
@@ -549,7 +549,7 @@ We offer both flat-rate and usage-based pricing. Teams choose whichever is more 
 
 | Tier | Included Events | Overage | Retention | Price |
 |---|---|---|---|---|
-| **Free** | 10K/mo | — | 7 days | $0 |
+| **Free** | 10K/mo | - | 7 days | $0 |
 | **Pay-as-you-go** | 10K/mo | $1 per 50K events | 14 days | $5/mo base |
 | **Pro** | 200K/mo | $0.50 per 50K events | 30 days | $15/mo base |
 | **Enterprise** | Custom | Custom | 90 days | Custom |
@@ -590,11 +590,11 @@ We offer both flat-rate and usage-based pricing. Teams choose whichever is more 
 | Y2 (month 24) | 200 | 25 | $5,775 | $69,300 |
 | Y3 (month 36) | 600 | 80 | $17,720 | $212,640 |
 
-#### Product 2: Quark Cloud — Managed Full-Stack Infrastructure
+#### Product 2: Quark Cloud - Managed Full-Stack Infrastructure
 
 **Positioning:** *"One click to deploy your entire Quark app. The path of least resistance, not the only path."*
 
-Quark Cloud runs the complete Quark stack. This is the answer to: "I use Vercel for my frontend — where do I put the worker, database, and Redis?"
+Quark Cloud runs the complete Quark stack. This is the answer to: "I use Vercel for my frontend - where do I put the worker, database, and Redis?"
 
 **Important:** Quark Cloud is a **convenience product**, not a necessity. The CLI wizard shows Railway, Render, Docker, and self-hosted as equally prominent deployment options. Quark Cloud is one choice among many. The docs show self-hosted deployment first. We will never make Cloud the only path.
 
@@ -616,7 +616,7 @@ Quark Cloud runs the complete Quark stack. This is the answer to: "I use Vercel 
 - **Mix and match:** Use Vercel for web + Quark Cloud for worker/infra, or Quark Cloud for everything.
 - **Works alongside Vercel:** `quark deploy vercel` deploys web to Vercel and provisions worker + infra on Quark Cloud. One command, seamless.
 
-**Pricing — Two Models:**
+**Pricing - Two Models:**
 
 **Option A: Flat Bundles (Simple, Predictable)**
 
@@ -645,7 +645,7 @@ Quark Cloud runs the complete Quark stack. This is the answer to: "I use Vercel 
 | **Object storage** | 1GB | $0.02/GB/mo |
 | **Bandwidth** | 10GB/mo | $0.10/GB |
 
-**Pricing comparison (typical indie SaaS — light usage):**
+**Pricing comparison (typical indie SaaS - light usage):**
 
 | Scenario | Flat Bundle (Pro) | Usage-Based (est.) | Cheaper? |
 |---|---|---|---|
@@ -673,7 +673,7 @@ Quark Cloud runs the complete Quark stack. This is the answer to: "I use Vercel 
 - **Simpler than AWS** (one CLI command vs. multi-service console setup)
 - **More complete than Railway** (includes storage + Observe integration)
 - **Integrated with Observe** (metrics flow automatically, no setup)
-- **Standard protocols** (leave anytime — `pg_dump`, `redis-cli`, S3 sync)
+- **Standard protocols** (leave anytime - `pg_dump`, `redis-cli`, S3 sync)
 - **Vercel companion:** `quark deploy vercel` = web on Vercel, everything else on Quark Cloud
 
 **Revenue model (flat bundles, base case):**
@@ -745,7 +745,7 @@ $ quark observe
 
   How would you like to run Observe?
   ● Use Quark Observe SaaS (recommended)
-  ○ Self-host (docker compose — same codebase as SaaS)
+  ○ Self-host (docker compose - same codebase as SaaS)
   ○ I'll set it up myself
 
   → Opening browser to observe.quark.dev/setup...
@@ -830,7 +830,7 @@ $ quark deploy vercel
 
 ### Base Case vs. Optimistic
 
-All projections below use two scenarios. The business works in both — the base case just takes longer to reach meaningful revenue.
+All projections below use two scenarios. The business works in both - the base case just takes longer to reach meaningful revenue.
 
 #### Framework Adoption (Scaffolded Projects)
 
@@ -920,7 +920,7 @@ If framework adoption is slower than the base case (e.g., 250 scaffolded project
 | **Net Margin (Base)** | **$20,100** | **$82,420** | **$232,440** |
 | **Net Margin (Optimistic)** | **$82,600** | **$402,400** | **$1,043,200** |
 
-*Y1: Solo founder + AI system (no FTEs). AI handles client interactions, triage, small fixes, and documentation PRs. Costs scale with revenue — infra grows with paying customers, not free users.*
+*Y1: Solo founder + AI system (no FTEs). AI handles client interactions, triage, small fixes, and documentation PRs. Costs scale with revenue - infra grows with paying customers, not free users.*
 
 **Note:** No external funding required. The solo + AI model keeps fixed costs minimal. Contractor DevRel/Content is added only when revenue justifies it (MRR > $5K). The base case is profitable from Y1.
 
@@ -937,7 +937,7 @@ If framework adoption is slower than the base case (e.g., 250 scaffolded project
 
 ## Part 8: Go-to-Market
 
-**Starting point:** The framework is at V2 MVP and live on npm. This is not a pre-launch buildout — it's a monetization strategy for an existing product.
+**Starting point:** The framework is at V2 MVP and live on npm. This is not a pre-launch buildout - it's a monetization strategy for an existing product.
 
 ### Phase 1: Official Open-Source Launch (Month 1–2)
 
@@ -948,18 +948,18 @@ If framework adoption is slower than the base case (e.g., 250 scaffolded project
 | License change: ISC → MIT | 1 day | Enterprise trust |
 | Publish `@techstream/quark-ai` to npm | 2 weeks | AI positioning |
 | Ship AI context files in scaffold (`.cursorrules`, `CLAUDE.md`, etc.) | 3 days | AI-agent differentiation |
-| **"First Feature" guide** — scaffold to working feature in 20 min | 3 days | Onboarding conversion |
-| **Incremental adoption guide** — add `quark-core` to existing Next.js app | 3 days | Addressable market expansion |
+| **"First Feature" guide** - scaffold to working feature in 20 min | 3 days | Onboarding conversion |
+| **Incremental adoption guide** - add `quark-core` to existing Next.js app | 3 days | Addressable market expansion |
 | Landing page (quark.dev or similar) | 1 week | Lead capture |
 | Documentation refresh (AI patterns, "build a chatbot in 30 min") | 1 week | SEO, developer trust |
 | HN launch post + Indie Hackers | 1 day | Initial traffic |
 | Discord community | 1 day | Engagement loop |
 
 **Two acquisition funnels:**
-1. **Greenfield** — `npx @techstream/quark-create-app` → full scaffold → first feature guide
-2. **Incremental** — `pnpm add @techstream/quark-core` into an existing Next.js project → progressively adopt auth, email, jobs, error reporting
+1. **Greenfield** - `npx @techstream/quark-create-app` → full scaffold → first feature guide
+2. **Incremental** - `pnpm add @techstream/quark-core` into an existing Next.js project → progressively adopt auth, email, jobs, error reporting
 
-The incremental path is the highest-leverage addition. The largest pool of potential users already has a Next.js app they won't restart from scratch. This doesn't compete with the scaffold — it's additive, and expands the addressable audience significantly. It also strengthens the AI-agent story: an agent can add Quark features to an existing codebase, not just build greenfield.
+The incremental path is the highest-leverage addition. The largest pool of potential users already has a Next.js app they won't restart from scratch. This doesn't compete with the scaffold - it's additive, and expands the addressable audience significantly. It also strengthens the AI-agent story: an agent can add Quark features to an existing codebase, not just build greenfield.
 
 **Target (base):** 50 scaffolded projects, 200 GitHub stars, 100 npm weekly downloads.
 **Target (optimistic):** 150 scaffolded projects, 500 GitHub stars, 300 npm weekly downloads.
@@ -1029,16 +1029,16 @@ Each module is independently useful. Don't ship everything at once.
 
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
-| **Low adoption** — developers don't discover Quark | Medium | High | Invest in content marketing, HN launches, Discord. Framework adoption is slow but sticky. Note: Observe and Cloud are independently marketable to any Node.js team, even without framework adoption. |
-| **Slow adoption** — growth is 50% of base case | Medium | Medium | The business still works: costs are near-zero in Y1 (no FTEs — solo founder + AI system), infra scales with customers. No hiring pressure. |
-| **Observe SaaS competition** — Datadog/Grafana add AI metrics | Medium | Medium | Our advantage is simplicity and price, not feature depth. Datadog adding a feature doesn't make it cheaper or simpler. Observe targets indie devs, not enterprises. |
-| **Vercel platform expansion** — Vercel ships queues, cron, storage, full-stack primitives | **High** | **Medium** | Vercel adding full-stack features increases lock-in to their platform. Quark's "deploy anywhere" story becomes *more* valuable, not less. The more Vercel locks in, the more developers want an escape hatch. Quark runs on Railway, Fly, Docker, VPS — and Vercel too. |
-| **Infra margin compression** — providers raise wholesale prices | Low | Medium | Multi-provider strategy (Neon + Supabase, Upstash + Dragonfly). Can operate own infra if margins require it. |
-| **Next.js breaking changes** — major version breaks scaffold | Medium | Low | Already handled by `quark-core` update mechanism. Monorepo structure isolates breaking changes. |
-| **AI hype cycle** — market correction reduces AI app demand | Low | Medium | Quark is a full-stack framework first. AI features are additive, not the entire value prop. Teams building non-AI apps should feel equally at home. |
-| **Fork competition** — someone forks and competes | Low | Low | MIT license allows this. Differentiate via Observe SaaS + Cloud (managed services can't be forked). |
-| **Team burnout** — too few people, too much scope | Medium | High | Strict scope: 2 products only (Observe + Cloud). Sequential launch, not parallel. AI system handles client interactions, triage, and routine fixes — founder focuses on architecture and features. Everything else is free and community-driven. |
-| **Execution speed** — solo founder shipping on projected timeline | Medium | Medium | The product thesis is validated — the risk is entirely execution speed. Mitigated by: AI-assisted development (AI handles client interactions, triage, and small fixes; founder focuses on architecture and major features), sequential launch plan, and near-zero fixed costs in Y1. |
+| **Low adoption** - developers don't discover Quark | Medium | High | Invest in content marketing, HN launches, Discord. Framework adoption is slow but sticky. Note: Observe and Cloud are independently marketable to any Node.js team, even without framework adoption. |
+| **Slow adoption** - growth is 50% of base case | Medium | Medium | The business still works: costs are near-zero in Y1 (no FTEs - solo founder + AI system), infra scales with customers. No hiring pressure. |
+| **Observe SaaS competition** - Datadog/Grafana add AI metrics | Medium | Medium | Our advantage is simplicity and price, not feature depth. Datadog adding a feature doesn't make it cheaper or simpler. Observe targets indie devs, not enterprises. |
+| **Vercel platform expansion** - Vercel ships queues, cron, storage, full-stack primitives | **High** | **Medium** | Vercel adding full-stack features increases lock-in to their platform. Quark's "deploy anywhere" story becomes *more* valuable, not less. The more Vercel locks in, the more developers want an escape hatch. Quark runs on Railway, Fly, Docker, VPS - and Vercel too. |
+| **Infra margin compression** - providers raise wholesale prices | Low | Medium | Multi-provider strategy (Neon + Supabase, Upstash + Dragonfly). Can operate own infra if margins require it. |
+| **Next.js breaking changes** - major version breaks scaffold | Medium | Low | Already handled by `quark-core` update mechanism. Monorepo structure isolates breaking changes. |
+| **AI hype cycle** - market correction reduces AI app demand | Low | Medium | Quark is a full-stack framework first. AI features are additive, not the entire value prop. Teams building non-AI apps should feel equally at home. |
+| **Fork competition** - someone forks and competes | Low | Low | MIT license allows this. Differentiate via Observe SaaS + Cloud (managed services can't be forked). |
+| **Team burnout** - too few people, too much scope | Medium | High | Strict scope: 2 products only (Observe + Cloud). Sequential launch, not parallel. AI system handles client interactions, triage, and routine fixes - founder focuses on architecture and features. Everything else is free and community-driven. |
+| **Execution speed** - solo founder shipping on projected timeline | Medium | Medium | The product thesis is validated - the risk is entirely execution speed. Mitigated by: AI-assisted development (AI handles client interactions, triage, and small fixes; founder focuses on architecture and major features), sequential launch plan, and near-zero fixed costs in Y1. |
 
 ---
 
@@ -1072,10 +1072,10 @@ Each module is independently useful. Don't ship everything at once.
 | Validation | Zod | 4 |
 | UI | Tailwind CSS | 4 |
 | Email | Nodemailer (pluggable: SMTP, Zeptomail, Resend) | 8 |
-| Storage | S3/R2 (pluggable) | — |
+| Storage | S3/R2 (pluggable) | - |
 | Linting | Biome | Latest |
 | Testing | Node.js test runner | Built-in |
-| CI/CD | GitHub Actions | — |
+| CI/CD | GitHub Actions | - |
 
 ### Security (Built-in)
 
@@ -1115,7 +1115,7 @@ Each module is independently useful. Don't ship everything at once.
 
 *No FTEs planned. The operating model is solo founder + AI system. AI handles client-facing interactions (issue triage, support responses, small bug fixes, documentation PRs) while the founder focuses on large features and architectural decisions. AI-raised issues feed directly into the development backlog.*
 
-*The framework is already at V2 — the work is building Observe and Cloud, not the framework itself. Consider hiring a part-time contractor (DevRel/Content) only when MRR exceeds $5K.*
+*The framework is already at V2 - the work is building Observe and Cloud, not the framework itself. Consider hiring a part-time contractor (DevRel/Content) only when MRR exceeds $5K.*
 
 ### Year 2+: Growth (contingent on revenue exceeding $5K MRR)
 
@@ -1139,7 +1139,7 @@ Each module is independently useful. Don't ship everything at once.
 | npm weekly downloads | 50 | 150 | 400 |
 | Observe connected apps | 10 | 40 | 100 |
 | Observe paying workspaces | 2 | 10 | 40 |
-| Cloud paying bundles | — | 5 | 30 |
+| Cloud paying bundles | - | 5 | 30 |
 | MRR | $40 | $400 | $2,500 |
 | Discord members | 30 | 100 | 300 |
 
@@ -1152,7 +1152,7 @@ Each module is independently useful. Don't ship everything at once.
 | npm weekly downloads | 200 | 500 | 1,500 |
 | Observe connected apps | 50 | 150 | 400 |
 | Observe paying workspaces | 10 | 50 | 150 |
-| Cloud paying bundles | — | 20 | 80 |
+| Cloud paying bundles | - | 20 | 80 |
 | MRR | $200 | $2,000 | $8,000 |
 | Discord members | 100 | 400 | 1,000 |
 
@@ -1170,9 +1170,9 @@ Each module is independently useful. Don't ship everything at once.
 |---|---|
 | **Own your code** | Scaffolded code belongs to the developer. Full git history, full control. |
 | **No lock-in** | Standard technologies (Postgres, Redis, S3, Node.js). Eject by removing one dependency. |
-| **Infrastructure consistency** | Same patterns across every project. Auth, queues, validation, errors — solved once. |
-| **Centralized updates** | `pnpm update @techstream/quark-core` — infrastructure improvements flow to all projects. |
-| **Deploy anywhere** | Not tied to a platform. Railway, Vercel, Render, AWS, Docker, VPS — your choice. |
+| **Infrastructure consistency** | Same patterns across every project. Auth, queues, validation, errors - solved once. |
+| **Centralized updates** | `pnpm update @techstream/quark-core` - infrastructure improvements flow to all projects. |
+| **Deploy anywhere** | Not tied to a platform. Railway, Vercel, Render, AWS, Docker, VPS - your choice. |
 | **Low barrier** | Free to start. No credit card. No account. `npx` and go. |
 
 ### Does This Strategy Align?
@@ -1181,11 +1181,11 @@ Each module is independently useful. Don't ship everything at once.
 |---|---|---|
 | **Open-source everything (MIT)** | ✅ Strong | Own your code, no lock-in. |
 | **Observe is self-hostable** | ✅ Strong | No forced SaaS dependency. SaaS is convenience. |
-| **Quark Cloud uses standard protocols** | ✅ Strong | pg_dump, redis-cli, S3 sync — leave anytime. |
+| **Quark Cloud uses standard protocols** | ✅ Strong | pg_dump, redis-cli, S3 sync - leave anytime. |
 | **Admin UI + Integrations are free** | ✅ Strong | No gatekeeping. Core value drives adoption. |
 | **`@techstream/quark-ai` is free** | ✅ Strong | AI features are part of the framework, not a premium tier. |
-| **Quark Cloud runs compute (web + worker)** | ⚠️ Moderate | Adds operational complexity. Must ensure "deploy anywhere" remains true — Cloud is explicitly positioned as the path of least resistance, not the only path. CLI wizard shows Railway, Docker, and self-hosted as equally prominent options. |
-| **Email is provider-agnostic** | ✅ Strong | SMTP, Zeptomail, Resend, or custom — adapter pattern, no vendor lock-in. |
+| **Quark Cloud runs compute (web + worker)** | ⚠️ Moderate | Adds operational complexity. Must ensure "deploy anywhere" remains true - Cloud is explicitly positioned as the path of least resistance, not the only path. CLI wizard shows Railway, Docker, and self-hosted as equally prominent options. |
+| **Email is provider-agnostic** | ✅ Strong | SMTP, Zeptomail, Resend, or custom - adapter pattern, no vendor lock-in. |
 | **Worker adapter for Vercel (serverless)** | ✅ Strong | Meets developers where they are. Doesn't force platform choice. |
 | **Observe is open-source first** | ✅ Strong | Self-hostable, priced for indie devs. SaaS is convenience. Self-hosted uses same codebase. |
 

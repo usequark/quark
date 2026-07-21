@@ -65,7 +65,7 @@ function runQuarkCli(args) {
 }
 
 // ---------------------------------------------------------------------------
-// Level 2: Integration — deployToRailway with missing Railway CLI
+// Level 2: Integration - deployToRailway with missing Railway CLI
 // ---------------------------------------------------------------------------
 
 test("checkRailwayCLI returns null when railway is not on PATH", async () => {
@@ -81,7 +81,7 @@ test("checkRailwayCLI returns null when railway is not on PATH", async () => {
 });
 
 // ---------------------------------------------------------------------------
-// Level 2: Integration — adapter functions with mocked project
+// Level 2: Integration - adapter functions with mocked project
 // ---------------------------------------------------------------------------
 
 test("isProjectLinked returns false for unlinked project", async () => {
@@ -105,7 +105,7 @@ test("isProjectLinked returns true after creating .railway directory with config
 });
 
 // ---------------------------------------------------------------------------
-// Level 2: Integration — resolveQuarkDeployProject with fixtures
+// Level 2: Integration - resolveQuarkDeployProject with fixtures
 // ---------------------------------------------------------------------------
 
 test("resolveQuarkDeployProject discovers web + worker in fixture", async () => {
@@ -134,7 +134,7 @@ test("resolveQuarkDeployProject fails when web is missing", async () => {
 });
 
 // ---------------------------------------------------------------------------
-// Level 2: Integration — inspectProject with fixture
+// Level 2: Integration - inspectProject with fixture
 // ---------------------------------------------------------------------------
 
 test("inspectProject loads and inspects fixture without error", async () => {

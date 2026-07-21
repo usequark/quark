@@ -83,7 +83,7 @@ describe("authorization", () => {
 
 		it("applies defaultRole when user has no role", () => {
 			const user = { id: "u4" };
-			// defaultRole is "viewer" — can read but not create
+			// defaultRole is "viewer" - can read but not create
 			assert.equal(auth.can(user, "read", "post"), true);
 			assert.equal(auth.can(user, "create", "post"), false);
 		});

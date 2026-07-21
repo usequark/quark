@@ -385,7 +385,7 @@ test("Email Service", async (t) => {
 		assert.strictEqual(typeof EmailProvider, "function");
 		const provider = new EmailProvider("test@example.com");
 		assert.strictEqual(provider.from, "test@example.com");
-		// validateConfig() is a no-op on base class — must not throw
+		// validateConfig() is a no-op on base class - must not throw
 		assert.doesNotThrow(() => provider.validateConfig());
 	});
 

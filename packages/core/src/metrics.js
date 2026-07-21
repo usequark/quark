@@ -173,7 +173,7 @@ class Histogram {
 	 * Returns a timer function. Call the returned function to record
 	 * elapsed time in seconds.
 	 * @param {Record<string, string>} [labels]
-	 * @returns {() => number} stop function — returns elapsed seconds
+	 * @returns {() => number} stop function - returns elapsed seconds
 	 */
 	startTimer(labels = {}) {
 		const start = performance.now();
@@ -358,7 +358,7 @@ export const jobQueueDepth = metrics.gauge({
 });
 
 /**
- * Total job processing attempts (labels: queue, status — completed | failed).
+ * Total job processing attempts (labels: queue, status - completed | failed).
  * For jobs with retries > 1, each attempt increments this counter independently.
  */
 export const jobsProcessedTotal = metrics.counter({

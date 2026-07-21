@@ -98,7 +98,7 @@ git push -u origin main
 
 1. Go to [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub repo** → select `__QUARK_PROJECT_NAME__`
 2. In the service → **Settings** → **Source**:
-   - Set **Root Directory** to `/` (the repo root — Railpack needs the full monorepo context to resolve workspace dependencies)
+   - Set **Root Directory** to `/` (the repo root - Railpack needs the full monorepo context to resolve workspace dependencies)
    - Set **Config as Code Path** to `apps/web/railway.json`
 3. In the project → **+ New** → **Database** → **Add PostgreSQL**
 4. In the project → **+ New** → **Database** → **Add Redis**
@@ -114,9 +114,9 @@ Railway auto-deploys on every push to `main`. Migrations run automatically befor
 
 If you need to seed Railway manually after the first migration, run `SEED_PROFILE=minimal pnpm db:seed` inside a Railway shell/one-off command, or from a machine using Railway's externally reachable database credentials, and provide the required admin credentials. The seed guard rejects remote seeds without an explicit profile on purpose.
 
-> **Important:** Root Directory must be `/` (not `apps/web`) so Railpack can resolve pnpm workspace dependencies. The **Config as Code Path** tells Railway where to find the `railway.json` — without it, the config is silently ignored and Railway falls back to defaults.
+> **Important:** Root Directory must be `/` (not `apps/web`) so Railpack can resolve pnpm workspace dependencies. The **Config as Code Path** tells Railway where to find the `railway.json` - without it, the config is silently ignored and Railway falls back to defaults.
 >
-> Railway starts the web service with `HOSTNAME=0.0.0.0 pnpm --dir apps/web start:deploy` (configured in `railway.json`), which delegates to the standalone entrypoint `node .next/standalone/apps/web/server.js`. This forces the standalone Next server to bind on Railway's network interface. The `pnpm start` script uses `next start` which requires full `node_modules` — it's for local testing only.
+> Railway starts the web service with `HOSTNAME=0.0.0.0 pnpm --dir apps/web start:deploy` (configured in `railway.json`), which delegates to the standalone entrypoint `node .next/standalone/apps/web/server.js`. This forces the standalone Next server to bind on Railway's network interface. The `pnpm start` script uses `next start` which requires full `node_modules` - it's for local testing only.
 
 ## AI-Assisted Development
 
@@ -124,7 +124,7 @@ This project ships with pre-loaded context for Claude Code, Cursor, GitHub Copil
 
 **Suggested first prompt:**
 
-> I'm building __QUARK_PROJECT_NAME__ — [describe what your app does in one sentence].
+> I'm building __QUARK_PROJECT_NAME__ - [describe what your app does in one sentence].
 >
 > Start by reviewing `CLAUDE.md` so you understand the full stack, then:
 > 1. Add the Prisma models we need to `packages/db/prisma/schema.prisma`
@@ -143,5 +143,5 @@ __QUARK_OPTIONAL_APPS__├── packages/
 │   ├── db/          # Prisma schema + query helpers
 │   └── config/      # Environment validation
 ├── docker-compose.yml
-└── CLAUDE.md        # AI tool context — keep this updated
+└── CLAUDE.md        # AI tool context - keep this updated
 ```

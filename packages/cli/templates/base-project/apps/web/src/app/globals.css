@@ -1,14 +1,14 @@
 @import "tailwindcss";
 @source "../../../../packages/ui/src/**/*.{js,jsx}";
 
-/* Tailwind dark variant — activates when data-theme="dark" is set on <html> */
+/* Tailwind dark variant - activates when data-theme="dark" is set on <html> */
 @custom-variant dark (&:is([data-theme="dark"] *));
 
 /*
  * ─── DESIGN TOKEN LAYER ─────────────────────────────────────────────────────
  *
  * All UI component colours, borders, and radii are driven from these CSS vars.
- * To fully retheme a scaffolded project, override any token in this block —
+ * To fully retheme a scaffolded project, override any token in this block -
  * no component source files need to be edited.
  *
  * Dark-first: :root holds dark defaults.
@@ -51,7 +51,7 @@
 	--color-info: #22d3ee;
 	--color-info-muted: rgba(34, 211, 238, 0.1);
 
-	/* Shape — sharp geometry by default (expert-designer spec) */
+	/* Shape - sharp geometry by default (expert-designer spec) */
 	/* Projects that prefer rounded corners set --radius-default: 0.25rem */
 	--radius-default: 0px;
 
@@ -65,7 +65,7 @@
 	--quark-health-text: #7886a8;
 	--quark-health-sep: #2c3450;
 	--quark-health-dot-idle: #2c3450;
-	/* Logo dark arc — visible on lifted dark bg */
+	/* Logo dark arc - visible on lifted dark bg */
 	--quark-logo-dark-arc: #4e5e7a;
 	/* Toast SVG stroke colours */
 	--quark-toast-track: rgba(255, 255, 255, 0.2);
@@ -195,7 +195,7 @@
 	--radius-default: var(--radius-default);
 }
 
-/* Theme toggle pill — CSS-driven so the toggle reflects data-theme
+/* Theme toggle pill - CSS-driven so the toggle reflects data-theme
  * immediately from the blocking script, with no React-state flash. */
 :root,
 :root[data-theme="light"] {
@@ -211,7 +211,7 @@
 	--toggle-knob-x: translateX(14px);
 }
 
-/* Toast SVG strokes — per-variant dark overrides.
+/* Toast SVG strokes - per-variant dark overrides.
  * Light uses :root defaults (white strokes on dark toast bg).
  * The blocking script in layout.js ensures data-theme is always set. */
 [data-theme="dark"] [data-toast-variant="default"] {
@@ -227,7 +227,7 @@
 	--quark-toast-progress: rgba(255, 71, 87, 0.7);
 }
 
-/* Pin the document background to match the app shell — prevents overscroll flash */
+/* Pin the document background to match the app shell - prevents overscroll flash */
 html,
 body {
 	background-color: var(--quark-page-bg);
@@ -242,7 +242,7 @@ body {
 	background-size: 40px 40px;
 }
 
-/* Native dialog — browser default positions it at the top; force viewport-center */
+/* Native dialog - browser default positions it at the top; force viewport-center */
 dialog {
 	position: fixed;
 	inset: 0;
@@ -305,7 +305,7 @@ dialog {
 	opacity: 1;
 }
 
-/* Floating theme toggle — top-right corner, always visible */
+/* Floating theme toggle - top-right corner, always visible */
 .floating-theme-toggle {
 	position: fixed;
 	top: 1.5rem;
@@ -384,7 +384,7 @@ dialog {
  * ─── AUTH LAYOUT ─────────────────────────────────────────────────────────────
  *
  * Split-panel auth layout: authority branding panel (left) + form panel (right).
- * On mobile the authority panel collapses — only the logo bar is shown.
+ * On mobile the authority panel collapses - only the logo bar is shown.
  */
 @keyframes quark-auth-enter {
 	from {
@@ -465,4 +465,34 @@ dialog {
 		opacity: 0;
 		transform: translateY(16px);
 	}
+}
+
+@keyframes slide-in-from-right {
+	from {
+		opacity: 0;
+		transform: translateX(24px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+@keyframes slide-in-from-left {
+	from {
+		opacity: 0;
+		transform: translateX(-24px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+.animate-slide-in {
+	animation: slide-in-from-right 300ms ease-out both;
+}
+
+.animate-slide-in-back {
+	animation: slide-in-from-left 300ms ease-out both;
 }

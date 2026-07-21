@@ -45,7 +45,7 @@ const MAGIC_BYTES = [
 	{ mime: "application/pdf", bytes: [0x25, 0x50, 0x44, 0x46] }, // %PDF
 	{ mime: "application/zip", bytes: [0x50, 0x4b, 0x03, 0x04] },
 
-	// Video — MP4 uses ftyp box like AVIF, but with different brands (isom, mp41, mp42, etc.)
+	// Video - MP4 uses ftyp box like AVIF, but with different brands (isom, mp41, mp42, etc.)
 	{
 		mime: "video/mp4",
 		bytes: null,

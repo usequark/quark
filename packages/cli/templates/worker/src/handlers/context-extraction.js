@@ -1,9 +1,6 @@
-import { createLogger } from "@techstream/quark-core";
 import { AppError } from "@techstream/quark-core/errors";
 import { prisma } from "@techstream/quark-db";
 import { complete } from "../lib/openrouter.js";
-
-const logger = createLogger("context-extraction");
 
 /**
  * Handles context extraction from conversation messages.
@@ -98,7 +95,7 @@ ${messageText}`;
 			return { extracted: 0, contexts: [] };
 		}
 
-		// Upsert business context records (placeholder — in production, use a BusinessContext model)
+		// Upsert business context records (placeholder - in production, use a BusinessContext model)
 		let extracted = 0;
 		for (const ctx of contexts) {
 			if (ctx.key && ctx.value && ctx.category) {

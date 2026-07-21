@@ -42,7 +42,7 @@ export const getDevMailConfig = () => {
 	};
 };
 
-// Backwards-compatible aliases (deprecated — use getDevMailConfig, getDevMailUrl, getDevMailUiUrl)
+// Backwards-compatible aliases (deprecated - use getDevMailConfig, getDevMailUrl, getDevMailUiUrl)
 export const getMailSmtpConfig = getDevMailConfig;
 export const getMailSmtpUrl = getDevMailUrl;
 export const getMailUiUrl = getDevMailUiUrl;

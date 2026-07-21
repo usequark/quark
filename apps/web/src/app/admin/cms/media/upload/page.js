@@ -6,7 +6,7 @@ import MediaEditorForm from "../_components/MediaEditorForm";
 
 export default function MediaUploadPage() {
 	return (
-		<div>
+		<div className="max-w-6xl mx-auto">
 			<div className="mb-6">
 				<a
 					href="/admin/cms/media"

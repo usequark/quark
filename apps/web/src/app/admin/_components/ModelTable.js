@@ -68,7 +68,7 @@ function getColumnWidth(field) {
  * @returns {import("react").ReactNode}
  */
 function formatValue(value, field) {
-	if (value === null || value === undefined) return "—";
+	if (value === null || value === undefined) return "-";
 
 	if (typeof value === "boolean") {
 		return (

@@ -3,7 +3,7 @@
  * scripts/doctor.js
  *
  * Audits this project for unfinished post-scaffold customisation.
- * Run it at any time — it is safe, read-only by default.
+ * Run it at any time - it is safe, read-only by default.
  *
  * Usage:
  *   pnpm doctor          # Audit only
@@ -124,7 +124,7 @@ const quarkLink = (() => {
 const hasUI = Array.isArray(quarkLink.packages) && quarkLink.packages.includes("ui");
 const installedPackages = Array.isArray(quarkLink.packages) ? quarkLink.packages : [];
 
-// ── Structural checks (always run — safe in CI without .env) ─────────────────
+// ── Structural checks (always run - safe in CI without .env) ─────────────────
 
 // ── Check S1: app/page.js conflicts with a route group ────────────────────────
 const rootPagePath = "apps/web/src/app/page.js";
@@ -139,7 +139,7 @@ if (exists(rootPagePath) && fs.existsSync(appDir)) {
 		error(
 			"page-route-conflict",
 			"routing",
-			"apps/web/src/app/page.js conflicts with a route group — Next.js will fail to build",
+			"apps/web/src/app/page.js conflicts with a route group - Next.js will fail to build",
 			routeGroups.join("\n"),
 			"Delete apps/web/src/app/page.js and move its content into the route group's page.js",
 		);
@@ -152,7 +152,7 @@ if (forgotPwContent && forgotPwContent.includes("quark-auth-layout")) {
 	warn(
 		"forgot-password-stub",
 		"security",
-		"Forgot-password page is a scaffold stub — users cannot reset their password",
+		"Forgot-password page is a scaffold stub - users cannot reset their password",
 		"apps/web/src/app/auth/forgot-password/page.js",
 		"Implement a password reset flow (email token) before going to production, or remove this route",
 	);
@@ -199,7 +199,7 @@ if (!exists(".quark-link.json")) {
 	warn(
 		"quark-link-missing",
 		"configuration",
-		".quark-link.json is missing — Quark CLI commands (update, add) will not work",
+		".quark-link.json is missing - Quark CLI commands (update, add) will not work",
 		"",
 		"If this is a Quark project, restore .quark-link.json from git history",
 	);
@@ -297,7 +297,7 @@ if (envContent && envContent.includes("CHANGE_ME")) {
 	error(
 		"secrets",
 		"security",
-		"CHANGE_ME placeholders found in .env — rotate these before deploying",
+		"CHANGE_ME placeholders found in .env - rotate these before deploying",
 		lines.join("\n"),
 		"Replace every CHANGE_ME value with a real secret",
 	);
@@ -351,7 +351,7 @@ const STATUS_COLOR = { error: fmt.red, warn: fmt.yellow, info: fmt.dim };
 console.log(fmt.bold(fmt.blue(`\n🩺 Quark Doctor${CI ? " (CI)" : ""}\n`)));
 
 if (findings.length === 0) {
-	console.log(fmt.green("  ✓ Nothing to do — project looks clean!\n"));
+	console.log(fmt.green("  ✓ Nothing to do - project looks clean!\n"));
 	process.exit(0);
 }
 

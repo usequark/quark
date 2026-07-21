@@ -2,11 +2,11 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
 const shellCls =
-	"relative w-full border-b border-border bg-surface/95 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] backdrop-blur";
+	"sticky top-0 z-50 w-full border-b border-border bg-surface/95 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] backdrop-blur";
 const mobileShellCls =
-	"relative w-full border-b border-border bg-surface shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]";
+	"sticky top-0 z-50 w-full border-b border-border bg-surface shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]";
 const mobileShellOpenCls =
-	"relative w-full border-b border-transparent bg-surface shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]";
+	"sticky top-0 z-50 w-full border-b border-transparent bg-surface shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]";
 const containerCls = "mx-auto w-full px-4 sm:px-6 lg:px-8";
 const desktopInnerCls = "flex h-[4.5rem] items-center justify-center gap-6";
 const leftZoneCls = "flex items-center mr-auto";

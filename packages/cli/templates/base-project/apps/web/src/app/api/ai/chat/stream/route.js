@@ -1,10 +1,10 @@
 import { prisma } from "@techstream/quark-db";
 import { NextResponse } from "next/server";
-import { handleError } from "../../error-handler";
+import { handleError } from "../../../error-handler";
 import {
 	requireAuth,
 	requireConversationAccess,
-} from "../_lib/requireConversationAccess";
+} from "../../_lib/requireConversationAccess";
 
 export async function GET(request) {
 	try {
@@ -68,7 +68,7 @@ export async function GET(request) {
 
 					subscriber.on("message", messageHandler);
 				} catch {
-					// Redis unavailable — fallback to polling
+					// Redis unavailable - fallback to polling
 					redisAvailable = false;
 
 					const pollInterval = setInterval(async () => {

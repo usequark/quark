@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { after, before, describe, it } from "node:test";
+import { describe, it } from "node:test";
 import { adminConfig } from "./config.js";
 import {
 	getInputType,
@@ -295,7 +295,7 @@ describe("isSystemField", () => {
 	});
 
 	it("false for non-system field with default", () => {
-		// role String @default("viewer") — has default but NOT a system field name
+		// role String @default("viewer") - has default but NOT a system field name
 		assert.equal(
 			isSystemField(
 				field({ name: "role", type: "String", hasDefaultValue: true }),

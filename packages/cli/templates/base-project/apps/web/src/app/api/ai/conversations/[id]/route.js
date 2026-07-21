@@ -6,13 +6,13 @@ import { handleError } from "../../../error-handler";
 import {
 	requireAuth,
 	requireConversationAccess,
-} from "../_lib/requireConversationAccess";
+} from "../../_lib/requireConversationAccess";
 
 const updateConversationSchema = z.object({
 	title: z.string().min(1).max(200),
 });
 
-export async function GET(request, { params }) {
+export async function GET(_request, { params }) {
 	try {
 		const session = await requireAuth();
 		const { id } = await params;
@@ -48,7 +48,7 @@ export async function PATCH(request, { params }) {
 	}
 }
 
-export async function DELETE(request, { params }) {
+export async function DELETE(_request, { params }) {
 	try {
 		const session = await requireAuth();
 		const { id } = await params;

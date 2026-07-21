@@ -397,7 +397,7 @@ async function runE2ETest() {
 				stdio: ["ignore", "pipe", "pipe"],
 			});
 
-			// Wait for app to start — allow it time to boot before checking
+			// Wait for app to start - allow it time to boot before checking
 			log.info("Waiting for application to be ready...");
 			await new Promise((r) => setTimeout(r, 2000)); // Let the dev server initialize
 
@@ -415,7 +415,7 @@ async function runE2ETest() {
 					break;
 				}
 
-				// Check if port is open — use longer timeout for port availability check
+				// Check if port is open - use longer timeout for port availability check
 				if (await waitForPort(appPort, "Web App", 3000)) {
 					appReady = true;
 					break;

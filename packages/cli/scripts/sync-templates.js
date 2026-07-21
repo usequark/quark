@@ -59,7 +59,7 @@ const SYNC_DIRS = [
 	{
 		src: "apps/web",
 		dest: "base-project/apps/web",
-		// Admin routes are scaffolded conditionally via admin-routes template — exclude from base project
+		// Admin routes are scaffolded conditionally via admin-routes template - exclude from base project
 		// CMS public files are scaffolded conditionally via cms-public template
 		localExcludes: [
 			/^apps\/web\/src\/app\/admin\//,
@@ -97,24 +97,24 @@ const SYNC_DIRS = [
 	},
 	// CMS package (content models, slug helpers, status lifecycle)
 	{ src: "packages/cms", dest: "cms" },
-	// CMS admin routes — scaffolded conditionally alongside the CMS package
+	// CMS admin routes - scaffolded conditionally alongside the CMS package
 	{
 		src: "apps/web/src/app/admin/cms",
 		dest: "cms-routes",
 	},
 	// CRM package (contacts, companies, pipeline)
 	{ src: "packages/crm", dest: "crm" },
-	// CRM admin routes — scaffolded conditionally alongside the CRM package
+	// CRM admin routes - scaffolded conditionally alongside the CRM package
 	{
 		src: "apps/web/src/app/admin/crm",
 		dest: "crm-routes",
 	},
-	// OpenCode server config — scaffolded conditionally when --features ai is selected
+	// OpenCode server config - scaffolded conditionally when --features ai is selected
 	{
 		src: "packages/opencode/deploy",
 		dest: "opencode",
 	},
-	// AI chat admin routes — scaffolded conditionally alongside the ai feature
+	// AI chat admin routes - scaffolded conditionally alongside the ai feature
 	{
 		src: "apps/web/src/app/admin/ai",
 		dest: "ai-routes",
@@ -144,7 +144,7 @@ const SYNC_FILES = [
 		src: "pnpm-workspace.yaml",
 		dest: "base-project/pnpm-workspace.yaml",
 	},
-	// CMS public files — scaffolded conditionally alongside CMS package,
+	// CMS public files - scaffolded conditionally alongside CMS package,
 	// synced individually since they're interleaved with non-CMS files
 	{ src: "apps/web/src/app/sitemap.js", dest: "cms-public/app/sitemap.js" },
 	{
@@ -218,7 +218,7 @@ const EXCLUDE_PATTERNS = [
 	/\.env$/,
 	/^apps\/web\/uploads\//,
 
-	// Prisma generated code — users run `prisma generate` post-scaffold
+	// Prisma generated code - users run `prisma generate` post-scaffold
 	/\/src\/generated\//,
 
 	// Monorepo-only web files (advanced features not in starter template)
@@ -238,29 +238,29 @@ const EXCLUDE_PATTERNS = [
 	/^packages\/config\/coverage\//,
 	/^packages\/config\/src\/.*\.test\.js$/,
 
-	// Playground: monorepo reference only — scaffolded conditionally via CLI when ui is selected
+	// Playground: monorepo reference only - scaffolded conditionally via CLI when ui is selected
 	/^apps\/web\/src\/app\/playground\//,
 ];
 
 /**
- * Template-only paths (relative to templates/) — never overwritten by sync.
+ * Template-only paths (relative to templates/) - never overwritten by sync.
  * These are generation templates (with __PLACEHOLDER__ variables),
  * scaffolding-specific configs, or manually curated starter files.
  */
 const TEMPLATE_ONLY = new Set([
-	// Copilot skill with __QUARK_SCOPE__ placeholders — generation template
+	// Copilot skill with __QUARK_SCOPE__ placeholders - generation template
 	"base-project/.github/skills/project-context/SKILL.md",
 	// Template-specific copilot instructions (with __QUARK_*__ placeholders + inline conventions)
 	"base-project/.github/copilot-instructions.md",
-	// Claude Code context file (with __QUARK_*__ placeholders) — generation template
+	// Claude Code context file (with __QUARK_*__ placeholders) - generation template
 	"base-project/CLAUDE.md",
-	// Cursor rules (with __QUARK_*__ placeholders) — generation template
+	// Cursor rules (with __QUARK_*__ placeholders) - generation template
 	"base-project/.cursor/rules/quark.mdc",
-	// GitHub CI/CD workflows — scaffolded projects have their own pipelines
+	// GitHub CI/CD workflows - scaffolded projects have their own pipelines
 	"base-project/.github/workflows/ci.yml",
 	"base-project/.github/workflows/release.yml",
 	"base-project/.github/workflows/dependabot-auto-merge.yml",
-	// Dependabot config — scaffolded projects have a simpler version
+	// Dependabot config - scaffolded projects have a simpler version
 	"base-project/.github/dependabot.yml",
 	// Scaffold starter README (different from monorepo README)
 	"base-project/README.md",
@@ -268,7 +268,7 @@ const TEMPLATE_ONLY = new Set([
 	"base-project/.gitignore",
 	// Root package.json with @myquark scope placeholder
 	"base-project/package.json",
-	// Biome config — template has Tailwind CSS support and scoped file includes
+	// Biome config - template has Tailwind CSS support and scoped file includes
 	"base-project/biome.json",
 	"base-project/apps/web/biome.json",
 	// Migrations: template maintains its own squashed initial migration
@@ -373,7 +373,7 @@ function transformDbPackageJson(content) {
 	// Use @myquark placeholder scope (CLI replaces with user's scope)
 	pkg.name = "@myquark/db";
 
-	// Remove private flag — scaffolded packages use custom scope
+	// Remove private flag - scaffolded packages use custom scope
 	delete pkg.private;
 
 	// DB tests need a generated Prisma client on fresh installs, and the Node.js
@@ -387,7 +387,7 @@ function transformDbPackageJson(content) {
 
 function transformPrismaConfig(content) {
 	// Template now uses the shared getConnectionString() import (same as monorepo).
-	// No transformation needed — both versions use identical code.
+	// No transformation needed - both versions use identical code.
 	return content;
 }
 
@@ -602,7 +602,7 @@ function syncDirectory(mapping) {
 
 		const srcRelativeToRoot = `${mapping.src}/${rel}`;
 
-		// If excluded, it's expected to NOT be in source — don't delete from template
+		// If excluded, it's expected to NOT be in source - don't delete from template
 		// (template may have its own version of excluded files, like migrations)
 		if (isExcluded(srcRelativeToRoot)) continue;
 		if (mapping.localExcludes?.some((p) => p.test(srcRelativeToRoot))) continue;

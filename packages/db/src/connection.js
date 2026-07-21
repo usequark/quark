@@ -5,8 +5,8 @@
  * Priority: DATABASE_URL env var → assembled from POSTGRES_* env vars.
  *
  * @param {{ throwOnMissing?: boolean }} [options]
- *   - throwOnMissing=true  (default) — runtime: throws if credentials are missing.
- *   - throwOnMissing=false — CLI/CI: returns a placeholder URL so `prisma generate` works.
+ *   - throwOnMissing=true  (default) - runtime: throws if credentials are missing.
+ *   - throwOnMissing=false - CLI/CI: returns a placeholder URL so `prisma generate` works.
  * @returns {string} PostgreSQL connection string
  */
 export function getConnectionString({ throwOnMissing = true } = {}) {
@@ -36,7 +36,7 @@ export function getConnectionString({ throwOnMissing = true } = {}) {
 			);
 		}
 
-		// Placeholder for prisma generate / CI — will fail at connect time, not at config time.
+		// Placeholder for prisma generate / CI - will fail at connect time, not at config time.
 		return "postgresql://placeholder:placeholder@localhost:5432/placeholder?schema=public";
 	}
 

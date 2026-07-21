@@ -1,6 +1,6 @@
 /**
  * CMS Media Serving API
- * GET /api/media/[...key] — Serve a media asset by storage key.
+ * GET /api/media/[...key] - Serve a media asset by storage key.
  *
  * Only serves files that are registered in the MediaAsset table.
  * This prevents serving arbitrary files from storage (IDOR protection).

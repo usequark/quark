@@ -12,7 +12,7 @@ import {
  * @param {Object} opts
  * @param {string} [opts.method="GET"]
  * @param {string} [opts.url="http://localhost/api/test"]
- * @param {Record<string, string>} [opts.headers={}] — lowercase header names
+ * @param {Record<string, string>} [opts.headers={}] - lowercase header names
  */
 function mockRequest({
 	method = "GET",

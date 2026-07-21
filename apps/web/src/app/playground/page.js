@@ -57,7 +57,7 @@ function ComponentSection({ id, index, title, children }) {
 			className="scroll-mt-8 space-y-5 py-5 border-t border-border"
 		>
 			<h2 className="font-mono uppercase text-xs tracking-[0.2em] text-text-faint">
-				§ {num} — {title}
+				§ {num} - {title}
 			</h2>
 			{children}
 		</section>

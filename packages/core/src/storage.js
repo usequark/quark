@@ -67,7 +67,7 @@ function safePath(baseDir, key) {
 		relativePath.startsWith(`..${sep}`) ||
 		isAbsolute(relativePath)
 	) {
-		throw new Error("Path traversal detected — key escapes storage directory");
+		throw new Error("Path traversal detected - key escapes storage directory");
 	}
 	return resolved;
 }
@@ -369,12 +369,12 @@ export function generateStorageKey(originalFilename, options = {}) {
 /**
  * Returns the public URL for a stored asset.
  *
- * Checks `ASSET_CDN_URL` first — if set, prepends it to the key.
+ * Checks `ASSET_CDN_URL` first - if set, prepends it to the key.
  * This is provider-agnostic: works with any CDN (CloudFront, Cloudflare,
  * Bunny, Fastly, etc.) as long as the CDN is pointed at the same bucket.
  *
  * Falls back to the local API route (`/api/files/<key>`) when no CDN is
- * configured — covers local development and any environment where
+ * configured - covers local development and any environment where
  * `STORAGE_PROVIDER=local` is used.
  *
  * @param {string} key - Storage key (e.g. "uploads/2026/02/abc-photo.jpg")

@@ -120,7 +120,7 @@ export { getErrorMessage as normalizeErrorMessage } from "./errors.js";
 
 /**
  * Generates a cryptographically secure random string of specified length.
- * Uses crypto.randomBytes for secure randomness — safe for tokens and IDs.
+ * Uses crypto.randomBytes for secure randomness - safe for tokens and IDs.
  * @param {number} length - String length
  * @param {string} chars - Characters to use (default: alphanumeric)
  * @returns {string} Random string

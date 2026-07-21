@@ -1,12 +1,12 @@
-# Archived Phase 2: Admin Package — Historical Plan
+# Archived Phase 2: Admin Package - Historical Plan
 
 > **Not the active Phase 2.** The current deployment roadmap is:
 >
-> 1. Phase 1 — deploy foundation (complete)
-> 2. Phase 2 — user-facing `quark deploy` CLI + Railway
-> 3. Phase 3 — AWS
-> 4. Phase 4 — self-hosted/provider expansion
-> 5. Phase 5 — Quark Cloud
+> 1. Phase 1 - deploy foundation (complete)
+> 2. Phase 2 - user-facing `quark deploy` CLI + Railway
+> 3. Phase 3 - AWS
+> 4. Phase 4 - self-hosted/provider expansion
+> 5. Phase 5 - Quark Cloud
 >
 > Keep the admin package material below as historical exploration only. The current authoritative summaries are [../PLAN_SUMMARY.md](../PLAN_SUMMARY.md) and [../PLAN.md](../PLAN.md).
 
@@ -31,7 +31,7 @@ The admin package is a utility library with zero React dependency. All rendering
 
 ### Why this split?
 
-- `packages/admin/` stays framework-agnostic — pure JS, testable with `node --test`, no transpiler needed
+- `packages/admin/` stays framework-agnostic - pure JS, testable with `node --test`, no transpiler needed
 - Route files live in `apps/web/` where JSX works natively via Next.js
 - Follows the existing pattern: `packages/db/` (utilities) → `apps/web/src/app/api/` (routes that use them)
 
@@ -62,7 +62,7 @@ This mirrors how `jobs` + `worker` are paired: selecting `jobs` scaffolds both `
 ### Sync configuration additions
 
 ```javascript
-// sync-templates.js — new SYNC_DIRS entries
+// sync-templates.js - new SYNC_DIRS entries
 { src: "packages/admin", dest: "admin" },
 { src: "apps/web/src/app/admin", dest: "admin-routes" },
 
@@ -77,14 +77,14 @@ This mirrors how `jobs` + `worker` are paired: selecting `jobs` scaffolds both `
 
 ## File Tree
 
-### `packages/admin/` (new — monorepo source)
+### `packages/admin/` (new - monorepo source)
 
 ```
 packages/admin/
   package.json
   src/
     index.js              Main exports
-    introspect.js         DMMF reader — returns model metadata
+    introspect.js         DMMF reader - returns model metadata
     introspect.test.js    Tests for introspection
     query.js              Generic CRUD via dynamic Prisma client access
     query.test.js         Tests for query helpers (needs Postgres)
@@ -93,24 +93,24 @@ packages/admin/
     config.js             Admin configuration (hidden fields, read-only fields, labels)
 ```
 
-### `apps/web/src/app/admin/` (new — monorepo reference)
+### `apps/web/src/app/admin/` (new - monorepo reference)
 
 ```
 apps/web/src/app/admin/
   layout.js               Auth guard + admin shell (sidebar + content)
-  page.js                 Dashboard — model counts, recent activity
+  page.js                 Dashboard - model counts, recent activity
   [model]/
-    page.js               List view — table with pagination
+    page.js               List view - table with pagination
     [id]/
-      page.js             Edit view — form pre-filled with record data
+      page.js             Edit view - form pre-filled with record data
     new/
-      page.js             Create view — empty form
+      page.js             Create view - empty form
   _actions/
     crud.js               Server Actions for create, update, delete
   _components/
     Sidebar.js            Model navigation sidebar (Server Component)
     ModelTable.js          Records table with links (Server Component)
-    ModelForm.js           Create/edit form (Client Component — interactive)
+    ModelForm.js           Create/edit form (Client Component - interactive)
     FieldRenderer.js       Renders correct input per field type (Client Component)
 ```
 
@@ -141,7 +141,7 @@ apps/web/package.json                     Add @techstream/quark-admin workspace 
 }
 ```
 
-No dependencies. Admin uses imports from `@<app>/db` (Prisma client + DMMF) — these are workspace refs wired by the CLI.
+No dependencies. Admin uses imports from `@<app>/db` (Prisma client + DMMF) - these are workspace refs wired by the CLI.
 
 ### 2. `packages/admin/src/index.js`
 
@@ -164,8 +164,8 @@ export * from "./config.js";
 |----------|--------|-------|
 | 1 | `Prisma.dmmf.datamodel.models` | Public API in prisma-client-js. Verify availability in Prisma 7 `prisma-client` generator. |
 | 2 | Import from generated client directory | `import { Prisma } from '@<app>/db'` if re-exported |
-| 3 | `prisma._baseDmmf` or `prisma._dmmf` | Internal API — fragile but proven |
-| 4 | Parse `schema.prisma` file directly | Last resort — regex-based, no dependency |
+| 3 | `prisma._baseDmmf` or `prisma._dmmf` | Internal API - fragile but proven |
+| 4 | Parse `schema.prisma` file directly | Last resort - regex-based, no dependency |
 
 **Implementation must verify which method works with Prisma 7's `prisma-client` generator before writing code.**
 
@@ -301,7 +301,7 @@ function getDelegate(prisma, model) {
 ```
 
 **Key design decisions:**
-- Accepts `prisma` as a parameter (not imported) — testable, no circular deps
+- Accepts `prisma` as a parameter (not imported) - testable, no circular deps
 - Delegate lookup uses lowerCamelCase (Prisma convention)
 - `findMany` returns `{ records, total, skip, take }` for pagination
 - Default sort by `createdAt desc` (every Quark model has `createdAt`)
@@ -445,7 +445,7 @@ export default async function AdminLayout({ children }) {
 ```
 
 - Auth check via `auth()` (NextAuth session) + role check
-- Redirect to home if not admin (not an error page — better UX)
+- Redirect to home if not admin (not an error page - better UX)
 - Sidebar + content layout
 
 ### 8. `apps/web/src/app/admin/page.js` (Dashboard)
@@ -645,7 +645,7 @@ export async function adminDelete(slug, id) {
 
 /**
  * Extract and coerce form data based on model field types.
- * Only includes editable fields — ignores IDs, system timestamps, etc.
+ * Only includes editable fields - ignores IDs, system timestamps, etc.
  */
 function extractFormData(model, formData) {
   const data = {};
@@ -678,12 +678,12 @@ function coerceValue(field, value) {
 ```
 
 **Key design decisions:**
-- **Server Actions** (not API routes) — modern Next.js pattern, less boilerplate
-- **`requireAdmin()`** — local inline check (admin layout already guards, but defense in depth)
-- **`revalidatePath`** — ensures list view updates after mutations
-- **`redirect`** — sends user back to list after create/update
-- **`extractFormData`** — type coercion from FormData strings to Prisma types
-- **No Zod validation** — The CRUD operations are generic (schema is dynamic). Field-level type coercion + Prisma's own validation provide safety. Adding Zod would require dynamic schema generation which adds complexity without proportional safety gain for an admin-only tool.
+- **Server Actions** (not API routes) - modern Next.js pattern, less boilerplate
+- **`requireAdmin()`** - local inline check (admin layout already guards, but defense in depth)
+- **`revalidatePath`** - ensures list view updates after mutations
+- **`redirect`** - sends user back to list after create/update
+- **`extractFormData`** - type coercion from FormData strings to Prisma types
+- **No Zod validation** - The CRUD operations are generic (schema is dynamic). Field-level type coercion + Prisma's own validation provide safety. Adding Zod would require dynamic schema generation which adds complexity without proportional safety gain for an admin-only tool.
 
 ### 13. `_components/Sidebar.js` (Server Component)
 
@@ -753,7 +753,7 @@ export default function ModelTable({ model, records, slug }) {
 }
 
 function formatValue(value, field) {
-  if (value === null || value === undefined) return "—";
+  if (value === null || value === undefined) return "-";
   if (field.type === "DateTime") return new Date(value).toLocaleDateString();
   if (field.type === "Boolean") return value ? "Yes" : "No";
   if (typeof value === "string" && value.length > 50) return value.slice(0, 50) + "…";
@@ -832,7 +832,7 @@ function renderInput(field, inputType, value) {
     case "checkbox":
       return <Checkbox id={name} name={name} defaultChecked={!!value} />;
     case "select":
-      // Enum fields — options come from field metadata
+      // Enum fields - options come from field metadata
       return (
         <Select id={name} name={name} defaultValue={value || ""} required={required}>
           <option value="">Select...</option>
@@ -922,7 +922,7 @@ Add to `TRANSFORMS`:
 
 ---
 
-## DMMF Access — Implementation Spike
+## DMMF Access - Implementation Spike
 
 **This is the single biggest technical risk.** Before writing any admin code, verify DMMF access with Prisma 7's `prisma-client` generator.
 
@@ -970,33 +970,33 @@ No code generation step. No CLI command to run. Just edit schema → generate �
 | File | Tests |
 |------|-------|
 | `introspect.test.js` | Parse DMMF fixture → correct model list, field shapes, slug mapping |
-| `query.test.js` | CRUD operations via Prisma (requires Postgres) — findMany pagination, findById, create, update, delete, count |
+| `query.test.js` | CRUD operations via Prisma (requires Postgres) - findMany pagination, findById, create, update, delete, count |
 | `field-map.test.js` | Input type mapping, visibility rules, editability rules, sensitive field detection |
 
 Test DMMF fixtures can be generated from the existing schema by calling `getDmmf()` once and saving the output.
 
 ### Integration tests
 
-Route-level tests are optional for Phase 2. The admin is an internal tool — unit tests on the utilities + manual QA is sufficient. Integration tests for admin routes can be added in a later phase if needed.
+Route-level tests are optional for Phase 2. The admin is an internal tool - unit tests on the utilities + manual QA is sufficient. Integration tests for admin routes can be added in a later phase if needed.
 
 ---
 
 ## Implementation Order
 
 ```
-Step 1: DMMF spike — verify access method
-Step 2: packages/admin/ — introspect.js + tests
-Step 3: packages/admin/ — field-map.js + tests
-Step 4: packages/admin/ — query.js + tests
-Step 5: packages/admin/ — config.js + index.js + package.json
-Step 6: apps/web/src/app/admin/ — layout.js + Sidebar
-Step 7: apps/web/src/app/admin/ — dashboard page
-Step 8: apps/web/src/app/admin/ — [model]/page.js (list view) + ModelTable
-Step 9: apps/web/src/app/admin/ — _actions/crud.js + ModelForm + FieldRenderer
-Step 10: apps/web/src/app/admin/ — [model]/[id]/page.js + [model]/new/page.js
-Step 11: CLI — sync-templates.js + index.js changes
+Step 1: DMMF spike - verify access method
+Step 2: packages/admin/ - introspect.js + tests
+Step 3: packages/admin/ - field-map.js + tests
+Step 4: packages/admin/ - query.js + tests
+Step 5: packages/admin/ - config.js + index.js + package.json
+Step 6: apps/web/src/app/admin/ - layout.js + Sidebar
+Step 7: apps/web/src/app/admin/ - dashboard page
+Step 8: apps/web/src/app/admin/ - [model]/page.js (list view) + ModelTable
+Step 9: apps/web/src/app/admin/ - _actions/crud.js + ModelForm + FieldRenderer
+Step 10: apps/web/src/app/admin/ - [model]/[id]/page.js + [model]/new/page.js
+Step 11: CLI - sync-templates.js + index.js changes
 Step 12: Run sync-templates, lint, test
-Step 13: Manual QA — verify self-scaling behavior
+Step 13: Manual QA - verify self-scaling behavior
 ```
 
 Steps 2–5 can be done first (pure JS, fully testable). Steps 6–10 depend on steps 2–5. Step 11 depends on all source files existing.
@@ -1005,12 +1005,12 @@ Steps 2–5 can be done first (pure JS, fully testable). Steps 6–10 depend on 
 
 ## What's NOT in Phase 2
 
-- **Search/filter** — list view shows paginated records only. Filtering is Phase 2.5 or a user customization.
-- **Relation editing** — FK fields show the ID value. Relation select dropdowns are a future enhancement.
-- **Bulk actions** — no multi-select, no bulk delete/update.
-- **Audit logging** — admin CRUD operations are not logged to AuditLog. Can be added by users.
-- **Custom actions** — no model-specific action buttons. Users extend ModelForm after scaffolding.
-- **Dark mode** — admin uses light Tailwind classes only. Users add dark mode via UI component `theme` prop.
-- **Multi-tenant** — mentioned in PLAN.md as a CLI flag. Separate from admin, not in scope.
+- **Search/filter** - list view shows paginated records only. Filtering is Phase 2.5 or a user customization.
+- **Relation editing** - FK fields show the ID value. Relation select dropdowns are a future enhancement.
+- **Bulk actions** - no multi-select, no bulk delete/update.
+- **Audit logging** - admin CRUD operations are not logged to AuditLog. Can be added by users.
+- **Custom actions** - no model-specific action buttons. Users extend ModelForm after scaffolding.
+- **Dark mode** - admin uses light Tailwind classes only. Users add dark mode via UI component `theme` prop.
+- **Multi-tenant** - mentioned in PLAN.md as a CLI flag. Separate from admin, not in scope.
 
-These omissions are intentional — the admin is a starting point that users customize. Shipping less is better than shipping fragile abstractions.
+These omissions are intentional - the admin is a starting point that users customize. Shipping less is better than shipping fragile abstractions.

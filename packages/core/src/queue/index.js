@@ -14,7 +14,7 @@ const logger = createLogger("queue");
 /**
  * Returns the default Redis config for BullMQ connections.
  * Evaluated lazily so env vars set after module load (e.g. via dotenv) are respected.
- * Uses resolveRedisConnection() — supports REDIS_URL, REDIS_HOST/REDIS_PORT, and localhost fallback.
+ * Uses resolveRedisConnection() - supports REDIS_URL, REDIS_HOST/REDIS_PORT, and localhost fallback.
  */
 function getDefaultRedisConfig() {
 	return {
@@ -38,7 +38,7 @@ function getHealthCheckRedisConfig() {
 		enableOfflineQueue: false,
 		connectTimeout: 3000,
 		maxRetriesPerRequest: 0,
-		retryStrategy: () => null, // don't auto-retry — let waitForRedis control the loop
+		retryStrategy: () => null, // don't auto-retry - let waitForRedis control the loop
 	};
 }
 
@@ -190,11 +190,11 @@ export const createQueueEvents = (queueName, options = {}) => {
  * @throws {ServiceError} When the job fails to queue (not on dedup skip).
  */
 export const addJob = async (queue, jobName, data, jobOptions = {}) => {
-	// Extract dedup options before passing to BullMQ — it doesn't recognize them
+	// Extract dedup options before passing to BullMQ - it doesn't recognize them
 	const { dedupKey, dedupTTL, ...bullOptions } = jobOptions;
 
 	// Optional deduplication: caller provides a key that identifies unique work.
-	// Uses Redis SET NX for atomic check-and-set — no race conditions.
+	// Uses Redis SET NX for atomic check-and-set - no race conditions.
 	if (dedupKey) {
 		try {
 			const client = await queue.client;
@@ -205,7 +205,7 @@ export const addJob = async (queue, jobName, data, jobOptions = {}) => {
 				return null; // Duplicate detected, silently skip
 			}
 		} catch (error) {
-			// Dedup is best-effort — if Redis fails, let the job through rather than block
+			// Dedup is best-effort - if Redis fails, let the job through rather than block
 			const logger = createLogger("queue:addJob");
 			logger.warn("Dedup check failed, allowing job through", {
 				error: error.message,
@@ -230,7 +230,7 @@ export const addJob = async (queue, jobName, data, jobOptions = {}) => {
 /**
  * Atomically registers or updates a repeatable job scheduler.
  * Uses BullMQ's upsertJobScheduler (Redis Lua script) to prevent duplicate
- * schedulers on worker restart — unlike queue.add() + repeat which is not atomic.
+ * schedulers on worker restart - unlike queue.add() + repeat which is not atomic.
  *
  * @param {Queue} queue - BullMQ Queue instance
  * @param {string} schedulerId - Unique identifier for this scheduler (e.g. 'cleanup-orphaned-files')
@@ -327,7 +327,7 @@ export const checkQueueHealth = async () => {
 		});
 		testQueue.on("error", () => {});
 		try {
-			// BullMQ v5: queue.client is an async getter — must be awaited
+			// BullMQ v5: queue.client is an async getter - must be awaited
 			const client = await testQueue.client;
 			await client.ping();
 			return true;
@@ -351,7 +351,7 @@ export const checkQueueHealth = async () => {
 	const redisAddr = getRedisAddress(queueConnections.get(firstQueue.name));
 
 	try {
-		// BullMQ v5: queue.client is an async getter — must be awaited
+		// BullMQ v5: queue.client is an async getter - must be awaited
 		const client = await firstQueue.client;
 		await client.ping();
 		return true;
@@ -385,7 +385,7 @@ export const updateQueueDepths = async () => {
 			const waiting = await queue.getWaitingCount();
 			jobQueueDepth.set({ queue: name }, waiting);
 		} catch (error) {
-			// Non-critical — depth gauge is best-effort
+			// Non-critical - depth gauge is best-effort
 			logger.warn(`Failed to update depth gauge for queue "${name}"`, {
 				error: error.message,
 			});

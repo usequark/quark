@@ -146,7 +146,7 @@ function SectionIntro({ eyebrow, title, copy }) {
 export default function ExamplePage() {
 	return (
 		<div className="min-h-screen bg-bg text-text">
-			<div className="hidden md:block">
+			<div className="sticky top-0 z-50 hidden md:block">
 				<Navbar
 					logo="Quark"
 					logoHref="/"
@@ -155,7 +155,7 @@ export default function ExamplePage() {
 					maxWidthClassName="max-w-7xl"
 				/>
 			</div>
-			<div className="md:hidden">
+			<div className="sticky top-0 z-50 md:hidden">
 				<MobileNavbar
 					logo="Quark"
 					logoHref="/"

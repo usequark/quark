@@ -1,4 +1,4 @@
-# OpenCode Server — Deployment Guide
+# OpenCode Server - Deployment Guide
 
 Deployment configuration for the OpenCode AI agent server. This directory is scaffolded into `apps/opencode/` when you run `quark add ai`.
 
@@ -125,7 +125,7 @@ Key points:
 }
 ```
 
-- **Builder:** `DOCKERFILE` — uses the Dockerfile in the root directory
+- **Builder:** `DOCKERFILE` - uses the Dockerfile in the root directory
 - **Watch patterns:** Only rebuilds when config, skills, or Docker-related files change
 - **Restart policy:** Restarts on failure (up to 5 retries)
 

@@ -8,13 +8,17 @@ export default function Home() {
 			{/* Hero: animated ASCII logo, centered */}
 			<QuarkAnimation />
 
-			{/* Footer — flows naturally below the animation */}
+			{/* Footer - flows naturally below the animation */}
 			<div className="quark-home-footer flex flex-col items-center gap-2 pt-8 pb-8">
 				{/* Identity */}
 				<p className="quark-home-label font-mono uppercase">Your Quark App</p>
 
 				{/* Navigation */}
 				<nav className="flex items-center gap-2">
+					<Link href="/book" className="quark-home-link">
+						booking
+					</Link>
+					<span className="quark-home-sep">·</span>
 					<Link href="/example-page" className="quark-home-link">
 						example page
 					</Link>
@@ -22,6 +26,7 @@ export default function Home() {
 					<Link href="/playground" className="quark-home-link">
 						playground
 					</Link>
+					<span className="quark-home-sep">·</span>
 					{/* @quark:start:admin */}
 					<span className="quark-home-sep">·</span>
 					<Link href="/admin" className="quark-home-link">
@@ -53,7 +58,7 @@ export default function Home() {
 					</a>
 				</nav>
 
-				{/* Status — supplementary, last */}
+				{/* Status - supplementary, last */}
 				<HealthIndicator />
 			</div>
 		</main>

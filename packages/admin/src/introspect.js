@@ -288,10 +288,10 @@ function parseField(line, enumNames, enumByName) {
 	const isId = /(?:^|\s)@id(?:\s|$)/.test(restStr);
 	const isUnique = /(?:^|\s)@unique(?:\s|$)/.test(restStr);
 	const hasDefaultValue = /(?:^|\s)@default\(/.test(restStr);
-	// @updatedAt means Prisma manages this field — treat as read-only
+	// @updatedAt means Prisma manages this field - treat as read-only
 	const isReadOnly = /(?:^|\s)@updatedAt(?:\s|$)/.test(restStr);
 
-	// Relation name — only meaningful for object kinds
+	// Relation name - only meaningful for object kinds
 	let relationName = null;
 	if (kind === "object") {
 		const namedMatch = restStr.match(/@relation\(\s*name:\s*"([^"]+)"/);

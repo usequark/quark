@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import { afterEach, beforeEach, describe, mock, test } from "node:test";
+import { closeSharedRedisClient } from "@techstream/quark-config";
 import { AppError } from "@techstream/quark-core/errors";
 import { handleAiAgentTask } from "./ai.js";
 
@@ -15,7 +16,8 @@ beforeEach(() => {
 	process.env.OPENROUTER_API_KEY = "test-api-key";
 });
 
-afterEach(() => {
+afterEach(async () => {
+	await closeSharedRedisClient();
 	if (originalPrisma !== undefined) {
 		globalThis.__prisma = originalPrisma;
 	} else {

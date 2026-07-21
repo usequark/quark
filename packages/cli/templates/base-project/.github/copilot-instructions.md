@@ -1,26 +1,26 @@
 <skills>
 <skill>
 <name>project-context</name>
-<description>Project-specific context and conventions. This skill evolves with your project — update it as your architecture grows.</description>
+<description>Project-specific context and conventions. This skill evolves with your project - update it as your architecture grows.</description>
 <file>.github/skills/project-context/SKILL.md</file>
 </skill>
 </skills>
 
-# __QUARK_PROJECT_NAME__ — Project Conventions
+# __QUARK_PROJECT_NAME__ - Project Conventions
 
 > Scaffolded with Quark on __QUARK_SCAFFOLD_DATE__. Package scope: `@__QUARK_SCOPE__`
 > Also see `CLAUDE.md` at the project root for the full context reference.
 
 ## Non-Negotiable Rules
 
-- **ESM only** — `import`/`export` everywhere. Never `require()`.
-- **No authored TypeScript** — `.js` and `.jsx` only. Generated code may emit typed artifacts, but project code should not add `.ts` or `.tsx` sources.
-- **Validate at every boundary** — Zod schemas on all Server Actions and API routes.
-- **Errors** — `AppError` / `ValidationError` from `@techstream/quark-core/errors` in app/runtime code. Native `Error` is acceptable in library, bootstrap, CLI, and test code.
-- **Logging** — `createLogger(name)` from `@techstream/quark-core` in app/runtime code. Console output is acceptable in bootstrap, CLI, and test code.
-- **DB models** — Always add `createdAt` and `updatedAt` to every Prisma model.
-- **Workspace imports** — Use `@__QUARK_SCOPE__/*` for local packages (`db`, `config`, `ui`, `jobs`). Never `@techstream/quark-db` etc.
-- **Tests** — Co-located `*.test.js`, run with `node --test`.
+- **ESM only** - `import`/`export` everywhere. Never `require()`.
+- **No authored TypeScript** - `.js` and `.jsx` only. Generated code may emit typed artifacts, but project code should not add `.ts` or `.tsx` sources.
+- **Validate at every boundary** - Zod schemas on all Server Actions and API routes.
+- **Errors** - `AppError` / `ValidationError` from `@techstream/quark-core/errors` in app/runtime code. Native `Error` is acceptable in library, bootstrap, CLI, and test code.
+- **Logging** - `createLogger(name)` from `@techstream/quark-core` in app/runtime code. Console output is acceptable in bootstrap, CLI, and test code.
+- **DB models** - Always add `createdAt` and `updatedAt` to every Prisma model.
+- **Workspace imports** - Use `@__QUARK_SCOPE__/*` for local packages (`db`, `config`, `ui`, `jobs`). Never `@techstream/quark-db` etc.
+- **Tests** - Co-located `*.test.js`, run with `node --test`.
 
 ## Import Patterns
 
@@ -38,13 +38,13 @@ import { createLogger, getCurrentSession, createQueue, addJob } from "@techstrea
 
 ## UI & Design System
 
-Components from `@__QUARK_SCOPE__/ui` — Tailwind-only, Server Component safe:
+Components from `@__QUARK_SCOPE__/ui` - Tailwind-only, Server Component safe:
 `Button`, `Input`, `Label`, `Textarea`, `Select`, `Checkbox`, `Badge`,
 `Card`/`CardHeader`/`CardTitle`/`CardContent`/`CardFooter`,
 `Table`/`TableHeader`/`TableBody`/`TableRow`/`TableHead`/`TableCell`,
 `Skeleton`, `ErrorBanner`, `Footer`, `Navbar`/`MobileNavbar`, `RichText`,
 `QuarkLogo` *(server)*, `Dialog` *(client)*, `Toast`/`useToast` *(client)*,
-`ThemeProvider`/`useTheme` *(client)* — dark/light mode context.
+`ThemeProvider`/`useTheme` *(client)* - dark/light mode context.
 
 All accept `className`. Never import from `@/components/ui/*`.
 Inspect `apps/web/src/app/example-page/page.js`, `apps/web/src/app/playground/page.js`, and `packages/ui/README.md` before creating bespoke public-page layout primitives.

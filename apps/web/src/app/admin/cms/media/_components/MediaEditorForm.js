@@ -43,7 +43,7 @@ export default function MediaEditorForm({
 	return (
 		<form
 			action={formAction}
-			className="max-w-5xl grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:items-start"
+			className="max-w-5xl mx-auto grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:items-start"
 		>
 			<div className="rounded-[--radius-default] border border-border bg-surface p-4 sm:p-5 space-y-4">
 				<div>

@@ -142,7 +142,7 @@ describe("handleSearchCompanies", () => {
 		const mockCompanies = [
 			{ id: "comp-1", name: "Acme", _count: { contacts: 5, deals: 2 } },
 		];
-		const prisma = setPrismaMock({
+		setPrismaMock({
 			company: {
 				findMany: mock.fn(async () => mockCompanies),
 			},
@@ -169,7 +169,7 @@ describe("handleSearchCompanies", () => {
 describe("handleCreateCompany", () => {
 	test("creates company with correct data", async () => {
 		const mockCompany = { id: "comp-1", name: "Acme" };
-		const prisma = setPrismaMock({
+		setPrismaMock({
 			company: {
 				create: mock.fn(async () => mockCompany),
 			},
@@ -183,7 +183,7 @@ describe("handleCreateCompany", () => {
 describe("handleUpdateCompany", () => {
 	test("updates company with correct data", async () => {
 		const mockCompany = { id: "comp-1", name: "Acme Corp" };
-		const prisma = setPrismaMock({
+		setPrismaMock({
 			company: {
 				update: mock.fn(async () => mockCompany),
 			},
@@ -204,7 +204,7 @@ describe("handleSearchDeals", () => {
 		const mockDeals = [
 			{ id: "d1", title: "Enterprise Deal", contact: null, company: null },
 		];
-		const prisma = setPrismaMock({
+		setPrismaMock({
 			deal: {
 				findMany: mock.fn(async () => mockDeals),
 			},
@@ -245,7 +245,7 @@ describe("handleCreateDeal", () => {
 			contact: null,
 			company: null,
 		};
-		const prisma = setPrismaMock({
+		setPrismaMock({
 			deal: {
 				create: mock.fn(async () => mockDeal),
 			},
@@ -280,7 +280,7 @@ describe("handleUpdateDeal", () => {
 			contact: null,
 			company: null,
 		};
-		const prisma = setPrismaMock({
+		setPrismaMock({
 			deal: {
 				update: mock.fn(async () => mockDeal),
 			},
@@ -299,7 +299,7 @@ describe("handleGetConversationHistory", () => {
 			{ id: "m1", role: "user", content: "Hello" },
 			{ id: "m2", role: "assistant", content: "Hi!" },
 		];
-		const prisma = setPrismaMock({
+		setPrismaMock({
 			aiMessage: {
 				findMany: mock.fn(async () => [...mockMessages].reverse()),
 			},
@@ -362,7 +362,7 @@ describe("handleCreateBusinessContext", () => {
 describe("handleSearchJobs", () => {
 	test("returns jobs matching query", async () => {
 		const mockJobs = [{ id: "j1", name: "send-email", status: "COMPLETED" }];
-		const prisma = setPrismaMock({
+		setPrismaMock({
 			job: {
 				findMany: mock.fn(async () => mockJobs),
 			},

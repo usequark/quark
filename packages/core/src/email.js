@@ -1,7 +1,7 @@
 /**
- * @techstream/quark-core — Email Service
+ * @techstream/quark-core - Email Service
  *
- * Providers are defined using a Strategy Pattern — each implements the same
+ * Providers are defined using a Strategy Pattern - each implements the same
  * interface. Quark ships with three built-in providers (smtp, resend, zeptomail)
  * and exposes a registry so users can plug in any provider they need.
  *
@@ -17,7 +17,7 @@
 import { getDevMailConfig } from "./mail.js";
 
 // ---------------------------------------------------------------------------
-// Base class — extend this to add your own email provider
+// Base class - extend this to add your own email provider
 // ---------------------------------------------------------------------------
 
 /**
@@ -25,7 +25,7 @@ import { getDevMailConfig } from "./mail.js";
  */
 export class EmailProvider {
 	/**
-	 * @param {string} from — Sender address (e.g. "App <noreply@example.com>")
+	 * @param {string} from - Sender address (e.g. "App <noreply@example.com>")
 	 */
 	constructor(from) {
 		this.from = from;
@@ -219,7 +219,7 @@ class ZeptomailProvider extends EmailProvider {
 			);
 		}
 
-		// Normalize to { id } — Zeptomail returns { request_id }
+		// Normalize to { id } - Zeptomail returns { request_id }
 		const data = await response.json();
 		return { id: data.request_id ?? data.id, ...data };
 	}
@@ -238,8 +238,8 @@ const _providers = {
 /**
  * Register a custom email provider so it can be selected via EMAIL_PROVIDER.
  *
- * @param {string} name — value used in EMAIL_PROVIDER env var (e.g. "sendgrid")
- * @param {typeof EmailProvider} ProviderClass — must extend EmailProvider
+ * @param {string} name - value used in EMAIL_PROVIDER env var (e.g. "sendgrid")
+ * @param {typeof EmailProvider} ProviderClass - must extend EmailProvider
  *
  * @example
  *   class SendGridProvider extends EmailProvider {
@@ -257,16 +257,16 @@ export function registerEmailProvider(name, ProviderClass) {
 }
 
 // ---------------------------------------------------------------------------
-// Public API — unchanged for existing users
+// Public API - unchanged for existing users
 // ---------------------------------------------------------------------------
 
 /**
  * Create an email service instance.
  *
  * @param {Object} [options]
- * @param {string} [options.provider] — Provider name: "smtp" (default), "resend",
+ * @param {string} [options.provider] - Provider name: "smtp" (default), "resend",
  *   "zeptomail", or any name registered via registerEmailProvider()
- * @param {string} [options.from] — Sender address (defaults to EMAIL_FROM env var)
+ * @param {string} [options.from] - Sender address (defaults to EMAIL_FROM env var)
  * @returns {{ sendEmail: (to: string|string[], subject: string, html: string, text?: string) => Promise<Object> }}
  */
 export function createEmailService(options = {}) {
@@ -292,12 +292,12 @@ export function createEmailService(options = {}) {
 		 *
 		 * @param {string|string[]} to
 		 * @param {string} subject
-		 * @param {string} html — HTML body
-		 * @param {string} [text] — Plain text body (optional)
+		 * @param {string} html - HTML body
+		 * @param {string} [text] - Plain text body (optional)
 		 * @returns {Promise<Object>}
 		 */
 		async sendEmail(to, subject, html, text) {
-			// Input validation — common concern, applied before reaching any provider
+			// Input validation - common concern, applied before reaching any provider
 			if (!to || (typeof to === "string" && !to.trim())) {
 				throw new Error("Email 'to' address is required");
 			}

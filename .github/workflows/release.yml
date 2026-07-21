@@ -68,7 +68,7 @@ jobs:
             // Build release body
             const lines = ['## Published Packages\n'];
             for (const pkg of published) {
-              lines.push(`- \`${pkg.name}\` — **${pkg.version}**`);
+              lines.push(`- \`${pkg.name}\` - **${pkg.version}**`);
             }
             lines.push('\n---\n');
             lines.push(`Full changelog: https://github.com/${context.repo.owner}/${context.repo.repo}/compare/${tag}...main`);

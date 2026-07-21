@@ -9,7 +9,7 @@ An ADR documents a significant architectural decision: the context, the decision
 | ID | Title | Status |
 |----|-------|--------|
 | [ADR-001](./001-esm-only.md) | ESM-only, No CommonJS | Accepted |
-| [ADR-002](./002-no-typescript.md) | No TypeScript — Plain JavaScript | Accepted |
+| [ADR-002](./002-no-typescript.md) | No TypeScript - Plain JavaScript | Accepted |
 | [ADR-003](./003-prisma-orm.md) | Prisma as the ORM | Accepted |
 | [ADR-004](./004-tailwind-ui-primitives.md) | Tailwind-only UI Primitives (No Shadcn) | Accepted |
 | [ADR-005](./005-bullmq-job-queue.md) | BullMQ for Background Jobs | Accepted |

@@ -1,6 +1,6 @@
 /**
  * Reusable mock objects for testing without external services.
- * All mocks use plain JavaScript objects and closures — no complex proxy chains.
+ * All mocks use plain JavaScript objects and closures - no complex proxy chains.
  *
  * @module testing/mocks
  */

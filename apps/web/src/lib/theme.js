@@ -4,7 +4,7 @@
  * These three values form the contract between HomeThemeToggle and any
  * ThemeProvider that may be present in the tree (e.g. from @techstream/quark-ui).
  *
- * An identical copy lives in packages/ui/src/theme-constants.js — each
+ * An identical copy lives in packages/ui/src/theme-constants.js - each
  * package owns its own copy so there is no cross-package import. If you
  * rename any of these, update both files and the CSS selectors in globals.css.
  */

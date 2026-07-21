@@ -1,4 +1,4 @@
-# Quark Deployment Roadmap — Active Summary
+# Quark Deployment Roadmap - Active Summary
 
 > **Status update (May 2026):** This summary replaces the older admin/observe phase table as the active execution plan. Older phase notes are historical and are no longer the authoritative sequence for Quark's current work.
 

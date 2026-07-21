@@ -1,4 +1,4 @@
-# Quark — Contributor Guide
+# Quark - Contributor Guide
 
 > For app developers building with Quark: see `CLAUDE.md` in your scaffolded project.
 
@@ -26,7 +26,7 @@ quark/
 │   ├── ui/           # Shared UI components (Tailwind, scaffold template)
 │   └── jobs/         # BullMQ job type definitions (scaffold template)
 ├── docs/             # Architecture, API, roadmap docs
-└── packages/cli/templates/  # Generated scaffold templates — see Template Sync
+└── packages/cli/templates/  # Generated scaffold templates - see Template Sync
 ```
 
 **Published to npm:** `@techstream/quark-core`, `@techstream/quark-create-app`
@@ -61,17 +61,17 @@ Import from `@techstream/quark-create-app/deploy` in monorepo or use the CLI bin
 
 ## Coding Conventions
 
-- **ESM only** — `import`/`export`. Never `require()` or `module.exports`.
-- **No authored TypeScript** — `.js` and `.jsx` files only. Generated code may emit typed artifacts, but repo code should not add `.ts` or `.tsx` sources.
-- **Linting** — Biome for all formatting and linting. No ESLint, no Prettier.
-- **Validation** — Zod for all Server Actions and API routes. No exceptions.
-- **Errors** — `AppError` / `ValidationError` from `@techstream/quark-core/errors` in app/runtime code. Native `Error` is acceptable in library, bootstrap, CLI, and test code.
-- **Logging** — `createLogger(name)` from `@techstream/quark-core` in app/runtime code. Console output is acceptable in bootstrap, CLI, and test code.
-- **Metrics** — `metrics` singleton from `@techstream/quark-core` for counters, gauges, histograms. Example: `metrics.counter({ name: "requests_total", help: "Total requests", labelNames: ["method"] }).inc({ method: "GET" })`.
-- **Edge middleware** — Use `proxy.js` in `apps/web/src/` (Next.js 16 convention) for edge guards (auth, rate-limiting, CORS, CSP headers). Not `middleware.js`.
-- **Config loading** — `loadConfig()` from `@<scope>/config` for centralized, env-validated config with caching. Call once, returns merged env + defaults + overrides.
-- **DB models** — Always include `createdAt DateTime @default(now())` and `updatedAt DateTime @updatedAt` on every Prisma model.
-- **Tests** — Co-located `*.test.js` files, run with `node --test`. Postgres + Redis required.
+- **ESM only** - `import`/`export`. Never `require()` or `module.exports`.
+- **No authored TypeScript** - `.js` and `.jsx` files only. Generated code may emit typed artifacts, but repo code should not add `.ts` or `.tsx` sources.
+- **Linting** - Biome for all formatting and linting. No ESLint, no Prettier.
+- **Validation** - Zod for all Server Actions and API routes. No exceptions.
+- **Errors** - `AppError` / `ValidationError` from `@techstream/quark-core/errors` in app/runtime code. Native `Error` is acceptable in library, bootstrap, CLI, and test code.
+- **Logging** - `createLogger(name)` from `@techstream/quark-core` in app/runtime code. Console output is acceptable in bootstrap, CLI, and test code.
+- **Metrics** - `metrics` singleton from `@techstream/quark-core` for counters, gauges, histograms. Example: `metrics.counter({ name: "requests_total", help: "Total requests", labelNames: ["method"] }).inc({ method: "GET" })`.
+- **Edge middleware** - Use `proxy.js` in `apps/web/src/` (Next.js 16 convention) for edge guards (auth, rate-limiting, CORS, CSP headers). Not `middleware.js`.
+- **Config loading** - `loadConfig()` from `@<scope>/config` for centralized, env-validated config with caching. Call once, returns merged env + defaults + overrides.
+- **DB models** - Always include `createdAt DateTime @default(now())` and `updatedAt DateTime @updatedAt` on every Prisma model.
+- **Tests** - Co-located `*.test.js` files, run with `node --test`. Postgres + Redis required.
 
 ## UI & Design System
 
@@ -79,7 +79,7 @@ The `packages/ui` directory contains Tailwind-only, dependency-free Server Compo
 
 Available exports: `Button`, `Input`, `Label`, `Textarea`, `Select`, `Checkbox`, `Badge`, `Card`/`CardHeader`/`CardTitle`/`CardContent`/`CardFooter`, `Table`/`TableHeader`/`TableBody`/`TableRow`/`TableHead`/`TableCell`, `Skeleton`, `ErrorBanner`, `Footer`, `Navbar`/`MobileNavbar`, `RichText`, `QuarkLogo` (server), `Dialog` (client), `Toast`/`useToast` (client), `ThemeProvider`/`useTheme` (client).
 
-All components accept `className` for Tailwind overrides. Import from `@techstream/quark-ui` (monorepo) or `@<scope>/ui` (scaffolded projects) — never deep-import (`@/components/ui/*`).
+All components accept `className` for Tailwind overrides. Import from `@techstream/quark-ui` (monorepo) or `@<scope>/ui` (scaffolded projects) - never deep-import (`@/components/ui/*`).
 
 Usage examples:
 
@@ -119,7 +119,7 @@ For public-page references, inspect `apps/web/src/app/example-page/page.js`, `ap
 
 ## Template Sync
 
-`packages/cli/templates/` is **generated from monorepo source** — never edited manually (except `TEMPLATE_ONLY` files).
+`packages/cli/templates/` is **generated from monorepo source** - never edited manually (except `TEMPLATE_ONLY` files).
 
 After changing any source file in `apps/web/`, `apps/worker/`, `packages/db/`, `packages/config/`, `packages/ui/`, or `packages/jobs/`:
 
@@ -205,7 +205,7 @@ myCounter.inc({ plan: "pro" });
 
 ## Optimistic Updates (instant UI)
 
-Use React 19 built-ins only — `useOptimistic` or local `useState` with `startTransition`. Never add TanStack Query or SWR.
+Use React 19 built-ins only - `useOptimistic` or local `useState` with `startTransition`. Never add TanStack Query or SWR.
 
 ```javascript
 // Pattern: useOptimistic for list/board data

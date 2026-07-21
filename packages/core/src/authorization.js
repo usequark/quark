@@ -18,7 +18,7 @@ import { ForbiddenError } from "./errors.js";
  */
 
 /**
- * Default policy shipped with Quark — easily overridable by downstream projects.
+ * Default policy shipped with Quark - easily overridable by downstream projects.
  * @type {Policy}
  */
 export const defaultPolicy = {

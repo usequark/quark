@@ -63,6 +63,9 @@ importers:
       '@techstream/quark-admin':
         specifier: workspace:*
         version: link:../../packages/admin
+      '@techstream/quark-bookings':
+        specifier: workspace:*
+        version: link:../../packages/bookings
       '@techstream/quark-cms':
         specifier: workspace:*
         version: link:../../packages/cms
@@ -84,6 +87,9 @@ importers:
       '@techstream/quark-ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      ioredis:
+        specifier: ^5.10.0
+        version: 5.10.0
       lucide-react:
         specifier: ^1.14.0
         version: 1.14.0(react@19.2.4)
@@ -162,6 +168,15 @@ importers:
         specifier: workspace:*
         version: link:../core
 
+  packages/bookings:
+    dependencies:
+      '@techstream/quark-core':
+        specifier: workspace:*
+        version: link:../core
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
+
   packages/cli:
     dependencies:
       chalk:
@@ -197,6 +212,9 @@ importers:
       '@techstream/quark-core':
         specifier: workspace:*
         version: link:../core
+      ioredis:
+        specifier: ^5.10.0
+        version: 5.10.0
 
   packages/core:
     dependencies:

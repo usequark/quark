@@ -15,7 +15,7 @@ Seeding is driven by `packages/db/prisma/seed.js` via `pnpm db:seed`. Two profil
 | `minimal` | Admin user only (`admin@example.com`) | Production: first deploy only |
 | `dev` *(default)* | Admin + sample viewer + audit log + sample job | Staging, local dev, E2E tests |
 
-Both profiles are **idempotent** — re-running when data already exists is safe and exits cleanly.
+Both profiles are **idempotent** - re-running when data already exists is safe and exits cleanly.
 
 ### Commands
 
@@ -33,16 +33,16 @@ pnpm --filter @techstream/quark-db exec prisma migrate reset --force
 
 ### Why SEED_PROFILE, not NODE_ENV
 
-`SEED_PROFILE` is intentionally separate from `NODE_ENV`. Railway sets `NODE_ENV=production` on **all** deployed services — including staging — for Next.js build/performance reasons. Deriving the seed profile from `NODE_ENV` would silently give staging the minimal seed instead of the full dev dataset.
+`SEED_PROFILE` is intentionally separate from `NODE_ENV`. Railway sets `NODE_ENV=production` on **all** deployed services - including staging - for Next.js build/performance reasons. Deriving the seed profile from `NODE_ENV` would silently give staging the minimal seed instead of the full dev dataset.
 
-This project does support `NODE_ENV=staging` via `resolveEnvironment()` in `packages/config/src/environment.js`, but that only works if Railway is explicitly configured with that value — an error-prone manual step. `SEED_PROFILE` makes intent explicit and visible in deploy commands and CI logs.
+This project does support `NODE_ENV=staging` via `resolveEnvironment()` in `packages/config/src/environment.js`, but that only works if Railway is explicitly configured with that value - an error-prone manual step. `SEED_PROFILE` makes intent explicit and visible in deploy commands and CI logs.
 
 ### Seed credentials (dev data only)
 
 | Email | Password | Role |
 |---|---|---|
 | `admin@example.com` | `admin123` | admin |
-| `user@example.com` | *(OAuth only — no password set)* | viewer |
+| `user@example.com` | *(OAuth only - no password set)* | viewer |
 
 > These are scaffolded placeholder credentials. Change `admin@example.com`'s password immediately after first login on any deployed environment.
 
@@ -60,8 +60,8 @@ User ─┬── Account    (1:many, cascade delete)
       ├── AuditLog   (1:many, cascade delete)
       └── File       (1:many, set null on delete)
 
-Job           (standalone — BullMQ audit trail)
-VerificationToken (standalone — NextAuth email verification)
+Job           (standalone - BullMQ audit trail)
+VerificationToken (standalone - NextAuth email verification)
 ```
 
 ---
@@ -76,13 +76,13 @@ The central identity model. Used by NextAuth for authentication and by the appli
 |--------|------|-------------|-------------|
 | `id` | `String` | PK, CUID | Unique identifier |
 | `email` | `String` | Unique | Login email |
-| `emailVerified` | `DateTime?` | — | Set when email is confirmed |
-| `name` | `String?` | — | Display name |
-| `password` | `String?` | — | Bcrypt hash (12 rounds). Null for OAuth-only users |
-| `image` | `String?` | — | Avatar URL |
+| `emailVerified` | `DateTime?` | - | Set when email is confirmed |
+| `name` | `String?` | - | Display name |
+| `password` | `String?` | - | Bcrypt hash (12 rounds). Null for OAuth-only users |
+| `image` | `String?` | - | Avatar URL |
 | `role` | `String` | Default: `"viewer"` | RBAC role (`admin`, `editor`, `viewer`) |
-| `createdAt` | `DateTime` | Default: `now()` | — |
-| `updatedAt` | `DateTime` | `@updatedAt` | — |
+| `createdAt` | `DateTime` | Default: `now()` | - |
+| `updatedAt` | `DateTime` | `@updatedAt` | - |
 
 **Indexes:** `email`, `createdAt`
 
@@ -102,22 +102,22 @@ OAuth provider accounts linked to users.
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
-| `id` | `String` | PK, CUID | — |
-| `userId` | `String` | FK → User | — |
-| `type` | `String` | — | Account type (e.g. `"oauth"`) |
-| `provider` | `String` | — | Provider name (e.g. `"github"`, `"google"`) |
-| `providerAccountId` | `String` | — | External account ID |
+| `id` | `String` | PK, CUID | - |
+| `userId` | `String` | FK → User | - |
+| `type` | `String` | - | Account type (e.g. `"oauth"`) |
+| `provider` | `String` | - | Provider name (e.g. `"github"`, `"google"`) |
+| `providerAccountId` | `String` | - | External account ID |
 | `refresh_token` | `String?` | `@db.Text` | OAuth refresh token |
 | `access_token` | `String?` | `@db.Text` | OAuth access token |
-| `expires_at` | `Int?` | — | Token expiry (epoch seconds) |
-| `token_type` | `String?` | — | e.g. `"bearer"` |
-| `scope` | `String?` | — | OAuth scopes granted |
+| `expires_at` | `Int?` | - | Token expiry (epoch seconds) |
+| `token_type` | `String?` | - | e.g. `"bearer"` |
+| `scope` | `String?` | - | OAuth scopes granted |
 | `id_token` | `String?` | `@db.Text` | OIDC ID token |
-| `session_state` | `String?` | — | Provider session state |
-| `createdAt` | `DateTime` | Default: `now()` | — |
-| `updatedAt` | `DateTime` | `@updatedAt` | — |
+| `session_state` | `String?` | - | Provider session state |
+| `createdAt` | `DateTime` | Default: `now()` | - |
+| `updatedAt` | `DateTime` | `@updatedAt` | - |
 
-**Unique:** `(provider, providerAccountId)` — one account per provider per external ID.
+**Unique:** `(provider, providerAccountId)` - one account per provider per external ID.
 
 **Indexes:** `userId`
 
@@ -131,12 +131,12 @@ Active user sessions for database-backed session strategy.
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
-| `id` | `String` | PK, CUID | — |
+| `id` | `String` | PK, CUID | - |
 | `sessionToken` | `String` | Unique | The session cookie value |
-| `userId` | `String` | FK → User | — |
-| `expires` | `DateTime` | — | Session expiry |
-| `createdAt` | `DateTime` | Default: `now()` | — |
-| `updatedAt` | `DateTime` | `@updatedAt` | — |
+| `userId` | `String` | FK → User | - |
+| `expires` | `DateTime` | - | Session expiry |
+| `createdAt` | `DateTime` | Default: `now()` | - |
+| `updatedAt` | `DateTime` | `@updatedAt` | - |
 
 **Indexes:** `userId`, `expires`
 
@@ -150,38 +150,38 @@ Email verification and magic-link tokens.
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
-| `identifier` | `String` | — | Usually the user's email |
+| `identifier` | `String` | - | Usually the user's email |
 | `token` | `String` | Unique | The verification token value |
-| `expires` | `DateTime` | — | Token expiry |
-| `createdAt` | `DateTime` | Default: `now()` | — |
+| `expires` | `DateTime` | - | Token expiry |
+| `createdAt` | `DateTime` | Default: `now()` | - |
 
 **Unique:** `(identifier, token)`
 
 **Indexes:** `token`, `expires`
 
-**Note:** No `id` primary key — uses the composite `(identifier, token)` unique constraint. The `expires` index supports efficient cleanup via `verificationToken.deleteExpired()`.
+**Note:** No `id` primary key - uses the composite `(identifier, token)` unique constraint. The `expires` index supports efficient cleanup via `verificationToken.deleteExpired()`.
 
 ---
 
 ### Job
 
-Database-side audit trail for background jobs. **Not actively used by the BullMQ worker** — job lifecycle is managed entirely in Redis. This model exists for optional reporting/auditing.
+Database-side audit trail for background jobs. **Not actively used by the BullMQ worker** - job lifecycle is managed entirely in Redis. This model exists for optional reporting/auditing.
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
-| `id` | `String` | PK, CUID | — |
-| `queue` | `String` | — | Queue name (e.g. `"default"`) |
-| `name` | `String` | — | Job type (e.g. `"SEND_WELCOME_EMAIL"`) |
-| `data` | `Json?` | — | Job payload |
+| `id` | `String` | PK, CUID | - |
+| `queue` | `String` | - | Queue name (e.g. `"default"`) |
+| `name` | `String` | - | Job type (e.g. `"SEND_WELCOME_EMAIL"`) |
+| `data` | `Json?` | - | Job payload |
 | `status` | `JobStatus` | Default: `PENDING` | Current state |
-| `error` | `String?` | — | Error message on failure |
+| `error` | `String?` | - | Error message on failure |
 | `attempts` | `Int` | Default: `0` | Number of attempts made |
 | `maxRetries` | `Int` | Default: `3` | Maximum retry count |
 | `runAt` | `DateTime` | Default: `now()` | Scheduled execution time |
-| `startedAt` | `DateTime?` | — | When processing began |
-| `completedAt` | `DateTime?` | — | When processing finished |
-| `createdAt` | `DateTime` | Default: `now()` | — |
-| `updatedAt` | `DateTime` | `@updatedAt` | — |
+| `startedAt` | `DateTime?` | - | When processing began |
+| `completedAt` | `DateTime?` | - | When processing finished |
+| `createdAt` | `DateTime` | Default: `now()` | - |
+| `updatedAt` | `DateTime` | `@updatedAt` | - |
 
 **Indexes:** `queue`, `status`, `runAt`, `(status, runAt)` (compound), `createdAt`
 
@@ -195,16 +195,16 @@ Uploaded file metadata. Actual file data lives in storage (local filesystem or S
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
-| `id` | `String` | PK, CUID | — |
-| `filename` | `String` | — | Stored filename (may differ from original) |
-| `originalName` | `String` | — | User-provided filename |
-| `mimeType` | `String` | — | Detected MIME type |
-| `size` | `Int` | — | File size in bytes |
+| `id` | `String` | PK, CUID | - |
+| `filename` | `String` | - | Stored filename (may differ from original) |
+| `originalName` | `String` | - | User-provided filename |
+| `mimeType` | `String` | - | Detected MIME type |
+| `size` | `Int` | - | File size in bytes |
 | `storageKey` | `String` | Unique | Path/key in storage backend |
 | `storageProvider` | `String` | Default: `"local"` | `"local"` or `"s3"` |
 | `uploadedById` | `String?` | FK → User | Uploader (null = orphaned) |
-| `createdAt` | `DateTime` | Default: `now()` | — |
-| `updatedAt` | `DateTime` | `@updatedAt` | — |
+| `createdAt` | `DateTime` | Default: `now()` | - |
+| `updatedAt` | `DateTime` | `@updatedAt` | - |
 
 **Indexes:** `uploadedById`, `mimeType`, `createdAt`
 
@@ -216,18 +216,18 @@ Uploaded file metadata. Actual file data lives in storage (local filesystem or S
 
 ### AuditLog
 
-Immutable audit trail for user actions. Append-only — no update or delete queries exist.
+Immutable audit trail for user actions. Append-only - no update or delete queries exist.
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
-| `id` | `String` | PK, CUID | — |
+| `id` | `String` | PK, CUID | - |
 | `userId` | `String` | FK → User | Who performed the action |
-| `action` | `String` | — | Action name (e.g. `"create"`, `"delete"`) |
-| `entity` | `String` | — | Entity type (e.g. `"post"`, `"user"`) |
-| `entityId` | `String` | — | ID of the affected entity |
-| `changes` | `Json?` | — | Before/after field values |
-| `metadata` | `Json?` | — | Additional context (IP, user agent, etc.) |
-| `createdAt` | `DateTime` | Default: `now()` | — |
+| `action` | `String` | - | Action name (e.g. `"create"`, `"delete"`) |
+| `entity` | `String` | - | Entity type (e.g. `"post"`, `"user"`) |
+| `entityId` | `String` | - | ID of the affected entity |
+| `changes` | `Json?` | - | Before/after field values |
+| `metadata` | `Json?` | - | Additional context (IP, user agent, etc.) |
+| `createdAt` | `DateTime` | Default: `now()` | - |
 
 **Indexes:** `userId`, `action`, `entity`, `createdAt`
 
@@ -245,7 +245,7 @@ Immutable audit trail for user actions. Append-only — no update or delete quer
 | `20260214_add_audit_log_*` | 2026-02-14 | Add AuditLog model |
 | `20260215_add_account_timestamps` | 2026-02-15 | Add createdAt/updatedAt to Account |
 | `20260215_add_indexes` | 2026-02-15 | Add expires index on Session/VerificationToken, compound index on Job |
-| `20260218_remove_post` | 2026-02-18 | Remove Post model — use domain-specific models per project |
+| `20260218_remove_post` | 2026-02-18 | Remove Post model - use domain-specific models per project |
 
 ---
 
@@ -264,10 +264,10 @@ Immutable audit trail for user actions. Append-only — no update or delete quer
 ### Query Patterns
 
 - **Always use `USER_SAFE_SELECT`** when returning user data to clients
-- **Never expose `password`** — only `user.findByEmail()` returns it for auth
-- **Use pagination** — all `findAll()` and `findMany()` helpers accept `{ skip, take }`
-- **Default ordering** — all list queries order by `createdAt: "desc"`
-- **Cascade deletes** — understand which relations cascade before deleting parent records
+- **Never expose `password`** - only `user.findByEmail()` returns it for auth
+- **Use pagination** - all `findAll()` and `findMany()` helpers accept `{ skip, take }`
+- **Default ordering** - all list queries order by `createdAt: "desc"`
+- **Cascade deletes** - understand which relations cascade before deleting parent records
 
 ### Adding a New Entity
 

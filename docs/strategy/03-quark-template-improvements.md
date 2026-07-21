@@ -7,7 +7,7 @@
 
 ## 1. New Design Tokens (`globals.css`)
 
-Add to `apps/web/src/app/globals.css` inside the `:root` block. These are infrastructure tokens — no opinionated design values. All bridge to Tailwind v4 via `@theme inline`.
+Add to `apps/web/src/app/globals.css` inside the `:root` block. These are infrastructure tokens - no opinionated design values. All bridge to Tailwind v4 via `@theme inline`.
 
 ### 1.1 Typography Tokens
 
@@ -146,7 +146,7 @@ Composable hero section. Provides structure without dictating design.
 
 #### Implementation Notes
 
-- **No `"use client"`** — this is a server-safe presentational component.
+- **No `"use client"`** - this is a server-safe presentational component.
 - `highlightedWords` matching: split the headline string, wrap matching words in `<em>` with `text-primary italic not-italic` styling.
 - `variant="split"`: two-column grid (`lg:grid-cols-2`), children slot renders in the right column.
 - `variant="image"`: full-width background image via inline `style={{ backgroundImage }}`, overlay div with `bg-black/50`.
@@ -154,7 +154,7 @@ Composable hero section. Provides structure without dictating design.
 - Stats render as a flex row below CTAs: `text-3xl font-bold` for value, `text-sm text-text-muted` for label.
 - Trust badges render as a horizontal flex row of small text badges.
 - Responsive: stacks vertically on mobile, side-by-side on desktop.
-- Works with Navbar/MobileNavbar above it — no conflicting z-index or positioning.
+- Works with Navbar/MobileNavbar above it - no conflicting z-index or positioning.
 
 #### Skeleton
 
@@ -363,7 +363,7 @@ Wraps multiple TestimonialCards. Client component (`"use client"`).
 - Renders prev/next buttons with `aria-label="Previous testimonial"` / `aria-label="Next testimonial"`.
 - Renders dot indicators with `aria-label="Go to testimonial X"` and `aria-current={index === current ? "true" : undefined}`.
 - Wrapper has `role="region"` and `aria-label="Testimonials"`.
-- Respects `prefers-reduced-motion` — disables auto-play if `window.matchMedia('(prefers-reduced-motion: reduce)').matches`.
+- Respects `prefers-reduced-motion` - disables auto-play if `window.matchMedia('(prefers-reduced-motion: reduce)').matches`.
 - Only one slide visible at a time; uses CSS transition for slide change.
 
 #### Skeleton
@@ -590,7 +590,7 @@ Animated number counters. Client component (`"use client"`).
 - Animation duration: ~1.5s per counter. All counters animate simultaneously on trigger.
 - `variant="inline"`: horizontal flex row with dividers.
 - `variant="grid"`: responsive grid (`grid-cols-2 lg:grid-cols-4`).
-- Respects `prefers-reduced-motion` — if set, numbers render at final value immediately (no animation).
+- Respects `prefers-reduced-motion` - if set, numbers render at final value immediately (no animation).
 - Each counter uses `useRef` + `useState` for the animated value.
 - Format: numbers ≥ 1000 use `toLocaleString()` for comma separators. Supports suffix via a `suffix` prop on each item (e.g., `{ value: 99, suffix: "%", label: "Satisfaction" }`).
 
@@ -797,48 +797,48 @@ All templates go in `apps/web/src/app/` as new route directories:
 
 **Sections (top to bottom):**
 
-1. **Navbar** — standard shell with logo + links + CTA
-2. **Hero** (product screenshot variant) — headline, subtitle, CTA, secondary CTA, stats (users, revenue, uptime), trust badges (SOC2, GDPR, etc.)
-3. **LogoCloud** (grid variant) — partner/integration logos
-4. **Features** — 3-column card grid. Each card: icon (lucide-react), title, description. Use `Card`/`CardHeader`/`CardTitle`/`CardContent`.
-5. **Stats** (grid variant) — 4 stat items (customers, transactions, countries, uptime)
-6. **TestimonialCarousel** — 3-4 TestimonialCards with ratings
-7. **Pricing** — 3-column card grid (Starter/Pro/Enterprise). Each card: plan name, price, feature list, CTA button. Highlight "Pro" with a subtle border/badge.
-8. **FAQ** — collapsible Card components (use `variant="collapsible"`). 6-8 common questions.
-9. **EmailCapture** — inline with benefit copy
-10. **Footer** — standard shell
+1. **Navbar** - standard shell with logo + links + CTA
+2. **Hero** (product screenshot variant) - headline, subtitle, CTA, secondary CTA, stats (users, revenue, uptime), trust badges (SOC2, GDPR, etc.)
+3. **LogoCloud** (grid variant) - partner/integration logos
+4. **Features** - 3-column card grid. Each card: icon (lucide-react), title, description. Use `Card`/`CardHeader`/`CardTitle`/`CardContent`.
+5. **Stats** (grid variant) - 4 stat items (customers, transactions, countries, uptime)
+6. **TestimonialCarousel** - 3-4 TestimonialCards with ratings
+7. **Pricing** - 3-column card grid (Starter/Pro/Enterprise). Each card: plan name, price, feature list, CTA button. Highlight "Pro" with a subtle border/badge.
+8. **FAQ** - collapsible Card components (use `variant="collapsible"`). 6-8 common questions.
+9. **EmailCapture** - inline with benefit copy
+10. **Footer** - standard shell
 
 ### 3.2 Local Service Landing (`templates/local-service/page.js`)
 
 **Sections (top to bottom):**
 
-1. **Navbar** — standard shell
-2. **Hero** (image variant) — headline, subtitle, CTA ("Get a free quote"), secondary CTA ("View our work"), stats (years in business, projects completed, 5-star reviews)
-3. **Services** — 3-column card grid. Each card: icon, service name, short description.
-4. **Projects/Gallery** — responsive image grid (2-col mobile, 3-col desktop). Each image in a Card with subtle hover effect.
-5. **Stats** (inline variant) — 3-4 stat items with dividers
-6. **TestimonialCarousel** — 3-4 TestimonialCards with ratings
-7. **About** — two-column layout: text block (heading + paragraph + CTA) + image
-8. **Contact** — two-column: contact form (Input + Textarea + Button) + contact details (phone, email, address, hours)
-9. **Footer** — standard shell
+1. **Navbar** - standard shell
+2. **Hero** (image variant) - headline, subtitle, CTA ("Get a free quote"), secondary CTA ("View our work"), stats (years in business, projects completed, 5-star reviews)
+3. **Services** - 3-column card grid. Each card: icon, service name, short description.
+4. **Projects/Gallery** - responsive image grid (2-col mobile, 3-col desktop). Each image in a Card with subtle hover effect.
+5. **Stats** (inline variant) - 3-4 stat items with dividers
+6. **TestimonialCarousel** - 3-4 TestimonialCards with ratings
+7. **About** - two-column layout: text block (heading + paragraph + CTA) + image
+8. **Contact** - two-column: contact form (Input + Textarea + Button) + contact details (phone, email, address, hours)
+9. **Footer** - standard shell
 
 ### 3.3 E-commerce Landing (`templates/ecommerce/page.js`)
 
 **Sections (top to bottom):**
 
-1. **Navbar** — standard shell with cart icon
-2. **Hero** (image/video variant) — headline, subtitle, CTA ("Shop now"), secondary CTA ("Learn more")
-3. **Featured Products** — responsive product grid (2-col mobile, 4-col desktop). Each product card: image, name, price, "Add to cart" button. Use Card components.
-4. **Categories** — 3-column card grid. Each card: category image, name, item count.
-5. **TestimonialCarousel** — 3-4 TestimonialCards
-6. **EmailCapture** — "Get 10% off your first order" with benefit copy
-7. **Footer** — standard shell with extra link columns (Shop, About, Help, Legal)
+1. **Navbar** - standard shell with cart icon
+2. **Hero** (image/video variant) - headline, subtitle, CTA ("Shop now"), secondary CTA ("Learn more")
+3. **Featured Products** - responsive product grid (2-col mobile, 4-col desktop). Each product card: image, name, price, "Add to cart" button. Use Card components.
+4. **Categories** - 3-column card grid. Each card: category image, name, item count.
+5. **TestimonialCarousel** - 3-4 TestimonialCards
+6. **EmailCapture** - "Get 10% off your first order" with benefit copy
+7. **Footer** - standard shell with extra link columns (Shop, About, Help, Legal)
 
 ---
 
 ## 4. Implementation Checklist
 
-### Phase 1 — Tokens + Core Components
+### Phase 1 - Tokens + Core Components
 
 - [ ] Add typography tokens to `globals.css` (`:root` block)
 - [ ] Add shadow tokens to `globals.css` (`:root` block)
@@ -861,7 +861,7 @@ All templates go in `apps/web/src/app/` as new route directories:
 - [ ] Run `pnpm test` and ensure all tests pass
 - [ ] Run `pnpm --filter @techstream/quark-create-app sync-templates`
 
-### Phase 2 — EmailCapture + Templates
+### Phase 2 - EmailCapture + Templates
 
 - [ ] Create `packages/ui/src/email-capture.js`
 - [ ] Create `packages/ui/src/email-capture.test.js`
@@ -874,7 +874,7 @@ All templates go in `apps/web/src/app/` as new route directories:
 - [ ] Run `pnpm test` and ensure all tests pass
 - [ ] Run `pnpm --filter @techstream/quark-create-app sync-templates`
 
-### Phase 3 — Polish
+### Phase 3 - Polish
 
 - [ ] Add spacing tokens to `globals.css`
 - [ ] Add spacing token bridge to `@theme inline`
@@ -885,15 +885,15 @@ All templates go in `apps/web/src/app/` as new route directories:
 
 ## 5. Rules & Conventions
 
-- **All components are `.js` files** — no TypeScript.
-- **All components use `React.createElement`** — no JSX. Follow existing patterns in `packages/ui/src/`.
+- **All components are `.js` files** - no TypeScript.
+- **All components use `React.createElement`** - no JSX. Follow existing patterns in `packages/ui/src/`.
 - **All components accept `className`** for overrides, merged at the end of the class string.
-- **All interactive components include ARIA attributes** — `aria-label`, `aria-expanded`, `aria-current`, `role`, etc.
-- **No new dependencies** — no animation libraries, no carousel libraries, no third-party form libraries.
-- **Components go in `packages/ui/src/`** — each with a co-located `*.test.js` file.
-- **Exports go in `packages/ui/src/index.js`** — barrel export for each new component.
+- **All interactive components include ARIA attributes** - `aria-label`, `aria-expanded`, `aria-current`, `role`, etc.
+- **No new dependencies** - no animation libraries, no carousel libraries, no third-party form libraries.
+- **Components go in `packages/ui/src/`** - each with a co-located `*.test.js` file.
+- **Exports go in `packages/ui/src/index.js`** - barrel export for each new component.
 - **After source changes, run:** `pnpm --filter @techstream/quark-create-app sync-templates`
-- **Use `"use client"` only when needed** — components using hooks (`useState`, `useEffect`, `useRef`, `useActionState`, `IntersectionObserver`) need it. Presentational components do not.
-- **Follow existing Tailwind class patterns** — use the design token CSS vars (`text-text`, `bg-surface`, `border-border`, `rounded-[--radius-default]`, etc.).
-- **Respect `prefers-reduced-motion`** — disable animations when the user prefers reduced motion.
-- **Use `lucide-react` for icons** — it's already a dependency of `packages/ui`.
+- **Use `"use client"` only when needed** - components using hooks (`useState`, `useEffect`, `useRef`, `useActionState`, `IntersectionObserver`) need it. Presentational components do not.
+- **Follow existing Tailwind class patterns** - use the design token CSS vars (`text-text`, `bg-surface`, `border-border`, `rounded-[--radius-default]`, etc.).
+- **Respect `prefers-reduced-motion`** - disable animations when the user prefers reduced motion.
+- **Use `lucide-react` for icons** - it's already a dependency of `packages/ui`.

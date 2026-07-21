@@ -14,17 +14,17 @@ Next.js API Route → BullMQ Queue → Worker Handler → OpenCode SDK → OpenC
 
 **Key components:**
 
-- **OpenCode Server** — A headless AI agent server that manages sessions, dispatches prompts to LLMs, and exposes a REST API (port 4096). Runs as a separate Railway service.
-- **OpenRouter** — The model gateway. All LLM calls are routed through OpenRouter, which provides access to dozens of models (DeepSeek, Gemini, GPT, Claude, etc.) through a single API key.
-- **BullMQ Worker** — Background job processing. The worker receives AI tasks from your application, communicates with the OpenCode server via the TypeScript SDK, and returns results asynchronously.
-- **Custom Plugin** — Techstream-specific hooks and tools that extend OpenCode with quality gates, output composition, CMS publishing, and brand compliance checks.
+- **OpenCode Server** - A headless AI agent server that manages sessions, dispatches prompts to LLMs, and exposes a REST API (port 4096). Runs as a separate Railway service.
+- **OpenRouter** - The model gateway. All LLM calls are routed through OpenRouter, which provides access to dozens of models (DeepSeek, Gemini, GPT, Claude, etc.) through a single API key.
+- **BullMQ Worker** - Background job processing. The worker receives AI tasks from your application, communicates with the OpenCode server via the TypeScript SDK, and returns results asynchronously.
+- **Custom Plugin** - Techstream-specific hooks and tools that extend OpenCode with quality gates, output composition, CMS publishing, and brand compliance checks.
 
 **Design principles:**
 
-- **HTTP, not stdio** — The OpenCode server exposes a REST API (OpenAPI 3.1) for decoupled worker communication over Railway internal networking.
-- **Stateless workers** — Each BullMQ job carries full context (prompt, agent, session title). No shared state between jobs.
-- **No fork** — Zero modifications to OpenCode source code. All customization is done via configuration, plugins, and the TypeScript SDK.
-- **OpenRouter as model gateway** — All LLM calls go through OpenRouter, giving you access to every major model provider with a single API key and unified billing.
+- **HTTP, not stdio** - The OpenCode server exposes a REST API (OpenAPI 3.1) for decoupled worker communication over Railway internal networking.
+- **Stateless workers** - Each BullMQ job carries full context (prompt, agent, session title). No shared state between jobs.
+- **No fork** - Zero modifications to OpenCode source code. All customization is done via configuration, plugins, and the TypeScript SDK.
+- **OpenRouter as model gateway** - All LLM calls go through OpenRouter, giving you access to every major model provider with a single API key and unified billing.
 
 ---
 
@@ -48,7 +48,7 @@ quark add ai
 
 This command does the following:
 
-1. **Creates `apps/opencode/`** — Copies the OpenCode server template (Dockerfile, railway.json, config, skills) from `packages/opencode/deploy/` into your project.
+1. **Creates `apps/opencode/`** - Copies the OpenCode server template (Dockerfile, railway.json, config, skills) from `packages/opencode/deploy/` into your project.
 2. **Adds `@opencode-ai/sdk`** to `apps/worker/package.json` dependencies.
 3. **Migrates the worker** by running `migrate-worker.js`, which:
    - Adds `AI: "ai-queue"` to `JOB_QUEUES` in `packages/jobs/src/definitions.js`
@@ -59,9 +59,9 @@ This command does the following:
 
 ### Prerequisites
 
-- **Docker** — Required for local development (PostgreSQL + Redis for BullMQ)
-- **OpenRouter API key** — Get one at [openrouter.ai](https://openrouter.ai/keys)
-- **pnpm** — Package manager for the monorepo
+- **Docker** - Required for local development (PostgreSQL + Redis for BullMQ)
+- **OpenRouter API key** - Get one at [openrouter.ai](https://openrouter.ai/keys)
+- **pnpm** - Package manager for the monorepo
 
 ---
 
@@ -71,7 +71,7 @@ This command does the following:
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `OPENROUTER_API_KEY` | **Yes** | — | OpenRouter API key. Get one at [openrouter.ai/keys](https://openrouter.ai/keys). Used by the OpenCode server to authenticate with OpenRouter. |
+| `OPENROUTER_API_KEY` | **Yes** | - | OpenRouter API key. Get one at [openrouter.ai/keys](https://openrouter.ai/keys). Used by the OpenCode server to authenticate with OpenRouter. |
 | `OPENCODE_SERVER_URL` | No | `http://opencode:4096` | Base URL of the OpenCode server. In production on Railway, this uses internal networking (`http://opencode.railway.internal:4096`). The worker handler falls back to `http://opencode:4096` (Docker Compose service name) if not set. |
 
 ### Setting up OpenRouter
@@ -136,7 +136,7 @@ Environment variable interpolation uses the `${VAR_NAME}` syntax. The OpenCode s
 
 | Provider ID | Description |
 |---|---|
-| `openrouter` | OpenRouter gateway — access to 200+ models from all major providers |
+| `openrouter` | OpenRouter gateway - access to 200+ models from all major providers |
 | `openai` | Direct OpenAI API (bypasses OpenRouter) |
 | `anthropic` | Direct Anthropic API (bypasses OpenRouter) |
 | `google` | Direct Google AI API (bypasses OpenRouter) |
@@ -237,9 +237,9 @@ Each agent can override the default model:
 
 Three levels of data isolation between agents:
 
-- **Model A — Shared Project Root (weakest):** All agents share one `.opencode/` directory. Isolation is by convention (agent prompts + permissions). Suitable for internal tools, low-sensitivity data.
-- **Model B — Separate Project Roots (moderate):** Each domain gets its own directory with its own `.opencode/`. The `x-opencode-directory` header controls which files each session sees. Suitable for multi-department projects with moderate data sensitivity.
-- **Model C — Separate Servers (strongest):** Each domain runs its own OpenCode server (separate Railway service). Complete process, filesystem, and database isolation. Required for financial data, PII, regulated industries.
+- **Model A - Shared Project Root (weakest):** All agents share one `.opencode/` directory. Isolation is by convention (agent prompts + permissions). Suitable for internal tools, low-sensitivity data.
+- **Model B - Separate Project Roots (moderate):** Each domain gets its own directory with its own `.opencode/`. The `x-opencode-directory` header controls which files each session sees. Suitable for multi-department projects with moderate data sensitivity.
+- **Model C - Separate Servers (strongest):** Each domain runs its own OpenCode server (separate Railway service). Complete process, filesystem, and database isolation. Required for financial data, PII, regulated industries.
 
 ---
 
@@ -298,10 +298,10 @@ Three levels of data isolation between agents:
 
 ### Key Design Decisions
 
-- **HTTP, not stdio** — The OpenCode server exposes a REST API (OpenAPI 3.1). The worker communicates over HTTP, which is more reliable in containerized environments than stdio-based IPC.
-- **Stateless workers** — Each BullMQ job carries full context (prompt, agent, session title). No shared state between workers, making horizontal scaling trivial.
-- **Dynamic import** — The worker uses `await import("@opencode-ai/sdk")` (dynamic import) so the SDK is only loaded when AI jobs are actually processed. This keeps the worker lightweight when AI isn't configured.
-- **Railway internal networking** — Services communicate over Railway's private network using `.railway.internal` hostnames, keeping traffic off the public internet.
+- **HTTP, not stdio** - The OpenCode server exposes a REST API (OpenAPI 3.1). The worker communicates over HTTP, which is more reliable in containerized environments than stdio-based IPC.
+- **Stateless workers** - Each BullMQ job carries full context (prompt, agent, session title). No shared state between workers, making horizontal scaling trivial.
+- **Dynamic import** - The worker uses `await import("@opencode-ai/sdk")` (dynamic import) so the SDK is only loaded when AI jobs are actually processed. This keeps the worker lightweight when AI isn't configured.
+- **Railway internal networking** - Services communicate over Railway's private network using `.railway.internal` hostnames, keeping traffic off the public internet.
 
 ---
 
@@ -317,7 +317,7 @@ Sends a prompt to an AI agent and returns the response.
 
 | Field | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `prompt` | `string` | Yes | — | The prompt text to send to the agent |
+| `prompt` | `string` | Yes | - | The prompt text to send to the agent |
 | `agent` | `string` | No | `"assistant"` | The agent to use (e.g., `"assistant"`, `"strategist"`, `"researcher"`) |
 | `sessionTitle` | `string` | No | `"AI Task: {agent}"` | Optional title for the session |
 
@@ -636,11 +636,11 @@ This copies `packages/opencode/deploy/` → `packages/cli/templates/opencode/`, 
 
 **Causes and solutions:**
 
-1. **Typo in model name** — Verify the model name matches what OpenRouter expects. Check available models at [openrouter.ai/models](https://openrouter.ai/models).
+1. **Typo in model name** - Verify the model name matches what OpenRouter expects. Check available models at [openrouter.ai/models](https://openrouter.ai/models).
 
-2. **Provider prefix mismatch** — Ensure the model field uses the correct format: `openrouter/provider/model-name`. For example, `openrouter/deepseek/deepseek-v4-flash` (not `deepseek/deepseek-v4-flash` without the `openrouter/` prefix).
+2. **Provider prefix mismatch** - Ensure the model field uses the correct format: `openrouter/provider/model-name`. For example, `openrouter/deepseek/deepseek-v4-flash` (not `deepseek/deepseek-v4-flash` without the `openrouter/` prefix).
 
-3. **Model deprecated or renamed** — Models are occasionally deprecated by providers. Check the [OpenRouter models page](https://openrouter.ai/models) for the latest names.
+3. **Model deprecated or renamed** - Models are occasionally deprecated by providers. Check the [OpenRouter models page](https://openrouter.ai/models) for the latest names.
 
 ### Connection refused (server not running)
 
@@ -648,7 +648,7 @@ This copies `packages/opencode/deploy/` → `packages/cli/templates/opencode/`, 
 
 **Causes and solutions:**
 
-1. **OpenCode server not started** — Ensure the OpenCode service is running:
+1. **OpenCode server not started** - Ensure the OpenCode service is running:
    ```bash
    # Docker Compose
    docker compose ps opencode
@@ -657,12 +657,12 @@ This copies `packages/opencode/deploy/` → `packages/cli/templates/opencode/`, 
    railway service status opencode
    ```
 
-2. **Wrong hostname** — Check the `OPENCODE_SERVER_URL` environment variable:
+2. **Wrong hostname** - Check the `OPENCODE_SERVER_URL` environment variable:
    - Local Docker: `http://opencode:4096` (Docker Compose service name)
    - Railway: `http://opencode.railway.internal:4096` (internal networking)
    - Custom: Set `OPENCODE_SERVER_URL` explicitly if using a different hostname
 
-3. **Port mismatch** — Verify the OpenCode server is listening on port 4096. Check the Dockerfile and railway.json for the `--port` argument.
+3. **Port mismatch** - Verify the OpenCode server is listening on port 4096. Check the Dockerfile and railway.json for the `--port` argument.
 
 ### API key not set
 
@@ -670,7 +670,7 @@ This copies `packages/opencode/deploy/` → `packages/cli/templates/opencode/`, 
 
 **Causes and solutions:**
 
-1. **Missing environment variable** — Ensure `OPENROUTER_API_KEY` is set in the OpenCode server's environment:
+1. **Missing environment variable** - Ensure `OPENROUTER_API_KEY` is set in the OpenCode server's environment:
    ```bash
    # Check locally
    echo $OPENROUTER_API_KEY
@@ -679,9 +679,9 @@ This copies `packages/opencode/deploy/` → `packages/cli/templates/opencode/`, 
    railway env list
    ```
 
-2. **Invalid API key** — Generate a new key at [openrouter.ai/keys](https://openrouter.ai/keys). Keys start with `sk-or-v1-`.
+2. **Invalid API key** - Generate a new key at [openrouter.ai/keys](https://openrouter.ai/keys). Keys start with `sk-or-v1-`.
 
-3. **Key not interpolated** — The `opencode.json` config uses `${OPENROUTER_API_KEY}` syntax. Verify the config file has the correct format:
+3. **Key not interpolated** - The `opencode.json` config uses `${OPENROUTER_API_KEY}` syntax. Verify the config file has the correct format:
    ```json
    {
      "provider": {
@@ -698,7 +698,7 @@ This copies `packages/opencode/deploy/` → `packages/cli/templates/opencode/`, 
 
 **Causes and solutions:**
 
-1. **Server overloaded** — The OpenCode server may be rate-limited. Check server logs:
+1. **Server overloaded** - The OpenCode server may be rate-limited. Check server logs:
    ```bash
    # Docker
    docker compose logs opencode
@@ -707,9 +707,9 @@ This copies `packages/opencode/deploy/` → `packages/cli/templates/opencode/`, 
    railway logs opencode
    ```
 
-2. **Invalid agent name** — Ensure the agent name in the job data matches an agent defined in `opencode.json`. The default is `"assistant"`.
+2. **Invalid agent name** - Ensure the agent name in the job data matches an agent defined in `opencode.json`. The default is `"assistant"`.
 
-3. **SDK version mismatch** — Ensure `@opencode-ai/sdk` version in the worker matches the OpenCode server version:
+3. **SDK version mismatch** - Ensure `@opencode-ai/sdk` version in the worker matches the OpenCode server version:
    ```bash
    # Check SDK version
    pnpm ls @opencode-ai/sdk --depth 0
@@ -737,7 +737,7 @@ This copies `packages/opencode/deploy/` → `packages/cli/templates/opencode/`, 
 
 ## Development
 
-This package lives inside the Quark monorepo. All development uses `pnpm` — no standalone setup required.
+This package lives inside the Quark monorepo. All development uses `pnpm` - no standalone setup required.
 
 ```bash
 pnpm install
@@ -758,12 +758,12 @@ This copies configuration, skills, and the plugin entry point to `~/.config/open
 The Techstream plugin (`src/index.js`) registers two hooks and two tools:
 
 - **Hooks:**
-  - `experimental.session.compacting` — Quality gate refinement loop (max 3 iterations)
-  - `experimental.chat.messages.transform` — Output composer (stitches multi-part messages into structured JSON)
+  - `experimental.session.compacting` - Quality gate refinement loop (max 3 iterations)
+  - `experimental.chat.messages.transform` - Output composer (stitches multi-part messages into structured JSON)
 
 - **Tools:**
-  - `publish-to-cms` — Zod-validated CMS publishing tool (stub)
-  - `check-compliance` — Zod-validated brand compliance checker (stub)
+  - `publish-to-cms` - Zod-validated CMS publishing tool (stub)
+  - `check-compliance` - Zod-validated brand compliance checker (stub)
 
 ### Skills
 
@@ -780,4 +780,4 @@ Eight skills are available in `packages/opencode/skills/`:
 | `seo` | Keyword strategy, metadata optimization, heading hierarchy |
 | `skill-builder` | Meta-skill for creating/modifying SKILL.md files |
 
-Skills are auto-discovered from `~/.config/opencode/skills/` and `.opencode/skills/`. No additional configuration is needed — just create a `skills/<name>/SKILL.md` file.
+Skills are auto-discovered from `~/.config/opencode/skills/` and `.opencode/skills/`. No additional configuration is needed - just create a `skills/<name>/SKILL.md` file.

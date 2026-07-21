@@ -7,15 +7,15 @@
  * Connectes to PostgreSQL via DATABASE_URL environment variable.
  *
  * Tools:
- *  - getUsers           — List users with optional role filter
- *  - getCompanies       — List CRM companies
- *  - getContacts        — List CRM contacts, optionally filtered by company
- *  - getDeals           — List CRM deals, optionally filtered by stage
- *  - getPages           — List CMS pages with optional status filter
- *  - getMediaAssets     — List media assets, optionally filtered by mime type
- *  - getAuditLogs       — List audit log entries, optionally filtered by action
- *  - getFiles           — List uploaded files
- *  - getJobs            — List background jobs with optional status filter
+ *  - getUsers           - List users with optional role filter
+ *  - getCompanies       - List CRM companies
+ *  - getContacts        - List CRM contacts, optionally filtered by company
+ *  - getDeals           - List CRM deals, optionally filtered by stage
+ *  - getPages           - List CMS pages with optional status filter
+ *  - getMediaAssets     - List media assets, optionally filtered by mime type
+ *  - getAuditLogs       - List audit log entries, optionally filtered by action
+ *  - getFiles           - List uploaded files
+ *  - getJobs            - List background jobs with optional status filter
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -363,7 +363,7 @@ server.setRequestHandler("tools/call", async (request) => {
 					const rows = await sql`
             SELECT id, name, website, industry, size, notes, "createdAt", "updatedAt"
             FROM "Company"
-            WHERE name ILIKE ${"%" + search + "%"}
+            WHERE name ILIKE ${`%${search}%`}
             ORDER BY "createdAt" DESC
             LIMIT ${limit} OFFSET ${offset}
           `;
@@ -397,7 +397,7 @@ server.setRequestHandler("tools/call", async (request) => {
 				if (companyId) conditions.push(sql`c."companyId" = ${companyId}`);
 				if (search) {
 					conditions.push(
-						sql`(c."firstName" ILIKE ${"%" + search + "%"} OR c."lastName" ILIKE ${"%" + search + "%"} OR c.email ILIKE ${"%" + search + "%"})`,
+						sql`(c."firstName" ILIKE ${`%${search}%`} OR c."lastName" ILIKE ${`%${search}%`} OR c.email ILIKE ${`%${search}%`})`,
 					);
 				}
 				if (conditions.length > 0) {
@@ -469,7 +469,7 @@ server.setRequestHandler("tools/call", async (request) => {
         `;
 				const conditions = [];
 				if (mimeType)
-					conditions.push(sql`ma."mimeType" ILIKE ${mimeType + "%"}`);
+					conditions.push(sql`ma."mimeType" ILIKE ${`${mimeType}%`}`);
 				if (uploadedById)
 					conditions.push(sql`ma."uploadedById" = ${uploadedById}`);
 				if (conditions.length > 0) {
@@ -514,7 +514,7 @@ server.setRequestHandler("tools/call", async (request) => {
             SELECT id, filename, "originalName", "mimeType", size, "storageKey",
                    "storageProvider", "uploadedById", "createdAt", "updatedAt"
             FROM "File"
-            WHERE "mimeType" ILIKE ${mimeType + "%"}
+            WHERE "mimeType" ILIKE ${`${mimeType}%`}
             ORDER BY "createdAt" DESC
             LIMIT ${limit} OFFSET ${offset}
           `;

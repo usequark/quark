@@ -61,7 +61,7 @@ const envSchema = {
 	REDIS_HOST: { required: false, description: "Redis host" },
 	REDIS_PORT: { required: false, description: "Redis port" },
 
-	// Mail (local SMTP — Mailpit in dev)
+	// Mail (local SMTP - Mailpit in dev)
 	MAIL_HOST: { required: false, description: "Mail host" },
 	MAIL_SMTP_PORT: { required: false, description: "Mail SMTP port" },
 	MAIL_UI_PORT: { required: false, description: "Mail UI port" },
@@ -76,7 +76,7 @@ const envSchema = {
 	// Email provider
 	EMAIL_PROVIDER: {
 		required: false,
-		description: 'Email provider — "smtp" (default), "resend", or "zeptomail"',
+		description: 'Email provider - "smtp" (default), "resend", or "zeptomail"',
 	},
 	EMAIL_FROM: { required: false, description: "Sender email address" },
 	RESEND_API_KEY: { required: false, description: "Resend API key" },
@@ -101,17 +101,17 @@ const envSchema = {
 	// Application
 	APP_NAME: {
 		required: false,
-		description: "Application name — used in metadata, emails, and page titles",
+		description: "Application name - used in metadata, emails, and page titles",
 	},
 	APP_DESCRIPTION: {
 		required: false,
 		description:
-			"Application description — used for SEO metadata and social previews",
+			"Application description - used for SEO metadata and social previews",
 	},
 	APP_URL: {
 		required: false,
 		description:
-			"Canonical application URL — derives NEXTAUTH_URL and CORS origins",
+			"Canonical application URL - derives NEXTAUTH_URL and CORS origins",
 	},
 	NEXT_PUBLIC_UMAMI_URL: {
 		required: false,
@@ -128,7 +128,7 @@ const envSchema = {
 	ALLOW_INDEXING: {
 		required: false,
 		description:
-			'Set to "true" to allow search engine indexing — only set in the production deployment',
+			'Set to "true" to allow search engine indexing - only set in the production deployment',
 	},
 	NODE_ENV: {
 		required: false,
@@ -150,7 +150,7 @@ const envSchema = {
 	// Storage
 	STORAGE_PROVIDER: {
 		required: false,
-		description: 'Storage provider — "local" (default) or "s3"',
+		description: 'Storage provider - "local" (default) or "s3"',
 	},
 	STORAGE_LOCAL_DIR: {
 		required: false,
@@ -169,10 +169,10 @@ const envSchema = {
 	ASSET_CDN_URL: {
 		required: false,
 		description:
-			"Public CDN base URL for asset delivery — provider-agnostic (CloudFront, Cloudflare, Bunny, etc.). Falls back to /api/files when unset.",
+			"Public CDN base URL for asset delivery - provider-agnostic (CloudFront, Cloudflare, Bunny, etc.). Falls back to /api/files when unset.",
 	},
 
-	// Admin seed (used by `pnpm db:seed` — not required at web/worker runtime)
+	// Admin seed (used by `pnpm db:seed` - not required at web/worker runtime)
 	ADMIN_EMAIL: {
 		required: false,
 		description:
@@ -181,7 +181,7 @@ const envSchema = {
 	ADMIN_PASSWORD: {
 		required: false,
 		description:
-			"Admin user password for initial database seed — required by seed script, min 12 characters",
+			"Admin user password for initial database seed - required by seed script, min 12 characters",
 	},
 	ADMIN_NAME: {
 		required: false,
@@ -193,7 +193,7 @@ const envSchema = {
 /**
  * Validates environment variables against schema.
  *
- * @param {"web" | "worker"} [service="web"] — The service being validated.
+ * @param {"web" | "worker"} [service="web"] - The service being validated.
  *   Worker skips web-only checks (e.g. NEXTAUTH_SECRET).
  * @throws {Error} If required environment variables are missing
  * @returns {{ validated: Object, warnings: string[] }}
@@ -205,7 +205,7 @@ export function validateEnv(service = "web") {
 	const isTest = process.env.NODE_ENV === "test";
 
 	// During Next.js build, runtime secrets are not (and should not be) available.
-	// Skip strict validation — the server process will re-validate on first request.
+	// Skip strict validation - the server process will re-validate on first request.
 	if (process.env.NEXT_PHASE === "phase-production-build") {
 		return { validated: {}, warnings: [] };
 	}
@@ -257,7 +257,7 @@ export function validateEnv(service = "web") {
 		const value = process.env[key];
 		if (value && placeholderPattern.test(value)) {
 			errors.push(
-				`${key} contains a placeholder value — replace with a real secret (${envSchema[key]?.description || ""})`,
+				`${key} contains a placeholder value - replace with a real secret (${envSchema[key]?.description || ""})`,
 			);
 		}
 	}
@@ -310,7 +310,7 @@ export function validateEnv(service = "web") {
 		]) {
 			if (!process.env[key]) {
 				errors.push(
-					`Missing ${key} — required when STORAGE_PROVIDER=s3 (${envSchema[key].description})`,
+					`Missing ${key} - required when STORAGE_PROVIDER=s3 (${envSchema[key].description})`,
 				);
 			}
 		}
@@ -318,19 +318,19 @@ export function validateEnv(service = "web") {
 
 	// Conditional: Resend provider requires API key
 	if (process.env.EMAIL_PROVIDER === "resend" && !process.env.RESEND_API_KEY) {
-		errors.push("Missing RESEND_API_KEY — required when EMAIL_PROVIDER=resend");
+		errors.push("Missing RESEND_API_KEY - required when EMAIL_PROVIDER=resend");
 	}
 
 	// Conditional: Zeptomail provider requires token and URL
 	if (process.env.EMAIL_PROVIDER === "zeptomail") {
 		if (!process.env.ZEPTOMAIL_TOKEN) {
 			errors.push(
-				"Missing ZEPTOMAIL_TOKEN — required when EMAIL_PROVIDER=zeptomail",
+				"Missing ZEPTOMAIL_TOKEN - required when EMAIL_PROVIDER=zeptomail",
 			);
 		}
 		if (!process.env.ZEPTOMAIL_URL) {
 			errors.push(
-				"Missing ZEPTOMAIL_URL — required when EMAIL_PROVIDER=zeptomail",
+				"Missing ZEPTOMAIL_URL - required when EMAIL_PROVIDER=zeptomail",
 			);
 		}
 	}

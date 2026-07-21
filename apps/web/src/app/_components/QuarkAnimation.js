@@ -21,7 +21,7 @@ const CONF = {
 	dashAngle: 0.8,
 };
 
-// Fixed brand palette — all three colors are part of the Quark logo identity.
+// Fixed brand palette - all three colors are part of the Quark logo identity.
 const CLASS_COLORS = { s: "#2d3436", b: "#377dff", c: "#ff4757" };
 
 export default function QuarkAnimation() {
@@ -130,7 +130,7 @@ export default function QuarkAnimation() {
 				}
 			}
 
-			// Build HTML string — inline colors avoid global CSS pollution
+			// Build HTML string - inline colors avoid global CSS pollution
 			let o = "";
 			for (let i = 0; i < cB.length; i++) {
 				if (i > 0 && i % W === 0) o += "\n";

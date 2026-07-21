@@ -4,9 +4,9 @@
 
 ## Why This Works
 
-**No platform tax.** Techstream self-hosts on its own infrastructure. Every dollar of your monthly fee goes to running and improving your site — not to Webflow, Shopify, or WordPress. Agencies building on those platforms lose $25-130/mo to the platform before they make anything. You keep the margin.
+**No platform tax.** Techstream self-hosts on its own infrastructure. Every dollar of your monthly fee goes to running and improving your site - not to Webflow, Shopify, or WordPress. Agencies building on those platforms lose $25-130/mo to the platform before they make anything. You keep the margin.
 
-**AI-powered delivery.** Content, SEO, design, and reporting are handled by an AI-assisted production pipeline. This means faster turnaround, consistent quality, and costs that decline over time — without raising your price.
+**AI-powered delivery.** Content, SEO, design, and reporting are handled by an AI-assisted production pipeline. This means faster turnaround, consistent quality, and costs that decline over time - without raising your price.
 
 **Portfolio economics.** Some months you'll need more, some less. Across all clients, the quiet months offset the busy ones. The model works because we think in aggregate, not per-ticket.
 
@@ -24,7 +24,7 @@ Your site, professionally designed and built. Pay once, own it forever.
 | **+ CRM** | +$500 | Customer database, pipeline management, contact tracking, email integration |
 | **+ Custom** | Quoted | Third-party integrations, custom backend, AI features, membership portals |
 
-CMS and admin panel included with every build — they're infrastructure, not add-ons.
+CMS and admin panel included with every build - they're infrastructure, not add-ons.
 
 ---
 
@@ -46,11 +46,11 @@ Hosting, maintenance, and platform access. Same infrastructure cost regardless o
 
 **$1,000/mo.** Unlimited digital work. One request at a time. Pause or cancel anytime.
 
-Content, SEO, social media, analytics reporting, brand strategy, asset creation — if you need it, we do it. Think of it as your digital team on retainer, without the overhead.
+Content, SEO, social media, analytics reporting, brand strategy, asset creation - if you need it, we do it. Think of it as your digital team on retainer, without the overhead.
 
 How it works:
 1. You submit a request (email, message, or call)
-2. We queue it and get to work — typical turnaround 1-2 business days
+2. We queue it and get to work - typical turnaround 1-2 business days
 3. You review, we refine, you approve
 4. Next request starts
 
@@ -96,7 +96,7 @@ One active request at a time keeps things moving without overwhelming either sid
 
 - All prices in NZD
 - Build fee: 50% upfront, 50% on launch
-- Month-to-month — no lock-in, cancel anytime
+- Month-to-month - no lock-in, cancel anytime
 - You own your site, content, and data
 - Migration from existing platforms available
 - Annual billing: 10% off (optional)

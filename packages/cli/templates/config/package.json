@@ -13,6 +13,7 @@
 		"./redis": "./src/redis.js"
 	},
 	"dependencies": {
-		"@techstream/quark-core": "^2.0.0"
+		"@techstream/quark-core": "^2.0.0",
+		"ioredis": "^5.10.0"
 	}
 }

@@ -116,7 +116,7 @@ export default function Sidebar({
 							{title}
 						</Link>
 					)}
-					{/* Close button — mobile/tablet only */}
+					{/* Close button - mobile/tablet only */}
 					<button
 						type="button"
 						onClick={() => setOpen(false)}
@@ -138,7 +138,7 @@ export default function Sidebar({
 							/>
 						</svg>
 					</button>
-					{/* Collapse chevron — desktop only */}
+					{/* Collapse chevron - desktop only */}
 					<button
 						type="button"
 						onClick={() => setCollapsed(!collapsed)}
@@ -164,7 +164,7 @@ export default function Sidebar({
 					</button>
 				</div>
 
-				{/* Dashboard — hidden for editor-only mode */}
+				{/* Dashboard - hidden for editor-only mode */}
 				{!isCmsOnly && (
 					<nav className="flex flex-col gap-1 mb-3 shrink-0">
 						{navLink(
@@ -225,7 +225,7 @@ export default function Sidebar({
 					<div className="border-t border-border mb-3 shrink-0" />
 				)}
 
-				{/* Scrollable model sections — hidden for client_admin and editors */}
+				{/* Scrollable model sections - hidden for client_admin and editors */}
 				{!isCollapsed ? (
 					!isCmsOnly &&
 					!isClientAdmin && (

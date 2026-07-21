@@ -75,7 +75,7 @@ export default async function PagesListPage({ searchParams }) {
 			<ContentTable records={records} basePath="/admin/cms/pages" />
 			{total > 50 && (
 				<p className="mt-3 text-xs text-text-faint text-center tabular-nums">
-					Showing 50 of {total} — use status filters to narrow results.
+					Showing 50 of {total} - use status filters to narrow results.
 				</p>
 			)}
 		</div>

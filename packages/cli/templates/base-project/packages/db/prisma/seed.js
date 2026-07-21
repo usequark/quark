@@ -7,10 +7,10 @@ import { prisma } from "../src/index.js";
  * Also called by seedDev to avoid duplication.
  *
  * Required env vars:
- *   ADMIN_PASSWORD — min 12 characters, no default (generate: openssl rand -base64 24)
+ *   ADMIN_PASSWORD - min 12 characters, no default (generate: openssl rand -base64 24)
  * Optional env vars:
- *   ADMIN_EMAIL    — defaults to admin@example.com
- *   ADMIN_NAME     — defaults to Admin
+ *   ADMIN_EMAIL    - defaults to admin@example.com
+ *   ADMIN_NAME     - defaults to Admin
  */
 async function seedMinimal(prisma) {
 	const seedProfile = process.env.SEED_PROFILE || "dev";
@@ -67,43 +67,131 @@ async function seedMinimal(prisma) {
 async function seedDev(prisma) {
 	const admin = await seedMinimal(prisma);
 
-	// If admin already existed, skip the rest to remain idempotent
-	if (!admin) return;
+	if (admin) {
+		const sampleUser = await prisma.user.create({
+			data: {
+				email: "user@example.com",
+				name: "Sample User",
+				role: "viewer",
+				image:
+					"https://api.dicebear.com/7.x/avataaars/svg?seed=user@example.com",
+			},
+		});
 
-	const sampleUser = await prisma.user.create({
-		data: {
-			email: "user@example.com",
-			name: "Sample User",
-			role: "viewer",
-			image: "https://api.dicebear.com/7.x/avataaars/svg?seed=user@example.com",
+		console.log(`✓ Created sample user: ${sampleUser.email}`);
+
+		await prisma.auditLog.create({
+			data: {
+				userId: admin.id,
+				action: "CREATE",
+				entity: "User",
+				entityId: sampleUser.id,
+				metadata: { email: sampleUser.email, role: sampleUser.role },
+			},
+		});
+
+		console.log("✓ Created sample audit log");
+
+		await prisma.job.create({
+			data: {
+				queue: "default",
+				name: "example-job",
+				status: "COMPLETED",
+				data: { message: "This is a sample job" },
+				completedAt: new Date(),
+			},
+		});
+
+		console.log("✓ Created sample job");
+	}
+
+	await seedBookingData(prisma);
+}
+
+async function seedBookingData(prisma) {
+	const existing = await prisma.serviceType.count();
+	if (existing > 0) {
+		console.log("✓ Booking services already exist - skipping");
+		return;
+	}
+
+	const laneTypes = [
+		{
+			name: "Hack Attack Machine",
+			description:
+				"High-velocity pitching machine that simulates real at-bats with adjustable speeds up to 90 mph.",
+			duration: 30,
+			price: 35.0,
+			color: "#ef4444",
+			capacity: 1,
 		},
-	});
-
-	console.log(`✓ Created sample user: ${sampleUser.email}`);
-
-	await prisma.auditLog.create({
-		data: {
-			userId: admin.id,
-			action: "CREATE",
-			entity: "User",
-			entityId: sampleUser.id,
-			metadata: { email: sampleUser.email, role: sampleUser.role },
+		{
+			name: "Tee Lane",
+			description:
+				"Perfect for beginners and technique work. Adjustable tee height for all ages and skill levels.",
+			duration: 30,
+			price: 20.0,
+			color: "#22c55e",
+			capacity: 1,
 		},
-	});
-
-	console.log("✓ Created sample audit log");
-
-	await prisma.job.create({
-		data: {
-			queue: "default",
-			name: "example-job",
-			status: "COMPLETED",
-			data: { message: "This is a sample job" },
-			completedAt: new Date(),
+		{
+			name: "3 Wheel Machine",
+			description:
+				"Three-wheel pitching machine delivering curveballs, sliders, and fastballs. Great for advanced training.",
+			duration: 30,
+			price: 40.0,
+			color: "#3b82f6",
+			capacity: 1,
 		},
-	});
+		{
+			name: "Pitching Lane",
+			description:
+				"Full-length lane with mound and plate. Includes L-screen and radar gun. Bring your own catcher or use our target net.",
+			duration: 30,
+			price: 25.0,
+			color: "#f59e0b",
+			capacity: 1,
+		},
+	];
 
-	console.log("✓ Created sample job");
+	const services = [];
+	for (const data of laneTypes) {
+		const service = await prisma.serviceType.create({ data });
+		services.push(service);
+		console.log(`✓ Created lane type: ${service.name}`);
+	}
+
+	const now = new Date();
+	const slotsCreated = [];
+
+	for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+		for (const service of services) {
+			for (let h = 9; h < 21; h++) {
+				for (const m of [0, 30]) {
+					const start = new Date(now);
+					start.setDate(start.getDate() + dayOffset);
+					start.setHours(h, m, 0, 0);
+
+					const end = new Date(start.getTime() + 30 * 60 * 1000);
+
+					await prisma.availabilitySlot.create({
+						data: {
+							serviceId: service.id,
+							slotScopeKey: service.id,
+							startTime: start,
+							endTime: end,
+							capacity: 1,
+						},
+					});
+					slotsCreated.push(true);
+				}
+			}
+		}
+	}
+
+	console.log(
+		`✓ Created ${slotsCreated.length} availability slots (7 days for 4 lanes)`,
+	);
 }
 
 async function main() {

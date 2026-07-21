@@ -1,3 +1,4 @@
+import { AppError, ValidationError } from "@techstream/quark-core/errors";
 import { toolHandlers } from "./handlers.js";
 import { toolSchemas } from "./schemas.js";
 
@@ -17,7 +18,7 @@ export function getToolNames() {
 export function getToolDefinition(name) {
 	const schema = toolSchemas[name];
 	if (!schema) {
-		throw new Error(`Unknown tool: ${name}`);
+		throw new ValidationError(`Unknown tool: ${name}`);
 	}
 
 	return {
@@ -46,7 +47,7 @@ export function getAllToolDefinitions() {
 export function getToolHandler(name) {
 	const handler = toolHandlers[name];
 	if (!handler) {
-		throw new Error(`No handler for tool: ${name}`);
+		throw new AppError(`No handler for tool: ${name}`);
 	}
 	return handler;
 }
@@ -60,7 +61,7 @@ export function getToolHandler(name) {
 export async function executeTool(name, input) {
 	const schema = toolSchemas[name];
 	if (!schema) {
-		throw new Error(`Unknown tool: ${name}`);
+		throw new ValidationError(`Unknown tool: ${name}`);
 	}
 
 	const validated = schema.parse(input);

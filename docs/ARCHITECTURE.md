@@ -252,14 +252,14 @@ Handlers are extracted to separate files and registered in a handler map.
 The worker dispatches jobs to the correct handler automatically.
 
 ```javascript
-// apps/worker/src/handlers/video.js — YOUR custom handler
+// apps/worker/src/handlers/video.js - YOUR custom handler
 export async function handleTranscodeVideo(bullJob, logger) {
   logger.info(`Transcoding video ${bullJob.data.videoId}`);
   await transcodeVideo(bullJob.data);
   return { success: true };
 }
 
-// apps/worker/src/handlers/index.js — handler registry
+// apps/worker/src/handlers/index.js - handler registry
 import { JOB_NAMES } from "@yourapp/jobs";
 import { handleSendWelcomeEmail, handleSendResetPasswordEmail } from "./email.js";
 import { handleCleanupOrphanedFiles } from "./files.js";
@@ -272,7 +272,7 @@ export const jobHandlers = {
   [JOB_NAMES.TRANSCODE_VIDEO]: handleTranscodeVideo, // Your custom job
 };
 
-// apps/worker/src/index.js — generic dispatch (no changes needed)
+// apps/worker/src/index.js - generic dispatch (no changes needed)
 // The worker loops over JOB_QUEUES and dispatches to jobHandlers automatically.
 ```
 
@@ -530,19 +530,19 @@ Quark includes a comprehensive E2E testing approach to validate the entire proje
 
 ### CLI Testing Levels
 
-**1. Unit Tests** — Template and scaffold validation
+**1. Unit Tests** - Template and scaffold validation
 ```bash
 pnpm test
 ```
 Fast validation (~5 seconds) that templates are valid and dependencies are correct.
 
-**2. E2E Scaffolding Test** — Full project creation
+**2. E2E Scaffolding Test** - Full project creation
 ```bash
 pnpm test:e2e
 ```
 Validates project scaffolding process (file creation, replacements, structure).
 
-**3. Full Lifecycle Test** — Create → Install → Deploy → Startup (Optional)
+**3. Full Lifecycle Test** - Create → Install → Deploy → Startup (Optional)
 ```bash
 pnpm test:e2e:full
 ```
@@ -632,7 +632,7 @@ As your app grows:
 
 ## Design System & Rebranding
 
-Quark ships with a complete CSS token layer. Every colour, radius, and surface value is defined in one place — change it once and the entire UI updates.
+Quark ships with a complete CSS token layer. Every colour, radius, and surface value is defined in one place - change it once and the entire UI updates.
 
 ### Token Source of Truth
 
@@ -640,7 +640,7 @@ All design tokens live in `apps/web/src/app/globals.css` inside the `@theme inli
 
 ```css
 @theme inline {
-  /* Brand colour — swap this one value to change every button, link, and accent */
+  /* Brand colour - swap this one value to change every button, link, and accent */
   --color-primary: oklch(0.6 0.15 250);
   --color-primary-hover: oklch(0.55 0.15 250);
 
@@ -664,12 +664,12 @@ All design tokens live in `apps/web/src/app/globals.css` inside the `@theme inli
   --color-warning: oklch(0.65 0.15 80);
   --color-info: oklch(0.6 0.12 230);
 
-  /* Geometry — 0px for sharp, 0.25rem for rounded, 0.5rem for pill */
+  /* Geometry - 0px for sharp, 0.25rem for rounded, 0.5rem for pill */
   --radius-default: 0px;
 }
 ```
 
-Dark mode overrides follow immediately under `[data-theme="dark"]`. To retheme a scaffolded project, edit **only** this block — no component files need touching.
+Dark mode overrides follow immediately under `[data-theme="dark"]`. To retheme a scaffolded project, edit **only** this block - no component files need touching.
 
 ### Geometry
 
@@ -697,7 +697,7 @@ The `ThemeProvider` component (from `@techstream/quark-ui`) sets `data-theme="da
 
 - ✅ `dark:bg-surface` works in component files
 - ✅ CSS variables automatically switch via `[data-theme="dark"]` overrides
-- ❌ The system `prefers-color-scheme` media query is **not** used — theme is always explicit
+- ❌ The system `prefers-color-scheme` media query is **not** used - theme is always explicit
 
 ### Template Sync
 
@@ -725,7 +725,7 @@ Core evolves based on real usage patterns!
 
 ## Admin UI (`@techstream/quark-admin`)
 
-An optional published package that auto-generates a complete CRUD admin interface from your Prisma schema using DMMF introspection. No generated code — the admin UI reflects your live schema at runtime.
+An optional published package that auto-generates a complete CRUD admin interface from your Prisma schema using DMMF introspection. No generated code - the admin UI reflects your live schema at runtime.
 
 ### What it does
 
@@ -734,13 +734,13 @@ An optional published package that auto-generates a complete CRUD admin interfac
 - Generates list/detail/create/edit views for every model automatically
 - Maps Prisma field types to appropriate form inputs via `field-map.js`: strings → text, booleans → checkbox, enums → select, DateTime → datetime-local, numbers → number
 - Filters fields by `isListVisible()`, `isEditable()` so internal IDs and timestamps display correctly but aren't editable in forms
-- Enforces `role: "admin"` via the RBAC middleware — every admin route requires an authenticated admin session
+- Enforces `role: "admin"` via the RBAC middleware - every admin route requires an authenticated admin session
 
 ### Routes
 
 | Path | Purpose |
 |---|---|
-| `/admin` | Dashboard — lists all models with record counts |
+| `/admin` | Dashboard - lists all models with record counts |
 | `/admin/[model]` | List view with all records |
 | `/admin/[model]/new` | Create form |
 | `/admin/[model]/[id]` | Edit/view form with delete |
@@ -770,11 +770,11 @@ Select it during scaffolding (`--features ui,jobs,admin`) or via the interactive
 
 ## Theme System
 
-Quark ships a **dark-mode-first** theme system built entirely on CSS custom properties and the HTML `data-theme` attribute — no class-flipping, no SSR flicker.
+Quark ships a **dark-mode-first** theme system built entirely on CSS custom properties and the HTML `data-theme` attribute - no class-flipping, no SSR flicker.
 
 ### How it works
 
-1. **`data-theme` attribute** on `<html>` is the single source of truth — `"dark"` or `"light"`.
+1. **`data-theme` attribute** on `<html>` is the single source of truth - `"dark"` or `"light"`.
 2. **Tailwind uses** `@custom-variant dark (&:is([data-theme="dark"] *))` so `dark:` utility classes react to the attribute, not a `dark` class.
 3. **FOUC prevention**: a small blocking `<script>` in `layout.js` reads `localStorage.getItem("quark-theme")` and `prefers-color-scheme` synchronously before the first paint, writing `data-theme` before any React hydration.
 4. **CSS custom properties**: all theme-sensitive colors (`--quark-page-bg`, `--quark-text-primary`, `--quark-border`, etc.) are defined dark-first in `:root` with light overrides in `@media (prefers-color-scheme: light)` and `[data-theme="light"]`.
@@ -823,11 +823,11 @@ function ThemeToggle() {
 
 ### Design principle
 
-`ThemeProvider` is `"use client"` but all other components (`Card`, `Badge`, `Table`, `QuarkLogo`, etc.) are pure Server Components — theme adaptation happens via CSS variables, not JS. The `QuarkLogo` component specifically uses `var(--quark-logo-dark-arc)` to ensure the dark arc stroke remains visible against both light and dark backgrounds.
+`ThemeProvider` is `"use client"` but all other components (`Card`, `Badge`, `Table`, `QuarkLogo`, etc.) are pure Server Components - theme adaptation happens via CSS variables, not JS. The `QuarkLogo` component specifically uses `var(--quark-logo-dark-arc)` to ensure the dark arc stroke remains visible against both light and dark backgrounds.
 
 ### Forcing a single theme (disabling the toggle)
 
-Some sites should not offer theme switching — a marketing page with a specific aesthetic, or an app where dark mode simply doesn't fit. The correct method is to **set `data-theme` statically on `<html>`** and **remove the blocking script and toggle**. Because the attribute is present in the server-rendered HTML, there is no FOUC and no need for a script.
+Some sites should not offer theme switching - a marketing page with a specific aesthetic, or an app where dark mode simply doesn't fit. The correct method is to **set `data-theme` statically on `<html>`** and **remove the blocking script and toggle**. Because the attribute is present in the server-rendered HTML, there is no FOUC and no need for a script.
 
 **To lock to light mode**, edit `apps/web/src/app/layout.js`:
 
@@ -863,11 +863,11 @@ export default function RootLayout({ children }) {
 - Remove the `themeScript` constant and its `<script>` tag.
 - Remove `<FloatingThemeToggle />` (and its import).
 - Add `data-theme="light"` (or `"dark"`) directly to `<html>`.
-- Remove `suppressHydrationWarning` — it is only needed when `data-theme` may differ between server and client.
+- Remove `suppressHydrationWarning` - it is only needed when `data-theme` may differ between server and client.
 
 **Why not just remove the toggle?** The blocking script restores the user's previously stored preference from `localStorage` on every visit. A user who previously switched to dark will still get dark even after the toggle is removed. The only reliable fix is to replace the script with a static attribute.
 
-**Re-enableable flag pattern** — if you want to switch back later without hunting through JSX, add a single config constant:
+**Re-enableable flag pattern** - if you want to switch back later without hunting through JSX, add a single config constant:
 
 ```js
 // apps/web/src/lib/theme-config.js
