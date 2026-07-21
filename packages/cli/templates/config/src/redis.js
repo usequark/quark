@@ -23,6 +23,7 @@ export async function getSharedRedisClient() {
 		await _redis.connect();
 		return _redis;
 	} catch {
+		await closeSharedRedisClient();
 		return null;
 	}
 }
