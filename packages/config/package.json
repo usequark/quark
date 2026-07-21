@@ -19,7 +19,8 @@
 		"lint": "biome format --write && biome check --write"
 	},
 	"dependencies": {
-		"@techstream/quark-core": "workspace:*"
+		"@techstream/quark-core": "workspace:*",
+		"ioredis": "^5.10.0"
 	},
 	"keywords": [],
 	"author": "",

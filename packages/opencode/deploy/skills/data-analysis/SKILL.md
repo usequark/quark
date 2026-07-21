@@ -13,7 +13,7 @@ Analyze performance data to derive actionable insights and support data-driven d
 ## Trend Identification
 - Compare period-over-period (MoM, QoQ, YoY) with a minimum of 3 data points to establish direction.
 - Use rolling averages (7-day, 28-day) to smooth noise and reveal underlying trends.
-- Flag statistically significant changes — not every up/down is meaningful. Note confidence intervals where possible.
+- Flag statistically significant changes - not every up/down is meaningful. Note confidence intervals where possible.
 - Look for seasonal patterns and normalize for them before drawing conclusions.
 
 ## Benchmark Comparison
@@ -29,8 +29,8 @@ Analyze performance data to derive actionable insights and support data-driven d
 - Avoid: pie charts with more than 5 slices, 3D charts, dual y-axes without clear justification.
 
 ## Avoiding Common Statistical Pitfalls
-- **Survivorship bias** — don't analyze only the successes; include failures in the dataset.
-- **Confirmation bias** — actively look for data that contradicts your hypothesis.
-- **Small sample sizes** — n ≥ 30 for any meaningful inference; flag sub-30 conclusions as tentative.
-- **Correlation vs. causation** — never claim causation without controlled experiments (A/B tests) or causal inference methods.
-- **Data dredging** — if you test 20 metrics, expect 1 to be significant at p=0.05 by chance. Apply Bonferroni correction or similar.
+- **Survivorship bias** - don't analyze only the successes; include failures in the dataset.
+- **Confirmation bias** - actively look for data that contradicts your hypothesis.
+- **Small sample sizes** - n ≥ 30 for any meaningful inference; flag sub-30 conclusions as tentative.
+- **Correlation vs. causation** - never claim causation without controlled experiments (A/B tests) or causal inference methods.
+- **Data dredging** - if you test 20 metrics, expect 1 to be significant at p=0.05 by chance. Apply Bonferroni correction or similar.

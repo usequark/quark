@@ -120,7 +120,7 @@ export class QueryBuilder {
 			const prismaOp = OPERATORS[operator];
 
 			if (operator === "in") {
-				// Special handling for "in" operator — value should be an array
+				// Special handling for "in" operator - value should be an array
 				const values = Array.isArray(value) ? value : [value];
 				conditions.push({ [field]: { in: values } });
 			} else if (operator === "ne") {

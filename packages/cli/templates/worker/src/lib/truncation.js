@@ -61,7 +61,7 @@ export function buildPromptMessages({
 		const msgTokens = estimateMessageTokens([msg]);
 
 		if (tokensUsed + msgTokens > availableForMessages) {
-			// Can't fit this message — drop it (and all older ones)
+			// Can't fit this message - drop it (and all older ones)
 			droppedCount = i + 1;
 			break;
 		}

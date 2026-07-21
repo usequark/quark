@@ -3,7 +3,7 @@ description: Quark monorepo contributor conventions. Covers coding standards, te
 alwaysApply: true
 ---
 
-# Quark Monorepo — Contributor Rules
+# Quark Monorepo - Contributor Rules
 
 > For app developers building WITH Quark: see `CLAUDE.md` in your scaffolded project.
 > For the full contributor reference: see `CLAUDE.md` at the monorepo root.
@@ -13,13 +13,13 @@ alwaysApply: true
 ## Non-Negotiable Rules
 
 1. **ESM only.** Always `import`/`export`. Never `require()` or `module.exports`.
-2. **No authored TypeScript.** Plain `.js` and `.jsx` files only — no repo-authored `.ts`, `.tsx`, or type annotations. Generated code is the only exception.
+2. **No authored TypeScript.** Plain `.js` and `.jsx` files only - no repo-authored `.ts`, `.tsx`, or type annotations. Generated code is the only exception.
 3. **Biome for everything.** No ESLint, no Prettier. Run `pnpm lint` to check.
 4. **Validate at boundaries.** Zod schemas on all Server Actions and API routes. No exceptions.
 5. **Use AppError at runtime boundaries.** Throw `AppError` / `ValidationError` from `@techstream/quark-core/errors` in application/runtime code. Native `Error` is reserved for library, bootstrap, CLI, and test code.
 6. **Log with createLogger in runtime code.** `createLogger(name)` from `@techstream/quark-core` for application/runtime code. Console output is reserved for bootstrap, CLI, and test code.
 7. **DB models always have timestamps.** Every Prisma model: `createdAt DateTime @default(now())` + `updatedAt DateTime @updatedAt`.
-8. **Co-located tests.** `feature.test.js` next to `feature.js`. `node --test` — no Jest, no Vitest.
+8. **Co-located tests.** `feature.test.js` next to `feature.js`. `node --test` - no Jest, no Vitest.
 
 ---
 
@@ -31,13 +31,13 @@ alwaysApply: true
 | `packages/cli` | Published to npm | `@techstream/quark-create-app` |
 | `packages/db`, `config`, `ui`, `jobs` | Scaffolded locally | `@<scope>/db` etc. in user projects |
 
-Never add `packages/db`, `config`, `ui`, or `jobs` as dependencies of `quark-core` or `quark-create-app`. They are scaffolded into user projects — not published.
+Never add `packages/db`, `config`, `ui`, or `jobs` as dependencies of `quark-core` or `quark-create-app`. They are scaffolded into user projects - not published.
 
 ---
 
 ## Template Sync (CRITICAL)
 
-`packages/cli/templates/` is **generated from monorepo source** — never edit it manually (except `TEMPLATE_ONLY` files like `CLAUDE.md`, `.cursor/rules/quark.mdc`, `SKILL.md`, and workflow files).
+`packages/cli/templates/` is **generated from monorepo source** - never edit it manually (except `TEMPLATE_ONLY` files like `CLAUDE.md`, `.cursor/rules/quark.mdc`, `SKILL.md`, and workflow files).
 
 After changing any file in `apps/web/`, `apps/worker/`, `packages/db/`, `packages/config/`, `packages/ui/`, or `packages/jobs/`:
 
@@ -52,7 +52,7 @@ CI fails if templates are stale. Always sync before committing.
 ## Release Workflow
 
 ```bash
-pnpm changeset        # Create a changeset (interactive) — do this after your changes
+pnpm changeset        # Create a changeset (interactive) - do this after your changes
 # Never run: pnpm changeset version   ← CI handles this automatically
 ```
 

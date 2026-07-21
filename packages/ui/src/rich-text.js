@@ -12,18 +12,18 @@ import { Dialog } from "./dialog.js";
 import { Input } from "./input.js";
 
 /**
- * RichText — dependency-free rich text editor using contentEditable.
+ * RichText - dependency-free rich text editor using contentEditable.
  *
  * Props:
- *   id            (string)   — id applied to the editor div for label association
- *   name          (string)   — form field name (value submitted as HTML string)
- *   defaultValue  (string)   — initial HTML content
- *   placeholder   (string)   — placeholder text when empty
- *   disabled      (bool)     — read-only mode
- *   required      (bool)     — form validation
- *   rows          (number)   — approximate visible rows (default 6)
- *   className     (string)   — merged onto the outer wrapper
- *   onChange      (fn)       — called with HTML string on content change
+ *   id            (string)   - id applied to the editor div for label association
+ *   name          (string)   - form field name (value submitted as HTML string)
+ *   defaultValue  (string)   - initial HTML content
+ *   placeholder   (string)   - placeholder text when empty
+ *   disabled      (bool)     - read-only mode
+ *   required      (bool)     - form validation
+ *   rows          (number)   - approximate visible rows (default 6)
+ *   className     (string)   - merged onto the outer wrapper
+ *   onChange      (fn)       - called with HTML string on content change
  */
 
 const wrapperCls =
@@ -240,7 +240,7 @@ export function RichText({
 		updateToolbar();
 	}, [updateToolbar]);
 
-	// Prevent pasting formatted HTML — paste as clean HTML but strip dangerous tags
+	// Prevent pasting formatted HTML - paste as clean HTML but strip dangerous tags
 	const onPaste = useCallback(
 		(e) => {
 			e.preventDefault();

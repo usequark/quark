@@ -22,5 +22,5 @@ All packages in the Quark monorepo use `"type": "module"` in `package.json`. Onl
 
 **Negative:**
 - Some legacy npm packages that are CJS-only require dynamic `import()` workarounds
-- Jest (ESM support is experimental) is incompatible — we use `node --test` instead
+- Jest (ESM support is experimental) is incompatible - we use `node --test` instead
 - Developers accustomed to CJS (`__dirname`, `require.resolve`) must use ESM equivalents (`import.meta.url`, `import.meta.resolve`)

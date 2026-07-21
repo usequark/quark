@@ -112,11 +112,11 @@ export default function AdminImagePicker({
 
 			{/* ── Selected state ─────────────────────────────── */}
 			{value && (
-				<div className="flex items-stretch gap-3 p-2.5 rounded-[--radius-default] border border-border bg-surface">
+				<div className="flex flex-col sm:flex-row items-stretch gap-3 p-2.5 rounded-[--radius-default] border border-border bg-surface">
 					<button
 						type="button"
 						onClick={() => setLightboxOpen(true)}
-						className="w-44 h-32 rounded border border-border bg-surface-hover overflow-hidden shrink-0 flex items-center justify-center cursor-pointer"
+						className="w-full sm:w-44 h-32 rounded border border-border bg-surface-hover overflow-hidden shrink-0 flex items-center justify-center cursor-pointer"
 						aria-label="Open image preview"
 					>
 						{showImage ? (
@@ -137,7 +137,7 @@ export default function AdminImagePicker({
 							{value}
 						</p>
 						{!disabled && (
-							<div className="flex items-center gap-3">
+							<div className="flex items-center gap-3 flex-wrap">
 								<Button
 									type="button"
 									onClick={() => setOpen(true)}

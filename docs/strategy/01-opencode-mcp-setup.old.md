@@ -1,10 +1,10 @@
-# OpenCode MCP Setup — Techstream Asset Production Pipeline
+# OpenCode MCP Setup - Techstream Asset Production Pipeline
 
 **Status:** Implementation-ready  
 **Last updated:** 2026-06-24  
 **Audience:** Platform engineers, DevOps, Techstream leadership
 
-> **Repo note:** The OpenCode fork lives in its own separate repository — `opencode-techstream` — not inside the Quark monorepo. The Quark monorepo (`quark`) contains the BullMQ job router, worker infrastructure, and platform services that dispatch work to the fork. The fork repo is the standalone HTTP server hosting agents, skills, and the MCP client.
+> **Repo note:** The OpenCode fork lives in its own separate repository - `opencode-techstream` - not inside the Quark monorepo. The Quark monorepo (`quark`) contains the BullMQ job router, worker infrastructure, and platform services that dispatch work to the fork. The fork repo is the standalone HTTP server hosting agents, skills, and the MCP client.
 
 ---
 
@@ -106,7 +106,7 @@ The forked OpenCode server runs as a standalone HTTP service on the Techstream p
 
 ### What to Remove
 
-- **Code-specific agents:** `developer`, `tester`, `devops`, `migrator`, `security` — not relevant to asset production.
+- **Code-specific agents:** `developer`, `tester`, `devops`, `migrator`, `security` - not relevant to asset production.
 - **Code-specific classification criteria:** Bug reports, PR reviews, test generation, deployment checks.
 - **File-system tool restrictions:** The forked server needs broader filesystem access for asset staging, not just code editing.
 
@@ -115,8 +115,8 @@ The forked OpenCode server runs as a standalone HTTP service on the Techstream p
 | Agent | Role | Replaces |
 |---|---|---|
 | `strategist` | Brand strategy, content planning, audience analysis | `architect` (adapted) |
-| `producer` | Asset generation — copy, images, layouts | `developer` (repurposed) |
-| `reviewer` | Quality gate — brand consistency, SEO, accessibility | `reviewer` (adapted) |
+| `producer` | Asset generation - copy, images, layouts | `developer` (repurposed) |
+| `reviewer` | Quality gate - brand consistency, SEO, accessibility | `reviewer` (adapted) |
 | `publisher` | CMS publishing, scheduling, distribution | `devops` (repurposed) |
 | `analyst` | Performance data, SEO audits, conversion metrics | `analytics` (adapted) |
 
@@ -208,67 +208,67 @@ When the primary model fails (rate limit, timeout, provider outage), the router 
 
 ## 4. MCP Server Setup
 
-> **Deferred:** MCP server implementation is deferred until after the core OpenCode fork is built and proven with internal task management (Phase 0). The MCP integrations described below are the target architecture — they will be implemented incrementally once the fork is stable and handling internal workflows reliably.
+> **Deferred:** MCP server implementation is deferred until after the core OpenCode fork is built and proven with internal task management (Phase 0). The MCP integrations described below are the target architecture - they will be implemented incrementally once the fork is stable and handling internal workflows reliably.
 
 ### Core MCPs (Build First)
 
 #### `playwright-mcp`
-- **Purpose:** Browser automation — screenshot capture, page testing, visual regression
+- **Purpose:** Browser automation - screenshot capture, page testing, visual regression
 - **Used by:** `reviewer`, `producer`
 - **Key tools:**
-  - `browser_navigate` — open a URL
-  - `browser_screenshot` — capture viewport or full page
-  - `browser_click`, `browser_fill` — interact with pages
-  - `browser_evaluate` — run JS in page context
+  - `browser_navigate` - open a URL
+  - `browser_screenshot` - capture viewport or full page
+  - `browser_click`, `browser_fill` - interact with pages
+  - `browser_evaluate` - run JS in page context
 - **Transport:** stdio (local), HTTP (remote)
 
 #### `github-mcp`
-- **Purpose:** Repository operations — content versioning, PR-based review workflows
+- **Purpose:** Repository operations - content versioning, PR-based review workflows
 - **Used by:** `publisher`, `reviewer`
 - **Key tools:**
-  - `create_or_update_file` — commit content to repo
-  - `create_pull_request` — open a review PR
-  - `search_repositories`, `get_file_contents` — read existing content
-  - `create_branch` — isolate changes per task
+  - `create_or_update_file` - commit content to repo
+  - `create_pull_request` - open a review PR
+  - `search_repositories`, `get_file_contents` - read existing content
+  - `create_branch` - isolate changes per task
 - **Transport:** HTTP (GitHub API)
 
 #### `postgres-mcp`
-- **Purpose:** Direct database access — query client data, content history, analytics
+- **Purpose:** Direct database access - query client data, content history, analytics
 - **Used by:** `analyst`, `strategist`, `publisher`
 - **Key tools:**
-  - `query` — run read-only SQL
-  - `list_tables`, `describe_table` — schema introspection
+  - `query` - run read-only SQL
+  - `list_tables`, `describe_table` - schema introspection
 - **Transport:** stdio (local `psql` connection string)
 - **Security:** Read-only connection string; write operations go through the app API, not MCP.
 
 #### `cms-mcp`
-- **Purpose:** Content publishing — create, update, schedule content in the CMS
+- **Purpose:** Content publishing - create, update, schedule content in the CMS
 - **Used by:** `publisher`
 - **Key tools:**
-  - `create_post` — publish a new article/page
-  - `update_post` — revise existing content
-  - `schedule_post` — set future publish date
-  - `list_posts`, `get_post` — read existing content
-  - `upload_media` — upload images/assets
+  - `create_post` - publish a new article/page
+  - `update_post` - revise existing content
+  - `schedule_post` - set future publish date
+  - `list_posts`, `get_post` - read existing content
+  - `upload_media` - upload images/assets
 - **Transport:** HTTP (CMS REST API)
 
 #### `analytics-mcp`
-- **Purpose:** Performance data — GA4 and Umami metrics for reporting and optimization
+- **Purpose:** Performance data - GA4 and Umami metrics for reporting and optimization
 - **Used by:** `analyst`, `strategist`
 - **Key tools:**
-  - `get_page_metrics` — pageviews, bounce rate, session duration
-  - `get_conversion_data` — goal completions, funnel analysis
-  - `get_realtime` — current active users
-  - `run_report` — custom GA4/Umami report
+  - `get_page_metrics` - pageviews, bounce rate, session duration
+  - `get_conversion_data` - goal completions, funnel analysis
+  - `get_realtime` - current active users
+  - `run_report` - custom GA4/Umami report
 - **Transport:** HTTP (GA4 Data API / Umami API)
 
 #### `email-mcp`
-- **Purpose:** Client communication — send reports, deliverables, notifications
+- **Purpose:** Client communication - send reports, deliverables, notifications
 - **Used by:** `publisher`, `orchestrator`
 - **Key tools:**
-  - `send_email` — send transactional email
-  - `send_report` — attach and send a formatted report
-  - `get_templates` — list available email templates
+  - `send_email` - send transactional email
+  - `send_report` - attach and send a formatted report
+  - `get_templates` - list available email templates
 - **Transport:** HTTP (Resend / SendGrid API)
 
 ### Expansion MCPs (Phase 3)
@@ -559,13 +559,13 @@ Thresholds are percentages of the monthly limit. At 50%, the PM gets an email. A
       "mcpServers": ["postgres", "analytics"]
     },
     "producer": {
-      "description": "Asset generation — copy, images, layouts",
+      "description": "Asset generation - copy, images, layouts",
       "model": "deepseek-v4-flash",
       "skills": ["brand-voice", "copywriter", "seo"],
       "mcpServers": ["playwright", "github"]
     },
     "reviewer": {
-      "description": "Quality gate — brand consistency, SEO, accessibility, visual QA",
+      "description": "Quality gate - brand consistency, SEO, accessibility, visual QA",
       "model": "gemini-3.5-flash",
       "skills": ["brand-voice", "seo", "accessibility"],
       "mcpServers": ["playwright", "github"]
@@ -620,7 +620,7 @@ Thresholds are percentages of the monthly limit. At 50%, the PM gets an email. A
     },
     "distribution": {
       "path": "./skills/distribution.js",
-      "description": "Multi-channel distribution — email, social, RSS"
+      "description": "Multi-channel distribution - email, social, RSS"
     },
     "data-analysis": {
       "path": "./skills/data-analysis.js",
@@ -672,7 +672,7 @@ Thresholds are percentages of the monthly limit. At 50%, the PM gets an email. A
 
 ## 7. Implementation Phases
 
-### Phase 0 — Internal Task Management (Weeks 1–2)
+### Phase 0 - Internal Task Management (Weeks 1–2)
 
 **Goal:** Prove the fork works by automating Techstream's own internal task management before building client-facing features.
 
@@ -685,7 +685,7 @@ Thresholds are percentages of the monthly limit. At 50%, the PM gets an email. A
 | Build daily standup report | Analyst agent generates a daily summary of task progress, blockers, and upcoming deadlines |
 | Internal dogfooding | Techstream team uses the fork for 1–2 weeks of real task management, iterating on reliability |
 
-### Phase 1 — Foundation (Weeks 3–4)
+### Phase 1 - Foundation (Weeks 3–4)
 
 **Goal:** One model, one MCP, one end-to-end client job.
 
@@ -697,7 +697,7 @@ Thresholds are percentages of the monthly limit. At 50%, the PM gets an email. A
 | Build BullMQ job router | Worker accepts `asset-gen` jobs, classifies them, dispatches to OpenCode server |
 | End-to-end smoke test | "Generate a blog post about X" → classification → producer → reviewer → output |
 
-### Phase 2 — Core MCPs & Per-Project (Weeks 5–6)
+### Phase 2 - Core MCPs & Per-Project (Weeks 5–6)
 
 **Goal:** All core MCPs operational, per-project isolation working.
 
@@ -712,7 +712,7 @@ Thresholds are percentages of the monthly limit. At 50%, the PM gets an email. A
 | Per-client OpenRouter API keys with usage limits | Cost tracking per project, budget enforcement |
 | Central cost dashboard (MVP) | Daily/weekly/monthly spend per project, alert thresholds |
 
-### Phase 3 — Expansion & Polish (Weeks 7–8)
+### Phase 3 - Expansion & Polish (Weeks 7–8)
 
 **Goal:** Creative MCPs, full cost dashboard, production hardening.
 

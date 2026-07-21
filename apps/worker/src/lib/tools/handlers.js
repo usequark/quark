@@ -164,14 +164,17 @@ export async function handleGetConversationHistory({
 
 // ── Business Context Handlers ────────────────────────────────────────────────
 
-export async function handleGetBusinessContext({ category, limit }) {
-	// This is a placeholder — in production, this would query a BusinessContext model
+export async function handleGetBusinessContext({
+	category: _category,
+	limit: _limit,
+}) {
+	// This is a placeholder - in production, this would query a BusinessContext model
 	// For now, return empty array
 	return { contexts: [], count: 0 };
 }
 
 export async function handleCreateBusinessContext(data) {
-	// This is a placeholder — in production, this would create a BusinessContext record
+	// This is a placeholder - in production, this would create a BusinessContext record
 	logger.info("Business context created", {
 		key: data.key,
 		category: data.category,

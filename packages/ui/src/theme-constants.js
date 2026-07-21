@@ -5,7 +5,7 @@
  * out-of-tree component (e.g. HomeThemeToggle in apps/web) that interoperates
  * with it via the shared localStorage key, HTML attribute, and DOM event.
  *
- * An identical copy lives in apps/web/src/lib/theme.js — each package owns
+ * An identical copy lives in apps/web/src/lib/theme.js - each package owns
  * its own copy so there is no cross-package import. If you rename any of
  * these, update both files and the CSS selectors in globals.css.
  */

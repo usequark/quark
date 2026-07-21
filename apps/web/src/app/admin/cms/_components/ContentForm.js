@@ -115,7 +115,7 @@ export default function ContentForm({
 										<li className="flex items-start gap-2 text-sm text-primary/80">
 											<span className="mt-0.5 text-primary">&#x2022;</span>
 											<span>
-												Give your page a clear title — this becomes the page
+												Give your page a clear title - this becomes the page
 												heading and browser tab label.
 											</span>
 										</li>
@@ -198,7 +198,7 @@ export default function ContentForm({
 										onChange={(e) => setShowHeader(e.target.checked)}
 									/>
 									<p className="mt-1.5 pl-6 text-xs text-text-faint">
-										By default the title is hidden — use a Hero section instead
+										By default the title is hidden - use a Hero section instead
 										for a more polished look. Check this if you want a simple
 										title bar.
 									</p>
@@ -300,7 +300,7 @@ export default function ContentForm({
 						</section>
 					)}
 
-					{/* Save / Cancel inline — visible on mobile */}
+					{/* Save / Cancel inline - visible on mobile */}
 					<div className="flex items-center gap-3 lg:hidden">
 						<Button
 							type="submit"
@@ -392,7 +392,7 @@ export default function ContentForm({
 
 						{!isEdit && (
 							<p className="text-xs text-text-faint">
-								Saved as <strong>Draft</strong> — publish after creating.
+								Saved as <strong>Draft</strong> - publish after creating.
 							</p>
 						)}
 

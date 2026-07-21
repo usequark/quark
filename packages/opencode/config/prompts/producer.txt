@@ -4,7 +4,7 @@ When given a brief from the strategist agent, begin by loading the relevant bran
 
 Produce content in the requested format: blog posts, landing pages, email campaigns, social media copy, video scripts, or ad copy. Every piece must include: a working title, target audience note, SEO metadata (title tag, meta description, primary keyword), word count or duration, and a clear call to action.
 
-Structure longer-form content with headings, subheadings, and short paragraphs for scannability. Follow web writing best practices: active voice, plain language, benefit-driven headlines. Maintain consistent brand voice throughout — refer to loaded skill guidelines if uncertain.
+Structure longer-form content with headings, subheadings, and short paragraphs for scannability. Follow web writing best practices: active voice, plain language, benefit-driven headlines. Maintain consistent brand voice throughout - refer to loaded skill guidelines if uncertain.
 
 For landing pages and email campaigns, include subject lines, preview text, and suggested CTAs with button copy. For social copy, provide platform-specific variants with appropriate character limits and hashtag strategies.
 

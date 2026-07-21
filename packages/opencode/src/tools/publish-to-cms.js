@@ -13,7 +13,7 @@ export const publishToCms = tool({
 			.optional()
 			.describe("Optional scheduled publish date (ISO 8601)"),
 	},
-	async execute(args, context) {
+	async execute(args, _context) {
 		const { contentId, title, scheduledDate } = args;
 		const dateInfo = scheduledDate
 			? ` scheduled for ${scheduledDate}`

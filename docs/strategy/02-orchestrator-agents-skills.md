@@ -1,4 +1,4 @@
-# Orchestrator, Agents & Skills — Asset Production Pipeline
+# Orchestrator, Agents & Skills - Asset Production Pipeline
 
 > Implementation-ready reference for configuring the OpenCode agent registry.
 > This adapts the orchestrator pattern for **digital asset production** (content, design, marketing) rather than code generation.
@@ -61,7 +61,7 @@ Generate → Present to human → Incorporate feedback → Regenerate
 - Maintain session continuity using `task_id` across refinement rounds
 - Maximum **3 refinement rounds** before escalating to a human-led revision
 - Each round must show a **diff** of specific changes from the previous version
-- Feedback is applied incrementally — do not regenerate from scratch unless explicitly requested
+- Feedback is applied incrementally - do not regenerate from scratch unless explicitly requested
 
 **Example flow:**
 1. Content Writer generates blog post draft → presents to human
@@ -79,9 +79,9 @@ The orchestrator is the central router and coordinator. It does not generate con
 | Compose multi-agent outputs into a single deliverable | Yes |
 | Call MCP tools for delivery (email, CMS publish, Slack notify) | Yes |
 | Delegate work to sub-agents | Yes |
-| Generate content directly | **No** — always routes to a Producer |
-| Make creative decisions | **No** — delegates to Strategist agents |
-| Audit or review output | **No** — delegates to Reviewer agents |
+| Generate content directly | **No** - always routes to a Producer |
+| Make creative decisions | **No** - delegates to Strategist agents |
+| Audit or review output | **No** - delegates to Reviewer agents |
 
 ---
 
@@ -91,7 +91,7 @@ Three categories, eleven agents. Each agent has a defined model, skill dependenc
 
 ### 2.1 STRATEGIST Agents
 
-**Model: DeepSeek V4 Pro** — Planning, creative direction, complex decisions. These agents think before acting and produce structured plans that Producer agents execute.
+**Model: DeepSeek V4 Pro** - Planning, creative direction, complex decisions. These agents think before acting and produce structured plans that Producer agents execute.
 
 ---
 
@@ -181,7 +181,7 @@ Three categories, eleven agents. Each agent has a defined model, skill dependenc
 
 ### 2.2 PRODUCER Agents
 
-**Model: DeepSeek V4 Flash** — Bulk generation, execution, drafting. These agents produce the actual assets at high throughput.
+**Model: DeepSeek V4 Flash** - Bulk generation, execution, drafting. These agents produce the actual assets at high throughput.
 
 ---
 
@@ -321,9 +321,9 @@ Three categories, eleven agents. Each agent has a defined model, skill dependenc
 - Token application (brand colors, typography, spacing applied to theme)
 
 **Inputs:**
-- IA plan (from IA Planner — page structure, wireframes)
-- Brand tokens (from Brand Strategist — colors, fonts, spacing)
-- Content draft (from Content Writer — copy for each section)
+- IA plan (from IA Planner - page structure, wireframes)
+- Brand tokens (from Brand Strategist - colors, fonts, spacing)
+- Content draft (from Content Writer - copy for each section)
 - Quark template (base template to extend)
 
 **Behavior:**
@@ -336,7 +336,7 @@ Three categories, eleven agents. Each agent has a defined model, skill dependenc
 
 ### 2.3 REVIEWER Agents
 
-**Model: Gemini 3.5 Flash** — Visual analysis, quality assurance. These agents audit Producer output against brand standards and best practices. Using a different model family reduces echo-chamber bias.
+**Model: Gemini 3.5 Flash** - Visual analysis, quality assurance. These agents audit Producer output against brand standards and best practices. Using a different model family reduces echo-chamber bias.
 
 ---
 
@@ -648,16 +648,16 @@ This section maps directly to the OpenCode agent configuration. Use these defini
 ```
 Orchestrator classifies: COMPLEX (multi-asset, needs analytics data)
 
-Phase 1 — PLAN (parallel):
+Phase 1 - PLAN (parallel):
   Campaign Planner → content calendar framework, content pillars
 
-Phase 2 — PRODUCE (parallel):
+Phase 2 - PRODUCE (parallel):
   Content Writer ∥ Social Media Manager ∥ SEO Auditor ∥ Report Generator
 
-Phase 3 — REVIEW (parallel, on combined output):
+Phase 3 - REVIEW (parallel, on combined output):
   Copy Auditor + SEO Verifier → combined audit
 
-Phase 4 — HUMAN:
+Phase 4 - HUMAN:
   Human reviews package, adds personal touches, delivers to client
 ```
 
@@ -666,13 +666,13 @@ Phase 4 — HUMAN:
 ```
 Orchestrator classifies: SIMPLE (single asset, template exists, no external data)
 
-Phase 1 — PRODUCE:
+Phase 1 - PRODUCE:
   Content Writer → blog post draft
 
-Phase 2 — REVIEW:
+Phase 2 - REVIEW:
   Copy Auditor → PASSED
 
-Phase 3 — HUMAN:
+Phase 3 - HUMAN:
   Human reviews, polishes, publishes
 ```
 
@@ -681,15 +681,15 @@ Phase 3 — HUMAN:
 ```
 Orchestrator classifies: COMPLEX (multi-asset, needs brand adaptation)
 
-Phase 1 — PLAN (parallel):
+Phase 1 - PLAN (parallel):
   Brand Strategist ∥ IA Planner
 
-Phase 2 — PRODUCE (sequential, IA depends on brand):
+Phase 2 - PRODUCE (sequential, IA depends on brand):
   Content Writer (uses brand voice) ∥ Site Builder (uses brand tokens + IA plan)
 
-Phase 3 — REVIEW (parallel):
+Phase 3 - REVIEW (parallel):
   Design Reviewer + Copy Auditor → combined audit
 
-Phase 4 — HUMAN:
+Phase 4 - HUMAN:
   Human reviews full site, requests refinements, approves launch
 ```

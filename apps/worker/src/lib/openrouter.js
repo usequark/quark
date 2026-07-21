@@ -44,7 +44,7 @@ export async function complete({ model, messages, options = {} }) {
 			});
 
 			if (response.status === 429) {
-				// Rate limited — retry after delay
+				// Rate limited - retry after delay
 				const retryAfter = response.headers.get("retry-after");
 				const delay = retryAfter
 					? Number.parseInt(retryAfter, 10) * 1000
@@ -58,7 +58,7 @@ export async function complete({ model, messages, options = {} }) {
 			}
 
 			if (response.status >= 500) {
-				// Server error — retry
+				// Server error - retry
 				logger.warn("OpenRouter server error", {
 					attempt,
 					status: response.status,
@@ -220,7 +220,7 @@ export async function completeWithTools({
 			continue;
 		}
 
-		// No tool calls — return the final response
+		// No tool calls - return the final response
 		return {
 			...result,
 			totalCost,

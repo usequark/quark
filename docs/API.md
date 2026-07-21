@@ -102,7 +102,7 @@ Upload one or more files via `multipart/form-data`. Requires authentication.
 - Allowed types: images + PDF by default (env: `UPLOAD_ALLOWED_TYPES`)
 - Magic-byte verification prevents MIME spoofing
 
-**Response (single file — 201):**
+**Response (single file - 201):**
 ```json
 {
   "id": "clxyz...",
@@ -114,7 +114,7 @@ Upload one or more files via `multipart/form-data`. Requires authentication.
 }
 ```
 
-**Response (multiple files — 200):**
+**Response (multiple files - 200):**
 ```json
 {
   "files": [{ "id": "...", "originalName": "...", ... }]
@@ -233,7 +233,7 @@ import {
   ValidationError,
 } from "@techstream/quark-core";
 
-// Storage — reads STORAGE_PROVIDER env var
+// Storage - reads STORAGE_PROVIDER env var
 // For STORAGE_PROVIDER=s3, install @aws-sdk/client-s3 and
 // @aws-sdk/s3-request-presigner in the app first.
 const storage = createStorage();
@@ -242,7 +242,7 @@ await storage.put(key, buffer, { contentType: "image/jpeg" });
 const { body, contentType } = await storage.get(key);
 await storage.delete(key);
 
-// File validation — magic-byte detection + MIME allow-list
+// File validation - magic-byte detection + MIME allow-list
 const result = validateFile({
   filename: "photo.jpg",
   mimeType: "image/jpeg",
@@ -251,7 +251,7 @@ const result = validateFile({
 });
 // result: { valid: true, detectedType: "image/jpeg" }
 
-// Multipart parsing — streams Web Request bodies into files + fields
+// Multipart parsing - streams Web Request bodies into files + fields
 const { files, fields } = await parseMultipart(request);
 ```
 
@@ -318,10 +318,10 @@ config.appName // "Quark"
 | MAIL_SMTP_PORT       | Dev SMTP port (Mailpit)                                | `1025`                                     |
 | SMTP_HOST            | Production SMTP relay host                             | `smtp.example.com`                         |
 | SMTP_PORT            | Production SMTP relay port                             | `587`                                      |
-| SMTP_USER            | Production SMTP username                               | —                                          |
-| SMTP_PASSWORD        | Production SMTP password                               | —                                          |
+| SMTP_USER            | Production SMTP username                               | -                                          |
+| SMTP_PASSWORD        | Production SMTP password                               | -                                          |
 | RESEND_API_KEY       | Resend API key (when `EMAIL_PROVIDER=resend`)           | `re_xxxxxxxxxxxxx`                         |
-| ZEPTOMAIL_TOKEN      | Zeptomail API token (when `EMAIL_PROVIDER=zeptomail`)  | —                                          |
+| ZEPTOMAIL_TOKEN      | Zeptomail API token (when `EMAIL_PROVIDER=zeptomail`)  | -                                          |
 | ZEPTOMAIL_URL        | Zeptomail API base URL                                 | `https://api.zeptomail.com`                |
 | ZEPTOMAIL_BOUNCE_EMAIL | Bounce address for Zeptomail                         | `bounce@yourdomain.com`                    |
 | **Storage**          |                                                        |                                            |
@@ -330,8 +330,8 @@ config.appName // "Quark"
 | S3_BUCKET            | S3/R2 bucket name                                      | `my-app-uploads`                           |
 | S3_REGION            | S3 region (`"auto"` for Cloudflare R2)                 | `auto`                                     |
 | S3_ENDPOINT          | Custom S3 endpoint (required for R2)                   | `https://<id>.r2.cloudflarestorage.com`    |
-| S3_ACCESS_KEY_ID     | S3 access key                                          | —                                          |
-| S3_SECRET_ACCESS_KEY | S3 secret key                                          | —                                          |
+| S3_ACCESS_KEY_ID     | S3 access key                                          | -                                          |
+| S3_SECRET_ACCESS_KEY | S3 secret key                                          | -                                          |
 | S3_PUBLIC_URL        | Optional CDN URL for public file access                | `https://cdn.example.com`                  |
 | **Upload Limits**    |                                                        |                                            |
 | UPLOAD_MAX_SIZE      | Max file size in bytes (default: 10 MB)                | `10485760`                                 |

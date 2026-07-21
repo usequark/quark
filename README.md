@@ -36,7 +36,7 @@ Quark is a **Core-Only Registry** framework that provides:
 
 ## Quick Start
 
-All Quark packages are published on **npmjs.org** — no authentication required.
+All Quark packages are published on **npmjs.org** - no authentication required.
 
 ### 1. Create a project
 
@@ -192,9 +192,9 @@ pnpm changeset --empty
 
 #### Available scripts
 
-- `pnpm changeset` — add a changeset
-- `pnpm version-packages` — bump versions & update changelogs (local)
-- `pnpm release` — publish changed packages to npm (local)
+- `pnpm changeset` - add a changeset
+- `pnpm version-packages` - bump versions & update changelogs (local)
+- `pnpm release` - publish changed packages to npm (local)
 
 > **Note:** Publishing is handled automatically by CI. The local scripts are for debugging only.
 

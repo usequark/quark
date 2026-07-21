@@ -8,14 +8,14 @@ import React, {
 } from "react";
 
 /**
- * Dialog — centered modal built on the native <dialog> element.
+ * Dialog - centered modal built on the native <dialog> element.
  *
  * Props:
- *   open      (bool)    — controlled open state
- *   onClose   (fn)      — called when the dialog should close
- *   title     (string)  — header text
- *   children            — dialog body content
- *   className (string)  — merged onto the <dialog> element
+ *   open      (bool)    - controlled open state
+ *   onClose   (fn)      - called when the dialog should close
+ *   title     (string)  - header text
+ *   children            - dialog body content
+ *   className (string)  - merged onto the <dialog> element
  *
  * Architecture:
  *   • ALL close paths (header ×, backdrop click, Escape, external button)
@@ -62,7 +62,7 @@ export function Dialog({ open, onClose, title, children, className = "" }) {
 			isClosingRef.current = false;
 			setIsClosing(false);
 		} else {
-			// Play exit animation then close native element — regardless of who triggered close
+			// Play exit animation then close native element - regardless of who triggered close
 			if (isClosingRef.current) return; // already animating out, don't double-trigger
 			isClosingRef.current = true;
 			setIsClosing(true);
@@ -75,7 +75,7 @@ export function Dialog({ open, onClose, title, children, className = "" }) {
 		}
 	}, [open]);
 
-	// All close-trigger sources just call onClose() — parent sets open=false,
+	// All close-trigger sources just call onClose() - parent sets open=false,
 	// which re-runs the effect above and plays the animation.
 	const handleClose = useCallback(() => {
 		if (!isClosingRef.current) onClose?.();

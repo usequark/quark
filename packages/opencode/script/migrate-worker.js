@@ -9,7 +9,7 @@ import fs from "fs-extra";
  *   B. Create apps/worker/src/handlers/ai.js with the AI job handlers
  *   C. Wire the AI handlers into apps/worker/src/handlers/index.js
  *
- * All steps are idempotent — if the relevant entries or files already exist
+ * All steps are idempotent - if the relevant entries or files already exist
  * they are skipped.
  *
  * @param {string} projectDir - Root directory of the Quark project
@@ -164,9 +164,9 @@ const logger = createLogger("worker:ai");
  * Creates an OpenCode session and sends a prompt, returning the result.
  *
  * Job data expected:
- *   - prompt: string — the prompt text to send
- *   - agent: string — the agent to use (e.g., "assistant", "strategist")
- *   - sessionTitle: string — optional title for the session
+ *   - prompt: string - the prompt text to send
+ *   - agent: string - the agent to use (e.g., "assistant", "strategist")
+ *   - sessionTitle: string - optional title for the session
  *
  * @param {import("bullmq").Job} bullJob
  * @param {Object} logger
@@ -236,7 +236,7 @@ export async function handleAiAgentTask(bullJob, logger) {
  * Creates a new OpenCode session and returns the session ID.
  *
  * Job data expected:
- *   - title: string — optional session title
+ *   - title: string - optional session title
  *
  * @param {import("bullmq").Job} bullJob
  * @param {Object} logger
@@ -1091,7 +1091,7 @@ async function updateSidebar(projectDir) {
 
 	// Add TOOL_ICONS mapping if not present
 	if (!content.includes("TOOL_ICONS")) {
-		// Find a good insertion point — after the last import or after component definition
+		// Find a good insertion point - after the last import or after component definition
 		const modelSectionMatch = content.match(/(function ModelSection\s*\{)/);
 		if (modelSectionMatch) {
 			content = content.replace(

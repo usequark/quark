@@ -13,7 +13,7 @@
 		"plan": { "disable": true },
 		"orchestrator": {
 			"mode": "primary",
-			"description": "Orchestrator — classifies incoming jobs and delegates to specialist sub-agents. Composes final outputs.",
+			"description": "Orchestrator - classifies incoming jobs and delegates to specialist sub-agents. Composes final outputs.",
 			"model": "openrouter/deepseek/deepseek-v4-pro",
 			"temperature": 0.3,
 			"permission": {
@@ -36,7 +36,7 @@
 		},
 		"producer": {
 			"mode": "subagent",
-			"description": "Asset generation — copy, images, layouts",
+			"description": "Asset generation - copy, images, layouts",
 			"model": "openrouter/deepseek/deepseek-v4-flash",
 			"temperature": 0.3,
 			"permission": {
@@ -48,7 +48,7 @@
 		},
 		"reviewer": {
 			"mode": "subagent",
-			"description": "Quality gate — brand consistency, SEO, accessibility, visual QA",
+			"description": "Quality gate - brand consistency, SEO, accessibility, visual QA",
 			"model": "openrouter/google/gemini-3.5-flash",
 			"temperature": 0.4,
 			"permission": {

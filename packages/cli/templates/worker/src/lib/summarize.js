@@ -63,7 +63,7 @@ export async function summarizeConversation(
 		logger.error("Failed to summarize conversation", {
 			error: error.message,
 		});
-		// Return empty summary — truncation still works by dropping messages
+		// Return empty summary - truncation still works by dropping messages
 		return { summary: "", tokenCount: 0 };
 	}
 }

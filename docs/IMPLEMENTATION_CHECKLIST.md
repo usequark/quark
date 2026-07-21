@@ -81,7 +81,7 @@ This document contains a comprehensive list of all missing features, issues, and
 - [x] **Add auth environment variables**
   - [x] NEXTAUTH_SECRET already present
   - [x] Add APP_URL (derives NEXTAUTH_URL automatically)
-  - [x] OAuth provider keys (GITHUB_ID, GITHUB_SECRET, etc.) — user-configured per deployment
+  - [x] OAuth provider keys (GITHUB_ID, GITHUB_SECRET, etc.) - user-configured per deployment
 
 ### Background Jobs
 
@@ -107,14 +107,14 @@ This document contains a comprehensive list of all missing features, issues, and
   - Strategy Pattern: providers implement a common `EmailProvider` base class
   - Built-in providers: `smtp` (Nodemailer), `resend`, `zeptomail`
   - Provider selected via `EMAIL_PROVIDER` env var (defaults to `smtp`)
-  - Config validated at service-creation time (`validateConfig()`) — fails fast at startup
+  - Config validated at service-creation time (`validateConfig()`) - fails fast at startup
   - Consistent `{ id }` return shape across all providers
   - Custom providers: extend `EmailProvider`, call `registerEmailProvider(name, Class)`
 
 - [x] **Setup email templates**
   - Files: `packages/core/src/email-templates.js`
   - `welcomeEmail()` and `passwordResetEmail()` with HTML layout + plain-text fallback
-  - XSS-safe via `escapeHtml()`, customizable app name, login URL, expiry — 20 tests
+  - XSS-safe via `escapeHtml()`, customizable app name, login URL, expiry - 20 tests
 
 - [x] **Integrate with job processor**
   - Worker uses `welcomeEmail()` / `passwordResetEmail()` templates in job handlers
@@ -181,7 +181,7 @@ This document contains a comprehensive list of all missing features, issues, and
 - [x] **Add structured logging**
   - Custom zero-dependency structured logger in `packages/core/src/logger.js`
   - JSON output in production, colorized in dev, LOG_LEVEL env var support
-  - `createLogger()`, `logger.child()`, `requestLogger()` — 14 tests
+  - `createLogger()`, `logger.child()`, `requestLogger()` - 14 tests
 
 - [x] **Add request logging middleware**
   - `requestLogger(req)` creates child logger with method, url, requestId
@@ -190,7 +190,7 @@ This document contains a comprehensive list of all missing features, issues, and
 - [x] **Add error tracking**
   - Adapter-based `ErrorReporter` in `packages/core/src/error-reporter.js`
   - Console adapter by default, `createSentryAdapter()` stub for production
-  - Breadcrumbs, user context, `report()`, `captureMessage()` — 17 tests
+  - Breadcrumbs, user context, `report()`, `captureMessage()` - 17 tests
 
 - [x] **Add health check endpoint**
   - Files: `apps/web/src/app/api/health/route.js`
@@ -203,7 +203,7 @@ This document contains a comprehensive list of all missing features, issues, and
   - Pre-registered HTTP metrics: `httpRequestsTotal`, `httpRequestDuration`, `httpRequestsInFlight`, `appErrorsTotal`
   - Prometheus exposition format via `metrics.serialize()`
   - `/api/metrics` endpoint at `apps/web/src/app/api/metrics/route.js`
-  - Factory: `createMetrics()`, singleton: `metrics` — 23 tests
+  - Factory: `createMetrics()`, singleton: `metrics` - 23 tests
 
 ### Database & Caching
 
@@ -221,7 +221,7 @@ This document contains a comprehensive list of all missing features, issues, and
 
 - [x] **Implement query result caching**
   - `createCache(redisClient, options)` in `packages/core/src/cache.js`
-  - `get()`, `set()`, `del()`, `getOrSet()`, `wrap()`, `invalidate()` — 14 tests
+  - `get()`, `set()`, `del()`, `getOrSet()`, `wrap()`, `invalidate()` - 14 tests
 
 - [x] **Add cache invalidation strategy**
   - `invalidate(pattern)` deletes all keys matching a glob pattern via Redis SCAN
@@ -248,13 +248,13 @@ This document contains a comprehensive list of all missing features, issues, and
   - `packages/config/src/environment.js` with dev/test/staging/production defaults
   - `resolveEnvironment()` with aliases (dev→development, prod→production, etc.)
   - `getEnvironmentConfig()`, `mergeConfig()`, `ENVIRONMENTS` constant
-  - Per-environment: rate limits, cache TTL, logging, DB pool, security, feature flags — 32 tests
+  - Per-environment: rate limits, cache TTL, logging, DB pool, security, feature flags - 32 tests
 
 - [x] **Add configuration loader**
   - Files: `packages/config/src/load-config.js`
-  - `loadConfig(overrides, options)` — validates env vars, resolves environment, merges defaults + env overrides + user overrides
+  - `loadConfig(overrides, options)` - validates env vars, resolves environment, merges defaults + env overrides + user overrides
   - Caching with `resetConfig()` for tests, `getConfig()` for access
-  - Reads PORT, RATE_LIMIT_MAX, LOG_LEVEL, DB_POOL_MAX, CACHE_TTL from env — 17 tests
+  - Reads PORT, RATE_LIMIT_MAX, LOG_LEVEL, DB_POOL_MAX, CACHE_TTL from env - 17 tests
 
 ### Testing
 
@@ -267,7 +267,7 @@ This document contains a comprehensive list of all missing features, issues, and
 - [x] **Create test fixtures/factories**
   - Files: `packages/core/src/testing/factories.js`
   - `createTestUser()`, `createTestPost()`, `createTestSession()` with overridable defaults
-  - Import via `@techstream/quark-core/testing` subpath — 62 tests for all testing utilities
+  - Import via `@techstream/quark-core/testing` subpath - 62 tests for all testing utilities
 
 - [ ] **Add API integration tests**
   - Test all CRUD endpoints with valid/invalid data
@@ -280,7 +280,7 @@ This document contains a comprehensive list of all missing features, issues, and
 - [x] **Add role-based access control (RBAC)**
   - Added `role` field to User model in Prisma schema (default: "viewer")
   - Policy-based RBAC engine in `packages/core/src/authorization.js`
-  - `createAuthorization(policy)`, `can()`, `authorize()`, `hasPermission()` — 36 tests
+  - `createAuthorization(policy)`, `can()`, `authorize()`, `hasPermission()` - 36 tests
   - Default policy: admin (wildcard), editor (posts CRUD, users read), viewer (read-only)
 
 - [x] **Create permission middleware**
@@ -384,7 +384,7 @@ This document contains a comprehensive list of all missing features, issues, and
   - Client-only: Dialog, Toast/useToast, ThemeProvider/useTheme
 
 - [x] **Add dark mode support (Tailwind `@custom-variant dark`)**
-  - `globals.css`: `@custom-variant dark (&:is([data-theme="dark"] *))` — data-theme attribute strategy
+  - `globals.css`: `@custom-variant dark (&:is([data-theme="dark"] *))` - data-theme attribute strategy
   - Dark-first CSS custom properties with light overrides via `@media` + `[data-theme="light"]`
   - FOUC prevention: blocking script in `layout.js` reads localStorage + OS pref before first paint
   - All 11 UI components updated with `dark:` utility class variants
@@ -405,13 +405,13 @@ This document contains a comprehensive list of all missing features, issues, and
 
 - [x] **Implement auto-generated admin UI**
   - Files: `apps/web/src/app/admin/`
-  - Powered by `@techstream/quark-admin` — Prisma DMMF introspection, no code generation
+  - Powered by `@techstream/quark-admin` - Prisma DMMF introspection, no code generation
   - Full CRUD: list, create, edit, delete for every Prisma model
   - Routes: `/admin`, `/admin/[model]`, `/admin/[model]/new`, `/admin/[model]/[id]`
-  - `ModelTable.js` — generic record list using `<Table>` from `@techstream/quark-ui`
-  - `ModelForm.js` — generic create/edit form with proper `variant="danger"` delete button
-  - `FieldRenderer.js` — maps Prisma field types to appropriate form inputs
-  - `Sidebar.js` — collapsible model navigation
+  - `ModelTable.js` - generic record list using `<Table>` from `@techstream/quark-ui`
+  - `ModelForm.js` - generic create/edit form with proper `variant="danger"` delete button
+  - `FieldRenderer.js` - maps Prisma field types to appropriate form inputs
+  - `Sidebar.js` - collapsible model navigation
   - Admin is opt-in at scaffolding time (`--features admin`)
 
 - [x] **Enforce admin RBAC**
@@ -599,8 +599,8 @@ These tasks can be completed quickly and provide immediate value:
 - [x] `--features <list>` flag with validation (valid: `ui`, `jobs`)
 - [x] `--skip-install` flag for CI/CD environments
 - [x] `--skip-docker` flag to skip Docker cleanup step
-- [x] Full lifecycle E2E test (`test:e2e:full`) — 7 phases, ~30s
-- [x] Flag validation unit tests (`test:flags`) — 9 tests, 100% pass
+- [x] Full lifecycle E2E test (`test:e2e:full`) - 7 phases, ~30s
+- [x] Flag validation unit tests (`test:flags`) - 9 tests, 100% pass
 - [x] GitHub Actions CI workflow (PR validation)
 - [x] GitHub Actions nightly full lifecycle test
 - [x] Documentation updated (README, ARCHITECTURE, EXAMPLES)
@@ -621,7 +621,7 @@ Total:         58/95 (61%)
 
 **Recent Updates:**
 - 2026-02-16: Completed application metrics, environment configs, config loader, OpenAPI docs, database docs
-- 2026-02-17: Security hardening — fixed path traversal, IP spoofing, missing CSRF, weak secret validation
+- 2026-02-17: Security hardening - fixed path traversal, IP spoofing, missing CSRF, weak secret validation
 - 2026-02-17: Added search/filtering, sorting, and request/response logging support
 
 Last Updated: 17 February 2026

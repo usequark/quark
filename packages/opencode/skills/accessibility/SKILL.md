@@ -13,13 +13,13 @@ Review content and UI elements against WCAG 2.2 criteria to ensure inclusive, ac
 
 ## Alt Text Requirements
 - Every image must have `alt` text. Decorative images get `alt=""` (empty).
-- Informative images: describe the content and function in context — be concise but complete.
+- Informative images: describe the content and function in context - be concise but complete.
 - Complex images (charts, graphs): provide a short alt text plus a longer description in nearby text or `aria-describedby`.
-- Alt text should not start with "image of" or "picture of" — screen readers announce it as an image automatically.
+- Alt text should not start with "image of" or "picture of" - screen readers announce it as an image automatically.
 
 ## Heading Structure
 - Headings must follow a logical hierarchy (h1 → h2 → h3) without skipping levels.
-- Never use headings purely for visual styling — use CSS for that.
+- Never use headings purely for visual styling - use CSS for that.
 - Verify that all content is sectioned by headings that describe the content beneath them.
 - Check that heading levels are consistent across similar pages/templates.
 
@@ -31,7 +31,7 @@ Review content and UI elements against WCAG 2.2 criteria to ensure inclusive, ac
 
 ## Common WCAG Failures to Check
 - Missing form label associations (every input must have a `<label>` or `aria-label`).
-- Buttons vs. links: use `<button>` for actions, `<a>` for navigation — never the reverse.
+- Buttons vs. links: use `<button>` for actions, `<a>` for navigation - never the reverse.
 - Dynamic content changes: updates must be announced by aria-live regions.
 - Touch target size: interactive targets must be at least 24x24 CSS pixels with sufficient spacing.
 - CAPTCHA failures: offer audio alternatives or accessible challenge methods.

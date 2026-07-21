@@ -185,7 +185,7 @@ export default function ModelForm({ model, slug, record, readOnly = false }) {
 	);
 
 	return (
-		<div className="max-w-6xl">
+		<div className="max-w-6xl mx-auto">
 			<div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
 				<form id={formId} action={formAction} className="space-y-4">
 					{activeGroups.map((groupKey) => (

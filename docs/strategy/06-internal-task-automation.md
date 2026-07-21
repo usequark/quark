@@ -1,7 +1,7 @@
 # Phase 0: Internal Task Automation
 
 > **Status:** Spec  
-> **Priority:** Highest — this is the first thing to build  
+> **Priority:** Highest - this is the first thing to build  
 > **Goal:** Automate Techstream's internal Kanban task management before any client-facing automation. Proves the OpenCode fork, model routing, agent delegation, and human-in-the-loop review all work in a low-risk internal context.
 
 ---
@@ -448,7 +448,7 @@ The Techstream platform exposes a Kanban API that the OpenCode server calls:
    - Adjust priority heuristics
    - Refine effort estimation
 
-7. **Graduate** — once stable for 2+ weeks with no critical misses, consider Phase 0 complete and begin Phase 1 (client-facing automation)
+7. **Graduate** - once stable for 2+ weeks with no critical misses, consider Phase 0 complete and begin Phase 1 (client-facing automation)
 
 ---
 

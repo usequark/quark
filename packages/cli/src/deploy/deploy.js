@@ -42,7 +42,7 @@ async function healthCheckService(url) {
 	}
 
 	console.log(
-		chalk.yellow(`  ⚠ Health check timed out: ${lastError} — verify manually`),
+		chalk.yellow(`  ⚠ Health check timed out: ${lastError} - verify manually`),
 	);
 	return false;
 }
@@ -116,7 +116,7 @@ export async function deployToRailway(options = {}) {
 			console.error(chalk.red(`  ✖ ${issue}`));
 		}
 		throw new Error(
-			"Pre-deploy validation failed — missing railway.json files",
+			"Pre-deploy validation failed - missing railway.json files",
 		);
 	}
 
@@ -236,7 +236,7 @@ export async function deployToRailway(options = {}) {
 				{ key: "APP_NAME", value: projectLabel },
 				{
 					key: "APP_DESCRIPTION",
-					value: `${projectLabel} — Quark application`,
+					value: `${projectLabel} - Quark application`,
 				},
 				{ key: "NODE_ENV", value: "production" },
 				{ key: "AUTH_SECRET", value: authSecret },
@@ -390,7 +390,7 @@ export async function deployToRailway(options = {}) {
 			),
 		);
 	} else {
-		console.log(chalk.red.bold("\n❌ Deploy failed — see errors above\n"));
+		console.log(chalk.red.bold("\n❌ Deploy failed - see errors above\n"));
 	}
 
 	return { success: allSucceeded, services: results };

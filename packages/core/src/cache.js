@@ -18,10 +18,10 @@
 /**
  * Creates a cache instance backed by a Redis client.
  *
- * @param {import("ioredis").Redis} redisClient — any Redis client with get/set/del/keys/expire methods
+ * @param {import("ioredis").Redis} redisClient - any Redis client with get/set/del/keys/expire methods
  * @param {Object} [options]
- * @param {string} [options.prefix="cache:"] — key prefix for namespacing
- * @param {number} [options.defaultTTL=300] — default TTL in seconds (5 minutes)
+ * @param {string} [options.prefix="cache:"] - key prefix for namespacing
+ * @param {number} [options.defaultTTL=300] - default TTL in seconds (5 minutes)
  * @returns {ReturnType<typeof createCache>}
  */
 export function createCache(redisClient, options = {}) {
@@ -48,8 +48,8 @@ export function createCache(redisClient, options = {}) {
 		 * Set a cached value with optional TTL (atomic SET + EX).
 		 *
 		 * @param {string} key
-		 * @param {any} value — will be JSON.stringified
-		 * @param {number} [ttl] — TTL in seconds, defaults to defaultTTL
+		 * @param {any} value - will be JSON.stringified
+		 * @param {number} [ttl] - TTL in seconds, defaults to defaultTTL
 		 */
 		async set(key, value, ttl) {
 			const prefixedKey = `${prefix}${key}`;
@@ -69,7 +69,7 @@ export function createCache(redisClient, options = {}) {
 		/**
 		 * Delete all keys matching a pattern using SCAN (non-blocking, production-safe).
 		 *
-		 * @param {string} pattern — e.g., "user:*"
+		 * @param {string} pattern - e.g., "user:*"
 		 */
 		async invalidate(pattern) {
 			const matchPattern = `${prefix}${pattern}`;
@@ -94,8 +94,8 @@ export function createCache(redisClient, options = {}) {
 		 * otherwise calls factory, caches the result, and returns it.
 		 *
 		 * @param {string} key
-		 * @param {Function} factory — async function that produces the value
-		 * @param {number} [ttl] — TTL in seconds, defaults to defaultTTL
+		 * @param {Function} factory - async function that produces the value
+		 * @param {number} [ttl] - TTL in seconds, defaults to defaultTTL
 		 * @returns {Promise<any>}
 		 */
 		async getOrSet(key, factory, ttl) {
@@ -111,11 +111,11 @@ export function createCache(redisClient, options = {}) {
 		 * Wrap a function with caching. Returns a new function that
 		 * caches results based on argument serialisation.
 		 *
-		 * @param {Function} fn — the function to wrap
+		 * @param {Function} fn - the function to wrap
 		 * @param {Object} [wrapOptions]
-		 * @param {string} [wrapOptions.keyPrefix] — prefix for generated cache keys
-		 * @param {number} [wrapOptions.ttl] — TTL in seconds
-		 * @param {Function} [wrapOptions.keyGenerator] — custom key generator `(...args) => string`
+		 * @param {string} [wrapOptions.keyPrefix] - prefix for generated cache keys
+		 * @param {number} [wrapOptions.ttl] - TTL in seconds
+		 * @param {Function} [wrapOptions.keyGenerator] - custom key generator `(...args) => string`
 		 * @returns {Function}
 		 */
 		wrap(fn, wrapOptions = {}) {

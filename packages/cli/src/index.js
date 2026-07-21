@@ -21,7 +21,7 @@ const program = new Command();
 
 program
 	.name("quark")
-	.description("Quark CLI — scaffold, update, and deploy Quark projects")
+	.description("Quark CLI - scaffold, update, and deploy Quark projects")
 	.version(pkg.version);
 
 /**
@@ -64,15 +64,15 @@ function isPortAvailable(port) {
 		socket.setTimeout(500);
 		socket.once("connect", () => {
 			socket.destroy();
-			resolve(false); // something is listening — port is in use
+			resolve(false); // something is listening - port is in use
 		});
 		socket.once("error", () => {
 			socket.destroy();
-			resolve(true); // ECONNREFUSED — port is free
+			resolve(true); // ECONNREFUSED - port is free
 		});
 		socket.once("timeout", () => {
 			socket.destroy();
-			resolve(true); // no response — port is free
+			resolve(true); // no response - port is free
 		});
 		socket.connect(port, "127.0.0.1");
 	});
@@ -525,7 +525,7 @@ program
 					try {
 						await execa("docker", ["network", "rm", `${projectName}_default`]);
 					} catch {
-						// Network may not exist — fine
+						// Network may not exist - fine
 					}
 					// Now remove the orphaned volumes
 					for (const vol of orphanedVolumes) {
@@ -534,7 +534,7 @@ program
 					console.log(chalk.green("  ✓ Cleaned up orphaned Docker volumes"));
 				}
 			} catch {
-				// Docker not available — fine
+				// Docker not available - fine
 			}
 
 		// Check if directory already exists
@@ -568,7 +568,7 @@ program
 				});
 				console.log(chalk.green("  ✓ Stopped existing Docker containers"));
 			} catch {
-				// No docker-compose file or Docker not running — fine
+				// No docker-compose file or Docker not running - fine
 			}
 
 			await fs.remove(targetDir);
@@ -602,7 +602,7 @@ program
 					await copyTemplate(reqPkg, pkgDir);
 				}
 				const pkgJsonPath = path.join(pkgDir, "package.json");
-				// Verify copy succeeded — guards against Windows fs race conditions where a
+				// Verify copy succeeded - guards against Windows fs race conditions where a
 				// directory handle is returned before child writes are fully committed.
 				if (!(await fs.pathExists(pkgJsonPath))) {
 					throw new Error(
@@ -785,7 +785,7 @@ program
 					if (!(await fs.pathExists(templatePath))) {
 						console.log(
 							chalk.yellow(
-								`    ⚠ ${packageName} (template not yet available — skipped)`,
+								`    ⚠ ${packageName} (template not yet available - skipped)`,
 							),
 						);
 						continue;
@@ -1010,7 +1010,7 @@ program
 			// Step 8: Create .env.example file
 			console.log(chalk.cyan("\n  📋 Creating environment configuration..."));
 			const envExampleTemplate = `# ⚠️  IMPORTANT: Copy this file to .env and fill in the values for your environment.
-# NEVER commit the .env file to version control — it contains secrets!
+# NEVER commit the .env file to version control - it contains secrets!
 # $ cp .env.example .env
 
 # --- Environment ---
@@ -1073,13 +1073,13 @@ MAIL_UI_PORT=8025
 # RESEND_API_KEY=re_xxxxxxxxxxxxx
 
 # --- Application URL ---
-# In development, APP_URL is derived automatically from PORT — no need to set it.
+# In development, APP_URL is derived automatically from PORT - no need to set it.
 # In production, set this to your real domain:
 # APP_URL=https://yourdomain.com
 
 # --- Application Identity ---
 # APP_NAME is used in metadata, emails, and page titles.
-# ⚠️  APP_DESCRIPTION affects SEO snippets — update before production.
+# ⚠️  APP_DESCRIPTION affects SEO snippets - update before production.
 APP_NAME=${appDisplayName}
 APP_DESCRIPTION=${appDescription}
 
@@ -1204,7 +1204,7 @@ MAIL_UI_PORT=${mailUiPort}
 
 # --- Application Identity ---
 # APP_NAME is used in metadata, emails, and page titles.
-# ⚠️  APP_DESCRIPTION affects SEO snippets — update before production.
+# ⚠️  APP_DESCRIPTION affects SEO snippets - update before production.
 APP_NAME=${appDisplayName}
 APP_DESCRIPTION=${appDescription}
 
@@ -1227,7 +1227,7 @@ WORKER_CONCURRENCY=5
 STORAGE_PROVIDER=local
 
 # --- Database Seeding ---
-# SEED_PROFILE=dev             # Options: dev (default), minimal (users only — use for production initial seed)
+# SEED_PROFILE=dev             # Options: dev (default), minimal (users only - use for production initial seed)
 `;
 			await fs.writeFile(path.join(targetDir, ".env"), envContent);
 			console.log(
@@ -1411,7 +1411,7 @@ STORAGE_PROVIDER=local
 			);
 			console.log(
 				chalk.white(
-					`  "I'm building ${projectName} — [what it does]. Review CLAUDE.md and let's start."\n`,
+					`  "I'm building ${projectName} - [what it does]. Review CLAUDE.md and let's start."\n`,
 				),
 			);
 
@@ -1434,7 +1434,7 @@ STORAGE_PROVIDER=local
 	});
 
 // ---------------------------------------------------------------------------
-// quark add <feature> — Add optional packages to an existing Quark project
+// quark add <feature> - Add optional packages to an existing Quark project
 // ---------------------------------------------------------------------------
 
 /** Feature metadata: dependencies and paired apps/routes */
@@ -1877,7 +1877,7 @@ program
 		if (missingRequirements.length > 0) {
 			console.log(
 				chalk.yellow(
-					`  ℹ  "${feature}" requires ${missingRequirements.join(", ")} — adding automatically.`,
+					`  ℹ  "${feature}" requires ${missingRequirements.join(", ")} - adding automatically.`,
 				),
 			);
 		}
@@ -1897,7 +1897,7 @@ program
 					if (await fs.pathExists(packageDir)) {
 						console.log(
 							chalk.dim(
-								`    · packages/${packageName} already exists — skipping copy`,
+								`    · packages/${packageName} already exists - skipping copy`,
 							),
 						);
 					} else {
@@ -1922,7 +1922,7 @@ program
 						const workerDir = path.join(projectDir, "apps", "worker");
 						if (await fs.pathExists(workerDir)) {
 							console.log(
-								chalk.dim(`    · apps/worker already exists — skipping copy`),
+								chalk.dim(`    · apps/worker already exists - skipping copy`),
 							);
 						} else {
 							await copyTemplate("worker", workerDir);
@@ -1950,7 +1950,7 @@ program
 						if (await fs.pathExists(adminRoutesDir)) {
 							console.log(
 								chalk.dim(
-									`    · apps/web/src/app/admin already exists — skipping copy`,
+									`    · apps/web/src/app/admin already exists - skipping copy`,
 								),
 							);
 						} else {
@@ -1973,7 +1973,7 @@ program
 						if (await fs.pathExists(cmsRoutesDir)) {
 							console.log(
 								chalk.dim(
-									`    · apps/web/src/app/admin/cms already exists — skipping copy`,
+									`    · apps/web/src/app/admin/cms already exists - skipping copy`,
 								),
 							);
 						} else {
@@ -2007,7 +2007,7 @@ program
 						if (await fs.pathExists(crmRoutesDir)) {
 							console.log(
 								chalk.dim(
-									`    · apps/web/src/app/admin/crm already exists — skipping copy`,
+									`    · apps/web/src/app/admin/crm already exists - skipping copy`,
 								),
 							);
 						} else {
@@ -2031,7 +2031,7 @@ program
 						);
 						if (await fs.pathExists(aiRoutesDir)) {
 							console.log(
-								chalk.dim(`    · admin/ai already exists — skipping copy`),
+								chalk.dim(`    · admin/ai already exists - skipping copy`),
 							);
 						} else {
 							const aiTplDir = path.join(templatesDir, "ai-routes");
@@ -2260,7 +2260,7 @@ program
 					continue;
 				}
 				if (!installed || installed === latest) {
-					console.log(chalk.green(`  ✓ ${name} ${latest} — up to date`));
+					console.log(chalk.green(`  ✓ ${name} ${latest} - up to date`));
 				} else {
 					console.log(
 						chalk.yellow(`  ↑ ${name}: ${installed} → ${chalk.bold(latest)}`),
@@ -2341,7 +2341,7 @@ program
 				}
 			}
 
-			// Persist the new core version — keep previous on failure, never write garbage
+			// Persist the new core version - keep previous on failure, never write garbage
 			const newCoreVersion =
 				after["@techstream/quark-core"] ?? quarkLink.quarkVersion;
 			quarkLink.quarkVersion = newCoreVersion;
@@ -2359,7 +2359,7 @@ program
 			} catch {
 				console.log(
 					chalk.yellow(
-						"\n  ⚠️  Lint reported issues — review before committing.\n",
+						"\n  ⚠️  Lint reported issues - review before committing.\n",
 					),
 				);
 			}
@@ -2377,7 +2377,7 @@ program
 	});
 
 // ---------------------------------------------------------------------------
-// quark deploy — Deploy and inspect
+// quark deploy - Deploy and inspect
 // ---------------------------------------------------------------------------
 
 const deployCmd = program
@@ -2401,7 +2401,7 @@ deployCmd
 		if (options.dryRun) {
 			const { inspectProject } = await import("./deploy/inspect.js");
 			console.log(
-				chalk.yellow("\n⚠  Dry run — validating deployment configuration\n"),
+				chalk.yellow("\n⚠  Dry run - validating deployment configuration\n"),
 			);
 			await inspectProject({ cwd: process.cwd() });
 			console.log(

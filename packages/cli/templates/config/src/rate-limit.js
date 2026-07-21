@@ -23,7 +23,7 @@ export async function rateLimit(key, limit = 10, windowMs = 60000) {
 	try {
 		const client = await getSharedRedisClient();
 		if (!client) {
-			// Fail open — Redis unavailable
+			// Fail open - Redis unavailable
 			return {
 				allowed: true,
 				remaining: limit,
@@ -50,7 +50,7 @@ export async function rateLimit(key, limit = 10, windowMs = 60000) {
 			local count = redis.call('ZCARD', key)
 
 			if count >= limit then
-				-- Rate limited — return oldest entry for reset calculation
+				-- Rate limited - return oldest entry for reset calculation
 				local oldest = redis.call('ZRANGE', key, 0, 0, 'WITHSCORES')
 				local reset_time = window_end
 				if #oldest >= 2 then
@@ -88,7 +88,7 @@ export async function rateLimit(key, limit = 10, windowMs = 60000) {
 			reset: Math.ceil(reset / 1000),
 		};
 	} catch {
-		// Fail open — Redis error
+		// Fail open - Redis error
 		return {
 			allowed: true,
 			remaining: limit,

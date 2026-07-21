@@ -671,9 +671,9 @@ export const adminConfig = {
 ```
 
 **What this controls:**
-- `readOnly` — disables create/edit/delete, groups model under "System" in sidebar
-- `label` — display name in sidebar and headings
-- `hiddenFields` — fields excluded from forms and tables
+- `readOnly` - disables create/edit/delete, groups model under "System" in sidebar
+- `label` - display name in sidebar and headings
+- `hiddenFields` - fields excluded from forms and tables
 
 ### Tier 2: Replace Model Pages (Custom Detail/Form)
 
@@ -827,7 +827,7 @@ export default async function NewBookingPage() {
           <Select name="serviceId" required>
             <option value="">Select a service…</option>
             {services.map((s) => (
-              <option key={s.id} value={s.id}>{s.name} — ${Number(s.price).toFixed(2)}</option>
+              <option key={s.id} value={s.id}>{s.name} - ${Number(s.price).toFixed(2)}</option>
             ))}
           </Select>
         </div>
@@ -875,7 +875,7 @@ For views that don't map to a single model (analytics, calendars, overviews), ad
 Edit the existing dashboard to add domain-specific metrics:
 
 ```javascript
-// apps/web/src/app/admin/page.js — add to the existing dashboard
+// apps/web/src/app/admin/page.js - add to the existing dashboard
 
 // In the data fetching section, add:
 const lowStock = await prisma.product.findMany({
@@ -955,5 +955,5 @@ export default async function CalendarPage() {
 | **Replace** | Model needs domain-specific UI | Named route overrides `[model]` | Order detail, booking form |
 | **Add** | Non-model views, custom metrics | New routes + sidebar links | Calendar, analytics, stock alerts |
 
-The generic CRUD handles 80% of models. Custom pages handle the rest. You never build an admin framework — you build Next.js pages that happen to live under `/admin`.
+The generic CRUD handles 80% of models. Custom pages handle the rest. You never build an admin framework - you build Next.js pages that happen to live under `/admin`.
 

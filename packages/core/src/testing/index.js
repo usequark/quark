@@ -1,5 +1,5 @@
 /**
- * Quark test utilities — zero-dependency helpers for testing Quark applications.
+ * Quark test utilities - zero-dependency helpers for testing Quark applications.
  *
  * Import from `@techstream/quark-core/testing` in your test files:
  *
@@ -23,13 +23,13 @@
  * @module testing
  */
 
-// Factories — test data creation
+// Factories - test data creation
 export {
 	createTestPost,
 	createTestSession,
 	createTestUser,
 } from "./factories.js";
-// Helpers — test utilities
+// Helpers - test utilities
 export {
 	assertApiResponse,
 	assertThrows,
@@ -37,7 +37,7 @@ export {
 	createTestContext,
 	waitFor,
 } from "./helpers.js";
-// Mocks — service stand-ins
+// Mocks - service stand-ins
 export {
 	createMockPrisma,
 	createMockRedis,

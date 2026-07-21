@@ -11,7 +11,7 @@
 		"plan": { "disable": true },
 		"assistant": {
 			"mode": "primary",
-			"description": "Text-only AI assistant. Can only respond with text — no file access, no tool execution, no sub-agent spawning.",
+			"description": "Text-only AI assistant. Can only respond with text - no file access, no tool execution, no sub-agent spawning.",
 			"model": "openrouter/deepseek/deepseek-v4-flash",
 			"temperature": 0.3,
 			"permission": {

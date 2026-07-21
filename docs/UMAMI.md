@@ -16,9 +16,9 @@ Quark's recommended default is a dormant Umami baseline in every scaffolded Next
 
 Scaffolded apps should expose only these three public variables by default:
 
-- `NEXT_PUBLIC_UMAMI_URL` — absolute Umami base URL, for example `https://stats.example.com`
-- `NEXT_PUBLIC_UMAMI_WEBSITE_ID` — public website UUID used by `script.js` and replay uploads
-- `NEXT_PUBLIC_UMAMI_REPLAY_ENABLED` — boolean-like flag that enables the local rrweb recorder
+- `NEXT_PUBLIC_UMAMI_URL` - absolute Umami base URL, for example `https://stats.example.com`
+- `NEXT_PUBLIC_UMAMI_WEBSITE_ID` - public website UUID used by `script.js` and replay uploads
+- `NEXT_PUBLIC_UMAMI_REPLAY_ENABLED` - boolean-like flag that enables the local rrweb recorder
 
 Behavior rules:
 

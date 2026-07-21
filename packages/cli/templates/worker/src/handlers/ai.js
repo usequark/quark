@@ -18,7 +18,7 @@ const _logger = createLogger("worker:ai");
 
 /**
  * Publish an event to Redis for SSE streaming.
- * Non-fatal — failures are logged and swallowed.
+ * Non-fatal - failures are logged and swallowed.
  *
  * @param {string} conversationId
  * @param {object} data - Event data to publish
@@ -76,7 +76,7 @@ export async function handleAiAgentTask(bullJob, logger) {
 	});
 
 	try {
-		// Load conversation history (all messages — truncation module handles limiting)
+		// Load conversation history (all messages - truncation module handles limiting)
 		const conversation = await prisma.aiConversation.findUnique({
 			where: { id: conversationId },
 			include: {
@@ -190,7 +190,7 @@ export async function handleAiAgentTask(bullJob, logger) {
 			shouldCompact({ messages: droppedMessages, tokenBudget })
 		) {
 			logger.info("Triggering background compaction", { conversationId });
-			// Fire and forget — don't block the response
+			// Fire and forget - don't block the response
 			summarizeConversation(droppedMessages, model)
 				.then(async ({ summary, tokenCount }) => {
 					if (summary) {

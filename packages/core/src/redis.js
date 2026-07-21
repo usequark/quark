@@ -15,7 +15,7 @@ function getRedisUrl() {
 
 /**
  * Creates a Redis configuration object from environment variables.
- * Returns the URL and any additional options — does not create an actual connection.
+ * Returns the URL and any additional options - does not create an actual connection.
  * Pass the URL to your Redis library of choice (e.g., ioredis).
  *
  * @deprecated Use `resolveRedisConnection` for ioredis/BullMQ configs, or `getRedisUrl` for URL strings.
@@ -62,7 +62,7 @@ export async function pingRedis({ timeout = 3000 } = {}) {
 
 		// Suppress the "Unhandled error event" stderr noise that ioredis emits
 		// when a connection attempt fails. The error is still caught by the
-		// try/catch below — this listener just prevents Node from treating it
+		// try/catch below - this listener just prevents Node from treating it
 		// as an unhandled EventEmitter error.
 		client.on("error", () => {});
 
@@ -125,7 +125,7 @@ export async function pingRedis({ timeout = 3000 } = {}) {
  * Resolves Redis connection config as an ioredis-compatible options object.
  * Precedence: explicit override > REDIS_URL > REDIS_HOST/REDIS_PORT > localhost defaults.
  *
- * @param {object} [override] — if provided, returned as-is (pass-through for caller-supplied config)
+ * @param {object} [override] - if provided, returned as-is (pass-through for caller-supplied config)
  * @returns {{ host: string, port: number, password?: string, tls?: object }}
  */
 export function resolveRedisConnection(override) {
@@ -141,7 +141,7 @@ export function resolveRedisConnection(override) {
 				...(u.protocol === "rediss:" && { tls: {} }),
 			};
 		} catch {
-			// Malformed REDIS_URL — fall through to host/port env vars
+			// Malformed REDIS_URL - fall through to host/port env vars
 		}
 	}
 

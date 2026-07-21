@@ -1,10 +1,6 @@
 import assert from "node:assert";
 import { afterEach, beforeEach, describe, mock, test } from "node:test";
-import {
-	ForbiddenError,
-	NotFoundError,
-	UnauthorizedError,
-} from "@techstream/quark-core/errors";
+import { ForbiddenError, NotFoundError } from "@techstream/quark-core/errors";
 
 // ── Mocks ────────────────────────────────────────────────────────────────────
 

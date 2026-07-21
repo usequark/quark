@@ -27,10 +27,10 @@ Redis (already required for session caching) serves as the BullMQ backend, so no
 **Positive:**
 - Battle-tested queue with retries, exponential back-off, and dead-letter support
 - Built-in metrics hooks integrate with Quark's `metrics` singleton
-- Job types in `packages/jobs` are shared between the web app and worker — no duplication
+- Job types in `packages/jobs` are shared between the web app and worker - no duplication
 - Redis is already in the stack (session caching), so no new infrastructure cost
 
 **Negative:**
 - Requires Redis in all environments (local dev, CI, staging, production)
-- BullMQ v5+ has breaking changes from v4 — upgrades require care
+- BullMQ v5+ has breaking changes from v4 - upgrades require care
 - Worker process must be deployed and scaled separately from the web app

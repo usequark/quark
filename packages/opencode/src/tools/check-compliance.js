@@ -11,8 +11,8 @@ export const checkCompliance = tool({
 			.optional()
 			.describe("Optional brand guidelines to check against"),
 	},
-	async execute(args, context) {
-		// Stub implementation — always passes
+	async execute(_args, _context) {
+		// Stub implementation - always passes
 		return JSON.stringify({
 			passed: true,
 			issues: [],

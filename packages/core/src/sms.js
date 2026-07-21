@@ -1,7 +1,7 @@
 /**
- * @techstream/quark-core — SMS Service
+ * @techstream/quark-core - SMS Service
  *
- * Providers are defined using a Strategy Pattern — each implements the same
+ * Providers are defined using a Strategy Pattern - each implements the same
  * interface. Quark ships with one built-in provider (twilio) and exposes a
  * registry so users can plug in any provider they need.
  *
@@ -15,7 +15,7 @@
  */
 
 // ---------------------------------------------------------------------------
-// Base class — extend this to add your own SMS provider
+// Base class - extend this to add your own SMS provider
 // ---------------------------------------------------------------------------
 
 /**
@@ -23,7 +23,7 @@
  */
 export class SmsProvider {
 	/**
-	 * @param {string} from — Sender phone number (e.g. "+6421XXXXXX")
+	 * @param {string} from - Sender phone number (e.g. "+6421XXXXXX")
 	 */
 	constructor(from) {
 		this.from = from;
@@ -40,8 +40,8 @@ export class SmsProvider {
 	 * Send an SMS. Must be implemented by every provider subclass.
 	 * Must return an object with at least `{ id: string }`.
 	 *
-	 * @param {string|string[]} to — recipient phone number(s)
-	 * @param {string} body — message text (SMS body, typically 160 chars)
+	 * @param {string|string[]} to - recipient phone number(s)
+	 * @param {string} body - message text (SMS body, typically 160 chars)
 	 * @returns {Promise<{ id: string, [key: string]: any }>}
 	 */
 	async sendSms(_to, _body) {
@@ -141,8 +141,8 @@ const _providers = {
 /**
  * Register a custom SMS provider so it can be selected via SMS_PROVIDER env var.
  *
- * @param {string} name — value used in SMS_PROVIDER env var (e.g. "sns")
- * @param {typeof SmsProvider} ProviderClass — must extend SmsProvider
+ * @param {string} name - value used in SMS_PROVIDER env var (e.g. "sns")
+ * @param {typeof SmsProvider} ProviderClass - must extend SmsProvider
  *
  * @example
  *   class AmazonSnsProvider extends SmsProvider {
@@ -167,7 +167,7 @@ export function registerSmsProvider(name, ProviderClass) {
  * Create an SMS service instance.
  *
  * @param {Object} [options]
- * @param {string} [options.provider] — Provider name: "twilio" (default), or any name
+ * @param {string} [options.provider] - Provider name: "twilio" (default), or any name
  *   registered via registerSmsProvider()
  * @returns {{ sendSms: (to: string|string[], body: string) => Promise<Object> }}
  */
@@ -191,7 +191,7 @@ export function createSmsService(options = {}) {
 		 * Send an SMS via the configured provider.
 		 *
 		 * @param {string|string[]} to
-		 * @param {string} body — SMS body text
+		 * @param {string} body - SMS body text
 		 * @returns {Promise<Object>}
 		 */
 		async sendSms(to, body) {

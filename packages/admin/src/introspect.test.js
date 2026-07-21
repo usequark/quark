@@ -69,7 +69,7 @@ after(() => {
 	resetSchemaCache();
 });
 
-describe("introspect — getModels", () => {
+describe("introspect - getModels", () => {
 	before(() => resetSchemaCache());
 
 	it("returns all models from schema", () => {
@@ -156,7 +156,7 @@ describe("introspect — getModels", () => {
 	});
 });
 
-describe("introspect — getEnums", () => {
+describe("introspect - getEnums", () => {
 	before(() => resetSchemaCache());
 
 	it("returns all enums", () => {
@@ -167,7 +167,7 @@ describe("introspect — getEnums", () => {
 	});
 });
 
-describe("introspect — getModel / getModelBySlug", () => {
+describe("introspect - getModel / getModelBySlug", () => {
 	before(() => resetSchemaCache());
 
 	it("getModel finds by exact name", () => {
@@ -195,7 +195,7 @@ describe("introspect — getModel / getModelBySlug", () => {
 	});
 });
 
-describe("introspect — modelToSlug", () => {
+describe("introspect - modelToSlug", () => {
 	it("lowercases model names", () => {
 		assert.equal(modelToSlug("User"), "user");
 		assert.equal(modelToSlug("AuditLog"), "auditlog");
@@ -203,7 +203,7 @@ describe("introspect — modelToSlug", () => {
 	});
 });
 
-describe("introspect — hasIdField", () => {
+describe("introspect - hasIdField", () => {
 	before(() => resetSchemaCache());
 
 	it("User has an id field", () => {
@@ -218,7 +218,7 @@ describe("introspect — hasIdField", () => {
 	});
 });
 
-describe("introspect — cache", () => {
+describe("introspect - cache", () => {
 	it("returns cached result on second call", () => {
 		resetSchemaCache();
 		const a = getModels(fixtureSchemaPath);

@@ -1,8 +1,8 @@
 /**
- * APP_URL — Single source of truth for the application's canonical URL.
+ * APP_URL - Single source of truth for the application's canonical URL.
  *
  * Resolution order:
- *   1. APP_URL          (production — set to your real domain)
+ *   1. APP_URL          (production - set to your real domain)
  *   2. NEXTAUTH_URL     (legacy / backward-compat)
  *   3. http://localhost:${PORT || 3000}   (local dev fallback)
  *
@@ -11,9 +11,9 @@
  * In production, set APP_URL explicitly (e.g. https://yourdomain.com).
  *
  * Derived values:
- *   - NEXTAUTH_URL  — always set equal to the resolved APP_URL so
+ *   - NEXTAUTH_URL  - always set equal to the resolved APP_URL so
  *                      NextAuth works without a separate variable.
- *   - allowedOrigins — the resolved APP_URL plus any extra origins
+ *   - allowedOrigins - the resolved APP_URL plus any extra origins
  *                      listed in ALLOWED_ORIGINS (comma-separated).
  */
 

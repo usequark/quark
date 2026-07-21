@@ -1,4 +1,4 @@
-# Quark Monorepo — Contributor Guide
+# Quark Monorepo - Contributor Guide
 
 > For app developers building with Quark: see `CLAUDE.md` in your scaffolded project.
 > For the full contributor reference: see `CLAUDE.md` at the monorepo root.
@@ -34,18 +34,18 @@ quark/
 
 ## Non-Negotiable Rules
 
-- **ESM only** — `import`/`export`. Never `require()` or `module.exports`.
-- **No authored TypeScript** — `.js` and `.jsx` files only. Generated code may emit typed artifacts, but repo code should not add `.ts` or `.tsx` sources.
-- **Biome** — all formatting and linting. No ESLint, no Prettier.
-- **Zod** — all Server Actions and API routes. No exceptions.
+- **ESM only** - `import`/`export`. Never `require()` or `module.exports`.
+- **No authored TypeScript** - `.js` and `.jsx` files only. Generated code may emit typed artifacts, but repo code should not add `.ts` or `.tsx` sources.
+- **Biome** - all formatting and linting. No ESLint, no Prettier.
+- **Zod** - all Server Actions and API routes. No exceptions.
 - **AppError / ValidationError** from `@techstream/quark-core/errors` in app/runtime code. Native `Error` is acceptable in library, bootstrap, CLI, and test code.
 - **createLogger(name)** from `@techstream/quark-core` in app/runtime code. Console output is acceptable in bootstrap, CLI, and test code.
-- **DB models** — always include `createdAt` and `updatedAt`.
-- **Tests** — co-located `*.test.js`, `node --test`. Postgres + Redis required.
+- **DB models** - always include `createdAt` and `updatedAt`.
+- **Tests** - co-located `*.test.js`, `node --test`. Postgres + Redis required.
 
 ## UI & Design System
 
-Import from `@techstream/quark-ui` in the monorepo or `@<scope>/ui` in scaffolded projects — never from `@/components/ui/*`.
+Import from `@techstream/quark-ui` in the monorepo or `@<scope>/ui` in scaffolded projects - never from `@/components/ui/*`.
 
 Available exports: `Button`, `Input`, `Label`, `Textarea`, `Select`, `Checkbox`, `Badge`, `Card`/`CardHeader`/`CardTitle`/`CardContent`/`CardFooter`, `Table`/`TableHeader`/`TableBody`/`TableRow`/`TableHead`/`TableCell`, `Skeleton`, `ErrorBanner`, `Footer`, `Navbar`/`MobileNavbar`, `RichText`, `QuarkLogo` *(server)*, `Dialog` *(client)*, `Toast`/`useToast` *(client)*, `ThemeProvider`/`useTheme` *(client)*.
 
@@ -68,7 +68,7 @@ pnpm --filter @techstream/quark-create-app sync-templates:check  # Check for dri
 
 ## Template Sync (CRITICAL)
 
-`packages/cli/templates/` is generated from monorepo source — never edit manually (except `TEMPLATE_ONLY` files). After changing any source file in `apps/web/`, `apps/worker/`, `packages/db/`, `packages/config/`, `packages/ui/`, or `packages/jobs/`:
+`packages/cli/templates/` is generated from monorepo source - never edit manually (except `TEMPLATE_ONLY` files). After changing any source file in `apps/web/`, `apps/worker/`, `packages/db/`, `packages/config/`, `packages/ui/`, or `packages/jobs/`:
 
 ```bash
 pnpm --filter @techstream/quark-create-app sync-templates
@@ -76,7 +76,7 @@ pnpm --filter @techstream/quark-create-app sync-templates
 
 ## Release Workflow
 
-1. `pnpm changeset` — create a changeset file (interactive)
+1. `pnpm changeset` - create a changeset file (interactive)
 2. Commit code + changeset file, open PR
 3. CI runs lint + test + build + changeset-check
 4. Merge to `main` → CI auto-opens a "chore: version packages" PR

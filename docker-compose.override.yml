@@ -1,4 +1,4 @@
-# Dev-only services — auto-merged by `docker compose up`.
+# Dev-only services - auto-merged by `docker compose up`.
 # Not read by Railway, Kubernetes, or other deployment platforms.
 services:
   # --- Mailpit (Local SMTP Server) ---

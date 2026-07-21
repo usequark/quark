@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { formatProjectDisplayName } from "./utils.js";
 
 // ---------------------------------------------------------------------------
-// Happy path — common slug patterns
+// Happy path - common slug patterns
 // ---------------------------------------------------------------------------
 
 test("formatProjectDisplayName - hyphen-separated slug", () => {
@@ -23,7 +23,7 @@ test("formatProjectDisplayName - single word (no separators)", () => {
 });
 
 test("formatProjectDisplayName - already title-cased input", () => {
-	// slice(1) preserves remaining chars as-is — only the first char is forced uppercase
+	// slice(1) preserves remaining chars as-is - only the first char is forced uppercase
 	assert.strictEqual(formatProjectDisplayName("MyApp"), "MyApp");
 });
 
@@ -43,7 +43,7 @@ test("formatProjectDisplayName - numbers preserved in words", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Edge cases — degenerate / boundary inputs
+// Edge cases - degenerate / boundary inputs
 // ---------------------------------------------------------------------------
 
 test("formatProjectDisplayName - all separators returns fallback", () => {

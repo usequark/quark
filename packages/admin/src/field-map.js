@@ -87,7 +87,7 @@ export function getInputType(field, modelName) {
 	// Email heuristic
 	if (field.name === "email" && field.type === "String") return "email";
 
-	// Image URL heuristic — fields whose names end with an image-related word
+	// Image URL heuristic - fields whose names end with an image-related word
 	if (field.type === "String") {
 		const lower = field.name.toLowerCase();
 		if (IMAGE_FIELD_SUFFIXES.some((s) => lower === s || lower.endsWith(s)))

@@ -82,7 +82,7 @@ export function requireCsrfToken(request) {
 
 	if (!cookieToken) {
 		throw new UnauthorizedError(
-			"CSRF token not found — call GET /api/csrf first",
+			"CSRF token not found - call GET /api/csrf first",
 		);
 	}
 

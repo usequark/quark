@@ -1,16 +1,16 @@
 # @techstream/quark-core
 
-Shared infrastructure for the Quark platform — authentication, job queues, error handling, and utilities.
+Shared infrastructure for the Quark platform - authentication, job queues, error handling, and utilities.
 
 ## What's Included
 
-- **Authentication** — Auth.js-compatible config helpers (`createAuthConfig`, `requireAuth`, password hashing)
-- **Job Queue** — BullMQ integration (`createQueue`, `createWorker`, `addJob`)
-- **Storage** — Local filesystem built in; S3/R2/MinIO via optional AWS SDK install in the app
-- **Errors** — Standardized error types (`ValidationError`, `NotFoundError`, `UnauthorizedError`, etc.)
-- **Utilities** — `retryAsync`, `deepMerge`, `randomString`, `sanitizeId`, `measureTime`, `memoize`
-- **Validation** — Zod-based request body validation
-- **Redis / Mail** — Connection helpers for Redis and local mail (Mailpit)
+- **Authentication** - Auth.js-compatible config helpers (`createAuthConfig`, `requireAuth`, password hashing)
+- **Job Queue** - BullMQ integration (`createQueue`, `createWorker`, `addJob`)
+- **Storage** - Local filesystem built in; S3/R2/MinIO via optional AWS SDK install in the app
+- **Errors** - Standardized error types (`ValidationError`, `NotFoundError`, `UnauthorizedError`, etc.)
+- **Utilities** - `retryAsync`, `deepMerge`, `randomString`, `sanitizeId`, `measureTime`, `memoize`
+- **Validation** - Zod-based request body validation
+- **Redis / Mail** - Connection helpers for Redis and local mail (Mailpit)
 
 ## Usage
 

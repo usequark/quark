@@ -15,7 +15,7 @@ This guide covers deploying a Quark project to Railway using the built-in `quark
   railway login
   ```
 - **A Quark project** scaffolded via `@techstream/quark-create-app`
-- **PostgreSQL and Redis** — the deploy command can provision these automatically, or you can add them manually from the Railway dashboard first and use `--no-provision` to skip.
+- **PostgreSQL and Redis** - the deploy command can provision these automatically, or you can add them manually from the Railway dashboard first and use `--no-provision` to skip.
 
 ---
 
@@ -53,7 +53,7 @@ Deploys web + worker services, provisions Postgres + Redis, and sets environment
 quark deploy railway --dry-run
 ```
 
-Runs the inspection and validation logic — checks that your `apps/web/package.json` and `apps/worker/package.json` exist, that Railway CLI is installed and logged in, and that all per-service `railway.json` files are present. Outputs a readiness report and exits without creating anything on Railway.
+Runs the inspection and validation logic - checks that your `apps/web/package.json` and `apps/worker/package.json` exist, that Railway CLI is installed and logged in, and that all per-service `railway.json` files are present. Outputs a readiness report and exits without creating anything on Railway.
 
 ### Inspect / status
 
@@ -110,7 +110,7 @@ Verifies `railway --version` works. If not found, prints install instructions fo
 Runs `railway whoami` and extracts the authenticated email. If not logged in, prompts you to run `railway login`.
 
 ### 3. Service discovery
-Looks for `apps/web/package.json` and `apps/worker/package.json`. The **web** service is always required. The **worker** service is optional — if its `package.json` is missing, it's skipped with a diagnostic warning rather than a hard failure.
+Looks for `apps/web/package.json` and `apps/worker/package.json`. The **web** service is always required. The **worker** service is optional - if its `package.json` is missing, it's skipped with a diagnostic warning rather than a hard failure.
 
 For each discovered service, the CLI records:
 - Service kind (`web` or `worker`)
@@ -141,7 +141,7 @@ For each service, the deploy command sets environment variables using a single `
 | `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` |
 | `REDIS_URL` | `${{Redis.REDIS_URL}}` |
 | `APP_NAME` | Directory name |
-| `APP_DESCRIPTION` | `"<name> — Quark application"` |
+| `APP_DESCRIPTION` | `"<name> - Quark application"` |
 | `NODE_ENV` | `production` |
 | `AUTH_SECRET` | Auto-generated or preserved from previous deploys |
 | `NEXTAUTH_SECRET` | Auto-generated or preserved from previous deploys |
@@ -158,18 +158,18 @@ For each service, the deploy command sets environment variables using a single `
 |---|---|
 | `WORKER_CONCURRENCY` | `5` |
 
-Secrets are **preserved across deploys** — `AUTH_SECRET` and `NEXTAUTH_SECRET` are checked from the first service before generating new ones, so you don't break existing sessions when redeploying.
+Secrets are **preserved across deploys** - `AUTH_SECRET` and `NEXTAUTH_SECRET` are checked from the first service before generating new ones, so you don't break existing sessions when redeploying.
 
 ### 8. Temporary multi-service railway.json
 The CLI reads each service's individual `railway.json` (e.g. `apps/web/railway.json`, `apps/worker/railway.json`) and writes a merged multi-service `railway.json` at the project root. This temporary file is deleted in a `finally` block after deployment completes. If the root already had a `railway.json` (config-as-code path), it is left untouched.
 
 ### 9. Service deployment
 For each service, in order:
-- **`railway add --service <name>`** — creates the Railway service if it doesn't exist
-- **`railway up --service <name> --detach`** — triggers a deployment and polls every 5 seconds for up to 10 minutes
+- **`railway add --service <name>`** - creates the Railway service if it doesn't exist
+- **`railway up --service <name> --detach`** - triggers a deployment and polls every 5 seconds for up to 10 minutes
 - Deployment status is polled via `railway deployment list --json` looking for `SUCCESS` or `HEALTHY`. Crashed/failed deployments throw immediately. Timeout after 10 minutes.
-- **Health check** — for the web service, hits `/api/health` every 3 seconds for up to 60 seconds, waiting for an HTTP 200 response.
-- **Worker domain removal** — Railway assigns a default domain to every service. Since workers don't serve HTTP, the deploy command removes the worker's domain via `railway domain remove`.
+- **Health check** - for the web service, hits `/api/health` every 3 seconds for up to 60 seconds, waiting for an HTTP 200 response.
+- **Worker domain removal** - Railway assigns a default domain to every service. Since workers don't serve HTTP, the deploy command removes the worker's domain via `railway domain remove`.
 
 ### 10. Rollback
 If a service is newly created (not just linked) and its deployment fails, the CLI deletes the Railway service to avoid leaving behind half-deployed infrastructure.
@@ -267,7 +267,7 @@ These are set via `railway variable set` during deployment using Railway's `${{P
 | `AUTH_SECRET` | Auto-generated | Preserved across redeploys |
 | `NEXTAUTH_SECRET` | Auto-generated | Preserved across redeploys |
 | `APP_NAME` | Directory name | e.g. `my-project` |
-| `APP_DESCRIPTION` | Generated | e.g. `"my-project — Quark application"` |
+| `APP_DESCRIPTION` | Generated | e.g. `"my-project - Quark application"` |
 | `NODE_ENV` | `production` | |
 | `STORAGE_PROVIDER` | `local` | Change to `s3`, `r2`, etc. for production |
 | `AUTH_ALLOW_SIGNUP` | `false` | Web service only. Set to `true` to allow registration |
@@ -281,8 +281,8 @@ These are not set by the deploy command and must be configured in the Railway da
 | Variable | Reason |
 |---|---|
 | `APP_URL` | Your custom domain (e.g. `https://app.example.com`). Required for auth callbacks, email links, etc. |
-| Email provider vars | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM` — if using email auth or notifications |
-| Storage provider creds | `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET`, `S3_REGION` — if using S3-compatible storage |
+| Email provider vars | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM` - if using email auth or notifications |
+| Storage provider creds | `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET`, `S3_REGION` - if using S3-compatible storage |
 | Any `NEXT_PUBLIC_*` vars | Public-facing variables your frontend needs at runtime |
 
 Set them via:
@@ -329,7 +329,7 @@ Or add them in the Railway dashboard under the web service's "Domains" section. 
 3. For each service, set the Config as Code Path (see above)
 4. Future pushes to the branch trigger automatic redeploys
 
-Railway builds from the monorepo root. The `watchPatterns` in each `railway.json` control which file changes trigger a build. For example, `apps/web/railway.json` watches `apps/web/**` and `packages/**` — changes to the worker or other apps won't rebuild the web service.
+Railway builds from the monorepo root. The `watchPatterns` in each `railway.json` control which file changes trigger a build. For example, `apps/web/railway.json` watches `apps/web/**` and `packages/**` - changes to the worker or other apps won't rebuild the web service.
 
 ### Checking deploy status
 

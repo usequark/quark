@@ -272,7 +272,7 @@ test("Storage - createStorage with 's3' provider requires credentials", () => {
 });
 
 // ---------------------------------------------------------------------------
-// createS3Storage (unit tests without real S3 — validate init)
+// createS3Storage (unit tests without real S3 - validate init)
 // ---------------------------------------------------------------------------
 
 test("Storage - createS3Storage sets provider to 's3'", () => {

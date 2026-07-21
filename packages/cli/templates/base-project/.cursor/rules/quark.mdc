@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Quark Project: __QUARK_PROJECT_NAME__
 
-Package scope: `@__QUARK_SCOPE__` — use this for ALL workspace packages.
+Package scope: `@__QUARK_SCOPE__` - use this for ALL workspace packages.
 Scaffolded: __QUARK_SCAFFOLD_DATE__
 
 ---
@@ -13,26 +13,26 @@ Scaffolded: __QUARK_SCAFFOLD_DATE__
 ## Non-Negotiable Rules
 
 1. **ESM only.** Always `import`/`export`. Never `require()` or `module.exports`.
-2. **No authored TypeScript.** Plain `.js` and `.jsx` files only — no repo-authored `.ts`, `.tsx`, or type annotations. Generated code is the only exception.
+2. **No authored TypeScript.** Plain `.js` and `.jsx` files only - no repo-authored `.ts`, `.tsx`, or type annotations. Generated code is the only exception.
 3. **Validate everything at boundaries.** Server Actions and API routes must use Zod. No raw `req.body` access without parsing.
 4. **Use AppError at runtime boundaries.** Throw `AppError` / `ValidationError` / `NotFoundError` from `@techstream/quark-core/errors` in application/runtime code. Native `Error` is reserved for library, bootstrap, CLI, and test code.
 5. **Log with createLogger in runtime code.** Use `createLogger(name)` from `@techstream/quark-core` for application/runtime code. Console output is reserved for bootstrap, CLI, and test code.
 6. **DB models always have timestamps.** Every Prisma model: `createdAt DateTime @default(now())` + `updatedAt DateTime @updatedAt`.
 7. **Workspace import scope.** Use `@__QUARK_SCOPE__/*` for local packages. Never `@techstream/quark-db`, `@techstream/quark-config`, etc.
-8. **Co-located tests.** `feature.test.js` lives next to `feature.js`. Tests use `node --test` — no Jest, no Vitest.
+8. **Co-located tests.** `feature.test.js` lives next to `feature.js`. Tests use `node --test` - no Jest, no Vitest.
 
 ---
 
 ## Import Reference
 
 ```javascript
-// ✅ Workspace packages — always @__QUARK_SCOPE__/*:
+// ✅ Workspace packages - always @__QUARK_SCOPE__/*:
 import { prisma, user, post }    from "@__QUARK_SCOPE__/db";
 import { loadConfig }            from "@__QUARK_SCOPE__/config";
 import { Button, Card, Input }   from "@__QUARK_SCOPE__/ui";
 import { JOB_TYPES }             from "@__QUARK_SCOPE__/jobs";
 
-// ✅ Published runtime — @techstream/quark-core:
+// ✅ Published runtime - @techstream/quark-core:
 import { AppError, ValidationError, NotFoundError } from "@techstream/quark-core/errors";
 import { createLogger, getCurrentSession }          from "@techstream/quark-core";
 import { createQueue, addJob }                      from "@techstream/quark-core";
@@ -111,7 +111,7 @@ export async function GET(request) {
 ## Database
 
 - Schema: `packages/db/prisma/schema.prisma`
-- Query helpers: `packages/db/src/queries.js` — add functions here, don't call `prisma.*` directly in components or actions.
+- Query helpers: `packages/db/src/queries.js` - add functions here, don't call `prisma.*` directly in components or actions.
 - Always run `pnpm db:generate` after schema changes, then `pnpm db:migrate`.
 
 ---
@@ -169,4 +169,4 @@ New env vars must be registered in `packages/config/src/validate-env.js` before 
 
 ## Deployment
 
-Railway: two services (`web` + `worker`). Migrations auto-run on deploy via `releaseCommand` in `apps/web/railway.json`. Env vars managed in Railway dashboard — never committed.
+Railway: two services (`web` + `worker`). Migrations auto-run on deploy via `releaseCommand` in `apps/web/railway.json`. Env vars managed in Railway dashboard - never committed.

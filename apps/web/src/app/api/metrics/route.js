@@ -2,7 +2,7 @@
  * Metrics Endpoint
  * Exposes application metrics in Prometheus exposition format.
  *
- * GET /api/metrics — returns all registered metrics as plain text.
+ * GET /api/metrics - returns all registered metrics as plain text.
  *
  * In production, consider protecting this route behind authentication
  * or an internal-only network. Access is unrestricted by default to

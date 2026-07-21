@@ -1,7 +1,7 @@
 /**
  * Admin panel configuration.
  *
- * This file is scaffolded into your project — edit it freely to customise
+ * This file is scaffolded into your project - edit it freely to customise
  * the admin UI for your specific models and requirements.
  */
 
@@ -33,7 +33,7 @@ export const adminConfig = {
 	 * User: { fkTargets: { leadId: "User" } }
 	 */
 	modelOverrides: {
-		// NextAuth internal models — shown read-only to prevent accidental changes
+		// NextAuth internal models - shown read-only to prevent accidental changes
 		Account: { readOnly: true },
 		Session: { readOnly: true },
 		VerificationToken: { readOnly: true },

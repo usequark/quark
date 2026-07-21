@@ -44,7 +44,7 @@ function layout(body) {
 }
 
 /**
- * Welcome email — sent after user registration
+ * Welcome email - sent after user registration
  *
  * @param {{ name?: string, appName?: string, loginUrl?: string }} data
  * @returns {{ subject: string, html: string, text: string }}
@@ -86,7 +86,7 @@ export function welcomeEmail(data = {}) {
 }
 
 /**
- * Password reset email — sent when user requests a reset
+ * Password reset email - sent when user requests a reset
  *
  * @param {{ name?: string, resetUrl: string, appName?: string, expiresIn?: string }} data
  * @returns {{ subject: string, html: string, text: string }}

@@ -16,7 +16,7 @@ const ERROR_MESSAGES = {
 export default async function AuthErrorPage({ searchParams }) {
 	const params = await searchParams;
 	const raw = params?.error;
-	// NextAuth sometimes passes the literal string "undefined" — normalise it.
+	// NextAuth sometimes passes the literal string "undefined" - normalise it.
 	const errorCode = !raw || raw === "undefined" ? "Default" : raw;
 	const message = ERROR_MESSAGES[errorCode] ?? ERROR_MESSAGES.Default;
 

@@ -68,7 +68,7 @@ export async function GET(request) {
 
 					subscriber.on("message", messageHandler);
 				} catch {
-					// Redis unavailable — fallback to polling
+					// Redis unavailable - fallback to polling
 					redisAvailable = false;
 
 					const pollInterval = setInterval(async () => {

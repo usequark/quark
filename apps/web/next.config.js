@@ -41,7 +41,7 @@ const allowedDevOrigins =
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-	// Required for Railway deployment — produces a self-contained build
+	// Required for Railway deployment - produces a self-contained build
 	// at .next/standalone that can run without node_modules.
 	output: "standalone",
 	outputFileTracingIncludes: {
@@ -50,9 +50,10 @@ const nextConfig = {
 	allowedDevOrigins,
 
 	// Support workspace package resolution (including @techstream/quark-db which uses
-	// the Prisma driver-adapter pattern — pure JS, no native engine binary)
+	// the Prisma driver-adapter pattern - pure JS, no native engine binary)
 	transpilePackages: [
 		"@techstream/quark-admin",
+		"@techstream/quark-bookings",
 		"@techstream/quark-cms",
 		"@techstream/quark-crm",
 		"@techstream/quark-core",

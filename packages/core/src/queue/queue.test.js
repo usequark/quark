@@ -31,7 +31,7 @@ describe("getRegisteredQueues", () => {
 		assert.ok(getRegisteredQueues().has("test-registry-queue"));
 	});
 
-	test("createQueue is idempotent — same instance on repeated calls", () => {
+	test("createQueue is idempotent - same instance on repeated calls", () => {
 		q2 = createQueue("test-idempotent-queue");
 		const again = createQueue("test-idempotent-queue");
 		assert.strictEqual(q2, again, "should return the same queue instance");
@@ -42,7 +42,7 @@ describe("getRegisteredQueues", () => {
 
 describe("updateQueueDepths", () => {
 	test("resolves without error when no queues are registered", async () => {
-		// Create a fresh scenario — if no queues in the singleton map, just skip
+		// Create a fresh scenario - if no queues in the singleton map, just skip
 		// We can't easily reset the singleton, so we just verify it doesn't throw
 		await assert.doesNotReject(() => updateQueueDepths());
 	});
@@ -51,7 +51,7 @@ describe("updateQueueDepths", () => {
 // ─── createWorker auto-instrumentation ───────────────────────────────────────
 // These tests require a live Redis connection.
 
-describe("createWorker — metrics instrumentation", () => {
+describe("createWorker - metrics instrumentation", () => {
 	const TEST_QUEUE = "test-metrics-queue";
 	let queue;
 

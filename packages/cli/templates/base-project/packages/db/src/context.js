@@ -2,17 +2,17 @@
  * Context Retrieval Utility
  *
  * Generic, project-agnostic utility for retrieving relevant business context.
- * Designed to be portable — can be copied to any Quark project with minimal changes.
+ * Designed to be portable - can be copied to any Quark project with minimal changes.
  *
  * Features:
- *  - getRelevantContext(question, records) — filters context by keyword relevance
- *  - summarizeContext(records) — brief category overview
- *  - shouldProcess(input, previousHash) — dedup check for extraction
+ *  - getRelevantContext(question, records) - filters context by keyword relevance
+ *  - summarizeContext(records) - brief category overview
+ *  - shouldProcess(input, previousHash) - dedup check for extraction
  */
 
 // ── Default Keyword Map ──────────────────────────────────────────────────────
 // Maps question keywords to BusinessContext categories.
-// Generic enough for any project — customize by extending or replacing.
+// Generic enough for any project - customize by extending or replacing.
 const DEFAULT_KEYWORD_MAP = {
 	billing: [
 		"billing",
@@ -184,7 +184,7 @@ export function getRelevantContext(question, records, options = {}) {
 		return { records: cleanRecords, summary: null };
 	}
 
-	// No relevant records found — return a summary instead
+	// No relevant records found - return a summary instead
 	return {
 		records: [],
 		summary: summarizeContext(records),

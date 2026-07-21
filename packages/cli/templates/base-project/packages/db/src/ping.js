@@ -3,7 +3,7 @@ import { getConnectionString } from "./connection.js";
 /**
  * Pings PostgreSQL to verify connectivity.
  * Uses a raw `pg.Client` directly so the check is immune to Prisma
- * adapter quirks — in particular, Prisma 7 + @prisma/adapter-pg surfaces
+ * adapter quirks - in particular, Prisma 7 + @prisma/adapter-pg surfaces
  * connection failures as a misleading "Invalid invocation" error rather
  * than a proper ECONNREFUSED.
  *

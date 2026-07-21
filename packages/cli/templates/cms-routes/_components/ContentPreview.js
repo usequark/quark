@@ -72,7 +72,7 @@ export default function ContentPreview({
 						</div>
 					) : (
 						<p className="px-4 py-6 text-xs text-text-faint text-center">
-							Nothing to preview yet — add a section to see the page come
+							Nothing to preview yet - add a section to see the page come
 							together.
 						</p>
 					)}

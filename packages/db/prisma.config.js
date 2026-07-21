@@ -10,7 +10,7 @@ try {
 	process.loadEnvFile(resolve(__dirname, "../../.env"));
 } catch {}
 
-// Use shared connection builder — throwOnMissing=false so `prisma generate` works
+// Use shared connection builder - throwOnMissing=false so `prisma generate` works
 // even without database credentials (e.g. in CI). Commands that need a real
 // connection (migrate, push, studio) will fail at connect time.
 const databaseUrl = getConnectionString({ throwOnMissing: false });

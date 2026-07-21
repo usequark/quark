@@ -1,7 +1,7 @@
-# __QUARK_PROJECT_NAME__ — AI Context
+# __QUARK_PROJECT_NAME__ - AI Context
 
 > Scaffolded with [Quark](https://github.com/Bobnoddle/quark) on __QUARK_SCAFFOLD_DATE__.
-> **Keep this file updated** as your project grows — it's what Claude Code, Cursor, and other AI tools read first.
+> **Keep this file updated** as your project grows - it's what Claude Code, Cursor, and other AI tools read first.
 
 ## Quick Start
 
@@ -37,7 +37,7 @@ __QUARK_OPTIONAL_APPS__├── packages/
 │   ├── config/               # Environment validation & shared config
 __QUARK_OPTIONAL_PACKAGES__├── docker-compose.yml
 ├── .env                      # Local environment secrets (never commit)
-└── .env.example              # Template — copy to .env to get started
+└── .env.example              # Template - copy to .env to get started
 ```
 
 ## Tech Stack
@@ -45,7 +45,7 @@ __QUARK_OPTIONAL_PACKAGES__├── docker-compose.yml
 | Layer | Technology |
 |---|---|
 | Framework | Next.js 16 (App Router) |
-| Language | JavaScript — ESM only, no TypeScript |
+| Language | JavaScript - ESM only, no TypeScript |
 | Database | PostgreSQL 16 + Prisma 7 |
 | Queue | BullMQ + Redis 7 |
 | Auth | NextAuth v5 |
@@ -63,7 +63,7 @@ __QUARK_OPTIONAL_PACKAGES__├── docker-compose.yml
 ## Package Imports
 
 ```javascript
-// Published (installed from npm) — use @techstream/ prefix:
+// Published (installed from npm) - use @techstream/ prefix:
 import { AppError, ValidationError, NotFoundError, UnauthorizedError } from "@techstream/quark-core/errors";
 import { createLogger } from "@techstream/quark-core";
 import { getCurrentSession } from "@techstream/quark-core";
@@ -73,7 +73,7 @@ import { cache } from "@techstream/quark-core";
 import { rateLimit } from "@techstream/quark-core";
 import { storage } from "@techstream/quark-core";
 
-// Workspace packages — ALWAYS use @__QUARK_SCOPE__/* (never @techstream/quark-*):
+// Workspace packages - ALWAYS use @__QUARK_SCOPE__/* (never @techstream/quark-*):
 import { prisma, user } from "@__QUARK_SCOPE__/db";         // add more as you create query helpers
 import { loadConfig } from "@__QUARK_SCOPE__/config";
 import { Button, Card, Input } from "@__QUARK_SCOPE__/ui";   // if ui package selected
@@ -85,38 +85,38 @@ import { JOB_NAMES } from "@__QUARK_SCOPE__/jobs";           // if jobs package 
 All UI components come from `@__QUARK_SCOPE__/ui`. They are Tailwind-only, dependency-free, and Server Component-safe.
 
 **Available components:**
-- `Button`, `Input`, `Label`, `Textarea`, `Select`, `Checkbox` — form primitives
-- `Badge` — status labels
-- `Card` / `CardHeader` / `CardTitle` / `CardContent` / `CardFooter` — content containers
-- `Table` / `TableHeader` / `TableBody` / `TableRow` / `TableHead` / `TableCell` — data tables
-- `Skeleton` — loading placeholders
-- `ErrorBanner` — inline error feedback
-- `Footer` — public site footer layout
-- `Navbar` / `MobileNavbar` — public navigation shells
-- `RichText` *(client)* — dependency-free rich text editor
-- `QuarkLogo` *(server)* — inline SVG logo, dark-mode aware
-- `Dialog` *(client)* — modal dialogs
-- `Toast` / `useToast` *(client)* — notifications
-- `ThemeProvider` / `useTheme` *(client)* — dark/light mode context
+- `Button`, `Input`, `Label`, `Textarea`, `Select`, `Checkbox` - form primitives
+- `Badge` - status labels
+- `Card` / `CardHeader` / `CardTitle` / `CardContent` / `CardFooter` - content containers
+- `Table` / `TableHeader` / `TableBody` / `TableRow` / `TableHead` / `TableCell` - data tables
+- `Skeleton` - loading placeholders
+- `ErrorBanner` - inline error feedback
+- `Footer` - public site footer layout
+- `Navbar` / `MobileNavbar` - public navigation shells
+- `RichText` *(client)* - dependency-free rich text editor
+- `QuarkLogo` *(server)* - inline SVG logo, dark-mode aware
+- `Dialog` *(client)* - modal dialogs
+- `Toast` / `useToast` *(client)* - notifications
+- `ThemeProvider` / `useTheme` *(client)* - dark/light mode context
 
 **Rules:**
 - All styling via Tailwind CSS utility classes. No inline styles, no CSS modules.
-- Import from `@__QUARK_SCOPE__/ui` — never from `@/components/ui/*` or direct paths.
+- Import from `@__QUARK_SCOPE__/ui` - never from `@/components/ui/*` or direct paths.
 - Every component accepts `className` for Tailwind overrides.
 - For public-page references, inspect `apps/web/src/app/example-page/page.js`, `apps/web/src/app/playground/page.js`, and `packages/ui/README.md` before building bespoke layout primitives.
 - **Loading states** → `<Skeleton>` / `<Suspense>`. Every async page that fetches from the database must have a sibling `loading.js` using `<Skeleton>` from `@__QUARK_SCOPE__/ui`.
-  - **loading.js** — single-entity pages (detail, form, edit). Shows skeleton immediately, replaced when data resolves.
-  - **Suspense streaming** — pages with multiple independent sections where some fetches are slower than others. Extract each section as an async server component wrapped in `<Suspense>` with a skeleton fallback.
-  - **No bare `<Suspense>`** — always provide a `fallback` prop.
-  - **Per-section error handling** — each streamed section should wrap data fetching in try/catch and return an error fallback rather than crashing the page.
+  - **loading.js** - single-entity pages (detail, form, edit). Shows skeleton immediately, replaced when data resolves.
+  - **Suspense streaming** - pages with multiple independent sections where some fetches are slower than others. Extract each section as an async server component wrapped in `<Suspense>` with a skeleton fallback.
+  - **No bare `<Suspense>`** - always provide a `fallback` prop.
+  - **Per-section error handling** - each streamed section should wrap data fetching in try/catch and return an error fallback rather than crashing the page.
 - Run the loading-state audit to find gaps: `pnpm check:loading`.
-- **Page checklist** — every new route should include:
-  - `export const metadata` — title and description.
-  - `loading.js` — sibling loading.js using `<Skeleton>` from `@__QUARK_SCOPE__/ui` for all async DB-fetching pages.
-  - `error.js` — route-level error boundary with a user-facing fallback.
+- **Page checklist** - every new route should include:
+  - `export const metadata` - title and description.
+  - `loading.js` - sibling loading.js using `<Skeleton>` from `@__QUARK_SCOPE__/ui` for all async DB-fetching pages.
+  - `error.js` - route-level error boundary with a user-facing fallback.
 - User feedback → `useToast()` hook (client component).
 - Modals → `<Dialog>` (mark parent as `"use client"`).
-- Server Components are the default — only add `"use client"` when the component uses hooks, browser APIs, or the marked client components above.
+- Server Components are the default - only add `"use client"` when the component uses hooks, browser APIs, or the marked client components above.
 
 ## Server Actions (preferred for all mutations)
 
@@ -257,9 +257,9 @@ const handleSubmit = async (e) => {
 - `useOptimistic` for list/board data where items have stable IDs
 - Local `useState` for single-value fields (status, priority, toggles)
 - The `startTransition` wrapper lets React show the optimistic state before the async work completes
-- Always capture the previous value before the optimistic update — revert to it on error
+- Always capture the previous value before the optimistic update - revert to it on error
 - `revalidatePath` in the server action + `router.refresh()` in the client handles eventual consistency with the server
-- No external caching libraries needed — React 19 builtins do everything
+- No external caching libraries needed - React 19 builtins do everything
 
 ## API Routes
 
@@ -303,18 +303,18 @@ export const example = {
 };
 ```
 
-Do not call `prisma.*` directly inside pages or Server Actions — use the query helper functions.
+Do not call `prisma.*` directly inside pages or Server Actions - use the query helper functions.
 
 ## Auth & Authorization
 
 ```javascript
 import { getCurrentSession } from "@techstream/quark-core";
 
-// Server Component — check session:
+// Server Component - check session:
 const session = await getCurrentSession();
 if (!session) redirect("/login");
 
-// Server Action — guard:
+// Server Action - guard:
 const session = await getCurrentSession();
 if (!session) throw new AppError("Unauthorized", 401);
 
@@ -381,7 +381,7 @@ Railway with two services: **web** (`apps/web`) and **worker** (`apps/worker`).
 - Migrations run automatically on every deploy via `releaseCommand` in `apps/web/railway.json`.
 - Use `.env.railway.example` as the default Railway variable template for non-local settings.
 - Wire `DATABASE_URL` and `REDIS_URL` into the web and worker services via Railway shared/service variables or Railway service references, then replace the remaining placeholders in the Railway dashboard.
-- Environment variables live in Railway dashboard — never in committed files.
+- Environment variables live in Railway dashboard - never in committed files.
 - Staging: auto-deploys on push to `main`. Production: deploy from a version tag.
 - For a remote production seed, run `SEED_PROFILE=minimal pnpm db:seed` inside Railway or from a machine using Railway's externally reachable database credentials.
 
@@ -396,16 +396,16 @@ Each service needs its **Config as Code Path** set in the Railway dashboard:
 
 Root Directory **must** be `/` so Railpack can resolve pnpm workspace dependencies. Without the Config as Code Path, Railway ignores the `railway.json` files and falls back to defaults.
 
-The canonical production Railway start command is `HOSTNAME=0.0.0.0 pnpm --dir apps/web start:deploy`, which delegates to `node .next/standalone/apps/web/server.js` and forces the standalone Next server to bind on Railway's network interface. The `pnpm start` / `next start` script is for local testing only — it requires full `node_modules` and skips the standalone build.
+The canonical production Railway start command is `HOSTNAME=0.0.0.0 pnpm --dir apps/web start:deploy`, which delegates to `node .next/standalone/apps/web/server.js` and forces the standalone Next server to bind on Railway's network interface. The `pnpm start` / `next start` script is for local testing only - it requires full `node_modules` and skips the standalone build.
 
 ## Key Files
 
 | File | Purpose |
 |---|---|
-| `.env.railway.example` | Default Railway variable template — copy values into Railway shared/service variables |
-| `packages/db/prisma/schema.prisma` | Database schema — edit this to add models |
-| `packages/db/src/queries.js` | Database query functions — add helpers here |
-| `packages/config/src/validate-env.js` | Environment variable validation — register new vars here |
+| `.env.railway.example` | Default Railway variable template - copy values into Railway shared/service variables |
+| `packages/db/prisma/schema.prisma` | Database schema - edit this to add models |
+| `packages/db/src/queries.js` | Database query functions - add helpers here |
+| `packages/config/src/validate-env.js` | Environment variable validation - register new vars here |
 | `apps/web/src/app/` | Next.js pages and API routes |
 | `apps/web/src/lib/auth.js` | NextAuth configuration |
 | `apps/worker/src/handlers/` | Background job handler functions |

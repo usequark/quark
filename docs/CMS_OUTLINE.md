@@ -1,4 +1,4 @@
-# Quark CMS — Design Outline
+# Quark CMS - Design Outline
 
 > A content management system built on the same principles as the Admin package:
 > schema-driven, scaffolded-and-owned, zero external CMS dependencies.
@@ -7,11 +7,11 @@
 
 The Quark CMS is **not Strapi, not Payload, not WordPress**. It follows the Quark pattern:
 
-- **Schema-driven** — Content types are Prisma models. The CMS reads the schema, just like Admin reads it.
-- **Scaffold-and-own** — The CMS package is scaffolded into your project. You own the code, the schema, the routes.
-- **Admin-native** — CMS routes live under `/admin/cms/` and share the admin layout, auth guard, and sidebar.
-- **No runtime content-type builder** — Content types are defined in `schema.prisma`, not in a web UI. Migrations are the source of truth.
-- **Progressive** — Start with Pages and Media. Add custom content types only when your schema or a dedicated package actually needs them.
+- **Schema-driven** - Content types are Prisma models. The CMS reads the schema, just like Admin reads it.
+- **Scaffold-and-own** - The CMS package is scaffolded into your project. You own the code, the schema, the routes.
+- **Admin-native** - CMS routes live under `/admin/cms/` and share the admin layout, auth guard, and sidebar.
+- **No runtime content-type builder** - Content types are defined in `schema.prisma`, not in a web UI. Migrations are the source of truth.
+- **Progressive** - Start with Pages and Media. Add custom content types only when your schema or a dedicated package actually needs them.
 
 ## Architecture
 
@@ -26,7 +26,7 @@ packages/cms/                    # New optional package (requires: admin + ui)
     ├── content-query.js         # Content-specific query helpers (extends admin/query.js)
     ├── slug.js                  # Slug generation + uniqueness validation
     ├── status.js                # Content status lifecycle (draft → published → archived)
-    └── schema-fragment.prisma   # Reference schema — appended to user's schema on scaffold
+    └── schema-fragment.prisma   # Reference schema - appended to user's schema on scaffold
 
 apps/web/src/app/admin/cms/      # CMS routes (nested under admin layout)
 ├── page.js                      # CMS dashboard (content overview, recent drafts)
@@ -68,17 +68,17 @@ CLI enforcement: `quark add cms` auto-adds `admin` and `ui` if not present.
 |---------|-------|-----|
 | What it manages | All Prisma models (generic CRUD) | Content-specific models (Pages, Media, explicitly opted-in models) |
 | Schema awareness | `introspect.js` parses all models | Reuses admin introspection + adds content-specific logic |
-| Query layer | `query.js` — generic findMany/create/update/delete | `content-query.js` — extends with publish/archive/version/slug ops |
+| Query layer | `query.js` - generic findMany/create/update/delete | `content-query.js` - extends with publish/archive/version/slug ops |
 | Route location | `/admin/` | `/admin/cms/` (nested under admin layout) |
-| Config | `adminConfig` — model overrides | `cmsConfig` — content types, editor settings, media config |
-| Field rendering | `FieldRenderer.js` — generic inputs | `ContentEditor.js` — rich text with media embedding |
+| Config | `adminConfig` - model overrides | `cmsConfig` - content types, editor settings, media config |
+| Field rendering | `FieldRenderer.js` - generic inputs | `ContentEditor.js` - rich text with media embedding |
 
 ## Data Model
 
 ### Core Models (schema-fragment.prisma)
 
 ```prisma
-/// CMS: Pages — static site content (about, contact, terms, etc.)
+/// CMS: Pages - static site content (about, contact, terms, etc.)
 model Page {
   id          String      @id @default(cuid())
   title       String
@@ -96,7 +96,7 @@ model Page {
   @@index([slug])
 }
 
-/// CMS: Media library — tracks uploaded files with metadata
+/// CMS: Media library - tracks uploaded files with metadata
 model MediaAsset {
   id          String   @id @default(cuid())
   filename    String
@@ -125,7 +125,7 @@ enum ContentStatus {
 - **No `version` column in v1.** Content versioning is a LARGE feature. v1 ships with `status` lifecycle only. Version history can be added later via an `ContentVersion` model with a relation to the parent.
 - **`authorId` is required.** All content tracks who created it. The admin auth guard ensures a session exists.
 - **`slug` is unique per model.** The `slug.js` utility auto-generates from title and validates uniqueness at the server action level.
-- **`MediaAsset` uses `storageKey`.** This maps directly to `storage.put(key, ...)` from `@techstream/quark-core`. The CMS doesn't store files itself — it delegates to the existing storage adapter.
+- **`MediaAsset` uses `storageKey`.** This maps directly to `storage.put(key, ...)` from `@techstream/quark-core`. The CMS doesn't store files itself - it delegates to the existing storage adapter.
 
 ## Module Design
 
@@ -178,13 +178,13 @@ Extends the admin query pattern with content-specific operations:
 ```js
 import { findMany, findById, createRecord, updateRecord } from "@scope/admin";
 
-/** Publish a content record — sets status to PUBLISHED and publishedAt to now */
+/** Publish a content record - sets status to PUBLISHED and publishedAt to now */
 export async function publishContent(prisma, model, id) { ... }
 
-/** Archive a content record — sets status to ARCHIVED */
+/** Archive a content record - sets status to ARCHIVED */
 export async function archiveContent(prisma, model, id) { ... }
 
-/** Revert to draft — sets status to DRAFT, clears publishedAt */
+/** Revert to draft - sets status to DRAFT, clears publishedAt */
 export async function unpublishContent(prisma, model, id) { ... }
 
 /** Find published content by slug */
@@ -229,8 +229,8 @@ export function applyTransition(record, newStatus) { ... }
 
 **Options (choose one at scaffold time, own the code):**
 
-1. **Tiptap** (recommended) — Headless, extensible, built on ProseMirror. Supports media embedding, markdown shortcuts, collaborative editing (future). MIT license. `~50KB gzipped`.
-2. **Lexical** (alternative) — Meta's editor framework. More low-level, better for custom block editors. MIT. `~30KB gzipped`.
+1. **Tiptap** (recommended) - Headless, extensible, built on ProseMirror. Supports media embedding, markdown shortcuts, collaborative editing (future). MIT license. `~50KB gzipped`.
+2. **Lexical** (alternative) - Meta's editor framework. More low-level, better for custom block editors. MIT. `~30KB gzipped`.
 
 Both are scaffolded as source code in the CMS package, not installed as runtime dependencies. The developer owns the editor config.
 
@@ -238,7 +238,7 @@ Both are scaffolded as source code in the CMS package, not installed as runtime 
 - Headings (H1-H3), bold, italic, links
 - Ordered/unordered lists
 - Block quotes
-- Images (via Media Library integration — opens `MediaBrowser` modal)
+- Images (via Media Library integration - opens `MediaBrowser` modal)
 - Code blocks
 - Undo/redo
 
@@ -323,12 +323,12 @@ SYNC_DIRS.push(
 
 ## Public API (Optional)
 
-The CMS is for *managing* content in the admin. For *serving* content on the public site, developers write their own routes — Quark doesn't prescribe frontend rendering.
+The CMS is for *managing* content in the admin. For *serving* content on the public site, developers write their own routes - Quark doesn't prescribe frontend rendering.
 
 However, the CMS package exports query helpers usable in any Server Component:
 
 ```js
-// app/[slug]/page.js — developer writes this
+// app/[slug]/page.js - developer writes this
 import { findBySlug } from "@scope/cms";
 import { prisma } from "@scope/db";
 
@@ -343,7 +343,7 @@ export default async function DynamicPage({ params }) {
 
 ## Implementation Phases
 
-### Phase 1 — Core (MVP)
+### Phase 1 - Core (MVP)
 
 - [ ] `packages/cms/` package: config, content-query, slug, status
 - [ ] Prisma schema fragment: Page, MediaAsset, ContentStatus enum
@@ -353,13 +353,13 @@ export default async function DynamicPage({ params }) {
 - [ ] CLI: `quark add cms` with schema append
 - [ ] Template sync integration
 
-### Phase 2 — Media Browser + Package Hooks
+### Phase 2 - Media Browser + Package Hooks
 
 - [ ] Media Browser component (grid, search, preview)
 - [ ] Editor ↔ Media Browser integration (insert image from library)
 - [ ] Package hooks for dedicated vertical content packages
 
-### Phase 3 — Polish
+### Phase 3 - Polish
 
 - [ ] Content preview (side-by-side editor + rendered view)
 - [ ] Bulk actions (publish/archive multiple)
@@ -370,15 +370,15 @@ export default async function DynamicPage({ params }) {
 
 - Content versioning / revision history
 - Collaborative editing
-- Content type builder UI (goes against Quark philosophy — use Prisma schema)
+- Content type builder UI (goes against Quark philosophy - use Prisma schema)
 - Multi-language / i18n content (use the `i18n` skill when needed)
 - API/GraphQL content delivery layer
 
 ## Open Questions
 
-1. **Rich text storage format:** Store as HTML (simpler, what the editor produces) or as a structured JSON document (ProseMirror/Lexical format — more flexible for future rendering)? Recommendation: **HTML** for v1, with server-side sanitization via DOMPurify.
+1. **Rich text storage format:** Store as HTML (simpler, what the editor produces) or as a structured JSON document (ProseMirror/Lexical format - more flexible for future rendering)? Recommendation: **HTML** for v1, with server-side sanitization via DOMPurify.
 
-2. **Editor dependency:** Scaffold Tiptap as vendored code (full ownership) or install as a `dependency` (simpler updates)? Recommendation: **Install as dependency** — editors are complex and benefit from upstream bug fixes. This is the one exception to "scaffold-and-own" because rich text editing is not a domain developers typically customize at the library level.
+2. **Editor dependency:** Scaffold Tiptap as vendored code (full ownership) or install as a `dependency` (simpler updates)? Recommendation: **Install as dependency** - editors are complex and benefit from upstream bug fixes. This is the one exception to "scaffold-and-own" because rich text editing is not a domain developers typically customize at the library level.
 
 3. **Additional domain model inclusion:** Should richer public content ship in the base CMS or in dedicated packages? Recommendation: **Dedicated packages**. Quark should keep the base CMS page-first and let packages like booking, ecommerce, payments, or AI introduce their own richer flows.
 

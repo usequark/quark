@@ -24,9 +24,9 @@ Quark's UI components must be:
 - All components are Server Component-safe by default
 - No JavaScript bundle overhead for layout/display components
 - Scaffolded projects own the full UI layer with no upstream coupling
-- Easy to understand, modify, and style — no abstraction layers
+- Easy to understand, modify, and style - no abstraction layers
 
 **Negative:**
 - No accessibility primitives from Radix (focus traps, ARIA patterns must be hand-rolled)
-- More limited than a full component library — complex components (data tables, comboboxes) must be built by app developers
+- More limited than a full component library - complex components (data tables, comboboxes) must be built by app developers
 - No animation library integration by default

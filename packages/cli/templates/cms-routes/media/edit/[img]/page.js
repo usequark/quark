@@ -23,7 +23,7 @@ export default async function MediaEditPage({ params }) {
 	if (!asset) notFound();
 
 	return (
-		<div>
+		<div className="max-w-6xl mx-auto">
 			<div className="mb-6">
 				<a
 					href="/admin/cms/media"

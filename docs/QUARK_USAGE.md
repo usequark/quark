@@ -1,6 +1,6 @@
 # Quark: Complete Usage Guide
 
-This guide covers the complete Quark workflow—from development to scaffolding new projects to keeping them updated.
+This guide covers the complete Quark workflow-from development to scaffolding new projects to keeping them updated.
 
 ---
 
@@ -59,7 +59,7 @@ git push origin your-branch
 
 Then open a PR. Once merged to `main`, CI automatically opens a **"chore: version packages"** PR. Merge that PR to publish to npm and create a GitHub Release.
 
-> **Never run `git tag` manually** and never run `pnpm changeset version` locally — CI owns both steps.
+> **Never run `git tag` manually** and never run `pnpm changeset version` locally - CI owns both steps.
 
 ---
 
@@ -153,7 +153,7 @@ pnpm dev
 
 #### CI/CD (GitHub Actions)
 
-No authentication tokens needed — all packages are public:
+No authentication tokens needed - all packages are public:
 
 ```yaml
 # .github/workflows/ci.yml
@@ -311,15 +311,15 @@ console.log(JOB_NAMES.SEND_WELCOME_EMAIL);
 React components and UI primitives for your application. The full component library with dark mode support built in.
 
 **Available components:**
-- `Button`, `Input`, `Label`, `Textarea`, `Select`, `Checkbox` — form primitives
-- `Badge` — status labels
-- `Card` / `CardHeader` / `CardTitle` / `CardContent` / `CardFooter` — content containers
-- `Table` / `TableHeader` / `TableBody` / `TableRow` / `TableHead` / `TableCell` — data tables
-- `Skeleton` — loading placeholders
-- `Dialog` *(client)* — modal dialogs
-- `Toast` / `useToast` *(client)* — notifications
-- `ThemeProvider` / `useTheme` *(client)* — dark/light mode context
-- `QuarkLogo` *(server)* — inline SVG logo, theme-aware
+- `Button`, `Input`, `Label`, `Textarea`, `Select`, `Checkbox` - form primitives
+- `Badge` - status labels
+- `Card` / `CardHeader` / `CardTitle` / `CardContent` / `CardFooter` - content containers
+- `Table` / `TableHeader` / `TableBody` / `TableRow` / `TableHead` / `TableCell` - data tables
+- `Skeleton` - loading placeholders
+- `Dialog` *(client)* - modal dialogs
+- `Toast` / `useToast` *(client)* - notifications
+- `ThemeProvider` / `useTheme` *(client)* - dark/light mode context
+- `QuarkLogo` *(server)* - inline SVG logo, theme-aware
 
 **Why it's optional:** Not all apps need a shared component library. If scaffolded, you customize components to match your design system.
 
@@ -335,13 +335,13 @@ npx @techstream/quark-create-app my-app --features ui,jobs,admin
 ```
 
 **What you get:**
-- Full admin interface at `/admin` — lists all your Prisma models
-- List, create, edit, and delete records for every model — zero config
+- Full admin interface at `/admin` - lists all your Prisma models
+- List, create, edit, and delete records for every model - zero config
 - Field-type aware forms: strings → text inputs, booleans → checkboxes, enums → dropdowns, DateTimes → datetime pickers
 - Automatic protection: only users with `role: "admin"` can access the admin
 - Dark mode support via the shared theme system
 
-No code generation — the admin reads your schema at runtime via DMMF, so it automatically reflects schema changes without any regeneration step.
+No code generation - the admin reads your schema at runtime via DMMF, so it automatically reflects schema changes without any regeneration step.
 
 ---
 
@@ -353,7 +353,7 @@ Quark uses a **dark-mode-first** theme system. Every scaffolded project ships wi
 
 Theme is controlled by a `data-theme` attribute on `<html>` (`"dark"` or `"light"`), not by a CSS class. Tailwind's `dark:` utilities are wired to `data-theme` via a custom variant in `globals.css`.
 
-A blocking inline `<script>` in `layout.js` reads `localStorage` and `prefers-color-scheme` synchronously before the first paint — no flash.
+A blocking inline `<script>` in `layout.js` reads `localStorage` and `prefers-color-scheme` synchronously before the first paint - no flash.
 
 ### Using ThemeProvider
 
@@ -391,11 +391,11 @@ export function MyToggle() {
 }
 ```
 
-`ThemeProvider` is optional for simple use cases — the FOUC prevention script and CSS variables work without it. Use it only when a component needs to read or programmatically change the theme.
+`ThemeProvider` is optional for simple use cases - the FOUC prevention script and CSS variables work without it. Use it only when a component needs to read or programmatically change the theme.
 
 ### Dark mode in your own components
 
-Use Tailwind's `dark:` utilities anywhere — they react to the `data-theme` attribute automatically:
+Use Tailwind's `dark:` utilities anywhere - they react to the `data-theme` attribute automatically:
 
 ```jsx
 <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
@@ -413,7 +413,7 @@ Use Tailwind's `dark:` utilities anywhere — they react to the `data-theme` att
 
 ## Email Service
 
-Quark's email service uses a **Strategy Pattern** — swap providers without changing any call sites.
+Quark's email service uses a **Strategy Pattern** - swap providers without changing any call sites.
 
 ### Sending Email
 
@@ -445,7 +445,7 @@ Set `EMAIL_PROVIDER` in your `.env`:
 
 All providers return `{ id, ...providerData }` from `sendEmail()`.
 
-Provider config is validated at **service-creation time** — misconfigured providers fail immediately at app startup rather than silently at send time.
+Provider config is validated at **service-creation time** - misconfigured providers fail immediately at app startup rather than silently at send time.
 
 ### Registering a Custom Provider
 
@@ -527,7 +527,7 @@ git commit -m "chore: update Quark core"
 If a Quark update includes breaking changes:
 
 1. **Check the changelog** in the Quark repository
-2. **Run tests** — they will fail with detailed error messages
+2. **Run tests** - they will fail with detailed error messages
 3. **Follow migration guides** in Quark docs
 4. **Test locally** before pushing
 

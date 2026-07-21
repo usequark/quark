@@ -23,7 +23,7 @@ let cachedConfig = null;
  * 2. Resolves the current environment (dev/test/staging/production).
  * 3. Merges environment-specific defaults with any user overrides.
  * 4. Enriches with computed values (APP_URL, allowed origins, ports).
- * 5. Caches the result — subsequent calls return the same object.
+ * 5. Caches the result - subsequent calls return the same object.
  *
  * @param {Record<string, unknown>} [overrides] - Optional partial overrides
  * @param {Object} [options]
@@ -66,7 +66,7 @@ export function resetConfig() {
 
 /**
  * Returns the cached configuration if already loaded, otherwise null.
- * Does NOT trigger validation — use `loadConfig()` for that.
+ * Does NOT trigger validation - use `loadConfig()` for that.
  * @returns {ReturnType<typeof loadConfig> | null}
  */
 export function getConfig() {
