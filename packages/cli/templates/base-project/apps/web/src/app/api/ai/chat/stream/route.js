@@ -1,10 +1,10 @@
 import { prisma } from "@techstream/quark-db";
 import { NextResponse } from "next/server";
-import { handleError } from "../../error-handler";
+import { handleError } from "../../../error-handler";
 import {
 	requireAuth,
 	requireConversationAccess,
-} from "../_lib/requireConversationAccess";
+} from "../../_lib/requireConversationAccess";
 
 export async function GET(request) {
 	try {

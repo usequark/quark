@@ -6,7 +6,7 @@ import { handleError } from "../../../error-handler";
 import {
 	requireAuth,
 	requireConversationAccess,
-} from "../_lib/requireConversationAccess";
+} from "../../_lib/requireConversationAccess";
 
 const updateConversationSchema = z.object({
 	title: z.string().min(1).max(200),
