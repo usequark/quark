@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useEffectEvent, useRef } from "react";
-
+import { getUmamiUserRole } from "../../lib/analytics/umami.js";
 import { getUmamiConfig } from "../../lib/analytics/umami-config.js";
 import {
 	buildReplayEndpoint,
@@ -68,6 +68,11 @@ export default function UmamiReplayRecorder() {
 		if (!umamiConfig.replayEnabled || !shouldSampleReplay()) {
 			return undefined;
 		}
+
+		// Skip replay recording for admin users (identified by the
+		// umami_user_role cookie set by the admin layout).
+		const role = getUmamiUserRole();
+		if (role === "admin" || role === "client_admin") return undefined;
 
 		let cancelled = false;
 		let flushIntervalId = null;

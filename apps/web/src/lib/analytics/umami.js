@@ -1,5 +1,16 @@
 import { getUmamiConfig } from "./umami-config.js";
 
+/**
+ * Read the Umami user role cookie set by the admin layout.
+ * Returns the role string ("admin", "client_admin", etc.) or null.
+ * The inline before-send script in layout.js duplicates this regex
+ * because it runs before any module code.
+ */
+export function getUmamiUserRole() {
+	if (typeof document === "undefined") return null;
+	return (document.cookie.match(/umami_user_role=([^;]+)/) || [])[1] || null;
+}
+
 function getUmamiClient() {
 	if (typeof window === "undefined") return null;
 	if (!getUmamiConfig().enabled) return null;

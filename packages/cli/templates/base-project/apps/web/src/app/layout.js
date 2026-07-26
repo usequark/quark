@@ -6,12 +6,17 @@ import {
 import { getUmamiConfig } from "../lib/analytics/umami-config.js";
 import { getSiteMetadata } from "../lib/seo/site-metadata.js";
 import UmamiReplayRecorder from "./_components/UmamiReplayRecorder.js";
+import UmamiWebVitals from "./_components/UmamiWebVitals.js";
 export function generateMetadata() {
 	return getSiteMetadata();
 }
 
 /* Blocking script that sets data-theme before first paint (FOUC prevention). */
 const themeScript = `(function(){try{var t=localStorage.getItem("${THEME_STORAGE_KEY}");if(t==="dark"||t==="light"){document.documentElement.setAttribute("${THEME_ATTR}",t)}else if(matchMedia("(prefers-color-scheme:dark)").matches){document.documentElement.setAttribute("${THEME_ATTR}","dark")}}catch(e){}})()`;
+
+// Inline Umami before-send handler that drops events from admin pages (/admin/*)
+// and admin users (identified by the umami_user_role cookie set by the admin layout).
+const umamiBeforeSendScript = `window.__umamiBeforeSend=function(t,p){var r=(document.cookie.match(/umami_user_role=([^;]+)/)||[])[1];if(p.url&&p.url.indexOf("/admin")===0)return false;if(r==="admin"||r==="client_admin")return false;return p}`;
 
 export default function RootLayout({ children }) {
 	const umamiConfig = getUmamiConfig();
@@ -21,6 +26,8 @@ export default function RootLayout({ children }) {
 			<head>
 				{/* biome-ignore lint/security/noDangerouslySetInnerHtml: static constant, not user input */}
 				<script dangerouslySetInnerHTML={{ __html: themeScript }} />
+				{/* biome-ignore lint/security/noDangerouslySetInnerHtml: static inline before-send handler */}
+				<script dangerouslySetInnerHTML={{ __html: umamiBeforeSendScript }} />
 				{umamiConfig.enabled ? (
 					<>
 						<link
@@ -34,12 +41,14 @@ export default function RootLayout({ children }) {
 							data-performance="true"
 							data-website-id={umamiConfig.websiteId}
 							src={umamiConfig.scriptUrl}
+							data-before-send="__umamiBeforeSend"
 						/>
 					</>
 				) : null}
 			</head>
 			<body>
 				{children}
+				{umamiConfig.enabled ? <UmamiWebVitals /> : null}
 				{umamiConfig.replayEnabled ? <UmamiReplayRecorder /> : null}
 			</body>
 		</html>
