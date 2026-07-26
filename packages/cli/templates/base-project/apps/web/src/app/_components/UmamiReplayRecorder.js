@@ -2,7 +2,6 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useEffectEvent, useRef } from "react";
-import { getUmamiUserRole } from "../../lib/analytics/umami.js";
 import { getUmamiConfig } from "../../lib/analytics/umami-config.js";
 import {
 	buildReplayEndpoint,
@@ -41,6 +40,7 @@ export default function UmamiReplayRecorder() {
 	const startedAtRef = useRef(0);
 	const isActiveRef = useRef(false);
 	const recordRef = useRef(null);
+	const stopRecordingRef = useRef(null);
 
 	const flushPendingEvents = useEffectEvent(
 		async ({ useKeepalive = false } = {}) => {
@@ -69,10 +69,11 @@ export default function UmamiReplayRecorder() {
 			return undefined;
 		}
 
-		// Skip replay recording for admin users (identified by the
-		// umami_user_role cookie set by the admin layout).
-		const role = getUmamiUserRole();
-		if (role === "admin" || role === "client_admin") return undefined;
+		// Skip replay recording on admin pages. The cookie-based admin
+		// detection was removed because cookies().set() throws in Next.js 16
+		// Server Components — the before-send handler in the root layout
+		// blocks /admin page views as the primary guard.
+		if (window.location.pathname.startsWith("/admin")) return undefined;
 
 		let cancelled = false;
 		let flushIntervalId = null;
@@ -142,7 +143,7 @@ export default function UmamiReplayRecorder() {
 				window.removeEventListener("pagehide", handlePageHide);
 			};
 
-			stopRecording = ({ useKeepalive = false } = {}) => {
+			const stopFn = ({ useKeepalive = false } = {}) => {
 				if (!isActiveRef.current) return;
 
 				isActiveRef.current = false;
@@ -157,6 +158,8 @@ export default function UmamiReplayRecorder() {
 				recordRef.current = null;
 				void flushPendingEvents({ useKeepalive });
 			};
+			stopRecordingRef.current = stopFn;
+			stopRecording = stopFn;
 		}
 
 		void setupReplay();
@@ -171,6 +174,16 @@ export default function UmamiReplayRecorder() {
 		if (previousPathnameRef.current === pathname) return;
 
 		previousPathnameRef.current = pathname;
+
+		// Stop recording if navigating into an admin page — handles
+		// client-side transitions from public pages to /admin.
+		if (pathname.startsWith("/admin")) {
+			if (isActiveRef.current) {
+				stopRecordingRef.current?.({ useKeepalive: true });
+			}
+			return;
+		}
+
 		if (!isActiveRef.current || !recordRef.current) return;
 
 		void flushPendingEvents();

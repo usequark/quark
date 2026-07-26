@@ -1,5 +1,4 @@
 import { adminConfig, getModels, modelToSlug } from "@techstream/quark-admin";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { loadCmsConfig } from "@/lib/load-cms-config";
@@ -27,16 +26,6 @@ export default async function AdminLayout({ children }) {
 	if (!isAdminRole && (role !== "editor" || !cmsConfig)) {
 		redirect("/");
 	}
-
-	// Expose the user role to the Umami before-send handler via a cookie
-	// so admin page views and admin user activity are excluded from analytics.
-	const cookieStore = await cookies();
-	cookieStore.set("umami_user_role", role, {
-		path: "/",
-		httpOnly: false,
-		sameSite: "lax",
-		maxAge: 60 * 60, // 1 hour — refreshed on every admin page visit
-	});
 
 	const cmsLinks = cmsConfig
 		? Object.entries(cmsConfig.contentTypes).map(([model, cfg]) => ({
