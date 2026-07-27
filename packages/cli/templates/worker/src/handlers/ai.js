@@ -206,30 +206,6 @@ export async function handleAiAgentTask(bullJob, logger) {
 			droppedCount > 0 &&
 			shouldCompact({ messages: droppedMessages, tokenBudget })
 		) {
-			logger.info("Triggering background compaction", { conversationId });
-			// Fire and forget - don't block the response
-			summarizeConversation(droppedMessages, model)
-				.then(async ({ summary, tokenCount }) => {
-					if (summary) {
-						await prisma.aiConversation.update({
-							where: { id: conversationId },
-							data: {
-								summary,
-								summaryTokens: tokenCount,
-								summaryUpdatedAt: new Date(),
-							},
-						});
-						logger.info("Conversation compacted", {
-							conversationId,
-							summaryTokens: tokenCount,
-						});
-					}
-				})
-				.catch((err) => {
-					logger.error("Background compaction failed", {
-						conversationId,
-						error: err.message,
-					});
 			try {
 				const aiQueue = createQueue(JOB_QUEUES.AI);
 				await aiQueue.add(JOB_NAMES.AI_CONVERSATION_COMPACT, {

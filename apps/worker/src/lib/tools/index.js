@@ -1,5 +1,4 @@
 import { AppError, ValidationError } from "@techstream/quark-core/errors";
-import { AppError } from "@techstream/quark-core/errors";
 import { toolHandlers } from "./handlers.js";
 import { getVisibleTools } from "./permissions.js";
 import { toolSchemas } from "./schemas.js";
@@ -61,7 +60,6 @@ export function getAllFilteredToolDefinitions(role) {
 export function getToolHandler(name) {
 	const handler = toolHandlers[name];
 	if (!handler) {
-		throw new AppError(`No handler for tool: ${name}`);
 		throw new AppError(`No handler for tool: ${name}`, 500, "NO_TOOL_HANDLER");
 	}
 	return handler;
