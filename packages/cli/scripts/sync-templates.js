@@ -240,6 +240,9 @@ const EXCLUDE_PATTERNS = [
 
 	// Playground: monorepo reference only - scaffolded conditionally via CLI when ui is selected
 	/^apps\/web\/src\/app\/playground\//,
+
+	// Bookings: monorepo-only feature (package not published to npm)
+	/^apps\/web\/src\/app\/book\//,
 ];
 
 /**
@@ -295,6 +298,7 @@ const TRANSFORMS = {
 	"base-project/.dockerignore": transformScaffoldDockerIgnore,
 	// Apps: adjust dependency references for scaffold context
 	"base-project/apps/web/package.json": transformWebPackageJson,
+	"base-project/apps/web/next.config.js": transformWebNextConfig,
 	"worker/package.json": transformWorkerPackageJson,
 	// DB: remove private flag for scaffold context
 	"base-project/packages/db/package.json": transformDbPackageJson,
@@ -333,6 +337,9 @@ function transformWebPackageJson(content) {
 	// Remove monorepo-only scripts
 	delete pkg.scripts?.["test:integration"];
 
+	// Bookings is a monorepo-only package (not published to npm)
+	delete pkg.dependencies?.["@techstream/quark-bookings"];
+
 	// Core is installed from npm (not workspace) in scaffolded projects
 	if (pkg.dependencies?.["@techstream/quark-core"]) {
 		pkg.dependencies["@techstream/quark-core"] = CORE_VERSION_PIN;
@@ -345,6 +352,11 @@ function transformWebPackageJson(content) {
 	}
 
 	return `${JSON.stringify(pkg, null, "\t")}\n`;
+}
+
+function transformWebNextConfig(content) {
+	// Remove bookings reference (monorepo-only package, not published to npm)
+	return content.replace(/^\t\t"@techstream\/quark-bookings",\n/gm, "");
 }
 
 function transformWorkerPackageJson(content) {
