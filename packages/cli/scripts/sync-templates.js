@@ -109,11 +109,6 @@ const SYNC_DIRS = [
 		src: "apps/web/src/app/admin/crm",
 		dest: "crm-routes",
 	},
-	// OpenCode server config - scaffolded conditionally when --features ai is selected
-	{
-		src: "packages/opencode/deploy",
-		dest: "opencode",
-	},
 	// AI chat admin routes - scaffolded conditionally alongside the ai feature
 	{
 		src: "apps/web/src/app/admin/ai",
@@ -282,6 +277,9 @@ const TEMPLATE_ONLY = new Set([
 	// Base-project sitemap is a simpler version (no CMS dependency);
 	// the CMS-capable sitemap lives in cms-public template
 	"base-project/apps/web/src/app/sitemap.js",
+
+	// OpenCode deploy config - scaffolded conditionally via --features ai
+	"opencode",
 ]);
 
 // ─── Transforms ────────────────────────────────────────────────────────────────

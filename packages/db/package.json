@@ -5,6 +5,10 @@
 	"type": "module",
 	"description": "",
 	"main": "src/index.js",
+	"exports": {
+		".": "./src/index.js",
+		"./umami": "./src/umami.js"
+	},
 	"scripts": {
 		"test": "pnpm run db:generate && node --test 'src/**/*.test.js'",
 		"lint": "biome format --write && biome check --write",

@@ -17,14 +17,19 @@ describe("JOB_QUEUES", () => {
 		assert.strictEqual(JOB_QUEUES.AI, "ai-queue");
 	});
 
+	test("defines default queue", () => {
+		assert.strictEqual(JOB_QUEUES.DEFAULT, "default-queue");
+	});
+
 	test("queues are strings", () => {
 		assert.strictEqual(typeof JOB_QUEUES.EMAIL, "string");
 		assert.strictEqual(typeof JOB_QUEUES.FILES, "string");
 		assert.strictEqual(typeof JOB_QUEUES.AI, "string");
+		assert.strictEqual(typeof JOB_QUEUES.DEFAULT, "string");
 	});
 
-	test("defines exactly 3 queues", () => {
-		assert.strictEqual(Object.keys(JOB_QUEUES).length, 3);
+	test("defines exactly 4 queues", () => {
+		assert.strictEqual(Object.keys(JOB_QUEUES).length, 4);
 	});
 });
 
@@ -53,6 +58,20 @@ describe("JOB_NAMES", () => {
 		assert.strictEqual(JOB_NAMES.AI_AGENT_TASK, "ai-agent-task");
 	});
 
+	test("defines AI context extraction job name", () => {
+		assert.strictEqual(
+			JOB_NAMES.AI_CONTEXT_EXTRACTION,
+			"ai-context-extraction",
+		);
+	});
+
+	test("defines AI task context extraction job name", () => {
+		assert.strictEqual(
+			JOB_NAMES.AI_TASK_CONTEXT_EXTRACTION,
+			"ai-task-context-extraction",
+		);
+	});
+
 	test("defines AI conversation compact job name", () => {
 		assert.strictEqual(
 			JOB_NAMES.AI_CONVERSATION_COMPACT,
@@ -60,8 +79,38 @@ describe("JOB_NAMES", () => {
 		);
 	});
 
-	test("defines exactly 5 job names", () => {
-		assert.strictEqual(Object.keys(JOB_NAMES).length, 5);
+	test("defines Railway sync job names", () => {
+		assert.strictEqual(JOB_NAMES.SYNC_RAILWAY_COSTS, "sync-railway-costs");
+		assert.strictEqual(
+			JOB_NAMES.SYNC_RAILWAY_DEPLOYMENTS,
+			"sync-railway-deployments",
+		);
+		assert.strictEqual(JOB_NAMES.SYNC_RAILWAY_METRICS, "sync-railway-metrics");
+	});
+
+	test("defines project manager job names", () => {
+		assert.strictEqual(JOB_NAMES.SYNC_UMAMI_ANALYTICS, "sync-umami-analytics");
+		assert.strictEqual(JOB_NAMES.CHECK_MONITORS, "check-monitors");
+		assert.strictEqual(
+			JOB_NAMES.CHECK_PROJECT_GOVERNANCE,
+			"check-project-governance",
+		);
+		assert.strictEqual(
+			JOB_NAMES.SEND_GOVERNANCE_ALERT,
+			"send-governance-alert",
+		);
+		assert.strictEqual(
+			JOB_NAMES.GENERATE_PROJECT_REPORT,
+			"generate-project-report",
+		);
+		assert.strictEqual(
+			JOB_NAMES.SYNC_WORKSPACE_BILLING,
+			"sync-workspace-billing",
+		);
+	});
+
+	test("defines exactly 16 job names", () => {
+		assert.strictEqual(Object.keys(JOB_NAMES).length, 16);
 	});
 
 	test("all job names are strings", () => {
