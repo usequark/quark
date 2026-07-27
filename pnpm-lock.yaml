@@ -133,9 +133,6 @@ importers:
 
   apps/worker:
     dependencies:
-      '@opencode-ai/sdk':
-        specifier: ^1.17.0
-        version: 1.17.11
       '@techstream/quark-config':
         specifier: workspace:*
         version: link:../../packages/config
