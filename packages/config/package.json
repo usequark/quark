@@ -20,7 +20,8 @@
 	},
 	"dependencies": {
 		"@techstream/quark-core": "workspace:*",
-		"ioredis": "^5.10.0"
+		"ioredis": "^5.10.0",
+		"zod": "^4.3.6"
 	},
 	"keywords": [],
 	"author": "",

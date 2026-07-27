@@ -14,7 +14,7 @@ Use this package when your project needs editorial workflows, managed pages, or 
 
 - `src/config.js` - managed content types and media rules
 - `src/content-query.js` - CMS-facing data access helpers
-- `src/page-builder.js` - page content helpers
+- `src/page-builder/` - page content helpers (schemas, normalize, render)
 - `src/slug.js` and `src/status.js` - content lifecycle helpers
 
 The paired CMS routes live in:

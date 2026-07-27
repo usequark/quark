@@ -9,7 +9,7 @@ import {
 	parseStoredPageContent,
 	serializePageContentToBody,
 	serializePageContentToPlainText,
-} from "./page-builder.js";
+} from "./page-builder/index.js";
 
 test("parsePageBuilderInput parses JSON content and preserves layout", () => {
 	const result = parsePageBuilderInput({
