@@ -209,17 +209,17 @@ export function summarizeContext(records) {
 		byCategory[r.category].push(r);
 	}
 
-	const totalLearned = records.filter((r) => r.source === "learned").length;
+	const totalManual = records.filter((r) => r.source === "manual").length;
 	const totalSeed = records.filter((r) => r.source === "seed").length;
 
-	let summary = `Available business context (${records.length} records, ${totalSeed} curated + ${totalLearned} learned):\n`;
+	let summary = `Available business context (${records.length} records, ${totalSeed} curated + ${totalManual} manual):\n`;
 
 	for (const [category, entries] of Object.entries(byCategory)) {
 		const label = category.charAt(0).toUpperCase() + category.slice(1);
-		const learned = entries.filter((e) => e.source === "learned").length;
+		const manual = entries.filter((e) => e.source === "manual").length;
 		const seed = entries.filter((e) => e.source === "seed").length;
 		summary += `- **${label}**: ${entries.length} records`;
-		if (seed > 0) summary += ` (${seed} curated, ${learned} learned)`;
+		if (seed > 0) summary += ` (${seed} curated, ${manual} manual)`;
 		summary += "\n";
 	}
 

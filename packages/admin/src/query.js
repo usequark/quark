@@ -5,6 +5,20 @@
  * circular imports and make testing straightforward.
  */
 
+import { AppError } from "@techstream/quark-core/errors";
+import { getIdField, getModel } from "./introspect.js";
+
+/**
+ * Resolve the primary-key field name for a model (falls back to "id").
+ * @param {string} model
+ * @returns {string}
+ */
+function resolveIdFieldName(model) {
+	const modelDef = getModel(model);
+	const field = modelDef ? getIdField(modelDef) : null;
+	return field?.name ?? "id";
+}
+
 /**
  * Fetch paginated records for a model.
  * @param {import('@prisma/client').PrismaClient} prisma
@@ -37,7 +51,10 @@ export async function findMany(prisma, model, options = {}) {
  * @returns {Promise<object | null>}
  */
 export async function findById(prisma, model, id) {
-	return getDelegate(prisma, model).findUnique({ where: { id } });
+	const idField = resolveIdFieldName(model);
+	return getDelegate(prisma, model).findUnique({
+		where: { [idField]: id },
+	});
 }
 
 /**
@@ -60,7 +77,11 @@ export async function createRecord(prisma, model, data) {
  * @returns {Promise<object>}
  */
 export async function updateRecord(prisma, model, id, data) {
-	return getDelegate(prisma, model).update({ where: { id }, data });
+	const idField = resolveIdFieldName(model);
+	return getDelegate(prisma, model).update({
+		where: { [idField]: id },
+		data,
+	});
 }
 
 /**
@@ -71,7 +92,10 @@ export async function updateRecord(prisma, model, id, data) {
  * @returns {Promise<object>}
  */
 export async function deleteRecord(prisma, model, id) {
-	return getDelegate(prisma, model).delete({ where: { id } });
+	const idField = resolveIdFieldName(model);
+	return getDelegate(prisma, model).delete({
+		where: { [idField]: id },
+	});
 }
 
 /**
@@ -95,7 +119,11 @@ function getDelegate(prisma, model) {
 	const key = model.charAt(0).toLowerCase() + model.slice(1);
 	const delegate = prisma[key];
 	if (!delegate || typeof delegate.findMany !== "function") {
-		throw new Error(`Unknown Prisma model: "${model}"`);
+		throw new AppError(
+			`Unknown Prisma model: "${model}"`,
+			500,
+			"UNKNOWN_MODEL",
+		);
 	}
 	return delegate;
 }

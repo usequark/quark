@@ -10,6 +10,4 @@ export const JOB_NAMES = {
 	CLEANUP_ORPHANED_FILES: "cleanup-orphaned-files",
 	AI_AGENT_TASK: "ai-agent-task",
 	AI_CONVERSATION_COMPACT: "ai-conversation-compact",
-	AI_SESSION_CREATE: "ai-session-create",
-	AI_HEALTH_CHECK: "ai-health-check",
 };

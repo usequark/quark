@@ -1,3 +1,5 @@
+"use client";
+
 import { Eye, EyeOff } from "lucide-react";
 import React from "react";
 import { Input } from "./input.js";

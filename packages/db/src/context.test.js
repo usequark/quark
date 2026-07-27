@@ -41,7 +41,7 @@ describe("getRelevantContext", () => {
 				key: "client.acme",
 				value: "Acme Corp",
 				category: "client",
-				source: "learned",
+				source: "manual",
 			},
 		];
 
@@ -57,7 +57,7 @@ describe("getRelevantContext", () => {
 				key: "client.acme.industry",
 				value: "Technology",
 				category: "client",
-				source: "learned",
+				source: "manual",
 			},
 			{
 				key: "task.reports",
@@ -97,7 +97,7 @@ describe("getRelevantContext", () => {
 				key: `billing.item${i}`,
 				value: `Billing item ${i}`,
 				category: "billing",
-				source: "learned",
+				source: "manual",
 			});
 		}
 
@@ -178,14 +178,14 @@ describe("summarizeContext", () => {
 	test("creates summary with category breakdown", () => {
 		const records = [
 			{ key: "billing.a", value: "A", category: "billing", source: "seed" },
-			{ key: "billing.b", value: "B", category: "billing", source: "learned" },
+			{ key: "billing.b", value: "B", category: "billing", source: "manual" },
 			{ key: "client.a", value: "C", category: "client", source: "seed" },
 		];
 
 		const result = summarizeContext(records);
 		assert.ok(result.includes("3 records"));
 		assert.ok(result.includes("2 curated"));
-		assert.ok(result.includes("1 learned"));
+		assert.ok(result.includes("1 manual"));
 		assert.ok(result.includes("Billing"));
 		assert.ok(result.includes("Client"));
 	});

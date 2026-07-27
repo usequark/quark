@@ -17,6 +17,9 @@
  *                      listed in ALLOWED_ORIGINS (comma-separated).
  */
 
+import { ValidationError } from "@techstream/quark-core/errors";
+import { getEnvironmentConfig } from "./environment.js";
+
 /**
  * Resolves the canonical application URL.
  * @returns {string} The canonical URL (no trailing slash)
@@ -52,13 +55,13 @@ function normalizeAppUrl(rawUrl, label) {
 	try {
 		parsedUrl = new URL(rawUrl);
 	} catch {
-		throw new Error(
+		throw new ValidationError(
 			`${label} must be an absolute http(s) URL. Received: ${rawUrl}`,
 		);
 	}
 
 	if (!["http:", "https:"].includes(parsedUrl.protocol)) {
-		throw new Error(
+		throw new ValidationError(
 			`${label} must use http:// or https://. Received: ${rawUrl}`,
 		);
 	}
@@ -83,10 +86,11 @@ export function getAllowedOrigins() {
 				.filter(Boolean)
 		: [];
 
-	// In development, always allow the common local ports
+	// In development, always allow the common local ports derived from env config
 	const isDev = process.env.NODE_ENV !== "production";
+	const devPort = getEnvironmentConfig("development").server.port;
 	const devOrigins = isDev
-		? ["http://localhost:3000", "http://localhost:3001"]
+		? [`http://localhost:${devPort}`, `http://localhost:${devPort + 1}`]
 		: [];
 
 	// De-duplicate

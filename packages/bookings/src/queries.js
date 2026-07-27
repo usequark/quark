@@ -4,7 +4,7 @@ import { checkSlotAvailability, releaseSlot } from "./availability.js";
 import { applyTransition, canTransition } from "./status.js";
 import { bookingSchema, cancelBookingSchema } from "./validation.js";
 
-const logger = createLogger("bookings:queries");
+const logger = createLogger({ name: "bookings:queries" });
 
 /**
  * @param {object} params

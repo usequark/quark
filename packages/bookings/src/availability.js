@@ -2,7 +2,7 @@ import { createLogger } from "@techstream/quark-core";
 import { ValidationError } from "@techstream/quark-core/errors";
 import { resolveSlotScopeKey } from "./config.js";
 
-const logger = createLogger("bookings:availability");
+const logger = createLogger({ name: "bookings:availability" });
 
 function supportsSlotScope(prisma) {
 	return Boolean(prisma?.availabilitySlot?.fields?.slotScopeKey);

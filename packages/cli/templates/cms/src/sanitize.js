@@ -1,4 +1,4 @@
-function getStringValue(value) {
+export function getStringValue(value) {
 	if (typeof value === "string") {
 		return value;
 	}
@@ -69,7 +69,7 @@ export function renderRichText(text) {
 		.join("");
 }
 
-function getTrimmedString(value) {
+export function getTrimmedString(value) {
 	const str = getStringValue(value);
 	return str.trim();
 }

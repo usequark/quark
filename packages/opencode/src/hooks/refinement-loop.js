@@ -1,5 +1,67 @@
-/** @type {Map<string, number>} */
-const iterationCount = new Map();
+const MAX_ENTRIES = 1000;
+const ENTRY_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Session iteration tracker with TTL eviction.
+ * Stores { count, timestamp } per sessionID.
+ * On each access, evicts expired entries and caps size at MAX_ENTRIES.
+ */
+class IterationCountMap {
+	constructor() {
+		/** @type {Map<string, { count: number, timestamp: number }>} */
+		this._map = new Map();
+	}
+
+	/**
+	 * Evict expired entries (older than TTL). If still over cap, delete oldest.
+	 */
+	_cleanup() {
+		const now = Date.now();
+
+		for (const [key, entry] of this._map) {
+			if (now - entry.timestamp > ENTRY_TTL_MS) {
+				this._map.delete(key);
+			}
+		}
+
+		if (this._map.size > MAX_ENTRIES) {
+			const excess = this._map.size - MAX_ENTRIES;
+			let removed = 0;
+			for (const key of this._map.keys()) {
+				if (removed >= excess) break;
+				this._map.delete(key);
+				removed++;
+			}
+		}
+	}
+
+	/**
+	 * @param {string} sessionId
+	 * @returns {number}
+	 */
+	get(sessionId) {
+		this._cleanup();
+		const entry = this._map.get(sessionId);
+		if (!entry) return 0;
+		if (Date.now() - entry.timestamp > ENTRY_TTL_MS) {
+			this._map.delete(sessionId);
+			return 0;
+		}
+		return entry.count;
+	}
+
+	/**
+	 * @param {string} sessionId
+	 * @param {number} count
+	 */
+	set(sessionId, count) {
+		this._cleanup();
+		this._map.set(sessionId, { count, timestamp: Date.now() });
+	}
+}
+
+/** @type {IterationCountMap} */
+const iterationCount = new IterationCountMap();
 
 const MAX_ITERATIONS = 3;
 

@@ -1,4 +1,8 @@
+import { createLogger } from "@techstream/quark-core";
+import { ValidationError } from "@techstream/quark-core/errors";
 import { syncNextAuthUrl } from "./app-url.js";
+
+const log = createLogger("env");
 
 function getResolvedNextAuthSecret() {
 	return process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET || null;
@@ -413,12 +417,12 @@ export function validateEnv(service = "web") {
 
 	// Log warnings (non-fatal)
 	for (const warning of warnings) {
-		console.warn(`[env] ⚠️  ${warning}`);
+		log.warn(warning);
 	}
 
 	if (errors.length > 0) {
 		const errorMessage = `Environment Validation Failed:\n${errors.join("\n")}`;
-		throw new Error(errorMessage);
+		throw new ValidationError(errorMessage);
 	}
 
 	// Ensure NEXTAUTH_URL is derived from APP_URL when not explicitly set
@@ -453,7 +457,7 @@ export function loadEnv(service = "web") {
 		const { validated } = validateEnv(service);
 		return validated;
 	} catch (error) {
-		console.error(error.message);
+		log.error(error.message);
 		process.exit(1);
 	}
 }

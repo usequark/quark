@@ -60,16 +60,8 @@ describe("JOB_NAMES", () => {
 		);
 	});
 
-	test("defines AI session create job name", () => {
-		assert.strictEqual(JOB_NAMES.AI_SESSION_CREATE, "ai-session-create");
-	});
-
-	test("defines AI health check job name", () => {
-		assert.strictEqual(JOB_NAMES.AI_HEALTH_CHECK, "ai-health-check");
-	});
-
-	test("defines exactly 7 job names", () => {
-		assert.strictEqual(Object.keys(JOB_NAMES).length, 7);
+	test("defines exactly 5 job names", () => {
+		assert.strictEqual(Object.keys(JOB_NAMES).length, 5);
 	});
 
 	test("all job names are strings", () => {

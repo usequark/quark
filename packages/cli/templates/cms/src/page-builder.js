@@ -3,6 +3,8 @@ import { z } from "zod";
 import {
 	escapeAttribute,
 	escapeHtml,
+	getStringValue,
+	getTrimmedString,
 	renderRichText,
 	sanitizeRichTextHtml,
 	stripHtml,
@@ -574,14 +576,6 @@ function createBlockId() {
 	}
 
 	return `page-block-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-}
-
-function getStringValue(value) {
-	return typeof value === "string" ? value : "";
-}
-
-function getTrimmedString(value) {
-	return getStringValue(value).trim();
 }
 
 function coerceJsonValue(value) {
