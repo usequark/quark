@@ -57,11 +57,21 @@ async function createQuarkFixture() {
 
 function runQuarkCli(args) {
 	const cliEntry = path.join(__dirname, "../../src/index.js");
-	const result = execSync(`${process.execPath} ${cliEntry} ${args.join(" ")}`, {
-		encoding: "utf8",
-		timeout: 10_000,
-	});
-	return result;
+	try {
+		const result = execSync(
+			`${process.execPath} ${cliEntry} ${args.join(" ")}`,
+			{
+				encoding: "utf8",
+				timeout: 10_000,
+				stdio: ["ignore", "pipe", "pipe"],
+			},
+		);
+		return result;
+	} catch (error) {
+		// execSync throws on non-zero exit — return stdout if available
+		if (error.stdout) return error.stdout.toString("utf8");
+		throw error;
+	}
 }
 
 // ---------------------------------------------------------------------------
