@@ -21,7 +21,6 @@
 		"@techstream/quark-config": "workspace:*",
 		"@techstream/quark-core": "^2.0.0",
 		"@techstream/quark-db": "workspace:*",
-		"@opencode-ai/sdk": "^1.17.0",
 		"@techstream/quark-jobs": "workspace:*",
 		"bullmq": "^5.70.4",
 		"zod": "^3.25.0"

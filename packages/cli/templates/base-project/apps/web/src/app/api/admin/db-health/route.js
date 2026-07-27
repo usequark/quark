@@ -34,12 +34,12 @@
  */
 
 import {
-	createLogger,
 	createDbInstrumentation,
+	createLogger,
 	requireAdminToken,
 } from "@techstream/quark-core";
-import { NextResponse } from "next/server";
 import { getPoolConfig, pingDatabase } from "@techstream/quark-db";
+import { NextResponse } from "next/server";
 
 const logger = createLogger("admin:db-health");
 

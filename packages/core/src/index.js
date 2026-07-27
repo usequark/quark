@@ -1,10 +1,10 @@
 // Authorization exports
 
+// Admin auth exports
+export * from "./admin-auth.js";
 // Auth exports
 export * from "./auth/index.js";
 export * from "./authorization.js";
-// Admin auth exports
-export * from "./admin-auth.js";
 // Cache exports
 export * from "./cache.js";
 // CSRF protection exports

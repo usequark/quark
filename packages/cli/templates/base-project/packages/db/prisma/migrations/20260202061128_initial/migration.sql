@@ -13,6 +13,9 @@ CREATE TYPE "ContentStatus" AS ENUM ('DRAFT', 'PUBLISHED', 'ARCHIVED');
 -- CreateEnum
 CREATE TYPE "AiRole" AS ENUM ('user', 'assistant', 'system', 'tool');
 
+-- CreateEnum
+CREATE TYPE "ContextSource" AS ENUM ('ai', 'seed', 'manual');
+
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
@@ -113,6 +116,7 @@ CREATE TABLE "AuditLog" (
     "changes" JSONB,
     "metadata" JSONB,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "AuditLog_pkey" PRIMARY KEY ("id")
 );
@@ -193,7 +197,7 @@ CREATE TABLE "MediaAsset" (
     "width" INTEGER,
     "height" INTEGER,
     "alt" TEXT,
-    "uploadedById" TEXT NOT NULL,
+    "uploadedById" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -373,6 +377,12 @@ CREATE INDEX "AiConversation_updatedAt_idx" ON "AiConversation"("updatedAt");
 CREATE INDEX "AiConversation_deletedAt_idx" ON "AiConversation"("deletedAt");
 
 -- CreateIndex
+CREATE INDEX "AiConversation_userId_updatedAt_idx" ON "AiConversation"("userId", "updatedAt");
+
+-- CreateIndex
+CREATE INDEX "AiConversation_userId_deletedAt_idx" ON "AiConversation"("userId", "deletedAt");
+
+-- CreateIndex
 CREATE INDEX "AiMessage_conversationId_idx" ON "AiMessage"("conversationId");
 
 -- CreateIndex
@@ -403,10 +413,10 @@ ALTER TABLE "Deal" ADD CONSTRAINT "Deal_contactId_fkey" FOREIGN KEY ("contactId"
 ALTER TABLE "Deal" ADD CONSTRAINT "Deal_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Page" ADD CONSTRAINT "Page_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Page" ADD CONSTRAINT "Page_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "MediaAsset" ADD CONSTRAINT "MediaAsset_uploadedById_fkey" FOREIGN KEY ("uploadedById") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "MediaAsset" ADD CONSTRAINT "MediaAsset_uploadedById_fkey" FOREIGN KEY ("uploadedById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "AiConversation" ADD CONSTRAINT "AiConversation_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -582,7 +592,7 @@ CREATE TABLE "Context" (
     "key" TEXT NOT NULL,
     "value" TEXT NOT NULL,
     "category" TEXT NOT NULL,
-    "source" TEXT NOT NULL DEFAULT 'ai',
+    "source" "ContextSource" NOT NULL DEFAULT 'ai',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 

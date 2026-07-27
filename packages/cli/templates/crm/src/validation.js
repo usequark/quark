@@ -1,7 +1,12 @@
 import { z } from "zod";
 import { crmConfig } from "./config.js";
 
-const stageKeys = crmConfig.pipelineStages.map((s) => s.key);
+/** @returns {[string, ...string[]]} Current stage keys from config */
+function getStageKeys() {
+	const keys = crmConfig.pipelineStages.map((s) => s.key);
+	if (keys.length === 0) return ["LEAD"];
+	return /** @type {[string, ...string[]]} */ (keys);
+}
 
 export const contactSchema = z.object({
 	firstName: z.string().min(1, "First name is required"),
@@ -21,10 +26,16 @@ export const companySchema = z.object({
 	notes: z.string().optional().or(z.literal("")),
 });
 
+/** Deal schema — stage validation reads from crmConfig at parse time */
 export const dealSchema = z.object({
 	title: z.string().min(1, "Deal title is required"),
 	value: z.coerce.number().min(0).default(0),
-	stage: z.enum(stageKeys).default("LEAD"),
+	stage: z
+		.string()
+		.default("LEAD")
+		.refine((val) => getStageKeys().includes(val), {
+			message: "Invalid stage for current pipeline configuration",
+		}),
 	probability: z.coerce.number().int().min(0).max(100).default(10),
 	expectedCloseDate: z
 		.string()

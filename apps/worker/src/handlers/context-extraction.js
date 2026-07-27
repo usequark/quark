@@ -42,10 +42,26 @@ export async function handleContextExtraction(bullJob, logger) {
 			return { extracted: 0, contexts: [] };
 		}
 
-		// Build a transcript for extraction
-		const transcript = messages
-			.map((m) => `${m.role}: ${m.content}`)
-			.join("\n\n");
+		// Build a transcript for extraction, truncating to avoid context overflow
+		const MAX_TRANSCRIPT_CHARS = 60_000;
+		let transcript = "";
+		let truncated = false;
+		for (let i = messages.length - 1; i >= 0; i--) {
+			const m = messages[i];
+			const entry = `${m.role}: ${m.content}`;
+			if (transcript.length + entry.length + 2 > MAX_TRANSCRIPT_CHARS) {
+				truncated = true;
+				break;
+			}
+			transcript = `${entry}\n\n${transcript}`;
+		}
+		if (truncated) {
+			logger.info("Transcript truncated for extraction", {
+				conversationId,
+				totalMessages: messages.length,
+				transcriptLength: transcript.length,
+			});
+		}
 
 		// Call OpenRouter to extract structured context
 		const extractionPrompt = `Extract key information from this conversation as structured context records.

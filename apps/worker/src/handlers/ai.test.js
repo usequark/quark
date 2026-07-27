@@ -44,6 +44,39 @@ function makeBullJob(name, data, overrides = {}) {
 	return { id: "job-1", name, data, attemptsMade: 0, ...overrides };
 }
 
+/**
+ * Mock OpenRouter SSE streaming response (handleAiAgentTask uses onStream).
+ * @param {string} content
+ * @param {object} [usage]
+ */
+function mockOpenRouterStream(
+	content,
+	usage = { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 },
+) {
+	const chunks = [
+		`data: ${JSON.stringify({ choices: [{ delta: { role: "assistant" } }] })}\n\n`,
+		`data: ${JSON.stringify({ choices: [{ delta: { content } }] })}\n\n`,
+		`data: ${JSON.stringify({ choices: [{ delta: {}, finish_reason: "stop" }], usage })}\n\n`,
+		"data: [DONE]\n\n",
+	].join("");
+
+	const encoder = new TextEncoder();
+	const body = new ReadableStream({
+		start(controller) {
+			controller.enqueue(encoder.encode(chunks));
+			controller.close();
+		},
+	});
+
+	globalThis.fetch = mock.fn(async () => ({
+		status: 200,
+		ok: true,
+		body,
+		headers: { get: () => null },
+		text: async () => chunks,
+	}));
+}
+
 // ── handleAiAgentTask ────────────────────────────────────────────────────────
 
 describe("handleAiAgentTask", () => {
@@ -152,16 +185,8 @@ describe("handleAiAgentTask", () => {
 			},
 		});
 
-		// Mock OpenRouter response
-		globalThis.fetch = mock.fn(async () => ({
-			status: 200,
-			ok: true,
-			json: async () => ({
-				choices: [{ message: { content: "Hi there!" } }],
-				usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 },
-			}),
-			headers: { get: () => null },
-		}));
+		// Mock OpenRouter streaming response
+		mockOpenRouterStream("Hi there!");
 
 		const logger = createMockLogger();
 		const job = makeBullJob("ai-agent-task", {
@@ -201,15 +226,7 @@ describe("handleAiAgentTask", () => {
 			},
 		});
 
-		globalThis.fetch = mock.fn(async () => ({
-			status: 200,
-			ok: true,
-			json: async () => ({
-				choices: [{ message: { content: "Response" } }],
-				usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 },
-			}),
-			headers: { get: () => null },
-		}));
+		mockOpenRouterStream("Response");
 
 		const logger = createMockLogger();
 		const job = makeBullJob("ai-agent-task", {
@@ -228,6 +245,7 @@ describe("handleAiAgentTask", () => {
 		const createCall = prisma.aiMessage.create.mock.calls[0].arguments[0];
 		assert.strictEqual(createCall.data.role, "assistant");
 		assert.strictEqual(createCall.data.conversationId, "conv-1");
+		assert.strictEqual(createCall.data.content, "Response");
 	});
 
 	test("throws for deleted conversation", async () => {

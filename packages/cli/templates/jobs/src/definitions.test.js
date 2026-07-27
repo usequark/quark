@@ -53,6 +53,13 @@ describe("JOB_NAMES", () => {
 		assert.strictEqual(JOB_NAMES.AI_AGENT_TASK, "ai-agent-task");
 	});
 
+	test("defines AI conversation compact job name", () => {
+		assert.strictEqual(
+			JOB_NAMES.AI_CONVERSATION_COMPACT,
+			"ai-conversation-compact",
+		);
+	});
+
 	test("defines AI session create job name", () => {
 		assert.strictEqual(JOB_NAMES.AI_SESSION_CREATE, "ai-session-create");
 	});
@@ -61,8 +68,8 @@ describe("JOB_NAMES", () => {
 		assert.strictEqual(JOB_NAMES.AI_HEALTH_CHECK, "ai-health-check");
 	});
 
-	test("defines exactly 6 job names", () => {
-		assert.strictEqual(Object.keys(JOB_NAMES).length, 6);
+	test("defines exactly 7 job names", () => {
+		assert.strictEqual(Object.keys(JOB_NAMES).length, 7);
 	});
 
 	test("all job names are strings", () => {

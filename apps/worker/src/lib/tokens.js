@@ -11,6 +11,18 @@ const MODELS = {
 };
 
 const DEFAULT_CONTEXT_WINDOW = 128_000;
+/**
+ * Characters-per-token ratio used for estimation.
+ *
+ * 4 chars/token is a reasonable heuristic for English prose but has known
+ * limitations: code and JSON payloads are denser (overcounted), while
+ * non-Latin scripts (CJK, Arabic) are less dense (undercounted).
+ *
+ * A production-grade tokenizer (tiktoken, @anthropic-ai/tokenizer) would be
+ * more accurate but adds weight. The 4:1 heuristic keeps the dependency
+ * footprint at zero while being conservative enough for budget enforcement
+ * (overestimating is safer than underestimating for truncation decisions).
+ */
 const CHARS_PER_TOKEN = 4;
 const OVERHEAD_PER_MESSAGE = 14; // ~4 for role framing + ~10 for tool call structure
 

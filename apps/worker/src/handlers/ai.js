@@ -4,12 +4,11 @@
  */
 
 import { getSharedRedisClient } from "@techstream/quark-config";
-import { createLogger } from "@techstream/quark-core";
+import { createLogger, createQueue } from "@techstream/quark-core";
 import { AppError } from "@techstream/quark-core/errors";
 import { prisma } from "@techstream/quark-db";
-import { JOB_NAMES } from "@techstream/quark-jobs";
+import { JOB_NAMES, JOB_QUEUES } from "@techstream/quark-jobs";
 import { completeWithTools } from "../lib/openrouter.js";
-import { summarizeConversation } from "../lib/summarize.js";
 import { getModelBudget } from "../lib/tokens.js";
 import {
 	executeTool,
@@ -150,7 +149,7 @@ export async function handleAiAgentTask(bullJob, logger) {
 			return executeTool(toolName, input);
 		};
 
-		// Call OpenRouter with role-filtered tools
+		// Call OpenRouter with role-filtered tools; stream final tokens over SSE
 		const tools = getAllFilteredToolDefinitions(user.role);
 		const result = await completeWithTools({
 			model,
@@ -158,6 +157,12 @@ export async function handleAiAgentTask(bullJob, logger) {
 			tools,
 			budget: getModelBudget(model),
 			onToolCall: enhancedOnToolCall,
+			onStream: async (content) => {
+				await publishToRedis(conversationId, {
+					type: "token",
+					content,
+				});
+			},
 		});
 
 		// Extract assistant message
@@ -181,7 +186,7 @@ export async function handleAiAgentTask(bullJob, logger) {
 			data: { updatedAt: new Date() },
 		});
 
-		// Publish message event to Redis
+		// Publish final message event (full content) after token stream
 		await publishToRedis(conversationId, {
 			type: "message",
 			content: assistantContent,
@@ -201,31 +206,25 @@ export async function handleAiAgentTask(bullJob, logger) {
 			droppedCount > 0 &&
 			shouldCompact({ messages: droppedMessages, tokenBudget })
 		) {
-			logger.info("Triggering background compaction", { conversationId });
-			// Fire and forget - don't block the response
-			summarizeConversation(droppedMessages, model)
-				.then(async ({ summary, tokenCount }) => {
-					if (summary) {
-						await prisma.aiConversation.update({
-							where: { id: conversationId },
-							data: {
-								summary,
-								summaryTokens: tokenCount,
-								summaryUpdatedAt: new Date(),
-							},
-						});
-						logger.info("Conversation compacted", {
-							conversationId,
-							summaryTokens: tokenCount,
-						});
-					}
-				})
-				.catch((err) => {
-					logger.error("Background compaction failed", {
-						conversationId,
-						error: err.message,
-					});
+			try {
+				const aiQueue = createQueue(JOB_QUEUES.AI);
+				await aiQueue.add(JOB_NAMES.AI_CONVERSATION_COMPACT, {
+					conversationId,
+					droppedCount,
+					model,
 				});
+				logger.info("Enqueued conversation compaction", {
+					conversationId,
+					droppedCount,
+				});
+			} catch (error) {
+				// Non-fatal — AI response already delivered; don't fail/retry the agent task
+				logger.error("Failed to enqueue conversation compaction", {
+					conversationId,
+					droppedCount,
+					error: error.message,
+				});
+			}
 		}
 
 		logger.info("AI agent task completed", {

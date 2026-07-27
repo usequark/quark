@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { test, mock } from "node:test";
+import { mock, test } from "node:test";
 
 // Module-level env control: restore after each test.
 const ORIGINAL_ENV = { ...process.env };
@@ -40,58 +40,74 @@ test("db-instrumentation", async (t) => {
 		assert.equal(mod.REDACTED_PLACEHOLDER, "[REDACTED]");
 	});
 
-	await t.test("should return null when DB_INSTRUMENTATION is disabled", async () => {
-		process.env.DB_INSTRUMENTATION = "false";
-		const { createDbInstrumentation } = await import("./db-instrumentation.js");
-		const result = createDbInstrumentation();
-		assert.strictEqual(result, null);
-	});
+	await t.test(
+		"should return null when DB_INSTRUMENTATION is disabled",
+		async () => {
+			process.env.DB_INSTRUMENTATION = "false";
+			const { createDbInstrumentation } = await import(
+				"./db-instrumentation.js"
+			);
+			const result = createDbInstrumentation();
+			assert.strictEqual(result, null);
+		},
+	);
 
-	await t.test("should return an extension object when instrumentation is enabled", async () => {
-		process.env.DB_INSTRUMENTATION = "true";
-		// Re-import to pick up updated env (module body is cached, but
-		// isInstrumentationEnabled reads process.env each call).
-		const { createDbInstrumentation } = await import("./db-instrumentation.js");
-		const ext = createDbInstrumentation();
-		assert.ok(ext, "expected non-null extension");
-		assert.equal(ext.name, "quark-db-instrumentation");
-		assert.equal(typeof ext.query.$allOperations, "function");
-	});
+	await t.test(
+		"should return an extension object when instrumentation is enabled",
+		async () => {
+			process.env.DB_INSTRUMENTATION = "true";
+			// Re-import to pick up updated env (module body is cached, but
+			// isInstrumentationEnabled reads process.env each call).
+			const { createDbInstrumentation } = await import(
+				"./db-instrumentation.js"
+			);
+			const ext = createDbInstrumentation();
+			assert.ok(ext, "expected non-null extension");
+			assert.equal(ext.name, "quark-db-instrumentation");
+			assert.equal(typeof ext.query.$allOperations, "function");
+		},
+	);
 
-	await t.test("maskSensitiveValues — redacts known sensitive keys", async () => {
-		const { maskSensitiveValues, REDACTED_PLACEHOLDER } = await import(
-			"./db-instrumentation.js"
-		);
+	await t.test(
+		"maskSensitiveValues — redacts known sensitive keys",
+		async () => {
+			const { maskSensitiveValues, REDACTED_PLACEHOLDER } = await import(
+				"./db-instrumentation.js"
+			);
 
-		const input = {
-			email: "user@example.com",
-			password: "supersecret",
-			name: "Alice",
-			token: "abc123",
-			metadata: {
-				apiKey: "sk-xxx",
-				role: "admin",
-			},
-		};
+			const input = {
+				email: "user@example.com",
+				password: "supersecret",
+				name: "Alice",
+				token: "abc123",
+				metadata: {
+					apiKey: "sk-xxx",
+					role: "admin",
+				},
+			};
 
-		const result = maskSensitiveValues(input);
+			const result = maskSensitiveValues(input);
 
-		assert.strictEqual(result.email, "user@example.com");
-		assert.strictEqual(result.password, REDACTED_PLACEHOLDER);
-		assert.strictEqual(result.name, "Alice");
-		assert.strictEqual(result.token, REDACTED_PLACEHOLDER);
-		assert.strictEqual(result.metadata.apiKey, REDACTED_PLACEHOLDER);
-		assert.strictEqual(result.metadata.role, "admin");
-	});
+			assert.strictEqual(result.email, "user@example.com");
+			assert.strictEqual(result.password, REDACTED_PLACEHOLDER);
+			assert.strictEqual(result.name, "Alice");
+			assert.strictEqual(result.token, REDACTED_PLACEHOLDER);
+			assert.strictEqual(result.metadata.apiKey, REDACTED_PLACEHOLDER);
+			assert.strictEqual(result.metadata.role, "admin");
+		},
+	);
 
-	await t.test("maskSensitiveValues — handles null/undefined/primitives", async () => {
-		const { maskSensitiveValues } = await import("./db-instrumentation.js");
+	await t.test(
+		"maskSensitiveValues — handles null/undefined/primitives",
+		async () => {
+			const { maskSensitiveValues } = await import("./db-instrumentation.js");
 
-		assert.strictEqual(maskSensitiveValues(null), null);
-		assert.strictEqual(maskSensitiveValues(undefined), undefined);
-		assert.strictEqual(maskSensitiveValues(42), 42);
-		assert.strictEqual(maskSensitiveValues("hello"), "hello");
-	});
+			assert.strictEqual(maskSensitiveValues(null), null);
+			assert.strictEqual(maskSensitiveValues(undefined), undefined);
+			assert.strictEqual(maskSensitiveValues(42), 42);
+			assert.strictEqual(maskSensitiveValues("hello"), "hello");
+		},
+	);
 
 	await t.test("maskSensitiveValues — handles arrays", async () => {
 		const { maskSensitiveValues, REDACTED_PLACEHOLDER } = await import(
@@ -198,12 +214,15 @@ test("db-instrumentation", async (t) => {
 		assert.ok("[+17 more]" in result.where || "[+11 more]" in result.where);
 	});
 
-	await t.test("summarizeArgs — returns empty object for null/undefined", async () => {
-		const { summarizeArgs } = await import("./db-instrumentation.js");
+	await t.test(
+		"summarizeArgs — returns empty object for null/undefined",
+		async () => {
+			const { summarizeArgs } = await import("./db-instrumentation.js");
 
-		assert.deepStrictEqual(summarizeArgs(null), {});
-		assert.deepStrictEqual(summarizeArgs(undefined), {});
-	});
+			assert.deepStrictEqual(summarizeArgs(null), {});
+			assert.deepStrictEqual(summarizeArgs(undefined), {});
+		},
+	);
 
 	await t.test("getSlowThreshold — reads from env", async () => {
 		const { getSlowThreshold } = await import("./db-instrumentation.js");
@@ -237,24 +256,29 @@ test("db-instrumentation", async (t) => {
 		assert.equal(params.query.mock.callCount(), 1);
 	});
 
-	await t.test("$allOperations — still returns result on query error (finally block)", async () => {
-		process.env.DB_INSTRUMENTATION = "true";
-		const { createDbInstrumentation } = await import("./db-instrumentation.js");
-		const ext = createDbInstrumentation();
+	await t.test(
+		"$allOperations — still returns result on query error (finally block)",
+		async () => {
+			process.env.DB_INSTRUMENTATION = "true";
+			const { createDbInstrumentation } = await import(
+				"./db-instrumentation.js"
+			);
+			const ext = createDbInstrumentation();
 
-		const queryError = new Error("DB failure");
-		const params = {
-			model: "User",
-			operation: "create",
-			args: { data: { email: "test@test.com" } },
-			query: mock.fn(async () => {
-				throw queryError;
-			}),
-		};
+			const queryError = new Error("DB failure");
+			const params = {
+				model: "User",
+				operation: "create",
+				args: { data: { email: "test@test.com" } },
+				query: mock.fn(async () => {
+					throw queryError;
+				}),
+			};
 
-		await assert.rejects(
-			() => ext.query.$allOperations(params),
-			(error) => error === queryError,
-		);
-	});
+			await assert.rejects(
+				() => ext.query.$allOperations(params),
+				(error) => error === queryError,
+			);
+		},
+	);
 });

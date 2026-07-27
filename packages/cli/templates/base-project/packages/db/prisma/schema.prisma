@@ -153,6 +153,7 @@ model AuditLog {
   changes   Json?
   metadata  Json?
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -247,7 +248,7 @@ model Page {
   status      ContentStatus @default(DRAFT)
   publishedAt DateTime?
   authorId    String
-  author      User          @relation(fields: [authorId], references: [id])
+  author      User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
@@ -267,8 +268,8 @@ model MediaAsset {
   width        Int?
   height       Int?
   alt          String?
-  uploadedById String
-  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
+  uploadedById String?
+  uploadedBy   User?    @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -279,17 +280,23 @@ model MediaAsset {
 
 // ─── Context Model ────────────────────────────────────────────────────────────
 
+enum ContextSource {
+  ai
+  seed
+  manual
+}
+
 /// Generic Context — living knowledge base for AI
 /// Stores key-value-category triples extracted or seeded from any domain.
 /// Category is a free-form string — projects define their own namespacing.
 model Context {
-  id        String   @id @default(cuid())
+  id        String        @id @default(cuid())
   key       String
-  value     String   @db.Text
-  category  String   // free-form: "business.client", "user.preference", "app.config", etc.
-  source    String   @default("ai") // "ai" | "seed" | "manual"
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  value     String        @db.Text
+  category  String        // free-form: "business.client", "user.preference", "app.config", etc.
+  source    ContextSource @default(ai)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 
   @@unique([key, category])
   @@index([category])
@@ -322,6 +329,8 @@ model AiConversation {
   @@index([userId])
   @@index([updatedAt])
   @@index([deletedAt])
+  @@index([userId, updatedAt])
+  @@index([userId, deletedAt])
 }
 
 /// AI: Individual messages within a conversation

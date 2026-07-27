@@ -1,7 +1,12 @@
 import assert from "node:assert";
 import { afterEach, beforeEach, describe, mock, test } from "node:test";
 import { AppError } from "@techstream/quark-core/errors";
-import { complete, completeWithTools, estimateCost } from "./openrouter.js";
+import {
+	complete,
+	completeStreaming,
+	completeWithTools,
+	estimateCost,
+} from "./openrouter.js";
 
 // ── Mocks ────────────────────────────────────────────────────────────────────
 
@@ -38,6 +43,62 @@ function createMockResponse(status, body, headers = {}) {
 		},
 		json: async () => body,
 		text: (_async) => JSON.stringify(body),
+		text: async () => JSON.stringify(body),
+	};
+}
+
+/**
+ * Build a fetch Response-like object with an SSE ReadableStream body.
+ * @param {number} status
+ * @param {Array<object|string>} chunks - JSON chunk objects or "[DONE]"
+ * @param {Object} [headers]
+ */
+function createMockStreamResponse(status, chunks, headers = {}) {
+	const sseText = chunks
+		.map((chunk) =>
+			chunk === "[DONE]"
+				? "data: [DONE]\n\n"
+				: `data: ${JSON.stringify(chunk)}\n\n`,
+		)
+		.join("");
+
+	const encoder = new TextEncoder();
+	const body = new ReadableStream({
+		start(controller) {
+			controller.enqueue(encoder.encode(sseText));
+			controller.close();
+		},
+	});
+
+	return {
+		status,
+		ok: status >= 200 && status < 300,
+		headers: {
+			get: (key) => headers[key] || null,
+		},
+		body,
+		json: async () => {
+			throw new Error("stream response has no json body");
+		},
+		text: async () => sseText,
+	};
+}
+
+function contentChunk(text, extras = {}) {
+	return {
+		id: "chatcmpl-test",
+		model: "test-model",
+		choices: [{ index: 0, delta: { content: text }, finish_reason: null }],
+		...extras,
+	};
+}
+
+function finishChunk(finishReason = "stop", usage = null) {
+	return {
+		id: "chatcmpl-test",
+		model: "test-model",
+		choices: [{ index: 0, delta: {}, finish_reason: finishReason }],
+		...(usage ? { usage } : {}),
 	};
 }
 
@@ -409,6 +470,247 @@ describe("completeWithTools", () => {
 
 		assert.strictEqual(typeof result.totalCost, "number");
 		assert.strictEqual(result.rounds, 1);
+	});
+
+	test("streams final response tokens via onStream", async () => {
+		const tokens = [];
+		mockFetch([
+			createMockStreamResponse(200, [
+				{ choices: [{ delta: { role: "assistant" } }] },
+				contentChunk("Hello"),
+				contentChunk(" world"),
+				finishChunk("stop", {
+					prompt_tokens: 10,
+					completion_tokens: 5,
+					total_tokens: 15,
+				}),
+				"[DONE]",
+			]),
+		]);
+
+		const result = await completeWithTools({
+			model: "anthropic/claude-3.5-sonnet",
+			messages: [{ role: "user", content: "Hi" }],
+			onStream: async (token) => {
+				tokens.push(token);
+			},
+		});
+
+		assert.deepStrictEqual(tokens, ["Hello", " world"]);
+		assert.strictEqual(result.choices[0].message.content, "Hello world");
+		assert.strictEqual(result.rounds, 1);
+
+		const body = JSON.parse(globalThis.fetch.mock.calls[0].arguments[1].body);
+		assert.strictEqual(body.stream, true);
+	});
+
+	test("does not emit onStream tokens during tool-call rounds", async () => {
+		const tokens = [];
+		const toolCallId = "call-1";
+
+		mockFetch([
+			// Round 1: tool call stream (no content tokens expected)
+			createMockStreamResponse(200, [
+				{
+					choices: [
+						{
+							delta: {
+								role: "assistant",
+								tool_calls: [
+									{
+										index: 0,
+										id: toolCallId,
+										type: "function",
+										function: {
+											name: "search_contacts",
+											arguments: '{"query":"John"}',
+										},
+									},
+								],
+							},
+						},
+					],
+				},
+				finishChunk("tool_calls", {
+					prompt_tokens: 10,
+					completion_tokens: 5,
+					total_tokens: 15,
+				}),
+				"[DONE]",
+			]),
+			// Round 2: final text stream
+			createMockStreamResponse(200, [
+				contentChunk("Found "),
+				contentChunk("John"),
+				finishChunk("stop", {
+					prompt_tokens: 20,
+					completion_tokens: 10,
+					total_tokens: 30,
+				}),
+				"[DONE]",
+			]),
+		]);
+
+		const onToolCall = mock.fn(async () => ({ contacts: [] }));
+
+		const result = await completeWithTools({
+			model: "anthropic/claude-3.5-sonnet",
+			messages: [{ role: "user", content: "Find John" }],
+			onToolCall,
+			onStream: async (token) => {
+				tokens.push(token);
+			},
+		});
+
+		assert.strictEqual(onToolCall.mock.callCount(), 1);
+		assert.deepStrictEqual(tokens, ["Found ", "John"]);
+		assert.strictEqual(result.choices[0].message.content, "Found John");
+		assert.strictEqual(result.rounds, 2);
+	});
+});
+
+// ── completeStreaming() ──────────────────────────────────────────────────────
+
+describe("completeStreaming", () => {
+	test("parses SSE content deltas and calls onToken", async () => {
+		const tokens = [];
+		mockFetch([
+			createMockStreamResponse(200, [
+				contentChunk("Hi"),
+				contentChunk("!"),
+				finishChunk("stop", {
+					prompt_tokens: 5,
+					completion_tokens: 2,
+					total_tokens: 7,
+				}),
+				"[DONE]",
+			]),
+		]);
+
+		const result = await completeStreaming({
+			model: "test-model",
+			messages: [{ role: "user", content: "Hey" }],
+			onToken: async (t) => {
+				tokens.push(t);
+			},
+		});
+
+		assert.deepStrictEqual(tokens, ["Hi", "!"]);
+		assert.strictEqual(result.choices[0].message.content, "Hi!");
+		assert.strictEqual(result.choices[0].finish_reason, "stop");
+		assert.strictEqual(result.usage.total_tokens, 7);
+	});
+
+	test("assembles streamed tool_calls", async () => {
+		mockFetch([
+			createMockStreamResponse(200, [
+				{
+					choices: [
+						{
+							delta: {
+								role: "assistant",
+								tool_calls: [
+									{
+										index: 0,
+										id: "call-abc",
+										type: "function",
+										function: { name: "search_contacts", arguments: "" },
+									},
+								],
+							},
+						},
+					],
+				},
+				{
+					choices: [
+						{
+							delta: {
+								tool_calls: [{ index: 0, function: { arguments: '{"q":' } }],
+							},
+						},
+					],
+				},
+				{
+					choices: [
+						{
+							delta: {
+								tool_calls: [{ index: 0, function: { arguments: '"x"}' } }],
+							},
+						},
+					],
+				},
+				finishChunk("tool_calls"),
+				"[DONE]",
+			]),
+		]);
+
+		const result = await completeStreaming({
+			model: "test-model",
+			messages: [{ role: "user", content: "search" }],
+		});
+
+		const toolCalls = result.choices[0].message.tool_calls;
+		assert.ok(toolCalls);
+		assert.strictEqual(toolCalls.length, 1);
+		assert.strictEqual(toolCalls[0].id, "call-abc");
+		assert.strictEqual(toolCalls[0].function.name, "search_contacts");
+		assert.strictEqual(toolCalls[0].function.arguments, '{"q":"x"}');
+	});
+
+	test("sets stream:true in request body", async () => {
+		mockFetch([
+			createMockStreamResponse(200, [
+				contentChunk("ok"),
+				finishChunk("stop"),
+				"[DONE]",
+			]),
+		]);
+
+		await completeStreaming({
+			model: "test-model",
+			messages: [{ role: "user", content: "Hi" }],
+		});
+
+		const body = JSON.parse(globalThis.fetch.mock.calls[0].arguments[1].body);
+		assert.strictEqual(body.stream, true);
+	});
+
+	test("throws when OPENROUTER_API_KEY is not configured", async () => {
+		delete process.env.OPENROUTER_API_KEY;
+
+		await assert.rejects(
+			() =>
+				completeStreaming({
+					model: "test-model",
+					messages: [{ role: "user", content: "Hi" }],
+				}),
+			(error) => {
+				assert.ok(error instanceof AppError);
+				assert.strictEqual(error.code, "OPENROUTER_NOT_CONFIGURED");
+				return true;
+			},
+		);
+	});
+
+	test("retries on 429 then succeeds", async () => {
+		mockFetch([
+			createMockStreamResponse(429, [{ error: "rate limited" }], {
+				"retry-after": "0",
+			}),
+			createMockStreamResponse(200, [
+				contentChunk("ok"),
+				finishChunk("stop"),
+				"[DONE]",
+			]),
+		]);
+
+		const result = await completeStreaming({
+			model: "test-model",
+			messages: [{ role: "user", content: "Hi" }],
+		});
+
+		assert.strictEqual(result.choices[0].message.content, "ok");
+		assert.strictEqual(globalThis.fetch.mock.callCount(), 2);
 	});
 });
 

@@ -1,4 +1,5 @@
 import { AppError, ValidationError } from "@techstream/quark-core/errors";
+import { AppError } from "@techstream/quark-core/errors";
 import { toolHandlers } from "./handlers.js";
 import { getVisibleTools } from "./permissions.js";
 import { toolSchemas } from "./schemas.js";
@@ -61,6 +62,7 @@ export function getToolHandler(name) {
 	const handler = toolHandlers[name];
 	if (!handler) {
 		throw new AppError(`No handler for tool: ${name}`);
+		throw new AppError(`No handler for tool: ${name}`, 500, "NO_TOOL_HANDLER");
 	}
 	return handler;
 }
@@ -112,20 +114,15 @@ function getToolDescription(name) {
 }
 
 /**
- * Convert a Zod schema to JSON Schema format.
- * Simple implementation that handles the schemas we use.
+ * Convert a single Zod type to its JSON Schema property representation.
+ * Handles the Zod types used across tool schemas.
  */
-function zodToJsonSchema(schema) {
-	const shape = schema.shape;
-	const properties = {};
-	const required = [];
+function zodTypeToJsonSchema(zodType) {
+	const def = zodType._def;
 
-	for (const [key, zodType] of Object.entries(shape)) {
-		const def = zodType._def;
-		const prop = {};
-
-		if (def.typeName === "ZodString") {
-			prop.type = "string";
+	switch (def.typeName) {
+		case "ZodString": {
+			const prop = { type: "string" };
 			if (def.checks) {
 				for (const check of def.checks) {
 					if (check.kind === "email") prop.format = "email";
@@ -134,8 +131,10 @@ function zodToJsonSchema(schema) {
 					if (check.kind === "max") prop.maxLength = check.value;
 				}
 			}
-		} else if (def.typeName === "ZodNumber") {
-			prop.type = "number";
+			return prop;
+		}
+		case "ZodNumber": {
+			const prop = { type: "number" };
 			if (def.checks) {
 				for (const check of def.checks) {
 					if (check.kind === "min") prop.minimum = check.value;
@@ -143,23 +142,48 @@ function zodToJsonSchema(schema) {
 					if (check.kind === "int") prop.type = "integer";
 				}
 			}
-		} else if (def.typeName === "ZodEnum") {
-			prop.type = "string";
-			prop.enum = def.values;
-		} else if (
-			def.typeName === "ZodOptional" ||
-			def.typeName === "ZodDefault"
-		) {
-			// Recurse into the inner type
-			const inner = zodToJsonSchema({
-				shape: { inner: def.innerType },
-			});
-			Object.assign(prop, inner.properties.inner || {});
+			return prop;
 		}
+		case "ZodEnum":
+			return { type: "string", enum: def.values };
+		case "ZodArray":
+			return {
+				type: "array",
+				items: zodTypeToJsonSchema(def.type),
+			};
+		case "ZodObject":
+			// Nested object — recurse using the object converter
+			return zodObjectToJsonSchema(zodType);
+		case "ZodNullable": {
+			const inner = zodTypeToJsonSchema(def.innerType);
+			return { ...inner, nullable: true };
+		}
+		case "ZodOptional":
+		case "ZodDefault":
+			return zodTypeToJsonSchema(def.innerType);
+		case "ZodUnion":
+			return { oneOf: def.options.map((opt) => zodTypeToJsonSchema(opt)) };
+		default:
+			// Unknown/unhandled Zod type — fall back to string so tool calls
+			// degrade gracefully instead of silently omitting the parameter.
+			return { type: "string" };
+	}
+}
 
-		properties[key] = prop;
+/**
+ * Convert a Zod object schema to JSON Schema format.
+ * @param {import("zod").ZodObject} schema
+ * @returns {object}
+ */
+function zodObjectToJsonSchema(schema) {
+	const shape = schema.shape;
+	const properties = {};
+	const required = [];
 
-		// Check if required (not optional, not default)
+	for (const [key, zodType] of Object.entries(shape)) {
+		properties[key] = zodTypeToJsonSchema(zodType);
+
+		const def = zodType._def;
 		if (def.typeName !== "ZodOptional" && def.typeName !== "ZodDefault") {
 			required.push(key);
 		}
@@ -170,4 +194,12 @@ function zodToJsonSchema(schema) {
 		properties,
 		required: required.length > 0 ? required : undefined,
 	};
+}
+
+/**
+ * Convert a Zod schema to JSON Schema format.
+ * Entry point — delegates to the recursive type converter.
+ */
+function zodToJsonSchema(schema) {
+	return zodObjectToJsonSchema(schema);
 }

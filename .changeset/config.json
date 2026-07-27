@@ -12,6 +12,7 @@
 		"@techstream/quark-bookings",
 		"@techstream/quark-cms",
 		"@techstream/quark-crm",
+		"@techstream/quark-opencode",
 		"@techstream/quark-web",
 		"@techstream/quark-worker",
 		"@techstream/quark-config",

@@ -70,7 +70,9 @@ const DEFAULT_SLOW_THRESHOLD_MS = 500;
  */
 function getSlowThreshold() {
 	const fromEnv = Number(process.env.DB_SLOW_QUERY_THRESHOLD);
-	return Number.isFinite(fromEnv) && fromEnv > 0 ? fromEnv : DEFAULT_SLOW_THRESHOLD_MS;
+	return Number.isFinite(fromEnv) && fromEnv > 0
+		? fromEnv
+		: DEFAULT_SLOW_THRESHOLD_MS;
 }
 
 /**
@@ -107,7 +109,9 @@ function maskSensitiveValues(value) {
 
 	// Plain object — clone and mask matching keys.
 	const masked = /** @type {Record<string, unknown>} */ ({});
-	for (const [key, val] of Object.entries(/** @type {Record<string, unknown>} */ (value))) {
+	for (const [key, val] of Object.entries(
+		/** @type {Record<string, unknown>} */ (value),
+	)) {
 		if (isSensitiveKey(key)) {
 			masked[key] = REDACTED_PLACEHOLDER;
 		} else {
@@ -168,7 +172,10 @@ function truncateDeep(obj, maxKeys) {
 		for (const key of keys) {
 			result[key] =
 				typeof obj[key] === "object" && obj[key] !== null
-					? truncateDeep(/** @type {Record<string, unknown>} */ (obj[key]), maxKeys)
+					? truncateDeep(
+							/** @type {Record<string, unknown>} */ (obj[key]),
+							maxKeys,
+						)
 					: obj[key];
 		}
 		return result;
@@ -179,7 +186,10 @@ function truncateDeep(obj, maxKeys) {
 	for (const key of kept) {
 		result[key] =
 			typeof obj[key] === "object" && obj[key] !== null
-				? truncateDeep(/** @type {Record<string, unknown>} */ (obj[key]), maxKeys)
+				? truncateDeep(
+						/** @type {Record<string, unknown>} */ (obj[key]),
+						maxKeys,
+					)
 				: obj[key];
 	}
 	result[`[+${keys.length - maxKeys} more]`] = true;
@@ -230,7 +240,9 @@ export function createDbInstrumentation() {
 
 					// Emit Prometheus metrics (best-effort, no throw)
 					try {
-						const { dbQueriesTotal, dbQueryDuration } = await import("./db-metrics.js");
+						const { dbQueriesTotal, dbQueryDuration } = await import(
+							"./db-metrics.js"
+						);
 						dbQueriesTotal.inc({ model, operation });
 						dbQueryDuration.observe({ model, operation }, durationMs / 1000);
 					} catch {
@@ -260,4 +272,10 @@ export function createDbInstrumentation() {
 }
 
 // Re-export for testing
-export { maskSensitiveValues, isSensitiveKey, summarizeArgs, getSlowThreshold, REDACTED_PLACEHOLDER };
+export {
+	getSlowThreshold,
+	isSensitiveKey,
+	maskSensitiveValues,
+	REDACTED_PLACEHOLDER,
+	summarizeArgs,
+};

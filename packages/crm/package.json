@@ -3,6 +3,7 @@
 	"version": "1.0.0",
 	"private": true,
 	"type": "module",
+	"description": "CRM package — pipeline tracking, contact/company management, and deal stages",
 	"main": "src/index.js",
 	"exports": {
 		".": "./src/index.js",
@@ -10,6 +11,14 @@
 		"./queries": "./src/queries.js",
 		"./validation": "./src/validation.js"
 	},
+	"scripts": {
+		"test": "node --test $(find src -name '*.test.js')",
+		"lint": "biome format --write && biome check --write"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"packageManager": "pnpm@10.12.1",
 	"dependencies": {
 		"@techstream/quark-core": "workspace:*",
 		"zod": "^4.3.6"

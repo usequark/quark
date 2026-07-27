@@ -1,4 +1,5 @@
 import { createLogger } from "@techstream/quark-core";
+import { AppError } from "@techstream/quark-core/errors";
 import { prisma } from "@techstream/quark-db";
 
 const logger = createLogger("tools");
@@ -243,7 +244,12 @@ const SEARCH_PROVIDERS = {
 			headers: { "X-Subscription-Token": apiKey, Accept: "application/json" },
 			signal: AbortSignal.timeout(10_000),
 		});
-		if (!res.ok) throw new Error(`Brave search failed: ${res.status}`);
+		if (!res.ok)
+			throw new AppError(
+				`Brave search failed: ${res.status}`,
+				502,
+				"BRAVE_SEARCH_FAILED",
+			);
 		const data = await res.json();
 		return (data.web?.results || []).map((r) => ({
 			title: r.title,

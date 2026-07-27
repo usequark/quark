@@ -35,24 +35,24 @@ function getPrismaClient() {
 			}),
 		});
 
+		// Assign base client immediately so the proxy never blocks.
+		globalForPrisma.__prisma = baseClient;
+
 		// Apply optional query instrumentation extension from @techstream/quark-core.
+		// Loaded asynchronously — the base client is used in the meantime, then
+		// upgraded in-place once the extension module arrives.
 		// The extension handles slow-query logging, argument masking, and Prometheus
-		// metrics.  It is schema-agnostic and respects DB_INSTRUMENTATION env var.
-		// When disabled or unavailable, the base client is used as-is (zero overhead).
-		try {
-			const { createDbInstrumentation } = await import(
-				"@techstream/quark-core"
-			);
-			const ext = createDbInstrumentation();
-			if (ext) {
-				globalForPrisma.__prisma = baseClient.$extends(ext);
-			} else {
-				globalForPrisma.__prisma = baseClient;
-			}
-		} catch {
-			// @techstream/quark-core not available or old version — fall through.
-			globalForPrisma.__prisma = baseClient;
-		}
+		// metrics.  It is schema-agnostic and respects the DB_INSTRUMENTATION env var.
+		import("@techstream/quark-core")
+			.then(({ createDbInstrumentation }) => {
+				const ext = createDbInstrumentation();
+				if (ext) {
+					globalForPrisma.__prisma = baseClient.$extends(ext);
+				}
+			})
+			.catch(() => {
+				// @techstream/quark-core not available or old version — base client remains.
+			});
 	}
 	return globalForPrisma.__prisma;
 }
