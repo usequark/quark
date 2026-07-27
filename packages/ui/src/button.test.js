@@ -99,3 +99,25 @@ test("Button - adds noopener noreferrer for target blank links", () => {
 	assert.equal(result.type, Link);
 	assert.equal(result.props.rel, "noopener noreferrer");
 });
+
+test("Button - loading adds spinner and disables button", () => {
+	const result = Button({ loading: true, children: "Save" });
+
+	assert.ok(result);
+	assert.equal(result.props.disabled, true);
+	// First child should be the Spinner
+	assert.match(result.props.children[0].type?.name ?? "", /Spinner/);
+});
+
+test("Button - loading on link sets aria-disabled", () => {
+	const result = Button({
+		href: "/docs",
+		loading: true,
+		children: "Save",
+	});
+
+	assert.ok(result);
+	assert.equal(result.type, Link);
+	assert.equal(result.props["aria-disabled"], true);
+	assert.equal(result.props.href, undefined);
+});

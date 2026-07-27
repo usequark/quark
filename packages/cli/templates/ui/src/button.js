@@ -1,5 +1,6 @@
 import Link from "next/link.js";
 import React from "react";
+import { Spinner } from "./spinner.js";
 
 const base =
 	"inline-flex items-center justify-center font-medium tracking-wide transition-all duration-200 linear cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed active:opacity-80";
@@ -52,6 +53,7 @@ export function Button({
 	rel,
 	type = "button",
 	icon,
+	loading = false,
 	children,
 	...props
 }) {
@@ -68,6 +70,10 @@ export function Button({
 
 	const buttonChildren = [];
 
+	if (loading)
+		buttonChildren.push(
+			React.createElement(Spinner, { key: "spinner", className: "h-4 w-4" }),
+		);
 	if (hasIcon) buttonChildren.push(buildIcon(icon, size));
 	if (hasLabel) buttonChildren.push(children);
 
@@ -77,11 +83,12 @@ export function Button({
 		return React.createElement(
 			Link,
 			{
-				href,
+				href: loading ? undefined : href,
 				target,
 				rel: anchorRel,
 				className: cls,
 				"data-btn-variant": variant,
+				"aria-disabled": loading || undefined,
 				...props,
 			},
 			...buttonChildren,
@@ -94,6 +101,7 @@ export function Button({
 			type: buttonType,
 			className: cls,
 			"data-btn-variant": variant,
+			disabled: loading || props.disabled,
 			...props,
 		},
 		...buttonChildren,

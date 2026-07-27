@@ -16,6 +16,7 @@ export * from "./password-input.js";
 export * from "./rich-text.js";
 export * from "./select.js";
 export * from "./skeleton.js";
+export * from "./spinner.js";
 export * from "./table.js";
 export * from "./textarea.js";
 export * from "./theme.js";
