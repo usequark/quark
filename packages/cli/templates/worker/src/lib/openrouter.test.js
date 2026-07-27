@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import { afterEach, beforeEach, describe, mock, test } from "node:test";
+import { ServiceError } from "@techstream/quark-core";
 import { AppError } from "@techstream/quark-core/errors";
 import {
 	complete,
@@ -225,8 +226,8 @@ describe("complete", () => {
 					messages: [{ role: "user", content: "Hi" }],
 				}),
 			(error) => {
-				assert.ok(error instanceof AppError);
-				assert.strictEqual(error.code, "OPENROUTER_FAILED");
+				assert.ok(error instanceof ServiceError);
+				assert.strictEqual(error.serviceName, "OpenRouter");
 				assert.ok(error.message.includes("3 attempts"));
 				return true;
 			},
@@ -394,20 +395,18 @@ describe("completeWithTools", () => {
 
 		const onToolCall = mock.fn(async () => ({ contacts: [] }));
 
-		await assert.rejects(
-			() =>
-				completeWithTools({
-					model: "anthropic/claude-3.5-sonnet",
-					messages: [{ role: "user", content: "test" }],
-					onToolCall,
-				}),
-			(error) => {
-				assert.ok(error instanceof AppError);
-				assert.strictEqual(error.code, "TOOL_LOOP_EXCEEDED");
-				return true;
-			},
-		);
+		const result = await completeWithTools({
+			model: "anthropic/claude-3.5-sonnet",
+			messages: [{ role: "user", content: "test" }],
+			onToolCall,
+		});
 
+		assert.strictEqual(result.truncated, true);
+		assert.strictEqual(result.rounds, 20);
+		assert.strictEqual(
+			result.choices[0].message.content.includes("maximum number"),
+			true,
+		);
 		assert.strictEqual(onToolCall.mock.callCount(), 20);
 	});
 

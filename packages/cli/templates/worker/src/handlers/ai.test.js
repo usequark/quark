@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import { afterEach, beforeEach, describe, mock, test } from "node:test";
 import { closeSharedRedisClient } from "@techstream/quark-config";
+import { ServiceError } from "@techstream/quark-core";
 import { AppError } from "@techstream/quark-core/errors";
 import { handleAiAgentTask } from "./ai.js";
 
@@ -310,8 +311,8 @@ describe("handleAiAgentTask", () => {
 		await assert.rejects(
 			() => handleAiAgentTask(job, logger),
 			(error) => {
-				assert.ok(error instanceof AppError);
-				assert.strictEqual(error.code, "OPENROUTER_API_ERROR");
+				assert.ok(error instanceof ServiceError);
+				assert.strictEqual(error.serviceName, "OpenRouter");
 				return true;
 			},
 		);

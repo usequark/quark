@@ -358,9 +358,10 @@ export async function completeWithTools({
 	options = {},
 }) {
 	const MAX_ROUNDS = 20;
-	const MAX_TOOL_CONTENT_LENGTH = 500;
+	const MAX_TOOL_CONTENT_LENGTH = 8_000;
 	const currentMessages = [...messages];
 	let totalCost = 0;
+	let finalResult = null;
 
 	for (let round = 0; round < MAX_ROUNDS; round++) {
 		const requestOptions = {
@@ -382,6 +383,8 @@ export async function completeWithTools({
 					messages: currentMessages,
 					options: requestOptions,
 				});
+
+		finalResult = result;
 
 		const choice = result.choices?.[0];
 		if (!choice) {
@@ -419,7 +422,9 @@ export async function completeWithTools({
 
 					// Compress large tool results if budget is set
 					if (budget && toolContent.length > MAX_TOOL_CONTENT_LENGTH) {
-						toolContent = `${toolContent.slice(0, MAX_TOOL_CONTENT_LENGTH)}...[truncated]`;
+						const truncatedChars = toolContent.length - MAX_TOOL_CONTENT_LENGTH;
+						const keepHalf = Math.floor(MAX_TOOL_CONTENT_LENGTH / 2);
+						toolContent = `${toolContent.slice(0, keepHalf)}\n\n...[TRUNCATED: ${truncatedChars} chars removed from the middle of the tool result. Use specific filters (status, priority, stage, date range, name, client) on your next query to narrow results.]\n\n${toolContent.slice(-(MAX_TOOL_CONTENT_LENGTH - keepHalf))}`;
 						logger.info("Compressed tool result", {
 							tool: toolName,
 							originalLength: JSON.stringify(toolResult).length,
@@ -456,9 +461,10 @@ export async function completeWithTools({
 						if (
 							msg.role === "tool" &&
 							msg.content &&
-							msg.content.length > 500
+							msg.content.length > MAX_TOOL_CONTENT_LENGTH
 						) {
-							msg.content = `${msg.content.slice(0, 500)}...[truncated by budget]`;
+							const keepHalf = Math.floor(MAX_TOOL_CONTENT_LENGTH / 2);
+							msg.content = `${msg.content.slice(0, keepHalf)}\n\n...[TRUNCATED by budget — use specific filters (status, priority, stage, date range, name, client) to narrow results.]\n\n${msg.content.slice(-(MAX_TOOL_CONTENT_LENGTH - keepHalf))}`;
 						}
 					}
 				}
@@ -476,11 +482,28 @@ export async function completeWithTools({
 		};
 	}
 
-	throw new AppError(
-		`Tool calling loop exceeded ${MAX_ROUNDS} rounds`,
-		500,
-		"TOOL_LOOP_EXCEEDED",
-	);
+	// Max rounds exceeded — return gracefully instead of throwing.
+	// The model gets a hint that it hit the limit so it can simplify its approach.
+	logger.warn("Tool calling loop exceeded max rounds", {
+		rounds: MAX_ROUNDS,
+	});
+	return {
+		...finalResult,
+		totalCost,
+		rounds: MAX_ROUNDS,
+		truncated: true,
+		choices: [
+			{
+				...finalResult?.choices?.[0],
+				message: {
+					...finalResult?.choices?.[0]?.message,
+					content:
+						(finalResult?.choices?.[0]?.message?.content || "") +
+						"\n\n*I reached the maximum number of tool operations for this request. Some actions may not have been completed. Please rephrase or break your request into smaller steps.*",
+				},
+			},
+		],
+	};
 }
 
 /**
