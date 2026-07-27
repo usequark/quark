@@ -1,0 +1,394 @@
+/* ─── @techstream/quark-ui — Theme: PLAYFUL GEOMETRIC ─────────
+ *
+ * Vibrant Memphis-inspired with chunky borders, hard offset shadows,
+ * and a warm cream base. Mix of 8px/16px/24px radii.
+ *
+ * Fonts required:
+ *   - Outfit (headings):       https://fonts.google.com/specimen/Outfit
+ *   - Plus Jakarta Sans (body): https://fonts.google.com/specimen/Plus+Jakarta+Sans
+ *
+ * Usage:
+ *   @import "@techstream/quark-ui/themes/playful-geometric.css";
+ * ─────────────────────────────────────────────────────────────── */
+
+@layer theme {
+	:root {
+		/* ─── Core Palette ──────────────────────────── */
+		--color-primary: #8b5cf6;
+		--color-primary-hover: #a78bfa;
+		--color-primary-muted: rgba(139, 92, 246, 0.12);
+
+		--color-bg: #fffdf5;
+		--color-surface: #ffffff;
+		--color-surface-hover: #faf5ff;
+
+		--color-border: #e5e0d5;
+		--color-border-hover: #8b5cf6;
+
+		--color-text: #1c1917;
+		--color-text-muted: #78716c;
+		--color-text-faint: #a8a29e;
+
+		--color-danger: #f472b6;
+		--color-danger-hover: #f59ebd;
+		--color-danger-muted: rgba(244, 114, 182, 0.1);
+
+		--color-success: #34d399;
+		--color-success-muted: rgba(52, 211, 153, 0.1);
+
+		--color-warning: #fbbf24;
+		--color-warning-muted: rgba(251, 191, 36, 0.1);
+
+		--color-info: #60a5fa;
+		--color-info-muted: rgba(96, 165, 250, 0.1);
+
+		/* ─── Shape ─────────────────────────────────── */
+		--radius-default: 16px;
+
+		/* ─── App Shell ─────────────────────────────── */
+		--quark-page-bg: var(--color-bg);
+		--quark-grid-line: rgba(139, 92, 246, 0.06);
+		--quark-home-muted: #78716c;
+		--quark-home-sep: #e5e0d5;
+		--quark-home-link-idle: #78716c;
+		--quark-home-link-hover: var(--color-primary);
+		--quark-health-text: #78716c;
+		--quark-health-sep: #e5e0d5;
+		--quark-health-dot-idle: #e5e0d5;
+		--quark-logo-dark-arc: #78716c;
+		--quark-toast-track: rgba(139, 92, 246, 0.2);
+		--quark-toast-progress: rgba(139, 92, 246, 0.85);
+
+		/* ─── Button ────────────────────────────────── */
+		--btn-radius: 8px;
+		--btn-bg: var(--color-primary);
+		--btn-border: var(--color-text);
+		--btn-text: #ffffff;
+		--btn-ring: color-mix(in srgb, var(--color-primary) 50%, transparent);
+		--btn-hover-brightness: 0.95;
+		--btn-hover-shadow: 4px 4px 0px var(--color-text);
+		--btn-hover-bg: transparent;
+		--btn-hover-text: inherit;
+		--btn-hover-opacity: 1;
+
+		/* ─── Card ──────────────────────────────────── */
+		--card-bg: var(--color-surface);
+		--card-border: var(--color-text);
+		--card-title-text: var(--color-text);
+		--card-text-muted: var(--color-text-muted);
+		--card-trigger-hover-bg: var(--color-surface-hover);
+		--card-trigger-ring: color-mix(
+			in srgb,
+			var(--color-primary) 40%,
+			transparent
+		);
+
+		/* ─── Navbar ────────────────────────────────── */
+		--navbar-bg: #ffffff;
+		--navbar-mobile-bg: #ffffff;
+		--navbar-border: var(--color-text);
+		--navbar-inset-shadow: none;
+		--navbar-text: var(--color-text);
+		--navbar-text-muted: var(--color-text-muted);
+		--navbar-hover-bg: var(--color-surface-hover);
+		--navbar-hover-text: var(--color-primary);
+		--navbar-logo-text: var(--color-primary);
+		--navbar-logo-hover: var(--color-primary-hover);
+		--navbar-mark-bg: var(--color-primary-muted);
+		--navbar-mark-border: var(--color-primary);
+		--navbar-mark-text: var(--color-primary);
+		--navbar-action-border: var(--color-text);
+		--navbar-action-bg: var(--color-primary);
+		--navbar-action-text: #ffffff;
+		--navbar-action-hover-border: var(--color-text);
+		--navbar-action-hover-bg: var(--color-primary-hover);
+		--navbar-ring: color-mix(in srgb, var(--color-primary) 40%, transparent);
+		--navbar-dropdown-bg: #ffffff;
+		--navbar-dropdown-border: var(--color-text);
+		--navbar-dropdown-shadow: 4px 4px 0px rgba(0, 0, 0, 0.1);
+		--navbar-mobile-panel-bg: #ffffff;
+		--navbar-mobile-panel-border: var(--color-text);
+		--navbar-divide-border: var(--color-border);
+
+		/* ─── Footer ────────────────────────────────── */
+		--footer-bg: #1c1917;
+		--footer-border: var(--color-border);
+		--footer-text: #ffffff;
+		--footer-text-muted: rgba(255, 255, 255, 0.6);
+		--footer-text-faint: rgba(255, 255, 255, 0.4);
+		--footer-mark-bg: rgba(139, 92, 246, 0.2);
+		--footer-mark-text: var(--color-primary);
+		--footer-cta-border: var(--color-primary);
+		--footer-cta-text: var(--color-primary);
+		--footer-cta-hover-bg: rgba(139, 92, 246, 0.15);
+		--footer-link-hover: var(--color-primary);
+		--footer-sep: rgba(255, 255, 255, 0.15);
+
+		/* ─── Input / Textarea / Select ─────────────── */
+		--input-bg: #ffffff;
+		--input-border: var(--color-text);
+		--input-text: var(--color-text);
+		--input-placeholder: var(--color-text-faint);
+		--input-border-hover: var(--color-primary);
+		--input-border-focus: var(--color-primary);
+		--input-ring-focus: color-mix(
+			in srgb,
+			var(--color-primary) 15%,
+			transparent
+		);
+		--input-disabled-opacity: 0.3;
+		--input-icon: var(--color-text-muted);
+		--input-icon-hover: var(--color-text);
+
+		--select-bg: #ffffff;
+		--select-border: var(--color-text);
+		--select-text: var(--color-text);
+		--select-text-faint: var(--color-text-faint);
+		--select-border-hover: var(--color-primary);
+		--select-ring: color-mix(in srgb, var(--color-primary) 30%, transparent);
+		--select-panel-bg: #ffffff;
+		--select-panel-border: var(--color-text);
+		--select-option-hover-bg: var(--color-surface-hover);
+		--select-option-hover-text: var(--color-text);
+		--select-option-active-bg: var(--color-primary-muted);
+		--select-option-active-text: var(--color-primary);
+
+		/* ─── Badge ─────────────────────────────────── */
+		--badge-bg: var(--color-surface-hover);
+		--badge-border: var(--color-text);
+		--badge-text: var(--color-text-muted);
+
+		/* ─── Dialog ────────────────────────────────── */
+		--dialog-bg: #ffffff;
+		--dialog-border: var(--color-text);
+		--dialog-title-text: var(--color-text);
+		--dialog-text-muted: var(--color-text-muted);
+		--dialog-close-hover-bg: var(--color-surface-hover);
+		--dialog-close-ring: var(--color-primary);
+		--dialog-backdrop: rgba(28, 25, 23, 0.4);
+
+		/* ─── Toast ─────────────────────────────────── */
+		--toast-bg: var(--color-primary-muted);
+		--toast-border: var(--color-primary);
+		--toast-text: var(--color-primary);
+		--toast-shadow: 4px 4px 0px rgba(139, 92, 246, 0.15);
+
+		/* ─── Table ─────────────────────────────────── */
+		--table-bg: #ffffff;
+		--table-border: var(--color-text);
+		--table-header-bg: var(--color-surface-hover);
+		--table-row-hover-bg: color-mix(
+			in srgb,
+			var(--color-surface-hover) 60%,
+			transparent
+		);
+		--table-row-active-bg: color-mix(
+			in srgb,
+			var(--color-primary-muted) 40%,
+			transparent
+		);
+		--table-head-text: var(--color-text-faint);
+		--table-cell-text: var(--color-text);
+		--table-sort-icon: var(--color-text-faint);
+		--table-sort-icon-hover: var(--color-text);
+		--table-sort-active: var(--color-primary);
+		--table-ring: color-mix(in srgb, var(--color-primary) 30%, transparent);
+
+		/* ─── Skeleton ──────────────────────────────── */
+		--skeleton-bg: rgba(229, 224, 213, 0.6);
+
+		/* ─── Container ─────────────────────────────── */
+		--container-bg: #ffffff;
+		--container-border: var(--color-text);
+
+		/* ─── Error Banner ──────────────────────────── */
+		--error-bg: var(--color-danger-muted);
+		--error-border: var(--color-danger);
+		--error-text: var(--color-danger);
+
+		/* ─── Checkbox ──────────────────────────────── */
+		--checkbox-bg: transparent;
+		--checkbox-border: var(--color-text);
+		--checkbox-accent: var(--color-primary);
+		--checkbox-ring: color-mix(in srgb, var(--color-primary) 30%, transparent);
+		--checkbox-disabled-opacity: 0.5;
+		--checkbox-label-text: var(--color-text-muted);
+
+		/* ─── Label ─────────────────────────────────── */
+		--label-text: var(--color-text-muted);
+
+		/* ─── Logo ──────────────────────────────────── */
+		--logo-blue-arc: var(--color-primary);
+		--logo-red-arc: var(--color-danger);
+		--logo-red-dash: var(--color-danger);
+
+		/* ─── Lightbox ──────────────────────────────── */
+		--lightbox-backdrop: rgba(28, 25, 23, 0.7);
+		--lightbox-btn-border: var(--color-primary);
+		--lightbox-btn-text: var(--color-primary);
+		--lightbox-btn-hover-bg: var(--color-primary-muted);
+		--lightbox-btn-ring: color-mix(
+			in srgb,
+			var(--color-primary) 40%,
+			transparent
+		);
+		--lightbox-caption-text: rgba(255, 255, 255, 0.85);
+		--lightbox-counter-text: rgba(255, 255, 255, 0.8);
+
+		/* ─── Rich Text ─────────────────────────────── */
+		--richtext-bg: #ffffff;
+		--richtext-border: var(--color-text);
+		--richtext-text: var(--color-text);
+		--richtext-border-focus: var(--color-primary);
+		--richtext-ring: color-mix(in srgb, var(--color-primary) 15%, transparent);
+		--richtext-toolbar-bg: var(--color-surface-hover);
+		--richtext-toolbar-border: var(--color-text);
+		--richtext-btn-text: var(--color-text-muted);
+		--richtext-btn-hover-bg: #ffffff;
+		--richtext-btn-hover-text: var(--color-text);
+		--richtext-btn-active-bg: #ffffff;
+		--richtext-btn-active-text: var(--color-text);
+		--richtext-separator: var(--color-border);
+		--richtext-placeholder: var(--color-text-faint);
+		--richtext-link: var(--color-primary);
+		--richtext-blockquote-border: var(--color-border);
+		--richtext-blockquote-text: var(--color-text-muted);
+		--richtext-code-bg: var(--color-surface-hover);
+
+		/* ─── Theme Toggle ──────────────────────────── */
+		--toggle-track-bg: #e5e0d5;
+		--toggle-track-border: var(--color-text);
+		--toggle-knob-bg: var(--color-primary);
+		--toggle-knob-x: translateX(0);
+	}
+
+	/* ─── Chunky 2px borders on all interactive elements ─ */
+	button,
+	input,
+	select,
+	textarea,
+	[role="button"],
+	.card,
+	dialog,
+	table,
+	th,
+	td {
+		border-width: 2px;
+	}
+
+	/* ─── Hard offset shadow on cards ────────────── */
+	.card,
+	[data-component="card"] {
+		box-shadow: 4px 4px 0px var(--color-text);
+	}
+
+	/* ─── Confetti decoration for hero sections ──── */
+	.quark-auth-brand {
+		background-image:
+			radial-gradient(
+				circle at 20% 30%,
+				rgba(139, 92, 246, 0.08) 0%,
+				transparent 30%
+			),
+			radial-gradient(
+				circle at 80% 20%,
+				rgba(244, 114, 182, 0.08) 0%,
+				transparent 30%
+			),
+			radial-gradient(
+				circle at 50% 80%,
+				rgba(251, 191, 36, 0.08) 0%,
+				transparent 30%
+			),
+			radial-gradient(
+				circle at 10% 70%,
+				rgba(52, 211, 153, 0.08) 0%,
+				transparent 30%
+			);
+	}
+
+	/* ─── Dark mode overrides ────────────────────── */
+	@media (prefers-color-scheme: dark) {
+		:root:not([data-theme="light"]) {
+			--color-bg: #1c1917;
+			--color-surface: #292524;
+			--color-surface-hover: #34302d;
+
+			--color-border: #44403c;
+			--color-border-hover: #8b5cf6;
+
+			--color-text: #f5f5f4;
+			--color-text-muted: #a8a29e;
+			--color-text-faint: #78716c;
+
+			--quark-page-bg: var(--color-bg);
+			--quark-grid-line: rgba(139, 92, 246, 0.06);
+			--quark-home-muted: #a8a29e;
+			--quark-home-sep: #44403c;
+
+			--navbar-bg: #292524;
+			--navbar-mobile-bg: #1c1917;
+			--navbar-dropdown-bg: #292524;
+
+			--footer-bg: #0f0e0d;
+
+			--input-bg: #292524;
+			--select-bg: #292524;
+			--select-panel-bg: #292524;
+			--dialog-bg: #292524;
+			--table-bg: #292524;
+			--container-bg: #292524;
+			--richtext-bg: #292524;
+			--richtext-toolbar-bg: #1c1917;
+
+			--checkbox-bg: #1c1917;
+			--skeleton-bg: rgba(68, 64, 60, 0.6);
+
+			--toggle-track-bg: #292524;
+			--toggle-track-border: #44403c;
+			--toggle-knob-bg: var(--color-primary);
+			--toggle-knob-x: translateX(14px);
+		}
+	}
+
+	:root[data-theme="dark"] {
+		--color-bg: #1c1917;
+		--color-surface: #292524;
+		--color-surface-hover: #34302d;
+
+		--color-border: #44403c;
+		--color-border-hover: #8b5cf6;
+
+		--color-text: #f5f5f4;
+		--color-text-muted: #a8a29e;
+		--color-text-faint: #78716c;
+
+		--quark-page-bg: var(--color-bg);
+		--quark-grid-line: rgba(139, 92, 246, 0.06);
+		--quark-home-muted: #a8a29e;
+		--quark-home-sep: #44403c;
+
+		--navbar-bg: #292524;
+		--navbar-mobile-bg: #1c1917;
+		--navbar-dropdown-bg: #292524;
+
+		--footer-bg: #0f0e0d;
+
+		--input-bg: #292524;
+		--select-bg: #292524;
+		--select-panel-bg: #292524;
+		--dialog-bg: #292524;
+		--table-bg: #292524;
+		--container-bg: #292524;
+		--richtext-bg: #292524;
+		--richtext-toolbar-bg: #1c1917;
+
+		--checkbox-bg: #1c1917;
+		--skeleton-bg: rgba(68, 64, 60, 0.6);
+
+		--toggle-track-bg: #292524;
+		--toggle-track-border: #44403c;
+		--toggle-knob-bg: var(--color-primary);
+		--toggle-knob-x: translateX(14px);
+	}
+}

@@ -3,10 +3,14 @@
 // Auth exports
 export * from "./auth/index.js";
 export * from "./authorization.js";
+// Admin auth exports
+export * from "./admin-auth.js";
 // Cache exports
 export * from "./cache.js";
 // CSRF protection exports
 export * from "./csrf.js";
+// Database instrumentation exports
+export * from "./db-instrumentation.js";
 // Email service exports
 export * from "./email.js";
 // Email template exports

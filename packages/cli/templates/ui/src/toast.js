@@ -4,12 +4,8 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 const RADIUS = 9;
 const CIRC = 2 * Math.PI * RADIUS;
 
-// Replaced arbitrary hex with semantic design tokens
-const VARIANTS = {
-	default: "border border-primary/40 bg-primary-muted text-primary shadow-xl",
-	success: "border border-success/40 bg-success-muted text-success shadow-xl",
-	error: "border border-danger/40 bg-danger-muted text-danger shadow-xl",
-};
+// Visual properties driven entirely by CSS variables — see globals.css
+// [data-toast-variant] selectors override --toast-bg, --toast-border, --toast-text, --toast-shadow
 
 export function Toast({
 	message,
@@ -24,7 +20,8 @@ export function Toast({
 	const [isAnimatingOut, setIsAnimatingOut] = useState(false);
 	const [shouldRender, setShouldRender] = useState(visible);
 
-	const variantCls = VARIANTS[variant] ?? VARIANTS.default;
+	const variantCls =
+		"bg-[--toast-bg] border-[--toast-border] text-[--toast-text] shadow-[var(--toast-shadow)]";
 
 	const remainingRef = useRef(duration);
 	const startRef = useRef(null);

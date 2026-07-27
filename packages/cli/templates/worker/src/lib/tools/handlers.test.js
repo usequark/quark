@@ -1,19 +1,23 @@
 import assert from "node:assert";
 import { afterEach, beforeEach, describe, mock, test } from "node:test";
 import {
-	handleCreateBusinessContext,
 	handleCreateCompany,
 	handleCreateContact,
+	handleCreateContext,
 	handleCreateDeal,
-	handleGetBusinessContext,
+	handleDeleteContext,
+	handleGetContext,
 	handleGetConversationHistory,
 	handleSearchCompanies,
 	handleSearchContacts,
+	handleSearchContext,
 	handleSearchDeals,
 	handleSearchJobs,
 	handleUpdateCompany,
 	handleUpdateContact,
+	handleUpdateContext,
 	handleUpdateDeal,
+	handleWebSearch,
 	toolHandlers,
 } from "./handlers.js";
 
@@ -333,27 +337,165 @@ describe("handleGetConversationHistory", () => {
 	});
 });
 
-// ── Business Context Handlers ────────────────────────────────────────────────
+// ── Context Handlers ─────────────────────────────────────────────────────────
 
-describe("handleGetBusinessContext", () => {
-	test("returns empty contexts (placeholder)", async () => {
-		const result = await handleGetBusinessContext({ limit: 10 });
-		assert.deepStrictEqual(result.contexts, []);
-		assert.strictEqual(result.count, 0);
+describe("handleGetContext", () => {
+	test("returns contexts from DB", async () => {
+		const mockContexts = [
+			{
+				id: "ctx-1",
+				key: "client.acme",
+				value: "Acme Corp",
+				category: "client",
+			},
+		];
+		const prisma = setPrismaMock({
+			context: {
+				findMany: mock.fn(async () => mockContexts),
+			},
+		});
+
+		const result = await handleGetContext({ limit: 10 });
+		assert.deepStrictEqual(result.contexts, mockContexts);
+		assert.strictEqual(result.count, 1);
+		assert.strictEqual(prisma.context.findMany.mock.callCount(), 1);
+	});
+
+	test("passes category filter when provided", async () => {
+		const prisma = setPrismaMock({
+			context: {
+				findMany: mock.fn(async () => []),
+			},
+		});
+
+		await handleGetContext({ category: "client", limit: 10 });
+		const callArgs = prisma.context.findMany.mock.calls[0].arguments[0];
+		assert.strictEqual(callArgs.where.category, "client");
+	});
+
+	test("omits category filter when not provided", async () => {
+		const prisma = setPrismaMock({
+			context: {
+				findMany: mock.fn(async () => []),
+			},
+		});
+
+		await handleGetContext({ limit: 10 });
+		const callArgs = prisma.context.findMany.mock.calls[0].arguments[0];
+		assert.strictEqual(callArgs.where.category, undefined);
 	});
 });
 
-describe("handleCreateBusinessContext", () => {
-	test("returns created context data", async () => {
-		const data = {
-			key: "test.key",
-			value: "test value",
+describe("handleCreateContext", () => {
+	test("creates context record", async () => {
+		const mockContext = {
+			id: "ctx-1",
+			key: "client.acme",
+			value: "Acme Corp",
 			category: "client",
-			source: "learned",
+			source: "ai",
 		};
-		const result = await handleCreateBusinessContext(data);
-		assert.deepStrictEqual(result.context, data);
-		assert.strictEqual(result.created, true);
+		const prisma = setPrismaMock({
+			context: {
+				create: mock.fn(async () => mockContext),
+			},
+		});
+
+		const result = await handleCreateContext({
+			key: "client.acme",
+			value: "Acme Corp",
+			category: "client",
+			source: "ai",
+		});
+		assert.deepStrictEqual(result.context, mockContext);
+		assert.strictEqual(prisma.context.create.mock.callCount(), 1);
+	});
+});
+
+describe("handleUpdateContext", () => {
+	test("updates context record", async () => {
+		const mockContext = {
+			id: "ctx-1",
+			key: "client.acme",
+			value: "Updated value",
+		};
+		const prisma = setPrismaMock({
+			context: {
+				update: mock.fn(async () => mockContext),
+			},
+		});
+
+		const result = await handleUpdateContext({
+			id: "ctx-1",
+			value: "Updated value",
+		});
+		assert.deepStrictEqual(result.context, mockContext);
+		const callArgs = prisma.context.update.mock.calls[0].arguments[0];
+		assert.strictEqual(callArgs.where.id, "ctx-1");
+		assert.strictEqual(callArgs.data.value, "Updated value");
+	});
+});
+
+describe("handleDeleteContext", () => {
+	test("deletes context record", async () => {
+		const prisma = setPrismaMock({
+			context: {
+				delete: mock.fn(async () => ({ id: "ctx-1" })),
+			},
+		});
+
+		const result = await handleDeleteContext({ id: "ctx-1" });
+		assert.strictEqual(result.deleted, true);
+		assert.strictEqual(prisma.context.delete.mock.callCount(), 1);
+		const callArgs = prisma.context.delete.mock.calls[0].arguments[0];
+		assert.strictEqual(callArgs.where.id, "ctx-1");
+	});
+});
+
+describe("handleSearchContext", () => {
+	test("searches contexts by key or value", async () => {
+		const mockContexts = [
+			{
+				id: "ctx-1",
+				key: "client.acme",
+				value: "Acme Corp",
+				category: "client",
+			},
+		];
+		const prisma = setPrismaMock({
+			context: {
+				findMany: mock.fn(async () => mockContexts),
+			},
+		});
+
+		const result = await handleSearchContext({ query: "acme", limit: 10 });
+		assert.deepStrictEqual(result.contexts, mockContexts);
+		assert.strictEqual(result.count, 1);
+	});
+
+	test("passes OR filter for key and value", async () => {
+		const prisma = setPrismaMock({
+			context: {
+				findMany: mock.fn(async () => []),
+			},
+		});
+
+		await handleSearchContext({ query: "acme", limit: 10 });
+		const callArgs = prisma.context.findMany.mock.calls[0].arguments[0];
+		assert.ok(callArgs.where.OR);
+		assert.strictEqual(callArgs.where.OR.length, 2);
+	});
+
+	test("passes category filter when provided", async () => {
+		const prisma = setPrismaMock({
+			context: {
+				findMany: mock.fn(async () => []),
+			},
+		});
+
+		await handleSearchContext({ query: "acme", category: "client", limit: 10 });
+		const callArgs = prisma.context.findMany.mock.calls[0].arguments[0];
+		assert.strictEqual(callArgs.where.category, "client");
 	});
 });
 
@@ -393,6 +535,126 @@ describe("handleSearchJobs", () => {
 	});
 });
 
+// ── Web Search Handlers ──────────────────────────────────────────────────────
+
+describe("handleWebSearch", () => {
+	test("returns notice when SEARCH_API_KEY is not set", async () => {
+		const origKey = process.env.SEARCH_API_KEY;
+		delete process.env.SEARCH_API_KEY;
+
+		try {
+			const result = await handleWebSearch({ query: "test", maxResults: 5 });
+			assert.deepStrictEqual(result.results, []);
+			assert.ok(result.notice.includes("not configured"));
+		} finally {
+			if (origKey !== undefined) {
+				process.env.SEARCH_API_KEY = origKey;
+			}
+		}
+	});
+
+	test("returns results from Brave search", async () => {
+		const origKey = process.env.SEARCH_API_KEY;
+		const origFetch = globalThis.fetch;
+		process.env.SEARCH_API_KEY = "test-key";
+
+		const mockResults = [
+			{
+				title: "Result 1",
+				url: "https://example.com/1",
+				description: "First result",
+			},
+			{
+				title: "Result 2",
+				url: "https://example.com/2",
+				description: "Second result",
+			},
+		];
+
+		globalThis.fetch = mock.fn(async () => ({
+			ok: true,
+			json: async () => ({ web: { results: mockResults } }),
+		}));
+
+		try {
+			const result = await handleWebSearch({
+				query: "test query",
+				maxResults: 2,
+			});
+			assert.strictEqual(result.results.length, 2);
+			assert.strictEqual(result.results[0].title, "Result 1");
+			assert.strictEqual(result.results[0].url, "https://example.com/1");
+			assert.strictEqual(result.results[0].snippet, "First result");
+			assert.strictEqual(result.results[1].title, "Result 2");
+
+			const callArgs = globalThis.fetch.mock.calls[0].arguments;
+			assert.ok(callArgs[0] instanceof URL || typeof callArgs[0] === "string");
+			const url = callArgs[0] instanceof URL ? callArgs[0].href : callArgs[0];
+			assert.ok(url.includes("api.search.brave.com"));
+			assert.ok(url.includes("q=test+query"));
+			assert.strictEqual(
+				callArgs[1].headers["X-Subscription-Token"],
+				"test-key",
+			);
+		} finally {
+			globalThis.fetch = origFetch;
+			if (origKey !== undefined) {
+				process.env.SEARCH_API_KEY = origKey;
+			} else {
+				delete process.env.SEARCH_API_KEY;
+			}
+		}
+	});
+
+	test("returns error on search failure", async () => {
+		const origKey = process.env.SEARCH_API_KEY;
+		const origFetch = globalThis.fetch;
+		process.env.SEARCH_API_KEY = "test-key";
+
+		globalThis.fetch = mock.fn(async () => ({
+			ok: false,
+			status: 429,
+		}));
+
+		try {
+			const result = await handleWebSearch({ query: "test", maxResults: 5 });
+			assert.deepStrictEqual(result.results, []);
+			assert.ok(result.error.includes("Search failed"));
+		} finally {
+			globalThis.fetch = origFetch;
+			if (origKey !== undefined) {
+				process.env.SEARCH_API_KEY = origKey;
+			} else {
+				delete process.env.SEARCH_API_KEY;
+			}
+		}
+	});
+
+	test("returns notice for unknown provider", async () => {
+		const origKey = process.env.SEARCH_API_KEY;
+		const origProvider = process.env.SEARCH_PROVIDER;
+		process.env.SEARCH_API_KEY = "test-key";
+		process.env.SEARCH_PROVIDER = "nonexistent";
+
+		try {
+			const result = await handleWebSearch({ query: "test", maxResults: 5 });
+			assert.deepStrictEqual(result.results, []);
+			assert.ok(result.notice.includes("Unknown search provider"));
+		} finally {
+			if (origKey !== undefined) {
+				process.env.SEARCH_API_KEY = origKey;
+			} else {
+				delete process.env.SEARCH_API_KEY;
+			}
+			if (origProvider !== undefined) {
+				process.env.SEARCH_PROVIDER = origProvider;
+			} else {
+				delete process.env.SEARCH_PROVIDER;
+			}
+		}
+	});
+});
+
 // ── Handler Registry ─────────────────────────────────────────────────────────
 
 describe("toolHandlers registry", () => {
@@ -408,9 +670,13 @@ describe("toolHandlers registry", () => {
 			"create_deal",
 			"update_deal",
 			"get_conversation_history",
-			"get_business_context",
-			"create_business_context",
+			"get_context",
+			"create_context",
+			"update_context",
+			"delete_context",
+			"search_context",
 			"search_jobs",
+			"web_search",
 		];
 
 		for (const name of expectedTools) {
@@ -420,6 +686,6 @@ describe("toolHandlers registry", () => {
 				`Missing handler for ${name}`,
 			);
 		}
-		assert.strictEqual(Object.keys(toolHandlers).length, 13);
+		assert.strictEqual(Object.keys(toolHandlers).length, 17);
 	});
 });

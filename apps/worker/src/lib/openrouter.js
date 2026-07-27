@@ -41,6 +41,7 @@ export async function complete({ model, messages, options = {} }) {
 					messages,
 					...options,
 				}),
+				signal: AbortSignal.timeout(120_000),
 			});
 
 			if (response.status === 429) {

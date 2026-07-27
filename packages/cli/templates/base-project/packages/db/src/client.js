@@ -28,12 +28,31 @@ const globalForPrisma = globalThis;
 
 function getPrismaClient() {
 	if (!globalForPrisma.__prisma) {
-		globalForPrisma.__prisma = new PrismaClient({
+		const baseClient = new PrismaClient({
 			adapter: new PrismaPg({
 				connectionString: getConnectionString(),
 				...getPoolConfig(),
 			}),
 		});
+
+		// Apply optional query instrumentation extension from @techstream/quark-core.
+		// The extension handles slow-query logging, argument masking, and Prometheus
+		// metrics.  It is schema-agnostic and respects DB_INSTRUMENTATION env var.
+		// When disabled or unavailable, the base client is used as-is (zero overhead).
+		try {
+			const { createDbInstrumentation } = await import(
+				"@techstream/quark-core"
+			);
+			const ext = createDbInstrumentation();
+			if (ext) {
+				globalForPrisma.__prisma = baseClient.$extends(ext);
+			} else {
+				globalForPrisma.__prisma = baseClient;
+			}
+		} catch {
+			// @techstream/quark-core not available or old version — fall through.
+			globalForPrisma.__prisma = baseClient;
+		}
 	}
 	return globalForPrisma.__prisma;
 }

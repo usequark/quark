@@ -162,24 +162,56 @@ export async function handleGetConversationHistory({
 	return { messages: messages.reverse(), count: messages.length };
 }
 
-// ── Business Context Handlers ────────────────────────────────────────────────
+// ── Context Handlers ─────────────────────────────────────────────────────────
 
-export async function handleGetBusinessContext({
-	category: _category,
-	limit: _limit,
-}) {
-	// This is a placeholder - in production, this would query a BusinessContext model
-	// For now, return empty array
-	return { contexts: [], count: 0 };
+export async function handleGetContext({ category, limit }) {
+	const where = category ? { category } : {};
+	const contexts = await prisma.context.findMany({
+		where,
+		orderBy: { updatedAt: "desc" },
+		take: limit,
+	});
+	return { contexts, count: contexts.length };
 }
 
-export async function handleCreateBusinessContext(data) {
-	// This is a placeholder - in production, this would create a BusinessContext record
-	logger.info("Business context created", {
-		key: data.key,
-		category: data.category,
+export async function handleCreateContext(data) {
+	const context = await prisma.context.create({ data });
+	logger.info("Context created", {
+		key: context.key,
+		category: context.category,
 	});
-	return { context: data, created: true };
+	return { context };
+}
+
+export async function handleUpdateContext({ id, ...data }) {
+	const context = await prisma.context.update({
+		where: { id },
+		data,
+	});
+	logger.info("Context updated", { id: context.id, key: context.key });
+	return { context };
+}
+
+export async function handleDeleteContext({ id }) {
+	await prisma.context.delete({ where: { id } });
+	logger.info("Context deleted", { id });
+	return { deleted: true };
+}
+
+export async function handleSearchContext({ query, category, limit }) {
+	const where = {
+		OR: [
+			{ key: { contains: query, mode: "insensitive" } },
+			{ value: { contains: query, mode: "insensitive" } },
+		],
+		...(category && { category }),
+	};
+	const contexts = await prisma.context.findMany({
+		where,
+		orderBy: { updatedAt: "desc" },
+		take: limit,
+	});
+	return { contexts, count: contexts.length };
 }
 
 // ── Job Handlers ─────────────────────────────────────────────────────────────
@@ -200,6 +232,61 @@ export async function handleSearchJobs({ query, limit, status, queue }) {
 	return { jobs, count: jobs.length };
 }
 
+// ── Web Search Handlers ───────────────────────────────────────────────────────
+
+const SEARCH_PROVIDERS = {
+	brave: async (query, maxResults, apiKey) => {
+		const url = new URL("https://api.search.brave.com/res/v1/web/search");
+		url.searchParams.set("q", query);
+		url.searchParams.set("count", String(maxResults));
+		const res = await fetch(url, {
+			headers: { "X-Subscription-Token": apiKey, Accept: "application/json" },
+			signal: AbortSignal.timeout(10_000),
+		});
+		if (!res.ok) throw new Error(`Brave search failed: ${res.status}`);
+		const data = await res.json();
+		return (data.web?.results || []).map((r) => ({
+			title: r.title,
+			url: r.url,
+			snippet: r.description,
+		}));
+	},
+};
+
+export async function handleWebSearch({ query, maxResults }) {
+	const apiKey = process.env.SEARCH_API_KEY;
+	if (!apiKey) {
+		return {
+			results: [],
+			notice: "Web search is not configured — set SEARCH_API_KEY",
+		};
+	}
+
+	const provider = process.env.SEARCH_PROVIDER || "brave";
+	const searchFn = SEARCH_PROVIDERS[provider];
+
+	if (!searchFn) {
+		return { results: [], notice: `Unknown search provider: ${provider}` };
+	}
+
+	try {
+		const results = await searchFn(query, maxResults, apiKey);
+		logger.info("Web search completed", {
+			provider,
+			query,
+			resultCount: results.length,
+		});
+		return { results };
+	} catch (error) {
+		logger.error("Web search failed", {
+			provider,
+			query,
+			error: error.message,
+		});
+		return { results: [], error: `Search failed: ${error.message}` };
+	}
+}
+
 // ── Handler Registry ─────────────────────────────────────────────────────────
 
 export const toolHandlers = {
@@ -213,7 +300,15 @@ export const toolHandlers = {
 	create_deal: handleCreateDeal,
 	update_deal: handleUpdateDeal,
 	get_conversation_history: handleGetConversationHistory,
-	get_business_context: handleGetBusinessContext,
-	create_business_context: handleCreateBusinessContext,
+
+	// Context tools (replaces business context placeholders)
+	get_context: handleGetContext,
+	create_context: handleCreateContext,
+	update_context: handleUpdateContext,
+	delete_context: handleDeleteContext,
+	search_context: handleSearchContext,
+
 	search_jobs: handleSearchJobs,
+
+	web_search: handleWebSearch,
 };

@@ -27,14 +27,14 @@ export function QuarkLogo({ size = 40, className = "", ...props }) {
 		// Blue arc - bottom-left
 		React.createElement("path", {
 			d: "M 119.1,162.1 A 65,65 0 0,1 35,100",
-			stroke: "#377dff",
+			stroke: "var(--logo-blue-arc)",
 			strokeWidth: 26,
 			strokeLinecap: "butt",
 		}),
 		// Red arc - tiny pre-gap sliver
 		React.createElement("path", {
 			d: "M 165,100 A 65,65 0 0,1 161.5,121",
-			stroke: "#ff4757",
+			stroke: "var(--logo-red-arc)",
 			strokeWidth: 26,
 			strokeLinecap: "butt",
 		}),
@@ -44,7 +44,7 @@ export function QuarkLogo({ size = 40, className = "", ...props }) {
 			y1: 116.8,
 			x2: 172,
 			y2: 174.2,
-			stroke: "#ff4757",
+			stroke: "var(--logo-red-dash)",
 			strokeWidth: 28,
 			strokeLinecap: "butt",
 		}),

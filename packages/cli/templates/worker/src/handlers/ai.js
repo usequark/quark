@@ -11,7 +11,10 @@ import { JOB_NAMES } from "@techstream/quark-jobs";
 import { completeWithTools } from "../lib/openrouter.js";
 import { summarizeConversation } from "../lib/summarize.js";
 import { getModelBudget } from "../lib/tokens.js";
-import { executeTool, getAllToolDefinitions } from "../lib/tools/index.js";
+import {
+	executeTool,
+	getAllFilteredToolDefinitions,
+} from "../lib/tools/index.js";
 import { buildPromptMessages, shouldCompact } from "../lib/truncation.js";
 
 const _logger = createLogger("worker:ai");
@@ -74,6 +77,15 @@ export async function handleAiAgentTask(bullJob, logger) {
 		conversationId,
 		userId,
 	});
+
+	// Look up user role for authorization-aware tool filtering
+	const user = await prisma.user.findUnique({
+		where: { id: userId },
+		select: { role: true },
+	});
+	if (!user) {
+		throw new AppError("User not found", 404, "USER_NOT_FOUND");
+	}
 
 	try {
 		// Load conversation history (all messages - truncation module handles limiting)
@@ -138,8 +150,8 @@ export async function handleAiAgentTask(bullJob, logger) {
 			return executeTool(toolName, input);
 		};
 
-		// Call OpenRouter with tools
-		const tools = getAllToolDefinitions();
+		// Call OpenRouter with role-filtered tools
+		const tools = getAllFilteredToolDefinitions(user.role);
 		const result = await completeWithTools({
 			model,
 			messages: openrouterMessages,
@@ -230,6 +242,16 @@ export async function handleAiAgentTask(bullJob, logger) {
 			tokens: result.usage?.total_tokens,
 		};
 	} catch (error) {
+		// Publish error event to SSE before re-throwing
+		try {
+			await publishToRedis(conversationId, {
+				type: "error",
+				error: error.message || "AI agent task failed",
+			});
+		} catch {
+			// Non-fatal — error publishing is best-effort
+		}
+
 		logger.error("AI agent task failed", {
 			job: JOB_NAMES.AI_AGENT_TASK,
 			error: error.message,

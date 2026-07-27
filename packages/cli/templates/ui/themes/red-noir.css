@@ -1,0 +1,290 @@
+/* ─── @techstream/quark-ui — Theme: RED NOIR ──────────────────
+ *
+ * Dark cinematic with red accents and starfield aesthetic.
+ * Pill-shaped buttons, glow effects on red elements, conic gradient borders.
+ *
+ * Fonts required:
+ *   - Manrope: https://fonts.google.com/specimen/Manrope
+ *
+ * Usage:
+ *   @import "@techstream/quark-ui/themes/red-noir.css";
+ * ─────────────────────────────────────────────────────────────── */
+
+@layer theme {
+	:root {
+		/* ─── Core Palette ──────────────────────────── */
+		--color-primary: #ef233c;
+		--color-primary-hover: #ff4d5e;
+		--color-primary-muted: rgba(239, 35, 60, 0.15);
+
+		--color-bg: #000000;
+		--color-surface: #0d0d0d;
+		--color-surface-hover: #1a1a1a;
+
+		--color-border: #1f1f1f;
+		--color-border-hover: #ef233c;
+
+		--color-text: #ffffff;
+		--color-text-muted: #999999;
+		--color-text-faint: #666666;
+
+		--color-danger: #ef233c;
+		--color-danger-hover: #ff4d5e;
+		--color-danger-muted: rgba(239, 35, 60, 0.12);
+
+		--color-success: #2ecc71;
+		--color-success-muted: rgba(46, 204, 113, 0.12);
+
+		--color-warning: #f39c12;
+		--color-warning-muted: rgba(243, 156, 18, 0.12);
+
+		--color-info: #3498db;
+		--color-info-muted: rgba(52, 152, 219, 0.12);
+
+		/* ─── Shape ─────────────────────────────────── */
+		--radius-default: 12px;
+
+		/* ─── App Shell ─────────────────────────────── */
+		--quark-page-bg: var(--color-bg);
+		--quark-grid-line: rgba(239, 35, 60, 0.06);
+		--quark-home-muted: #999999;
+		--quark-home-sep: #1f1f1f;
+		--quark-home-link-idle: #666666;
+		--quark-home-link-hover: var(--color-primary);
+		--quark-health-text: #666666;
+		--quark-health-sep: #1f1f1f;
+		--quark-health-dot-idle: #1f1f1f;
+		--quark-logo-dark-arc: #999999;
+		--quark-toast-track: rgba(239, 35, 60, 0.2);
+		--quark-toast-progress: rgba(239, 35, 60, 0.85);
+
+		/* ─── Button ────────────────────────────────── */
+		--btn-radius: 9999px;
+		--btn-bg: var(--color-primary);
+		--btn-border: var(--color-primary);
+		--btn-text: #ffffff;
+		--btn-ring: rgba(239, 35, 60, 0.5);
+		--btn-hover-brightness: 1.1;
+		--btn-hover-shadow: 0 0 20px rgba(239, 35, 60, 0.4);
+		--btn-hover-bg: transparent;
+		--btn-hover-text: inherit;
+		--btn-hover-opacity: 1;
+
+		/* ─── Card ──────────────────────────────────── */
+		--card-bg: var(--color-surface);
+		--card-border: var(--color-border);
+		--card-title-text: var(--color-text);
+		--card-text-muted: var(--color-text-muted);
+		--card-trigger-hover-bg: var(--color-surface-hover);
+		--card-trigger-ring: color-mix(
+			in srgb,
+			var(--color-primary) 40%,
+			transparent
+		);
+
+		/* ─── Navbar ────────────────────────────────── */
+		--navbar-bg: rgba(0, 0, 0, 0.9);
+		--navbar-mobile-bg: #000000;
+		--navbar-border: var(--color-border);
+		--navbar-inset-shadow: inset 0 1px 0 rgba(239, 35, 60, 0.1);
+		--navbar-text: var(--color-text);
+		--navbar-text-muted: var(--color-text-muted);
+		--navbar-hover-bg: var(--color-surface);
+		--navbar-hover-text: var(--color-primary);
+		--navbar-logo-text: var(--color-primary);
+		--navbar-logo-hover: var(--color-primary-hover);
+		--navbar-mark-bg: var(--color-primary-muted);
+		--navbar-mark-border: color-mix(
+			in srgb,
+			var(--color-primary) 40%,
+			transparent
+		);
+		--navbar-mark-text: var(--color-primary);
+		--navbar-action-border: var(--color-primary);
+		--navbar-action-bg: var(--color-primary-muted);
+		--navbar-action-text: var(--color-primary);
+		--navbar-action-hover-border: var(--color-primary-hover);
+		--navbar-action-hover-bg: color-mix(
+			in srgb,
+			var(--color-primary-muted) 70%,
+			transparent
+		);
+		--navbar-ring: rgba(239, 35, 60, 0.3);
+		--navbar-dropdown-bg: #0d0d0d;
+		--navbar-dropdown-border: var(--color-border);
+		--navbar-dropdown-shadow:
+			0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.3);
+		--navbar-mobile-panel-bg: #000000;
+		--navbar-mobile-panel-border: var(--color-border);
+		--navbar-divide-border: var(--color-border);
+
+		/* ─── Footer ────────────────────────────────── */
+		--footer-bg: #050505;
+		--footer-border: var(--color-border);
+		--footer-text: var(--color-text);
+		--footer-text-muted: var(--color-text-muted);
+		--footer-text-faint: var(--color-text-faint);
+		--footer-mark-bg: var(--color-primary-muted);
+		--footer-mark-text: var(--color-primary);
+		--footer-cta-border: var(--color-primary);
+		--footer-cta-text: var(--color-primary);
+		--footer-cta-hover-bg: var(--color-primary-muted);
+		--footer-link-hover: var(--color-primary);
+		--footer-sep: color-mix(in srgb, var(--color-text-faint) 70%, transparent);
+
+		/* ─── Input / Textarea / Select ─────────────── */
+		--input-bg: #0d0d0d;
+		--input-border: var(--color-border);
+		--input-text: var(--color-text);
+		--input-placeholder: var(--color-text-faint);
+		--input-border-hover: var(--color-primary);
+		--input-border-focus: var(--color-primary);
+		--input-ring-focus: rgba(239, 35, 60, 0.15);
+		--input-disabled-opacity: 0.3;
+		--input-icon: var(--color-text-muted);
+		--input-icon-hover: var(--color-text);
+
+		--select-bg: #0d0d0d;
+		--select-border: var(--color-border);
+		--select-text: var(--color-text);
+		--select-text-faint: var(--color-text-faint);
+		--select-border-hover: var(--color-primary);
+		--select-ring: rgba(239, 35, 60, 0.15);
+		--select-panel-bg: #0d0d0d;
+		--select-panel-border: var(--color-border);
+		--select-option-hover-bg: var(--color-surface-hover);
+		--select-option-hover-text: var(--color-text);
+		--select-option-active-bg: var(--color-primary-muted);
+		--select-option-active-text: var(--color-primary);
+
+		/* ─── Badge ─────────────────────────────────── */
+		--badge-bg: var(--color-surface-hover);
+		--badge-border: var(--color-border);
+		--badge-text: var(--color-text-muted);
+
+		/* ─── Dialog ────────────────────────────────── */
+		--dialog-bg: #0d0d0d;
+		--dialog-border: var(--color-border);
+		--dialog-title-text: var(--color-text);
+		--dialog-text-muted: var(--color-text-muted);
+		--dialog-close-hover-bg: var(--color-surface-hover);
+		--dialog-close-ring: var(--color-primary);
+		--dialog-backdrop: rgba(0, 0, 0, 0.8);
+
+		/* ─── Toast ─────────────────────────────────── */
+		--toast-bg: var(--color-primary-muted);
+		--toast-border: color-mix(in srgb, var(--color-primary) 40%, transparent);
+		--toast-text: var(--color-primary);
+		--toast-shadow: 0 0 20px rgba(239, 35, 60, 0.3);
+
+		/* ─── Table ─────────────────────────────────── */
+		--table-bg: #0d0d0d;
+		--table-border: var(--color-border);
+		--table-header-bg: var(--color-surface-hover);
+		--table-row-hover-bg: color-mix(
+			in srgb,
+			var(--color-surface-hover) 60%,
+			transparent
+		);
+		--table-row-active-bg: color-mix(
+			in srgb,
+			var(--color-primary-muted) 40%,
+			transparent
+		);
+		--table-head-text: var(--color-text-faint);
+		--table-cell-text: var(--color-text);
+		--table-sort-icon: var(--color-text-faint);
+		--table-sort-icon-hover: var(--color-text);
+		--table-sort-active: var(--color-primary);
+		--table-ring: rgba(239, 35, 60, 0.15);
+
+		/* ─── Skeleton ──────────────────────────────── */
+		--skeleton-bg: rgba(31, 31, 31, 0.7);
+
+		/* ─── Container ─────────────────────────────── */
+		--container-bg: #0d0d0d;
+		--container-border: var(--color-border);
+
+		/* ─── Error Banner ──────────────────────────── */
+		--error-bg: var(--color-danger-muted);
+		--error-border: color-mix(in srgb, var(--color-danger) 40%, transparent);
+		--error-text: var(--color-danger);
+
+		/* ─── Checkbox ──────────────────────────────── */
+		--checkbox-bg: #0d0d0d;
+		--checkbox-border: var(--color-border);
+		--checkbox-accent: var(--color-primary);
+		--checkbox-ring: rgba(239, 35, 60, 0.15);
+		--checkbox-disabled-opacity: 0.4;
+		--checkbox-label-text: var(--color-text-muted);
+
+		/* ─── Label ─────────────────────────────────── */
+		--label-text: var(--color-text-muted);
+
+		/* ─── Logo ──────────────────────────────────── */
+		--logo-blue-arc: var(--color-primary);
+		--logo-red-arc: var(--color-primary);
+		--logo-red-dash: var(--color-primary);
+
+		/* ─── Lightbox ──────────────────────────────── */
+		--lightbox-backdrop: rgba(0, 0, 0, 0.9);
+		--lightbox-btn-border: var(--color-primary);
+		--lightbox-btn-text: var(--color-primary);
+		--lightbox-btn-hover-bg: var(--color-primary-muted);
+		--lightbox-btn-ring: rgba(239, 35, 60, 0.4);
+		--lightbox-caption-text: rgba(255, 255, 255, 0.85);
+		--lightbox-counter-text: rgba(255, 255, 255, 0.8);
+
+		/* ─── Rich Text ─────────────────────────────── */
+		--richtext-bg: #0d0d0d;
+		--richtext-border: var(--color-border);
+		--richtext-text: var(--color-text);
+		--richtext-border-focus: var(--color-primary);
+		--richtext-ring: rgba(239, 35, 60, 0.15);
+		--richtext-toolbar-bg: #0d0d0d;
+		--richtext-toolbar-border: var(--color-border);
+		--richtext-btn-text: var(--color-text-muted);
+		--richtext-btn-hover-bg: var(--color-surface-hover);
+		--richtext-btn-hover-text: var(--color-text);
+		--richtext-btn-active-bg: var(--color-surface-hover);
+		--richtext-btn-active-text: var(--color-text);
+		--richtext-separator: var(--color-border);
+		--richtext-placeholder: var(--color-text-faint);
+		--richtext-link: var(--color-primary);
+		--richtext-blockquote-border: var(--color-border);
+		--richtext-blockquote-text: var(--color-text-muted);
+		--richtext-code-bg: var(--color-surface-hover);
+
+		/* ─── Theme Toggle ──────────────────────────── */
+		--toggle-track-bg: #0d0d0d;
+		--toggle-track-border: #1f1f1f;
+		--toggle-knob-bg: var(--color-primary);
+		--toggle-knob-x: translateX(14px);
+	}
+
+	/* ─── Conic gradient border for primary CTA ──── */
+	[data-btn-variant="primary"] {
+		--btn-bg: var(--color-primary);
+		--btn-border: transparent;
+		--btn-text: #ffffff;
+		--btn-hover-brightness: 1.1;
+		--btn-hover-shadow: 0 0 20px rgba(239, 35, 60, 0.4);
+		--btn-ring: rgba(239, 35, 60, 0.5);
+		background-image: conic-gradient(
+			from 0deg,
+			#ef233c,
+			#ff4d5e,
+			#ef233c,
+			#ff4d5e,
+			#ef233c
+		);
+		background-origin: border-box;
+		background-clip: padding-box, border-box;
+	}
+
+	/* ─── Red glow on focus-visible ──────────────── */
+	:focus-visible {
+		outline-color: var(--color-primary);
+		outline-offset: 2px;
+	}
+}

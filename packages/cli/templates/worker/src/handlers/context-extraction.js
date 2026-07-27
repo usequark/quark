@@ -4,7 +4,7 @@ import { complete } from "../lib/openrouter.js";
 
 /**
  * Handles context extraction from conversation messages.
- * Analyzes messages and extracts business context records.
+ * Analyzes messages and extracts structured context records.
  *
  * Job data expected:
  *   - conversationId: string
@@ -42,47 +42,54 @@ export async function handleContextExtraction(bullJob, logger) {
 			return { extracted: 0, contexts: [] };
 		}
 
-		// Build extraction prompt
-		const messageText = messages
+		// Build a transcript for extraction
+		const transcript = messages
 			.map((m) => `${m.role}: ${m.content}`)
-			.join("\n");
+			.join("\n\n");
 
-		const extractionPrompt = `Analyze the following conversation and extract business context records. 
-For each piece of business context found, return a JSON array of objects with:
-- key: a descriptive key (e.g., "client.acme_corp.industry")
-- value: the context value
-- category: one of "billing", "client", "task", "tech_note", "process", "preference"
-- source: "learned"
+		// Call OpenRouter to extract structured context
+		const extractionPrompt = `Extract key information from this conversation as structured context records.
+Each record should have:
+- key: a short identifier (snake_case)
+- value: the extracted information
+- category: one of: "client", "process", "preference", "tech_note", "billing"
 
-Return ONLY the JSON array, no other text.
+Return ONLY a valid JSON array of objects with keys: key, value, category.
+If nothing to extract, return an empty array.
+No markdown, no explanation.
 
 Conversation:
-${messageText}`;
+${transcript}`;
 
 		const result = await complete({
-			model: process.env.OPENROUTER_MODEL || "anthropic/claude-3.5-sonnet",
-			messages: [
-				{
-					role: "system",
-					content:
-						"You are a business context extraction assistant. Extract relevant business information from conversations and return structured data.",
-				},
-				{ role: "user", content: extractionPrompt },
-			],
+			model: process.env.OPENROUTER_MODEL || "deepseek/deepseek-v4-flash",
+			messages: [{ role: "user", content: extractionPrompt }],
+			options: { temperature: 0.1, max_tokens: 2000 },
 		});
 
 		const content = result.choices?.[0]?.message?.content || "[]";
-
-		// Parse extracted contexts
 		let contexts;
+
 		try {
-			// Try to extract JSON from the response (might be wrapped in markdown)
-			const jsonMatch = content.match(/\[[\s\S]*\]/);
-			contexts = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(content);
+			// Try direct JSON parse first (for clean responses)
+			contexts = JSON.parse(content);
 		} catch {
+			// Fall back to extracting JSON from markdown code fences
+			const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+			if (jsonMatch) {
+				try {
+					contexts = JSON.parse(jsonMatch[1].trim());
+				} catch {
+					contexts = null;
+				}
+			} else {
+				contexts = null;
+			}
+		}
+
+		if (!contexts) {
 			logger.warn("Failed to parse extraction result", {
 				conversationId,
-				content,
 			});
 			return {
 				extracted: 0,
@@ -95,16 +102,40 @@ ${messageText}`;
 			return { extracted: 0, contexts: [] };
 		}
 
-		// Upsert business context records (placeholder - in production, use a BusinessContext model)
+		// Write extracted context to the Context model
 		let extracted = 0;
+		const saved = [];
+
 		for (const ctx of contexts) {
 			if (ctx.key && ctx.value && ctx.category) {
-				logger.info("Extracted context", {
-					key: ctx.key,
-					category: ctx.category,
-					source: ctx.source || "learned",
-				});
-				extracted++;
+				try {
+					const record = await prisma.context.upsert({
+						where: {
+							key_category: { key: ctx.key, category: ctx.category },
+						},
+						update: {
+							value: ctx.value,
+							source: "ai",
+						},
+						create: {
+							key: ctx.key,
+							value: ctx.value,
+							category: ctx.category,
+							source: "ai",
+						},
+					});
+					saved.push(record);
+					extracted++;
+					logger.info("Context extracted", {
+						key: ctx.key,
+						category: ctx.category,
+					});
+				} catch (dbError) {
+					logger.warn("Failed to save context record", {
+						key: ctx.key,
+						error: dbError.message,
+					});
+				}
 			}
 		}
 
@@ -114,7 +145,7 @@ ${messageText}`;
 			total: contexts.length,
 		});
 
-		return { extracted, contexts };
+		return { extracted, contexts: saved };
 	} catch (error) {
 		logger.error("Context extraction failed", {
 			conversationId,

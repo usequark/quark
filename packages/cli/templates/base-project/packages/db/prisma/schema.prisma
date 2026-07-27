@@ -277,6 +277,25 @@ model MediaAsset {
   @@index([createdAt])
 }
 
+// ─── Context Model ────────────────────────────────────────────────────────────
+
+/// Generic Context — living knowledge base for AI
+/// Stores key-value-category triples extracted or seeded from any domain.
+/// Category is a free-form string — projects define their own namespacing.
+model Context {
+  id        String   @id @default(cuid())
+  key       String
+  value     String   @db.Text
+  category  String   // free-form: "business.client", "user.preference", "app.config", etc.
+  source    String   @default("ai") // "ai" | "seed" | "manual"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([key, category])
+  @@index([category])
+  @@index([source])
+}
+
 // ─── AI Models ───────────────────────────────────────────────────────────────
 
 enum AiRole {

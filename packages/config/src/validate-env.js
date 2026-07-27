@@ -173,6 +173,26 @@ const envSchema = {
 	},
 
 	// Admin seed (used by `pnpm db:seed` - not required at web/worker runtime)
+	// Database instrumentation
+	DB_INSTRUMENTATION: {
+		required: false,
+		description:
+			'Database query instrumentation — set to "false", "0", or "off" to disable Prisma $extends middleware with parameter masking (default: enabled)',
+	},
+	DB_SLOW_QUERY_THRESHOLD: {
+		required: false,
+		description:
+			"Slow query threshold in milliseconds — queries exceeding this duration are logged as warnings (default: 500)",
+	},
+
+	// Admin
+	ADMIN_API_TOKEN: {
+		required: false,
+		description:
+			"Bearer token protecting admin-only API routes (e.g. /api/admin/db-health). Strongly recommended in production.",
+	},
+
+	// Admin seed (used by `pnpm db:seed` — not required at web/worker runtime)
 	ADMIN_EMAIL: {
 		required: false,
 		description:

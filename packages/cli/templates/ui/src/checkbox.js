@@ -1,10 +1,9 @@
 import React from "react";
 
 const inputCls =
-	"h-4 w-4 rounded border-gray-300 dark:border-[#1e2535] text-blue-600 dark:bg-[#090d14] dark:accent-[#377dff] shadow-sm dark:shadow-none transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-500/40 dark:focus-visible:ring-[#377dff]/40 disabled:cursor-not-allowed disabled:opacity-60 dark:disabled:opacity-40";
+	"h-4 w-4 rounded border-[--checkbox-border] bg-[--checkbox-bg] accent-[--checkbox-accent] transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--checkbox-ring)] disabled:cursor-not-allowed disabled:opacity-[var(--checkbox-disabled-opacity)]";
 
-const labelCls =
-	"text-sm text-gray-700 dark:text-[#6b7a99] dark:font-mono select-none";
+const labelCls = "text-sm text-[--checkbox-label-text] select-none";
 
 export function Checkbox({ id, label, className = "", ...props }) {
 	return React.createElement(

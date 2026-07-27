@@ -75,8 +75,36 @@ describe("handleAiAgentTask", () => {
 		);
 	});
 
+	test("throws when user not found", async () => {
+		setPrismaMock({
+			user: {
+				findUnique: mock.fn(async () => null),
+			},
+		});
+
+		const logger = createMockLogger();
+		const job = makeBullJob("ai-agent-task", {
+			conversationId: "conv-1",
+			userId: "nonexistent-user",
+			message: "Hello",
+		});
+
+		await assert.rejects(
+			() => handleAiAgentTask(job, logger),
+			(error) => {
+				assert.ok(error instanceof AppError);
+				assert.strictEqual(error.code, "USER_NOT_FOUND");
+				assert.strictEqual(error.message, "User not found");
+				return true;
+			},
+		);
+	});
+
 	test("throws when conversation not found", async () => {
 		setPrismaMock({
+			user: {
+				findUnique: mock.fn(async () => ({ role: "admin" })),
+			},
 			aiConversation: {
 				findUnique: mock.fn(async () => null),
 			},
@@ -108,6 +136,9 @@ describe("handleAiAgentTask", () => {
 		};
 
 		const prisma = setPrismaMock({
+			user: {
+				findUnique: mock.fn(async () => ({ role: "admin" })),
+			},
 			aiConversation: {
 				findUnique: mock.fn(async () => mockConversation),
 				update: mock.fn(async () => ({})),
@@ -158,6 +189,9 @@ describe("handleAiAgentTask", () => {
 		};
 
 		const prisma = setPrismaMock({
+			user: {
+				findUnique: mock.fn(async () => ({ role: "admin" })),
+			},
 			aiConversation: {
 				findUnique: mock.fn(async () => mockConversation),
 				update: mock.fn(async () => ({})),
@@ -198,6 +232,9 @@ describe("handleAiAgentTask", () => {
 
 	test("throws for deleted conversation", async () => {
 		setPrismaMock({
+			user: {
+				findUnique: mock.fn(async () => ({ role: "admin" })),
+			},
 			aiConversation: {
 				findUnique: mock.fn(async () => ({
 					id: "conv-1",
@@ -226,6 +263,9 @@ describe("handleAiAgentTask", () => {
 
 	test("handles OpenRouter errors gracefully", async () => {
 		setPrismaMock({
+			user: {
+				findUnique: mock.fn(async () => ({ role: "admin" })),
+			},
 			aiConversation: {
 				findUnique: mock.fn(async () => ({
 					id: "conv-1",

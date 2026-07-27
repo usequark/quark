@@ -1,25 +1,27 @@
 import React from "react";
 
-const footerCls = "border-t border-border bg-surface";
+const footerCls = "border-t border-[--footer-border] bg-[--footer-bg]";
 const containerCls = "mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-10";
 const topGridCls =
 	"grid gap-8 sm:gap-10 md:grid-cols-2 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]";
 const brandRowCls = "flex items-center gap-3";
 const markCls =
-	"flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary-muted text-lg font-bold text-primary sm:h-12 sm:w-12 sm:text-xl";
-const brandNameCls = "text-2xl font-bold tracking-tight text-text sm:text-3xl";
-const brandTextCls = "max-w-md text-sm leading-7 text-text-muted";
+	"flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[--footer-mark-bg] text-lg font-bold text-[--footer-mark-text] sm:h-12 sm:w-12 sm:text-xl";
+const brandNameCls =
+	"text-2xl font-bold tracking-tight text-[--footer-text] sm:text-3xl";
+const brandTextCls = "max-w-md text-sm leading-7 text-[--footer-text-muted]";
 const ctaCls =
-	"inline-flex w-full items-center justify-center rounded-full border border-primary px-6 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-primary-muted sm:w-auto";
+	"inline-flex w-full items-center justify-center rounded-full border border-[--footer-cta-border] px-6 py-2.5 text-sm font-semibold text-[--footer-mark-text] transition-colors hover:bg-[--footer-cta-hover-bg] sm:w-auto";
 const columnTitleCls =
-	"mb-4 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-text-faint";
+	"mb-4 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-[--footer-text-faint]";
 const columnListCls = "space-y-2.5";
-const linkCls = "break-words text-text-muted transition-colors hover:text-text";
-const textItemCls = "break-words text-text-muted";
+const linkCls =
+	"break-words text-[--footer-text-muted] transition-colors hover:text-[--footer-link-hover]";
+const textItemCls = "break-words text-[--footer-text-muted]";
 const bottomBarCls =
-	"mt-8 border-t border-border pt-5 flex flex-col gap-3 text-sm text-text-faint sm:mt-10 sm:pt-6 lg:flex-row lg:items-center lg:justify-between";
+	"mt-8 border-t border-[--footer-border] pt-5 flex flex-col gap-3 text-sm text-[--footer-text-faint] sm:mt-10 sm:pt-6 lg:flex-row lg:items-center lg:justify-between";
 const legalCls = "flex flex-wrap items-center gap-2 sm:gap-3";
-const sepCls = "text-text-faint/70";
+const sepCls = "text-[var(--footer-sep)]";
 
 const DEFAULT_COLUMNS = [
 	{

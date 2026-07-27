@@ -5,7 +5,56 @@
 	"main": "src/index.js",
 	"exports": {
 		".": "./src/index.js",
-		"./theme-constants": "./src/theme-constants.js"
+		"./theme-constants": "./src/theme-constants.js",
+		"./themes/*": "./themes/*"
+	},
+	"designSystems": {
+		"default": "minimal",
+		"description": "All visual styling is controlled via CSS custom properties. Import a theme CSS file to completely retheme the UI without editing component source files.",
+		"docs": "packages/ui/README.md",
+		"skill": "~/.config/opencode/skills/design-system/SKILL.md",
+		"available": [
+			{
+				"name": "brutalist-yellow",
+				"description": "High-contrast editorial with golden yellow (#ffe17c) on charcoal (#171e19), sharp geometry, Anton + Satoshi fonts",
+				"file": "themes/brutalist-yellow.css"
+			},
+			{
+				"name": "red-noir",
+				"description": "Dark cinematic with red (#ef233c) on black, pill buttons, glow effects, Manrope font",
+				"file": "themes/red-noir.css"
+			},
+			{
+				"name": "editorial-coral",
+				"description": "Coral (#EF4623) and ink (#2D3B42) editorial style, glassmorphism nav, Instrument Serif + Manrope",
+				"file": "themes/editorial-coral.css"
+			},
+			{
+				"name": "soft-wellness",
+				"description": "Warm pastel wellness with peach (#FFB7B2) on warm white, grain textures, Outfit + Reenie Beanie",
+				"file": "themes/soft-wellness.css"
+			},
+			{
+				"name": "playful-geometric",
+				"description": "Memphis-inspired with violet (#8B5CF6), pink (#F472B6), amber (#FBBF24), hard shadows, Outfit + Plus Jakarta Sans",
+				"file": "themes/playful-geometric.css"
+			},
+			{
+				"name": "hyper-saturated",
+				"description": "Bold fintech with cyber yellow (#FDE047) on deep onyx, glassmorphism, liquid sections, Inter font",
+				"file": "themes/hyper-saturated.css"
+			},
+			{
+				"name": "season-04",
+				"description": "High-fashion brutalist with beige (#E3E2DE), burnt red (#C72A09), neon green accents, Clash Grotesk",
+				"file": "themes/season-04.css"
+			},
+			{
+				"name": "swiss-minimalist",
+				"description": "Typography-first Swiss editorial with off-white (#f2f2f2), deep black (#111111), Clash Display + Satoshi",
+				"file": "themes/swiss-minimalist.css"
+			}
+		]
 	},
 	"dependencies": {
 		"lucide-react": "^1.14.0",

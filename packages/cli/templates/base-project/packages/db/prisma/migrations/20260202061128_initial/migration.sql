@@ -576,3 +576,24 @@ ALTER TABLE "Booking" ADD CONSTRAINT "Booking_serviceTypeId_fkey" FOREIGN KEY ("
 
 -- AddForeignKey
 ALTER TABLE "Booking" ADD CONSTRAINT "Booking_staffId_fkey" FOREIGN KEY ("staffId") REFERENCES "Staff"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+-- CreateTable
+CREATE TABLE "Context" (
+    "id" TEXT NOT NULL,
+    "key" TEXT NOT NULL,
+    "value" TEXT NOT NULL,
+    "category" TEXT NOT NULL,
+    "source" TEXT NOT NULL DEFAULT 'ai',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Context_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Context_key_category_key" ON "Context"("key", "category");
+
+-- CreateIndex
+CREATE INDEX "Context_category_idx" ON "Context"("category");
+
+-- CreateIndex
+CREATE INDEX "Context_source_idx" ON "Context"("source");

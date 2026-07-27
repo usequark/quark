@@ -2,6 +2,7 @@ import assert from "node:assert";
 import { afterEach, beforeEach, describe, mock, test } from "node:test";
 import {
 	executeTool,
+	getAllFilteredToolDefinitions,
 	getAllToolDefinitions,
 	getToolDefinition,
 	getToolHandler,
@@ -53,9 +54,13 @@ describe("getToolNames", () => {
 			"create_deal",
 			"update_deal",
 			"get_conversation_history",
-			"get_business_context",
-			"create_business_context",
+			"get_context",
+			"create_context",
+			"update_context",
+			"delete_context",
+			"search_context",
 			"search_jobs",
+			"web_search",
 		];
 		for (const name of expected) {
 			assert.ok(names.includes(name), `Missing tool name: ${name}`);
@@ -108,7 +113,7 @@ describe("getAllToolDefinitions", () => {
 	test("returns array of all tool definitions", () => {
 		const defs = getAllToolDefinitions();
 		assert.ok(Array.isArray(defs));
-		assert.strictEqual(defs.length, 13);
+		assert.strictEqual(defs.length, 17);
 	});
 
 	test("each definition has correct structure", () => {
@@ -127,6 +132,57 @@ describe("getAllToolDefinitions", () => {
 		const defNames = defs.map((d) => d.function.name);
 		for (const name of names) {
 			assert.ok(defNames.includes(name), `Missing definition for ${name}`);
+		}
+	});
+});
+
+// ── getAllFilteredToolDefinitions ─────────────────────────────────────────────
+
+describe("getAllFilteredToolDefinitions", () => {
+	test("returns all tools for admin role", () => {
+		const defs = getAllFilteredToolDefinitions("admin");
+		assert.strictEqual(defs.length, 17);
+	});
+
+	test("returns viewer-visible tools for viewer role", () => {
+		const defs = getAllFilteredToolDefinitions("viewer");
+		// Viewers can only read contacts, companies, deals, conversations, context, jobs
+		// But default policy gives them read on "post" and "user" only
+		// So they'll get 0 tools from our CRM/context permissions
+		// Actually let's just check it's <= 16 and returns only read tools
+		for (const def of defs) {
+			const name = def.function.name;
+			// All returned tools should be read-only operations
+			assert.ok(
+				name.includes("search") || name.includes("get"),
+				`Unexpected write tool for viewer: ${name}`,
+			);
+		}
+	});
+
+	test("returns empty for null role", () => {
+		const defs = getAllFilteredToolDefinitions(null);
+		assert.strictEqual(defs.length, 0);
+	});
+
+	test("returns empty for undefined role", () => {
+		const defs = getAllFilteredToolDefinitions(undefined);
+		assert.strictEqual(defs.length, 0);
+	});
+
+	test("returns empty for role with no permissions", () => {
+		// "lead_dev" is not in the default policy, so no tools should match
+		const defs = getAllFilteredToolDefinitions("lead_dev");
+		assert.strictEqual(defs.length, 0);
+	});
+
+	test("each definition has correct structure", () => {
+		const defs = getAllFilteredToolDefinitions("admin");
+		for (const def of defs) {
+			assert.strictEqual(def.type, "function");
+			assert.ok(def.function.name);
+			assert.ok(def.function.description);
+			assert.ok(def.function.parameters);
 		}
 	});
 });

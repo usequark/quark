@@ -117,25 +117,33 @@ export const getConversationHistorySchema = z.object({
 	before: z.string().datetime().optional(),
 });
 
-export const getBusinessContextSchema = z.object({
-	category: z
-		.enum(["billing", "client", "task", "tech_note", "process", "preference"])
-		.optional(),
+export const getContextSchema = z.object({
+	category: z.string().optional(),
 	limit: z.number().int().positive().max(50).optional().default(10),
 });
 
-export const createBusinessContextSchema = z.object({
+export const createContextSchema = z.object({
 	key: z.string().min(1, "Key is required"),
 	value: z.string().min(1, "Value is required"),
-	category: z.enum([
-		"billing",
-		"client",
-		"task",
-		"tech_note",
-		"process",
-		"preference",
-	]),
-	source: z.enum(["seed", "learned"]).optional().default("learned"),
+	category: z.string().min(1, "Category is required"),
+	source: z.enum(["ai", "seed", "manual"]).optional().default("ai"),
+});
+
+export const updateContextSchema = z.object({
+	id: z.string().min(1, "ID is required"),
+	key: z.string().optional(),
+	value: z.string().optional(),
+	category: z.string().optional(),
+});
+
+export const deleteContextSchema = z.object({
+	id: z.string().min(1, "ID is required"),
+});
+
+export const searchContextSchema = z.object({
+	query: z.string().min(1, "Search query is required"),
+	category: z.string().optional(),
+	limit: z.number().int().positive().max(50).optional().default(10),
 });
 
 export const searchJobsSchema = z.object({
@@ -145,6 +153,11 @@ export const searchJobsSchema = z.object({
 		.enum(["PENDING", "IN_PROGRESS", "COMPLETED", "FAILED", "CANCELLED"])
 		.optional(),
 	queue: z.string().optional(),
+});
+
+export const webSearchSchema = z.object({
+	query: z.string().min(1, "Search query is required"),
+	maxResults: z.number().int().positive().max(10).optional().default(5),
 });
 
 // ── Schema Registry ──────────────────────────────────────────────────────────
@@ -160,7 +173,15 @@ export const toolSchemas = {
 	create_deal: createDealSchema,
 	update_deal: updateDealSchema,
 	get_conversation_history: getConversationHistorySchema,
-	get_business_context: getBusinessContextSchema,
-	create_business_context: createBusinessContextSchema,
+
+	// Context tools (replaces business context placeholders)
+	get_context: getContextSchema,
+	create_context: createContextSchema,
+	update_context: updateContextSchema,
+	delete_context: deleteContextSchema,
+	search_context: searchContextSchema,
+
 	search_jobs: searchJobsSchema,
+
+	web_search: webSearchSchema,
 };

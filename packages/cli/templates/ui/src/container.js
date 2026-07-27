@@ -5,7 +5,7 @@ export function Container({ className = "", children, ...props }) {
 		"section",
 		{
 			className:
-				`relative overflow-hidden rounded-[--radius-default] border border-border bg-surface ${className}`.trim(),
+				`relative overflow-hidden rounded-[--radius-default] border border-[--container-border] bg-[--container-bg] ${className}`.trim(),
 			...props,
 		},
 		children,

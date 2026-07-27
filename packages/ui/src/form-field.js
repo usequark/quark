@@ -40,7 +40,7 @@ export function FormField({
 					"p",
 					{
 						id: errorId,
-						className: "text-xs text-danger",
+						className: "text-xs text-[--error-text]",
 						role: "alert",
 					},
 					error,

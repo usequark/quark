@@ -4,25 +4,8 @@ import React from "react";
 const base =
 	"inline-flex items-center justify-center font-medium tracking-wide transition-all duration-200 linear cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed active:opacity-80";
 
-const VARIANTS = {
-	primary:
-		"bg-primary-hover border border-primary-hover text-white hover:brightness-95 hover:shadow-md focus-visible:ring-primary/60",
-	secondary:
-		"border border-border-hover bg-surface text-text hover:bg-surface-hover focus-visible:ring-border-hover",
-	danger:
-		"bg-danger-hover border border-danger-hover text-white hover:brightness-95 hover:shadow-md focus-visible:ring-danger/60",
-	ghost:
-		"bg-transparent text-text-faint hover:bg-surface-hover hover:text-text focus-visible:ring-border-hover",
-	success:
-		"bg-success-muted border border-success text-success hover:bg-success-muted/80 focus-visible:ring-success/60",
-	warning:
-		"bg-warning-muted border border-warning text-warning hover:bg-warning-muted/80 focus-visible:ring-warning/60",
-	info: "bg-info-muted border border-info text-info hover:bg-info-muted/80 focus-visible:ring-info/60",
-	outline:
-		"border border-primary text-primary bg-transparent hover:bg-primary-muted focus-visible:ring-primary/40",
-	solid:
-		"bg-primary border border-primary text-white hover:opacity-90 focus-visible:ring-primary/60",
-};
+const variantCls =
+	"bg-[--btn-bg] border border-[--btn-border] text-[--btn-text] rounded-[--btn-radius] hover:brightness-[var(--btn-hover-brightness)] hover:shadow-[var(--btn-hover-shadow)] hover:bg-[var(--btn-hover-bg)] hover:text-[var(--btn-hover-text)] hover:opacity-[var(--btn-hover-opacity)] focus-visible:ring-[var(--btn-ring)]";
 
 const sizes = {
 	sm: "h-8 px-3 text-sm",
@@ -77,7 +60,7 @@ export function Button({
 	const hasIcon = Boolean(icon);
 	const spacing = hasIcon && hasLabel ? "gap-2" : "";
 	const cls =
-		`${base} ${VARIANTS[variant] ?? VARIANTS.primary} ${sizes[size] ?? sizes.md} ${spacing} rounded-[--radius-default] ${className}`.trim();
+		`${base} ${variantCls} ${sizes[size] ?? sizes.md} ${spacing} ${className}`.trim();
 	const buttonType =
 		type === "submit" || type === "reset" || type === "button"
 			? type
@@ -98,6 +81,7 @@ export function Button({
 				target,
 				rel: anchorRel,
 				className: cls,
+				"data-btn-variant": variant,
 				...props,
 			},
 			...buttonChildren,
@@ -109,6 +93,7 @@ export function Button({
 		{
 			type: buttonType,
 			className: cls,
+			"data-btn-variant": variant,
 			...props,
 		},
 		...buttonChildren,

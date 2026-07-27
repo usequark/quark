@@ -70,6 +70,220 @@
 	/* Toast SVG stroke colours */
 	--quark-toast-track: rgba(255, 255, 255, 0.2);
 	--quark-toast-progress: rgba(255, 255, 255, 0.85);
+
+	/*
+	 * ─── COMPONENT CSS VARIABLES ──────────────────────────────────────────────
+	 *
+	 * Each component reads its visual properties from these CSS variables.
+	 * Override any variable to retheme without editing component source files.
+	 * Variables using var(--color-xxx) adapt automatically to the active theme.
+	 */
+
+	/* ── Button ─────────────────────────────────────────────────────────────── */
+	--btn-radius: var(--radius-default);
+	--btn-bg: var(--color-primary-hover);
+	--btn-border: var(--color-primary-hover);
+	--btn-text: #ffffff;
+	--btn-ring: color-mix(in srgb, var(--color-primary) 60%, transparent);
+	--btn-hover-brightness: 0.95;
+	--btn-hover-shadow:
+		0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+	--btn-hover-bg: transparent;
+	--btn-hover-text: inherit;
+	--btn-hover-opacity: 1;
+
+	/* ── Badge ──────────────────────────────────────────────────────────────── */
+	--badge-bg: var(--color-surface-hover);
+	--badge-border: var(--color-border);
+	--badge-text: var(--color-text-muted);
+
+	/* ── Toast ──────────────────────────────────────────────────────────────── */
+	--toast-bg: var(--color-primary-muted);
+	--toast-border: color-mix(in srgb, var(--color-primary) 40%, transparent);
+	--toast-text: var(--color-primary);
+	--toast-shadow:
+		0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+	/* ── Card ───────────────────────────────────────────────────────────────── */
+	--card-bg: var(--color-surface);
+	--card-border: var(--color-border);
+	--card-title-text: var(--color-text);
+	--card-text-muted: var(--color-text-muted);
+	--card-trigger-hover-bg: var(--color-surface-hover);
+	--card-trigger-ring: color-mix(
+		in srgb,
+		var(--color-primary) 40%,
+		transparent
+	);
+
+	/* ── Dialog ─────────────────────────────────────────────────────────────── */
+	--dialog-bg: var(--color-surface);
+	--dialog-border: var(--color-border);
+	--dialog-title-text: var(--color-text);
+	--dialog-text-muted: var(--color-text-muted);
+	--dialog-close-hover-bg: var(--color-surface-hover);
+	--dialog-close-ring: var(--color-border-hover);
+	--dialog-backdrop: rgba(0, 0, 0, 0.6);
+
+	/* ── Table ──────────────────────────────────────────────────────────────── */
+	--table-bg: var(--color-surface);
+	--table-border: var(--color-border);
+	--table-header-bg: var(--color-surface-hover);
+	--table-row-hover-bg: color-mix(
+		in srgb,
+		var(--color-surface-hover) 60%,
+		transparent
+	);
+	--table-row-active-bg: color-mix(
+		in srgb,
+		var(--color-surface-hover) 40%,
+		transparent
+	);
+	--table-head-text: var(--color-text-faint);
+	--table-cell-text: var(--color-text);
+	--table-sort-icon: var(--color-text-faint);
+	--table-sort-icon-hover: var(--color-text);
+	--table-sort-active: var(--color-primary);
+	--table-ring: color-mix(in srgb, var(--color-primary) 40%, transparent);
+
+	/* ── Input / Textarea ───────────────────────────────────────────────────── */
+	--input-bg: var(--color-surface-hover);
+	--input-border: var(--color-border);
+	--input-text: var(--color-text);
+	--input-placeholder: var(--color-text-faint);
+	--input-border-hover: var(--color-border-hover);
+	--input-border-focus: var(--color-primary);
+	--input-ring-focus: color-mix(in srgb, var(--color-primary) 20%, transparent);
+	--input-disabled-opacity: 0.3;
+
+	/* ── Select ─────────────────────────────────────────────────────────────── */
+	--select-bg: var(--color-surface-hover);
+	--select-border: var(--color-border);
+	--select-text: var(--color-text);
+	--select-text-faint: var(--color-text-faint);
+	--select-border-hover: var(--color-border-hover);
+	--select-ring: color-mix(in srgb, var(--color-primary) 40%, transparent);
+	--select-panel-bg: var(--color-surface);
+	--select-panel-border: var(--color-border);
+	--select-option-hover-bg: var(--color-surface-hover);
+	--select-option-hover-text: var(--color-text);
+	--select-option-active-bg: var(--color-primary-muted);
+	--select-option-active-text: var(--color-primary);
+
+	/* ── Checkbox ───────────────────────────────────────────────────────────── */
+	--checkbox-bg: #090d14;
+	--checkbox-border: #1e2535;
+	--checkbox-accent: #377dff;
+	--checkbox-ring: color-mix(in srgb, #377dff 40%, transparent);
+	--checkbox-disabled-opacity: 0.4;
+	--checkbox-label-text: #6b7a99;
+
+	/* ── Label ──────────────────────────────────────────────────────────────── */
+	--label-text: var(--color-text-muted);
+
+	/* ── Skeleton ───────────────────────────────────────────────────────────── */
+	--skeleton-bg: rgba(30, 37, 53, 0.7);
+
+	/* ── Container ──────────────────────────────────────────────────────────── */
+	--container-bg: var(--color-surface);
+	--container-border: var(--color-border);
+
+	/* ── Error Banner ───────────────────────────────────────────────────────── */
+	--error-bg: var(--color-danger-muted);
+	--error-border: color-mix(in srgb, var(--color-danger) 40%, transparent);
+	--error-text: var(--color-danger);
+
+	/* ── Password Input ─────────────────────────────────────────────────────── */
+	--input-icon: var(--color-text-muted);
+	--input-icon-hover: var(--color-text);
+
+	/* ── Lightbox ───────────────────────────────────────────────────────────── */
+	--lightbox-backdrop: rgba(0, 0, 0, 0.8);
+	--lightbox-btn-border: rgba(255, 255, 255, 0.25);
+	--lightbox-btn-text: #ffffff;
+	--lightbox-btn-hover-bg: rgba(255, 255, 255, 0.15);
+	--lightbox-btn-ring: rgba(255, 255, 255, 0.6);
+	--lightbox-caption-text: rgba(255, 255, 255, 0.85);
+	--lightbox-counter-text: rgba(255, 255, 255, 0.8);
+
+	/* ── RichText ───────────────────────────────────────────────────────────── */
+	--richtext-bg: var(--color-surface-hover);
+	--richtext-border: var(--color-border);
+	--richtext-text: var(--color-text);
+	--richtext-border-focus: var(--color-primary);
+	--richtext-ring: color-mix(in srgb, var(--color-primary) 20%, transparent);
+	--richtext-toolbar-bg: var(--color-surface);
+	--richtext-toolbar-border: var(--color-border);
+	--richtext-btn-text: var(--color-text-muted);
+	--richtext-btn-hover-bg: var(--color-surface-hover);
+	--richtext-btn-hover-text: var(--color-text);
+	--richtext-btn-active-bg: var(--color-surface-hover);
+	--richtext-btn-active-text: var(--color-text);
+	--richtext-separator: var(--color-border);
+	--richtext-placeholder: var(--color-text-faint);
+	--richtext-link: var(--color-primary);
+	--richtext-blockquote-border: var(--color-border);
+	--richtext-blockquote-text: var(--color-text-muted);
+	--richtext-code-bg: var(--color-surface-hover);
+
+	/* ── Navbar ─────────────────────────────────────────────────────────────── */
+	--navbar-bg: color-mix(in srgb, var(--color-surface) 95%, transparent);
+	--navbar-mobile-bg: var(--color-surface);
+	--navbar-border: var(--color-border);
+	--navbar-inset-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+	--navbar-text: var(--color-text);
+	--navbar-text-muted: var(--color-text-muted);
+	--navbar-hover-bg: var(--color-surface);
+	--navbar-hover-text: var(--color-text);
+	--navbar-logo-text: var(--color-text);
+	--navbar-logo-hover: var(--color-primary);
+	--navbar-mark-bg: var(--color-primary-muted);
+	--navbar-mark-border: color-mix(
+		in srgb,
+		var(--color-primary) 40%,
+		transparent
+	);
+	--navbar-mark-text: var(--color-primary);
+	--navbar-action-border: color-mix(
+		in srgb,
+		var(--color-primary) 55%,
+		transparent
+	);
+	--navbar-action-bg: var(--color-primary-muted);
+	--navbar-action-text: var(--color-primary);
+	--navbar-action-hover-border: var(--color-primary);
+	--navbar-action-hover-bg: color-mix(
+		in srgb,
+		var(--color-primary-muted) 70%,
+		transparent
+	);
+	--navbar-ring: color-mix(in srgb, var(--color-primary) 40%, transparent);
+	--navbar-dropdown-bg: var(--color-surface);
+	--navbar-dropdown-border: var(--color-border);
+	--navbar-dropdown-shadow:
+		0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+	--navbar-mobile-panel-bg: var(--color-surface);
+	--navbar-mobile-panel-border: var(--color-border);
+	--navbar-divide-border: var(--color-border);
+
+	/* ── Footer ─────────────────────────────────────────────────────────────── */
+	--footer-bg: var(--color-surface);
+	--footer-border: var(--color-border);
+	--footer-text: var(--color-text);
+	--footer-text-muted: var(--color-text-muted);
+	--footer-text-faint: var(--color-text-faint);
+	--footer-mark-bg: var(--color-primary-muted);
+	--footer-mark-text: var(--color-primary);
+	--footer-cta-border: var(--color-primary);
+	--footer-cta-text: var(--color-primary);
+	--footer-cta-hover-bg: var(--color-primary-muted);
+	--footer-link-hover: var(--color-text);
+	--footer-sep: color-mix(in srgb, var(--color-text-faint) 70%, transparent);
+
+	/* ── Logo ───────────────────────────────────────────────────────────────── */
+	--logo-blue-arc: #377dff;
+	--logo-red-arc: #ff4757;
+	--logo-red-dash: #ff4757;
 }
 
 @media (prefers-color-scheme: light) {
@@ -112,6 +326,16 @@
 		--quark-health-sep: #d1d5db;
 		--quark-health-dot-idle: #d1d5db;
 		--quark-logo-dark-arc: #2d3436;
+
+		/* Component variable light overrides */
+		--checkbox-bg: transparent;
+		--checkbox-border: #d1d5db;
+		--checkbox-accent: #2563eb;
+		--checkbox-ring: color-mix(in srgb, #3b82f6 40%, transparent);
+		--checkbox-disabled-opacity: 0.6;
+		--checkbox-label-text: #374151;
+		--skeleton-bg: rgba(229, 231, 235, 0.8);
+		--navbar-inset-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.02);
 	}
 }
 
@@ -154,6 +378,16 @@
 	--quark-health-sep: #d1d5db;
 	--quark-health-dot-idle: #d1d5db;
 	--quark-logo-dark-arc: #2d3436;
+
+	/* Component variable light overrides */
+	--checkbox-bg: transparent;
+	--checkbox-border: #d1d5db;
+	--checkbox-accent: #2563eb;
+	--checkbox-ring: color-mix(in srgb, #3b82f6 40%, transparent);
+	--checkbox-disabled-opacity: 0.6;
+	--checkbox-label-text: #374151;
+	--skeleton-bg: rgba(229, 231, 235, 0.8);
+	--navbar-inset-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.02);
 }
 
 /*
@@ -212,6 +446,162 @@
 }
 
 /* Toast SVG strokes - per-variant dark overrides.
+/*
+ * ─── BUTTON VARIANTS ─────────────────────────────────────────────────────────
+ * Each variant overrides the generic --btn-* variables.
+ */
+[data-btn-variant="primary"] {
+	--btn-bg: var(--color-primary-hover);
+	--btn-border: var(--color-primary-hover);
+	--btn-text: #ffffff;
+	--btn-hover-brightness: 0.95;
+	--btn-hover-shadow:
+		0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+	--btn-ring: color-mix(in srgb, var(--color-primary) 60%, transparent);
+}
+[data-btn-variant="secondary"] {
+	--btn-bg: var(--color-surface);
+	--btn-border: var(--color-border-hover);
+	--btn-text: var(--color-text);
+	--btn-hover-brightness: 1;
+	--btn-hover-shadow: none;
+	--btn-hover-bg: var(--color-surface-hover);
+	--btn-ring: var(--color-border-hover);
+}
+[data-btn-variant="danger"] {
+	--btn-bg: var(--color-danger-hover);
+	--btn-border: var(--color-danger-hover);
+	--btn-text: #ffffff;
+	--btn-hover-brightness: 0.95;
+	--btn-hover-shadow:
+		0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+	--btn-ring: color-mix(in srgb, var(--color-danger) 60%, transparent);
+}
+[data-btn-variant="ghost"] {
+	--btn-bg: transparent;
+	--btn-border: transparent;
+	--btn-text: var(--color-text-faint);
+	--btn-hover-brightness: 1;
+	--btn-hover-shadow: none;
+	--btn-hover-bg: var(--color-surface-hover);
+	--btn-hover-text: var(--color-text);
+	--btn-ring: var(--color-border-hover);
+}
+[data-btn-variant="success"] {
+	--btn-bg: var(--color-success-muted);
+	--btn-border: var(--color-success);
+	--btn-text: var(--color-success);
+	--btn-hover-brightness: 1;
+	--btn-hover-shadow: none;
+	--btn-hover-bg: color-mix(
+		in srgb,
+		var(--color-success-muted) 80%,
+		transparent
+	);
+	--btn-ring: color-mix(in srgb, var(--color-success) 60%, transparent);
+}
+[data-btn-variant="warning"] {
+	--btn-bg: var(--color-warning-muted);
+	--btn-border: var(--color-warning);
+	--btn-text: var(--color-warning);
+	--btn-hover-brightness: 1;
+	--btn-hover-shadow: none;
+	--btn-hover-bg: color-mix(
+		in srgb,
+		var(--color-warning-muted) 80%,
+		transparent
+	);
+	--btn-ring: color-mix(in srgb, var(--color-warning) 60%, transparent);
+}
+[data-btn-variant="info"] {
+	--btn-bg: var(--color-info-muted);
+	--btn-border: var(--color-info);
+	--btn-text: var(--color-info);
+	--btn-hover-brightness: 1;
+	--btn-hover-shadow: none;
+	--btn-hover-bg: color-mix(in srgb, var(--color-info-muted) 80%, transparent);
+	--btn-ring: color-mix(in srgb, var(--color-info) 60%, transparent);
+}
+[data-btn-variant="outline"] {
+	--btn-bg: transparent;
+	--btn-border: var(--color-primary);
+	--btn-text: var(--color-primary);
+	--btn-hover-brightness: 1;
+	--btn-hover-shadow: none;
+	--btn-hover-bg: var(--color-primary-muted);
+	--btn-ring: color-mix(in srgb, var(--color-primary) 40%, transparent);
+}
+[data-btn-variant="solid"] {
+	--btn-bg: var(--color-primary);
+	--btn-border: var(--color-primary);
+	--btn-text: #ffffff;
+	--btn-hover-brightness: 1;
+	--btn-hover-shadow: none;
+	--btn-hover-opacity: 0.9;
+	--btn-ring: color-mix(in srgb, var(--color-primary) 60%, transparent);
+}
+
+/*
+ * ─── BADGE VARIANTS ──────────────────────────────────────────────────────────
+ */
+[data-badge-variant="default"] {
+	--badge-bg: var(--color-surface-hover);
+	--badge-border: var(--color-border);
+	--badge-text: var(--color-text-muted);
+}
+[data-badge-variant="primary"] {
+	--badge-bg: var(--color-primary-muted);
+	--badge-border: color-mix(in srgb, var(--color-primary) 40%, transparent);
+	--badge-text: var(--color-primary);
+}
+[data-badge-variant="success"] {
+	--badge-bg: var(--color-success-muted);
+	--badge-border: color-mix(in srgb, var(--color-success) 40%, transparent);
+	--badge-text: var(--color-success);
+}
+[data-badge-variant="warning"] {
+	--badge-bg: var(--color-warning-muted);
+	--badge-border: color-mix(in srgb, var(--color-warning) 40%, transparent);
+	--badge-text: var(--color-warning);
+}
+[data-badge-variant="danger"] {
+	--badge-bg: var(--color-danger-muted);
+	--badge-border: color-mix(in srgb, var(--color-danger) 40%, transparent);
+	--badge-text: var(--color-danger);
+}
+[data-badge-variant="info"] {
+	--badge-bg: var(--color-info-muted);
+	--badge-border: color-mix(in srgb, var(--color-info) 40%, transparent);
+	--badge-text: var(--color-info);
+}
+
+/*
+ * ─── TOAST VARIANTS ──────────────────────────────────────────────────────────
+ */
+[data-toast-variant="default"] {
+	--toast-bg: var(--color-primary-muted);
+	--toast-border: color-mix(in srgb, var(--color-primary) 40%, transparent);
+	--toast-text: var(--color-primary);
+	--toast-shadow:
+		0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+[data-toast-variant="success"] {
+	--toast-bg: var(--color-success-muted);
+	--toast-border: color-mix(in srgb, var(--color-success) 40%, transparent);
+	--toast-text: var(--color-success);
+	--toast-shadow:
+		0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+[data-toast-variant="error"] {
+	--toast-bg: var(--color-danger-muted);
+	--toast-border: color-mix(in srgb, var(--color-danger) 40%, transparent);
+	--toast-text: var(--color-danger);
+	--toast-shadow:
+		0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+/* Toast SVG strokes — per-variant dark overrides.
+>>>>>>> 932257a (feat(ui): refactor to CSS variable theming system with 8 design presets)
  * Light uses :root defaults (white strokes on dark toast bg).
  * The blocking script in layout.js ensures data-theme is always set. */
 [data-theme="dark"] [data-toast-variant="default"] {

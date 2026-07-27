@@ -1,6 +1,6 @@
 import React from "react";
 
-const base = "animate-pulse rounded-lg bg-gray-200/80 dark:bg-[#1e2535]/70";
+const base = "animate-pulse rounded-lg bg-[--skeleton-bg]";
 
 export function Skeleton({ className = "", ...props }) {
 	return React.createElement("div", {

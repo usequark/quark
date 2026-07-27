@@ -1,5 +1,6 @@
 import { AppError, ValidationError } from "@techstream/quark-core/errors";
 import { toolHandlers } from "./handlers.js";
+import { getVisibleTools } from "./permissions.js";
 import { toolSchemas } from "./schemas.js";
 
 /**
@@ -37,6 +38,18 @@ export function getToolDefinition(name) {
  */
 export function getAllToolDefinitions() {
 	return getToolNames().map((name) => getToolDefinition(name));
+}
+
+/**
+ * Get filtered tool definitions based on user role.
+ * Only returns tools the user has permission to use.
+ * @param {string} role - User's role (e.g. "admin", "editor", "viewer")
+ * @returns {Object[]}
+ */
+export function getAllFilteredToolDefinitions(role) {
+	const names = getToolNames();
+	const visible = getVisibleTools(role, names);
+	return visible.map((name) => getToolDefinition(name));
 }
 
 /**
@@ -83,9 +96,17 @@ function getToolDescription(name) {
 		create_deal: "Create a new deal in the sales pipeline",
 		update_deal: "Update an existing deal's information",
 		get_conversation_history: "Retrieve conversation message history",
-		get_business_context: "Retrieve business context records",
-		create_business_context: "Create a new business context record",
+
+		// Context tools
+		get_context: "Retrieve context records by category",
+		create_context: "Create a new context record (key-value with category)",
+		update_context: "Update an existing context record",
+		delete_context: "Delete a context record",
+		search_context: "Search context records by key or value",
+
 		search_jobs: "Search background jobs by name, status, or queue",
+
+		web_search: "Search the web for current information on a topic",
 	};
 	return descriptions[name] || `Execute ${name} tool`;
 }

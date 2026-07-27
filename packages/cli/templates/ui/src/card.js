@@ -4,18 +4,19 @@ import { ChevronDown } from "lucide-react";
 import React, { useState } from "react";
 
 const cardCls =
-	"border border-border bg-surface transition-colors duration-200 linear";
+	"border border-[--card-border] bg-[--card-bg] transition-colors duration-200 linear";
 
 const headerCls = "flex flex-col space-y-1.5 p-6";
 
-const titleCls = "text-lg font-bold leading-none tracking-tight text-text";
+const titleCls =
+	"text-lg font-bold leading-none tracking-tight text-[--card-title-text]";
 
 const contentCls = "p-6 pt-0";
 
 const footerCls = "flex items-center p-6 pt-0";
 
 const collapsibleTriggerCls =
-	"flex w-full cursor-pointer items-center justify-between p-6 text-text transition-colors duration-200 hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40";
+	"flex w-full cursor-pointer items-center justify-between p-6 text-[--card-title-text] transition-colors duration-200 hover:bg-[--card-trigger-hover-bg] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--card-trigger-ring)]";
 
 function CollapsibleCard({
 	className = "",
@@ -50,7 +51,7 @@ function CollapsibleCard({
 				"span",
 				{
 					"aria-hidden": "true",
-					className: `pointer-events-none ml-3 shrink-0 text-text-faint transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${isOpen ? "rotate-180" : "rotate-0"}`,
+					className: `pointer-events-none ml-3 shrink-0 text-[--card-text-muted] transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${isOpen ? "rotate-180" : "rotate-0"}`,
 				},
 				React.createElement(ChevronDown, { size: 16 }),
 			),
@@ -58,7 +59,7 @@ function CollapsibleCard({
 		React.createElement(
 			"div",
 			{
-				className: `border-t border-border text-text-muted grid transition-[grid-template-rows,opacity,transform] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] motion-reduce:transition-none ${isOpen ? "translate-y-0 opacity-100" : "-translate-y-2 opacity-0"}`,
+				className: `border-t border-[--card-border] text-[--card-text-muted] grid transition-[grid-template-rows,opacity,transform] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] motion-reduce:transition-none ${isOpen ? "translate-y-0 opacity-100" : "-translate-y-2 opacity-0"}`,
 				style: { gridTemplateRows: isOpen ? "1fr" : "0fr" },
 			},
 			React.createElement(

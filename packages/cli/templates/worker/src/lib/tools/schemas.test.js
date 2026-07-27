@@ -1,20 +1,24 @@
 import assert from "node:assert";
 import { describe, test } from "node:test";
 import {
-	createBusinessContextSchema,
 	createCompanySchema,
 	createContactSchema,
+	createContextSchema,
 	createDealSchema,
-	getBusinessContextSchema,
+	deleteContextSchema,
+	getContextSchema,
 	getConversationHistorySchema,
 	searchCompaniesSchema,
 	searchContactsSchema,
+	searchContextSchema,
 	searchDealsSchema,
 	searchJobsSchema,
 	toolSchemas,
 	updateCompanySchema,
 	updateContactSchema,
+	updateContextSchema,
 	updateDealSchema,
+	webSearchSchema,
 } from "./schemas.js";
 
 // ── searchContactsSchema ─────────────────────────────────────────────────────
@@ -334,69 +338,59 @@ describe("getConversationHistorySchema", () => {
 	});
 });
 
-// ── getBusinessContextSchema ─────────────────────────────────────────────────
+// ── getContextSchema ─────────────────────────────────────────────────────────
 
-describe("getBusinessContextSchema", () => {
+describe("getContextSchema", () => {
 	test("validates correct input", () => {
-		const result = getBusinessContextSchema.parse({});
+		const result = getContextSchema.parse({});
 		assert.strictEqual(result.limit, 10);
 	});
 
-	test("accepts optional category", () => {
-		const result = getBusinessContextSchema.parse({ category: "billing" });
-		assert.strictEqual(result.category, "billing");
+	test("accepts optional free-form category", () => {
+		const result = getContextSchema.parse({ category: "business.client" });
+		assert.strictEqual(result.category, "business.client");
 	});
 
-	test("rejects invalid category", () => {
-		assert.throws(() =>
-			getBusinessContextSchema.parse({ category: "invalid" }),
-		);
-	});
-
-	test("accepts all valid categories", () => {
-		const categories = [
-			"billing",
-			"client",
-			"task",
-			"tech_note",
-			"process",
-			"preference",
-		];
-		for (const cat of categories) {
-			const result = getBusinessContextSchema.parse({ category: cat });
-			assert.strictEqual(result.category, cat);
-		}
+	test("accepts any string category (no enum restriction)", () => {
+		const result = getContextSchema.parse({ category: "custom.namespace" });
+		assert.strictEqual(result.category, "custom.namespace");
 	});
 });
 
-// ── createBusinessContextSchema ──────────────────────────────────────────────
+// ── createContextSchema ─────────────────────────────────────────────────────
 
-describe("createBusinessContextSchema", () => {
+describe("createContextSchema", () => {
 	test("validates correct input", () => {
-		const result = createBusinessContextSchema.parse({
+		const result = createContextSchema.parse({
 			key: "client.acme.industry",
 			value: "Technology",
 			category: "client",
 		});
 		assert.strictEqual(result.key, "client.acme.industry");
-		assert.strictEqual(result.source, "learned"); // default
+		assert.strictEqual(result.source, "ai"); // default
 	});
 
 	test("rejects missing key", () => {
 		assert.throws(() =>
-			createBusinessContextSchema.parse({ value: "test", category: "client" }),
+			createContextSchema.parse({ value: "test", category: "client" }),
 		);
 	});
 
 	test("rejects missing value", () => {
 		assert.throws(() =>
-			createBusinessContextSchema.parse({ key: "test", category: "client" }),
+			createContextSchema.parse({ key: "test", category: "client" }),
+		);
+	});
+
+	test("rejects missing category", () => {
+		assert.throws(() =>
+			createContextSchema.parse({ key: "test", value: "test" }),
 		);
 	});
 
 	test("rejects invalid source", () => {
 		assert.throws(() =>
-			createBusinessContextSchema.parse({
+			createContextSchema.parse({
 				key: "test",
 				value: "test",
 				category: "client",
@@ -405,14 +399,94 @@ describe("createBusinessContextSchema", () => {
 		);
 	});
 
+	test("accepts ai source", () => {
+		const result = createContextSchema.parse({
+			key: "test",
+			value: "test",
+			category: "client",
+			source: "ai",
+		});
+		assert.strictEqual(result.source, "ai");
+	});
+
 	test("accepts seed source", () => {
-		const result = createBusinessContextSchema.parse({
+		const result = createContextSchema.parse({
 			key: "test",
 			value: "test",
 			category: "client",
 			source: "seed",
 		});
 		assert.strictEqual(result.source, "seed");
+	});
+
+	test("accepts manual source", () => {
+		const result = createContextSchema.parse({
+			key: "test",
+			value: "test",
+			category: "client",
+			source: "manual",
+		});
+		assert.strictEqual(result.source, "manual");
+	});
+});
+
+// ── updateContextSchema ─────────────────────────────────────────────────────
+
+describe("updateContextSchema", () => {
+	test("validates correct input", () => {
+		const result = updateContextSchema.parse({ id: "ctx-1" });
+		assert.strictEqual(result.id, "ctx-1");
+	});
+
+	test("rejects missing id", () => {
+		assert.throws(() => updateContextSchema.parse({}));
+	});
+
+	test("accepts partial updates", () => {
+		const result = updateContextSchema.parse({
+			id: "ctx-1",
+			value: "new value",
+		});
+		assert.strictEqual(result.value, "new value");
+	});
+});
+
+// ── deleteContextSchema ─────────────────────────────────────────────────────
+
+describe("deleteContextSchema", () => {
+	test("validates correct input", () => {
+		const result = deleteContextSchema.parse({ id: "ctx-1" });
+		assert.strictEqual(result.id, "ctx-1");
+	});
+
+	test("rejects missing id", () => {
+		assert.throws(() => deleteContextSchema.parse({}));
+	});
+});
+
+// ── searchContextSchema ─────────────────────────────────────────────────────
+
+describe("searchContextSchema", () => {
+	test("validates correct input", () => {
+		const result = searchContextSchema.parse({ query: "acme" });
+		assert.strictEqual(result.query, "acme");
+		assert.strictEqual(result.limit, 10);
+	});
+
+	test("rejects empty query", () => {
+		assert.throws(() => searchContextSchema.parse({ query: "" }));
+	});
+
+	test("rejects missing query", () => {
+		assert.throws(() => searchContextSchema.parse({}));
+	});
+
+	test("accepts optional category filter", () => {
+		const result = searchContextSchema.parse({
+			query: "acme",
+			category: "client",
+		});
+		assert.strictEqual(result.category, "client");
 	});
 });
 
@@ -455,6 +529,58 @@ describe("searchJobsSchema", () => {
 	});
 });
 
+// ── webSearchSchema ──────────────────────────────────────────────────────────
+
+describe("webSearchSchema", () => {
+	test("validates correct input", () => {
+		const result = webSearchSchema.parse({ query: "latest AI news" });
+		assert.strictEqual(result.query, "latest AI news");
+		assert.strictEqual(result.maxResults, 5); // default
+	});
+
+	test("rejects empty query", () => {
+		assert.throws(() => webSearchSchema.parse({ query: "" }));
+	});
+
+	test("rejects missing query", () => {
+		assert.throws(() => webSearchSchema.parse({}));
+	});
+
+	test("defaults maxResults to 5", () => {
+		const result = webSearchSchema.parse({ query: "test" });
+		assert.strictEqual(result.maxResults, 5);
+	});
+
+	test("accepts custom maxResults within limit", () => {
+		const result = webSearchSchema.parse({ query: "test", maxResults: 8 });
+		assert.strictEqual(result.maxResults, 8);
+	});
+
+	test("rejects maxResults > 10", () => {
+		assert.throws(() =>
+			webSearchSchema.parse({ query: "test", maxResults: 11 }),
+		);
+	});
+
+	test("rejects zero maxResults", () => {
+		assert.throws(() =>
+			webSearchSchema.parse({ query: "test", maxResults: 0 }),
+		);
+	});
+
+	test("rejects negative maxResults", () => {
+		assert.throws(() =>
+			webSearchSchema.parse({ query: "test", maxResults: -1 }),
+		);
+	});
+
+	test("rejects non-integer maxResults", () => {
+		assert.throws(() =>
+			webSearchSchema.parse({ query: "test", maxResults: 1.5 }),
+		);
+	});
+});
+
 // ── toolSchemas registry ─────────────────────────────────────────────────────
 
 describe("toolSchemas registry", () => {
@@ -470,15 +596,19 @@ describe("toolSchemas registry", () => {
 			"create_deal",
 			"update_deal",
 			"get_conversation_history",
-			"get_business_context",
-			"create_business_context",
+			"get_context",
+			"create_context",
+			"update_context",
+			"delete_context",
+			"search_context",
 			"search_jobs",
+			"web_search",
 		];
 
 		for (const name of expectedTools) {
 			assert.ok(toolSchemas[name], `Missing schema for ${name}`);
 		}
-		assert.strictEqual(Object.keys(toolSchemas).length, 13);
+		assert.strictEqual(Object.keys(toolSchemas).length, 17);
 	});
 
 	test("each schema is a Zod schema with parse method", () => {

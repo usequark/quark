@@ -141,16 +141,29 @@ describe("handleContextExtraction", () => {
 		assert.strictEqual(globalThis.fetch.mock.callCount(), 1);
 		const callArgs = globalThis.fetch.mock.calls[0].arguments;
 		const body = JSON.parse(callArgs[1].body);
-		assert.strictEqual(body.model, "anthropic/claude-3.5-sonnet");
-		assert.ok(body.messages.length >= 2);
+		assert.strictEqual(body.model, "deepseek/deepseek-v4-flash");
+		assert.strictEqual(body.messages.length, 1);
 	});
 
-	test("parses extracted contexts correctly", async () => {
-		setPrismaMock({
+	test("parses extracted contexts and saves to DB", async () => {
+		const mockSavedContext = {
+			id: "ctx-1",
+			key: "client.acme.industry",
+			value: "Technology",
+			category: "client",
+			source: "ai",
+			createdAt: new Date(),
+			updatedAt: new Date(),
+		};
+
+		const prisma = setPrismaMock({
 			aiMessage: {
 				findMany: mock.fn(async () => [
 					{ id: "m1", role: "user", content: "We work with Acme Corp in tech" },
 				]),
+			},
+			context: {
+				upsert: mock.fn(async () => mockSavedContext),
 			},
 		});
 
@@ -159,7 +172,6 @@ describe("handleContextExtraction", () => {
 				key: "client.acme.industry",
 				value: "Technology",
 				category: "client",
-				source: "learned",
 			},
 		];
 
@@ -180,6 +192,7 @@ describe("handleContextExtraction", () => {
 		assert.strictEqual(result.extracted, 1);
 		assert.strictEqual(result.contexts.length, 1);
 		assert.strictEqual(result.contexts[0].key, "client.acme.industry");
+		assert.strictEqual(prisma.context.upsert.mock.callCount(), 1);
 	});
 
 	test("handles extraction errors gracefully", async () => {
@@ -235,12 +248,25 @@ describe("handleContextExtraction", () => {
 		assert.strictEqual(result.error, "Failed to parse extraction result");
 	});
 
-	test("preserves seed source tag in extracted contexts", async () => {
-		setPrismaMock({
+	test("sets source to ai for extracted contexts", async () => {
+		const mockSavedContext = {
+			id: "ctx-1",
+			key: "client.acme",
+			value: "Acme Corp",
+			category: "client",
+			source: "ai",
+			createdAt: new Date(),
+			updatedAt: new Date(),
+		};
+
+		const prisma = setPrismaMock({
 			aiMessage: {
 				findMany: mock.fn(async () => [
 					{ id: "m1", role: "user", content: "Test" },
 				]),
+			},
+			context: {
+				upsert: mock.fn(async () => mockSavedContext),
 			},
 		});
 
@@ -249,7 +275,6 @@ describe("handleContextExtraction", () => {
 				key: "client.acme",
 				value: "Acme Corp",
 				category: "client",
-				source: "seed",
 			},
 		];
 
@@ -267,7 +292,8 @@ describe("handleContextExtraction", () => {
 		const job = makeBullJob({ conversationId: "conv-1" });
 
 		const result = await handleContextExtraction(job, logger);
-		assert.strictEqual(result.contexts[0].source, "seed");
+		assert.strictEqual(result.contexts[0].source, "ai");
+		assert.strictEqual(prisma.context.upsert.mock.callCount(), 1);
 	});
 
 	test("returns 0 extracted for empty array response", async () => {
@@ -295,5 +321,61 @@ describe("handleContextExtraction", () => {
 		const result = await handleContextExtraction(job, logger);
 		assert.strictEqual(result.extracted, 0);
 		assert.deepStrictEqual(result.contexts, []);
+	});
+
+	test("upserts context records to DB", async () => {
+		const mockSavedContext = {
+			id: "ctx-1",
+			key: "client.acme.industry",
+			value: "Technology",
+			category: "client",
+			source: "ai",
+			createdAt: new Date(),
+			updatedAt: new Date(),
+		};
+
+		const prisma = setPrismaMock({
+			aiMessage: {
+				findMany: mock.fn(async () => [
+					{ id: "m1", role: "user", content: "We work with Acme Corp in tech" },
+				]),
+			},
+			context: {
+				upsert: mock.fn(async () => mockSavedContext),
+			},
+		});
+
+		const extractedContexts = [
+			{
+				key: "client.acme.industry",
+				value: "Technology",
+				category: "client",
+			},
+		];
+
+		globalThis.fetch = mock.fn(async () => ({
+			status: 200,
+			ok: true,
+			json: async () => ({
+				choices: [{ message: { content: JSON.stringify(extractedContexts) } }],
+				usage: { prompt_tokens: 10, completion_tokens: 5 },
+			}),
+			headers: { get: () => null },
+		}));
+
+		const logger = createMockLogger();
+		const job = makeBullJob({ conversationId: "conv-1" });
+
+		await handleContextExtraction(job, logger);
+
+		assert.strictEqual(prisma.context.upsert.mock.callCount(), 1);
+		const upsertArgs = prisma.context.upsert.mock.calls[0].arguments[0];
+		assert.strictEqual(
+			upsertArgs.where.key_category.key,
+			"client.acme.industry",
+		);
+		assert.strictEqual(upsertArgs.where.key_category.category, "client");
+		assert.strictEqual(upsertArgs.create.key, "client.acme.industry");
+		assert.strictEqual(upsertArgs.create.value, "Technology");
 	});
 });
