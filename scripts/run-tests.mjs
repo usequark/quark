@@ -56,7 +56,13 @@ if (files.length === 0) {
 
 const result = spawnSync(
 	process.execPath,
-	["--import", "tsx/esm", "--test", ...files],
+	[
+		"--import",
+		"tsx/esm",
+		"--experimental-test-module-mocks",
+		"--test",
+		...files,
+	],
 	{
 		stdio: "inherit",
 	},
