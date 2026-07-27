@@ -1,5 +1,44 @@
 # @techstream/quark-create-app
 
+## 1.16.0
+
+### Minor Changes
+
+- [`c20e541`](https://github.com/Bobnoddle/quark/commit/c20e541b3c6690fda859b1c2b997b81ddea280bf) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - AI chat system, UI theming engine, SMS service, CRM package, and expanded deployment tooling
+
+  **@techstream/quark-core**
+
+  - New SMS service module with pluggable provider pattern (Twilio built-in, custom provider registry via `registerSmsProvider`)
+  - New admin authentication module (`admin-auth.js`) for admin-only route protection
+  - New database instrumentation module (`db-instrumentation.js`) with Prometheus metrics (`db-metrics.js`) for query monitoring
+  - Queue improvements: `addRepeatableJob` utility using atomic `upsertJobScheduler`, `dedupKey` support for job deduplication with configurable TTL, `removeOnComplete` retention settings
+  - Auth: `trustHost` auto-detection for Railway and non-localhost deployments
+  - Dependency: nodemailer ^7 → ^9
+
+  **@techstream/quark-create-app**
+
+  - AI chat system: persistent conversations with Claude-style UI (sidebar, message bubbles, streaming indicators), rate limiting, truncation, OpenCode integration, context extraction, permission-based tool routing with full test suites, `throw new Error` → `AppError` in handler
+  - UI theming engine: refactor all 20+ components to CSS custom properties, ship 8 design preset themes (brutalist-yellow, red-noir, editorial-coral, soft-wellness, playful-geometric, hyper-saturated, season-04, swiss-minimalist), design-system skill for AI agents
+  - CRM package: pipeline tracking with Kanban board, stage columns, client_admin role, config and validation
+  - OpenCode deployment templates: server config, agent prompts, skills (accessibility, audience-research, data-analysis, distribution, skill-builder), MCP tools (getTasks, getRelevantContext)
+  - Admin UI: new image picker component, sidebar redesign, theme toggle, db-health route, action toast notifications
+  - CMS: page builder drag-and-drop improvements, cover image field refactor, cms-public scaffold split for cleaner project structure
+  - Auth: PasswordInput with visibility toggle, trustHost detection in scaffolded auth config
+  - Umami analytics: Core Web Vitals tracking component, replay recorder component
+  - Config: environment validation for AI features, SEO indexing gate hardened (dual `NODE_ENV` + `ALLOW_INDEXING` check), `pnpm.overrides` restore in scaffolded package.json
+  - DB: conversation summary model, context model, AI/CRM model migrations, context.js utility with test suite
+  - Railway deployment: service validation before deploy, .env.railway.example template, check-loading script, deploy integration test fixes
+  - Security: Docker base image bump for CVE-2026-45447, Dockerfile `apk upgrade` stage, nodemailer bump
+
+- [#58](https://github.com/Bobnoddle/quark/pull/58) [`1b38b14`](https://github.com/Bobnoddle/quark/commit/1b38b140456470b4add3e9c2bde2f7bf3d16891b) Thanks [@Mattyfegan](https://github.com/Mattyfegan)! - Enhanced media management UI with inline image editing, drag-and-drop page builder improvements, and admin navigation updates
+
+### Patch Changes
+
+- [`1191466`](https://github.com/Bobnoddle/quark/commit/119146639f0e53028ebe0a999ecc3008dd23ce67) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Fix OpenRouter error classification and max-rounds behavior in AI worker
+
+  - **Error classification**: Change remaining `AppError` throws in the streaming code path to `ServiceError("OpenRouter", ...)` for proper external-service error handling (OpenRouter API errors, missing response body, retry exhaustion)
+  - **Graceful max-rounds**: Replace `throw new AppError` when the tool-calling loop exceeds 20 rounds with a graceful return that includes `truncated: true` and an assistant hint message, preventing conversation crashes
+
 ## 1.15.0
 
 ### Minor Changes
