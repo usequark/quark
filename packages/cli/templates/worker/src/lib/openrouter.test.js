@@ -43,7 +43,6 @@ function createMockResponse(status, body, headers = {}) {
 			get: (key) => headers[key] || null,
 		},
 		json: async () => body,
-		text: (_async) => JSON.stringify(body),
 		text: async () => JSON.stringify(body),
 	};
 }
