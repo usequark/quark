@@ -1,5 +1,7 @@
 export function isWebsiteIndexable(env = process.env) {
-	return env.ALLOW_INDEXING === "true";
+	const productionEnv = (env.NODE_ENV || "").toLowerCase() === "production";
+	const explicitAllow = (env.ALLOW_INDEXING || "").toLowerCase() === "true";
+	return productionEnv && explicitAllow;
 }
 
 export function getMetadataRobots(env = process.env) {
