@@ -33,8 +33,13 @@ function extractFormData(model, formData) {
 		const raw = formData.get(field.name);
 
 		if (raw === null || raw === "") {
-			// Optional fields can be null; required have default values handled by Prisma
-			if (!field.isRequired) data[field.name] = null;
+			if (field.isRequired && !field.hasDefaultValue) {
+				throw new Error(`${field.name} is required`);
+			}
+			// Prisma 7 rejects null for non-nullable fields with defaults —
+			// omit the field entirely so Prisma applies the default.
+			if (field.hasDefaultValue) continue;
+			data[field.name] = null;
 			continue;
 		}
 
@@ -62,6 +67,20 @@ function extractFormData(model, formData) {
 				data[field.name] = raw;
 		}
 	}
+
+	// Convert FK scalar fields to Prisma relation syntax.
+	// Prisma 7 rejects scalar FK fields (e.g. `clientId`) — they must be
+	// expressed as `client: { connect: { id: "..." } }`.
+	for (const field of model.fields) {
+		if (field.kind !== "scalar") continue;
+		if (field.name === "id") continue;
+		if (!field.name.endsWith("Id")) continue;
+		if (!(field.name in data) || data[field.name] === null) continue;
+		const relationName = field.name.charAt(0).toLowerCase() + field.name.slice(1, -2);
+		data[relationName] = { connect: { id: data[field.name] } };
+		delete data[field.name];
+	}
+
 	return data;
 }
 
