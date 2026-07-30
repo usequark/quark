@@ -1,7 +1,12 @@
-import { crmConfig } from "./config.js";
+import { DEFAULT_CRM_CONFIG, getCrmConfig } from "./config.js";
 
-export async function getPipelineSummary(prisma) {
-	const stages = crmConfig.pipelineStages;
+/**
+ * @param {object} prisma
+ * @param {typeof DEFAULT_CRM_CONFIG} [config]
+ */
+export async function getPipelineSummary(prisma, config) {
+	const cfg = config ?? (await getCrmConfig());
+	const stages = cfg.pipelineStages ?? DEFAULT_CRM_CONFIG.pipelineStages;
 
 	const groupings = await Promise.all(
 		stages.map(async (stageDef) => {

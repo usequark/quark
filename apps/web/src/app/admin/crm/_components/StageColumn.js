@@ -1,8 +1,15 @@
 "use client";
 
-import { crmConfig, formatCurrency } from "@techstream/quark-crm";
+import { formatCurrency } from "@techstream/quark-crm";
 
-export default function StageColumn({ stage, count, totalValue, children }) {
+export default function StageColumn({
+	stage,
+	count,
+	totalValue,
+	entityPluralLabel = "Deals",
+	currencyOpts = {},
+	children,
+}) {
 	const colorMap = {
 		default: "bg-border",
 		info: "bg-blue-500",
@@ -23,14 +30,14 @@ export default function StageColumn({ stage, count, totalValue, children }) {
 					<span className="text-xs text-text-faint tabular-nums">{count}</span>
 				</div>
 				<p className="text-xs text-text-faint tabular-nums mt-0.5">
-					{formatCurrency(totalValue)}
+					{formatCurrency(totalValue, currencyOpts)}
 				</p>
 			</div>
 			<div className="flex-1 p-2 space-y-2 min-h-[200px] overflow-auto">
 				{children}
 				{count === 0 && (
 					<p className="text-xs text-text-faint text-center py-4">
-						No {crmConfig.entityPluralLabel.toLowerCase()}
+						No {entityPluralLabel.toLowerCase()}
 					</p>
 				)}
 			</div>

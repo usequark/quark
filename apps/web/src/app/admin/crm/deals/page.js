@@ -1,6 +1,6 @@
 import {
-	crmConfig,
 	formatCurrency,
+	getCrmConfig,
 	getPipelineSummary,
 } from "@techstream/quark-crm";
 import { prisma } from "@techstream/quark-db";
@@ -13,11 +13,16 @@ import {
 } from "@techstream/quark-ui";
 import Link from "next/link";
 
-export const metadata = { title: crmConfig.entityPluralLabel };
+export async function generateMetadata() {
+	const config = await getCrmConfig();
+	return { title: config.entityPluralLabel };
+}
 
 export default async function DealsPage({ searchParams }) {
 	const { stage: activeStage } = await searchParams;
-	const pipeline = await getPipelineSummary(prisma).catch(() => null);
+	const config = await getCrmConfig();
+	const pipeline = await getPipelineSummary(prisma, config).catch(() => null);
+	const currencyOpts = { locale: config.locale, currency: config.currency };
 
 	return (
 		<div className="space-y-10">
@@ -42,10 +47,10 @@ export default async function DealsPage({ searchParams }) {
 					</div>
 					<div>
 						<h1 className="text-2xl font-bold tracking-tight text-text">
-							{crmConfig.entityPluralLabel}
+							{config.entityPluralLabel}
 						</h1>
 						<p className="mt-0.5 text-sm text-text-faint">
-							Pipeline and {crmConfig.entityLabel.toLowerCase()} management
+							Pipeline and {config.entityLabel.toLowerCase()} management
 						</p>
 					</div>
 				</div>
@@ -62,7 +67,7 @@ export default async function DealsPage({ searchParams }) {
 					href="/admin/crm/deals"
 					className="border border-border bg-surface px-3 py-1.5 text-sm font-medium text-text"
 				>
-					{crmConfig.entityPluralLabel}
+					{config.entityPluralLabel}
 				</Link>
 				<Link
 					href="/admin/crm/deals/pipeline"
@@ -72,7 +77,7 @@ export default async function DealsPage({ searchParams }) {
 				</Link>
 				<div className="ml-auto">
 					<Link href="/admin/crm/deals/new">
-						<Button size="sm">New {crmConfig.entityLabel}</Button>
+						<Button size="sm">New {config.entityLabel}</Button>
 					</Link>
 				</div>
 			</div>
@@ -81,7 +86,7 @@ export default async function DealsPage({ searchParams }) {
 				<div className="space-y-6">
 					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
 						{pipeline.stages.map((group) => {
-							const stageConfig = crmConfig.pipelineStages.find(
+							const stageConfig = config.pipelineStages.find(
 								(s) => s.key === group.stage,
 							);
 							const isActive = activeStage === group.stage;
@@ -103,10 +108,10 @@ export default async function DealsPage({ searchParams }) {
 												{group.count}
 											</p>
 											<p className="text-xs text-text-faint tabular-nums mt-1">
-												{formatCurrency(group.totalValue)}
+												{formatCurrency(group.totalValue, currencyOpts)}
 											</p>
 											<p className="text-xs text-text-faint tabular-nums">
-												est. {formatCurrency(group.expectedValue)}
+												est. {formatCurrency(group.expectedValue, currencyOpts)}
 											</p>
 										</CardContent>
 									</Card>
@@ -120,7 +125,7 @@ export default async function DealsPage({ searchParams }) {
 							.filter((g) => !activeStage || g.stage === activeStage)
 							.flatMap((group) =>
 								group.deals.map((deal) => {
-									const stageConfig = crmConfig.pipelineStages.find(
+									const stageConfig = config.pipelineStages.find(
 										(s) => s.key === deal.stage,
 									);
 									return (
@@ -136,7 +141,7 @@ export default async function DealsPage({ searchParams }) {
 												<p className="text-xs text-text-faint mt-0.5">
 													{deal.contact
 														? `${deal.contact.firstName} ${deal.contact.lastName}`
-														: `No ${crmConfig.actorLabel.toLowerCase()}`}
+														: `No ${config.actorLabel.toLowerCase()}`}
 													{deal.company && ` · ${deal.company.name}`}
 												</p>
 											</div>
@@ -147,7 +152,7 @@ export default async function DealsPage({ searchParams }) {
 													{stageConfig?.label ?? deal.stage}
 												</div>
 												<p className="text-sm font-semibold tabular-nums text-text">
-													{formatCurrency(Number(deal.value))}
+													{formatCurrency(Number(deal.value), currencyOpts)}
 												</p>
 												<p className="text-xs text-text-faint w-8 text-right">
 													{deal.probability}%

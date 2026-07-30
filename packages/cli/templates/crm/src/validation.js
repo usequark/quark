@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { crmConfig } from "./config.js";
+import { DEFAULT_CRM_CONFIG } from "./config.js";
 
 /**
  * Derive a human-readable label from a camelCase field key.
@@ -15,24 +15,31 @@ function humanize(key) {
 		.trim();
 }
 
-/** @returns {[string, ...string[]]} Current stage keys from config */
-function getStageKeys() {
-	const keys = crmConfig.pipelineStages.map((s) => s.key);
+/**
+ * @param {typeof DEFAULT_CRM_CONFIG} config
+ * @returns {[string, ...string[]]}
+ */
+function getStageKeys(config) {
+	const keys = (config.pipelineStages ?? []).map((s) => s.key);
 	if (keys.length === 0) return ["LEAD"];
 	return /** @type {[string, ...string[]]} */ (keys);
 }
 
-/** @returns {string} Default stage key (first pipeline stage) */
-function getDefaultStageKey() {
-	return crmConfig.pipelineStages[0]?.key ?? "LEAD";
+/**
+ * @param {typeof DEFAULT_CRM_CONFIG} config
+ * @returns {string}
+ */
+function getDefaultStageKey(config) {
+	return config.pipelineStages?.[0]?.key ?? "LEAD";
 }
 
 /**
  * Build a Zod schema field from a CRM field definition.
  * @param {object} field
+ * @param {typeof DEFAULT_CRM_CONFIG} config
  * @returns {z.ZodTypeAny}
  */
-function fieldToZod(field) {
+function fieldToZod(field, config) {
 	const label = field.label ?? humanize(field.key);
 
 	switch (field.type) {
@@ -66,10 +73,12 @@ function fieldToZod(field) {
 
 		case "select": {
 			if (field.key === "stage") {
+				const stageKeys = getStageKeys(config);
+				const defaultKey = getDefaultStageKey(config);
 				return z
 					.string()
-					.default(getDefaultStageKey())
-					.refine((val) => getStageKeys().includes(val), {
+					.default(defaultKey)
+					.refine((val) => stageKeys.includes(val), {
 						message: "Invalid stage for current pipeline configuration",
 					});
 			}
@@ -92,23 +101,45 @@ function fieldToZod(field) {
 /**
  * Generate a Zod object schema from CRM field definitions.
  * @param {Array<object>} fields
+ * @param {typeof DEFAULT_CRM_CONFIG} [config]
  * @returns {z.ZodObject<any>}
  */
-export function generateSchema(fields) {
+export function generateSchema(fields, config = DEFAULT_CRM_CONFIG) {
 	/** @type {Record<string, z.ZodTypeAny>} */
 	const shape = {};
 	for (const field of fields) {
 		if (!field?.key) continue;
-		shape[field.key] = fieldToZod(field);
+		shape[field.key] = fieldToZod(field, config);
 	}
 	return z.object(shape);
 }
 
-/** Contact/actor schema — generated from crmConfig.fields.actor */
-export const contactSchema = generateSchema(crmConfig.fields.actor);
+/** Contact/actor schema — generated from default config fields.actor */
+export const contactSchema = generateSchema(
+	DEFAULT_CRM_CONFIG.fields.actor,
+	DEFAULT_CRM_CONFIG,
+);
 
-/** Company/container schema — generated from crmConfig.fields.container */
-export const companySchema = generateSchema(crmConfig.fields.container);
+/** Company/container schema — generated from default config fields.container */
+export const companySchema = generateSchema(
+	DEFAULT_CRM_CONFIG.fields.container,
+	DEFAULT_CRM_CONFIG,
+);
 
-/** Deal/entity schema — generated from crmConfig.fields.entity */
-export const dealSchema = generateSchema(crmConfig.fields.entity);
+/** Deal/entity schema — generated from default config fields.entity */
+export const dealSchema = generateSchema(
+	DEFAULT_CRM_CONFIG.fields.entity,
+	DEFAULT_CRM_CONFIG,
+);
+
+/**
+ * Build schemas from a live config object (e.g. DB-backed).
+ * @param {typeof DEFAULT_CRM_CONFIG} config
+ */
+export function schemasFromConfig(config) {
+	return {
+		contact: generateSchema(config.fields.actor, config),
+		company: generateSchema(config.fields.container, config),
+		deal: generateSchema(config.fields.entity, config),
+	};
+}

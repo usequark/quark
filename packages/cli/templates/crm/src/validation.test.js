@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { crmConfig } from "./config.js";
+import { DEFAULT_CRM_CONFIG } from "./config.js";
 import {
 	companySchema,
 	contactSchema,
@@ -277,9 +277,9 @@ describe("generateSchema", () => {
 	});
 
 	it("matches named exports for entity/actor/container fields", () => {
-		const entity = generateSchema(crmConfig.fields.entity);
-		const actor = generateSchema(crmConfig.fields.actor);
-		const container = generateSchema(crmConfig.fields.container);
+		const entity = generateSchema(DEFAULT_CRM_CONFIG.fields.entity);
+		const actor = generateSchema(DEFAULT_CRM_CONFIG.fields.actor);
+		const container = generateSchema(DEFAULT_CRM_CONFIG.fields.container);
 
 		assert.ok(
 			entity.safeParse({ title: "X", value: 0, probability: 10 }).success,

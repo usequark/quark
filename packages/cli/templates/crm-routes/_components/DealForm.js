@@ -1,6 +1,5 @@
 "use client";
 
-import { crmConfig } from "@techstream/quark-crm";
 import { Button, Input, Label, Select, Textarea } from "@techstream/quark-ui";
 import Link from "next/link";
 import { useActionState } from "react";
@@ -20,12 +19,17 @@ function humanize(key) {
 		.trim();
 }
 
-export default function DealForm({ deal, contacts = [], companies = [] }) {
+export default function DealForm({
+	config,
+	deal,
+	contacts = [],
+	companies = [],
+}) {
 	const action = deal ? updateDeal.bind(null, deal.id) : createDeal;
 	const [state, dispatch] = useActionState(action, {});
 
-	const stageDefs = crmConfig.pipelineStages;
-	const fields = crmConfig.fields.entity;
+	const stageDefs = config.pipelineStages;
+	const fields = config.fields.entity;
 	const errors = state?.errors ?? {};
 	const defaultStage = stageDefs[0]?.key ?? "LEAD";
 
@@ -38,6 +42,7 @@ export default function DealForm({ deal, contacts = [], companies = [] }) {
 						field={field}
 						deal={deal}
 						errors={errors}
+						config={config}
 						stageDefs={stageDefs}
 						defaultStage={defaultStage}
 						contacts={contacts}
@@ -48,7 +53,7 @@ export default function DealForm({ deal, contacts = [], companies = [] }) {
 
 			<div className="flex items-center gap-3 pt-4 border-t border-border">
 				<Button type="submit">
-					{deal ? "Save Changes" : `Create ${crmConfig.entityLabel}`}
+					{deal ? "Save Changes" : `Create ${config.entityLabel}`}
 				</Button>
 				<Link
 					href="/admin/crm/deals"
@@ -65,13 +70,14 @@ function ConfigField({
 	field,
 	deal,
 	errors,
+	config,
 	stageDefs,
 	defaultStage,
 	contacts,
 	companies,
 }) {
 	const error = errors[field.key];
-	const label = resolveFieldLabel(field);
+	const label = resolveFieldLabel(field, config);
 
 	if (field.type === "textarea") {
 		return (
@@ -108,7 +114,7 @@ function ConfigField({
 		return (
 			<FieldWrapper label={label} error={error}>
 				<Select name={field.key} defaultValue={deal?.[field.key] ?? ""}>
-					<option value="">No {crmConfig.actorLabel}</option>
+					<option value="">No {config.actorLabel}</option>
 					{contacts.map((c) => (
 						<option key={c.id} value={c.id}>
 							{c.firstName} {c.lastName}
@@ -124,7 +130,7 @@ function ConfigField({
 		return (
 			<FieldWrapper label={label} error={error}>
 				<Select name={field.key} defaultValue={deal?.[field.key] ?? ""}>
-					<option value="">No {crmConfig.containerLabel}</option>
+					<option value="">No {config.containerLabel}</option>
 					{companies.map((c) => (
 						<option key={c.id} value={c.id}>
 							{c.name}
@@ -182,17 +188,17 @@ function ConfigField({
 				defaultValue={deal?.[field.key] ?? ""}
 				required={field.required}
 				placeholder={
-					field.key === "title" ? `e.g. ${crmConfig.entityLabel}` : undefined
+					field.key === "title" ? `e.g. ${config.entityLabel}` : undefined
 				}
 			/>
 		</FieldWrapper>
 	);
 }
 
-function resolveFieldLabel(field) {
+function resolveFieldLabel(field, config) {
 	if (field.label) return field.label;
-	if (field.relation === "actor") return crmConfig.actorLabel;
-	if (field.relation === "container") return crmConfig.containerLabel;
+	if (field.relation === "actor") return config.actorLabel;
+	if (field.relation === "container") return config.containerLabel;
 	return humanize(field.key);
 }
 

@@ -1,21 +1,16 @@
 "use client";
 
-import { crmConfig } from "@techstream/quark-crm";
 import { moveDealStage } from "../_actions/deals";
 import DealCard from "./DealCard";
 import StageColumn from "./StageColumn";
 
-export default function PipelineBoard({ stages }) {
-	const stageDefs = crmConfig.pipelineStages;
+export default function PipelineBoard({ config, stages }) {
+	const stageDefs = config.pipelineStages;
+	const currencyOpts = { locale: config.locale, currency: config.currency };
 
 	const stageMap = {};
 	for (const group of stages) {
 		stageMap[group.stage] = group;
-	}
-
-	const stageIndex = {};
-	for (let i = 0; i < stageDefs.length; i++) {
-		stageIndex[stageDefs[i].key] = i;
 	}
 
 	async function handleMove(dealId, newStage) {
@@ -38,6 +33,8 @@ export default function PipelineBoard({ stages }) {
 						stage={stageDef}
 						count={group.count}
 						totalValue={group.totalValue}
+						entityPluralLabel={config.entityPluralLabel}
+						currencyOpts={currencyOpts}
 					>
 						{group.deals.map((deal) => {
 							const availableTransitions =
@@ -57,6 +54,7 @@ export default function PipelineBoard({ stages }) {
 									deal={deal}
 									transitions={availableTransitions}
 									onMove={handleMove}
+									currencyOpts={currencyOpts}
 								/>
 							);
 						})}

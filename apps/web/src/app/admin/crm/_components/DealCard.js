@@ -4,7 +4,12 @@ import { formatCurrency } from "@techstream/quark-crm";
 import Link from "next/link";
 import { useTransition } from "react";
 
-export default function DealCard({ deal, transitions, onMove }) {
+export default function DealCard({
+	deal,
+	transitions,
+	onMove,
+	currencyOpts = {},
+}) {
 	const [pending, startTransition] = useTransition();
 
 	return (
@@ -31,7 +36,7 @@ export default function DealCard({ deal, transitions, onMove }) {
 
 			<div className="mt-2 flex items-center justify-between">
 				<span className="text-sm font-semibold tabular-nums text-text">
-					{formatCurrency(Number(deal.value))}
+					{formatCurrency(Number(deal.value), currencyOpts)}
 				</span>
 				<span className="text-xs text-text-faint">{deal.probability}%</span>
 			</div>

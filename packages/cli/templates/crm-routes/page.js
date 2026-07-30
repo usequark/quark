@@ -1,6 +1,6 @@
 import {
-	crmConfig,
 	formatCurrency,
+	getCrmConfig,
 	getPipelineSummary,
 } from "@techstream/quark-crm";
 import { prisma } from "@techstream/quark-db";
@@ -16,11 +16,13 @@ import Link from "next/link";
 export const metadata = { title: "CRM" };
 
 export default async function CrmDashboard() {
-	const pipeline = await getPipelineSummary(prisma).catch(() => null);
+	const config = await getCrmConfig();
+	const pipeline = await getPipelineSummary(prisma, config).catch(() => null);
 
 	const contactCount = await prisma.contact.count();
 
-	const zeroCurrency = formatCurrency(0);
+	const currencyOpts = { locale: config.locale, currency: config.currency };
+	const zeroCurrency = formatCurrency(0, currencyOpts);
 
 	return (
 		<div className="space-y-10">
@@ -46,9 +48,9 @@ export default async function CrmDashboard() {
 					<div>
 						<h1 className="text-2xl font-bold tracking-tight text-text">CRM</h1>
 						<p className="mt-0.5 text-sm text-text-faint">
-							Manage {crmConfig.actorPluralLabel.toLowerCase()},{" "}
-							{crmConfig.containerPluralLabel.toLowerCase()}, and{" "}
-							{crmConfig.entityPluralLabel.toLowerCase()}
+							Manage {config.actorPluralLabel.toLowerCase()},{" "}
+							{config.containerPluralLabel.toLowerCase()}, and{" "}
+							{config.entityPluralLabel.toLowerCase()}
 						</p>
 					</div>
 				</div>
@@ -65,25 +67,25 @@ export default async function CrmDashboard() {
 					href="/admin/crm/deals"
 					className="border border-border px-3 py-1.5 text-sm font-medium text-text-muted hover:bg-surface-hover hover:text-text"
 				>
-					{crmConfig.entityPluralLabel}
+					{config.entityPluralLabel}
 				</Link>
 				<Link
 					href="/admin/contact"
 					className="border border-border px-3 py-1.5 text-sm font-medium text-text-muted hover:bg-surface-hover hover:text-text"
 				>
-					{crmConfig.actorPluralLabel}
+					{config.actorPluralLabel}
 				</Link>
 				<Link
 					href="/admin/company"
 					className="border border-border px-3 py-1.5 text-sm font-medium text-text-muted hover:bg-surface-hover hover:text-text"
 				>
-					{crmConfig.containerPluralLabel}
+					{config.containerPluralLabel}
 				</Link>
 			</div>
 
 			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
 				<StatCard
-					label={`Total ${crmConfig.entityPluralLabel}`}
+					label={`Total ${config.entityPluralLabel}`}
 					value={pipeline?.stages.reduce((s, g) => s + g.count, 0) ?? 0}
 					sub="across all stages"
 				/>
@@ -91,22 +93,22 @@ export default async function CrmDashboard() {
 					label="Pipeline Value"
 					value={
 						pipeline
-							? formatCurrency(pipeline.totalPipelineValue)
+							? formatCurrency(pipeline.totalPipelineValue, currencyOpts)
 							: zeroCurrency
 					}
-					sub={`active ${crmConfig.entityPluralLabel.toLowerCase()}`}
+					sub={`active ${config.entityPluralLabel.toLowerCase()}`}
 				/>
 				<StatCard
 					label="Expected Value"
 					value={
 						pipeline
-							? formatCurrency(pipeline.totalExpectedValue)
+							? formatCurrency(pipeline.totalExpectedValue, currencyOpts)
 							: zeroCurrency
 					}
 					sub="probability-weighted"
 				/>
 				<StatCard
-					label={crmConfig.actorPluralLabel}
+					label={config.actorPluralLabel}
 					value={contactCount}
 					sub="people"
 				/>
@@ -123,7 +125,7 @@ export default async function CrmDashboard() {
 					</div>
 					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
 						{pipeline.stages.map((group) => {
-							const stageConfig = crmConfig.pipelineStages.find(
+							const stageConfig = config.pipelineStages.find(
 								(s) => s.key === group.stage,
 							);
 							return (
@@ -146,7 +148,7 @@ export default async function CrmDashboard() {
 												{group.count}
 											</p>
 											<p className="mt-auto text-xs text-text-faint tabular-nums">
-												{formatCurrency(group.totalValue)}
+												{formatCurrency(group.totalValue, currencyOpts)}
 											</p>
 										</CardContent>
 									</Card>
@@ -159,16 +161,16 @@ export default async function CrmDashboard() {
 
 			<div className="flex gap-4">
 				<Link href="/admin/crm/deals/new">
-					<Button size="sm">New {crmConfig.entityLabel}</Button>
+					<Button size="sm">New {config.entityLabel}</Button>
 				</Link>
 				<Link href="/admin/contact/new">
 					<Button size="sm" variant="secondary">
-						New {crmConfig.actorLabel}
+						New {config.actorLabel}
 					</Button>
 				</Link>
 				<Link href="/admin/company/new">
 					<Button size="sm" variant="secondary">
-						New {crmConfig.containerLabel}
+						New {config.containerLabel}
 					</Button>
 				</Link>
 			</div>

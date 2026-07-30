@@ -1,15 +1,21 @@
 "use server";
 
-import { dealSchema } from "@techstream/quark-crm";
+import { getCrmConfig, schemasFromConfig } from "@techstream/quark-crm";
 import { prisma } from "@techstream/quark-db";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth-middleware";
 
+async function getDealSchema() {
+	const config = await getCrmConfig();
+	return schemasFromConfig(config).deal;
+}
+
 export async function createDeal(_prevState, formData) {
 	await requireRole(["admin", "editor"]);
 
 	const raw = Object.fromEntries(formData.entries());
+	const dealSchema = await getDealSchema();
 	const parsed = dealSchema.safeParse(raw);
 	if (!parsed.success) {
 		return { errors: parsed.error.flatten().fieldErrors };
@@ -47,6 +53,7 @@ export async function updateDeal(id, _prevState, formData) {
 	await requireRole(["admin", "editor"]);
 
 	const raw = Object.fromEntries(formData.entries());
+	const dealSchema = await getDealSchema();
 	const parsed = dealSchema.safeParse(raw);
 	if (!parsed.success) {
 		return { errors: parsed.error.flatten().fieldErrors };

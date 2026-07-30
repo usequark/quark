@@ -1,4 +1,4 @@
-import { crmConfig, getPipelineSummary } from "@techstream/quark-crm";
+import { getCrmConfig, getPipelineSummary } from "@techstream/quark-crm";
 import { prisma } from "@techstream/quark-db";
 import { Button } from "@techstream/quark-ui";
 import Link from "next/link";
@@ -7,7 +7,8 @@ import PipelineBoard from "../../_components/PipelineBoard";
 export const metadata = { title: "Pipeline Board" };
 
 export default async function PipelineBoardPage() {
-	const pipeline = await getPipelineSummary(prisma).catch(() => null);
+	const config = await getCrmConfig();
+	const pipeline = await getPipelineSummary(prisma, config).catch(() => null);
 
 	return (
 		<div className="space-y-6">
@@ -17,7 +18,7 @@ export default async function PipelineBoardPage() {
 						Pipeline Board
 					</h1>
 					<p className="mt-0.5 text-sm text-text-faint">
-						Move {crmConfig.entityPluralLabel.toLowerCase()} between stages to
+						Move {config.entityPluralLabel.toLowerCase()} between stages to
 						update their status
 					</p>
 				</div>
@@ -29,13 +30,13 @@ export default async function PipelineBoardPage() {
 						List View
 					</Link>
 					<Link href="/admin/crm/deals/new">
-						<Button size="sm">New {crmConfig.entityLabel}</Button>
+						<Button size="sm">New {config.entityLabel}</Button>
 					</Link>
 				</div>
 			</div>
 
 			{pipeline ? (
-				<PipelineBoard stages={pipeline.stages} />
+				<PipelineBoard config={config} stages={pipeline.stages} />
 			) : (
 				<div className="border border-border bg-surface p-8 text-center">
 					<p className="text-sm text-text-faint">

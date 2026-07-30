@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it, mock } from "node:test";
 
+import { DEFAULT_CRM_CONFIG } from "./config.js";
 import { getCompanyMetrics, getPipelineSummary } from "./queries.js";
 
 function mockPrisma(overrides = {}) {
@@ -21,7 +22,7 @@ function mockPrisma(overrides = {}) {
 describe("getPipelineSummary", () => {
 	it("returns empty stages when no deals exist", async () => {
 		const prisma = mockPrisma();
-		const result = await getPipelineSummary(prisma);
+		const result = await getPipelineSummary(prisma, DEFAULT_CRM_CONFIG);
 		assert.ok(Array.isArray(result.stages));
 		assert.equal(result.stages.length, 6); // 6 pipeline stages
 		assert.equal(result.totalPipelineValue, 0);
@@ -30,7 +31,7 @@ describe("getPipelineSummary", () => {
 
 	it("calls prisma.deal.findMany with correct stage filter", async () => {
 		const prisma = mockPrisma();
-		await getPipelineSummary(prisma);
+		await getPipelineSummary(prisma, DEFAULT_CRM_CONFIG);
 		const calls = prisma.deal.findMany.mock.calls;
 		// Should be called once per pipeline stage
 		assert.equal(calls.length, 6);
@@ -68,7 +69,7 @@ describe("getPipelineSummary", () => {
 			},
 		});
 
-		const result = await getPipelineSummary(prisma);
+		const result = await getPipelineSummary(prisma, DEFAULT_CRM_CONFIG);
 		const negotiationStage = result.stages.find(
 			(s) => s.stage === "NEGOTIATION",
 		);
@@ -110,7 +111,7 @@ describe("getPipelineSummary", () => {
 			},
 		});
 
-		const result = await getPipelineSummary(prisma);
+		const result = await getPipelineSummary(prisma, DEFAULT_CRM_CONFIG);
 		// Only QUALIFIED (30000) + NEGOTIATION (50000) should count
 		// LEAD has no deals, PROPOSAL has no deals, terminal stages excluded
 		assert.equal(result.totalPipelineValue, 80000);

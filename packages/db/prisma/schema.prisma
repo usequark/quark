@@ -38,7 +38,10 @@ model User {
   files         File[]
   pages         Page[]
   mediaAssets   MediaAsset[]
-  aiConversations AiConversation[]
+  aiConversations   AiConversation[]
+  aiToolPermissions AiToolPermission[]
+  aiToolEvents      AiToolEvent[]
+  aiWorkflows       AiWorkflow[]
   bookings      Booking[]
 
   @@index([email])
@@ -174,6 +177,7 @@ model Company {
   industry  String?
   size      String?
   notes     String?  @db.Text
+  metadata  Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -193,6 +197,7 @@ model Contact {
   phone      String?
   position   String?
   notes      String?  @db.Text
+  metadata   Json?
   companyId  String?
   company    Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
   createdAt  DateTime @default(now())
@@ -206,7 +211,7 @@ model Contact {
   @@index([lastName])
 }
 
-/// CRM: Deal - sales opportunity in a pipeline stage
+/// CRM: Deal - work item in a pipeline stage (sales deal, ticket, gift, etc.)
 model Deal {
   id               String    @id @default(cuid())
   title            String
@@ -215,6 +220,7 @@ model Deal {
   probability      Int       @default(10)
   expectedCloseDate DateTime?
   notes            String?   @db.Text
+  metadata         Json?
   contactId        String?
   contact     Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
   companyId   String?
@@ -226,6 +232,24 @@ model Deal {
   @@index([contactId])
   @@index([companyId])
   @@index([createdAt])
+}
+
+/// CRM: Global pipeline configuration (single-row table)
+model CrmConfig {
+  id              String   @id @default(cuid())
+  entityLabel     String   @default("Deal")
+  entityPlural    String   @default("Deals")
+  containerLabel  String   @default("Company")
+  containerPlural String   @default("Companies")
+  actorLabel      String   @default("Contact")
+  actorPlural     String   @default("Contacts")
+  pipelineStages  Json
+  currency        String   @default("USD")
+  locale          String   @default("en-US")
+  defaultPageSize Int      @default(25)
+  fields          Json
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 // ─── CMS Models ──────────────────────────────────────────────────────────────
@@ -350,6 +374,61 @@ model AiMessage {
 
   @@index([conversationId])
   @@index([role])
+  @@index([createdAt])
+}
+
+/// AI: Per-user tool permission overrides
+model AiToolPermission {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  toolName    String
+  accessLevel String   @default("auto") // "auto" | "confirm" | "disabled"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, toolName])
+  @@index([userId])
+}
+
+/// AI: Audit log for tool proposals, approvals, denials
+model AiToolEvent {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversationId String?
+  toolName       String
+  input          Json?
+  status         String // "proposed" | "approved" | "denied" | "timed_out" | "auto_executed" | "skipped"
+  reason         String? // "disabled" | "denied" | "timeout" | null
+  callId         String?  @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId])
+  @@index([conversationId])
+  @@index([toolName])
+  @@index([createdAt])
+}
+
+/// AI: Saved workflow definitions for the workflow engine
+model AiWorkflow {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  trigger     String   @default("manual") // "manual" | "event"
+  eventName   String?
+  steps       Json
+  enabled     Boolean  @default(true)
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  lastRunAt   DateTime?
+  lastResult  Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([enabled])
   @@index([createdAt])
 }
 
