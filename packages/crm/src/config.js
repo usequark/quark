@@ -1,5 +1,6 @@
 import { prisma } from "@techstream/quark-db";
-import { cache } from "react";
+
+const CONFIG_KEY = "crm";
 
 /**
  * Hardcoded defaults — used as fallback when no DB row exists,
@@ -99,159 +100,53 @@ export const DEFAULT_CRM_CONFIG = {
 };
 
 /**
- * Map a Prisma CrmConfig row to the app-facing config shape.
- * @param {object} row
- * @returns {typeof DEFAULT_CRM_CONFIG & { id?: string }}
+ * Load CRM config from AppConfig (key = "crm").
+ * Falls back to hardcoded defaults when no row exists.
+ * @returns {Promise<typeof DEFAULT_CRM_CONFIG>}
  */
-export function mapRowToConfig(row) {
+export async function getCrmConfig() {
+	const row = await prisma.appConfig.findUnique({
+		where: { key: CONFIG_KEY },
+	});
+	if (!row?.value || typeof row.value !== "object") {
+		return structuredClone(DEFAULT_CRM_CONFIG);
+	}
 	return {
-		id: row.id,
-		entityLabel: row.entityLabel,
-		entityPluralLabel: row.entityPlural,
-		containerLabel: row.containerLabel,
-		containerPluralLabel: row.containerPlural,
-		actorLabel: row.actorLabel,
-		actorPluralLabel: row.actorPlural,
-		pipelineStages: Array.isArray(row.pipelineStages)
-			? row.pipelineStages
-			: DEFAULT_CRM_CONFIG.pipelineStages,
-		currency: row.currency,
-		locale: row.locale,
-		defaultPageSize: row.defaultPageSize,
-		fields:
-			row.fields && typeof row.fields === "object"
-				? row.fields
-				: DEFAULT_CRM_CONFIG.fields,
+		...structuredClone(DEFAULT_CRM_CONFIG),
+		...row.value,
+		fields: {
+			...DEFAULT_CRM_CONFIG.fields,
+			...(row.value.fields ?? {}),
+		},
 	};
 }
 
 /**
- * Map app-facing config (or partial update) to Prisma create/update data.
+ * Upsert CRM config under AppConfig key "crm".
+ * Merges partial updates with the current config.
  * @param {Partial<typeof DEFAULT_CRM_CONFIG> & Record<string, unknown>} data
- * @returns {object}
+ * @returns {Promise<typeof DEFAULT_CRM_CONFIG>}
  */
-export function mapConfigToRow(data) {
-	/** @type {Record<string, unknown>} */
-	const row = {};
+export async function updateCrmConfig(data) {
+	const current = await getCrmConfig();
+	const next = {
+		...current,
+		...data,
+		fields: data.fields
+			? {
+					...current.fields,
+					...data.fields,
+				}
+			: current.fields,
+	};
 
-	if (data.entityLabel !== undefined) row.entityLabel = data.entityLabel;
-	if (data.entityPluralLabel !== undefined)
-		row.entityPlural = data.entityPluralLabel;
-	if (data.entityPlural !== undefined) row.entityPlural = data.entityPlural;
-	if (data.containerLabel !== undefined)
-		row.containerLabel = data.containerLabel;
-	if (data.containerPluralLabel !== undefined)
-		row.containerPlural = data.containerPluralLabel;
-	if (data.containerPlural !== undefined)
-		row.containerPlural = data.containerPlural;
-	if (data.actorLabel !== undefined) row.actorLabel = data.actorLabel;
-	if (data.actorPluralLabel !== undefined)
-		row.actorPlural = data.actorPluralLabel;
-	if (data.actorPlural !== undefined) row.actorPlural = data.actorPlural;
-	if (data.pipelineStages !== undefined)
-		row.pipelineStages = data.pipelineStages;
-	if (data.currency !== undefined) row.currency = data.currency;
-	if (data.locale !== undefined) row.locale = data.locale;
-	if (data.defaultPageSize !== undefined)
-		row.defaultPageSize = data.defaultPageSize;
-	if (data.fields !== undefined) row.fields = data.fields;
-
-	return row;
-}
-
-/**
- * Load CRM config from DB via the given Prisma client.
- * Falls back to hardcoded defaults when no row exists or DB is unavailable.
- * @param {object} [db] Prisma client (defaults to shared singleton)
- * @returns {Promise<typeof DEFAULT_CRM_CONFIG & { id?: string }>}
- */
-export async function loadCrmConfig(db = prisma) {
-	try {
-		const row = await db.crmConfig.findFirst({
-			orderBy: { createdAt: "asc" },
-		});
-		if (!row) {
-			return structuredClone(DEFAULT_CRM_CONFIG);
-		}
-		return mapRowToConfig(row);
-	} catch {
-		return structuredClone(DEFAULT_CRM_CONFIG);
-	}
-}
-
-/**
- * Per-request deduped CRM config loader (React cache).
- * @returns {Promise<typeof DEFAULT_CRM_CONFIG & { id?: string }>}
- */
-export const getCrmConfig = cache(async () => loadCrmConfig(prisma));
-
-/**
- * Upsert the single global CRM config row.
- * @param {Partial<typeof DEFAULT_CRM_CONFIG> & Record<string, unknown>} data
- * @param {object} [db] Prisma client
- * @returns {Promise<typeof DEFAULT_CRM_CONFIG & { id?: string }>}
- */
-export async function updateCrmConfig(data, db = prisma) {
-	const existing = await db.crmConfig.findFirst({
-		orderBy: { createdAt: "asc" },
+	const row = await prisma.appConfig.upsert({
+		where: { key: CONFIG_KEY },
+		update: { value: next },
+		create: { key: CONFIG_KEY, value: next },
 	});
 
-	const rowData = mapConfigToRow(data);
-
-	if (existing) {
-		const updated = await db.crmConfig.update({
-			where: { id: existing.id },
-			data: rowData,
-		});
-		return mapRowToConfig(updated);
-	}
-
-	const created = await db.crmConfig.create({
-		data: {
-			entityLabel: DEFAULT_CRM_CONFIG.entityLabel,
-			entityPlural: DEFAULT_CRM_CONFIG.entityPluralLabel,
-			containerLabel: DEFAULT_CRM_CONFIG.containerLabel,
-			containerPlural: DEFAULT_CRM_CONFIG.containerPluralLabel,
-			actorLabel: DEFAULT_CRM_CONFIG.actorLabel,
-			actorPlural: DEFAULT_CRM_CONFIG.actorPluralLabel,
-			pipelineStages: DEFAULT_CRM_CONFIG.pipelineStages,
-			currency: DEFAULT_CRM_CONFIG.currency,
-			locale: DEFAULT_CRM_CONFIG.locale,
-			defaultPageSize: DEFAULT_CRM_CONFIG.defaultPageSize,
-			fields: DEFAULT_CRM_CONFIG.fields,
-			...rowData,
-		},
-	});
-	return mapRowToConfig(created);
-}
-
-/**
- * Ensure a CrmConfig row exists, creating one from defaults if missing.
- * @param {object} [db]
- * @returns {Promise<typeof DEFAULT_CRM_CONFIG & { id?: string }>}
- */
-export async function ensureCrmConfig(db = prisma) {
-	const existing = await db.crmConfig.findFirst({
-		orderBy: { createdAt: "asc" },
-	});
-	if (existing) return mapRowToConfig(existing);
-
-	const created = await db.crmConfig.create({
-		data: {
-			entityLabel: DEFAULT_CRM_CONFIG.entityLabel,
-			entityPlural: DEFAULT_CRM_CONFIG.entityPluralLabel,
-			containerLabel: DEFAULT_CRM_CONFIG.containerLabel,
-			containerPlural: DEFAULT_CRM_CONFIG.containerPluralLabel,
-			actorLabel: DEFAULT_CRM_CONFIG.actorLabel,
-			actorPlural: DEFAULT_CRM_CONFIG.actorPluralLabel,
-			pipelineStages: DEFAULT_CRM_CONFIG.pipelineStages,
-			currency: DEFAULT_CRM_CONFIG.currency,
-			locale: DEFAULT_CRM_CONFIG.locale,
-			defaultPageSize: DEFAULT_CRM_CONFIG.defaultPageSize,
-			fields: DEFAULT_CRM_CONFIG.fields,
-		},
-	});
-	return mapRowToConfig(created);
+	return row.value;
 }
 
 /**

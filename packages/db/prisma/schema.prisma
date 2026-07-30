@@ -234,22 +234,13 @@ model Deal {
   @@index([createdAt])
 }
 
-/// CRM: Global pipeline configuration (single-row table)
-model CrmConfig {
-  id              String   @id @default(cuid())
-  entityLabel     String   @default("Deal")
-  entityPlural    String   @default("Deals")
-  containerLabel  String   @default("Company")
-  containerPlural String   @default("Companies")
-  actorLabel      String   @default("Contact")
-  actorPlural     String   @default("Contacts")
-  pipelineStages  Json
-  currency        String   @default("USD")
-  locale          String   @default("en-US")
-  defaultPageSize Int      @default(25)
-  fields          Json
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+/// Generic key-value application configuration
+model AppConfig {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
 }
 
 // ─── CMS Models ──────────────────────────────────────────────────────────────

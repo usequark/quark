@@ -1,12 +1,10 @@
 import assert from "node:assert/strict";
-import { describe, it, mock } from "node:test";
+import { afterEach, beforeEach, describe, it, mock } from "node:test";
 
 import {
 	DEFAULT_CRM_CONFIG,
 	formatCurrency,
-	loadCrmConfig,
-	mapConfigToRow,
-	mapRowToConfig,
+	getCrmConfig,
 	updateCrmConfig,
 } from "./config.js";
 
@@ -154,189 +152,146 @@ describe("DEFAULT_CRM_CONFIG", () => {
 	});
 });
 
-describe("mapRowToConfig / mapConfigToRow", () => {
-	it("maps DB plural fields to *PluralLabel keys", () => {
-		const config = mapRowToConfig({
-			id: "cfg-1",
-			entityLabel: "Ticket",
-			entityPlural: "Tickets",
-			containerLabel: "Org",
-			containerPlural: "Orgs",
-			actorLabel: "Person",
-			actorPlural: "People",
-			pipelineStages: DEFAULT_CRM_CONFIG.pipelineStages,
-			currency: "EUR",
-			locale: "de-DE",
-			defaultPageSize: 50,
-			fields: DEFAULT_CRM_CONFIG.fields,
-		});
-
-		assert.equal(config.id, "cfg-1");
-		assert.equal(config.entityLabel, "Ticket");
-		assert.equal(config.entityPluralLabel, "Tickets");
-		assert.equal(config.containerPluralLabel, "Orgs");
-		assert.equal(config.actorPluralLabel, "People");
-		assert.equal(config.currency, "EUR");
-		assert.equal(config.defaultPageSize, 50);
-	});
-
-	it("maps *PluralLabel keys back to DB plural columns", () => {
-		const row = mapConfigToRow({
-			entityLabel: "Ticket",
-			entityPluralLabel: "Tickets",
-			actorPluralLabel: "People",
-			currency: "GBP",
-		});
-		assert.deepStrictEqual(row, {
-			entityLabel: "Ticket",
-			entityPlural: "Tickets",
-			actorPlural: "People",
-			currency: "GBP",
-		});
-	});
-});
-
-function mockCrmPrisma(overrides = {}) {
+function mockAppConfigPrisma(overrides = {}) {
 	return {
-		crmConfig: {
-			findFirst: mock.fn(async () => null),
-			create: mock.fn(async ({ data }) => ({
-				id: "new-id",
-				...data,
+		appConfig: {
+			findUnique: mock.fn(async () => null),
+			upsert: mock.fn(async ({ create, update }) => ({
+				id: "cfg-1",
+				key: "crm",
+				value: update?.value ?? create?.value,
 			})),
-			update: mock.fn(async ({ data }) => ({
-				id: "existing-id",
-				entityLabel: "Deal",
-				entityPlural: "Deals",
-				containerLabel: "Company",
-				containerPlural: "Companies",
-				actorLabel: "Contact",
-				actorPlural: "Contacts",
-				pipelineStages: DEFAULT_CRM_CONFIG.pipelineStages,
-				currency: "USD",
-				locale: "en-US",
-				defaultPageSize: 25,
-				fields: DEFAULT_CRM_CONFIG.fields,
-				...data,
-			})),
-			...overrides.crmConfig,
+			...overrides.appConfig,
 		},
 		...overrides,
 	};
 }
 
-describe("loadCrmConfig", () => {
-	it("returns defaults when no DB row exists", async () => {
-		const db = mockCrmPrisma();
-		const config = await loadCrmConfig(db);
+describe("getCrmConfig / updateCrmConfig", () => {
+	let originalPrisma;
+
+	beforeEach(() => {
+		originalPrisma = globalThis.__prisma;
+		delete globalThis.__prisma;
+	});
+
+	afterEach(() => {
+		if (originalPrisma !== undefined) {
+			globalThis.__prisma = originalPrisma;
+		} else {
+			delete globalThis.__prisma;
+		}
+	});
+
+	it("getCrmConfig returns defaults when no DB row exists", async () => {
+		const db = mockAppConfigPrisma();
+		globalThis.__prisma = db;
+
+		const config = await getCrmConfig();
 		assert.equal(config.entityLabel, DEFAULT_CRM_CONFIG.entityLabel);
 		assert.equal(
 			config.entityPluralLabel,
 			DEFAULT_CRM_CONFIG.entityPluralLabel,
 		);
 		assert.equal(config.pipelineStages.length, 6);
-		assert.equal(db.crmConfig.findFirst.mock.callCount(), 1);
+		assert.equal(db.appConfig.findUnique.mock.callCount(), 1);
+		assert.deepStrictEqual(db.appConfig.findUnique.mock.calls[0].arguments[0], {
+			where: { key: "crm" },
+		});
 	});
 
-	it("returns mapped row when DB row exists", async () => {
-		const db = mockCrmPrisma({
-			crmConfig: {
-				findFirst: mock.fn(async () => ({
+	it("getCrmConfig returns stored value when row exists", async () => {
+		const stored = {
+			entityLabel: "Opportunity",
+			entityPluralLabel: "Opportunities",
+			containerLabel: "Account",
+			containerPluralLabel: "Accounts",
+			actorLabel: "Lead",
+			actorPluralLabel: "Leads",
+			pipelineStages: [
+				{
+					key: "NEW",
+					label: "New",
+					color: "default",
+					probability: 5,
+					next: [],
+				},
+			],
+			currency: "GBP",
+			locale: "en-GB",
+			defaultPageSize: 10,
+			fields: DEFAULT_CRM_CONFIG.fields,
+		};
+
+		globalThis.__prisma = mockAppConfigPrisma({
+			appConfig: {
+				findUnique: mock.fn(async () => ({
 					id: "cfg-1",
-					entityLabel: "Opportunity",
-					entityPlural: "Opportunities",
-					containerLabel: "Account",
-					containerPlural: "Accounts",
-					actorLabel: "Lead",
-					actorPlural: "Leads",
-					pipelineStages: [
-						{
-							key: "NEW",
-							label: "New",
-							color: "default",
-							probability: 5,
-							next: [],
-						},
-					],
-					currency: "GBP",
-					locale: "en-GB",
-					defaultPageSize: 10,
-					fields: DEFAULT_CRM_CONFIG.fields,
+					key: "crm",
+					value: stored,
 				})),
 			},
 		});
 
-		const config = await loadCrmConfig(db);
-		assert.equal(config.id, "cfg-1");
+		const config = await getCrmConfig();
 		assert.equal(config.entityLabel, "Opportunity");
 		assert.equal(config.entityPluralLabel, "Opportunities");
 		assert.equal(config.pipelineStages[0].key, "NEW");
 		assert.equal(config.currency, "GBP");
 	});
 
-	it("falls back to defaults when prisma throws", async () => {
-		const db = mockCrmPrisma({
-			crmConfig: {
-				findFirst: mock.fn(async () => {
-					throw new Error("db down");
-				}),
-			},
-		});
-		const config = await loadCrmConfig(db);
-		assert.equal(config.entityLabel, DEFAULT_CRM_CONFIG.entityLabel);
-	});
-});
+	it("updateCrmConfig upserts merged config", async () => {
+		const findUnique = mock.fn(async () => null);
+		const upsert = mock.fn(async ({ create }) => ({
+			id: "new-id",
+			key: "crm",
+			value: create.value,
+		}));
 
-describe("updateCrmConfig", () => {
-	it("creates a row when none exists", async () => {
-		const db = mockCrmPrisma();
-		const config = await updateCrmConfig(
-			{ entityLabel: "Ticket", entityPluralLabel: "Tickets" },
-			db,
-		);
-		assert.equal(db.crmConfig.create.mock.callCount(), 1);
+		globalThis.__prisma = mockAppConfigPrisma({
+			appConfig: { findUnique, upsert },
+		});
+
+		const config = await updateCrmConfig({
+			entityLabel: "Ticket",
+			entityPluralLabel: "Tickets",
+		});
+
+		assert.equal(upsert.mock.callCount(), 1);
+		const args = upsert.mock.calls[0].arguments[0];
+		assert.deepStrictEqual(args.where, { key: "crm" });
+		assert.equal(args.create.key, "crm");
+		assert.equal(args.create.value.entityLabel, "Ticket");
+		assert.equal(args.create.value.entityPluralLabel, "Tickets");
+		assert.equal(args.create.value.currency, DEFAULT_CRM_CONFIG.currency);
 		assert.equal(config.entityLabel, "Ticket");
-		assert.equal(config.entityPluralLabel, "Tickets");
 	});
 
-	it("updates the existing row", async () => {
-		const db = mockCrmPrisma({
-			crmConfig: {
-				findFirst: mock.fn(async () => ({
-					id: "existing-id",
-					entityLabel: "Deal",
-					entityPlural: "Deals",
-					containerLabel: "Company",
-					containerPlural: "Companies",
-					actorLabel: "Contact",
-					actorPlural: "Contacts",
-					pipelineStages: DEFAULT_CRM_CONFIG.pipelineStages,
-					currency: "USD",
-					locale: "en-US",
-					defaultPageSize: 25,
-					fields: DEFAULT_CRM_CONFIG.fields,
-				})),
-				update: mock.fn(async ({ where, data }) => ({
-					id: where.id,
-					entityLabel: "Deal",
-					entityPlural: "Deals",
-					containerLabel: "Company",
-					containerPlural: "Companies",
-					actorLabel: "Contact",
-					actorPlural: "Contacts",
-					pipelineStages: DEFAULT_CRM_CONFIG.pipelineStages,
-					currency: "USD",
-					locale: "en-US",
-					defaultPageSize: 25,
-					fields: DEFAULT_CRM_CONFIG.fields,
-					...data,
-				})),
-			},
+	it("updateCrmConfig merges with existing row", async () => {
+		const existing = {
+			...DEFAULT_CRM_CONFIG,
+			entityLabel: "Deal",
+			currency: "USD",
+		};
+
+		const findUnique = mock.fn(async () => ({
+			id: "existing-id",
+			key: "crm",
+			value: existing,
+		}));
+		const upsert = mock.fn(async ({ update }) => ({
+			id: "existing-id",
+			key: "crm",
+			value: update.value,
+		}));
+
+		globalThis.__prisma = mockAppConfigPrisma({
+			appConfig: { findUnique, upsert },
 		});
 
-		const config = await updateCrmConfig({ currency: "JPY" }, db);
-		assert.equal(db.crmConfig.update.mock.callCount(), 1);
+		const config = await updateCrmConfig({ currency: "JPY" });
+		assert.equal(upsert.mock.callCount(), 1);
 		assert.equal(config.currency, "JPY");
-		assert.equal(config.id, "existing-id");
+		assert.equal(config.entityLabel, "Deal");
 	});
 });

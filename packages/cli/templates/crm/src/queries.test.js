@@ -140,7 +140,7 @@ describe("getCompanyMetrics", () => {
 
 	it("calls prisma.deal.count with correct filters", async () => {
 		const prisma = mockPrisma();
-		await getCompanyMetrics(prisma, "cmp-1");
+		await getCompanyMetrics(prisma, "cmp-1", DEFAULT_CRM_CONFIG);
 		// Two deal.count calls: active deals and won deals
 		assert.equal(prisma.deal.count.mock.callCount(), 2);
 		assert.deepStrictEqual(prisma.deal.count.mock.calls[0].arguments[0], {

@@ -114,24 +114,6 @@ export function generateSchema(fields, config = DEFAULT_CRM_CONFIG) {
 	return z.object(shape);
 }
 
-/** Contact/actor schema — generated from default config fields.actor */
-export const contactSchema = generateSchema(
-	DEFAULT_CRM_CONFIG.fields.actor,
-	DEFAULT_CRM_CONFIG,
-);
-
-/** Company/container schema — generated from default config fields.container */
-export const companySchema = generateSchema(
-	DEFAULT_CRM_CONFIG.fields.container,
-	DEFAULT_CRM_CONFIG,
-);
-
-/** Deal/entity schema — generated from default config fields.entity */
-export const dealSchema = generateSchema(
-	DEFAULT_CRM_CONFIG.fields.entity,
-	DEFAULT_CRM_CONFIG,
-);
-
 /**
  * Build schemas from a live config object (e.g. DB-backed).
  * @param {typeof DEFAULT_CRM_CONFIG} config

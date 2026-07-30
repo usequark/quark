@@ -1,5 +1,5 @@
 import { validateBody } from "@techstream/quark-core";
-import { ensureCrmConfig, updateCrmConfig } from "@techstream/quark-crm";
+import { getCrmConfig, updateCrmConfig } from "@techstream/quark-crm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireRole } from "@/lib/auth-middleware";
@@ -43,7 +43,7 @@ const updateConfigSchema = z.object({
 export async function GET(_request) {
 	try {
 		await requireRole(["admin", "editor"]);
-		const config = await ensureCrmConfig();
+		const config = await getCrmConfig();
 		return NextResponse.json({ data: config });
 	} catch (error) {
 		return handleError(error);

@@ -11,10 +11,13 @@ CREATE TYPE "JobStatus" AS ENUM ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'FAILED'
 CREATE TYPE "ContentStatus" AS ENUM ('DRAFT', 'PUBLISHED', 'ARCHIVED');
 
 -- CreateEnum
+CREATE TYPE "ContextSource" AS ENUM ('ai', 'seed', 'manual');
+
+-- CreateEnum
 CREATE TYPE "AiRole" AS ENUM ('user', 'assistant', 'system', 'tool');
 
 -- CreateEnum
-CREATE TYPE "ContextSource" AS ENUM ('ai', 'seed', 'manual');
+CREATE TYPE "BookingStatus" AS ENUM ('PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED', 'NO_SHOW');
 
 -- CreateTable
 CREATE TABLE "User" (
@@ -130,6 +133,7 @@ CREATE TABLE "Company" (
     "industry" TEXT,
     "size" TEXT,
     "notes" TEXT,
+    "metadata" JSONB,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -145,6 +149,7 @@ CREATE TABLE "Contact" (
     "phone" TEXT,
     "position" TEXT,
     "notes" TEXT,
+    "metadata" JSONB,
     "companyId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -161,6 +166,7 @@ CREATE TABLE "Deal" (
     "probability" INTEGER NOT NULL DEFAULT 10,
     "expectedCloseDate" TIMESTAMP(3),
     "notes" TEXT,
+    "metadata" JSONB,
     "contactId" TEXT,
     "companyId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -168,6 +174,20 @@ CREATE TABLE "Deal" (
 
     CONSTRAINT "Deal_pkey" PRIMARY KEY ("id")
 );
+
+-- CreateTable
+CREATE TABLE "AppConfig" (
+    "id" TEXT NOT NULL,
+    "key" TEXT NOT NULL,
+    "value" JSONB NOT NULL,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "AppConfig_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "AppConfig_key_key" ON "AppConfig"("key");
 
 -- CreateTable
 CREATE TABLE "Page" (
@@ -206,6 +226,19 @@ CREATE TABLE "MediaAsset" (
 );
 
 -- CreateTable
+CREATE TABLE "Context" (
+    "id" TEXT NOT NULL,
+    "key" TEXT NOT NULL,
+    "value" TEXT NOT NULL,
+    "category" TEXT NOT NULL,
+    "source" "ContextSource" NOT NULL DEFAULT 'ai',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Context_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "AiConversation" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL DEFAULT 'New Conversation',
@@ -234,6 +267,137 @@ CREATE TABLE "AiMessage" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "AiMessage_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "AiToolPermission" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "toolName" TEXT NOT NULL,
+    "accessLevel" TEXT NOT NULL DEFAULT 'auto',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "AiToolPermission_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "AiToolEvent" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "conversationId" TEXT,
+    "toolName" TEXT NOT NULL,
+    "input" JSONB,
+    "status" TEXT NOT NULL,
+    "reason" TEXT,
+    "callId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "AiToolEvent_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "AiWorkflow" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "trigger" TEXT NOT NULL DEFAULT 'manual',
+    "eventName" TEXT,
+    "steps" JSONB NOT NULL,
+    "enabled" BOOLEAN NOT NULL DEFAULT true,
+    "userId" TEXT,
+    "lastRunAt" TIMESTAMP(3),
+    "lastResult" JSONB,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "AiWorkflow_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Staff" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "title" TEXT,
+    "bio" TEXT,
+    "image" TEXT,
+    "active" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Staff_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "StaffService" (
+    "id" TEXT NOT NULL,
+    "staffId" TEXT NOT NULL,
+    "serviceId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "StaffService_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ServiceType" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "duration" INTEGER NOT NULL,
+    "price" DOUBLE PRECISION,
+    "currency" TEXT DEFAULT 'USD',
+    "color" TEXT,
+    "capacity" INTEGER NOT NULL DEFAULT 1,
+    "active" BOOLEAN NOT NULL DEFAULT true,
+    "image" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "ServiceType_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "AvailabilitySlot" (
+    "id" TEXT NOT NULL,
+    "serviceId" TEXT NOT NULL,
+    "slotScopeKey" TEXT NOT NULL,
+    "staffId" TEXT,
+    "startTime" TIMESTAMP(3) NOT NULL,
+    "endTime" TIMESTAMP(3) NOT NULL,
+    "capacity" INTEGER NOT NULL DEFAULT 1,
+    "bookedCount" INTEGER NOT NULL DEFAULT 0,
+    "active" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "AvailabilitySlot_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Booking" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT,
+    "slotId" TEXT NOT NULL,
+    "serviceTypeId" TEXT NOT NULL,
+    "staffId" TEXT,
+    "durationMinutes" INTEGER NOT NULL DEFAULT 30,
+    "name" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "phone" TEXT,
+    "notes" TEXT,
+    "customFields" JSONB,
+    "status" "BookingStatus" NOT NULL DEFAULT 'PENDING',
+    "cancelledAt" TIMESTAMP(3),
+    "cancelledReason" TEXT,
+    "cancelToken" TEXT,
+    "reminderSent" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Booking_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -369,6 +533,15 @@ CREATE INDEX "MediaAsset_mimeType_idx" ON "MediaAsset"("mimeType");
 CREATE INDEX "MediaAsset_createdAt_idx" ON "MediaAsset"("createdAt");
 
 -- CreateIndex
+CREATE INDEX "Context_category_idx" ON "Context"("category");
+
+-- CreateIndex
+CREATE INDEX "Context_source_idx" ON "Context"("source");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Context_key_category_key" ON "Context"("key", "category");
+
+-- CreateIndex
 CREATE INDEX "AiConversation_userId_idx" ON "AiConversation"("userId");
 
 -- CreateIndex
@@ -391,6 +564,87 @@ CREATE INDEX "AiMessage_role_idx" ON "AiMessage"("role");
 
 -- CreateIndex
 CREATE INDEX "AiMessage_createdAt_idx" ON "AiMessage"("createdAt");
+
+-- CreateIndex
+CREATE INDEX "AiToolPermission_userId_idx" ON "AiToolPermission"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "AiToolPermission_userId_toolName_key" ON "AiToolPermission"("userId", "toolName");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "AiToolEvent_callId_key" ON "AiToolEvent"("callId");
+
+-- CreateIndex
+CREATE INDEX "AiToolEvent_userId_idx" ON "AiToolEvent"("userId");
+
+-- CreateIndex
+CREATE INDEX "AiToolEvent_conversationId_idx" ON "AiToolEvent"("conversationId");
+
+-- CreateIndex
+CREATE INDEX "AiToolEvent_toolName_idx" ON "AiToolEvent"("toolName");
+
+-- CreateIndex
+CREATE INDEX "AiToolEvent_createdAt_idx" ON "AiToolEvent"("createdAt");
+
+-- CreateIndex
+CREATE INDEX "AiWorkflow_userId_idx" ON "AiWorkflow"("userId");
+
+-- CreateIndex
+CREATE INDEX "AiWorkflow_enabled_idx" ON "AiWorkflow"("enabled");
+
+-- CreateIndex
+CREATE INDEX "AiWorkflow_createdAt_idx" ON "AiWorkflow"("createdAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Staff_email_key" ON "Staff"("email");
+
+-- CreateIndex
+CREATE INDEX "Staff_active_idx" ON "Staff"("active");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "StaffService_staffId_serviceId_key" ON "StaffService"("staffId", "serviceId");
+
+-- CreateIndex
+CREATE INDEX "ServiceType_active_idx" ON "ServiceType"("active");
+
+-- CreateIndex
+CREATE INDEX "AvailabilitySlot_slotScopeKey_staffId_startTime_endTime_idx" ON "AvailabilitySlot"("slotScopeKey", "staffId", "startTime", "endTime");
+
+-- CreateIndex
+CREATE INDEX "AvailabilitySlot_serviceId_staffId_startTime_endTime_idx" ON "AvailabilitySlot"("serviceId", "staffId", "startTime", "endTime");
+
+-- CreateIndex
+CREATE INDEX "AvailabilitySlot_startTime_endTime_idx" ON "AvailabilitySlot"("startTime", "endTime");
+
+-- CreateIndex
+CREATE INDEX "AvailabilitySlot_active_startTime_idx" ON "AvailabilitySlot"("active", "startTime");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "AvailabilitySlot_serviceId_startTime_endTime_key" ON "AvailabilitySlot"("serviceId", "startTime", "endTime");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "AvailabilitySlot_slotScopeKey_startTime_endTime_key" ON "AvailabilitySlot"("slotScopeKey", "startTime", "endTime");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Booking_cancelToken_key" ON "Booking"("cancelToken");
+
+-- CreateIndex
+CREATE INDEX "Booking_userId_status_idx" ON "Booking"("userId", "status");
+
+-- CreateIndex
+CREATE INDEX "Booking_slotId_status_idx" ON "Booking"("slotId", "status");
+
+-- CreateIndex
+CREATE INDEX "Booking_email_status_idx" ON "Booking"("email", "status");
+
+-- CreateIndex
+CREATE INDEX "Booking_createdAt_idx" ON "Booking"("createdAt");
+
+-- CreateIndex
+CREATE INDEX "Booking_cancelToken_idx" ON "Booking"("cancelToken");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Booking_slotId_email_key" ON "Booking"("slotId", "email");
 
 -- AddForeignKey
 ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -425,144 +679,14 @@ ALTER TABLE "AiConversation" ADD CONSTRAINT "AiConversation_userId_fkey" FOREIGN
 -- AddForeignKey
 ALTER TABLE "AiMessage" ADD CONSTRAINT "AiMessage_conversationId_fkey" FOREIGN KEY ("conversationId") REFERENCES "AiConversation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
--- CreateEnum
-CREATE TYPE "BookingStatus" AS ENUM ('PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED', 'NO_SHOW');
+-- AddForeignKey
+ALTER TABLE "AiToolPermission" ADD CONSTRAINT "AiToolPermission_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
--- CreateTable
-CREATE TABLE "Staff" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "email" TEXT NOT NULL,
-    "title" TEXT,
-    "bio" TEXT,
-    "image" TEXT,
-    "active" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
+-- AddForeignKey
+ALTER TABLE "AiToolEvent" ADD CONSTRAINT "AiToolEvent_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
-    CONSTRAINT "Staff_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "StaffService" (
-    "id" TEXT NOT NULL,
-    "staffId" TEXT NOT NULL,
-    "serviceId" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "StaffService_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "ServiceType" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "description" TEXT,
-    "duration" INTEGER NOT NULL,
-    "price" DOUBLE PRECISION,
-    "currency" TEXT DEFAULT 'USD',
-    "color" TEXT,
-    "capacity" INTEGER NOT NULL DEFAULT 1,
-    "active" BOOLEAN NOT NULL DEFAULT true,
-    "image" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "ServiceType_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "AvailabilitySlot" (
-    "id" TEXT NOT NULL,
-    "serviceId" TEXT NOT NULL,
-    "slotScopeKey" TEXT NOT NULL,
-    "staffId" TEXT,
-    "startTime" TIMESTAMP(3) NOT NULL,
-    "endTime" TIMESTAMP(3) NOT NULL,
-    "capacity" INTEGER NOT NULL DEFAULT 1,
-    "bookedCount" INTEGER NOT NULL DEFAULT 0,
-    "active" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "AvailabilitySlot_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "Booking" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT,
-    "slotId" TEXT NOT NULL,
-    "serviceTypeId" TEXT NOT NULL,
-    "staffId" TEXT,
-    "durationMinutes" INTEGER NOT NULL DEFAULT 30,
-    "name" TEXT NOT NULL,
-    "email" TEXT NOT NULL,
-    "phone" TEXT,
-    "notes" TEXT,
-    "customFields" JSONB,
-    "status" "BookingStatus" NOT NULL DEFAULT 'PENDING',
-    "cancelledAt" TIMESTAMP(3),
-    "cancelledReason" TEXT,
-    "cancelToken" TEXT,
-    "reminderSent" BOOLEAN NOT NULL DEFAULT false,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "Booking_pkey" PRIMARY KEY ("id")
-);
-
--- CreateIndex
-CREATE UNIQUE INDEX "Staff_email_key" ON "Staff"("email");
-
--- CreateIndex
-CREATE INDEX "Staff_active_idx" ON "Staff"("active");
-
--- CreateIndex
-CREATE UNIQUE INDEX "StaffService_staffId_serviceId_key" ON "StaffService"("staffId", "serviceId");
-
--- CreateIndex
-CREATE INDEX "ServiceType_active_idx" ON "ServiceType"("active");
-
--- CreateIndex
-CREATE UNIQUE INDEX "AvailabilitySlot_serviceId_startTime_endTime_key" ON "AvailabilitySlot"("serviceId", "startTime", "endTime");
-
--- CreateIndex
-CREATE UNIQUE INDEX "AvailabilitySlot_slotScopeKey_startTime_endTime_key" ON "AvailabilitySlot"("slotScopeKey", "startTime", "endTime");
-
--- CreateIndex
-CREATE INDEX "AvailabilitySlot_slotScopeKey_staffId_startTime_endTime_idx" ON "AvailabilitySlot"("slotScopeKey", "staffId", "startTime", "endTime");
-
--- CreateIndex
-CREATE INDEX "AvailabilitySlot_serviceId_staffId_startTime_endTime_idx" ON "AvailabilitySlot"("serviceId", "staffId", "startTime", "endTime");
-
--- CreateIndex
-CREATE INDEX "AvailabilitySlot_startTime_endTime_idx" ON "AvailabilitySlot"("startTime", "endTime");
-
--- CreateIndex
-CREATE INDEX "AvailabilitySlot_active_startTime_idx" ON "AvailabilitySlot"("active", "startTime");
-
--- CreateIndex
-CREATE UNIQUE INDEX "Booking_cancelToken_key" ON "Booking"("cancelToken");
-
--- CreateIndex
-CREATE UNIQUE INDEX "Booking_slotId_email_key" ON "Booking"("slotId", "email");
-
--- CreateIndex
-CREATE INDEX "Booking_userId_status_idx" ON "Booking"("userId", "status");
-
--- CreateIndex
-CREATE INDEX "Booking_slotId_status_idx" ON "Booking"("slotId", "status");
-
--- CreateIndex
-CREATE INDEX "Booking_email_status_idx" ON "Booking"("email", "status");
-
--- CreateIndex
-CREATE INDEX "Booking_createdAt_idx" ON "Booking"("createdAt");
-
--- CreateIndex
-CREATE INDEX "Booking_cancelToken_idx" ON "Booking"("cancelToken");
+-- AddForeignKey
+ALTER TABLE "AiWorkflow" ADD CONSTRAINT "AiWorkflow_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "StaffService" ADD CONSTRAINT "StaffService_staffId_fkey" FOREIGN KEY ("staffId") REFERENCES "Staff"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -587,24 +711,4 @@ ALTER TABLE "Booking" ADD CONSTRAINT "Booking_serviceTypeId_fkey" FOREIGN KEY ("
 
 -- AddForeignKey
 ALTER TABLE "Booking" ADD CONSTRAINT "Booking_staffId_fkey" FOREIGN KEY ("staffId") REFERENCES "Staff"("id") ON DELETE SET NULL ON UPDATE CASCADE;
--- CreateTable
-CREATE TABLE "Context" (
-    "id" TEXT NOT NULL,
-    "key" TEXT NOT NULL,
-    "value" TEXT NOT NULL,
-    "category" TEXT NOT NULL,
-    "source" "ContextSource" NOT NULL DEFAULT 'ai',
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "Context_pkey" PRIMARY KEY ("id")
-);
-
--- CreateIndex
-CREATE UNIQUE INDEX "Context_key_category_key" ON "Context"("key", "category");
-
--- CreateIndex
-CREATE INDEX "Context_category_idx" ON "Context"("category");
-
--- CreateIndex
-CREATE INDEX "Context_source_idx" ON "Context"("source");

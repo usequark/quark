@@ -2,14 +2,15 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import { DEFAULT_CRM_CONFIG } from "./config.js";
-import {
-	companySchema,
-	contactSchema,
-	dealSchema,
-	generateSchema,
-} from "./validation.js";
+import { generateSchema, schemasFromConfig } from "./validation.js";
 
-describe("contactSchema", () => {
+const {
+	contact: contactSchema,
+	company: companySchema,
+	deal: dealSchema,
+} = schemasFromConfig(DEFAULT_CRM_CONFIG);
+
+describe("contactSchema (from schemasFromConfig)", () => {
 	it("accepts a minimal valid contact", () => {
 		const result = contactSchema.safeParse({
 			firstName: "Jane",
@@ -84,7 +85,7 @@ describe("contactSchema", () => {
 	});
 });
 
-describe("companySchema", () => {
+describe("companySchema (from schemasFromConfig)", () => {
 	it("accepts a minimal valid company", () => {
 		const result = companySchema.safeParse({ name: "Acme Corp" });
 		assert.ok(result.success);
@@ -123,7 +124,7 @@ describe("companySchema", () => {
 	});
 });
 
-describe("dealSchema", () => {
+describe("dealSchema (from schemasFromConfig)", () => {
 	it("accepts a minimal valid deal", () => {
 		const result = dealSchema.safeParse({
 			title: "Big Deal",
@@ -276,7 +277,7 @@ describe("generateSchema", () => {
 		);
 	});
 
-	it("matches named exports for entity/actor/container fields", () => {
+	it("matches schemasFromConfig for entity/actor/container fields", () => {
 		const entity = generateSchema(DEFAULT_CRM_CONFIG.fields.entity);
 		const actor = generateSchema(DEFAULT_CRM_CONFIG.fields.actor);
 		const container = generateSchema(DEFAULT_CRM_CONFIG.fields.container);
@@ -286,5 +287,37 @@ describe("generateSchema", () => {
 		);
 		assert.ok(actor.safeParse({ firstName: "A", lastName: "B" }).success);
 		assert.ok(container.safeParse({ name: "Co" }).success);
+	});
+
+	it("uses custom pipeline stages from config", () => {
+		const customConfig = {
+			...DEFAULT_CRM_CONFIG,
+			pipelineStages: [
+				{
+					key: "OPEN",
+					label: "Open",
+					color: "default",
+					probability: 50,
+					next: [],
+				},
+			],
+		};
+		const schema = generateSchema(customConfig.fields.entity, customConfig);
+		assert.ok(
+			schema.safeParse({
+				title: "X",
+				value: 0,
+				probability: 10,
+				stage: "OPEN",
+			}).success,
+		);
+		assert.ok(
+			!schema.safeParse({
+				title: "X",
+				value: 0,
+				probability: 10,
+				stage: "LEAD",
+			}).success,
+		);
 	});
 });
