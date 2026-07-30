@@ -1,6 +1,20 @@
 import { z } from "zod";
 import { crmConfig } from "./config.js";
 
+/**
+ * Derive a human-readable label from a camelCase field key.
+ * e.g. "firstName" → "First Name", "expectedCloseDate" → "Expected Close Date"
+ * @param {string} key
+ * @returns {string}
+ */
+function humanize(key) {
+	return key
+		.replace(/([A-Z])/g, " $1")
+		.replace(/^./, (s) => s.toUpperCase())
+		.replace(/Id$/, "")
+		.trim();
+}
+
 /** @returns {[string, ...string[]]} Current stage keys from config */
 function getStageKeys() {
 	const keys = crmConfig.pipelineStages.map((s) => s.key);
@@ -8,40 +22,93 @@ function getStageKeys() {
 	return /** @type {[string, ...string[]]} */ (keys);
 }
 
-export const contactSchema = z.object({
-	firstName: z.string().min(1, "First name is required"),
-	lastName: z.string().min(1, "Last name is required"),
-	email: z.string().email().optional().or(z.literal("")),
-	phone: z.string().optional().or(z.literal("")),
-	position: z.string().optional().or(z.literal("")),
-	notes: z.string().optional().or(z.literal("")),
-	companyId: z.string().optional().or(z.literal("")),
-});
+/** @returns {string} Default stage key (first pipeline stage) */
+function getDefaultStageKey() {
+	return crmConfig.pipelineStages[0]?.key ?? "LEAD";
+}
 
-export const companySchema = z.object({
-	name: z.string().min(1, "Company name is required"),
-	website: z.string().optional().or(z.literal("")),
-	industry: z.string().optional().or(z.literal("")),
-	size: z.string().optional().or(z.literal("")),
-	notes: z.string().optional().or(z.literal("")),
-});
+/**
+ * Build a Zod schema field from a CRM field definition.
+ * @param {object} field
+ * @returns {z.ZodTypeAny}
+ */
+function fieldToZod(field) {
+	const label = field.label ?? humanize(field.key);
 
-/** Deal schema — stage validation reads from crmConfig at parse time */
-export const dealSchema = z.object({
-	title: z.string().min(1, "Deal title is required"),
-	value: z.coerce.number().min(0).default(0),
-	stage: z
-		.string()
-		.default("LEAD")
-		.refine((val) => getStageKeys().includes(val), {
-			message: "Invalid stage for current pipeline configuration",
-		}),
-	probability: z.coerce.number().int().min(0).max(100).default(10),
-	expectedCloseDate: z
-		.string()
-		.optional()
-		.transform((v) => (v ? v : undefined)),
-	notes: z.string().optional().or(z.literal("")),
-	contactId: z.string().optional().or(z.literal("")),
-	companyId: z.string().optional().or(z.literal("")),
-});
+	switch (field.type) {
+		case "email": {
+			return z.string().email().optional().or(z.literal(""));
+		}
+
+		case "number": {
+			let schema = z.coerce.number();
+			if (field.integer) {
+				schema = schema.int();
+			}
+			if (typeof field.min === "number") {
+				schema = schema.min(field.min);
+			}
+			if (typeof field.max === "number") {
+				schema = schema.max(field.max);
+			}
+			if (field.default !== undefined) {
+				schema = schema.default(field.default);
+			}
+			return schema;
+		}
+
+		case "date": {
+			return z
+				.string()
+				.optional()
+				.transform((v) => (v ? v : undefined));
+		}
+
+		case "select": {
+			if (field.key === "stage") {
+				return z
+					.string()
+					.default(getDefaultStageKey())
+					.refine((val) => getStageKeys().includes(val), {
+						message: "Invalid stage for current pipeline configuration",
+					});
+			}
+			// Relation / plain selects — optional id strings
+			return z.string().optional().or(z.literal(""));
+		}
+
+		default: {
+			// text, textarea, and unknown string-like types
+			if (field.required) {
+				return z
+					.string({ message: `${label} is required` })
+					.min(1, `${label} is required`);
+			}
+			return z.string().optional().or(z.literal(""));
+		}
+	}
+}
+
+/**
+ * Generate a Zod object schema from CRM field definitions.
+ * @param {Array<object>} fields
+ * @returns {z.ZodObject<any>}
+ */
+export function generateSchema(fields) {
+	/** @type {Record<string, z.ZodTypeAny>} */
+	const shape = {};
+	for (const field of fields) {
+		if (!field?.key) continue;
+		shape[field.key] = fieldToZod(field);
+	}
+	return z.object(shape);
+}
+
+/** Contact/actor schema — generated from crmConfig.fields.actor */
+export const contactSchema = generateSchema(crmConfig.fields.actor);
+
+/** Company/container schema — generated from crmConfig.fields.container */
+export const companySchema = generateSchema(crmConfig.fields.container);
+
+/** Deal/entity schema — generated from crmConfig.fields.entity */
+export const dealSchema = generateSchema(crmConfig.fields.entity);

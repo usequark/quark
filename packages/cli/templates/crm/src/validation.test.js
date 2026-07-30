@@ -1,7 +1,13 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { companySchema, contactSchema, dealSchema } from "./validation.js";
+import { crmConfig } from "./config.js";
+import {
+	companySchema,
+	contactSchema,
+	dealSchema,
+	generateSchema,
+} from "./validation.js";
 
 describe("contactSchema", () => {
 	it("accepts a minimal valid contact", () => {
@@ -66,6 +72,16 @@ describe("contactSchema", () => {
 		});
 		assert.ok(result.success);
 	});
+
+	it("uses humanized key in required error messages", () => {
+		const result = contactSchema.safeParse({ lastName: "Doe" });
+		assert.ok(!result.success);
+		const message = result.error.issues[0]?.message ?? "";
+		assert.ok(
+			message.includes("First Name"),
+			`expected humanized label in message, got: ${message}`,
+		);
+	});
 });
 
 describe("companySchema", () => {
@@ -109,38 +125,42 @@ describe("companySchema", () => {
 
 describe("dealSchema", () => {
 	it("accepts a minimal valid deal", () => {
-		const result = dealSchema.safeParse({ title: "Big Deal" });
+		const result = dealSchema.safeParse({
+			title: "Big Deal",
+			value: 0,
+			probability: 10,
+		});
 		assert.ok(result.success);
 	});
 
 	it("rejects missing title", () => {
-		const result = dealSchema.safeParse({});
+		const result = dealSchema.safeParse({ value: 0, probability: 10 });
 		assert.ok(!result.success);
 	});
 
 	it("rejects empty title", () => {
-		const result = dealSchema.safeParse({ title: "" });
+		const result = dealSchema.safeParse({
+			title: "",
+			value: 0,
+			probability: 10,
+		});
 		assert.ok(!result.success);
 	});
 
 	it("defaults stage to LEAD", () => {
-		const result = dealSchema.parse({ title: "Test" });
+		const result = dealSchema.parse({
+			title: "Test",
+			value: 0,
+			probability: 10,
+		});
 		assert.equal(result.stage, "LEAD");
-	});
-
-	it("defaults value to 0", () => {
-		const result = dealSchema.parse({ title: "Test" });
-		assert.equal(result.value, 0);
-	});
-
-	it("defaults probability to 10", () => {
-		const result = dealSchema.parse({ title: "Test" });
-		assert.equal(result.probability, 10);
 	});
 
 	it("accepts a valid stage", () => {
 		const result = dealSchema.safeParse({
 			title: "Test",
+			value: 0,
+			probability: 10,
 			stage: "NEGOTIATION",
 		});
 		assert.ok(result.success);
@@ -149,34 +169,54 @@ describe("dealSchema", () => {
 	it("rejects an invalid stage", () => {
 		const result = dealSchema.safeParse({
 			title: "Test",
+			value: 0,
+			probability: 10,
 			stage: "INVALID_STAGE",
 		});
 		assert.ok(!result.success);
 	});
 
 	it("coerces string value to number", () => {
-		const result = dealSchema.parse({ title: "Test", value: "5000" });
+		const result = dealSchema.parse({
+			title: "Test",
+			value: "5000",
+			probability: 10,
+		});
 		assert.equal(result.value, 5000);
 	});
 
 	it("rejects negative value", () => {
-		const result = dealSchema.safeParse({ title: "Test", value: -100 });
+		const result = dealSchema.safeParse({
+			title: "Test",
+			value: -100,
+			probability: 10,
+		});
 		assert.ok(!result.success);
 	});
 
 	it("rejects probability below 0", () => {
-		const result = dealSchema.safeParse({ title: "Test", probability: -1 });
+		const result = dealSchema.safeParse({
+			title: "Test",
+			value: 0,
+			probability: -1,
+		});
 		assert.ok(!result.success);
 	});
 
 	it("rejects probability above 100", () => {
-		const result = dealSchema.safeParse({ title: "Test", probability: 101 });
+		const result = dealSchema.safeParse({
+			title: "Test",
+			value: 0,
+			probability: 101,
+		});
 		assert.ok(!result.success);
 	});
 
 	it("accepts optional contactId and companyId", () => {
 		const result = dealSchema.safeParse({
 			title: "Test",
+			value: 0,
+			probability: 10,
 			contactId: "con-1",
 			companyId: "cmp-1",
 		});
@@ -186,8 +226,65 @@ describe("dealSchema", () => {
 	it("transforms expectedCloseDate empty string to undefined", () => {
 		const result = dealSchema.parse({
 			title: "Test",
+			value: 0,
+			probability: 10,
 			expectedCloseDate: "",
 		});
 		assert.equal(result.expectedCloseDate, undefined);
+	});
+});
+
+describe("generateSchema", () => {
+	it("builds a schema from label-less field definitions", () => {
+		const schema = generateSchema([
+			{ key: "name", type: "text", required: true },
+			{ key: "notes", type: "textarea" },
+		]);
+		assert.ok(schema.safeParse({ name: "Acme" }).success);
+		assert.ok(!schema.safeParse({}).success);
+		assert.ok(schema.safeParse({ name: "Acme", notes: "" }).success);
+	});
+
+	it("uses humanized keys in required error messages", () => {
+		const schema = generateSchema([
+			{ key: "firstName", type: "text", required: true },
+		]);
+		const result = schema.safeParse({});
+		assert.ok(!result.success);
+		const message = result.error.issues[0]?.message ?? "";
+		assert.ok(
+			message.includes("First Name"),
+			`expected humanized label in message, got: ${message}`,
+		);
+	});
+
+	it("respects explicit label overrides in error messages", () => {
+		const schema = generateSchema([
+			{
+				key: "expectedCloseDate",
+				label: "Close By",
+				type: "text",
+				required: true,
+			},
+		]);
+		const result = schema.safeParse({});
+		assert.ok(!result.success);
+		const message = result.error.issues[0]?.message ?? "";
+		assert.ok(
+			message.includes("Close By"),
+			`expected override label in message, got: ${message}`,
+		);
+	});
+
+	it("matches named exports for entity/actor/container fields", () => {
+		const entity = generateSchema(crmConfig.fields.entity);
+		const actor = generateSchema(crmConfig.fields.actor);
+		const container = generateSchema(crmConfig.fields.container);
+
+		assert.ok(
+			entity.safeParse({ title: "X", value: 0, probability: 10 }).success,
+		);
+		assert.ok(actor.safeParse({ firstName: "A", lastName: "B" }).success);
+		assert.ok(container.safeParse({ name: "Co" }).success);
 	});
 });

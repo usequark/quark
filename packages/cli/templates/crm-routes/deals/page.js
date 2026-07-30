@@ -1,4 +1,8 @@
-import { crmConfig, getPipelineSummary } from "@techstream/quark-crm";
+import {
+	crmConfig,
+	formatCurrency,
+	getPipelineSummary,
+} from "@techstream/quark-crm";
 import { prisma } from "@techstream/quark-db";
 import {
 	Button,
@@ -9,7 +13,7 @@ import {
 } from "@techstream/quark-ui";
 import Link from "next/link";
 
-export const metadata = { title: "Deals" };
+export const metadata = { title: crmConfig.entityPluralLabel };
 
 export default async function DealsPage({ searchParams }) {
 	const { stage: activeStage } = await searchParams;
@@ -38,10 +42,10 @@ export default async function DealsPage({ searchParams }) {
 					</div>
 					<div>
 						<h1 className="text-2xl font-bold tracking-tight text-text">
-							Deals
+							{crmConfig.entityPluralLabel}
 						</h1>
 						<p className="mt-0.5 text-sm text-text-faint">
-							Sales pipeline and deal management
+							Pipeline and {crmConfig.entityLabel.toLowerCase()} management
 						</p>
 					</div>
 				</div>
@@ -58,7 +62,7 @@ export default async function DealsPage({ searchParams }) {
 					href="/admin/crm/deals"
 					className="border border-border bg-surface px-3 py-1.5 text-sm font-medium text-text"
 				>
-					Deals
+					{crmConfig.entityPluralLabel}
 				</Link>
 				<Link
 					href="/admin/crm/deals/pipeline"
@@ -68,7 +72,7 @@ export default async function DealsPage({ searchParams }) {
 				</Link>
 				<div className="ml-auto">
 					<Link href="/admin/crm/deals/new">
-						<Button size="sm">New Deal</Button>
+						<Button size="sm">New {crmConfig.entityLabel}</Button>
 					</Link>
 				</div>
 			</div>
@@ -99,19 +103,10 @@ export default async function DealsPage({ searchParams }) {
 												{group.count}
 											</p>
 											<p className="text-xs text-text-faint tabular-nums mt-1">
-												{new Intl.NumberFormat("en-US", {
-													style: "currency",
-													currency: "USD",
-													maximumFractionDigits: 0,
-												}).format(group.totalValue)}
+												{formatCurrency(group.totalValue)}
 											</p>
 											<p className="text-xs text-text-faint tabular-nums">
-												est.{" "}
-												{new Intl.NumberFormat("en-US", {
-													style: "currency",
-													currency: "USD",
-													maximumFractionDigits: 0,
-												}).format(group.expectedValue)}
+												est. {formatCurrency(group.expectedValue)}
 											</p>
 										</CardContent>
 									</Card>
@@ -141,7 +136,7 @@ export default async function DealsPage({ searchParams }) {
 												<p className="text-xs text-text-faint mt-0.5">
 													{deal.contact
 														? `${deal.contact.firstName} ${deal.contact.lastName}`
-														: "No contact"}
+														: `No ${crmConfig.actorLabel.toLowerCase()}`}
 													{deal.company && ` · ${deal.company.name}`}
 												</p>
 											</div>
@@ -152,11 +147,7 @@ export default async function DealsPage({ searchParams }) {
 													{stageConfig?.label ?? deal.stage}
 												</div>
 												<p className="text-sm font-semibold tabular-nums text-text">
-													{new Intl.NumberFormat("en-US", {
-														style: "currency",
-														currency: "USD",
-														maximumFractionDigits: 0,
-													}).format(Number(deal.value))}
+													{formatCurrency(Number(deal.value))}
 												</p>
 												<p className="text-xs text-text-faint w-8 text-right">
 													{deal.probability}%

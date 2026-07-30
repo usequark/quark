@@ -1,4 +1,8 @@
-import { crmConfig, getPipelineSummary } from "@techstream/quark-crm";
+import {
+	crmConfig,
+	formatCurrency,
+	getPipelineSummary,
+} from "@techstream/quark-crm";
 import { prisma } from "@techstream/quark-db";
 import {
 	Button,
@@ -15,6 +19,8 @@ export default async function CrmDashboard() {
 	const pipeline = await getPipelineSummary(prisma).catch(() => null);
 
 	const contactCount = await prisma.contact.count();
+
+	const zeroCurrency = formatCurrency(0);
 
 	return (
 		<div className="space-y-10">
@@ -40,7 +46,9 @@ export default async function CrmDashboard() {
 					<div>
 						<h1 className="text-2xl font-bold tracking-tight text-text">CRM</h1>
 						<p className="mt-0.5 text-sm text-text-faint">
-							Manage contacts, companies, and deals
+							Manage {crmConfig.actorPluralLabel.toLowerCase()},{" "}
+							{crmConfig.containerPluralLabel.toLowerCase()}, and{" "}
+							{crmConfig.entityPluralLabel.toLowerCase()}
 						</p>
 					</div>
 				</div>
@@ -57,25 +65,25 @@ export default async function CrmDashboard() {
 					href="/admin/crm/deals"
 					className="border border-border px-3 py-1.5 text-sm font-medium text-text-muted hover:bg-surface-hover hover:text-text"
 				>
-					Deals
+					{crmConfig.entityPluralLabel}
 				</Link>
 				<Link
 					href="/admin/contact"
 					className="border border-border px-3 py-1.5 text-sm font-medium text-text-muted hover:bg-surface-hover hover:text-text"
 				>
-					Contacts
+					{crmConfig.actorPluralLabel}
 				</Link>
 				<Link
 					href="/admin/company"
 					className="border border-border px-3 py-1.5 text-sm font-medium text-text-muted hover:bg-surface-hover hover:text-text"
 				>
-					Companies
+					{crmConfig.containerPluralLabel}
 				</Link>
 			</div>
 
 			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
 				<StatCard
-					label="Total Deals"
+					label={`Total ${crmConfig.entityPluralLabel}`}
 					value={pipeline?.stages.reduce((s, g) => s + g.count, 0) ?? 0}
 					sub="across all stages"
 				/>
@@ -83,29 +91,25 @@ export default async function CrmDashboard() {
 					label="Pipeline Value"
 					value={
 						pipeline
-							? new Intl.NumberFormat("en-US", {
-									style: "currency",
-									currency: "USD",
-									maximumFractionDigits: 0,
-								}).format(pipeline.totalPipelineValue)
-							: "$0"
+							? formatCurrency(pipeline.totalPipelineValue)
+							: zeroCurrency
 					}
-					sub="active deals"
+					sub={`active ${crmConfig.entityPluralLabel.toLowerCase()}`}
 				/>
 				<StatCard
 					label="Expected Value"
 					value={
 						pipeline
-							? new Intl.NumberFormat("en-US", {
-									style: "currency",
-									currency: "USD",
-									maximumFractionDigits: 0,
-								}).format(pipeline.totalExpectedValue)
-							: "$0"
+							? formatCurrency(pipeline.totalExpectedValue)
+							: zeroCurrency
 					}
 					sub="probability-weighted"
 				/>
-				<StatCard label="Contacts" value={contactCount} sub="people" />
+				<StatCard
+					label={crmConfig.actorPluralLabel}
+					value={contactCount}
+					sub="people"
+				/>
 			</div>
 
 			{pipeline && (
@@ -142,11 +146,7 @@ export default async function CrmDashboard() {
 												{group.count}
 											</p>
 											<p className="mt-auto text-xs text-text-faint tabular-nums">
-												{new Intl.NumberFormat("en-US", {
-													style: "currency",
-													currency: "USD",
-													maximumFractionDigits: 0,
-												}).format(group.totalValue)}
+												{formatCurrency(group.totalValue)}
 											</p>
 										</CardContent>
 									</Card>
@@ -159,16 +159,16 @@ export default async function CrmDashboard() {
 
 			<div className="flex gap-4">
 				<Link href="/admin/crm/deals/new">
-					<Button size="sm">New Deal</Button>
+					<Button size="sm">New {crmConfig.entityLabel}</Button>
 				</Link>
 				<Link href="/admin/contact/new">
 					<Button size="sm" variant="secondary">
-						New Contact
+						New {crmConfig.actorLabel}
 					</Button>
 				</Link>
 				<Link href="/admin/company/new">
 					<Button size="sm" variant="secondary">
-						New Company
+						New {crmConfig.containerLabel}
 					</Button>
 				</Link>
 			</div>

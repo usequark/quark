@@ -1,9 +1,10 @@
+import { crmConfig } from "@techstream/quark-crm";
 import { prisma } from "@techstream/quark-db";
 import { Card, CardContent } from "@techstream/quark-ui";
 import Link from "next/link";
 import DealForm from "../../_components/DealForm";
 
-export const metadata = { title: "New Deal" };
+export const metadata = { title: `New ${crmConfig.entityLabel}` };
 
 export default async function NewDealPage() {
 	const [contacts, companies] = await Promise.all([
@@ -27,17 +28,17 @@ export default async function NewDealPage() {
 			<div className="flex items-center justify-between">
 				<div>
 					<h1 className="text-xl font-bold tracking-tight text-text">
-						New Deal
+						New {crmConfig.entityLabel}
 					</h1>
 					<p className="mt-0.5 text-sm text-text-faint">
-						Create a new sales opportunity
+						Create a new {crmConfig.entityLabel.toLowerCase()}
 					</p>
 				</div>
 				<Link
 					href="/admin/crm/deals"
 					className="text-sm text-primary hover:opacity-75"
 				>
-					&larr; Back to deals
+					&larr; Back to {crmConfig.entityPluralLabel.toLowerCase()}
 				</Link>
 			</div>
 

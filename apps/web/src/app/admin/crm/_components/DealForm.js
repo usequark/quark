@@ -6,108 +6,50 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { createDeal, updateDeal } from "../_actions/deals";
 
-export default function DealForm({ deal, contacts, companies }) {
+/**
+ * Derive a human-readable label from a camelCase field key.
+ * e.g. "firstName" → "First Name", "expectedCloseDate" → "Expected Close Date"
+ * @param {string} key
+ * @returns {string}
+ */
+function humanize(key) {
+	return key
+		.replace(/([A-Z])/g, " $1")
+		.replace(/^./, (s) => s.toUpperCase())
+		.replace(/Id$/, "")
+		.trim();
+}
+
+export default function DealForm({ deal, contacts = [], companies = [] }) {
 	const action = deal ? updateDeal.bind(null, deal.id) : createDeal;
 	const [state, dispatch] = useActionState(action, {});
 
 	const stageDefs = crmConfig.pipelineStages;
+	const fields = crmConfig.fields.entity;
 	const errors = state?.errors ?? {};
+	const defaultStage = stageDefs[0]?.key ?? "LEAD";
 
 	return (
 		<form action={dispatch} className="space-y-6">
 			<div className="space-y-4 max-w-xl">
-				<FieldWrapper label="Title" error={errors.title}>
-					<Input
-						name="title"
-						defaultValue={deal?.title ?? ""}
-						required
-						placeholder="e.g. Enterprise deal"
+				{fields.map((field) => (
+					<ConfigField
+						key={field.key}
+						field={field}
+						deal={deal}
+						errors={errors}
+						stageDefs={stageDefs}
+						defaultStage={defaultStage}
+						contacts={contacts}
+						companies={companies}
 					/>
-				</FieldWrapper>
-
-				<div className="grid grid-cols-2 gap-4">
-					<FieldWrapper label="Value" error={errors.value}>
-						<Input
-							name="value"
-							type="number"
-							min="0"
-							step="0.01"
-							defaultValue={deal ? String(deal.value) : "0"}
-							placeholder="0.00"
-						/>
-					</FieldWrapper>
-
-					<FieldWrapper label="Probability (%)" error={errors.probability}>
-						<Input
-							name="probability"
-							type="number"
-							min="0"
-							max="100"
-							defaultValue={deal?.probability ?? 10}
-						/>
-					</FieldWrapper>
-				</div>
-
-				<FieldWrapper label="Stage" error={errors.stage}>
-					<Select name="stage" defaultValue={deal?.stage ?? "LEAD"}>
-						{stageDefs.map((s) => (
-							<option key={s.key} value={s.key}>
-								{s.label} ({s.probability}%)
-							</option>
-						))}
-					</Select>
-				</FieldWrapper>
-
-				<FieldWrapper
-					label="Expected Close Date"
-					error={errors.expectedCloseDate}
-				>
-					<Input
-						name="expectedCloseDate"
-						type="date"
-						defaultValue={
-							deal?.expectedCloseDate
-								? new Date(deal.expectedCloseDate).toISOString().split("T")[0]
-								: ""
-						}
-					/>
-				</FieldWrapper>
-
-				<FieldWrapper label="Contact" error={errors.contactId}>
-					<Select name="contactId" defaultValue={deal?.contactId ?? ""}>
-						<option value="">No contact</option>
-						{contacts.map((c) => (
-							<option key={c.id} value={c.id}>
-								{c.firstName} {c.lastName}
-								{c.company ? ` (${c.company.name})` : ""}
-							</option>
-						))}
-					</Select>
-				</FieldWrapper>
-
-				<FieldWrapper label="Company" error={errors.companyId}>
-					<Select name="companyId" defaultValue={deal?.companyId ?? ""}>
-						<option value="">No company</option>
-						{companies.map((c) => (
-							<option key={c.id} value={c.id}>
-								{c.name}
-							</option>
-						))}
-					</Select>
-				</FieldWrapper>
-
-				<FieldWrapper label="Notes" error={errors.notes}>
-					<Textarea
-						name="notes"
-						defaultValue={deal?.notes ?? ""}
-						rows={4}
-						placeholder="Any additional notes..."
-					/>
-				</FieldWrapper>
+				))}
 			</div>
 
 			<div className="flex items-center gap-3 pt-4 border-t border-border">
-				<Button type="submit">{deal ? "Save Changes" : "Create Deal"}</Button>
+				<Button type="submit">
+					{deal ? "Save Changes" : `Create ${crmConfig.entityLabel}`}
+				</Button>
 				<Link
 					href="/admin/crm/deals"
 					className="text-sm text-text-muted hover:text-text"
@@ -117,6 +59,141 @@ export default function DealForm({ deal, contacts, companies }) {
 			</div>
 		</form>
 	);
+}
+
+function ConfigField({
+	field,
+	deal,
+	errors,
+	stageDefs,
+	defaultStage,
+	contacts,
+	companies,
+}) {
+	const error = errors[field.key];
+	const label = resolveFieldLabel(field);
+
+	if (field.type === "textarea") {
+		return (
+			<FieldWrapper label={label} error={error}>
+				<Textarea
+					name={field.key}
+					defaultValue={deal?.[field.key] ?? ""}
+					rows={4}
+					placeholder={`Any additional ${label.toLowerCase()}...`}
+				/>
+			</FieldWrapper>
+		);
+	}
+
+	if (field.type === "select" && field.key === "stage") {
+		return (
+			<FieldWrapper label={label} error={error}>
+				<Select
+					name={field.key}
+					defaultValue={deal?.stage ?? defaultStage}
+					required={field.required}
+				>
+					{stageDefs.map((s) => (
+						<option key={s.key} value={s.key}>
+							{s.label} ({s.probability}%)
+						</option>
+					))}
+				</Select>
+			</FieldWrapper>
+		);
+	}
+
+	if (field.type === "select" && field.relation === "actor") {
+		return (
+			<FieldWrapper label={label} error={error}>
+				<Select name={field.key} defaultValue={deal?.[field.key] ?? ""}>
+					<option value="">No {crmConfig.actorLabel}</option>
+					{contacts.map((c) => (
+						<option key={c.id} value={c.id}>
+							{c.firstName} {c.lastName}
+							{c.company ? ` (${c.company.name})` : ""}
+						</option>
+					))}
+				</Select>
+			</FieldWrapper>
+		);
+	}
+
+	if (field.type === "select" && field.relation === "container") {
+		return (
+			<FieldWrapper label={label} error={error}>
+				<Select name={field.key} defaultValue={deal?.[field.key] ?? ""}>
+					<option value="">No {crmConfig.containerLabel}</option>
+					{companies.map((c) => (
+						<option key={c.id} value={c.id}>
+							{c.name}
+						</option>
+					))}
+				</Select>
+			</FieldWrapper>
+		);
+	}
+
+	if (field.type === "date") {
+		return (
+			<FieldWrapper label={label} error={error}>
+				<Input
+					name={field.key}
+					type="date"
+					defaultValue={
+						deal?.[field.key]
+							? new Date(deal[field.key]).toISOString().split("T")[0]
+							: ""
+					}
+				/>
+			</FieldWrapper>
+		);
+	}
+
+	if (field.type === "number") {
+		const defaultValue =
+			deal != null
+				? String(deal[field.key] ?? field.default ?? "")
+				: String(field.default ?? "0");
+
+		return (
+			<FieldWrapper label={label} error={error}>
+				<Input
+					name={field.key}
+					type="number"
+					min={field.min != null ? String(field.min) : undefined}
+					max={field.max != null ? String(field.max) : undefined}
+					step={field.step != null ? String(field.step) : undefined}
+					defaultValue={defaultValue}
+					required={field.required}
+					placeholder={field.step === "0.01" ? "0.00" : undefined}
+				/>
+			</FieldWrapper>
+		);
+	}
+
+	// text, email, and default
+	return (
+		<FieldWrapper label={label} error={error}>
+			<Input
+				name={field.key}
+				type={field.type === "email" ? "email" : "text"}
+				defaultValue={deal?.[field.key] ?? ""}
+				required={field.required}
+				placeholder={
+					field.key === "title" ? `e.g. ${crmConfig.entityLabel}` : undefined
+				}
+			/>
+		</FieldWrapper>
+	);
+}
+
+function resolveFieldLabel(field) {
+	if (field.label) return field.label;
+	if (field.relation === "actor") return crmConfig.actorLabel;
+	if (field.relation === "container") return crmConfig.containerLabel;
+	return humanize(field.key);
 }
 
 function FieldWrapper({ label, error, children }) {

@@ -1,4 +1,4 @@
-import { getPipelineSummary } from "@techstream/quark-crm";
+import { crmConfig, getPipelineSummary } from "@techstream/quark-crm";
 import { prisma } from "@techstream/quark-db";
 import { Button } from "@techstream/quark-ui";
 import Link from "next/link";
@@ -17,7 +17,8 @@ export default async function PipelineBoardPage() {
 						Pipeline Board
 					</h1>
 					<p className="mt-0.5 text-sm text-text-faint">
-						Drag deals between stages to update their status
+						Move {crmConfig.entityPluralLabel.toLowerCase()} between stages to
+						update their status
 					</p>
 				</div>
 				<div className="flex items-center gap-3">
@@ -28,7 +29,7 @@ export default async function PipelineBoardPage() {
 						List View
 					</Link>
 					<Link href="/admin/crm/deals/new">
-						<Button size="sm">New Deal</Button>
+						<Button size="sm">New {crmConfig.entityLabel}</Button>
 					</Link>
 				</div>
 			</div>

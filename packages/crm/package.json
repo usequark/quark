@@ -3,7 +3,7 @@
 	"version": "1.0.0",
 	"private": true,
 	"type": "module",
-	"description": "CRM package — pipeline tracking, contact/company management, and deal stages",
+	"description": "Minimal mouldable pipeline scaffold — Container → Actor → WorkItem with configurable labels and stages",
 	"main": "src/index.js",
 	"exports": {
 		".": "./src/index.js",

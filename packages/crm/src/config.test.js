@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { crmConfig } from "./config.js";
+import { crmConfig, formatCurrency } from "./config.js";
 
 describe("crmConfig", () => {
 	const { pipelineStages } = crmConfig;
@@ -19,6 +19,54 @@ describe("crmConfig", () => {
 	it("has a defaultPageSize", () => {
 		assert.equal(typeof crmConfig.defaultPageSize, "number");
 		assert.ok(crmConfig.defaultPageSize > 0);
+	});
+
+	it("exports entity labels", () => {
+		assert.equal(typeof crmConfig.entityLabel, "string");
+		assert.equal(typeof crmConfig.entityPluralLabel, "string");
+		assert.equal(typeof crmConfig.containerLabel, "string");
+		assert.equal(typeof crmConfig.containerPluralLabel, "string");
+		assert.equal(typeof crmConfig.actorLabel, "string");
+		assert.equal(typeof crmConfig.actorPluralLabel, "string");
+	});
+
+	it("does not export a domain field", () => {
+		assert.equal(crmConfig.domain, undefined);
+	});
+
+	it("exports currency and locale", () => {
+		assert.equal(typeof crmConfig.currency, "string");
+		assert.equal(typeof crmConfig.locale, "string");
+	});
+
+	it("exports field definitions for entity, actor, and container", () => {
+		assert.ok(Array.isArray(crmConfig.fields.entity));
+		assert.ok(Array.isArray(crmConfig.fields.actor));
+		assert.ok(Array.isArray(crmConfig.fields.container));
+		assert.ok(crmConfig.fields.entity.length > 0);
+		assert.ok(crmConfig.fields.actor.length > 0);
+		assert.ok(crmConfig.fields.container.length > 0);
+	});
+
+	it("entity fields have key and type (labels optional)", () => {
+		for (const field of crmConfig.fields.entity) {
+			assert.ok(field.key, "missing key");
+			assert.ok(field.type, "missing type");
+		}
+	});
+
+	it("actor fields have key and type (labels optional)", () => {
+		for (const field of crmConfig.fields.actor) {
+			assert.ok(field.key, "missing key");
+			assert.ok(field.type, "missing type");
+		}
+	});
+
+	it("container fields have key and type (labels optional)", () => {
+		for (const field of crmConfig.fields.container) {
+			assert.ok(field.key, "missing key");
+			assert.ok(field.type, "missing type");
+		}
 	});
 
 	describe("each pipeline stage", () => {
@@ -82,5 +130,11 @@ describe("crmConfig", () => {
 			[],
 			`unreachable stages: ${unreachable.map((s) => s.key).join(", ")}`,
 		);
+	});
+
+	it("formatCurrency uses config locale and currency", () => {
+		const formatted = formatCurrency(1000);
+		assert.equal(typeof formatted, "string");
+		assert.ok(formatted.includes("1"));
 	});
 });

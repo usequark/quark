@@ -1,9 +1,11 @@
+import { crmConfig } from "@techstream/quark-crm";
 import { prisma } from "@techstream/quark-db";
 import { Card, CardContent } from "@techstream/quark-ui";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import DealForm from "../../_components/DealForm";
 
-export const metadata = { title: "Edit Deal" };
+export const metadata = { title: `Edit ${crmConfig.entityLabel}` };
 
 export default async function EditDealPage({ params }) {
 	const { id } = await params;
@@ -32,7 +34,7 @@ export default async function EditDealPage({ params }) {
 			<div className="flex items-center justify-between">
 				<div>
 					<h1 className="text-xl font-bold tracking-tight text-text">
-						Edit Deal
+						Edit {crmConfig.entityLabel}
 					</h1>
 					<p className="mt-0.5 text-sm text-text-faint">{deal.title}</p>
 				</div>
@@ -40,7 +42,7 @@ export default async function EditDealPage({ params }) {
 					href="/admin/crm/deals"
 					className="text-sm text-primary hover:opacity-75"
 				>
-					&larr; Back to deals
+					&larr; Back to {crmConfig.entityPluralLabel.toLowerCase()}
 				</Link>
 			</div>
 
