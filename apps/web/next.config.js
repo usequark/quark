@@ -53,6 +53,7 @@ const nextConfig = {
 	// the Prisma driver-adapter pattern - pure JS, no native engine binary)
 	transpilePackages: [
 		"@techstream/quark-admin",
+		"@techstream/quark-ai",
 		"@techstream/quark-bookings",
 		"@techstream/quark-cms",
 		"@techstream/quark-crm",

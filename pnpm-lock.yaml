@@ -64,6 +64,9 @@ importers:
       '@techstream/quark-admin':
         specifier: workspace:*
         version: link:../../packages/admin
+      '@techstream/quark-ai':
+        specifier: workspace:*
+        version: link:../../packages/ai
       '@techstream/quark-bookings':
         specifier: workspace:*
         version: link:../../packages/bookings
@@ -134,6 +137,9 @@ importers:
 
   apps/worker:
     dependencies:
+      '@techstream/quark-ai':
+        specifier: workspace:*
+        version: link:../../packages/ai
       '@techstream/quark-config':
         specifier: workspace:*
         version: link:../../packages/config
@@ -165,6 +171,21 @@ importers:
       '@techstream/quark-core':
         specifier: workspace:*
         version: link:../core
+
+  packages/ai:
+    dependencies:
+      '@techstream/quark-config':
+        specifier: workspace:*
+        version: link:../config
+      '@techstream/quark-core':
+        specifier: workspace:*
+        version: link:../core
+      '@techstream/quark-db':
+        specifier: workspace:*
+        version: link:../db
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
 
   packages/bookings:
     dependencies:
@@ -256,6 +277,12 @@ importers:
       '@techstream/quark-core':
         specifier: workspace:*
         version: link:../core
+      '@techstream/quark-db':
+        specifier: workspace:*
+        version: link:../db
+      react:
+        specifier: ^19.2.4
+        version: 19.2.4
       zod:
         specifier: ^4.3.6
         version: 4.3.6
