@@ -48,6 +48,39 @@ function makeBullJob(data, overrides = {}) {
 	};
 }
 
+function createMockConversation(messages) {
+	return {
+		id: "conv-1",
+		title: "Test session",
+		createdAt: new Date(),
+		updatedAt: new Date(),
+		deletedAt: null,
+		summary: null,
+		summaryTokens: null,
+		summaryUpdatedAt: null,
+		messages: messages.map((m, i) => ({
+			id: m.id || `m${i + 1}`,
+			role: m.role,
+			content: m.content,
+			createdAt: new Date(),
+			conversationId: "conv-1",
+			toolCalls: null,
+			cost: null,
+			tokens: null,
+		})),
+	};
+}
+
+function createMockFetch(responseData) {
+	return mock.fn(async () => ({
+		status: 200,
+		ok: true,
+		json: async () => responseData,
+		text: async () => JSON.stringify(responseData),
+		headers: { get: () => null },
+	}));
+}
+
 // ── Tests ────────────────────────────────────────────────────────────────────
 
 describe("handleContextExtraction", () => {
@@ -70,8 +103,8 @@ describe("handleContextExtraction", () => {
 
 	test("returns empty when no messages found", async () => {
 		setPrismaMock({
-			aiMessage: {
-				findMany: mock.fn(async () => []),
+			aiConversation: {
+				findUnique: mock.fn(async () => createMockConversation([])),
 			},
 		});
 
@@ -82,56 +115,47 @@ describe("handleContextExtraction", () => {
 		assert.deepStrictEqual(result, { extracted: 0, contexts: [] });
 	});
 
-	test("loads messages from DB via conversationId", async () => {
+	test("loads conversation from DB via conversationId", async () => {
 		const mockMessages = [
 			{ id: "m1", role: "user", content: "We work with Acme Corp" },
 			{ id: "m2", role: "assistant", content: "Got it, Acme Corp is a client" },
 		];
 
 		const prisma = setPrismaMock({
-			aiMessage: {
-				findMany: mock.fn(async () => mockMessages),
+			aiConversation: {
+				findUnique: mock.fn(async () => createMockConversation(mockMessages)),
 			},
 		});
 
-		globalThis.fetch = mock.fn(async () => ({
-			status: 200,
-			ok: true,
-			json: async () => ({
-				choices: [{ message: { content: "[]" } }],
-				usage: { prompt_tokens: 10, completion_tokens: 5 },
-			}),
-			headers: { get: () => null },
-		}));
+		globalThis.fetch = createMockFetch({
+			choices: [{ message: { content: "[]" } }],
+			usage: { prompt_tokens: 10, completion_tokens: 5 },
+		});
 
 		const logger = createMockLogger();
 		const job = makeBullJob({ conversationId: "conv-1" });
 
 		await handleContextExtraction(job, logger);
 
-		assert.strictEqual(prisma.aiMessage.findMany.mock.callCount(), 1);
-		const callArgs = prisma.aiMessage.findMany.mock.calls[0].arguments[0];
-		assert.strictEqual(callArgs.where.conversationId, "conv-1");
+		assert.strictEqual(prisma.aiConversation.findUnique.mock.callCount(), 1);
+		const callArgs =
+			prisma.aiConversation.findUnique.mock.calls[0].arguments[0];
+		assert.strictEqual(callArgs.where.id, "conv-1");
 	});
 
 	test("calls OpenRouter for extraction", async () => {
 		setPrismaMock({
-			aiMessage: {
-				findMany: mock.fn(async () => [
-					{ id: "m1", role: "user", content: "Test message" },
-				]),
+			aiConversation: {
+				findUnique: mock.fn(async () =>
+					createMockConversation([{ role: "user", content: "Test message" }]),
+				),
 			},
 		});
 
-		globalThis.fetch = mock.fn(async () => ({
-			status: 200,
-			ok: true,
-			json: async () => ({
-				choices: [{ message: { content: "[]" } }],
-				usage: { prompt_tokens: 10, completion_tokens: 5 },
-			}),
-			headers: { get: () => null },
-		}));
+		globalThis.fetch = createMockFetch({
+			choices: [{ message: { content: "[]" } }],
+			usage: { prompt_tokens: 10, completion_tokens: 5 },
+		});
 
 		const logger = createMockLogger();
 		const job = makeBullJob({ conversationId: "conv-1" });
@@ -157,10 +181,12 @@ describe("handleContextExtraction", () => {
 		};
 
 		const prisma = setPrismaMock({
-			aiMessage: {
-				findMany: mock.fn(async () => [
-					{ id: "m1", role: "user", content: "We work with Acme Corp in tech" },
-				]),
+			aiConversation: {
+				findUnique: mock.fn(async () =>
+					createMockConversation([
+						{ role: "user", content: "We work with Acme Corp in tech" },
+					]),
+				),
 			},
 			context: {
 				upsert: mock.fn(async () => mockSavedContext),
@@ -175,15 +201,10 @@ describe("handleContextExtraction", () => {
 			},
 		];
 
-		globalThis.fetch = mock.fn(async () => ({
-			status: 200,
-			ok: true,
-			json: async () => ({
-				choices: [{ message: { content: JSON.stringify(extractedContexts) } }],
-				usage: { prompt_tokens: 10, completion_tokens: 5 },
-			}),
-			headers: { get: () => null },
-		}));
+		globalThis.fetch = createMockFetch({
+			choices: [{ message: { content: JSON.stringify(extractedContexts) } }],
+			usage: { prompt_tokens: 10, completion_tokens: 5 },
+		});
 
 		const logger = createMockLogger();
 		const job = makeBullJob({ conversationId: "conv-1" });
@@ -197,10 +218,10 @@ describe("handleContextExtraction", () => {
 
 	test("handles extraction errors gracefully", async () => {
 		setPrismaMock({
-			aiMessage: {
-				findMany: mock.fn(async () => [
-					{ id: "m1", role: "user", content: "Test" },
-				]),
+			aiConversation: {
+				findUnique: mock.fn(async () =>
+					createMockConversation([{ role: "user", content: "Test" }]),
+				),
 			},
 		});
 
@@ -223,29 +244,24 @@ describe("handleContextExtraction", () => {
 
 	test("handles invalid JSON response from OpenRouter", async () => {
 		setPrismaMock({
-			aiMessage: {
-				findMany: mock.fn(async () => [
-					{ id: "m1", role: "user", content: "Test" },
-				]),
+			aiConversation: {
+				findUnique: mock.fn(async () =>
+					createMockConversation([{ role: "user", content: "Test" }]),
+				),
 			},
 		});
 
-		globalThis.fetch = mock.fn(async () => ({
-			status: 200,
-			ok: true,
-			json: async () => ({
-				choices: [{ message: { content: "This is not JSON" } }],
-				usage: { prompt_tokens: 10, completion_tokens: 5 },
-			}),
-			headers: { get: () => null },
-		}));
+		globalThis.fetch = createMockFetch({
+			choices: [{ message: { content: "This is not JSON" } }],
+			usage: { prompt_tokens: 10, completion_tokens: 5 },
+		});
 
 		const logger = createMockLogger();
 		const job = makeBullJob({ conversationId: "conv-1" });
 
 		const result = await handleContextExtraction(job, logger);
 		assert.strictEqual(result.extracted, 0);
-		assert.strictEqual(result.error, "Failed to parse extraction result");
+		assert.deepStrictEqual(result.contexts, []);
 	});
 
 	test("sets source to ai for extracted contexts", async () => {
@@ -260,10 +276,10 @@ describe("handleContextExtraction", () => {
 		};
 
 		const prisma = setPrismaMock({
-			aiMessage: {
-				findMany: mock.fn(async () => [
-					{ id: "m1", role: "user", content: "Test" },
-				]),
+			aiConversation: {
+				findUnique: mock.fn(async () =>
+					createMockConversation([{ role: "user", content: "Test" }]),
+				),
 			},
 			context: {
 				upsert: mock.fn(async () => mockSavedContext),
@@ -278,15 +294,10 @@ describe("handleContextExtraction", () => {
 			},
 		];
 
-		globalThis.fetch = mock.fn(async () => ({
-			status: 200,
-			ok: true,
-			json: async () => ({
-				choices: [{ message: { content: JSON.stringify(extractedContexts) } }],
-				usage: { prompt_tokens: 10, completion_tokens: 5 },
-			}),
-			headers: { get: () => null },
-		}));
+		globalThis.fetch = createMockFetch({
+			choices: [{ message: { content: JSON.stringify(extractedContexts) } }],
+			usage: { prompt_tokens: 10, completion_tokens: 5 },
+		});
 
 		const logger = createMockLogger();
 		const job = makeBullJob({ conversationId: "conv-1" });
@@ -298,22 +309,17 @@ describe("handleContextExtraction", () => {
 
 	test("returns 0 extracted for empty array response", async () => {
 		setPrismaMock({
-			aiMessage: {
-				findMany: mock.fn(async () => [
-					{ id: "m1", role: "user", content: "Just chatting" },
-				]),
+			aiConversation: {
+				findUnique: mock.fn(async () =>
+					createMockConversation([{ role: "user", content: "Just chatting" }]),
+				),
 			},
 		});
 
-		globalThis.fetch = mock.fn(async () => ({
-			status: 200,
-			ok: true,
-			json: async () => ({
-				choices: [{ message: { content: "[]" } }],
-				usage: { prompt_tokens: 10, completion_tokens: 5 },
-			}),
-			headers: { get: () => null },
-		}));
+		globalThis.fetch = createMockFetch({
+			choices: [{ message: { content: "[]" } }],
+			usage: { prompt_tokens: 10, completion_tokens: 5 },
+		});
 
 		const logger = createMockLogger();
 		const job = makeBullJob({ conversationId: "conv-1" });
@@ -335,10 +341,12 @@ describe("handleContextExtraction", () => {
 		};
 
 		const prisma = setPrismaMock({
-			aiMessage: {
-				findMany: mock.fn(async () => [
-					{ id: "m1", role: "user", content: "We work with Acme Corp in tech" },
-				]),
+			aiConversation: {
+				findUnique: mock.fn(async () =>
+					createMockConversation([
+						{ role: "user", content: "We work with Acme Corp in tech" },
+					]),
+				),
 			},
 			context: {
 				upsert: mock.fn(async () => mockSavedContext),
@@ -353,15 +361,10 @@ describe("handleContextExtraction", () => {
 			},
 		];
 
-		globalThis.fetch = mock.fn(async () => ({
-			status: 200,
-			ok: true,
-			json: async () => ({
-				choices: [{ message: { content: JSON.stringify(extractedContexts) } }],
-				usage: { prompt_tokens: 10, completion_tokens: 5 },
-			}),
-			headers: { get: () => null },
-		}));
+		globalThis.fetch = createMockFetch({
+			choices: [{ message: { content: JSON.stringify(extractedContexts) } }],
+			usage: { prompt_tokens: 10, completion_tokens: 5 },
+		});
 
 		const logger = createMockLogger();
 		const job = makeBullJob({ conversationId: "conv-1" });

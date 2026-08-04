@@ -5,6 +5,10 @@
 	"type": "module",
 	"description": "",
 	"main": "index.js",
+	"exports": {
+		".": "./src/index.js",
+		"./tools": "./src/lib/tools/index.js"
+	},
 	"scripts": {
 		"clean": "rm -rf dist",
 		"test": "node --test 'src/**/*.test.js'",
@@ -18,6 +22,7 @@
 	"license": "ISC",
 	"packageManager": "pnpm@10.12.1",
 	"dependencies": {
+		"@techstream/quark-ai": "workspace:*",
 		"@techstream/quark-config": "workspace:*",
 		"@techstream/quark-core": "^2.0.0",
 		"@techstream/quark-db": "workspace:*",

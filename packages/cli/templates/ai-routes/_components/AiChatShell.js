@@ -19,7 +19,9 @@ const initialState = {
 	streamingContent: "",
 	streamingAction: null,
 	streamingThinking: null,
+	toolProposal: null,
 	showImport: false,
+	pendingTitleIds: [],
 };
 
 function reducer(state, action) {
@@ -41,6 +43,7 @@ function reducer(state, action) {
 				streamingContent: "",
 				streamingAction: null,
 				streamingThinking: null,
+				toolProposal: null,
 			};
 		case "UPDATE_STREAMING_CONTENT":
 			return { ...state, streamingContent: action.payload };
@@ -63,9 +66,30 @@ function reducer(state, action) {
 				streamingContent: "",
 				streamingAction: null,
 				streamingThinking: null,
+				toolProposal: null,
 			};
-		case "ADD_MESSAGE":
-			return { ...state, messages: [...state.messages, action.payload] };
+		case "SET_TOOL_PROPOSAL":
+			return { ...state, toolProposal: action.payload };
+		case "CLEAR_TOOL_PROPOSAL":
+			return { ...state, toolProposal: null };
+		case "ADD_MESSAGE": {
+			const convId = action.conversationId;
+			return {
+				...state,
+				messages: [...state.messages, action.payload],
+				conversations: convId
+					? state.conversations.map((c) =>
+							c.id === convId
+								? {
+										...c,
+										messageCount:
+											(c.messageCount ?? c._count?.messages ?? 0) + 1,
+									}
+								: c,
+						)
+					: state.conversations,
+			};
+		}
 		case "REMOVE_TEMP_MESSAGE":
 			return {
 				...state,
@@ -73,6 +97,28 @@ function reducer(state, action) {
 			};
 		case "SET_SHOW_IMPORT":
 			return { ...state, showImport: action.payload };
+		case "UPDATE_CONVERSATION_TITLE":
+			return {
+				...state,
+				conversations: state.conversations.map((c) =>
+					c.id === action.payload.id
+						? { ...c, title: action.payload.title }
+						: c,
+				),
+			};
+		case "ADD_PENDING_TITLE":
+			if (state.pendingTitleIds.includes(action.payload)) return state;
+			return {
+				...state,
+				pendingTitleIds: [...state.pendingTitleIds, action.payload],
+			};
+		case "REMOVE_PENDING_TITLE":
+			return {
+				...state,
+				pendingTitleIds: state.pendingTitleIds.filter(
+					(id) => id !== action.payload,
+				),
+			};
 		default:
 			return state;
 	}
@@ -117,9 +163,41 @@ export default function AiChatShell() {
 		sidebarCollapsed: getInitialSidebarCollapsed(),
 	});
 	const [error, setError] = useState(null);
+	const [isMobile, setIsMobile] = useState(false);
 	const eventSourceRef = useRef(null);
+	const pendingSessionRef = useRef(null);
+	const errorHandledRef = useRef(false);
+	const silentFailureTimerRef = useRef(null);
+	const sendingRef = useRef(false);
 
 	const hasActiveConversation = state.activeConversationId !== null;
+
+	// Mobile detection
+	useEffect(() => {
+		const check = () => setIsMobile(window.innerWidth < 768);
+		check();
+		window.addEventListener("resize", check);
+		return () => window.removeEventListener("resize", check);
+	}, []);
+
+	// Auto-collapse on mobile, auto-expand on desktop
+	useEffect(() => {
+		if (isMobile) {
+			dispatch({ type: "SET_SIDEBAR_COLLAPSED", payload: true });
+		} else {
+			dispatch({ type: "SET_SIDEBAR_COLLAPSED", payload: false });
+		}
+	}, [isMobile]);
+
+	// Cleanup silent failure timer when streaming stops
+	useEffect(() => {
+		if (!state.streaming) {
+			if (silentFailureTimerRef.current) {
+				clearTimeout(silentFailureTimerRef.current);
+				silentFailureTimerRef.current = null;
+			}
+		}
+	}, [state.streaming]);
 
 	// Auto-dismiss errors after 5 seconds
 	useEffect(() => {
@@ -146,12 +224,28 @@ export default function AiChatShell() {
 		} catch {}
 	}, [state.sidebarCollapsed]);
 
+	// Sync URL with active session
+	useEffect(() => {
+		if (state.activeConversationId) {
+			window.history.replaceState(
+				null,
+				"",
+				`/admin/ai?session=${state.activeConversationId}`,
+			);
+		} else {
+			window.history.replaceState(null, "", "/admin/ai");
+		}
+	}, [state.activeConversationId]);
+
 	const loadConversations = useCallback(async () => {
 		try {
 			const res = await fetch("/api/ai/conversations?take=100");
 			if (!res.ok) return;
 			const data = await res.json();
-			dispatch({ type: "SET_CONVERSATIONS", payload: data.data ?? [] });
+			dispatch({
+				type: "SET_CONVERSATIONS",
+				payload: data.data ?? data.conversations ?? [],
+			});
 		} catch {
 			setError("Failed to load conversations. Please try again.");
 		}
@@ -166,6 +260,15 @@ export default function AiChatShell() {
 	useEffect(() => {
 		loadConversations();
 	}, [loadConversations]);
+
+	// Restore session from URL on initial load
+	useEffect(() => {
+		const params = new URLSearchParams(window.location.search);
+		const sessionId = params.get("session");
+		if (sessionId) {
+			pendingSessionRef.current = sessionId;
+		}
+	}, []);
 
 	const selectConversation = useCallback(
 		async (id) => {
@@ -187,7 +290,10 @@ export default function AiChatShell() {
 					return;
 				}
 				const data = await res.json();
-				dispatch({ type: "SET_MESSAGES", payload: data.messages ?? [] });
+				dispatch({
+					type: "SET_MESSAGES",
+					payload: data.messages ?? data.conversation?.messages ?? [],
+				});
 			} catch {
 				dispatch({ type: "SET_MESSAGES", payload: [] });
 				setError("Failed to load conversation. Please try again.");
@@ -196,29 +302,25 @@ export default function AiChatShell() {
 		[state.activeConversationId],
 	);
 
-	const createConversation = useCallback(async () => {
-		try {
-			const res = await fetch("/api/ai/conversations", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ title: "New Conversation" }),
-			});
-			if (!res.ok) {
-				setError("Failed to create conversation. Please try again.");
-				return;
+	// After conversations load, select the session from URL if present
+	useEffect(() => {
+		if (pendingSessionRef.current && state.conversations.length > 0) {
+			const id = pendingSessionRef.current;
+			pendingSessionRef.current = null;
+			const exists = state.conversations.some((c) => c.id === id);
+			if (exists) {
+				selectConversation(id);
 			}
-			const data = await res.json();
-			dispatch({
-				type: "SET_CONVERSATIONS",
-				payload: [data, ...state.conversations],
-			});
-			dispatch({ type: "SET_ACTIVE_CONVERSATION", payload: data.id });
-			dispatch({ type: "SET_MESSAGES", payload: data.messages ?? [] });
-			dispatch({ type: "STOP_STREAMING" });
-		} catch {
-			setError("Failed to create conversation. Please try again.");
 		}
-	}, [state.conversations]);
+	}, [state.conversations, selectConversation]);
+
+	const createConversation = useCallback(() => {
+		// Don't create a DB record yet — wait until the user sends their first message.
+		// The conversation will be auto-created in sendMessage when they type.
+		dispatch({ type: "SET_ACTIVE_CONVERSATION", payload: null });
+		dispatch({ type: "SET_MESSAGES", payload: [] });
+		dispatch({ type: "STOP_STREAMING" });
+	}, []);
 
 	const renameConversation = useCallback(
 		async (id, title) => {
@@ -259,6 +361,7 @@ export default function AiChatShell() {
 					type: "SET_CONVERSATIONS",
 					payload: state.conversations.filter((c) => c.id !== id),
 				});
+				dispatch({ type: "REMOVE_PENDING_TITLE", payload: id });
 				if (state.activeConversationId === id) {
 					dispatch({ type: "SET_ACTIVE_CONVERSATION", payload: null });
 					dispatch({ type: "SET_MESSAGES", payload: [] });
@@ -271,7 +374,7 @@ export default function AiChatShell() {
 	);
 
 	const handleSSEEvent = useCallback(
-		(data, eventSource, assistantContentRef) => {
+		(data, eventSource, assistantContentRef, conversationId) => {
 			switch (data.type) {
 				case "thinking":
 					dispatch({ type: "SET_STREAMING_THINKING", payload: data.content });
@@ -282,6 +385,23 @@ export default function AiChatShell() {
 				case "action_complete":
 					dispatch({ type: "SET_STREAMING_ACTION", payload: null });
 					break;
+				case "tool_proposal":
+					dispatch({
+						type: "SET_TOOL_PROPOSAL",
+						payload: {
+							toolName: data.toolName,
+							input: data.input,
+							callId: data.callId,
+						},
+					});
+					break;
+				case "tool_skipped":
+					dispatch({ type: "CLEAR_TOOL_PROPOSAL" });
+					dispatch({
+						type: "SET_STREAMING_ACTION",
+						payload: `Skipped ${data.toolName}${data.reason ? ` (${data.reason})` : ""}`,
+					});
+					break;
 				case "message":
 					assistantContentRef.current += data.content;
 					dispatch({
@@ -289,7 +409,24 @@ export default function AiChatShell() {
 						payload: assistantContentRef.current,
 					});
 					break;
+				case "title":
+					dispatch({
+						type: "REMOVE_PENDING_TITLE",
+						payload: conversationId,
+					});
+					dispatch({
+						type: "UPDATE_CONVERSATION_TITLE",
+						payload: {
+							id: conversationId,
+							title: data.title,
+						},
+					});
+					break;
 				case "done":
+					dispatch({
+						type: "REMOVE_PENDING_TITLE",
+						payload: conversationId,
+					});
 					eventSource.close();
 					eventSourceRef.current = null;
 					dispatch({
@@ -305,14 +442,27 @@ export default function AiChatShell() {
 					loadConversations();
 					break;
 				case "error":
+					dispatch({
+						type: "REMOVE_PENDING_TITLE",
+						payload: conversationId,
+					});
+					errorHandledRef.current = true;
 					eventSource.close();
 					eventSourceRef.current = null;
 					dispatch({ type: "STOP_STREAMING" });
+					setError(data.error || "AI request failed. Please try again.");
+					loadConversations();
 					break;
 				case "timeout":
+					dispatch({
+						type: "REMOVE_PENDING_TITLE",
+						payload: conversationId,
+					});
 					eventSource.close();
 					eventSourceRef.current = null;
 					dispatch({ type: "STOP_STREAMING" });
+					setError("Request timed out. Please try again.");
+					loadConversations();
 					break;
 			}
 		},
@@ -321,64 +471,183 @@ export default function AiChatShell() {
 
 	const sendMessage = useCallback(
 		async (text) => {
-			if (!state.activeConversationId || state.streaming) return;
-
-			// Optimistically add user message
-			const userMsg = {
-				id: `temp-${Date.now()}`,
-				role: "user",
-				content: text,
-			};
-			dispatch({ type: "ADD_MESSAGE", payload: userMsg });
+			if (state.streaming) return;
+			if (sendingRef.current) return;
+			sendingRef.current = true;
 
 			try {
-				const res = await fetch("/api/ai/chat", {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({
-						conversationId: state.activeConversationId,
-						message: text,
-					}),
+				// Optimistically add user message immediately for instant feedback
+				const userMsg = {
+					id: `temp-${Date.now()}`,
+					role: "user",
+					content: text,
+				};
+				dispatch({
+					type: "ADD_MESSAGE",
+					payload: userMsg,
+					conversationId: state.activeConversationId,
 				});
 
-				if (!res.ok) {
-					// Remove optimistic message on error
+				let conversationId = state.activeConversationId;
+
+				// Auto-create conversation if none selected
+				if (!conversationId) {
+					try {
+						const res = await fetch("/api/ai/conversations", {
+							method: "POST",
+							headers: { "Content-Type": "application/json" },
+							body: JSON.stringify({ title: "New conversation" }),
+						});
+						if (!res.ok) {
+							dispatch({ type: "REMOVE_TEMP_MESSAGE", payload: userMsg.id });
+							setError("Failed to create conversation. Please try again.");
+							return;
+						}
+						const data = await res.json();
+						const conv = data.data ?? data.conversation ?? data;
+						dispatch({
+							type: "SET_CONVERSATIONS",
+							payload: [conv, ...state.conversations],
+						});
+						dispatch({ type: "SET_ACTIVE_CONVERSATION", payload: conv.id });
+						dispatch({ type: "ADD_PENDING_TITLE", payload: conv.id });
+						conversationId = conv.id;
+					} catch {
+						dispatch({ type: "REMOVE_TEMP_MESSAGE", payload: userMsg.id });
+						setError("Failed to create conversation. Please try again.");
+						return;
+					}
+				}
+
+				try {
+					const res = await fetch("/api/ai/chat", {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({
+							conversationId,
+							message: text,
+						}),
+					});
+
+					if (!res.ok) {
+						dispatch({ type: "REMOVE_TEMP_MESSAGE", payload: userMsg.id });
+						dispatch({ type: "REMOVE_PENDING_TITLE", payload: conversationId });
+						setError("Failed to send message. Please try again.");
+						return;
+					}
+				} catch {
 					dispatch({ type: "REMOVE_TEMP_MESSAGE", payload: userMsg.id });
+					dispatch({ type: "REMOVE_PENDING_TITLE", payload: conversationId });
 					setError("Failed to send message. Please try again.");
 					return;
 				}
-			} catch {
-				dispatch({ type: "REMOVE_TEMP_MESSAGE", payload: userMsg.id });
-				setError("Failed to send message. Please try again.");
-				return;
+
+				// Start SSE stream
+				dispatch({ type: "START_STREAMING" });
+				errorHandledRef.current = false;
+
+				// Safety timeout: if no SSE events within 25s, show error
+				// This catches silent failures where the AI worker finished and
+				// published to Redis before the SSE subscriber existed.
+				silentFailureTimerRef.current = setTimeout(() => {
+					if (eventSourceRef.current) {
+						eventSourceRef.current.close();
+						eventSourceRef.current = null;
+					}
+					dispatch({ type: "REMOVE_PENDING_TITLE", payload: conversationId });
+					dispatch({ type: "STOP_STREAMING" });
+					setError(
+						"The AI is taking longer than expected. Please try again or rephrase your question.",
+					);
+				}, 25_000);
+
+				const assistantContentRef = { current: "" };
+
+				const eventSource = new EventSource(
+					`/api/ai/chat/stream?conversationId=${conversationId}`,
+				);
+				eventSourceRef.current = eventSource;
+
+				eventSource.onmessage = (event) => {
+					// Any SSE event proves the stream is alive — clear safety timer
+					if (silentFailureTimerRef.current) {
+						clearTimeout(silentFailureTimerRef.current);
+						silentFailureTimerRef.current = null;
+					}
+					try {
+						const data = JSON.parse(event.data);
+						handleSSEEvent(
+							data,
+							eventSource,
+							assistantContentRef,
+							conversationId,
+						);
+					} catch {
+						// Skip malformed events
+					}
+				};
+
+				eventSource.onerror = () => {
+					if (silentFailureTimerRef.current) {
+						clearTimeout(silentFailureTimerRef.current);
+						silentFailureTimerRef.current = null;
+					}
+					eventSource.close();
+					eventSourceRef.current = null;
+					dispatch({ type: "REMOVE_PENDING_TITLE", payload: conversationId });
+					dispatch({ type: "STOP_STREAMING" });
+
+					if (errorHandledRef.current) {
+						// Error was already handled via SSE event stream — don't overwrite
+						errorHandledRef.current = false;
+					} else {
+						setError("Connection lost. Please try again.");
+					}
+				};
+			} finally {
+				sendingRef.current = false;
 			}
-
-			// Start SSE stream
-			dispatch({ type: "START_STREAMING" });
-
-			const assistantContentRef = { current: "" };
-
-			const eventSource = new EventSource(
-				`/api/ai/chat/stream?conversationId=${state.activeConversationId}`,
-			);
-			eventSourceRef.current = eventSource;
-
-			eventSource.onmessage = (event) => {
-				try {
-					const data = JSON.parse(event.data);
-					handleSSEEvent(data, eventSource, assistantContentRef);
-				} catch {
-					// Skip malformed events
-				}
-			};
-
-			eventSource.onerror = () => {
-				eventSource.close();
-				eventSourceRef.current = null;
-				dispatch({ type: "STOP_STREAMING" });
-			};
 		},
-		[state.activeConversationId, state.streaming, handleSSEEvent],
+		[
+			state.activeConversationId,
+			state.streaming,
+			handleSSEEvent,
+			state.conversations,
+		],
+	);
+
+	const respondToToolProposal = useCallback(
+		async (approved) => {
+			const proposal = state.toolProposal;
+			if (!proposal?.callId) return;
+
+			dispatch({ type: "CLEAR_TOOL_PROPOSAL" });
+
+			try {
+				const res = await fetch(
+					`/api/ai/tool-permissions/${encodeURIComponent(proposal.callId)}/confirm`,
+					{
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({ approved }),
+					},
+				);
+				if (!res.ok) {
+					setError(
+						approved
+							? "Failed to approve tool. Please try again."
+							: "Failed to deny tool. Please try again.",
+					);
+				}
+			} catch {
+				setError(
+					approved
+						? "Failed to approve tool. Please try again."
+						: "Failed to deny tool. Please try again.",
+				);
+			}
+		},
+		[state.toolProposal],
 	);
 
 	const handleImport = useCallback(async () => {
@@ -427,12 +696,12 @@ export default function AiChatShell() {
 		<div className="flex flex-1 h-full overflow-hidden relative">
 			{error && (
 				<div className="absolute top-2 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4">
-					<div className="bg-danger-bg border border-danger text-danger-text rounded-lg px-4 py-3 text-sm flex items-center justify-between">
+					<div className="bg-danger-muted border border-danger/30 text-danger rounded-lg px-4 py-3 text-sm flex items-center justify-between shadow-md">
 						<span>{error}</span>
 						<button
 							type="button"
 							onClick={() => setError(null)}
-							className="ml-2 text-danger-text/70 hover:text-danger-text"
+							className="ml-2 text-danger/70 hover:text-danger"
 						>
 							✕
 						</button>
@@ -467,6 +736,7 @@ export default function AiChatShell() {
 				onNew={createConversation}
 				onDelete={deleteConversation}
 				onRename={renameConversation}
+				pendingTitleIds={state.pendingTitleIds}
 			/>
 			<ChatArea
 				messages={state.messages}
@@ -475,6 +745,9 @@ export default function AiChatShell() {
 				streamingContent={state.streamingContent}
 				streamingAction={state.streamingAction}
 				streamingThinking={state.streamingThinking}
+				toolProposal={state.toolProposal}
+				onApproveTool={() => respondToToolProposal(true)}
+				onDenyTool={() => respondToToolProposal(false)}
 				hasActiveConversation={hasActiveConversation}
 			/>
 		</div>

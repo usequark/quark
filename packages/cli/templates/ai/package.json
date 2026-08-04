@@ -1,0 +1,19 @@
+{
+	"name": "@myquark/ai",
+	"version": "1.0.0",
+	"type": "module",
+	"main": "src/index.js",
+	"exports": {
+		".": "./src/index.js",
+		"./permissions": "./src/permissions.js",
+		"./workflow": "./src/workflow/index.js",
+		"./audit": "./src/audit.js",
+		"./presets": "./src/presets.js"
+	},
+	"dependencies": {
+		"@techstream/quark-core": "^2.0.0",
+		"@techstream/quark-db": "workspace:*",
+		"@techstream/quark-config": "workspace:*",
+		"zod": "^4.3.6"
+	}
+}

@@ -18,6 +18,7 @@
 		"@auth/prisma-adapter": "^2.11.1",
 		"@prisma/client": "^7.8.0",
 		"@techstream/quark-admin": "workspace:*",
+		"@techstream/quark-ai": "workspace:*",
 		"@techstream/quark-cms": "workspace:*",
 		"@techstream/quark-core": "^2.0.0",
 		"@techstream/quark-crm": "workspace:*",

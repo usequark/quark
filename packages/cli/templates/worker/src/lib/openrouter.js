@@ -8,16 +8,160 @@ const logger = createLogger("openrouter");
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
+const DEFAULT_MODEL = "deepseek/deepseek-v4-flash";
+const DEFAULT_TIMEOUT_MS = 120_000;
+
+/**
+ * Get configuration from environment variables.
+ */
+function getConfig(overrides = {}) {
+	return {
+		apiKey: overrides.apiKey || process.env.OPENROUTER_API_KEY,
+		model: overrides.model || process.env.OPENROUTER_MODEL || DEFAULT_MODEL,
+		baseUrl:
+			overrides.baseUrl ||
+			process.env.OPENROUTER_BASE_URL ||
+			OPENROUTER_API_URL,
+		timeout: overrides.timeout || DEFAULT_TIMEOUT_MS,
+		maxRetries: overrides.maxRetries ?? MAX_RETRIES,
+	};
+}
+
+/**
+ * Sleep helper for retry backoff.
+ */
+function sleep(ms) {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Make an HTTP request to OpenRouter with retry logic.
+ * Handles rate limits (429), server errors (5xx), and network errors
+ * with exponential backoff and jitter.
+ */
+async function fetchWithRetry(url, options, config, attempt = 1) {
+	try {
+		const response = await fetch(url, {
+			...options,
+			signal: AbortSignal.timeout(config.timeout),
+		});
+
+		if (response.ok) {
+			return response;
+		}
+
+		// Rate limited — retry with backoff
+		if (response.status === 429 && attempt <= config.maxRetries) {
+			const retryAfter = parseInt(
+				response.headers.get("retry-after") || "1",
+				10,
+			);
+			const delay = Math.min(retryAfter * 1000, 10_000) + Math.random() * 1000;
+			logger.warn("OpenRouter rate limited, retrying", { attempt, delay });
+			await sleep(delay);
+			return fetchWithRetry(url, options, config, attempt + 1);
+		}
+
+		// Server error — retry
+		if (response.status >= 500 && attempt <= config.maxRetries) {
+			const delay = Math.min(1000 * 2 ** (attempt - 1), 10_000);
+			logger.warn("OpenRouter server error, retrying", {
+				status: response.status,
+				attempt,
+				delay,
+			});
+			await sleep(delay);
+			return fetchWithRetry(url, options, config, attempt + 1);
+		}
+
+		// Client error — throw immediately
+		const body = await response.text().catch(() => "");
+		throw new ServiceError(
+			"OpenRouter",
+			`OpenRouter API error (${response.status}): ${body.slice(0, 500)}`,
+			502,
+		);
+	} catch (error) {
+		if (error instanceof AppError) throw error;
+
+		// Network error — retry
+		if (attempt <= config.maxRetries) {
+			const delay = Math.min(1000 * 2 ** (attempt - 1), 10_000);
+			logger.warn("OpenRouter network error, retrying", {
+				attempt,
+				delay,
+				error: error.message,
+			});
+			await sleep(delay);
+			return fetchWithRetry(url, options, config, attempt + 1);
+		}
+
+		throw new ServiceError(
+			"OpenRouter",
+			`OpenRouter request failed after ${config.maxRetries} attempts: ${error.message}`,
+			502,
+		);
+	}
+}
 
 /**
  * Complete a chat with OpenRouter.
+ *
+ * Supports two calling conventions:
+ * 1. Legacy: `complete({ prompt, config })` — single string prompt
+ * 2. New: `complete({ model, messages, options })` — full message array
+ *
  * @param {Object} options
- * @param {string} options.model - Model ID (e.g., "anthropic/claude-3.5-sonnet")
- * @param {Array} options.messages - Chat messages
- * @param {Object} [options.options] - Additional options
+ * @param {string} [options.prompt] - Legacy: single prompt string
+ * @param {Object} [options.config] - Legacy: configuration overrides
+ * @param {string} [options.model] - New: model ID
+ * @param {Array} [options.messages] - New: chat messages
+ * @param {Object} [options.options] - New: additional options
  * @returns {Promise<Object>}
  */
-export async function complete({ model, messages, options = {} }) {
+export async function complete(options = {}) {
+	// Support legacy API: complete({ prompt, config })
+	if (options.prompt !== undefined) {
+		const config = getConfig(options.config);
+		if (!config.apiKey) {
+			throw new AppError(
+				"OPENROUTER_API_KEY environment variable is required",
+				500,
+				"OPENROUTER_CONFIG_ERROR",
+			);
+		}
+
+		const url = `${config.baseUrl}/chat/completions`;
+		const body = {
+			model: config.model,
+			messages: [{ role: "user", content: options.prompt }],
+		};
+
+		const response = await fetchWithRetry(
+			url,
+			{
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${config.apiKey}`,
+				},
+				body: JSON.stringify(body),
+			},
+			config,
+		);
+
+		const data = await response.json();
+		const choice = data.choices?.[0];
+		const content = choice?.message?.content || "";
+		const usage = data.usage || {};
+		const cost = estimateCost(usage, config.model);
+
+		return { content, usage, cost };
+	}
+
+	// New API: complete({ model, messages, options })
+	const { model, messages, options: extraOptions = {} } = options;
+
 	const apiKey = process.env.OPENROUTER_API_KEY;
 	if (!apiKey) {
 		throw new AppError(
@@ -27,75 +171,28 @@ export async function complete({ model, messages, options = {} }) {
 		);
 	}
 
-	for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-		try {
-			const response = await fetch(OPENROUTER_API_URL, {
-				method: "POST",
-				headers: {
-					Authorization: `Bearer ${apiKey}`,
-					"Content-Type": "application/json",
-					"HTTP-Referer": process.env.APP_URL || "https://quark.dev",
-					"X-Title": "Quark AI",
-				},
-				body: JSON.stringify({
-					model,
-					messages,
-					...options,
-				}),
-				signal: AbortSignal.timeout(120_000),
-			});
+	const config = getConfig({ model });
+	const response = await fetchWithRetry(
+		OPENROUTER_API_URL,
+		{
+			method: "POST",
+			headers: {
+				Authorization: `Bearer ${apiKey}`,
+				"Content-Type": "application/json",
+				"HTTP-Referer": process.env.APP_URL || "https://quark.dev",
+				"X-Title": "Quark AI",
+			},
+			body: JSON.stringify({
+				model,
+				messages,
+				...extraOptions,
+			}),
+		},
+		config,
+	);
 
-			if (response.status === 429) {
-				// Rate limited - retry after delay
-				const retryAfter = response.headers.get("retry-after");
-				const delay = retryAfter
-					? Number.parseInt(retryAfter, 10) * 1000
-					: RETRY_DELAY_MS * attempt;
-				logger.warn("Rate limited by OpenRouter", {
-					attempt,
-					retryAfter: delay,
-				});
-				await sleep(delay);
-				continue;
-			}
-
-			if (response.status >= 500) {
-				// Server error - retry
-				logger.warn("OpenRouter server error", {
-					attempt,
-					status: response.status,
-				});
-				await sleep(RETRY_DELAY_MS * attempt);
-				continue;
-			}
-
-			if (!response.ok) {
-				const errorBody = await response.text();
-				throw new ServiceError(
-					"OpenRouter",
-					`OpenRouter API error: ${response.status} ${errorBody}`,
-					response.status,
-				);
-			}
-
-			const data = await response.json();
-			return data;
-		} catch (error) {
-			if (error instanceof AppError) throw error;
-			if (attempt === MAX_RETRIES) {
-				throw new ServiceError(
-					"OpenRouter",
-					`OpenRouter failed after ${MAX_RETRIES} attempts: ${error.message}`,
-					502,
-				);
-			}
-			logger.warn("OpenRouter request failed, retrying", {
-				attempt,
-				error: error.message,
-			});
-			await sleep(RETRY_DELAY_MS * attempt);
-		}
-	}
+	const data = await response.json();
+	return data;
 }
 
 /**
@@ -125,73 +222,28 @@ export async function completeStreaming({
 		);
 	}
 
-	for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-		try {
-			const response = await fetch(OPENROUTER_API_URL, {
-				method: "POST",
-				headers: {
-					Authorization: `Bearer ${apiKey}`,
-					"Content-Type": "application/json",
-					"HTTP-Referer": process.env.APP_URL || "https://quark.dev",
-					"X-Title": "Quark AI",
-				},
-				body: JSON.stringify({
-					model,
-					messages,
-					...options,
-					stream: true,
-				}),
-				signal: AbortSignal.timeout(120_000),
-			});
+	const config = getConfig({ model });
+	const response = await fetchWithRetry(
+		OPENROUTER_API_URL,
+		{
+			method: "POST",
+			headers: {
+				Authorization: `Bearer ${apiKey}`,
+				"Content-Type": "application/json",
+				"HTTP-Referer": process.env.APP_URL || "https://quark.dev",
+				"X-Title": "Quark AI",
+			},
+			body: JSON.stringify({
+				model,
+				messages,
+				...options,
+				stream: true,
+			}),
+		},
+		config,
+	);
 
-			if (response.status === 429) {
-				const retryAfter = response.headers.get("retry-after");
-				const delay = retryAfter
-					? Number.parseInt(retryAfter, 10) * 1000
-					: RETRY_DELAY_MS * attempt;
-				logger.warn("Rate limited by OpenRouter", {
-					attempt,
-					retryAfter: delay,
-				});
-				await sleep(delay);
-				continue;
-			}
-
-			if (response.status >= 500) {
-				logger.warn("OpenRouter server error", {
-					attempt,
-					status: response.status,
-				});
-				await sleep(RETRY_DELAY_MS * attempt);
-				continue;
-			}
-
-			if (!response.ok) {
-				const errorBody = await response.text();
-				throw new ServiceError(
-					"OpenRouter",
-					`OpenRouter API error: ${response.status} ${errorBody}`,
-					response.status,
-				);
-			}
-
-			return await parseSSEStream(response, onToken);
-		} catch (error) {
-			if (error instanceof AppError) throw error;
-			if (attempt === MAX_RETRIES) {
-				throw new ServiceError(
-					"OpenRouter",
-					`OpenRouter failed after ${MAX_RETRIES} attempts: ${error.message}`,
-					502,
-				);
-			}
-			logger.warn("OpenRouter request failed, retrying", {
-				attempt,
-				error: error.message,
-			});
-			await sleep(RETRY_DELAY_MS * attempt);
-		}
-	}
+	return await parseSSEStream(response, onToken);
 }
 
 /**
@@ -512,18 +564,14 @@ export async function completeWithTools({
  * @param {string} [model] - Model ID for pricing lookup
  * @returns {number} Estimated cost in dollars
  */
-export function estimateCost(usage, model = "deepseek/deepseek-v4-flash") {
+export function estimateCost(usage, model = DEFAULT_MODEL) {
 	if (!usage) return 0;
 
 	const pricing = getPricing();
-	const rates = pricing[model] || pricing["deepseek/deepseek-v4-flash"];
+	const rates = pricing[model] || pricing[DEFAULT_MODEL];
 	const inputCost = ((usage.prompt_tokens || 0) / 1_000_000) * rates.input;
 	const outputCost =
 		((usage.completion_tokens || 0) / 1_000_000) * rates.output;
 
 	return Math.round((inputCost + outputCost) * 1_000_000) / 1_000_000;
-}
-
-function sleep(ms) {
-	return new Promise((resolve) => setTimeout(resolve, ms));
 }

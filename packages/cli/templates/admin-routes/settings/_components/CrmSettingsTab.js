@@ -21,7 +21,7 @@ const emptyStage = () => ({
 	next: [],
 });
 
-export default function CrmSettingsPage() {
+export default function CrmSettingsTab() {
 	const [config, setConfig] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [saving, setSaving] = useState(false);
@@ -192,7 +192,7 @@ export default function CrmSettingsPage() {
 	return (
 		<div className="max-w-3xl mx-auto space-y-8">
 			<div>
-				<h1 className="text-xl font-semibold text-text">CRM Settings</h1>
+				<h2 className="text-xl font-semibold text-text">CRM Settings</h2>
 				<p className="text-sm text-text-muted mt-1">
 					Configure entity labels, pipeline stages, currency, and field
 					definitions.

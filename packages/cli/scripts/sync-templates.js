@@ -109,6 +109,8 @@ const SYNC_DIRS = [
 		src: "apps/web/src/app/admin/crm",
 		dest: "crm-routes",
 	},
+	// AI package (permissions, audit, workflow engine)
+	{ src: "packages/ai", dest: "ai" },
 	// AI chat admin routes - scaffolded conditionally alongside the ai feature
 	{
 		src: "apps/web/src/app/admin/ai",
@@ -308,6 +310,7 @@ const TRANSFORMS = {
 	"jobs/package.json": transformOptionalPackageJson,
 	"admin/package.json": transformOptionalPackageJson,
 	"cms/package.json": transformOptionalPackageJson,
+	"ai/package.json": transformOptionalPackageJson,
 };
 
 function transformScaffoldDockerIgnore(content) {

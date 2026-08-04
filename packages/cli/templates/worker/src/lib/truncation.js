@@ -57,7 +57,11 @@ export function buildPromptMessages({
 	let droppedCount = 0;
 
 	for (let i = messages.length - 1; i >= 0; i--) {
-		const msg = messages[i];
+		const msg = { ...messages[i] }; // Clone to avoid mutation
+		// Normalize role to lowercase for OpenRouter compatibility
+		if (msg.role) {
+			msg.role = msg.role.toLowerCase();
+		}
 		const msgTokens = estimateMessageTokens([msg]);
 
 		if (tokensUsed + msgTokens > availableForMessages) {

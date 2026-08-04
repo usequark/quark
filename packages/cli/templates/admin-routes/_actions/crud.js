@@ -76,7 +76,8 @@ function extractFormData(model, formData) {
 		if (field.name === "id") continue;
 		if (!field.name.endsWith("Id")) continue;
 		if (!(field.name in data) || data[field.name] === null) continue;
-		const relationName = field.name.charAt(0).toLowerCase() + field.name.slice(1, -2);
+		const relationName =
+			field.name.charAt(0).toLowerCase() + field.name.slice(1, -2);
 		data[relationName] = { connect: { id: data[field.name] } };
 		delete data[field.name];
 	}
