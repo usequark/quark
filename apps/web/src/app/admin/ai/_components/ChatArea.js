@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import MessageBubble from "./MessageBubble";
 import MessageInput from "./MessageInput";
 import StreamingIndicator from "./StreamingIndicator";
+import ToolProposalCard from "./ToolProposalCard";
 
 export default function ChatArea({
 	messages,
@@ -12,15 +13,18 @@ export default function ChatArea({
 	streamingContent,
 	streamingAction,
 	streamingThinking,
+	toolProposal,
+	onApproveTool,
+	onDenyTool,
 	hasActiveConversation,
 }) {
 	const scrollRef = useRef(null);
 	const bottomRef = useRef(null);
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: scroll to bottom when messages or streaming content changes
+	// biome-ignore lint/correctness/useExhaustiveDependencies: scroll to bottom when messages, streaming, or proposal changes
 	useEffect(() => {
 		bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-	}, [messages, streamingContent]);
+	}, [messages, streamingContent, toolProposal]);
 
 	const hasMessages = messages.length > 0;
 
@@ -57,7 +61,7 @@ export default function ChatArea({
 				</div>
 			) : (
 				<div ref={scrollRef} className="flex-1 overflow-y-auto">
-					<div className="max-w-3xl mx-auto px-4 py-6">
+					<div className="max-w-[85%] mx-auto px-4 py-6">
 						{messages.map((msg) => (
 							<MessageBubble
 								key={msg.id}
@@ -69,11 +73,18 @@ export default function ChatArea({
 
 						{streaming && (
 							<>
-								{(streamingAction || streamingThinking) && (
+								<div className="py-2">
+									<StreamingIndicator
+										action={streamingAction}
+										thinking={streamingThinking}
+									/>
+								</div>
+								{toolProposal && (
 									<div className="py-2">
-										<StreamingIndicator
-											action={streamingAction}
-											thinking={streamingThinking}
+										<ToolProposalCard
+											proposal={toolProposal}
+											onApprove={onApproveTool}
+											onDeny={onDenyTool}
 										/>
 									</div>
 								)}
@@ -98,10 +109,10 @@ export default function ChatArea({
 
 			<MessageInput
 				onSend={onSend}
-				disabled={streaming || !hasActiveConversation}
+				disabled={streaming}
 				placeholder={
 					!hasActiveConversation
-						? "Select or create a conversation to start chatting"
+						? "Ask anything — a new conversation will be created for you"
 						: "Ask anything about your data..."
 				}
 			/>

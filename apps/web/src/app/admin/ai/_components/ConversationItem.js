@@ -8,6 +8,7 @@ export default function ConversationItem({
 	onSelect,
 	onDelete,
 	onRename,
+	isTitlePending = false,
 }) {
 	const [isEditing, setIsEditing] = useState(false);
 	const [editTitle, setEditTitle] = useState(conversation.title);
@@ -55,7 +56,8 @@ export default function ConversationItem({
 		}
 	};
 
-	const messageCount = conversation._count?.messages ?? 0;
+	const messageCount =
+		conversation.messageCount ?? conversation._count?.messages ?? 0;
 	const updatedAt = conversation.updatedAt
 		? new Date(conversation.updatedAt).toLocaleDateString(undefined, {
 				month: "short",
@@ -63,12 +65,21 @@ export default function ConversationItem({
 			})
 		: "";
 
+	// biome-ignore lint/a11y/useSemanticElements: a real <button> would nest the delete <button> inside it, which is invalid HTML
 	return (
-		<button
-			type="button"
+		<div
+			role="button"
+			tabIndex={0}
 			onClick={() => onSelect(conversation.id)}
 			onDoubleClick={handleDoubleClick}
-			className={`w-full text-left px-3 py-2.5 rounded-lg transition-colors group ${
+			onKeyDown={(e) => {
+				if (isEditing) return;
+				if (e.key === "Enter" || e.key === " ") {
+					e.preventDefault();
+					onSelect(conversation.id);
+				}
+			}}
+			className={`w-full text-left px-3 py-2.5 rounded-lg transition-colors group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
 				isActive
 					? "bg-surface-hover text-text"
 					: "text-text-muted hover:bg-surface-hover hover:text-text"
@@ -86,6 +97,13 @@ export default function ConversationItem({
 						className="flex-1 bg-surface border border-border rounded px-2 py-0.5 text-sm text-text focus:outline-none focus:border-primary"
 						onClick={(e) => e.stopPropagation()}
 					/>
+				) : isTitlePending ? (
+					<div className="flex items-center gap-2 flex-1 min-w-0">
+						<span className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse shrink-0" />
+						<span className="text-sm truncate opacity-60">
+							{conversation.title}
+						</span>
+					</div>
 				) : (
 					<span className="text-sm truncate flex-1">{conversation.title}</span>
 				)}
@@ -136,6 +154,6 @@ export default function ConversationItem({
 					</>
 				)}
 			</div>
-		</button>
+		</div>
 	);
 }

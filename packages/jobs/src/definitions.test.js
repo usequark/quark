@@ -65,13 +65,6 @@ describe("JOB_NAMES", () => {
 		);
 	});
 
-	test("defines AI task context extraction job name", () => {
-		assert.strictEqual(
-			JOB_NAMES.AI_TASK_CONTEXT_EXTRACTION,
-			"ai-task-context-extraction",
-		);
-	});
-
 	test("defines AI conversation compact job name", () => {
 		assert.strictEqual(
 			JOB_NAMES.AI_CONVERSATION_COMPACT,
@@ -79,38 +72,8 @@ describe("JOB_NAMES", () => {
 		);
 	});
 
-	test("defines Railway sync job names", () => {
-		assert.strictEqual(JOB_NAMES.SYNC_RAILWAY_COSTS, "sync-railway-costs");
-		assert.strictEqual(
-			JOB_NAMES.SYNC_RAILWAY_DEPLOYMENTS,
-			"sync-railway-deployments",
-		);
-		assert.strictEqual(JOB_NAMES.SYNC_RAILWAY_METRICS, "sync-railway-metrics");
-	});
-
-	test("defines project manager job names", () => {
-		assert.strictEqual(JOB_NAMES.SYNC_UMAMI_ANALYTICS, "sync-umami-analytics");
-		assert.strictEqual(JOB_NAMES.CHECK_MONITORS, "check-monitors");
-		assert.strictEqual(
-			JOB_NAMES.CHECK_PROJECT_GOVERNANCE,
-			"check-project-governance",
-		);
-		assert.strictEqual(
-			JOB_NAMES.SEND_GOVERNANCE_ALERT,
-			"send-governance-alert",
-		);
-		assert.strictEqual(
-			JOB_NAMES.GENERATE_PROJECT_REPORT,
-			"generate-project-report",
-		);
-		assert.strictEqual(
-			JOB_NAMES.SYNC_WORKSPACE_BILLING,
-			"sync-workspace-billing",
-		);
-	});
-
-	test("defines exactly 16 job names", () => {
-		assert.strictEqual(Object.keys(JOB_NAMES).length, 16);
+	test("defines exactly 6 job names", () => {
+		assert.strictEqual(Object.keys(JOB_NAMES).length, 6);
 	});
 
 	test("all job names are strings", () => {

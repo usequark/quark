@@ -1,0 +1,25 @@
+{
+	"name": "@techstream/quark-ai",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"description": "AI package: permissions, tools, conversations, workflow engine",
+	"main": "src/index.js",
+	"exports": {
+		".": "./src/index.js",
+		"./permissions": "./src/permissions.js",
+		"./workflow": "./src/workflow/index.js",
+		"./audit": "./src/audit.js",
+		"./presets": "./src/presets.js"
+	},
+	"scripts": {
+		"test": "node --test $(find src -name '*.test.js')",
+		"lint": "biome format --write && biome check --write"
+	},
+	"dependencies": {
+		"@techstream/quark-core": "workspace:*",
+		"@techstream/quark-db": "workspace:*",
+		"@techstream/quark-config": "workspace:*",
+		"zod": "^4.3.6"
+	}
+}

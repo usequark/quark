@@ -194,23 +194,31 @@ describe("complete", () => {
 		assert.strictEqual(globalThis.fetch.mock.callCount(), 2);
 	});
 
-	test("returns undefined after max retries on 5xx (loop exhausts without throw)", async () => {
-		// The current implementation uses `continue` in the try block for 5xx,
-		// which skips the catch block where the throw logic lives.
-		// After all retries, the loop ends and the function returns undefined.
+	test("throws after max retries on 5xx", async () => {
 		mockFetch([
 			createMockResponse(500, { error: "server error" }),
 			createMockResponse(500, { error: "server error" }),
 			createMockResponse(500, { error: "server error" }),
 		]);
 
-		const result = await complete({
-			model: "anthropic/claude-3.5-sonnet",
-			messages: [{ role: "user", content: "Hi" }],
-		});
-
-		assert.strictEqual(result, undefined);
-		assert.strictEqual(globalThis.fetch.mock.callCount(), 3);
+		try {
+			await complete({
+				model: "anthropic/claude-3.5-sonnet",
+				messages: [{ role: "user", content: "Hi" }],
+			});
+			assert.fail("Should have thrown");
+		} catch (error) {
+			assert.ok(
+				error instanceof ServiceError,
+				`Expected ServiceError, got ${error.constructor.name}: ${error.message}`,
+			);
+			assert.strictEqual(error.serviceName, "OpenRouter");
+			assert.ok(
+				error.message.includes("500"),
+				`Error message should include 500: ${error.message}`,
+			);
+		}
+		assert.strictEqual(globalThis.fetch.mock.callCount(), 4);
 	});
 
 	test("throws after max retries on network errors", async () => {
@@ -233,7 +241,7 @@ describe("complete", () => {
 		);
 	});
 
-	test("throws AppError for non-OK, non-429, non-5xx responses", async () => {
+	test("throws ServiceError for non-OK, non-429, non-5xx responses", async () => {
 		mockFetch([createMockResponse(400, { error: "bad request" })]);
 
 		await assert.rejects(
@@ -243,8 +251,9 @@ describe("complete", () => {
 					messages: [{ role: "user", content: "Hi" }],
 				}),
 			(error) => {
-				assert.ok(error instanceof AppError);
-				assert.strictEqual(error.statusCode, 400);
+				assert.ok(error instanceof ServiceError);
+				assert.strictEqual(error.serviceName, "OpenRouter");
+				assert.ok(error.message.includes("400"));
 				return true;
 			},
 		);

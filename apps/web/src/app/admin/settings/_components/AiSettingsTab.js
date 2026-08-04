@@ -110,7 +110,7 @@ function buildToolMeta(crm) {
 
 const DEFAULT_ACCESS = "auto";
 
-export default function AiToolSettingsPage() {
+export default function AiSettingsTab() {
 	const [permissions, setPermissions] = useState({});
 	const [crmLabels, setCrmLabels] = useState(DEFAULT_CRM_LABELS);
 	const [loading, setLoading] = useState(true);
@@ -203,7 +203,7 @@ export default function AiToolSettingsPage() {
 	return (
 		<div className="max-w-3xl mx-auto">
 			<div className="mb-6">
-				<h1 className="text-xl font-semibold text-text">AI Tool Permissions</h1>
+				<h2 className="text-xl font-semibold text-text">AI Tool Permissions</h2>
 				<p className="text-sm text-text-muted mt-1">
 					Control how the AI assistant can use each tool. Changes apply to new
 					conversations.

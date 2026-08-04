@@ -3,13 +3,10 @@
  * Summarizes dropped (truncated) messages and persists the summary on the conversation.
  */
 
-import { createLogger } from "@techstream/quark-core";
 import { AppError } from "@techstream/quark-core/errors";
 import { prisma } from "@techstream/quark-db";
 import { JOB_NAMES } from "@techstream/quark-jobs";
 import { summarizeConversation } from "../lib/summarize.js";
-
-const _logger = createLogger("worker:compact");
 
 /**
  * Handles conversation compaction after truncation.
@@ -49,23 +46,25 @@ export async function handleConversationCompact(bullJob, logger) {
 		droppedCount,
 	});
 
-	const conversation = await prisma.aiConversation.findUnique({
-		where: { id: conversationId },
-		include: {
-			messages: {
-				orderBy: { createdAt: "asc" },
-				take: droppedCount,
-			},
-		},
+	const messages = await prisma.aiMessage.findMany({
+		where: { conversationId },
+		orderBy: { createdAt: "asc" },
+		take: droppedCount,
 	});
 
-	if (!conversation || conversation.deletedAt) {
-		throw new AppError("Conversation not found", 404, "CONVERSATION_NOT_FOUND");
+	if (messages.length === 0) {
+		logger.warn("No messages found for compaction", {
+			conversationId,
+			droppedCount,
+		});
+		return { conversationId, summaryTokens: 0, skipped: true };
 	}
 
+	const resolvedModel =
+		model || process.env.OPENROUTER_MODEL || "deepseek/deepseek-v4-flash";
 	const { summary, tokenCount } = await summarizeConversation(
-		conversation.messages,
-		model,
+		messages,
+		resolvedModel,
 	);
 
 	if (summary) {
@@ -81,18 +80,19 @@ export async function handleConversationCompact(bullJob, logger) {
 			job: JOB_NAMES.AI_CONVERSATION_COMPACT,
 			conversationId,
 			summaryTokens: tokenCount,
+			messageCount: messages.length,
 		});
 	} else {
 		logger.warn("Compaction produced empty summary", {
 			job: JOB_NAMES.AI_CONVERSATION_COMPACT,
 			conversationId,
-			messageCount: conversation.messages.length,
+			messageCount: messages.length,
 		});
 	}
 
 	return {
 		conversationId,
-		summaryLength: summary?.length ?? 0,
 		summaryTokens: tokenCount,
+		messageCount: messages.length,
 	};
 }
