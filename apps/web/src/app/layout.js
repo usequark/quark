@@ -16,7 +16,7 @@ const themeScript = `(function(){try{var t=localStorage.getItem("${THEME_STORAGE
 
 // Inline Umami before-send handler that drops events from admin pages (/admin/*)
 // and admin users (identified by the umami_user_role cookie set by the admin layout).
-const umamiBeforeSendScript = `window.__umamiBeforeSend=function(t,p){var r=(document.cookie.match(/umami_user_role=([^;]+)/)||[])[1];if(p.url&&p.url.indexOf("/admin")===0)return false;if(r==="admin"||r==="client_admin")return false;return p}`;
+const umamiBeforeSendScript = `window.__umamiBeforeSend=function(t,p){var r=(document.cookie.match(/umami_user_role=([^;]+)/)||[])[1];if(p.url&&new URL(p.url).pathname.startsWith("/admin"))return false;if(r==="admin"||r==="client_admin")return false;return p}`;
 
 export default function RootLayout({ children }) {
 	const umamiConfig = getUmamiConfig();
