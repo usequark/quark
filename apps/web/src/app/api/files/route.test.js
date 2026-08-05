@@ -89,7 +89,7 @@ test("GET /api/files returns 401 when unauthenticated", async () => {
 
 	const { GET } = await import("./route.js");
 	const response = await GET(new Request("http://localhost/api/files"));
-	const body = await response.json();
+	const _body = await response.json();
 
 	assert.strictEqual(response.status, 401);
 });

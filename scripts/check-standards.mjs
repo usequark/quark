@@ -21,6 +21,8 @@ const consoleAllowlist = [
 	/^packages\/cli\/src\//,
 	/^packages\/cli\/templates\/config\/src\/validate-env\.js$/,
 	/^packages\/cli\/templates\/base-project\/packages\/config\/src\/validate-env\.js$/,
+	/^packages\/admin\/src\/introspect\.js$/,
+	/^packages\/cli\/templates\/admin\/src\/introspect\.js$/,
 ];
 
 const typeScriptAllowlist = [/\/src\/generated\//];

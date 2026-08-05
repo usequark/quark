@@ -52,8 +52,8 @@ describe("handleSearchContacts", () => {
 			{ id: "c1", firstName: "John", lastName: "Doe", company: null },
 		];
 		const prisma = setPrismaMock({
-			contact: {
-				findMany: mock.fn(async () => mockContacts),
+			context: {
+				findMany: mock.fn(async () => mockContexts),
 			},
 		});
 
@@ -462,7 +462,7 @@ describe("handleSearchContext", () => {
 				category: "client",
 			},
 		];
-		const prisma = setPrismaMock({
+		const _prisma = setPrismaMock({
 			context: {
 				findMany: mock.fn(async () => mockContexts),
 			},
