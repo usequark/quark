@@ -151,7 +151,10 @@ test("inspectProject loads and inspects fixture without error", async () => {
 	const { inspectProject } = await import("./inspect.js");
 	const projectDir = await createQuarkFixture();
 
-	await inspectProject({ cwd: projectDir });
+	// Suppress stdout — inspectProject prints a report via console.log, and
+	// unstructured text on the test runner's stdout pipe can corrupt the
+	// binary v8-serialized result frames (nodejs/node#64061), flaking CI.
+	await inspectProject({ cwd: projectDir, output: () => {} });
 });
 
 // ---------------------------------------------------------------------------

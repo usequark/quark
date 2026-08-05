@@ -16,68 +16,66 @@ function formatBool(value) {
 }
 
 export async function inspectProject(options = {}) {
-	const { cwd = process.cwd() } = options;
+	const { cwd = process.cwd(), output = console.log } = options;
 
-	console.log(chalk.blue.bold("\n🔍 Quark Deploy Inspection\n"));
+	output(chalk.blue.bold("\n🔍 Quark Deploy Inspection\n"));
 
 	// --- Service discovery ---
-	console.log(chalk.cyan("  Project Services\n"));
+	output(chalk.cyan("  Project Services\n"));
 
 	const discovery = await discoverQuarkDeployProject(cwd);
 
 	if (discovery.services.length === 0) {
-		console.log(chalk.yellow("  No Quark services discovered."));
+		output(chalk.yellow("  No Quark services discovered."));
 	} else {
 		for (const service of discovery.services) {
-			console.log(`  ${chalk.bold(service.name)}`);
-			console.log(
-				`    Package:    ${service.packageName ?? chalk.dim("unknown")}`,
-			);
-			console.log(`    Root:       ${service.relativeRootDir}`);
-			console.log(`    Entrypoint: ${service.runtime.relativeEntrypoint}`);
+			output(`  ${chalk.bold(service.name)}`);
+			output(`    Package:    ${service.packageName ?? chalk.dim("unknown")}`);
+			output(`    Root:       ${service.relativeRootDir}`);
+			output(`    Entrypoint: ${service.runtime.relativeEntrypoint}`);
 			if (service.runtime.healthcheckPath) {
-				console.log(`    Health:     ${service.runtime.healthcheckPath}`);
+				output(`    Health:     ${service.runtime.healthcheckPath}`);
 			}
-			console.log(
+			output(
 				`    Required:   ${service.required ? chalk.green("yes") : chalk.dim("no")}`,
 			);
-			console.log();
+			output();
 		}
 	}
 
 	// --- Diagnostics ---
 	if (discovery.diagnostics.length > 0) {
-		console.log(chalk.yellow("  Diagnostics\n"));
+		output(chalk.yellow("  Diagnostics\n"));
 		for (const diagnostic of discovery.diagnostics) {
-			console.log(`  ${chalk.yellow("⚠")} ${diagnostic.message}`);
+			output(`  ${chalk.yellow("⚠")} ${diagnostic.message}`);
 		}
-		console.log();
+		output();
 	}
 
 	// --- Railway readiness ---
-	console.log(chalk.cyan("  Railway Readiness\n"));
+	output(chalk.cyan("  Railway Readiness\n"));
 
 	const railCLIVersion = await checkRailwayCLI();
-	console.log(`  CLI installed:  ${formatBool(!!railCLIVersion)}`);
+	output(`  CLI installed:  ${formatBool(!!railCLIVersion)}`);
 	if (railCLIVersion) {
-		console.log(`    Version:       ${railCLIVersion}`);
+		output(`    Version:       ${railCLIVersion}`);
 	}
 
 	const railUser = await checkRailwayLogin();
-	console.log(`  Logged in:      ${formatBool(!!railUser)}`);
+	output(`  Logged in:      ${formatBool(!!railUser)}`);
 	if (railUser) {
-		console.log(`    User:          ${railUser}`);
+		output(`    User:          ${railUser}`);
 	}
 
 	const linked = await isProjectLinked(cwd);
-	console.log(`  Project linked: ${formatBool(linked)}`);
+	output(`  Project linked: ${formatBool(linked)}`);
 
 	if (linked) {
 		const domains = await getProjectDomains({ cwd });
 		if (domains.length > 0) {
-			console.log(chalk.green("\n  Deployed Services\n"));
+			output(chalk.green("\n  Deployed Services\n"));
 			for (const domain of domains) {
-				console.log(
+				output(
 					`    ${domain.service ?? chalk.dim("unknown")}: ${domain.domain ?? chalk.dim("no domain")}`,
 				);
 			}
@@ -86,7 +84,7 @@ export async function inspectProject(options = {}) {
 
 	// --- Service Status ---
 	if (linked) {
-		console.log(chalk.cyan("  Service Status\n"));
+		output(chalk.cyan("  Service Status\n"));
 
 		try {
 			const configPath = path.join(cwd, ".railway", "config.json");
@@ -117,16 +115,16 @@ export async function inspectProject(options = {}) {
 					coloredStatus = chalk.dim(status);
 				}
 				const url = `https://railway.com/project/${projectId}/service/${service.id}`;
-				console.log(
+				output(
 					`  ${chalk.bold(service.name)} : ${coloredStatus} (${shortId}) → ${chalk.dim(url)}`,
 				);
 			}
 		} catch (err) {
-			console.log(
+			output(
 				`  ${chalk.red("✖")} ${chalk.dim(`Failed to fetch service status: ${err.message}`)}`,
 			);
 		}
 	}
 
-	console.log();
+	output();
 }
