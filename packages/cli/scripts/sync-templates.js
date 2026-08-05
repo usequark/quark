@@ -389,6 +389,11 @@ function transformDbPackageJson(content) {
 	// Remove private flag - scaffolded packages use custom scope
 	delete pkg.private;
 
+	// Core is installed from npm (not workspace) in scaffolded projects
+	if (pkg.dependencies?.["@techstream/quark-core"]) {
+		pkg.dependencies["@techstream/quark-core"] = CORE_VERSION_PIN;
+	}
+
 	// DB tests need a generated Prisma client on fresh installs, and the Node.js
 	// native glob keeps the scaffold script cross-platform.
 	if (pkg.scripts?.test) {

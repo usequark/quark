@@ -296,13 +296,39 @@ function formatFeatureSummary(features) {
 }
 
 /**
+ * Registry pin for @techstream/quark-core in scaffolded apps.
+ * Mirrors sync-templates.js CORE_VERSION_PIN (major.0.0 from baked templates).
+ */
+function getCoreVersionPin() {
+	try {
+		const webPkg = fs.readJSONSync(
+			path.join(templatesDir, "base-project/apps/web/package.json"),
+		);
+		const pin = webPkg?.dependencies?.["@techstream/quark-core"];
+		if (typeof pin === "string" && pin !== "workspace:*") {
+			return pin;
+		}
+	} catch {
+		// Templates may be unavailable in some test contexts.
+	}
+	return "^2.0.0";
+}
+
+/**
  * Replace @techstream/quark-* workspace deps with @scope/* for local packages.
  * Also removes deps for packages that were not selected.
+ * @techstream/quark-core is a published registry package — rewrite workspace:*
+ * to the registry pin instead of deleting or rescoping it.
  */
 function replaceDepsScope(deps, scope, selectedPackages) {
 	if (!deps) return;
 	for (const [key, value] of Object.entries(deps)) {
 		if (key.startsWith("@techstream/quark-") && value === "workspace:*") {
+			// Published registry package — keep name, pin to registry version.
+			if (key === "@techstream/quark-core") {
+				deps[key] = getCoreVersionPin();
+				continue;
+			}
 			const packageName = key.replace("@techstream/quark-", "");
 			delete deps[key];
 			// Only keep the dep if the package was selected (or is always required)
@@ -363,6 +389,7 @@ async function replaceImportsInSourceFiles(dir, scope) {
 		"admin",
 		"cms",
 		"crm",
+		"ai",
 	];
 	const entries = await fs.readdir(dir, { withFileTypes: true });
 
@@ -1005,6 +1032,30 @@ program
 					);
 					await fs.writeFile(homePath, content);
 				}
+			}
+
+			// Step 7f: Remove feature-specific API routes when features not selected.
+			// The base-project template ships these routes for all features, but they
+			// import optional packages (@techstream/quark-crm, @techstream/quark-ai/*)
+			// that are only scaffolded when the feature is selected.
+			if (!features.includes("crm")) {
+				await fs.remove(
+					path.join(
+						targetDir,
+						"apps",
+						"web",
+						"src",
+						"app",
+						"api",
+						"admin",
+						"crm",
+					),
+				);
+			}
+			if (!features.includes("ai")) {
+				await fs.remove(
+					path.join(targetDir, "apps", "web", "src", "app", "api", "ai"),
+				);
 			}
 
 			// Step 8: Create .env.example file
@@ -2019,6 +2070,38 @@ program
 								),
 							);
 						}
+						// API routes for CRM live in the base-project template and are
+						// removed at scaffold time when crm is not selected - restore them.
+						const crmApiRoutesSrc = path.join(
+							templatesDir,
+							"base-project",
+							"apps",
+							"web",
+							"src",
+							"app",
+							"api",
+							"admin",
+							"crm",
+						);
+						const crmApiRoutesDest = path.join(
+							projectDir,
+							"apps",
+							"web",
+							"src",
+							"app",
+							"api",
+							"admin",
+							"crm",
+						);
+						if (await fs.pathExists(crmApiRoutesSrc)) {
+							await fs.copy(crmApiRoutesSrc, crmApiRoutesDest);
+							await replaceImportsInSourceFiles(crmApiRoutesDest, scope);
+							console.log(
+								chalk.green(
+									`    ✓ apps/web/src/app/api/admin/crm (API routes)`,
+								),
+							);
+						}
 					} else if (pair === "ai-routes") {
 						const aiRoutesDir = path.join(
 							projectDir,
@@ -2040,6 +2123,34 @@ program
 								await replaceImportsInSourceFiles(aiRoutesDir, scope);
 								console.log(chalk.green(`    ✓ AI chat UI (paired with ai)`));
 							}
+						}
+						// API routes for AI live in the base-project template and are
+						// removed at scaffold time when ai is not selected - restore them.
+						const aiApiRoutesSrc = path.join(
+							templatesDir,
+							"base-project",
+							"apps",
+							"web",
+							"src",
+							"app",
+							"api",
+							"ai",
+						);
+						const aiApiRoutesDest = path.join(
+							projectDir,
+							"apps",
+							"web",
+							"src",
+							"app",
+							"api",
+							"ai",
+						);
+						if (await fs.pathExists(aiApiRoutesSrc)) {
+							await fs.copy(aiApiRoutesSrc, aiApiRoutesDest);
+							await replaceImportsInSourceFiles(aiApiRoutesDest, scope);
+							console.log(
+								chalk.green(`    ✓ apps/web/src/app/api/ai (API routes)`),
+							);
 						}
 					}
 				}
