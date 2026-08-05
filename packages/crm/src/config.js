@@ -148,22 +148,3 @@ export async function updateCrmConfig(data) {
 
 	return row.value;
 }
-
-/**
- * Format a monetary value using locale/currency from options or defaults.
- * @param {number|string} value
- * @param {{ maximumFractionDigits?: number, locale?: string, currency?: string }} [options]
- * @returns {string}
- */
-export function formatCurrency(value, options = {}) {
-	const {
-		maximumFractionDigits = 0,
-		locale = DEFAULT_CRM_CONFIG.locale,
-		currency = DEFAULT_CRM_CONFIG.currency,
-	} = options;
-	return new Intl.NumberFormat(locale, {
-		style: "currency",
-		currency,
-		maximumFractionDigits,
-	}).format(Number(value));
-}

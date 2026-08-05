@@ -26,29 +26,30 @@ function isMissingPackageError(error, packageName) {
 	);
 }
 
-async function importOptionalPackage(packageName, installMessage) {
+async function importS3ClientPackage() {
 	try {
-		return await import(packageName);
+		return await import("@aws-sdk/client-s3");
 	} catch (error) {
-		if (isMissingPackageError(error, packageName)) {
-			throw new Error(installMessage);
+		if (isMissingPackageError(error, "@aws-sdk/client-s3")) {
+			throw new Error(
+				'S3 storage support requires installing "@aws-sdk/client-s3" in the app that uses STORAGE_PROVIDER=s3.',
+			);
 		}
 		throw error;
 	}
 }
 
-async function importS3ClientPackage() {
-	return importOptionalPackage(
-		"@aws-sdk/client-s3",
-		'S3 storage support requires installing "@aws-sdk/client-s3" in the app that uses STORAGE_PROVIDER=s3.',
-	);
-}
-
 async function importS3PresignerPackage() {
-	return importOptionalPackage(
-		"@aws-sdk/s3-request-presigner",
-		'Signed upload URLs require installing "@aws-sdk/s3-request-presigner" in the app that uses STORAGE_PROVIDER=s3.',
-	);
+	try {
+		return await import("@aws-sdk/s3-request-presigner");
+	} catch (error) {
+		if (isMissingPackageError(error, "@aws-sdk/s3-request-presigner")) {
+			throw new Error(
+				'Signed upload URLs require installing "@aws-sdk/s3-request-presigner" in the app that uses STORAGE_PROVIDER=s3.',
+			);
+		}
+		throw error;
+	}
 }
 
 /**

@@ -49,6 +49,10 @@ const nextConfig = {
 	},
 	allowedDevOrigins,
 
+	// Keep BullMQ out of the Turbopack/webpack graph — its ESM build imports
+	// Node built-ins (child_process, net, worker_threads, dns, fs).
+	serverExternalPackages: ["bullmq"],
+
 	// Support workspace package resolution (including @techstream/quark-db which uses
 	// the Prisma driver-adapter pattern - pure JS, no native engine binary)
 	transpilePackages: [

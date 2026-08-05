@@ -8,6 +8,7 @@
 	"exports": {
 		".": "./src/index.js",
 		"./config": "./src/config.js",
+		"./format": "./src/format.js",
 		"./queries": "./src/queries.js",
 		"./validation": "./src/validation.js"
 	},

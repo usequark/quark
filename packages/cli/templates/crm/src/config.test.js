@@ -1,12 +1,8 @@
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, describe, it, mock } from "node:test";
 
-import {
-	DEFAULT_CRM_CONFIG,
-	formatCurrency,
-	getCrmConfig,
-	updateCrmConfig,
-} from "./config.js";
+import { DEFAULT_CRM_CONFIG, getCrmConfig, updateCrmConfig } from "./config.js";
+import { formatCurrency } from "./format.js";
 
 describe("DEFAULT_CRM_CONFIG", () => {
 	const { pipelineStages } = DEFAULT_CRM_CONFIG;

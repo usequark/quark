@@ -1,4 +1,4 @@
-import { WorkflowSchema } from "@techstream/quark-ai/workflow";
+import { WorkflowSchema } from "@techstream/quark-ai/workflow-schemas";
 import { validateBody } from "@techstream/quark-core";
 import { prisma } from "@techstream/quark-db";
 import { NextResponse } from "next/server";

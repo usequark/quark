@@ -1,6 +1,6 @@
 "use client";
 
-import { formatCurrency } from "@techstream/quark-crm";
+import { formatCurrency } from "@techstream/quark-crm/format";
 
 export default function StageColumn({
 	stage,

@@ -1,6 +1,6 @@
 "use client";
 
-import { formatCurrency } from "@techstream/quark-crm";
+import { formatCurrency } from "@techstream/quark-crm/format";
 import Link from "next/link";
 import { useTransition } from "react";
 
