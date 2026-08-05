@@ -43,6 +43,26 @@ async function main() {
 		path.join(appRoot, ".next", "static"),
 		path.join(standaloneRoot, ".next", "static"),
 	);
+
+	// Copy Prisma schema so admin introspect resolves it from standalone cwd
+	// scriptDir = apps/web/scripts → ../../../ = repo root
+	const repoRoot = path.resolve(scriptDir, "../../..");
+	const schemaSource = path.join(
+		repoRoot,
+		"packages",
+		"db",
+		"prisma",
+		"schema.prisma",
+	);
+	const schemaDest = path.join(standaloneRoot, "schema.prisma");
+	try {
+		await access(schemaSource);
+		await copyIntoStandalone(schemaSource, schemaDest);
+	} catch {
+		console.warn(
+			`Warning: Prisma schema not found at ${schemaSource}; skipping copy into standalone.`,
+		);
+	}
 }
 
 main().catch((error) => {

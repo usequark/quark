@@ -1,9 +1,14 @@
 import { existsSync, readFileSync } from "node:fs";
 import * as path from "node:path";
 
+import { createLogger } from "@techstream/quark-core";
 import { AppError } from "@techstream/quark-core/errors";
 
+const logger = createLogger("admin:introspect");
+
 const DEFAULT_SCHEMA_RELATIVE_PATHS = [
+	// Copied into standalone root by prepare-standalone.mjs
+	"schema.prisma",
 	"packages/db/prisma/schema.prisma",
 	"../../packages/db/prisma/schema.prisma",
 	// In Next standalone, cwd becomes /app/apps/web/.next/standalone/apps/web.
@@ -40,6 +45,11 @@ export function getParsedSchema(schemaPath) {
 	const now = Date.now();
 	if (_parsed && now - _parsedAt < CACHE_TTL_MS) return _parsed;
 	const text = readSchemaText(schemaPath);
+	if (text === null) {
+		_parsed = { models: [], enums: [] };
+		_parsedAt = now;
+		return _parsed;
+	}
 	_parsed = parseSchema(text);
 	_parsedAt = now;
 	return _parsed;
@@ -58,11 +68,10 @@ function readSchemaText(schemaPath) {
 		}
 	}
 
-	throw new AppError(
-		`Prisma schema file not found. Tried: ${defaultSchemaPaths.join(", ")}`,
-		500,
-		"PRISMA_SCHEMA_NOT_FOUND",
-	);
+	logger.error("failed to read Prisma schema", {
+		tried: defaultSchemaPaths.join(", "),
+	});
+	return null;
 }
 
 function getDefaultSchemaPaths() {

@@ -197,7 +197,11 @@ export default function AiWorkflowsPage() {
 			});
 			if (!res.ok) {
 				const err = await res.json().catch(() => ({}));
-				throw new Error(err.error || "Save failed");
+				setMessage({
+					type: "error",
+					text: err.error || "Failed to save workflow",
+				});
+				return;
 			}
 			const json = await res.json();
 			setMessage({ type: "success", text: "Workflow saved" });
@@ -224,7 +228,10 @@ export default function AiWorkflowsPage() {
 						method: "DELETE",
 					},
 				);
-				if (!res.ok) throw new Error("Delete failed");
+				if (!res.ok) {
+					setMessage({ type: "error", text: "Failed to delete workflow" });
+					return;
+				}
 				if (editingId === id) {
 					resetEditor();
 					setShowEditor(false);
@@ -257,7 +264,11 @@ export default function AiWorkflowsPage() {
 			});
 			if (!res.ok) {
 				const err = await res.json().catch(() => ({}));
-				throw new Error(err.error || "Run failed");
+				setMessage({
+					type: "error",
+					text: err.error || "Failed to run workflow",
+				});
+				return;
 			}
 			const json = await res.json();
 			setRunResult(json.data);

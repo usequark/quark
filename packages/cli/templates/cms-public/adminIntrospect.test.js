@@ -93,22 +93,54 @@ describe("admin introspect schema resolution", () => {
 		}
 	});
 
-	test("reports attempted schema paths when no default schema exists", () => {
+	test("reads the schema from standalone root schema.prisma candidate", () => {
 		const fixture = createFixture({ withSchema: false });
 
 		try {
-			assert.throws(
-				() => withCwd(join(fixture.root, "apps/web"), () => getParsedSchema()),
-				(error) => {
-					assert.match(error.message, /Prisma schema file not found\. Tried:/);
-					assert.match(
-						error.message,
-						/packages[\\/]+db[\\/]+prisma[\\/]+schema\.prisma/,
-					);
-					return true;
-				},
+			const standaloneCwd = join(
+				fixture.root,
+				"apps/web/.next/standalone/apps/web",
+			);
+			mkdirSync(standaloneCwd, { recursive: true });
+			writeFileSync(join(standaloneCwd, "schema.prisma"), SCHEMA_TEXT);
+
+			const parsed = withCwd(standaloneCwd, () => getParsedSchema());
+
+			assert.deepStrictEqual(
+				parsed.models.map((model) => model.name),
+				["Widget"],
+			);
+			assert.deepStrictEqual(
+				parsed.enums.map((enumDef) => enumDef.name),
+				["Role"],
 			);
 		} finally {
+			fixture.cleanup();
+		}
+	});
+
+	test("returns empty models/enums when no default schema exists", () => {
+		const fixture = createFixture({ withSchema: false });
+		const errors = [];
+		const originalError = console.error;
+		console.error = (...args) => {
+			errors.push(args.join(" "));
+		};
+
+		try {
+			const parsed = withCwd(join(fixture.root, "apps/web"), () =>
+				getParsedSchema(),
+			);
+
+			assert.deepStrictEqual(parsed.models, []);
+			assert.deepStrictEqual(parsed.enums, []);
+			assert.ok(
+				errors.some((msg) =>
+					msg.includes("[admin] failed to read Prisma schema — tried:"),
+				),
+			);
+		} finally {
+			console.error = originalError;
 			fixture.cleanup();
 		}
 	});

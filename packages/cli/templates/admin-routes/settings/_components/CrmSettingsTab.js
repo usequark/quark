@@ -153,7 +153,11 @@ export default function CrmSettingsTab() {
 			});
 			if (!res.ok) {
 				const body = await res.json().catch(() => ({}));
-				throw new Error(body?.error?.message || "Save failed");
+				setMessage({
+					type: "error",
+					text: body?.error?.message || "Failed to save settings",
+				});
+				return;
 			}
 			const json = await res.json();
 			setConfig(json.data);

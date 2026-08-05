@@ -10,7 +10,11 @@ import {
 	isEditable,
 	updateRecord,
 } from "@techstream/quark-admin";
-import { ForbiddenError, NotFoundError } from "@techstream/quark-core";
+import {
+	ForbiddenError,
+	NotFoundError,
+	ValidationError,
+} from "@techstream/quark-core";
 import { prisma } from "@techstream/quark-db";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -34,7 +38,7 @@ function extractFormData(model, formData) {
 
 		if (raw === null || raw === "") {
 			if (field.isRequired && !field.hasDefaultValue) {
-				throw new Error(`${field.name} is required`);
+				throw new ValidationError(`${field.name} is required`);
 			}
 			// Prisma 7 rejects null for non-nullable fields with defaults —
 			// omit the field entirely so Prisma applies the default.

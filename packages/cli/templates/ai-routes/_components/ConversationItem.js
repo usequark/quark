@@ -65,8 +65,8 @@ export default function ConversationItem({
 			})
 		: "";
 
-	// biome-ignore lint/a11y/useSemanticElements: a real <button> would nest the delete <button> inside it, which is invalid HTML
 	return (
+		// biome-ignore lint/a11y/useSemanticElements: a real <button> would nest the delete <button> inside it, which is invalid HTML
 		<div
 			role="button"
 			tabIndex={0}

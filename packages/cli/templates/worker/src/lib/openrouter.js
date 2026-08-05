@@ -7,7 +7,7 @@ const logger = createLogger("openrouter");
 
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
 const MAX_RETRIES = 3;
-const RETRY_DELAY_MS = 1000;
+const _RETRY_DELAY_MS = 1000;
 const DEFAULT_MODEL = "deepseek/deepseek-v4-flash";
 const DEFAULT_TIMEOUT_MS = 120_000;
 

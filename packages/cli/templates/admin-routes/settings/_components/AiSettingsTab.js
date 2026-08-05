@@ -181,7 +181,10 @@ export default function AiSettingsTab() {
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ permissions: perms }),
 			});
-			if (!res.ok) throw new Error("Save failed");
+			if (!res.ok) {
+				setMessage({ type: "error", text: "Failed to save permissions" });
+				return;
+			}
 			setMessage({ type: "success", text: "Permissions saved" });
 			setChanged(false);
 			setTimeout(() => setMessage(null), 3000);

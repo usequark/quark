@@ -1,9 +1,12 @@
 import { adminConfig, getModels, modelToSlug } from "@techstream/quark-admin";
+import { createLogger } from "@techstream/quark-core";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { loadCmsConfig } from "@/lib/load-cms-config";
 import { hasCrmFeature } from "@/lib/load-crm-config";
 import Sidebar from "./_components/Sidebar";
+
+const logger = createLogger("admin:layout");
 
 export const dynamic = "force-dynamic";
 export const metadata = {
@@ -106,12 +109,19 @@ export default async function AdminLayout({ children }) {
 		},
 	];
 
-	const models = getModels().map((m) => ({
-		name: m.name,
-		slug: modelToSlug(m.name),
-		label: adminConfig.modelOverrides[m.name]?.label ?? m.name,
-		readOnly: !!adminConfig.modelOverrides[m.name]?.readOnly,
-	}));
+	let models = [];
+	try {
+		models = getModels().map((m) => ({
+			name: m.name,
+			slug: modelToSlug(m.name),
+			label: adminConfig.modelOverrides[m.name]?.label ?? m.name,
+			readOnly: !!adminConfig.modelOverrides[m.name]?.readOnly,
+		}));
+	} catch (error) {
+		logger.error("failed to load models for sidebar", {
+			error: error.message,
+		});
+	}
 
 	// Set umami_user_role cookie so the Umami before-send handler in the root
 	// layout can block analytics tracking for admin users on public pages.
