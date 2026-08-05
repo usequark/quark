@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useEffectEvent, useRef } from "react";
+import { isUmamiStaff } from "../../lib/analytics/umami.js";
 import { getUmamiConfig } from "../../lib/analytics/umami-config.js";
 import {
 	buildReplayEndpoint,
@@ -69,11 +70,10 @@ export default function UmamiReplayRecorder() {
 			return undefined;
 		}
 
-		// Skip replay recording on admin pages. The cookie-based admin
-		// detection was removed because cookies().set() throws in Next.js 16
-		// Server Components — the before-send handler in the root layout
-		// blocks /admin page views as the primary guard.
+		// Skip replay on admin pages and for any staff user (umami_user_role
+		// cookie set by admin layout via inline client script).
 		if (window.location.pathname.startsWith("/admin")) return undefined;
+		if (isUmamiStaff()) return undefined;
 
 		let cancelled = false;
 		let flushIntervalId = null;
@@ -175,9 +175,9 @@ export default function UmamiReplayRecorder() {
 
 		previousPathnameRef.current = pathname;
 
-		// Stop recording if navigating into an admin page — handles
-		// client-side transitions from public pages to /admin.
-		if (pathname.startsWith("/admin")) {
+		// Stop recording if navigating into an admin page or if a staff
+		// cookie appears mid-session (e.g. after visiting /admin).
+		if (pathname.startsWith("/admin") || isUmamiStaff()) {
 			if (isActiveRef.current) {
 				stopRecordingRef.current?.({ useKeepalive: true });
 			}

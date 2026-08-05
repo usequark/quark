@@ -11,6 +11,11 @@ export function getUmamiUserRole() {
 	return (document.cookie.match(/umami_user_role=([^;]+)/) || [])[1] || null;
 }
 
+/** True when any staff role cookie is present (any value = staff). */
+export function isUmamiStaff() {
+	return Boolean(getUmamiUserRole());
+}
+
 function getUmamiClient() {
 	if (typeof window === "undefined") return null;
 	if (!getUmamiConfig().enabled) return null;

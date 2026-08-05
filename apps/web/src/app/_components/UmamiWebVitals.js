@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { getUmamiUserRole } from "../../lib/analytics/umami.js";
+import { isUmamiStaff } from "../../lib/analytics/umami.js";
 import { getUmamiConfig } from "../../lib/analytics/umami-config.js";
 import { observeWebVitals } from "../../lib/analytics/umami-web-vitals.js";
 
@@ -25,10 +25,9 @@ export default function UmamiWebVitals() {
 		const config = getUmamiConfig();
 		if (!config.enabled) return;
 
-		// Skip web vitals dispatch for admin users (identified by the
+		// Skip web vitals dispatch for any staff user (identified by the
 		// umami_user_role cookie set by the admin layout).
-		const role = getUmamiUserRole();
-		if (role === "admin" || role === "client_admin") return;
+		if (isUmamiStaff()) return;
 
 		const stopObserving = observeWebVitals();
 		return () => {

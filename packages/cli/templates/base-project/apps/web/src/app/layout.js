@@ -3,6 +3,7 @@ import {
 	THEME_ATTR,
 	THEME_STORAGE_KEY,
 } from "@techstream/quark-ui/theme-constants";
+import { buildUmamiBeforeSendScript } from "../lib/analytics/umami-before-send.js";
 import { getUmamiConfig } from "../lib/analytics/umami-config.js";
 import { getSiteMetadata } from "../lib/seo/site-metadata.js";
 import UmamiReplayRecorder from "./_components/UmamiReplayRecorder.js";
@@ -15,8 +16,8 @@ export function generateMetadata() {
 const themeScript = `(function(){try{var t=localStorage.getItem("${THEME_STORAGE_KEY}");if(t==="dark"||t==="light"){document.documentElement.setAttribute("${THEME_ATTR}",t)}else if(matchMedia("(prefers-color-scheme:dark)").matches){document.documentElement.setAttribute("${THEME_ATTR}","dark")}}catch(e){}})()`;
 
 // Inline Umami before-send handler that drops events from admin pages (/admin/*)
-// and admin users (identified by the umami_user_role cookie set by the admin layout).
-const umamiBeforeSendScript = `window.__umamiBeforeSend=function(t,p){var r=(document.cookie.match(/umami_user_role=([^;]+)/)||[])[1];if(p.url&&new URL(p.url).pathname.startsWith("/admin"))return false;if(r==="admin"||r==="client_admin")return false;return p}`;
+// and any staff user (identified by the umami_user_role cookie set by the admin layout).
+const umamiBeforeSendScript = buildUmamiBeforeSendScript();
 
 export default function RootLayout({ children }) {
 	const umamiConfig = getUmamiConfig();
