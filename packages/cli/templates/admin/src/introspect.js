@@ -1,10 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import * as path from "node:path";
 
-import { createLogger } from "@techstream/quark-core";
 import { AppError } from "@techstream/quark-core/errors";
-
-const logger = createLogger("admin:introspect");
 
 const DEFAULT_SCHEMA_RELATIVE_PATHS = [
 	// Copied into standalone root by prepare-standalone.mjs
@@ -68,9 +65,9 @@ function readSchemaText(schemaPath) {
 		}
 	}
 
-	logger.error("failed to read Prisma schema", {
-		tried: defaultSchemaPaths.join(", "),
-	});
+	console.error(
+		`[admin] failed to read Prisma schema — tried: ${defaultSchemaPaths.join(", ")}`,
+	);
 	return null;
 }
 
