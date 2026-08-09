@@ -30,7 +30,7 @@ function isDeployed() {
 		process.env.VERCEL ||
 		process.env.CF_PAGES ||
 		process.env.RAILWAY_SERVICE_ID ||
-		process.env.AUTH_TRUST_HOST ||
+		process.env.AUTH_TRUST_HOST === "true" ||
 		process.env.NODE_ENV !== "production"
 	);
 }

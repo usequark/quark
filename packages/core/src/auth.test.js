@@ -85,6 +85,37 @@ test("Auth Module", async (t) => {
 		}
 	});
 
+	await t.test("createAuthConfig ignores AUTH_TRUST_HOST=false", () => {
+		const key = "AUTH_TRUST_HOST";
+		const nodeEnvKey = "NODE_ENV";
+		const orig = process.env[key];
+		const origNodeEnv = process.env[nodeEnvKey];
+		process.env[key] = "false";
+		process.env[nodeEnvKey] = "production";
+		try {
+			const config = createAuthConfig({ secret: "test-secret" });
+			assert.equal(config.trustHost, false);
+		} finally {
+			if (orig !== undefined) process.env[key] = orig;
+			else delete process.env[key];
+			if (origNodeEnv !== undefined) process.env[nodeEnvKey] = origNodeEnv;
+			else delete process.env[nodeEnvKey];
+		}
+	});
+
+	await t.test("createAuthConfig honors AUTH_TRUST_HOST=true", () => {
+		const key = "AUTH_TRUST_HOST";
+		const orig = process.env[key];
+		process.env[key] = "true";
+		try {
+			const config = createAuthConfig({ secret: "test-secret" });
+			assert.equal(config.trustHost, true);
+		} finally {
+			if (orig !== undefined) process.env[key] = orig;
+			else delete process.env[key];
+		}
+	});
+
 	await t.test(
 		"createAuthConfig sets trustHost=true for non-localhost NEXTAUTH_URL",
 		() => {
