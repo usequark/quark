@@ -1,4 +1,7 @@
+import { createLogger } from "@techstream/quark-core/logger";
 import { getUmamiConfig, normalizeUmamiUrl } from "./umami-config.js";
+
+const log = createLogger("umami-replay");
 
 export const UMAMI_REPLAY_DEFAULTS = Object.freeze({
 	// Validate end-to-end at 100% before lowering sampling (see REPLAY.md).
@@ -188,8 +191,8 @@ export async function postReplayBatch({
 				? await response.json().catch(() => null)
 				: null;
 		if (responseBody && responseBody.ok === false) {
-			console.warn(
-				`[umami-replay] batch rejected by server: ${responseBody.reason ?? "unknown reason"}`,
+			log.warn(
+				`batch rejected by server: ${responseBody.reason ?? "unknown reason"}`,
 			);
 			return false;
 		}
