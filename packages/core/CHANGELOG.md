@@ -1,5 +1,13 @@
 # @techstream/quark-core
 
+## 2.4.1
+
+### Patch Changes
+
+- [`4b8c677`](https://github.com/Bobnoddle/quark/commit/4b8c67786939bdc9ca7239ecf8fd3162431714b8) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add a browser-safe `./logger` subpath export. The main barrel re-exports node-only modules (redis, queue, email) that Turbopack cannot bundle into client components; `@techstream/quark-core/logger` exposes only the zero-dependency logger so client-side code can use `createLogger()` without pulling the server-only graph.
+
+- [`d3dd09e`](https://github.com/Bobnoddle/quark/commit/d3dd09e89e28498c6080a76d7ec267b20b229e5c) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Auth: `isDeployed()` now honors `AUTH_TRUST_HOST` only when set to the literal string `"true"` — previously any truthy value (including `"false"`) enabled `trustHost`
+
 ## 2.4.0
 
 ### Minor Changes
