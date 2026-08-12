@@ -21,6 +21,10 @@ const consoleAllowlist = [
 	/^packages\/cli\/src\//,
 	/^packages\/cli\/templates\/config\/src\/validate-env\.js$/,
 	/^packages\/cli\/templates\/base-project\/packages\/config\/src\/validate-env\.js$/,
+	// Client-bundle file: @techstream/quark-core's barrel pulls node-only
+	// modules (redis, queue, email) that break Turbopack client builds, so
+	// createLogger() cannot be imported here.
+	/^apps\/web\/src\/lib\/analytics\/umami-replay\.js$/,
 ];
 
 const typeScriptAllowlist = [/\/src\/generated\//];

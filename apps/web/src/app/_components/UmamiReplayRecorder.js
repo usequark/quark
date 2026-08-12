@@ -76,13 +76,16 @@ export default function UmamiReplayRecorder() {
 		if (isUmamiStaff()) return undefined;
 
 		let cancelled = false;
+		const abortController = new AbortController();
 		let flushIntervalId = null;
 		let stopRecording = () => {};
 		let removeVisibilityListener = () => {};
 		let removePageHideListener = () => {};
 
 		async function setupReplay() {
-			const cache = await waitForUmamiSessionCache();
+			const cache = await waitForUmamiSessionCache({
+				signal: abortController.signal,
+			});
 			if (cancelled || !cache) return;
 
 			const { record } = await import("rrweb");
@@ -166,6 +169,7 @@ export default function UmamiReplayRecorder() {
 
 		return () => {
 			cancelled = true;
+			abortController.abort();
 			stopRecording({ useKeepalive: true });
 		};
 	}, []);

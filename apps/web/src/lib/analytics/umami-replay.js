@@ -1,12 +1,16 @@
 import { getUmamiConfig, normalizeUmamiUrl } from "./umami-config.js";
 
 export const UMAMI_REPLAY_DEFAULTS = Object.freeze({
-	sampleRate: 0.15,
+	// Validate end-to-end at 100% before lowering sampling (see REPLAY.md).
+	sampleRate: 1,
 	flushIntervalMs: 10000,
 	flushEventCount: 100,
 	maxDurationMs: 300000,
 	sessionPollIntervalMs: 100,
-	sessionPollAttempts: 50,
+	// Wait indefinitely for the session cache: the token only appears after
+	// the first /api/send round-trip, which can be delayed on slow networks.
+	// Cancellation is handled via AbortSignal from the recorder.
+	sessionPollAttempts: Infinity,
 	maskLevel: "moderate",
 	blockSelector: "[data-umami-block]",
 });
@@ -83,23 +87,45 @@ export function waitForUmamiSessionCache({
 	getUmami = () => globalThis.window?.umami,
 	pollIntervalMs = UMAMI_REPLAY_DEFAULTS.sessionPollIntervalMs,
 	maxAttempts = UMAMI_REPLAY_DEFAULTS.sessionPollAttempts,
+	signal,
 } = {}) {
 	return new Promise((resolve) => {
+		if (signal?.aborted) {
+			resolve("");
+			return;
+		}
+
+		let timer = null;
+		const onAbort = () => {
+			cleanup();
+			resolve("");
+		};
+		const cleanup = () => {
+			if (timer !== null) {
+				clearTimeout(timer);
+				timer = null;
+			}
+			signal?.removeEventListener("abort", onAbort);
+		};
+
 		const poll = (attempts = 0) => {
 			const cache = getUmamiSessionCache(getUmami());
 			if (cache) {
+				cleanup();
 				resolve(cache);
 				return;
 			}
 
 			if (attempts >= maxAttempts) {
+				cleanup();
 				resolve("");
 				return;
 			}
 
-			setTimeout(() => poll(attempts + 1), pollIntervalMs);
+			timer = setTimeout(() => poll(attempts + 1), pollIntervalMs);
 		};
 
+		signal?.addEventListener("abort", onAbort, { once: true });
 		poll();
 	});
 }
@@ -152,7 +178,23 @@ export async function postReplayBatch({
 			credentials: "omit",
 		});
 
-		return response?.ok === true;
+		if (!response?.ok) return false;
+
+		// Umami answers 200 with { ok: false, reason } when replay is disabled
+		// server-side. Treat that as a failure so events are restored instead
+		// of silently dropped.
+		const responseBody =
+			typeof response.json === "function"
+				? await response.json().catch(() => null)
+				: null;
+		if (responseBody && responseBody.ok === false) {
+			console.warn(
+				`[umami-replay] batch rejected by server: ${responseBody.reason ?? "unknown reason"}`,
+			);
+			return false;
+		}
+
+		return true;
 	} catch {
 		return false;
 	}

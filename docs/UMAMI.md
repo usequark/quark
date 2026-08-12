@@ -49,12 +49,14 @@ The generated web app should include these surfaces:
 
 Replay remains app-local and uses code defaults that mirror Umami's recorder behavior closely enough for App Router apps:
 
-- sample rate: `0.15`
+- sample rate: `1` (validate end-to-end at 100% before lowering)
 - flush interval: `10000` ms
 - flush event count: `100`
 - max duration: `300000` ms
 - masking: `moderate` by default with `maskAllInputs: true`
+- session-cache wait: polls indefinitely until `window.umami.getSession().cache` appears (abortable); a fixed timeout silently dropped every session on slow networks
 - unload behavior: `keepalive` only when the payload stays under the browser body limit
+- server rejection: a `200` with `{ ok: false, reason }` (e.g. replay disabled server-side) is treated as a failure — events are restored and retried instead of silently dropped
 
 These defaults belong in code, not in additional public environment variables.
 

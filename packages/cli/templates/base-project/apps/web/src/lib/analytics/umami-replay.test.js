@@ -7,8 +7,14 @@ import {
 	postReplayBatch,
 	resolveUmamiSessionCache,
 	shouldSampleReplay,
+	UMAMI_REPLAY_DEFAULTS,
 	waitForUmamiSessionCache,
 } from "./umami-replay.js";
+
+test("replay defaults record every session and wait indefinitely for the cache", () => {
+	assert.equal(UMAMI_REPLAY_DEFAULTS.sampleRate, 1);
+	assert.equal(UMAMI_REPLAY_DEFAULTS.sessionPollAttempts, Infinity);
+});
 
 test("buildReplayEndpoint uses the normalized Umami URL", () => {
 	assert.equal(
@@ -56,6 +62,35 @@ test("waitForUmamiSessionCache resolves once the tracker session cache exists", 
 	});
 
 	assert.equal(cache, "session-cache");
+});
+
+test("waitForUmamiSessionCache keeps polling past the old timeout until the cache appears", async () => {
+	let attempts = 0;
+
+	const cache = await waitForUmamiSessionCache({
+		getUmami: () => ({
+			getSession: () => ({
+				cache: attempts++ >= 60 ? "late-cache" : "",
+			}),
+		}),
+		pollIntervalMs: 0,
+	});
+
+	assert.equal(cache, "late-cache");
+});
+
+test("waitForUmamiSessionCache resolves empty when aborted", async () => {
+	const abortController = new AbortController();
+
+	const promise = waitForUmamiSessionCache({
+		getUmami: () => ({ getSession: () => ({ cache: "" }) }),
+		pollIntervalMs: 1000,
+		signal: abortController.signal,
+	});
+
+	abortController.abort();
+
+	assert.equal(await promise, "");
 });
 
 test("resolveUmamiSessionCache prefers the live tracker session cache", () => {
@@ -127,6 +162,21 @@ test("postReplayBatch returns false when Umami responds with an HTTP error", asy
 		websiteId: "site_123",
 		events: [{ timestamp: 1, type: 4 }],
 		fetchImpl: async () => ({ ok: false, status: 500 }),
+	});
+
+	assert.equal(sent, false);
+});
+
+test("postReplayBatch returns false when the server rejects the batch", async () => {
+	const sent = await postReplayBatch({
+		endpoint: "https://stats.example.com/api/record",
+		cache: "cache-token",
+		websiteId: "site_123",
+		events: [{ timestamp: 1, type: 4 }],
+		fetchImpl: async () => ({
+			ok: true,
+			json: async () => ({ ok: false, reason: "replay_disabled" }),
+		}),
 	});
 
 	assert.equal(sent, false);
