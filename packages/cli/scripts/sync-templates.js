@@ -398,10 +398,11 @@ function transformDbPackageJson(content) {
 		pkg.dependencies["@techstream/quark-core"] = CORE_VERSION_PIN;
 	}
 
-	// DB tests need a generated Prisma client on fresh installs, and the Node.js
-	// native glob keeps the scaffold script cross-platform.
+	// DB tests rely on the generated Prisma client (produced by the turbo
+	// `test` task's `db:generate` dependency), and the Node.js native glob
+	// keeps the scaffold script cross-platform.
 	if (pkg.scripts?.test) {
-		pkg.scripts.test = "pnpm run db:generate && node --test 'src/**/*.test.js'";
+		pkg.scripts.test = "node --test 'src/**/*.test.js'";
 	}
 
 	return `${JSON.stringify(pkg, null, "\t")}\n`;

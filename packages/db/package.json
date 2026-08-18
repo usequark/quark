@@ -10,7 +10,7 @@
 		"./umami": "./src/umami.js"
 	},
 	"scripts": {
-		"test": "pnpm run db:generate && node --test 'src/**/*.test.js'",
+		"test": "node --test 'src/**/*.test.js'",
 		"lint": "biome format --write && biome check --write",
 		"db:generate": "prisma generate",
 		"db:migrate": "prisma migrate dev",
