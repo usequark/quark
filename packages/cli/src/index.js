@@ -186,6 +186,7 @@ function getWorkspacePackagesForFeatures(features) {
 
 	for (const feature of features) {
 		const meta = FEATURE_META[feature];
+		if (meta?.starter) continue; // starters have no workspace package
 		const packageNames = meta?.packages ?? [feature];
 
 		for (const packageName of packageNames) {
@@ -201,7 +202,7 @@ function getPairedTemplatesForFeatures(features) {
 
 	for (const feature of features) {
 		const meta = FEATURE_META[feature];
-		if (!meta) continue;
+		if (!meta || meta.starter) continue; // starters have no paired routes
 
 		for (const pair of meta.pairs) {
 			if (!pairs.includes(pair)) {
@@ -213,14 +214,57 @@ function getPairedTemplatesForFeatures(features) {
 	return pairs;
 }
 
+/**
+ * Drop a domain starter into a scaffolded project.
+ * Copies the starter template (generic Prisma model + CRUD endpoint) from
+ * templates/starters/<starter>/ and the matching recipe from
+ * templates/base-project/recipes/<starter>.md.
+ * @param {string} targetDir - Project root
+ * @param {string} starter - Starter name (bookings, crm, cms, ai)
+ * @param {string} scope - Project scope (for import rewriting)
+ */
+async function applyStarter(targetDir, starter, scope) {
+	const starterDir = path.join(templatesDir, "starters", starter);
+	if (!(await fs.pathExists(starterDir))) {
+		console.log(
+			chalk.yellow(
+				`    ⚠ ${starter} (starter template not yet available - skipped)`,
+			),
+		);
+		return;
+	}
+
+	// Copy the starter template into the project (merges with existing tree).
+	await fs.copy(starterDir, targetDir);
+	await replaceImportsInSourceFiles(targetDir, scope);
+
+	// Copy the matching recipe into the project's recipes/ dir.
+	const recipeSrc = path.join(
+		templatesDir,
+		"base-project",
+		"recipes",
+		`${starter}.md`,
+	);
+	if (await fs.pathExists(recipeSrc)) {
+		const recipeDir = path.join(targetDir, "recipes");
+		await fs.ensureDir(recipeDir);
+		await fs.copy(recipeSrc, path.join(recipeDir, `${starter}.md`));
+	}
+
+	console.log(chalk.green(`    ✓ ${starter} (domain starter)`));
+}
+
 function buildFeatureRows(features) {
 	const rows = {
 		ui: "| UI package | Included | `packages/ui/README.md` |",
 		jobs: "| Jobs + worker | Included | `packages/jobs/README.md`, `apps/worker/src/handlers/` |",
 		admin:
 			"| Admin panel | Included | `packages/admin/README.md`, `apps/web/src/app/admin/` |",
-		cms: "| CMS | Included | `packages/cms/README.md`, `apps/web/src/app/admin/cms/` |",
-		ai: "| AI chat assistant | Included | `apps/web/src/app/admin/ai/` |",
+		bookings:
+			"| Bookings starter | Included | `recipes/bookings.md`, `apps/web/src/app/api/bookings/` |",
+		crm: "| CRM starter | Included | `recipes/crm.md`, `apps/web/src/app/api/crm/` |",
+		cms: "| CMS starter | Included | `recipes/cms.md`, `apps/web/src/app/api/cms/` |",
+		ai: "| AI assistant starter | Included | `recipes/ai.md`, `apps/web/src/app/api/ai/` |",
 	};
 
 	const selectedRows = features
@@ -239,9 +283,6 @@ function buildOptionalAppLines(features) {
 	if (features.includes("jobs")) {
 		lines.push("│   └── worker/               # BullMQ background worker\n");
 	}
-	if (features.includes("ai")) {
-		lines.push("│   └── ai/                    # AI chat assistant\n");
-	}
 	return lines.join("");
 }
 
@@ -251,8 +292,11 @@ function buildFirstEditLines(features) {
 		jobs: "- `packages/jobs/src/definitions.js` and `apps/worker/src/handlers/` - define and process background jobs",
 		admin:
 			"- `packages/admin/src/config.js` and `apps/web/src/app/admin/` - tune model labels, hidden fields, and admin pages",
-		cms: "- `packages/cms/src/config.js` and `apps/web/src/app/admin/cms/` - choose managed content types and editorial flows",
-		ai: "- `apps/web/src/app/admin/ai/` - AI chat assistant with session management and tool calling",
+		bookings:
+			"- `recipes/bookings.md` and `apps/web/src/app/api/bookings/` - extend the booking model and CRUD",
+		crm: "- `recipes/crm.md` and `apps/web/src/app/api/crm/` - extend the CRM model and CRUD",
+		cms: "- `recipes/cms.md` and `apps/web/src/app/api/cms/` - extend the CMS model and CRUD",
+		ai: "- `recipes/ai.md` and `apps/web/src/app/api/ai/` - extend the AI assistant model and CRUD",
 	};
 
 	const selectedLines = features
@@ -272,8 +316,11 @@ function buildFeatureGuideLines(features) {
 		jobs: "- `packages/jobs/README.md` - queue names, worker pairing, and the job-extension workflow",
 		admin:
 			"- `packages/admin/README.md` - admin configuration, model overrides, and route ownership",
-		cms: "- `packages/cms/README.md` - content types, media rules, and CMS/admin boundaries",
-		ai: "- `apps/web/src/app/admin/ai/page.js` - AI chat page with streaming, tool calls, and conversation management",
+		bookings:
+			"- `recipes/bookings.md` - how to extend the booking starter into a full booking system",
+		crm: "- `recipes/crm.md` - how to extend the CRM starter into a full pipeline",
+		cms: "- `recipes/cms.md` - how to extend the CMS starter into a full content system",
+		ai: "- `recipes/ai.md` - how to extend the AI assistant starter into a full assistant",
 	};
 
 	const selectedLines = features
@@ -358,6 +405,10 @@ async function patchNextConfig(webDir, scope, selectedPackages) {
 		jobs: `@${scope}/jobs`,
 		admin: `@${scope}/admin`,
 		cms: `@${scope}/cms`,
+		// crm and ai are domain starters (never workspace packages) — their
+		// transpilePackages entries are always removed.
+		crm: `@${scope}/crm`,
+		ai: `@${scope}/ai`,
 	};
 
 	for (const [feature, pkg] of Object.entries(optionalEntries)) {
@@ -479,7 +530,15 @@ program
 	)
 	.option(
 		"--features <features>",
-		"Comma-separated list of optional features to include (ui,jobs,admin,cms)",
+		"Comma-separated list of optional features to include (ui,jobs,admin,bookings,crm,cms,ai)",
+	)
+	.option(
+		"--preset <preset>",
+		"Preset bundle of features (client-work, internal-tool, product, minimal)",
+	)
+	.option(
+		"--prompt <prompt>",
+		"Product brief used to populate MAIN.md (AI View)",
 	)
 	.option("--skip-install", "Skip pnpm install and Prisma generate steps")
 	.option("--skip-docker", "Skip Docker orphan-volume cleanup")
@@ -649,6 +708,7 @@ program
 
 			// Step 5: Ask which optional features to eject
 			let features;
+			let brief = options.prompt?.trim() || `${appDisplayName} application`;
 			if (!options.prompts && options.features !== undefined) {
 				// Parse features from CLI flag
 				console.log(chalk.cyan("\n  🎯 Configuring optional features..."));
@@ -686,6 +746,15 @@ program
 						`  Selected features: ${features.join(", ") || "none"} (non-interactive mode)`,
 					),
 				);
+			} else if (!options.prompts && options.preset !== undefined) {
+				// AI View: --preset bundle
+				console.log(chalk.cyan("\n  🎯 Configuring optional features..."));
+				features = resolvePresetFeatures(options.preset);
+				console.log(
+					chalk.green(
+						`  Using preset "${options.preset}": ${features.join(", ") || "none"} (non-interactive mode)`,
+					),
+				);
 			} else if (!options.prompts) {
 				// Use defaults when --no-prompts is set without --features
 				console.log(chalk.cyan("\n  🎯 Configuring optional features..."));
@@ -696,7 +765,24 @@ program
 					),
 				);
 			} else {
-				// Interactive prompt
+				// Human View: product-shaped questions first, then advanced config.
+				console.log(chalk.cyan("\n  💡 Describe your app...\n"));
+				const briefResponse = await prompts({
+					type: "text",
+					name: "brief",
+					message:
+						"Describe your app in a sentence or two (this seeds MAIN.md):",
+					initial: `${appDisplayName} application`,
+				});
+				brief = briefResponse.brief;
+				if (!brief) {
+					console.log(chalk.yellow("\n\u26A0\uFE0F  Setup cancelled."));
+					await fs.remove(targetDir);
+					process.exit(0);
+				}
+				brief = brief.trim();
+
+				// Advanced expander — full package/custom config.
 				console.log(chalk.cyan("\n  🎯 Configuring optional features...\n"));
 				const response = await prompts([
 					{
@@ -721,18 +807,22 @@ program
 								selected: false,
 							},
 							{
-								title: "CMS (packages/cms + /admin/cms) [requires: admin, ui]",
-								value: "cms",
+								title: "Bookings starter (model + CRUD endpoint + recipe)",
+								value: "bookings",
 								selected: false,
 							},
 							{
-								title: "CRM (packages/crm + /admin/crm) [requires: admin, ui]",
+								title: "CRM starter (model + CRUD endpoint + recipe)",
 								value: "crm",
 								selected: false,
 							},
 							{
-								title:
-									"AI Chat Assistant (admin AI agent with sessions, streaming, and tool calling) [requires: admin, jobs]",
+								title: "CMS starter (model + CRUD endpoint + recipe)",
+								value: "cms",
+								selected: false,
+							},
+							{
+								title: "AI assistant starter (model + CRUD endpoint + recipe)",
 								value: "ai",
 								selected: false,
 							},
@@ -925,6 +1015,27 @@ program
 				}
 			}
 
+			// Step 6b: Apply selected domain starters (bookings, crm, cms, ai)
+			const selectedStarters = features.filter((f) => FEATURE_META[f]?.starter);
+			if (selectedStarters.length > 0) {
+				console.log(chalk.cyan("\n  🚀 Setting up domain starters..."));
+				for (const starter of selectedStarters) {
+					await applyStarter(targetDir, starter, scope);
+				}
+			}
+
+			// Step 6c: Prune vertical recipes not selected. The base-project template
+			// ships the full recipes/ library (core + verticals); vertical recipes ship
+			// only with their feature (F2/F4 contract).
+			const recipesDir = path.join(targetDir, "recipes");
+			if (await fs.pathExists(recipesDir)) {
+				for (const starter of STARTER_FEATURES) {
+					if (!features.includes(starter)) {
+						await fs.remove(path.join(recipesDir, `${starter}.md`));
+					}
+				}
+			}
+
 			// Step 7: Update all package.json dependencies to use correct scope
 			console.log(chalk.cyan("\n  🔧 Updating app dependencies..."));
 
@@ -1034,29 +1145,26 @@ program
 				}
 			}
 
-			// Step 7f: Remove feature-specific API routes when features not selected.
-			// The base-project template ships these routes for all features, but they
-			// import optional packages (@techstream/quark-crm, @techstream/quark-ai/*)
-			// that are only scaffolded when the feature is selected.
-			if (!features.includes("crm")) {
-				await fs.remove(
-					path.join(
-						targetDir,
-						"apps",
-						"web",
-						"src",
-						"app",
-						"api",
-						"admin",
-						"crm",
-					),
-				);
-			}
-			if (!features.includes("ai")) {
-				await fs.remove(
-					path.join(targetDir, "apps", "web", "src", "app", "api", "ai"),
-				);
-			}
+			// Step 7f: Remove legacy vertical API routes from the base-project template.
+			// The base-project ships crm/ai API routes that import the now-archived
+			// vertical packages (@techstream/quark-crm, @techstream/quark-ai/*). These
+			// are always removed; the domain starters provide their own generic routes
+			// (apps/web/src/app/api/<vertical>/) via applyStarter.
+			await fs.remove(
+				path.join(
+					targetDir,
+					"apps",
+					"web",
+					"src",
+					"app",
+					"api",
+					"admin",
+					"crm",
+				),
+			);
+			await fs.remove(
+				path.join(targetDir, "apps", "web", "src", "app", "api", "ai"),
+			);
 
 			// Step 8: Create .env.example file
 			console.log(chalk.cyan("\n  📋 Creating environment configuration..."));
@@ -1298,12 +1406,21 @@ STORAGE_PROVIDER=local
 				authAllowSignup: allowSignup,
 				// Track that worker is paired with jobs (not independently selectable)
 				hasWorker: features.includes("jobs"),
+				brief,
 			};
 			await fs.writeFile(
 				path.join(targetDir, ".quark-link.json"),
 				JSON.stringify(quarkLinkJson, null, "	"),
 			);
 			console.log(chalk.green(`    ✓ .quark-link.json`));
+
+			// Populate MAIN.md brief placeholder if MAIN.md exists (F1 owns the file).
+			const mainMdPath = path.join(targetDir, "MAIN.md");
+			if (await fs.pathExists(mainMdPath)) {
+				let mainMd = await fs.readFile(mainMdPath, "utf-8");
+				mainMd = mainMd.replace(/__QUARK_BRIEF__/g, brief);
+				await fs.writeFile(mainMdPath, mainMd);
+			}
 
 			// Step 10b + 10c: Generate all AI coding tool context files
 			console.log(chalk.cyan("\n  🤖 Generating AI context files..."));
@@ -1488,7 +1605,16 @@ STORAGE_PROVIDER=local
 // quark add <feature> - Add optional packages to an existing Quark project
 // ---------------------------------------------------------------------------
 
-/** Feature metadata: dependencies and paired apps/routes */
+/**
+ * Feature metadata: dependencies, packages, paired apps/routes, and starter.
+ *
+ * Two kinds of feature:
+ * - `package` (default): scaffolds a workspace package (and optional paired
+ *   apps/routes). e.g. ui, jobs, admin.
+ * - `starter`: drops in a minified domain starter (generic Prisma model + CRUD
+ *   endpoint + recipe) from `templates/starters/<starter>/`. No workspace
+ *   package, no paired routes. e.g. bookings, crm, cms, ai.
+ */
 const FEATURE_META = {
 	ui: { requires: [], packages: ["ui"], pairs: [] },
 	jobs: { requires: [], packages: ["jobs"], pairs: ["worker"] },
@@ -1497,22 +1623,14 @@ const FEATURE_META = {
 		packages: ["admin"],
 		pairs: ["admin-routes"],
 	},
-	cms: {
-		requires: ["admin"],
-		packages: ["cms"],
-		pairs: ["cms-routes", "cms-public"],
-	},
-	crm: {
-		requires: ["admin"],
-		packages: ["crm"],
-		pairs: ["crm-routes"],
-	},
-	ai: {
-		requires: ["admin", "jobs"],
-		packages: [],
-		pairs: ["ai-routes"],
-	},
+	bookings: { requires: [], starter: "bookings" },
+	crm: { requires: [], starter: "crm" },
+	cms: { requires: [], starter: "cms" },
+	ai: { requires: [], starter: "ai" },
 };
+
+/** Names of the vertical features that resolve as domain starters. */
+const STARTER_FEATURES = ["bookings", "crm", "cms", "ai"];
 
 function resolveFeatureSelection(features) {
 	const resolved = [];
@@ -1546,6 +1664,32 @@ function resolveFeatureSelection(features) {
 }
 
 /**
+ * Preset bundles of optional features (AI View --preset).
+ * @type {Record<string, string[]>}
+ */
+const FEATURE_PRESETS = {
+	"client-work": ["ui", "jobs", "admin"],
+	"internal-tool": ["ui", "admin"],
+	product: ["ui", "jobs", "admin"],
+	minimal: [],
+};
+
+/**
+ * Resolve a --preset value into a feature list.
+ * @param {string} preset
+ * @returns {string[]}
+ */
+function resolvePresetFeatures(preset) {
+	const features = FEATURE_PRESETS[preset];
+	if (!features) {
+		throw new Error(
+			`Invalid preset: "${preset}". Valid options are: ${Object.keys(FEATURE_PRESETS).join(", ")}`,
+		);
+	}
+	return [...features];
+}
+
+/**
  * Detect the project scope from existing package.json files.
  * Reads root package.json and extracts the scope from the name field.
  * @param {string} projectDir
@@ -1567,6 +1711,15 @@ async function detectProjectScope(projectDir) {
 async function detectInstalledFeatures(projectDir) {
 	const installed = [];
 	for (const feature of Object.keys(FEATURE_META)) {
+		const meta = FEATURE_META[feature];
+		if (meta.starter) {
+			// Starters are detected by their recipe file in recipes/.
+			const recipePath = path.join(projectDir, "recipes", `${feature}.md`);
+			if (await fs.pathExists(recipePath)) {
+				installed.push(feature);
+			}
+			continue;
+		}
 		const featureDir = path.join(projectDir, "packages", feature);
 		if (await fs.pathExists(featureDir)) {
 			installed.push(feature);
@@ -1842,7 +1995,10 @@ async function rewriteWorkspaceDeps(pkgJsonPath, scope, workspacePackages) {
 
 program
 	.command("add")
-	.argument("<feature>", "Feature to add (ui, jobs, admin, cms, crm, ai)")
+	.argument(
+		"<feature>",
+		"Feature to add (ui, jobs, admin, bookings, crm, cms, ai)",
+	)
 	.description("Add an optional package to an existing Quark project")
 	.option("--force", "Skip safety checks (uncommitted changes)")
 	.action(async (feature, options) => {
@@ -1941,6 +2097,12 @@ program
 				const featMeta = FEATURE_META[feat];
 				const packageNames = featMeta.packages ?? [feat];
 				console.log(chalk.cyan(`\n  📋 Adding ${feat}...`));
+
+				// 0. Domain starter — drop in model + CRUD endpoint + recipe
+				if (featMeta.starter) {
+					await applyStarter(projectDir, featMeta.starter, scope);
+					continue;
+				}
 
 				// 1. Copy package template
 				for (const packageName of packageNames) {
@@ -2258,6 +2420,46 @@ program
 			console.error(chalk.dim(error.stack));
 			process.exit(1);
 		}
+	});
+
+// ---------------------------------------------------------------------------
+// quark recipe <feature> - Print an AI prompt recipe for a feature
+// ---------------------------------------------------------------------------
+
+program
+	.command("recipe")
+	.argument(
+		"<feature>",
+		"Feature to print a recipe for (model, endpoint, dashboard, bookings, crm, cms, ai)",
+	)
+	.description("Print an AI prompt recipe for a feature")
+	.action(async (feature) => {
+		const recipeName =
+			feature === "model"
+				? "add-model"
+				: feature === "endpoint"
+					? "add-endpoint"
+					: feature === "dashboard"
+						? "add-dashboard"
+						: feature;
+		const recipePath = path.join(
+			templatesDir,
+			"base-project",
+			"recipes",
+			`${recipeName}.md`,
+		);
+
+		if (!(await fs.pathExists(recipePath))) {
+			console.error(
+				chalk.red(
+					`✗ No recipe found for "${feature}". Available: model, endpoint, dashboard, bookings, crm, cms, ai`,
+				),
+			);
+			process.exit(1);
+		}
+
+		const recipe = await fs.readFile(recipePath, "utf-8");
+		console.log(recipe);
 	});
 
 /**

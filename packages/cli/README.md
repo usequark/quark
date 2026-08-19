@@ -30,6 +30,12 @@ pnpm dev
 # Create a new project
 npx @techstream/quark-create-app@latest my-awesome-app
 
+# Add a feature (package or domain starter) to an existing project
+npx @techstream/quark-create-app add cms
+
+# Print an AI prompt recipe for a feature
+npx @techstream/quark-create-app recipe bookings
+
 # Update Quark packages in an existing project
 npx @techstream/quark-create-app update
 
@@ -48,11 +54,21 @@ Aliases:
 - `create-quark-app`
 - `quark-update`
 
-## Usage with Flags
+## Two Views
 
-The CLI supports non-interactive mode with custom options for automation and CI/CD workflows.
+The CLI exposes two views over the same engine:
 
-### Non-Interactive Mode
+- **Human View (default, no params)** — interactive, product-shaped questions. It asks you to describe your app (which seeds `MAIN.md`), then an **advanced** expander for full package/custom configuration. Progressive disclosure: simple by default.
+- **AI View (params)** — a documented, deterministic flag surface (`--features`, `--preset`, `--prompt`, `--no-prompts`) that an agent calls reliably. Same params → same scaffold, every time.
+
+### Human View
+
+```bash
+# Interactive: describe your app, then configure features
+npx @techstream/quark-create-app my-app
+```
+
+### AI View (deterministic params)
 
 Skip all interactive prompts and use defaults:
 
@@ -63,7 +79,7 @@ npx @techstream/quark-create-app my-app --no-prompts
 
 ### Custom Features
 
-Specify which optional packages to include (default: `ui,jobs`; valid: `ui`, `jobs`, `admin`, `cms`):
+Specify which optional features to include (default: `ui,jobs`; valid: `ui`, `jobs`, `admin`, `bookings`, `crm`, `cms`, `ai`):
 
 ```bash
 # Only include UI package
@@ -72,12 +88,53 @@ npx @techstream/quark-create-app my-app --no-prompts --features ui
 # Include both UI and Jobs
 npx @techstream/quark-create-app my-app --no-prompts --features ui,jobs
 
-# Include admin plus the CMS section explicitly
+# Include admin plus the CMS starter explicitly
 npx @techstream/quark-create-app my-app --no-prompts --features ui,admin,cms
 
 # Minimal setup (no optional packages)
 npx @techstream/quark-create-app my-app --no-prompts --features ""
 ```
+
+### Presets
+
+Bundle a set of features with one flag:
+
+```bash
+# Client-work bundle (ui, jobs, admin)
+npx @techstream/quark-create-app my-app --no-prompts --preset client-work
+
+# Internal tool (ui, admin)
+npx @techstream/quark-create-app my-app --no-prompts --preset internal-tool
+
+# Minimal (no optional features)
+npx @techstream/quark-create-app my-app --no-prompts --preset minimal
+```
+
+Valid presets: `client-work`, `internal-tool`, `product`, `minimal`.
+
+### Product brief
+
+Seed the `MAIN.md` brief from a prompt (AI View):
+
+```bash
+npx @techstream/quark-create-app my-app --no-prompts --prompt "A booking platform for salons"
+```
+
+### recipe command
+
+Print an AI prompt recipe for a feature:
+
+```bash
+# Print the bookings starter recipe
+npx @techstream/quark-create-app recipe bookings
+
+# Print a core recipe (model, endpoint, dashboard)
+npx @techstream/quark-create-app recipe model
+npx @techstream/quark-create-app recipe endpoint
+npx @techstream/quark-create-app recipe dashboard
+```
+
+Available recipes: `model`, `endpoint`, `dashboard`, `bookings`, `crm`, `cms`, `ai`.
 
 ### Skip Installation Steps
 
