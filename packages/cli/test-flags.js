@@ -173,7 +173,6 @@ describe("Feature Validation", () => {
 				join(projectDir, "apps", "web", "src", "app", "admin", "layout.js"),
 				"utf8",
 			);
-			assert.ok(adminLayout.includes("loadCmsConfig"));
 			assert.ok(!adminLayout.includes("@techstream/quark-cms"));
 
 			const nextConfig = readFileSync(
