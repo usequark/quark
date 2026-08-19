@@ -1,7 +1,6 @@
 "use client";
 
-import { Toast, useToast } from "@techstream/quark-ui";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const DEFAULT_TOAST_MESSAGES = {
 	created: "{resource} created.",
@@ -9,12 +8,16 @@ const DEFAULT_TOAST_MESSAGES = {
 	deleted: "{resource} deleted.",
 };
 
+/**
+ * Neutral inline toast for admin actions. Replaces the themed quark-ui Toast
+ * with a plain gray banner so the admin shell carries no themed UI.
+ */
 export default function AdminActionToast({
 	toastKey,
 	resourceLabel,
 	messageOverrides,
 }) {
-	const toast = useToast();
+	const [message, setMessage] = useState(null);
 	const shownKeyRef = useRef(null);
 
 	useEffect(() => {
@@ -29,10 +32,10 @@ export default function AdminActionToast({
 		if (!messageTemplate) return;
 
 		shownKeyRef.current = toastKey;
-		const message = resourceLabel
+		const text = resourceLabel
 			? messageTemplate.replace("{resource}", resourceLabel)
 			: messageTemplate.replace("{resource}", "Item");
-		toast.show(message, "success");
+		setMessage(text);
 
 		const url = new URL(window.location.href);
 		url.searchParams.delete("toast");
@@ -41,7 +44,16 @@ export default function AdminActionToast({
 			"",
 			`${url.pathname}${url.search}${url.hash}`,
 		);
-	}, [messageOverrides, resourceLabel, toast, toastKey]);
+	}, [messageOverrides, resourceLabel, toastKey]);
 
-	return <Toast {...toast.toastProps} />;
+	if (!message) return null;
+
+	return (
+		<div
+			role="status"
+			className="mb-4 rounded-md border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700"
+		>
+			{message}
+		</div>
+	);
 }
