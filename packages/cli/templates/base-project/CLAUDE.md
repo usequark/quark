@@ -3,6 +3,10 @@
 > Scaffolded with [Quark](https://github.com/Bobnoddle/quark) on __QUARK_SCAFFOLD_DATE__.
 > **Keep this file updated** as your project grows - it's what Claude Code, Cursor, and other AI tools read first.
 
+## Entry Point
+
+Start with [`MAIN.md`](./MAIN.md) - the project brief and a map to the rest of the context (`docs/`, `openapi.yaml`, `recipes/`). This file is the detailed rules and conventions reference.
+
 ## Quick Start
 
 ```bash
