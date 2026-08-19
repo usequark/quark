@@ -532,6 +532,14 @@ program
 		"--features <features>",
 		"Comma-separated list of optional features to include (ui,jobs,admin,bookings,crm,cms,ai)",
 	)
+	.option(
+		"--preset <preset>",
+		"Preset bundle of features (client-work, internal-tool, product, minimal)",
+	)
+	.option(
+		"--prompt <prompt>",
+		"Product brief used to populate MAIN.md (AI View)",
+	)
 	.option("--skip-install", "Skip pnpm install and Prisma generate steps")
 	.option("--skip-docker", "Skip Docker orphan-volume cleanup")
 	.action(async (projectName, options) => {
@@ -700,6 +708,7 @@ program
 
 			// Step 5: Ask which optional features to eject
 			let features;
+			let brief = options.prompt?.trim() || `${appDisplayName} application`;
 			if (!options.prompts && options.features !== undefined) {
 				// Parse features from CLI flag
 				console.log(chalk.cyan("\n  🎯 Configuring optional features..."));
@@ -737,6 +746,15 @@ program
 						`  Selected features: ${features.join(", ") || "none"} (non-interactive mode)`,
 					),
 				);
+			} else if (!options.prompts && options.preset !== undefined) {
+				// AI View: --preset bundle
+				console.log(chalk.cyan("\n  🎯 Configuring optional features..."));
+				features = resolvePresetFeatures(options.preset);
+				console.log(
+					chalk.green(
+						`  Using preset "${options.preset}": ${features.join(", ") || "none"} (non-interactive mode)`,
+					),
+				);
 			} else if (!options.prompts) {
 				// Use defaults when --no-prompts is set without --features
 				console.log(chalk.cyan("\n  🎯 Configuring optional features..."));
@@ -747,7 +765,24 @@ program
 					),
 				);
 			} else {
-				// Interactive prompt
+				// Human View: product-shaped questions first, then advanced config.
+				console.log(chalk.cyan("\n  💡 Describe your app...\n"));
+				const briefResponse = await prompts({
+					type: "text",
+					name: "brief",
+					message:
+						"Describe your app in a sentence or two (this seeds MAIN.md):",
+					initial: `${appDisplayName} application`,
+				});
+				brief = briefResponse.brief;
+				if (!brief) {
+					console.log(chalk.yellow("\n\u26A0\uFE0F  Setup cancelled."));
+					await fs.remove(targetDir);
+					process.exit(0);
+				}
+				brief = brief.trim();
+
+				// Advanced expander — full package/custom config.
 				console.log(chalk.cyan("\n  🎯 Configuring optional features...\n"));
 				const response = await prompts([
 					{
@@ -1371,12 +1406,21 @@ STORAGE_PROVIDER=local
 				authAllowSignup: allowSignup,
 				// Track that worker is paired with jobs (not independently selectable)
 				hasWorker: features.includes("jobs"),
+				brief,
 			};
 			await fs.writeFile(
 				path.join(targetDir, ".quark-link.json"),
 				JSON.stringify(quarkLinkJson, null, "	"),
 			);
 			console.log(chalk.green(`    ✓ .quark-link.json`));
+
+			// Populate MAIN.md brief placeholder if MAIN.md exists (F1 owns the file).
+			const mainMdPath = path.join(targetDir, "MAIN.md");
+			if (await fs.pathExists(mainMdPath)) {
+				let mainMd = await fs.readFile(mainMdPath, "utf-8");
+				mainMd = mainMd.replace(/__QUARK_BRIEF__/g, brief);
+				await fs.writeFile(mainMdPath, mainMd);
+			}
 
 			// Step 10b + 10c: Generate all AI coding tool context files
 			console.log(chalk.cyan("\n  🤖 Generating AI context files..."));
@@ -1617,6 +1661,32 @@ function resolveFeatureSelection(features) {
 	}
 
 	return resolved;
+}
+
+/**
+ * Preset bundles of optional features (AI View --preset).
+ * @type {Record<string, string[]>}
+ */
+const FEATURE_PRESETS = {
+	"client-work": ["ui", "jobs", "admin"],
+	"internal-tool": ["ui", "admin"],
+	product: ["ui", "jobs", "admin"],
+	minimal: [],
+};
+
+/**
+ * Resolve a --preset value into a feature list.
+ * @param {string} preset
+ * @returns {string[]}
+ */
+function resolvePresetFeatures(preset) {
+	const features = FEATURE_PRESETS[preset];
+	if (!features) {
+		throw new Error(
+			`Invalid preset: "${preset}". Valid options are: ${Object.keys(FEATURE_PRESETS).join(", ")}`,
+		);
+	}
+	return [...features];
 }
 
 /**
@@ -2350,6 +2420,46 @@ program
 			console.error(chalk.dim(error.stack));
 			process.exit(1);
 		}
+	});
+
+// ---------------------------------------------------------------------------
+// quark recipe <feature> - Print an AI prompt recipe for a feature
+// ---------------------------------------------------------------------------
+
+program
+	.command("recipe")
+	.argument(
+		"<feature>",
+		"Feature to print a recipe for (model, endpoint, dashboard, bookings, crm, cms, ai)",
+	)
+	.description("Print an AI prompt recipe for a feature")
+	.action(async (feature) => {
+		const recipeName =
+			feature === "model"
+				? "add-model"
+				: feature === "endpoint"
+					? "add-endpoint"
+					: feature === "dashboard"
+						? "add-dashboard"
+						: feature;
+		const recipePath = path.join(
+			templatesDir,
+			"base-project",
+			"recipes",
+			`${recipeName}.md`,
+		);
+
+		if (!(await fs.pathExists(recipePath))) {
+			console.error(
+				chalk.red(
+					`✗ No recipe found for "${feature}". Available: model, endpoint, dashboard, bookings, crm, cms, ai`,
+				),
+			);
+			process.exit(1);
+		}
+
+		const recipe = await fs.readFile(recipePath, "utf-8");
+		console.log(recipe);
 	});
 
 /**
