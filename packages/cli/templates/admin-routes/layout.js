@@ -1,10 +1,35 @@
+import { access } from "node:fs/promises";
+import path from "node:path";
+
 import { adminConfig, getModels, modelToSlug } from "@techstream/quark-admin";
 import { createLogger } from "@techstream/quark-core";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { hasCrmFeature } from "@/lib/load-crm-config";
 
 const logger = createLogger("admin:layout");
+
+const CMS_CONFIG_PATHS = [
+	"packages/cms/src/config.js",
+	"../../packages/cms/src/config.js",
+	"../../../../../../packages/cms/src/config.js",
+];
+
+/**
+ * Detect whether the CMS feature is present without importing
+ * `@/lib/load-cms-config` (which only ships with the cms-public template).
+ * Mirrors the fs-existence pattern used by `load-crm-config.js`.
+ */
+async function hasCmsFeature() {
+	for (const relativePath of CMS_CONFIG_PATHS) {
+		try {
+			await access(path.resolve(process.cwd(), relativePath));
+			return true;
+		} catch {}
+	}
+	return false;
+}
 
 export const dynamic = "force-dynamic";
 export const metadata = {
@@ -68,7 +93,11 @@ export default async function AdminLayout({ children }) {
 
 	const role = session.user.role;
 	const isAdminRole = role === "admin" || role === "client_admin";
-	if (!isAdminRole && role !== "editor") {
+	const cmsEnabled = await hasCmsFeature();
+	const hasCrm = await hasCrmFeature();
+	// Editors are admitted only when the CMS feature is present — they manage
+	// content, not generic models (which require the admin role).
+	if (!isAdminRole && (role !== "editor" || !cmsEnabled)) {
 		redirect("/");
 	}
 
@@ -111,6 +140,20 @@ export default async function AdminLayout({ children }) {
 
 					<nav className="flex-1 overflow-y-auto p-3 space-y-1">
 						<SidebarLink href="/admin" label="Dashboard" exact />
+						{cmsEnabled && (
+							<>
+								<SectionLabel label="Content" />
+								<SidebarLink href="/admin/cms" label="Overview" exact />
+								<SidebarLink href="/admin/cms/media" label="Media" />
+							</>
+						)}
+						{hasCrm && (
+							<>
+								<SectionLabel label="CRM" />
+								<SidebarLink href="/admin/crm" label="Overview" exact />
+								<SidebarLink href="/admin/crm/deals" label="Deals" />
+							</>
+						)}
 						{coreModels.length > 0 && (
 							<SectionLabel label="Models" />
 						)}
