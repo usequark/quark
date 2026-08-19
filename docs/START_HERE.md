@@ -40,7 +40,10 @@ Optional scaffolded features:
 | `ui` | Local Tailwind UI primitives | `packages/ui/README.md` |
 | `jobs` | Local job definitions + `apps/worker` | `packages/jobs/README.md` |
 | `admin` | Auto-generated CRUD admin UI | `packages/admin/README.md` |
-| `cms` | Content helpers + admin CMS routes | `packages/cms/README.md` |
+| `bookings` | Booking domain starter (model + CRUD + recipe) | `recipes/bookings.md` |
+| `crm` | CRM domain starter (model + CRUD + recipe) | `recipes/crm.md` |
+| `cms` | CMS domain starter (model + CRUD + recipe) | `recipes/cms.md` |
+| `ai` | AI assistant domain starter (model + CRUD + recipe) | `recipes/ai.md` |
 
 ## Learn the project layout fast
 

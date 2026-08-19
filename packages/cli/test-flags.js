@@ -186,7 +186,7 @@ describe("Feature Validation", () => {
 		}
 	});
 
-	it("cms feature auto-adds admin and ui and scaffolds CMS package and routes", () => {
+	it("cms feature resolves as a domain starter (model + CRUD + recipe, no package)", () => {
 		const tmpDir = makeTempDir();
 		const projectName = "test-cms-app";
 		const scope = projectName.toLowerCase().replace(/[^a-z0-9-]/g, "");
@@ -209,8 +209,11 @@ describe("Feature Validation", () => {
 			);
 
 			const projectDir = join(tmpDir, projectName);
-			assert.ok(existsSync(join(projectDir, "packages", "admin")));
-			assert.ok(existsSync(join(projectDir, "packages", "cms")));
+			// Starter drops in a generic model + CRUD endpoint + recipe, NOT a package.
+			assert.ok(!existsSync(join(projectDir, "packages", "cms")));
+			assert.ok(
+				existsSync(join(projectDir, "packages", "db", "prisma", "cms.prisma")),
+			);
 			assert.ok(
 				existsSync(
 					join(
@@ -219,55 +222,52 @@ describe("Feature Validation", () => {
 						"web",
 						"src",
 						"app",
-						"admin",
+						"api",
 						"cms",
-						"page.js",
+						"route.js",
 					),
 				),
 			);
+			assert.ok(
+				existsSync(
+					join(
+						projectDir,
+						"apps",
+						"web",
+						"src",
+						"app",
+						"api",
+						"cms",
+						"[id]",
+						"route.js",
+					),
+				),
+			);
+			assert.ok(existsSync(join(projectDir, "recipes", "cms.md")));
 
+			// No workspace dep on a cms package.
 			const webPackageJson = JSON.parse(
 				readFileSync(join(projectDir, "apps", "web", "package.json"), "utf8"),
 			);
-			const cmsPackageJson = JSON.parse(
-				readFileSync(
-					join(projectDir, "packages", "cms", "package.json"),
-					"utf8",
+			assert.ok(!webPackageJson.dependencies[`@${scope}/cms`]);
+
+			// Legacy base-project cms/ai API routes (importing archived packages) are removed.
+			assert.ok(
+				!existsSync(
+					join(projectDir, "apps", "web", "src", "app", "api", "admin", "crm"),
 				),
 			);
-			assert.strictEqual(cmsPackageJson.name, `@${scope}/cms`);
-			assert.strictEqual(
-				cmsPackageJson.dependencies[`@${scope}/admin`],
-				"workspace:*",
+			assert.ok(
+				!existsSync(join(projectDir, "apps", "web", "src", "app", "api", "ai")),
 			);
-			assert.ok(!cmsPackageJson.dependencies["@techstream/quark-admin"]);
-			assert.strictEqual(
-				webPackageJson.dependencies[`@${scope}/admin`],
-				"workspace:*",
-			);
-			assert.strictEqual(
-				webPackageJson.dependencies[`@${scope}/cms`],
-				"workspace:*",
-			);
-			assert.strictEqual(
-				webPackageJson.dependencies[`@${scope}/ui`],
-				"workspace:*",
-			);
-
-			const nextConfig = readFileSync(
-				join(projectDir, "apps", "web", "next.config.js"),
-				"utf8",
-			);
-			assert.ok(nextConfig.includes(`@${scope}/cms`));
 		} finally {
 			cleanup(tmpDir);
 		}
 	});
 
-	it("add cms rewrites CMS workspace dependencies and auto-adds admin", () => {
+	it("add cms drops in the CMS domain starter (model + CRUD + recipe)", () => {
 		const tmpDir = makeTempDir();
 		const projectName = "test-add-admin-app";
-		const scope = projectName.toLowerCase().replace(/[^a-z0-9-]/g, "");
 		try {
 			const createResult = runCLI(
 				[
@@ -293,31 +293,26 @@ describe("Feature Validation", () => {
 				0,
 				`Expected exit 0\nstdout: ${addResult.stdout}\nstderr: ${addResult.stderr}`,
 			);
-			assert.ok(existsSync(join(projectDir, "packages", "admin")));
-
-			const cmsPackageJson = JSON.parse(
-				readFileSync(
-					join(projectDir, "packages", "cms", "package.json"),
-					"utf8",
+			// Starter drops in model + CRUD + recipe, NOT a package.
+			assert.ok(!existsSync(join(projectDir, "packages", "cms")));
+			assert.ok(
+				existsSync(join(projectDir, "packages", "db", "prisma", "cms.prisma")),
+			);
+			assert.ok(
+				existsSync(
+					join(
+						projectDir,
+						"apps",
+						"web",
+						"src",
+						"app",
+						"api",
+						"cms",
+						"route.js",
+					),
 				),
 			);
-			assert.strictEqual(
-				cmsPackageJson.dependencies[`@${scope}/admin`],
-				"workspace:*",
-			);
-			assert.ok(!cmsPackageJson.dependencies["@techstream/quark-admin"]);
-
-			const webPackageJson = JSON.parse(
-				readFileSync(join(projectDir, "apps", "web", "package.json"), "utf8"),
-			);
-			assert.strictEqual(
-				webPackageJson.dependencies[`@${scope}/admin`],
-				"workspace:*",
-			);
-			assert.strictEqual(
-				webPackageJson.dependencies[`@${scope}/cms`],
-				"workspace:*",
-			);
+			assert.ok(existsSync(join(projectDir, "recipes", "cms.md")));
 		} finally {
 			cleanup(tmpDir);
 		}
