@@ -1,0 +1,52 @@
+// Generic CRM model — a starting point for a pipeline/CRM domain.
+// Merge this into packages/db/prisma/schema.prisma, then run:
+//   pnpm db:generate && pnpm db:migrate
+// See recipes/crm.md for the full extension path.
+
+model Company {
+	id        String    @id @default(cuid())
+	name      String
+	website   String?
+	industry  String?
+	createdAt DateTime  @default(now())
+	updatedAt DateTime  @updatedAt
+
+	contacts Contact[]
+	deals    Deal[]
+
+	@@index([name])
+}
+
+model Contact {
+	id        String   @id @default(cuid())
+	firstName String
+	lastName  String
+	email     String?
+	phone     String?
+	companyId String?
+	company   Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+	createdAt DateTime @default(now())
+	updatedAt DateTime @updatedAt
+
+	deals Deal[]
+
+	@@index([email])
+	@@index([companyId])
+}
+
+model Deal {
+	id        String   @id @default(cuid())
+	title     String
+	value     Decimal  @default(0)
+	stage     String   @default("LEAD")
+	contactId String?
+	contact   Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+	companyId String?
+	company   Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+	createdAt DateTime @default(now())
+	updatedAt DateTime @updatedAt
+
+	@@index([stage])
+	@@index([contactId])
+	@@index([companyId])
+}

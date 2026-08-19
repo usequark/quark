@@ -1,0 +1,28 @@
+// Generic CMS model — a starting point for a content domain.
+// Merge this into packages/db/prisma/schema.prisma, then run:
+//   pnpm db:generate && pnpm db:migrate
+// See recipes/cms.md for the full extension path.
+
+enum ContentStatus {
+	DRAFT
+	PUBLISHED
+	ARCHIVED
+}
+
+model Page {
+	id          String        @id @default(cuid())
+	title       String
+	slug        String        @unique
+	body        String        @db.Text
+	excerpt     String?
+	status      ContentStatus @default(DRAFT)
+	publishedAt DateTime?
+	authorId    String
+	author      User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+	createdAt   DateTime      @default(now())
+	updatedAt   DateTime      @updatedAt
+
+	@@index([status])
+	@@index([slug])
+	@@index([authorId])
+}

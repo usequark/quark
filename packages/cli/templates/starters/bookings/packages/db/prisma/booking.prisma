@@ -1,0 +1,28 @@
+// Generic Booking model — a starting point for a bookings domain.
+// Merge this into packages/db/prisma/schema.prisma, then run:
+//   pnpm db:generate && pnpm db:migrate
+// See recipes/bookings.md for the full extension path.
+
+enum BookingStatus {
+	PENDING
+	CONFIRMED
+	CANCELLED
+	COMPLETED
+}
+
+model Booking {
+	id        String        @id @default(cuid())
+	userId    String?
+	user      User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+	service   String
+	startTime DateTime
+	endTime   DateTime
+	status    BookingStatus @default(PENDING)
+	notes     String?       @db.Text
+	createdAt DateTime      @default(now())
+	updatedAt DateTime      @updatedAt
+
+	@@index([userId])
+	@@index([startTime])
+	@@index([status])
+}
