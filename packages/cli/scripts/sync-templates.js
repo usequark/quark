@@ -306,8 +306,6 @@ const TRANSFORMS = {
 	"worker/package.json": transformWorkerPackageJson,
 	// DB: remove private flag for scaffold context
 	"base-project/packages/db/package.json": transformDbPackageJson,
-	// DB: prisma.config.js uses simple defaults for new projects
-	"base-project/packages/db/prisma.config.js": transformPrismaConfig,
 	// Optional packages: use @myquark placeholder scope
 	"config/package.json": transformOptionalPackageJson,
 	"ui/package.json": transformOptionalPackageJson,
@@ -406,12 +404,6 @@ function transformDbPackageJson(content) {
 	}
 
 	return `${JSON.stringify(pkg, null, "\t")}\n`;
-}
-
-function transformPrismaConfig(content) {
-	// Template now uses the shared getConnectionString() import (same as monorepo).
-	// No transformation needed - both versions use identical code.
-	return content;
 }
 
 function transformOptionalPackageJson(content) {
