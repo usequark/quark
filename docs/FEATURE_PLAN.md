@@ -57,20 +57,67 @@ For every feature, an agent must respect:
 
 **Goal:** A library of markdown feature recipes that agents execute against Quark conventions.
 
+**Name:** `recipes/` (locked). Established in the AI-boilerplate space; distinct from `docs/` (reference) and `templates/` (code). Rejected: `prompts/` (too raw), `playbooks/` (ops-flavored), `blueprints/` (structure-flavored).
+
+**Location (two contexts):**
+- **Source of truth (monorepo):** `packages/cli/templates/base-project/recipes/` — scaffolded into projects.
+- **Scaffolded project:** `<project>/recipes/` at repo root — agents find it immediately; `MAIN.md` links to it.
+
 **Scope:**
 - `packages/cli/templates/base-project/recipes/` (new directory)
-- `packages/cli/templates/base-project/recipes/_TEMPLATE.md` (recipe format)
-- `packages/cli/templates/base-project/recipes/README.md` (how to write/use recipes)
+- `packages/cli/templates/base-project/recipes/README.md` (how to use + how to write a recipe)
+- `packages/cli/templates/base-project/recipes/_TEMPLATE.md` (recipe format: frontmatter + body)
+- `packages/cli/templates/base-project/recipes/add-model.md` (core: add a Prisma model + query helpers)
+- `packages/cli/templates/base-project/recipes/add-endpoint.md` (core: add a CRUD endpoint)
+- `packages/cli/templates/base-project/recipes/add-dashboard.md` (core: add a decision dashboard to admin)
+
+**What ships (do NOT ship the whole library):**
+- **Core set ships by default:** `README.md`, `_TEMPLATE.md`, `add-model.md`, `add-endpoint.md`, `add-dashboard.md`.
+- **Vertical recipes ship with their feature** (F4 owns those): `add bookings` → `recipes/bookings.md`, `--features crm` → `recipes/crm.md`, etc.
+- **Full library lives in the monorepo**, pulled on demand via `add <feature>` / `recipe <feature>`.
+
+**Structure (flat, for agent discoverability):**
+```
+recipes/
+  README.md          # how to use + how to write a recipe
+  _TEMPLATE.md       # the recipe format (frontmatter + body)
+  add-model.md       # core: add a Prisma model + query helpers
+  add-endpoint.md    # core: add a CRUD endpoint
+  add-dashboard.md   # core: add a decision dashboard to admin
+  bookings.md        # vertical — ships with bookings feature (F4)
+  crm.md             # vertical (F4)
+  cms.md             # vertical (F4)
+  ai.md              # vertical (F4)
+```
+
+**Recipe format (frontmatter + markdown body):**
+```markdown
+---
+name: Add a booking system
+feature: bookings
+files:
+  - packages/db/prisma/booking.prisma
+  - apps/web/src/app/api/bookings/route.js
+  - apps/web/src/app/api/bookings/[id]/route.js
+depends: [db, admin]
+---
+## What this builds
+## Files created
+## Patterns to follow
+## Prompt to paste
+```
+The `files` list is the contract — it tells the agent exactly what to create and lets the CLI validate a recipe produced the right output.
 
 **Contract (produces):**
-- A documented recipe format: *what it builds, files created, patterns to follow, the prompt to paste.*
+- A documented recipe format: *what it builds, files created, patterns to follow, the prompt to paste* (frontmatter + body).
 - The `recipes/` path that F1 and F4 reference.
+- The core recipe set (`README.md`, `_TEMPLATE.md`, `add-model.md`, `add-endpoint.md`, `add-dashboard.md`).
 
 **Dependencies:** none.
 
-**Verification:** A recipe template renders correctly in a scaffolded project; `recipes/README.md` documents the format.
+**Verification:** A recipe template renders correctly in a scaffolded project; `recipes/README.md` documents the format; the core set is present in a base scaffold.
 
-**Isolation boundary:** Do NOT write domain-specific recipes (F4 owns those). Do NOT create `MAIN.md` (F1 owns it).
+**Isolation boundary:** Do NOT write domain-specific/vertical recipes (F4 owns those). Do NOT create `MAIN.md` (F1 owns it). Do NOT wire recipes into the CLI `add`/`recipe` commands (F5 owns that).
 
 ---
 
@@ -86,12 +133,13 @@ For every feature, an agent must respect:
 - Admin shell with neutral Tailwind (no quark-ui imports, no themes, no `QuarkLogo`/`ThemeToggle`).
 - Auto-CRUD fallback for models without a custom view.
 - `_patterns/Dashboard.js`, `_patterns/ActionForm.js`, `_patterns/DeployPanel.js`.
+- A neutral Quark logo mark in `admin-routes/layout.js` (F3 owns the admin logo; F7 only handles the base page).
 
 **Dependencies:** none (but F8 consumes the result).
 
-**Verification:** Scaffold with `--features admin`; confirm admin renders with neutral styling, no quark-ui imports, and CRUD fallback works for a model.
+**Verification:** Scaffold with `--features admin`; confirm admin renders with neutral styling, no quark-ui imports, CRUD fallback works for a model, and the logo mark renders in the shell.
 
-**Isolation boundary:** Do NOT edit the `design-system` skill (F8 owns it). Do NOT edit the CLI feature list (F6 owns it).
+**Isolation boundary:** Do NOT edit the `design-system` skill (F8 owns it). Do NOT edit the CLI feature list (F6 owns it). Do NOT touch the base page logo (F7 owns it).
 
 ---
 
@@ -100,14 +148,16 @@ For every feature, an agent must respect:
 **Goal:** Convert `bookings`, `crm`, `cms`, `ai` from full packages into minified domain starters (generic endpoint + model + recipe).
 
 **Scope:**
-- `packages/cli/templates/starters/` (new: `bookings/`, `crm/`, `cms/`, `ai/` — each a generic endpoint + Prisma model + recipe)
+- `packages/cli/templates/starters/` (new: `bookings/`, `crm/`, `cms/`, `ai/` — each a generic endpoint + Prisma model)
+- `packages/cli/templates/base-project/recipes/<vertical>.md` (vertical recipes: `bookings.md`, `crm.md`, `cms.md`, `ai.md` — using F2's format)
 - `reference/` (new, archive of the original full packages for recipe source + validation)
 
 **Contract (produces):**
-- A `starters/<vertical>/` with: `recipes/<vertical>.md`, a generic Prisma model, and a CRUD endpoint.
+- A `starters/<vertical>/` with: a generic Prisma model and a CRUD endpoint.
+- A vertical recipe `recipes/<vertical>.md` (F2 format) that documents the extension path.
 - The set of starter names that F6 uses to define the CLI feature list.
 
-**Dependencies:** F2 (recipe format).
+**Dependencies:** F2 (recipe format + the `recipes/` path).
 
 **Verification:** `add bookings` drops in the generic Booking model + CRUD endpoint + recipe; the recipe documents the extension path.
 
@@ -120,20 +170,21 @@ For every feature, an agent must respect:
 **Goal:** Restructure the CLI into a Human View (product-shaped questions + advanced) and an AI View (deterministic params).
 
 **Scope:**
-- `packages/cli/src/index.js` (prompt flow + param handling)
-- `packages/cli/test-flags.js` (AI View param tests)
-- `packages/cli/README.md` (document both views + param contract)
+- `packages/cli/src/index.js` (prompt flow + param handling + `recipe` command)
+- `packages/cli/test-flags.js` (AI View param tests + `recipe` command tests)
+- `packages/cli/README.md` (document both views + param contract + `recipe` command)
 
 **Contract (produces):**
 - Human View: "Describe your app" → brief → `MAIN.md`; advanced expander for full config.
 - AI View: documented `--features`, `--preset`, `--prompt`, `--no-prompts`; deterministic output.
-- The param contract documented in `CLAUDE.md`/`MAIN.md` so agents know what they can request.
+- `recipe <feature>` command: prints an AI prompt recipe for a feature.
+- The param contract + `recipe` command documented in `packages/cli/README.md` (F5's own file — NOT `CLAUDE.md`/`MAIN.md`, which F1 owns).
 
 **Dependencies:** F6 (the feature list it exposes).
 
-**Verification:** `pnpm --filter @techstream/quark-create-app test` passes; `test-flags.js` covers the AI View params; a `--no-prompts` run is deterministic.
+**Verification:** `pnpm --filter @techstream/quark-create-app test` passes; `test-flags.js` covers the AI View params and the `recipe` command; a `--no-prompts` run is deterministic.
 
-**Isolation boundary:** Do NOT edit templates (F1–F4 own them). Do NOT define the feature list (F6 owns it) — consume it.
+**Isolation boundary:** Do NOT edit templates (F1–F4 own them). Do NOT define the feature list (F6 owns it) — consume it. Do NOT edit `CLAUDE.md`/`MAIN.md` (F1 owns them).
 
 ---
 
@@ -160,19 +211,18 @@ For every feature, an agent must respect:
 
 ## F7 — Quark logo in scaffold
 
-**Goal:** Ensure the Quark logo renders consistently in the base page and admin shell.
+**Goal:** Ensure the Quark logo renders on the base page.
 
 **Scope:**
 - `packages/cli/templates/base-project/apps/web/src/app/page.js` (render logo)
-- `packages/cli/templates/admin-routes/layout.js` (neutral logo mark)
 
-**Contract (produces):** Logo present in the base page and admin shell.
+**Contract (produces):** Logo present in the base page.
 
 **Dependencies:** none.
 
-**Verification:** Scaffold a project; confirm the logo renders on the base page and admin.
+**Verification:** Scaffold a project; confirm the logo renders on the base page.
 
-**Isolation boundary:** Do NOT rebuild the admin shell (F3 owns it) — only add the logo mark.
+**Isolation boundary:** Do NOT touch `admin-routes/layout.js` (F3 owns the admin shell + admin logo). Do NOT rebuild the admin shell (F3 owns it).
 
 ---
 

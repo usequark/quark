@@ -144,4 +144,4 @@ admin-routes/
 - **Recipe quality is the risk.** The minified verticals are *less* than the originals; the recipe must carry the domain knowledge or functionality is lost.
 - **Open:** exact `--preset` bundles (client-work / internal-tool / product / minimal) and their feature mappings.
 - **Open:** whether `worker` stays opt-in or moves to a starter.
-- **Open:** where the archived originals live (`reference/` vs. a separate branch).
+- **Locked:** the archived originals live in `reference/` at the monorepo root (keeps the archive with the code; F4 creates it).
