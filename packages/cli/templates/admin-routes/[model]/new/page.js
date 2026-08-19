@@ -1,4 +1,8 @@
-import { adminConfig, getModelBySlug, hasIdField } from "@techstream/quark-admin";
+import {
+	adminConfig,
+	getModelBySlug,
+	hasIdField,
+} from "@techstream/quark-admin";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import ActionForm from "../../_patterns/ActionForm";
