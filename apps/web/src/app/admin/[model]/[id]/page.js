@@ -6,20 +6,12 @@ import {
 	hasIdField,
 } from "@techstream/quark-admin";
 import { prisma } from "@techstream/quark-db";
-import { ChevronLeft } from "lucide-react";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import ModelForm from "../../_components/ModelForm";
-import {
-	cmsArchivePage,
-	cmsDeletePage,
-	cmsPublishPage,
-	cmsUnpublishPage,
-	cmsUpdatePage,
-} from "../../cms/_actions/content";
-import ContentForm from "../../cms/_components/ContentForm";
+import ActionForm from "../../_patterns/ActionForm";
 
 export async function generateMetadata({ params }) {
-	const { model: slug, _id } = await params;
+	const { model: slug } = await params;
 	const model = getModelBySlug(slug);
 	return { title: model ? `Edit ${model.name}` : "Edit Record" };
 }
@@ -36,39 +28,24 @@ export default async function EditRecordPage({ params }) {
 	if (!record) notFound();
 
 	return (
-		<div className="max-w-6xl mx-auto space-y-6">
+		<div className="max-w-3xl space-y-6">
 			<div>
-				<a
+				<Link
 					href={`/admin/${slug}`}
-					className="inline-flex items-center gap-1 text-sm font-medium text-text-muted hover:text-text bg-surface border border-border hover:border-border-hover px-3 py-1.5 rounded-[--radius-default] transition-colors mb-2"
+					className="text-sm font-medium text-gray-500 hover:text-gray-900"
 				>
-					<ChevronLeft size={15} />
-					{model.name}
-				</a>
-				<h1 className="text-2xl font-bold mt-1 text-text">Edit {model.name}</h1>
-				<p className="mt-2 text-sm text-text-faint">
-					Update this record through grouped sections so related fields stay
-					together.
-				</p>
+					&larr; {model.name}
+				</Link>
+				<h1 className="mt-1 text-2xl font-bold text-gray-900">
+					Edit {model.name}
+				</h1>
 			</div>
-			{model.name === "Page" ? (
-				<ContentForm
-					record={record}
-					updateAction={cmsUpdatePage.bind(null, id)}
-					publishAction={cmsPublishPage.bind(null, id)}
-					archiveAction={cmsArchivePage.bind(null, id)}
-					unpublishAction={cmsUnpublishPage.bind(null, id)}
-					deleteAction={cmsDeletePage.bind(null, id)}
-					modelLabel="Page"
-				/>
-			) : (
-				<ModelForm
-					model={model}
-					record={record}
-					slug={slug}
-					readOnly={!!overrides.readOnly}
-				/>
-			)}
+			<ActionForm
+				model={model}
+				record={record}
+				slug={slug}
+				readOnly={!!overrides.readOnly}
+			/>
 		</div>
 	);
 }

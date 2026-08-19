@@ -19,10 +19,6 @@ import { prisma } from "@techstream/quark-db";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth-middleware";
-import {
-	isPublicContentModel,
-	revalidatePublicContent,
-} from "@/lib/public-content-revalidation.js";
 
 /**
  * Coerce raw form data values to the correct types for a Prisma model.
@@ -105,9 +101,6 @@ export async function adminCreate(slug, formData) {
 
 	const data = extractFormData(model, formData);
 	await createRecord(prisma, model.name, data);
-	if (await isPublicContentModel(model.name)) {
-		await revalidatePublicContent();
-	}
 
 	revalidatePath(`/admin/${slug}`);
 	redirect(`/admin/${slug}?toast=created`);
@@ -130,9 +123,6 @@ export async function adminUpdate(slug, id, formData) {
 
 	const data = extractFormData(model, formData);
 	await updateRecord(prisma, model.name, coerceId(model, id), data);
-	if (await isPublicContentModel(model.name)) {
-		await revalidatePublicContent();
-	}
 
 	revalidatePath(`/admin/${slug}`);
 	revalidatePath(`/admin/${slug}/${id}`);
@@ -154,9 +144,6 @@ export async function adminDelete(slug, id) {
 	if (overrides.readOnly) throw new ForbiddenError("Model is read-only");
 
 	await deleteRecord(prisma, model.name, coerceId(model, id));
-	if (await isPublicContentModel(model.name)) {
-		await revalidatePublicContent();
-	}
 
 	revalidatePath(`/admin/${slug}`);
 	redirect(`/admin/${slug}?toast=deleted`);

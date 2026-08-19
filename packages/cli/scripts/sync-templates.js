@@ -85,37 +85,7 @@ const SYNC_DIRS = [
 	{ src: "packages/jobs", dest: "jobs" },
 	{ src: "packages/admin", dest: "admin" },
 	// Admin routes live inside apps/web but are scaffolded separately (conditionally)
-	{
-		src: "apps/web/src/app/admin",
-		dest: "admin-routes",
-		// CMS/CRM/AI routes are scaffolded separately via their own templates
-		localExcludes: [
-			/^apps\/web\/src\/app\/admin\/cms\//,
-			/^apps\/web\/src\/app\/admin\/crm\//,
-			/^apps\/web\/src\/app\/admin\/ai\//,
-		],
-	},
-	// CMS package (content models, slug helpers, status lifecycle)
-	{ src: "packages/cms", dest: "cms" },
-	// CMS admin routes - scaffolded conditionally alongside the CMS package
-	{
-		src: "apps/web/src/app/admin/cms",
-		dest: "cms-routes",
-	},
-	// CRM package (contacts, companies, pipeline)
-	{ src: "packages/crm", dest: "crm" },
-	// CRM admin routes - scaffolded conditionally alongside the CRM package
-	{
-		src: "apps/web/src/app/admin/crm",
-		dest: "crm-routes",
-	},
-	// AI package (permissions, audit, workflow engine)
-	{ src: "packages/ai", dest: "ai" },
-	// AI chat admin routes - scaffolded conditionally alongside the ai feature
-	{
-		src: "apps/web/src/app/admin/ai",
-		dest: "ai-routes",
-	},
+	{ src: "apps/web/src/app/admin", dest: "admin-routes" },
 ];
 
 /**
@@ -140,65 +110,6 @@ const SYNC_FILES = [
 	{
 		src: "pnpm-workspace.yaml",
 		dest: "base-project/pnpm-workspace.yaml",
-	},
-	// CMS public files - scaffolded conditionally alongside CMS package,
-	// synced individually since they're interleaved with non-CMS files
-	{ src: "apps/web/src/app/sitemap.js", dest: "cms-public/app/sitemap.js" },
-	{
-		src: "apps/web/src/app/[slug]/page.js",
-		dest: "cms-public/app/[slug]/page.js",
-	},
-	{
-		src: "apps/web/src/app/_components/PageContentRenderer.js",
-		dest: "cms-public/app/_components/PageContentRenderer.js",
-	},
-	{
-		src: "apps/web/src/app/api/cms/media/route.js",
-		dest: "cms-public/app/api/cms/media/route.js",
-	},
-	{
-		src: "apps/web/src/lib/content/page-content.js",
-		dest: "cms-public/lib/content/page-content.js",
-	},
-	{
-		src: "apps/web/src/lib/content/page-content.test.js",
-		dest: "cms-public/lib/content/page-content.test.js",
-	},
-	{
-		src: "apps/web/src/lib/load-cms-config.js",
-		dest: "cms-public/lib/load-cms-config.js",
-	},
-	{
-		src: "apps/web/src/lib/load-cms-config.test.js",
-		dest: "cms-public/lib/load-cms-config.test.js",
-	},
-	{
-		src: "apps/web/src/lib/public-content-routes.js",
-		dest: "cms-public/lib/public-content-routes.js",
-	},
-	{
-		src: "apps/web/src/lib/public-content-routes.test.js",
-		dest: "cms-public/lib/public-content-routes.test.js",
-	},
-	{
-		src: "apps/web/src/lib/public-content.js",
-		dest: "cms-public/lib/public-content.js",
-	},
-	{
-		src: "apps/web/src/lib/public-content.test.js",
-		dest: "cms-public/lib/public-content.test.js",
-	},
-	{
-		src: "apps/web/src/lib/public-content-cache.js",
-		dest: "cms-public/lib/public-content-cache.js",
-	},
-	{
-		src: "apps/web/src/lib/public-content-revalidation.js",
-		dest: "cms-public/lib/public-content-revalidation.js",
-	},
-	{
-		src: "apps/web/src/adminIntrospect.test.js",
-		dest: "cms-public/adminIntrospect.test.js",
 	},
 ];
 

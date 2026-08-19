@@ -5,8 +5,8 @@ import {
 	modelToSlug,
 } from "@techstream/quark-admin";
 import { prisma } from "@techstream/quark-db";
-import MetricCard from "./_patterns/Dashboard";
 import { getServiceHealth } from "./_lib/dashboard-data";
+import MetricCard from "./_patterns/Dashboard";
 
 export default async function AdminDashboard() {
 	const models = getModels();
