@@ -1,25 +1,21 @@
 "use client";
 
-import { Button, Dialog, Input, Label, Lightbox } from "@techstream/quark-ui";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { cmsUploadMediaInline } from "../cms/_actions/media";
 
 /**
- * Unified image picker for admin forms.
+ * Neutral image picker for admin forms.
  *
- * Replaces the three-tab (Media / Upload / URL) pattern with a single panel:
- *   - Primary body: scrollable media library grid
- *   - Footer left: click-to-upload with inline preview & confirm
- *   - Footer right: paste-a-URL with instant "Use" action
- *
- * Emits the chosen URL as a hidden `<input name={name}>` and/or calls `onChange`.
+ * Replaces the themed quark-ui picker with plain HTML. Emits the chosen URL as
+ * a hidden `<input name={name}>` and/or calls `onChange`.
  *
  * @param {{
  *   label?: string,
  *   name?: string,
  *   defaultValue?: string,
  *   disabled?: boolean,
- *   onChange?: (value: string) => void
+ *   onChange?: (value: string) => void,
+ *   onAltChange?: (value: string) => void,
  * }} props
  */
 export default function AdminImagePicker({
@@ -32,7 +28,6 @@ export default function AdminImagePicker({
 }) {
 	const [value, setValue] = useState(defaultValue);
 	const [open, setOpen] = useState(false);
-	const [lightboxOpen, setLightboxOpen] = useState(false);
 	const [urlInput, setUrlInput] = useState("");
 	const [mediaAssets, setMediaAssets] = useState(null);
 	const [loadingMedia, setLoadingMedia] = useState(false);
@@ -58,7 +53,6 @@ export default function AdminImagePicker({
 		onChange?.(nextValue);
 	}
 
-	// Load media library when the panel first opens
 	useEffect(() => {
 		if (open && mediaAssets === null && !loadingMedia) {
 			setLoadingMedia(true);
@@ -106,72 +100,68 @@ export default function AdminImagePicker({
 		(/\.(jpe?g|png|gif|webp|avif|svg)$/i.test(value) ||
 			value.startsWith("/api/media/"));
 
+	const inputClass =
+		"w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400 disabled:bg-gray-50 disabled:text-gray-500";
+
 	return (
 		<div className="flex flex-col gap-1.5">
-			{label && <Label>{label}</Label>}
+			{label && (
+				<label className="block text-sm font-medium text-gray-700">
+					{label}
+				</label>
+			)}
 
-			{/* ── Selected state ─────────────────────────────── */}
 			{value && (
-				<div className="flex flex-col sm:flex-row items-stretch gap-3 p-2.5 rounded-[--radius-default] border border-border bg-surface">
-					<button
-						type="button"
-						onClick={() => setLightboxOpen(true)}
-						className="w-full sm:w-44 h-32 rounded border border-border bg-surface-hover overflow-hidden shrink-0 flex items-center justify-center cursor-pointer"
-						aria-label="Open image preview"
-					>
+				<div className="flex flex-col sm:flex-row items-stretch gap-3 rounded-md border border-gray-200 bg-white p-2.5">
+					<div className="flex h-32 w-full sm:w-44 shrink-0 items-center justify-center overflow-hidden rounded border border-gray-200 bg-gray-50">
 						{showImage ? (
 							// biome-ignore lint/performance/noImgElement: dynamic/blob URL
 							<img
 								src={value}
 								alt="Selected"
-								className="w-full h-full object-contain"
+								className="h-full w-full object-contain"
 							/>
 						) : (
-							<span className="text-[10px] font-mono text-text-faint text-center break-all px-2">
+							<span className="break-all px-2 text-center text-[10px] font-mono text-gray-400">
 								URL
 							</span>
 						)}
-					</button>
-					<div className="flex flex-col justify-center gap-1.5 min-w-0 flex-1">
-						<p className="text-[11px] font-mono text-text-muted truncate leading-none">
+					</div>
+					<div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5">
+						<p className="truncate text-[11px] font-mono text-gray-500 leading-none">
 							{value}
 						</p>
 						{!disabled && (
-							<div className="flex items-center gap-3 flex-wrap">
-								<Button
+							<div className="flex flex-wrap items-center gap-3">
+								<button
 									type="button"
 									onClick={() => setOpen(true)}
-									variant="outline"
-									size="sm"
-									className=" h-auto! py-1!"
+									className="rounded-md border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
 								>
 									Change
-								</Button>
-								<Button
+								</button>
+								<button
 									type="button"
 									onClick={() => applyValue("")}
-									variant="secondary"
-									size="sm"
-									className="border-red-500 text-red-500! hover:bg-red-50! h-auto! py-1!"
+									className="rounded-md border border-red-300 bg-white px-2.5 py-1 text-xs font-medium text-red-700 hover:bg-red-50"
 								>
 									Remove
-								</Button>
+								</button>
 							</div>
 						)}
 					</div>
 				</div>
 			)}
 
-			{/* ── Empty trigger ───────────────────────────────── */}
 			{!value && !disabled && (
 				<button
 					type="button"
 					onClick={() => setOpen(true)}
-					className="group flex items-center justify-center gap-2.5 w-full rounded-[--radius-default] border border-dashed border-border hover:border-primary bg-surface hover:bg-surface-hover transition-all duration-150 py-5 text-sm text-text-faint hover:text-text"
+					className="flex w-full items-center justify-center gap-2.5 rounded-md border border-dashed border-gray-300 bg-white py-5 text-sm text-gray-500 hover:border-gray-400 hover:bg-gray-50 hover:text-gray-700"
 				>
 					<svg
 						aria-hidden="true"
-						className="w-4 h-4 shrink-0 transition-transform duration-150 group-hover:scale-110"
+						className="h-4 w-4 shrink-0"
 						fill="none"
 						viewBox="0 0 24 24"
 						stroke="currentColor"
@@ -187,199 +177,189 @@ export default function AdminImagePicker({
 				</button>
 			)}
 
-			{/* Hidden form input */}
 			{name ? <input type="hidden" name={name} value={value} /> : null}
 
-			{/* ── Lightbox ────────────────────────────────────── */}
-			{showImage && (
-				<Lightbox
-					src={value}
-					alt="Selected image"
-					open={lightboxOpen}
-					onClose={() => setLightboxOpen(false)}
-				/>
-			)}
-
-			{/* ── Picker dialog ───────────────────────────────── */}
-			<Dialog
-				open={open}
-				onClose={handleClose}
-				title="Choose Image"
-				className="max-w-xl!"
-			>
-				<div className="flex flex-col">
-					{/* Media grid */}
-					<div className="min-h-24 max-h-60 overflow-y-auto">
-						{loadingMedia && (
-							<div className="grid grid-cols-[repeat(auto-fill,minmax(4rem,1fr))] gap-2">
-								{Array.from({ length: 10 }).map((_, i) => (
-									<div
-										// biome-ignore lint/suspicious/noArrayIndexKey: static skeleton loaders
-										key={i}
-										className="aspect-square rounded border border-border bg-surface-hover animate-pulse"
-									/>
-								))}
-							</div>
-						)}
-
-						{!loadingMedia && mediaAssets?.length === 0 && (
-							<div className="flex flex-col items-center justify-center py-6 gap-2 text-center">
+			{open && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+					<div className="flex max-h-[80vh] w-full max-w-xl flex-col rounded-lg bg-white">
+						<div className="flex items-center justify-between border-b border-gray-200 px-5 py-3">
+							<h2 className="text-base font-semibold text-gray-900">
+								Choose Image
+							</h2>
+							<button
+								type="button"
+								onClick={handleClose}
+								className="rounded-md p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+								aria-label="Close"
+							>
 								<svg
-									className="w-8 h-8 text-text-faint/40"
+									aria-hidden="true"
+									className="h-5 w-5"
 									fill="none"
 									viewBox="0 0 24 24"
 									stroke="currentColor"
-									strokeWidth="1"
-									aria-hidden="true"
+									strokeWidth="2"
 								>
 									<path
 										strokeLinecap="round"
 										strokeLinejoin="round"
-										d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"
+										d="M6 18L18 6M6 6l12 12"
 									/>
 								</svg>
-								<p className="text-xs text-text-faint">
-									No images in the library yet.
-									<br />
-									Upload one below.
-								</p>
-							</div>
-						)}
-
-						{!loadingMedia && mediaAssets && mediaAssets.length > 0 && (
-							<div className="grid grid-cols-[repeat(auto-fill,minmax(4rem,1fr))] gap-2">
-								{mediaAssets.map((asset) => (
-									<button
-										key={asset.id}
-										type="button"
-										onClick={() => handleSelectMedia(asset)}
-										className="aspect-square rounded border border-border hover:border-primary hover:ring-2 hover:ring-primary/20 bg-surface-hover overflow-hidden transition-all duration-100"
-										title={asset.alt ?? asset.filename}
-									>
-										{/* biome-ignore lint/performance/noImgElement: dynamic API URL */}
-										<img
-											src={`/api/media/${encodeURIComponent(asset.storageKey)}`}
-											alt={asset.alt ?? asset.filename}
-											className="w-full h-full object-cover"
-										/>
-									</button>
-								))}
-							</div>
-						)}
-					</div>
-
-					{/* Footer: Upload | URL */}
-					<div className="border-t border-border grid grid-cols-2 divide-x divide-border">
-						{/* Left: Upload */}
-						<div className="p-2.5 flex flex-col gap-2">
-							<p className="text-[10px] font-semibold tracking-widest uppercase text-text-faint select-none">
-								Upload
-							</p>
-							<button
-								type="button"
-								onClick={() => uploadInputRef.current?.click()}
-								className="flex items-center gap-2 px-2 py-1.5 rounded border border-border hover:border-border-hover hover:bg-surface-hover transition-colors text-xs text-text-faint hover:text-text w-full text-left"
-							>
-								{uploadPreview ? (
-									// biome-ignore lint/performance/noImgElement: dynamic/blob URL preview
-									<img
-										src={uploadPreview}
-										alt="Upload preview"
-										className="w-7 h-7 rounded object-cover shrink-0"
-									/>
-								) : (
-									<svg
-										aria-hidden="true"
-										className="w-4 h-4 shrink-0"
-										fill="none"
-										viewBox="0 0 24 24"
-										stroke="currentColor"
-										strokeWidth="1.5"
-									>
-										<path
-											strokeLinecap="round"
-											strokeLinejoin="round"
-											d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
-										/>
-									</svg>
-								)}
-								<span className="truncate">
-									{uploadPreview ? "File selected" : "Choose file…"}
-								</span>
 							</button>
-							<input
-								ref={uploadInputRef}
-								type="file"
-								name="file"
-								accept="image/*"
-								className="sr-only"
-								onChange={handleUploadFileChange}
-							/>
-							{uploadState?.error && (
-								<p className="text-[11px] text-danger leading-tight">
-									{uploadState.error}
-								</p>
-							)}
-							{uploadPreview && (
-								<Button
-									type="submit"
-									formAction={uploadAction}
-									formNoValidate
-									disabled={isUploading}
-									size="sm"
-									variant="outline"
-									className="w-full text-xs font-medium py-1.5 px-2 my-auto!"
-								>
-									{isUploading ? "Uploading…" : "Upload & use"}
-								</Button>
-							)}
 						</div>
 
-						{/* Right: URL */}
-						<div className="p-2.5 flex flex-col gap-2">
-							<p className="text-[10px] font-semibold tracking-widest uppercase text-text-faint select-none">
-								Paste URL
-							</p>
-							<Input
-								type="url"
-								value={urlInput}
-								onChange={(e) => setUrlInput(e.target.value)}
-								onKeyDown={(e) => {
-									if (e.key === "Enter") {
-										e.preventDefault();
-										handleUrlConfirm();
-									}
-								}}
-								placeholder="https://example.com/img.jpg"
-								className="text-xs h-8"
-							/>
-							{urlInput && /^https?:\/\//i.test(urlInput) && (
-								<div className="rounded border border-border overflow-hidden bg-surface-hover h-16 flex items-center justify-center">
-									{/* biome-ignore lint/performance/noImgElement: dynamic URL preview, next/image not applicable */}
-									<img
-										src={urlInput}
-										alt="URL preview"
-										className="max-h-full max-w-full object-contain"
-										onError={(e) => {
-											e.target.style.display = "none";
-										}}
+						<div className="flex flex-col overflow-hidden">
+							<div className="min-h-24 max-h-60 overflow-y-auto p-4">
+								{loadingMedia && (
+									<div className="grid grid-cols-[repeat(auto-fill,minmax(4rem,1fr))] gap-2">
+										{Array.from({ length: 10 }).map((_, i) => (
+											<div
+												// biome-ignore lint/suspicious/noArrayIndexKey: static skeleton loaders
+												key={i}
+												className="aspect-square animate-pulse rounded border border-gray-200 bg-gray-100"
+											/>
+										))}
+									</div>
+								)}
+
+								{!loadingMedia && mediaAssets?.length === 0 && (
+									<div className="flex flex-col items-center justify-center gap-2 py-6 text-center">
+										<p className="text-xs text-gray-500">
+											No images in the library yet. Upload one below.
+										</p>
+									</div>
+								)}
+
+								{!loadingMedia && mediaAssets && mediaAssets.length > 0 && (
+									<div className="grid grid-cols-[repeat(auto-fill,minmax(4rem,1fr))] gap-2">
+										{mediaAssets.map((asset) => (
+											<button
+												key={asset.id}
+												type="button"
+												onClick={() => handleSelectMedia(asset)}
+												className="aspect-square overflow-hidden rounded border border-gray-200 bg-gray-50 hover:border-gray-400"
+												title={asset.alt ?? asset.filename}
+											>
+												{/* biome-ignore lint/performance/noImgElement: dynamic API URL */}
+												<img
+													src={`/api/media/${encodeURIComponent(asset.storageKey)}`}
+													alt={asset.alt ?? asset.filename}
+													className="h-full w-full object-cover"
+												/>
+											</button>
+										))}
+									</div>
+								)}
+							</div>
+
+							<div className="grid grid-cols-2 divide-x divide-gray-200 border-t border-gray-200">
+								<div className="flex flex-col gap-2 p-2.5">
+									<p className="text-[10px] font-semibold uppercase tracking-widest text-gray-500">
+										Upload
+									</p>
+									<button
+										type="button"
+										onClick={() => uploadInputRef.current?.click()}
+										className="flex w-full items-center gap-2 rounded border border-gray-300 px-2 py-1.5 text-left text-xs text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+									>
+										{uploadPreview ? (
+											// biome-ignore lint/performance/noImgElement: dynamic/blob URL preview
+											<img
+												src={uploadPreview}
+												alt="Upload preview"
+												className="h-7 w-7 shrink-0 rounded object-cover"
+											/>
+										) : (
+											<svg
+												aria-hidden="true"
+												className="h-4 w-4 shrink-0"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke="currentColor"
+												strokeWidth="1.5"
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
+												/>
+											</svg>
+										)}
+										<span className="truncate">
+											{uploadPreview ? "File selected" : "Choose file…"}
+										</span>
+									</button>
+									<input
+										ref={uploadInputRef}
+										type="file"
+										name="file"
+										accept="image/*"
+										className="sr-only"
+										onChange={handleUploadFileChange}
 									/>
+									{uploadState?.error && (
+										<p className="text-[11px] leading-tight text-red-600">
+											{uploadState.error}
+										</p>
+									)}
+									{uploadPreview && (
+										<button
+											type="submit"
+											formAction={uploadAction}
+											formNoValidate
+											disabled={isUploading}
+											className="w-full rounded-md border border-gray-300 bg-white px-2 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+										>
+											{isUploading ? "Uploading…" : "Upload & use"}
+										</button>
+									)}
 								</div>
-							)}
-							<Button
-								type="button"
-								onClick={handleUrlConfirm}
-								disabled={!urlInput.trim()}
-								size="sm"
-								variant="outline"
-								className="w-full text-xs font-medium py-1.5 px-2 my-auto!"
-							>
-								Use URL
-							</Button>
+
+								<div className="flex flex-col gap-2 p-2.5">
+									<p className="text-[10px] font-semibold uppercase tracking-widest text-gray-500">
+										Paste URL
+									</p>
+									<input
+										type="url"
+										value={urlInput}
+										onChange={(e) => setUrlInput(e.target.value)}
+										onKeyDown={(e) => {
+											if (e.key === "Enter") {
+												e.preventDefault();
+												handleUrlConfirm();
+											}
+										}}
+										placeholder="https://example.com/img.jpg"
+										className={inputClass}
+									/>
+									{urlInput && /^https?:\/\//i.test(urlInput) && (
+										<div className="flex h-16 items-center justify-center overflow-hidden rounded border border-gray-200 bg-gray-50">
+											{/* biome-ignore lint/performance/noImgElement: dynamic URL preview, next/image not applicable */}
+											<img
+												src={urlInput}
+												alt="URL preview"
+												className="max-h-full max-w-full object-contain"
+												onError={(e) => {
+													e.target.style.display = "none";
+												}}
+											/>
+										</div>
+									)}
+									<button
+										type="button"
+										onClick={handleUrlConfirm}
+										disabled={!urlInput.trim()}
+										className="w-full rounded-md border border-gray-300 bg-white px-2 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+									>
+										Use URL
+									</button>
+								</div>
+							</div>
 						</div>
 					</div>
 				</div>
-			</Dialog>
+			)}
 		</div>
 	);
 }
