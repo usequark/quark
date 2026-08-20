@@ -46,6 +46,7 @@ Entry point: [../README.md](../README.md)
 | [IMPLEMENTATION_CHECKLIST.md](./IMPLEMENTATION_CHECKLIST.md) | Task tracker with progress percentages |
 | [DESIGN_NOTES.md](./DESIGN_NOTES.md) | Design direction for reducing Quark overhead (API-first, two-view CLI, minified admin/verticals) |
 | [FEATURE_PLAN.md](./FEATURE_PLAN.md) | Isolated, agent-executable feature plan (F1–F8) with contracts and dependencies |
+| [MERGE_PLAN.md](./MERGE_PLAN.md) | Sequence to merge the scaffold opinionation work into `main` (incl. F3 source rework) |
 
 ## Historical Archive
 
