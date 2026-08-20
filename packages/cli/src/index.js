@@ -1418,7 +1418,7 @@ STORAGE_PROVIDER=local
 			const mainMdPath = path.join(targetDir, "MAIN.md");
 			if (await fs.pathExists(mainMdPath)) {
 				let mainMd = await fs.readFile(mainMdPath, "utf-8");
-				mainMd = mainMd.replace(/__QUARK_BRIEF__/g, brief);
+				mainMd = mainMd.replace(/__QUARK_PROJECT_BRIEF__/g, brief);
 				await fs.writeFile(mainMdPath, mainMd);
 			}
 

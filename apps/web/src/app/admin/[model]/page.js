@@ -77,7 +77,9 @@ export default async function ModelListPage({ params, searchParams }) {
 
 	const totalPages = Math.ceil(total / pageSize);
 	const canCreate = !overrides.readOnly && hasIdField(model);
-	const visibleFields = model.fields.filter(isListVisible);
+	const visibleFields = model.fields.filter((field) =>
+		isListVisible(field, model.name),
+	);
 
 	return (
 		<div>
