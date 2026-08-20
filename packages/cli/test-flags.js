@@ -173,7 +173,6 @@ describe("Feature Validation", () => {
 				join(projectDir, "apps", "web", "src", "app", "admin", "layout.js"),
 				"utf8",
 			);
-			assert.ok(adminLayout.includes("loadCmsConfig"));
 			assert.ok(!adminLayout.includes("@techstream/quark-cms"));
 
 			const nextConfig = readFileSync(
@@ -186,7 +185,7 @@ describe("Feature Validation", () => {
 		}
 	});
 
-	it("cms feature auto-adds admin and ui and scaffolds CMS package and routes", () => {
+	it("cms feature resolves as a domain starter (model + CRUD + recipe, no package)", () => {
 		const tmpDir = makeTempDir();
 		const projectName = "test-cms-app";
 		const scope = projectName.toLowerCase().replace(/[^a-z0-9-]/g, "");
@@ -209,8 +208,11 @@ describe("Feature Validation", () => {
 			);
 
 			const projectDir = join(tmpDir, projectName);
-			assert.ok(existsSync(join(projectDir, "packages", "admin")));
-			assert.ok(existsSync(join(projectDir, "packages", "cms")));
+			// Starter drops in a generic model + CRUD endpoint + recipe, NOT a package.
+			assert.ok(!existsSync(join(projectDir, "packages", "cms")));
+			assert.ok(
+				existsSync(join(projectDir, "packages", "db", "prisma", "cms.prisma")),
+			);
 			assert.ok(
 				existsSync(
 					join(
@@ -219,55 +221,52 @@ describe("Feature Validation", () => {
 						"web",
 						"src",
 						"app",
-						"admin",
+						"api",
 						"cms",
-						"page.js",
+						"route.js",
 					),
 				),
 			);
+			assert.ok(
+				existsSync(
+					join(
+						projectDir,
+						"apps",
+						"web",
+						"src",
+						"app",
+						"api",
+						"cms",
+						"[id]",
+						"route.js",
+					),
+				),
+			);
+			assert.ok(existsSync(join(projectDir, "recipes", "cms.md")));
 
+			// No workspace dep on a cms package.
 			const webPackageJson = JSON.parse(
 				readFileSync(join(projectDir, "apps", "web", "package.json"), "utf8"),
 			);
-			const cmsPackageJson = JSON.parse(
-				readFileSync(
-					join(projectDir, "packages", "cms", "package.json"),
-					"utf8",
+			assert.ok(!webPackageJson.dependencies[`@${scope}/cms`]);
+
+			// Legacy base-project cms/ai API routes (importing archived packages) are removed.
+			assert.ok(
+				!existsSync(
+					join(projectDir, "apps", "web", "src", "app", "api", "admin", "crm"),
 				),
 			);
-			assert.strictEqual(cmsPackageJson.name, `@${scope}/cms`);
-			assert.strictEqual(
-				cmsPackageJson.dependencies[`@${scope}/admin`],
-				"workspace:*",
+			assert.ok(
+				!existsSync(join(projectDir, "apps", "web", "src", "app", "api", "ai")),
 			);
-			assert.ok(!cmsPackageJson.dependencies["@techstream/quark-admin"]);
-			assert.strictEqual(
-				webPackageJson.dependencies[`@${scope}/admin`],
-				"workspace:*",
-			);
-			assert.strictEqual(
-				webPackageJson.dependencies[`@${scope}/cms`],
-				"workspace:*",
-			);
-			assert.strictEqual(
-				webPackageJson.dependencies[`@${scope}/ui`],
-				"workspace:*",
-			);
-
-			const nextConfig = readFileSync(
-				join(projectDir, "apps", "web", "next.config.js"),
-				"utf8",
-			);
-			assert.ok(nextConfig.includes(`@${scope}/cms`));
 		} finally {
 			cleanup(tmpDir);
 		}
 	});
 
-	it("add cms rewrites CMS workspace dependencies and auto-adds admin", () => {
+	it("add cms drops in the CMS domain starter (model + CRUD + recipe)", () => {
 		const tmpDir = makeTempDir();
 		const projectName = "test-add-admin-app";
-		const scope = projectName.toLowerCase().replace(/[^a-z0-9-]/g, "");
 		try {
 			const createResult = runCLI(
 				[
@@ -293,31 +292,26 @@ describe("Feature Validation", () => {
 				0,
 				`Expected exit 0\nstdout: ${addResult.stdout}\nstderr: ${addResult.stderr}`,
 			);
-			assert.ok(existsSync(join(projectDir, "packages", "admin")));
-
-			const cmsPackageJson = JSON.parse(
-				readFileSync(
-					join(projectDir, "packages", "cms", "package.json"),
-					"utf8",
+			// Starter drops in model + CRUD + recipe, NOT a package.
+			assert.ok(!existsSync(join(projectDir, "packages", "cms")));
+			assert.ok(
+				existsSync(join(projectDir, "packages", "db", "prisma", "cms.prisma")),
+			);
+			assert.ok(
+				existsSync(
+					join(
+						projectDir,
+						"apps",
+						"web",
+						"src",
+						"app",
+						"api",
+						"cms",
+						"route.js",
+					),
 				),
 			);
-			assert.strictEqual(
-				cmsPackageJson.dependencies[`@${scope}/admin`],
-				"workspace:*",
-			);
-			assert.ok(!cmsPackageJson.dependencies["@techstream/quark-admin"]);
-
-			const webPackageJson = JSON.parse(
-				readFileSync(join(projectDir, "apps", "web", "package.json"), "utf8"),
-			);
-			assert.strictEqual(
-				webPackageJson.dependencies[`@${scope}/admin`],
-				"workspace:*",
-			);
-			assert.strictEqual(
-				webPackageJson.dependencies[`@${scope}/cms`],
-				"workspace:*",
-			);
+			assert.ok(existsSync(join(projectDir, "recipes", "cms.md")));
 		} finally {
 			cleanup(tmpDir);
 		}
@@ -508,6 +502,172 @@ describe("Non-Interactive Mode", () => {
 				tmpDir,
 			);
 			assert.ok(!result.stdout.includes("Which optional packages"));
+		} finally {
+			cleanup(tmpDir);
+		}
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Test Group 4: AI View params (--preset, --prompt)
+// ---------------------------------------------------------------------------
+
+describe("AI View Params", () => {
+	it("--preset minimal scaffolds no optional features", () => {
+		const tmpDir = makeTempDir();
+		const projectName = "test-preset-minimal";
+		try {
+			const result = runCLI(
+				[
+					projectName,
+					"--no-prompts",
+					"--preset",
+					"minimal",
+					"--skip-install",
+					"--skip-docker",
+				],
+				tmpDir,
+			);
+			assert.strictEqual(
+				result.status,
+				0,
+				`Expected exit 0\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
+			);
+			assert.ok(result.stdout.includes('Using preset "minimal"'));
+			const quarkLink = JSON.parse(
+				readFileSync(join(tmpDir, projectName, ".quark-link.json"), "utf8"),
+			);
+			assert.deepStrictEqual(quarkLink.packages, []);
+		} finally {
+			cleanup(tmpDir);
+		}
+	});
+
+	it("--preset client-work resolves to ui,jobs,admin", () => {
+		const tmpDir = makeTempDir();
+		const projectName = "test-preset-client";
+		try {
+			const result = runCLI(
+				[
+					projectName,
+					"--no-prompts",
+					"--preset",
+					"client-work",
+					"--skip-install",
+					"--skip-docker",
+				],
+				tmpDir,
+			);
+			assert.strictEqual(
+				result.status,
+				0,
+				`Expected exit 0\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
+			);
+			const quarkLink = JSON.parse(
+				readFileSync(join(tmpDir, projectName, ".quark-link.json"), "utf8"),
+			);
+			assert.ok(quarkLink.packages.includes("ui"));
+			assert.ok(quarkLink.packages.includes("jobs"));
+			assert.ok(quarkLink.packages.includes("admin"));
+		} finally {
+			cleanup(tmpDir);
+		}
+	});
+
+	it("invalid --preset exits with code 1", () => {
+		const tmpDir = makeTempDir();
+		try {
+			const result = runCLI(
+				[
+					"test-app",
+					"--no-prompts",
+					"--preset",
+					"bogus",
+					"--skip-install",
+					"--skip-docker",
+				],
+				tmpDir,
+			);
+			assert.strictEqual(result.status, 1);
+		} finally {
+			cleanup(tmpDir);
+		}
+	});
+
+	it("--prompt seeds the brief in .quark-link.json", () => {
+		const tmpDir = makeTempDir();
+		const projectName = "test-prompt-app";
+		try {
+			const result = runCLI(
+				[
+					projectName,
+					"--no-prompts",
+					"--features",
+					"ui",
+					"--prompt",
+					"A booking platform for salons",
+					"--skip-install",
+					"--skip-docker",
+				],
+				tmpDir,
+			);
+			assert.strictEqual(
+				result.status,
+				0,
+				`Expected exit 0\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
+			);
+			const quarkLink = JSON.parse(
+				readFileSync(join(tmpDir, projectName, ".quark-link.json"), "utf8"),
+			);
+			assert.strictEqual(quarkLink.brief, "A booking platform for salons");
+		} finally {
+			cleanup(tmpDir);
+		}
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Test Group 5: recipe command
+// ---------------------------------------------------------------------------
+
+describe("recipe command", () => {
+	it("recipe bookings prints the bookings recipe", () => {
+		const tmpDir = makeTempDir();
+		try {
+			const result = runCLI(["recipe", "bookings"], tmpDir);
+			assert.strictEqual(
+				result.status,
+				0,
+				`Expected exit 0\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
+			);
+			assert.ok(result.stdout.includes("Add a booking system"));
+			assert.ok(result.stdout.includes("recipes/bookings.md"));
+		} finally {
+			cleanup(tmpDir);
+		}
+	});
+
+	it("recipe model prints the add-model recipe", () => {
+		const tmpDir = makeTempDir();
+		try {
+			const result = runCLI(["recipe", "model"], tmpDir);
+			assert.strictEqual(
+				result.status,
+				0,
+				`Expected exit 0\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
+			);
+			assert.ok(result.stdout.includes("Add a Prisma model"));
+		} finally {
+			cleanup(tmpDir);
+		}
+	});
+
+	it("recipe with unknown feature exits with code 1", () => {
+		const tmpDir = makeTempDir();
+		try {
+			const result = runCLI(["recipe", "nope"], tmpDir);
+			assert.strictEqual(result.status, 1);
+			assert.ok((result.stdout + result.stderr).includes("No recipe found"));
 		} finally {
 			cleanup(tmpDir);
 		}

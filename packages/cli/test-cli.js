@@ -120,9 +120,14 @@ try {
 				fs.existsSync(path.join(__dirname, "templates/admin/README.md")),
 		},
 		{
-			name: "CMS template has README",
+			name: "CMS starter exists",
 			test: () =>
-				fs.existsSync(path.join(__dirname, "templates/cms/README.md")),
+				fs.existsSync(
+					path.join(
+						__dirname,
+						"templates/starters/cms/apps/web/src/app/api/cms/route.js",
+					),
+				),
 		},
 	];
 

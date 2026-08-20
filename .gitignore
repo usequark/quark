@@ -40,6 +40,9 @@ yarn-error.log*
 !.env.example
 !.env.railway.example
 
+# conductor (machine-local settings)
+.conductor/settings.local.toml
+
 # vercel
 **/.vercel
 

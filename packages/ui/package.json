@@ -15,6 +15,10 @@
 		"description": "All visual styling is controlled via CSS custom properties. Import a theme CSS file to completely retheme the UI without editing component source files.",
 		"docs": "packages/ui/README.md",
 		"skill": "~/.config/opencode/skills/design-system/SKILL.md",
+		"appliesTo": "public-facing user UI only",
+		"excludes": [
+			"admin"
+		],
 		"available": [
 			{
 				"name": "brutalist-yellow",
