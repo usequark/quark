@@ -8,7 +8,9 @@ jobs:
   changeset-check:
     name: Changeset Status
     runs-on: ubuntu-latest
-    if: github.actor != 'dependabot[bot]'
+    # Skip the changesets release PR: it has consumed its changesets and bumped
+    # versions, so `changeset status` would always report "no changesets found".
+    if: github.actor != 'dependabot[bot]' && github.head_ref != 'changeset-release/main'
     steps:
       - name: Checkout
         uses: actions/checkout@v6
