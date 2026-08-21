@@ -1,5 +1,18 @@
 # @techstream/quark-create-app
 
+## 1.17.1
+
+### Patch Changes
+
+- [#74](https://github.com/Bobnoddle/quark/pull/74) [`7e4c315`](https://github.com/Bobnoddle/quark/commit/7e4c31586e942034ca78ed1a1675b27226a41b81) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - fix(scaffold): scaffolded web tests fail out of the box
+
+  A freshly scaffolded project's `pnpm test` failed because the web test script
+  (`node --test 'src/**/*.test.js'`) was missing the `--experimental-test-module-mocks`
+  flag and ran integration tests that the monorepo excludes. The scaffold now ships
+  `scripts/run-tests.mjs` (matching the monorepo runner) and the web test script uses
+  `node ../../scripts/run-tests.mjs src --exclude=integration.test.js`. Scaffolded web
+  tests pass 56/56 and db tests 52/52.
+
 ## 1.17.0
 
 ### Minor Changes
