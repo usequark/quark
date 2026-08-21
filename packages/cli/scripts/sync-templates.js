@@ -101,6 +101,10 @@ const SYNC_FILES = [
 		src: "scripts/clean-workspace.mjs",
 		dest: "base-project/scripts/clean-workspace.mjs",
 	},
+	{
+		src: "scripts/run-tests.mjs",
+		dest: "base-project/scripts/run-tests.mjs",
+	},
 	{ src: "turbo.json", dest: "base-project/turbo.json" },
 	{ src: "docker-compose.yml", dest: "base-project/docker-compose.yml" },
 	{
@@ -244,9 +248,11 @@ function transformWebPackageJson(content) {
 	// Use @myquark placeholder scope (CLI replaces with user's scope)
 	pkg.name = "@myquark/web";
 
-	// Template test script doesn't have integration test exclusion
+	// Use run-tests.mjs (module-mocks flag + integration test exclusion),
+	// matching the monorepo so scaffolded tests pass out of the box.
 	if (pkg.scripts?.test) {
-		pkg.scripts.test = "node --test 'src/**/*.test.js'";
+		pkg.scripts.test =
+			"node ../../scripts/run-tests.mjs src --exclude=integration.test.js";
 	}
 	// Remove monorepo-only scripts
 	delete pkg.scripts?.["test:integration"];

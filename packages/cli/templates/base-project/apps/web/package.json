@@ -11,7 +11,7 @@
 		"build:deploy": "pnpm build && pnpm prepare:standalone",
 		"start": "next start",
 		"start:deploy": "node .next/standalone/apps/web/server.js",
-		"test": "node --test 'src/**/*.test.js'",
+		"test": "node ../../scripts/run-tests.mjs src --exclude=integration.test.js",
 		"lint": "biome format --write && biome check --write"
 	},
 	"dependencies": {
