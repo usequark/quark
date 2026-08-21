@@ -3,7 +3,7 @@ import { prisma } from "@techstream/quark-db";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireRole } from "@/lib/auth-middleware";
-import { handleError } from "../../error-handler";
+import { handleError } from "../error-handler";
 
 const createPageSchema = z.object({
 	title: z.string().min(1),

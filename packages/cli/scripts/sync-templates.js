@@ -76,9 +76,20 @@ const SYNC_DIRS = [
 			/^apps\/web\/src\/app\/_components\/PageContentRenderer\.js$/,
 			/^apps\/web\/src\/app\/\[slug\]\//,
 			/^apps\/web\/src\/app\/api\/cms\//,
+			// Demoted verticals are now AI skills, not scaffolded packages.
+			/^apps\/web\/src\/app\/api\/ai\//,
+			/^apps\/web\/src\/app\/api\/admin\/crm\//,
 		],
 	},
-	{ src: "apps/worker", dest: "worker" },
+	{
+		src: "apps/worker",
+		dest: "worker",
+		// Demoted verticals are now AI skills, not scaffolded packages.
+		localExcludes: [
+			/^apps\/worker\/src\/handlers\/ai\.js$/,
+			/^apps\/worker\/src\/handlers\/ai\.test\.js$/,
+		],
+	},
 	{ src: "packages/db", dest: "base-project/packages/db" },
 	{ src: "packages/config", dest: "config" },
 	{ src: "packages/ui", dest: "ui" },
@@ -219,6 +230,7 @@ const TRANSFORMS = {
 	"base-project/apps/web/package.json": transformWebPackageJson,
 	"base-project/apps/web/next.config.js": transformWebNextConfig,
 	"worker/package.json": transformWorkerPackageJson,
+	"worker/src/handlers/index.js": transformWorkerHandlersIndex,
 	// DB: remove private flag for scaffold context
 	"base-project/packages/db/package.json": transformDbPackageJson,
 	// Optional packages: use @myquark placeholder scope
@@ -257,8 +269,16 @@ function transformWebPackageJson(content) {
 	// Remove monorepo-only scripts
 	delete pkg.scripts?.["test:integration"];
 
-	// Bookings is a monorepo-only package (not published to npm)
-	delete pkg.dependencies?.["@techstream/quark-bookings"];
+	// Demoted verticals are monorepo-only packages (not published to npm);
+	// they are now AI skills, not scaffolded packages.
+	for (const pkgName of [
+		"@techstream/quark-bookings",
+		"@techstream/quark-ai",
+		"@techstream/quark-cms",
+		"@techstream/quark-crm",
+	]) {
+		delete pkg.dependencies?.[pkgName];
+	}
 
 	// Core is installed from npm (not workspace) in scaffolded projects
 	if (pkg.dependencies?.["@techstream/quark-core"]) {
@@ -274,9 +294,21 @@ function transformWebPackageJson(content) {
 	return `${JSON.stringify(pkg, null, "\t")}\n`;
 }
 
+function transformWorkerHandlersIndex(content) {
+	// Demoted AI vertical is now a skill, not a scaffolded package. Remove the
+	// ai.js handler import and its jobHandlers entry (ai.js is excluded from sync).
+	return content
+		.replace(/^\t*import \{ handleAiAgentTask \} from "\.\/ai\.js";\n/gm, "")
+		.replace(/^\t*\[JOB_NAMES\.AI_AGENT_TASK\]: handleAiAgentTask,\n/gm, "");
+}
+
 function transformWebNextConfig(content) {
-	// Remove bookings reference (monorepo-only package, not published to npm)
-	return content.replace(/^\t\t"@techstream\/quark-bookings",\n/gm, "");
+	// Remove demoted vertical references (monorepo-only packages, not published
+	// to npm; they are now AI skills, not scaffolded packages).
+	return content.replace(
+		/^\t\t"@techstream\/quark-(bookings|ai|cms|crm)",\n/gm,
+		"",
+	);
 }
 
 function transformWorkerPackageJson(content) {
@@ -290,10 +322,22 @@ function transformWorkerPackageJson(content) {
 		pkg.dependencies["@techstream/quark-core"] = CORE_VERSION_PIN;
 	}
 
-	// Replace bash subshell glob with a cross-platform Node.js native glob
-	// so `pnpm test` works on Windows (cmd.exe/PowerShell) as well as Unix.
+	// Demoted verticals are monorepo-only packages (not published to npm);
+	// they are now AI skills, not scaffolded packages.
+	for (const pkgName of [
+		"@techstream/quark-ai",
+		"@techstream/quark-cms",
+		"@techstream/quark-crm",
+		"@techstream/quark-bookings",
+	]) {
+		delete pkg.dependencies?.[pkgName];
+	}
+
+	// Use run-tests.mjs (module-mocks flag + integration test exclusion),
+	// matching the monorepo so scaffolded tests pass out of the box.
 	if (pkg.scripts?.test) {
-		pkg.scripts.test = "node --test 'src/**/*.test.js'";
+		pkg.scripts.test =
+			"node ../../scripts/run-tests.mjs src --exclude=integration.test.js";
 	}
 
 	return `${JSON.stringify(pkg, null, "\t")}\n`;
