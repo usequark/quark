@@ -249,6 +249,7 @@ const TRANSFORMS = {
 	"ui/package.json": transformOptionalPackageJson,
 	"jobs/package.json": transformOptionalPackageJson,
 	"jobs/src/definitions.js": transformJobsDefinitions,
+	"jobs/src/definitions.test.js": transformJobsDefinitionsTest,
 	"admin/package.json": transformOptionalPackageJson,
 	"cms/package.json": transformOptionalPackageJson,
 	"ai/package.json": transformOptionalPackageJson,
@@ -304,6 +305,42 @@ function transformWebPackageJson(content) {
 	}
 
 	return `${JSON.stringify(pkg, null, "\t")}\n`;
+}
+
+function transformJobsDefinitionsTest(content) {
+	// Demoted AI vertical is now a skill, not a scaffolded package. Remove the
+	// AI queue/job-name test cases and fix the queue/job-name counts.
+	return content
+		.replace(
+			/\n\ttest\("defines AI queue", \(\) => \{\n\t\tassert\.strictEqual\(JOB_QUEUES\.AI, "ai-queue"\);\n\t\}\);\n/g,
+			"\n",
+		)
+		.replace(
+			/\n\t\tassert\.strictEqual\(typeof JOB_QUEUES\.AI, "string"\);\n/g,
+			"\n",
+		)
+		.replace(/defines exactly 4 queues/g, "defines exactly 3 queues")
+		.replace(
+			/Object\.keys\(JOB_QUEUES\)\.length, 4\)/g,
+			"Object.keys(JOB_QUEUES).length, 3)",
+		)
+		.replace(
+			/\n\ttest\("defines AI agent task job name", \(\) => \{\n\t\tassert\.strictEqual\(JOB_NAMES\.AI_AGENT_TASK, "ai-agent-task"\);\n\t\}\);\n/g,
+			"\n",
+		)
+		.replace(
+			/\n\ttest\("defines AI context extraction job name", \(\) => \{\n\t\tassert\.strictEqual\(\n\t\t\tJOB_NAMES\.AI_CONTEXT_EXTRACTION,\n\t\t\t"ai-context-extraction",\n\t\t\);\n\t\}\);\n/g,
+			"\n",
+		)
+		.replace(
+			/\n\ttest\("defines AI conversation compact job name", \(\) => \{\n\t\tassert\.strictEqual\(\n\t\t\tJOB_NAMES\.AI_CONVERSATION_COMPACT,\n\t\t\t"ai-conversation-compact",\n\t\t\);\n\t\}\);\n/g,
+			"\n",
+		)
+		.replace(/defines exactly 6 job names/g, "defines exactly 3 job names")
+		.replace(
+			/Object\.keys\(JOB_NAMES\)\.length, 6\)/g,
+			"Object.keys(JOB_NAMES).length, 3)",
+		);
 }
 
 function transformJobsDefinitions(content) {
