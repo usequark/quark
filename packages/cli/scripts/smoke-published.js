@@ -49,6 +49,7 @@ const workspaceRoot = path.join(
 );
 const createProjectDir = path.join(workspaceRoot, "published-create");
 const addProjectDir = path.join(workspaceRoot, "published-add");
+const minimalProjectDir = path.join(workspaceRoot, "published-minimal");
 const coreProjectDir = path.join(workspaceRoot, "published-core");
 
 const CORE_IMPORT_SMOKE = `
@@ -135,6 +136,40 @@ async function validateScaffold(projectDir) {
 	}
 }
 
+async function runMinimalSmoke() {
+	section(`CLI minimal smoke (${cliLabel})`);
+	const projectDir = await scaffoldProject({
+		name: path.basename(minimalProjectDir),
+		features: "",
+	});
+
+	// The base scaffold must not reference demoted vertical packages, and must
+	// ship the embedded skills/ set.
+	const webPkg = JSON.parse(
+		fs.readFileSync(
+			path.join(projectDir, "apps", "web", "package.json"),
+			"utf8",
+		),
+	);
+	for (const demoted of [
+		"@techstream/quark-ai",
+		"@techstream/quark-cms",
+		"@techstream/quark-crm",
+		"@techstream/quark-bookings",
+	]) {
+		if (webPkg.dependencies?.[demoted]) {
+			throw new Error(`Base scaffold still references ${demoted}`);
+		}
+	}
+	for (const skill of ["bookings", "crm", "cms", "ai"]) {
+		if (!fs.existsSync(path.join(projectDir, "skills", skill, "SKILL.md"))) {
+			throw new Error(`Missing embedded skill: ${skill}`);
+		}
+	}
+
+	await validateScaffold(projectDir);
+}
+
 async function runCreateSmoke() {
 	section(`CLI create smoke (${cliLabel})`);
 	const projectDir = await scaffoldProject({
@@ -184,6 +219,7 @@ async function main() {
 	await fs.ensureDir(workspaceRoot);
 
 	try {
+		await runMinimalSmoke();
 		await runCreateSmoke();
 		await runAddSmoke();
 		await runStandaloneCoreSmoke();

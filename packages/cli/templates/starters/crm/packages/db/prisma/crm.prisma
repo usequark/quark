@@ -1,7 +1,7 @@
 // Generic CRM model — a starting point for a pipeline/CRM domain.
 // Merge this into packages/db/prisma/schema.prisma, then run:
 //   pnpm db:generate && pnpm db:migrate
-// See recipes/crm.md for the full extension path.
+// See skills/crm/SKILL.md for the full extension path.
 
 model Company {
 	id        String    @id @default(cuid())

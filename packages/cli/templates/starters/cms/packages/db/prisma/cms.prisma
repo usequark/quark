@@ -1,7 +1,7 @@
 // Generic CMS model — a starting point for a content domain.
 // Merge this into packages/db/prisma/schema.prisma, then run:
 //   pnpm db:generate && pnpm db:migrate
-// See recipes/cms.md for the full extension path.
+// See skills/cms/SKILL.md for the full extension path.
 
 enum ContentStatus {
 	DRAFT

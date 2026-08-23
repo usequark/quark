@@ -5,8 +5,6 @@
  */
 
 import { JOB_NAMES } from "@techstream/quark-jobs";
-import { handleContextExtraction } from "./context-extraction.js";
-import { handleConversationCompact } from "./conversation-compact.js";
 import {
 	handleSendResetPasswordEmail,
 	handleSendWelcomeEmail,
@@ -17,6 +15,4 @@ export const jobHandlers = {
 	[JOB_NAMES.SEND_WELCOME_EMAIL]: handleSendWelcomeEmail,
 	[JOB_NAMES.SEND_RESET_PASSWORD_EMAIL]: handleSendResetPasswordEmail,
 	[JOB_NAMES.CLEANUP_ORPHANED_FILES]: handleCleanupOrphanedFiles,
-	[JOB_NAMES.AI_CONTEXT_EXTRACTION]: handleContextExtraction,
-	[JOB_NAMES.AI_CONVERSATION_COMPACT]: handleConversationCompact,
 };

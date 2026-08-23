@@ -242,7 +242,7 @@ describe("Feature Validation", () => {
 					),
 				),
 			);
-			assert.ok(existsSync(join(projectDir, "recipes", "cms.md")));
+			assert.ok(existsSync(join(projectDir, "skills", "cms", "SKILL.md")));
 
 			// No workspace dep on a cms package.
 			const webPackageJson = JSON.parse(
@@ -311,7 +311,7 @@ describe("Feature Validation", () => {
 					),
 				),
 			);
-			assert.ok(existsSync(join(projectDir, "recipes", "cms.md")));
+			assert.ok(existsSync(join(projectDir, "skills", "cms", "SKILL.md")));
 		} finally {
 			cleanup(tmpDir);
 		}
@@ -640,8 +640,8 @@ describe("recipe command", () => {
 				0,
 				`Expected exit 0\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
 			);
-			assert.ok(result.stdout.includes("Add a booking system"));
-			assert.ok(result.stdout.includes("recipes/bookings.md"));
+			assert.ok(result.stdout.includes("Bookings Skill"));
+			assert.ok(result.stdout.includes("reference/verticals/bookings"));
 		} finally {
 			cleanup(tmpDir);
 		}
@@ -656,7 +656,7 @@ describe("recipe command", () => {
 				0,
 				`Expected exit 0\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
 			);
-			assert.ok(result.stdout.includes("Add a Prisma model"));
+			assert.ok(result.stdout.includes("Add a new Prisma model"));
 		} finally {
 			cleanup(tmpDir);
 		}
@@ -667,7 +667,7 @@ describe("recipe command", () => {
 		try {
 			const result = runCLI(["recipe", "nope"], tmpDir);
 			assert.strictEqual(result.status, 1);
-			assert.ok((result.stdout + result.stderr).includes("No recipe found"));
+			assert.ok((result.stdout + result.stderr).includes("No skill found"));
 		} finally {
 			cleanup(tmpDir);
 		}

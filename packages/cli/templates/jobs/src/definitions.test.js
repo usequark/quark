@@ -13,9 +13,6 @@ describe("JOB_QUEUES", () => {
 		assert.strictEqual(JOB_QUEUES.FILES, "files-queue");
 	});
 
-	test("defines AI queue", () => {
-		assert.strictEqual(JOB_QUEUES.AI, "ai-queue");
-	});
 
 	test("defines default queue", () => {
 		assert.strictEqual(JOB_QUEUES.DEFAULT, "default-queue");
@@ -24,12 +21,11 @@ describe("JOB_QUEUES", () => {
 	test("queues are strings", () => {
 		assert.strictEqual(typeof JOB_QUEUES.EMAIL, "string");
 		assert.strictEqual(typeof JOB_QUEUES.FILES, "string");
-		assert.strictEqual(typeof JOB_QUEUES.AI, "string");
 		assert.strictEqual(typeof JOB_QUEUES.DEFAULT, "string");
 	});
 
-	test("defines exactly 4 queues", () => {
-		assert.strictEqual(Object.keys(JOB_QUEUES).length, 4);
+	test("defines exactly 3 queues", () => {
+		assert.strictEqual(Object.keys(JOB_QUEUES).length, 3);
 	});
 });
 
@@ -54,26 +50,11 @@ describe("JOB_NAMES", () => {
 		);
 	});
 
-	test("defines AI agent task job name", () => {
-		assert.strictEqual(JOB_NAMES.AI_AGENT_TASK, "ai-agent-task");
-	});
 
-	test("defines AI context extraction job name", () => {
-		assert.strictEqual(
-			JOB_NAMES.AI_CONTEXT_EXTRACTION,
-			"ai-context-extraction",
-		);
-	});
 
-	test("defines AI conversation compact job name", () => {
-		assert.strictEqual(
-			JOB_NAMES.AI_CONVERSATION_COMPACT,
-			"ai-conversation-compact",
-		);
-	});
 
-	test("defines exactly 6 job names", () => {
-		assert.strictEqual(Object.keys(JOB_NAMES).length, 6);
+	test("defines exactly 3 job names", () => {
+		assert.strictEqual(Object.keys(JOB_NAMES).length, 3);
 	});
 
 	test("all job names are strings", () => {
