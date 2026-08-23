@@ -14,7 +14,9 @@ import { formatProjectDisplayName } from "./utils.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const templatesDir = path.join(__dirname, "../templates");
 const pkg = await fs.readJSON(path.join(__dirname, "../package.json"));
-const REQUIRED_PACKAGES = ["db", "config"];
+// db, config, and ui are always scaffolded: the base web app (layout, auth,
+// example-page) imports the ui package, so a scaffold without it is broken.
+const REQUIRED_PACKAGES = ["db", "config", "ui"];
 const SCAFFOLD_CHECK_IGNORED_FILES = new Set([".env", ".quark-link.json"]);
 
 const program = new Command();
@@ -186,7 +188,7 @@ function getWorkspacePackagesForFeatures(features) {
 
 	for (const feature of features) {
 		const meta = FEATURE_META[feature];
-		if (meta?.starter) continue; // starters have no workspace package
+		if (meta?.skill) continue; // skill-based verticals have no workspace package
 		const packageNames = meta?.packages ?? [feature];
 
 		for (const packageName of packageNames) {
@@ -202,7 +204,7 @@ function getPairedTemplatesForFeatures(features) {
 
 	for (const feature of features) {
 		const meta = FEATURE_META[feature];
-		if (!meta || meta.starter) continue; // starters have no paired routes
+		if (!meta || meta.skill) continue; // skill-based verticals have no paired routes
 
 		for (const pair of meta.pairs) {
 			if (!pairs.includes(pair)) {
@@ -214,33 +216,6 @@ function getPairedTemplatesForFeatures(features) {
 	return pairs;
 }
 
-/**
- * Drop a domain starter into a scaffolded project.
- * Copies the starter template (generic Prisma model + CRUD endpoint) from
- * templates/starters/<starter>/. The matching skill is already scaffolded in
- * the base template's skills/ directory.
- * @param {string} targetDir - Project root
- * @param {string} starter - Starter name (bookings, crm, cms, ai)
- * @param {string} scope - Project scope (for import rewriting)
- */
-async function applyStarter(targetDir, starter, scope) {
-	const starterDir = path.join(templatesDir, "starters", starter);
-	if (!(await fs.pathExists(starterDir))) {
-		console.log(
-			chalk.yellow(
-				`    ⚠ ${starter} (starter template not yet available - skipped)`,
-			),
-		);
-		return;
-	}
-
-	// Copy the starter template into the project (merges with existing tree).
-	await fs.copy(starterDir, targetDir);
-	await replaceImportsInSourceFiles(targetDir, scope);
-
-	console.log(chalk.green(`    ✓ ${starter} (domain starter)`));
-}
-
 function buildFeatureRows(features) {
 	const rows = {
 		ui: "| UI package | Included | `packages/ui/README.md` |",
@@ -248,10 +223,10 @@ function buildFeatureRows(features) {
 		admin:
 			"| Admin panel | Included | `packages/admin/README.md`, `apps/web/src/app/admin/` |",
 		bookings:
-			"| Bookings skill | Included | `skills/bookings/SKILL.md`, `apps/web/src/app/api/bookings/` |",
-		crm: "| CRM skill | Included | `skills/crm/SKILL.md`, `apps/web/src/app/api/crm/` |",
-		cms: "| CMS skill | Included | `skills/cms/SKILL.md`, `apps/web/src/app/api/cms/` |",
-		ai: "| AI assistant skill | Included | `skills/ai/SKILL.md`, `apps/web/src/app/api/ai/` |",
+			"| Bookings skill | Included | `.opencode/skills/bookings/SKILL.md`, `apps/web/src/app/api/bookings/` |",
+		crm: "| CRM skill | Included | `.opencode/skills/crm/SKILL.md`, `apps/web/src/app/api/crm/` |",
+		cms: "| CMS skill | Included | `.opencode/skills/cms/SKILL.md`, `apps/web/src/app/api/cms/` |",
+		ai: "| AI assistant skill | Included | `.opencode/skills/ai/SKILL.md`, `apps/web/src/app/api/ai/` |",
 	};
 
 	const selectedRows = features
@@ -280,10 +255,10 @@ function buildFirstEditLines(features) {
 		admin:
 			"- `packages/admin/src/config.js` and `apps/web/src/app/admin/` - tune model labels, hidden fields, and admin pages",
 		bookings:
-			"- `skills/bookings/SKILL.md` and `apps/web/src/app/api/bookings/` - extend the booking model and CRUD",
-		crm: "- `skills/crm/SKILL.md` and `apps/web/src/app/api/crm/` - extend the CRM model and CRUD",
-		cms: "- `skills/cms/SKILL.md` and `apps/web/src/app/api/cms/` - extend the CMS model and CRUD",
-		ai: "- `skills/ai/SKILL.md` and `apps/web/src/app/api/ai/` - extend the AI assistant model and CRUD",
+			"- `.opencode/skills/bookings/SKILL.md` and `apps/web/src/app/api/bookings/` - extend the booking model and CRUD",
+		crm: "- `.opencode/skills/crm/SKILL.md` and `apps/web/src/app/api/crm/` - extend the CRM model and CRUD",
+		cms: "- `.opencode/skills/cms/SKILL.md` and `apps/web/src/app/api/cms/` - extend the CMS model and CRUD",
+		ai: "- `.opencode/skills/ai/SKILL.md` and `apps/web/src/app/api/ai/` - extend the AI assistant model and CRUD",
 	};
 
 	const selectedLines = features
@@ -304,10 +279,10 @@ function buildFeatureGuideLines(features) {
 		admin:
 			"- `packages/admin/README.md` - admin configuration, model overrides, and route ownership",
 		bookings:
-			"- `skills/bookings/SKILL.md` - how to extend the booking starter into a full booking system",
-		crm: "- `skills/crm/SKILL.md` - how to extend the CRM starter into a full pipeline",
-		cms: "- `skills/cms/SKILL.md` - how to extend the CMS starter into a full content system",
-		ai: "- `skills/ai/SKILL.md` - how to extend the AI assistant starter into a full assistant",
+			"- `.opencode/skills/bookings/SKILL.md` - how to extend the booking starter into a full booking system",
+		crm: "- `.opencode/skills/crm/SKILL.md` - how to extend the CRM starter into a full pipeline",
+		cms: "- `.opencode/skills/cms/SKILL.md` - how to extend the CMS starter into a full content system",
+		ai: "- `.opencode/skills/ai/SKILL.md` - how to extend the AI assistant starter into a full assistant",
 	};
 
 	const selectedLines = features
@@ -369,6 +344,7 @@ function replaceDepsScope(deps, scope, selectedPackages) {
 			if (
 				packageName === "db" ||
 				packageName === "config" ||
+				packageName === "ui" ||
 				selectedPackages.includes(packageName)
 			) {
 				deps[`@${scope}/${packageName}`] = value;
@@ -794,22 +770,22 @@ program
 								selected: false,
 							},
 							{
-								title: "Bookings starter (model + CRUD endpoint + recipe)",
+								title: "Bookings skill (AI builds it on demand)",
 								value: "bookings",
 								selected: false,
 							},
 							{
-								title: "CRM starter (model + CRUD endpoint + recipe)",
+								title: "CRM skill (AI builds it on demand)",
 								value: "crm",
 								selected: false,
 							},
 							{
-								title: "CMS starter (model + CRUD endpoint + recipe)",
+								title: "CMS skill (AI builds it on demand)",
 								value: "cms",
 								selected: false,
 							},
 							{
-								title: "AI assistant starter (model + CRUD endpoint + recipe)",
+								title: "AI assistant skill (AI builds it on demand)",
 								value: "ai",
 								selected: false,
 							},
@@ -1002,15 +978,6 @@ program
 				}
 			}
 
-			// Step 6b: Apply selected domain starters (bookings, crm, cms, ai)
-			const selectedStarters = features.filter((f) => FEATURE_META[f]?.starter);
-			if (selectedStarters.length > 0) {
-				console.log(chalk.cyan("\n  🚀 Setting up domain starters..."));
-				for (const starter of selectedStarters) {
-					await applyStarter(targetDir, starter, scope);
-				}
-			}
-
 			// Step 7: Update all package.json dependencies to use correct scope
 			console.log(chalk.cyan("\n  🔧 Updating app dependencies..."));
 
@@ -1123,8 +1090,7 @@ program
 			// Step 7f: Remove legacy vertical API routes from the base-project template.
 			// The base-project ships crm/ai API routes that import the now-archived
 			// vertical packages (@techstream/quark-crm, @techstream/quark-ai/*). These
-			// are always removed; the domain starters provide their own generic routes
-			// (apps/web/src/app/api/<vertical>/) via applyStarter.
+			// are always removed; the embedded skills teach the AI to build them.
 			await fs.remove(
 				path.join(
 					targetDir,
@@ -1377,7 +1343,7 @@ STORAGE_PROVIDER=local
 				scaffoldedDate: scaffoldedAt,
 				projectName,
 				requiredPackages: REQUIRED_PACKAGES,
-				packages: features,
+				packages: [...REQUIRED_PACKAGES, ...features],
 				authAllowSignup: allowSignup,
 				// Track that worker is paired with jobs (not independently selectable)
 				hasWorker: features.includes("jobs"),
@@ -1598,14 +1564,13 @@ const FEATURE_META = {
 		packages: ["admin"],
 		pairs: ["admin-routes"],
 	},
-	bookings: { requires: [], starter: "bookings" },
-	crm: { requires: [], starter: "crm" },
-	cms: { requires: [], starter: "cms" },
-	ai: { requires: [], starter: "ai" },
+	// Verticals are skill-based: the embedded skill (always scaffolded) teaches
+	// the AI to build them. No starter code is scaffolded.
+	bookings: { requires: [], skill: "bookings" },
+	crm: { requires: [], skill: "crm" },
+	cms: { requires: [], skill: "cms" },
+	ai: { requires: [], skill: "ai" },
 };
-
-/** Names of the vertical features that resolve as domain starters. */
-const STARTER_FEATURES = ["bookings", "crm", "cms", "ai"];
 
 function resolveFeatureSelection(features) {
 	const resolved = [];
@@ -1685,20 +1650,20 @@ async function detectProjectScope(projectDir) {
  */
 async function detectInstalledFeatures(projectDir) {
 	const installed = [];
+	// Skill-based verticals are tracked in .quark-link.json (no code is scaffolded).
+	let quarkLinkPackages = [];
+	try {
+		const quarkLink = await fs.readJSON(
+			path.join(projectDir, ".quark-link.json"),
+		);
+		quarkLinkPackages = quarkLink.packages ?? [];
+	} catch {
+		// No .quark-link.json — fall through to directory detection.
+	}
 	for (const feature of Object.keys(FEATURE_META)) {
 		const meta = FEATURE_META[feature];
-		if (meta.starter) {
-			// Starters are detected by their API route (the skill is always present).
-			const apiRoute = path.join(
-				projectDir,
-				"apps",
-				"web",
-				"src",
-				"app",
-				"api",
-				feature,
-			);
-			if (await fs.pathExists(apiRoute)) {
+		if (meta.skill) {
+			if (quarkLinkPackages.includes(feature)) {
 				installed.push(feature);
 			}
 			continue;
@@ -2087,9 +2052,14 @@ program
 				const packageNames = featMeta.packages ?? [feat];
 				console.log(chalk.cyan(`\n  📋 Adding ${feat}...`));
 
-				// 0. Domain starter — drop in model + CRUD endpoint + recipe
-				if (featMeta.starter) {
-					await applyStarter(projectDir, featMeta.starter, scope);
+				// 0. Skill-based vertical — the embedded skill is already scaffolded;
+				//    no starter code is added.
+				if (featMeta.skill) {
+					console.log(
+						chalk.green(
+							`    ✓ ${feat} (skill — build it with the embedded skill)`,
+						),
+					);
 					continue;
 				}
 
@@ -2416,16 +2386,16 @@ program
 	});
 
 // ---------------------------------------------------------------------------
-// quark recipe <feature> - Print an AI prompt recipe for a feature
+// quark skill <feature> - Print an embedded skill for a feature
 // ---------------------------------------------------------------------------
 
 program
-	.command("recipe")
+	.command("skill")
 	.argument(
 		"<feature>",
-		"Feature to print a recipe for (model, endpoint, dashboard, bookings, crm, cms, ai)",
+		"Feature to print a skill for (model, endpoint, dashboard, bookings, crm, cms, ai)",
 	)
-	.description("Print an AI prompt recipe for a feature")
+	.description("Print an embedded skill for a feature")
 	.action(async (feature) => {
 		const skillName =
 			feature === "model"
@@ -2438,6 +2408,7 @@ program
 		const skillPath = path.join(
 			templatesDir,
 			"base-project",
+			".opencode",
 			"skills",
 			skillName,
 			"SKILL.md",

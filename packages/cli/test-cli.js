@@ -120,12 +120,12 @@ try {
 				fs.existsSync(path.join(__dirname, "templates/admin/README.md")),
 		},
 		{
-			name: "CMS starter exists",
+			name: "CMS skill exists",
 			test: () =>
 				fs.existsSync(
 					path.join(
 						__dirname,
-						"templates/starters/cms/apps/web/src/app/api/cms/route.js",
+						"templates/base-project/.opencode/skills/cms/SKILL.md",
 					),
 				),
 		},

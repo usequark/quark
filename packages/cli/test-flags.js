@@ -185,7 +185,7 @@ describe("Feature Validation", () => {
 		}
 	});
 
-	it("cms feature resolves as a domain starter (model + CRUD + recipe, no package)", () => {
+	it("cms feature resolves as a skill (no package, no starter code)", () => {
 		const tmpDir = makeTempDir();
 		const projectName = "test-cms-app";
 		const scope = projectName.toLowerCase().replace(/[^a-z0-9-]/g, "");
@@ -208,41 +208,19 @@ describe("Feature Validation", () => {
 			);
 
 			const projectDir = join(tmpDir, projectName);
-			// Starter drops in a generic model + CRUD endpoint + recipe, NOT a package.
+			// Skill-based vertical: no package, no starter code — just the embedded skill.
 			assert.ok(!existsSync(join(projectDir, "packages", "cms")));
 			assert.ok(
-				existsSync(join(projectDir, "packages", "db", "prisma", "cms.prisma")),
+				!existsSync(join(projectDir, "packages", "db", "prisma", "cms.prisma")),
 			);
 			assert.ok(
-				existsSync(
-					join(
-						projectDir,
-						"apps",
-						"web",
-						"src",
-						"app",
-						"api",
-						"cms",
-						"route.js",
-					),
+				!existsSync(
+					join(projectDir, "apps", "web", "src", "app", "api", "cms"),
 				),
 			);
 			assert.ok(
-				existsSync(
-					join(
-						projectDir,
-						"apps",
-						"web",
-						"src",
-						"app",
-						"api",
-						"cms",
-						"[id]",
-						"route.js",
-					),
-				),
+				existsSync(join(projectDir, ".opencode", "skills", "cms", "SKILL.md")),
 			);
-			assert.ok(existsSync(join(projectDir, "skills", "cms", "SKILL.md")));
 
 			// No workspace dep on a cms package.
 			const webPackageJson = JSON.parse(
@@ -264,7 +242,7 @@ describe("Feature Validation", () => {
 		}
 	});
 
-	it("add cms drops in the CMS domain starter (model + CRUD + recipe)", () => {
+	it("add cms resolves as a skill (no package, no starter code)", () => {
 		const tmpDir = makeTempDir();
 		const projectName = "test-add-admin-app";
 		try {
@@ -292,26 +270,19 @@ describe("Feature Validation", () => {
 				0,
 				`Expected exit 0\nstdout: ${addResult.stdout}\nstderr: ${addResult.stderr}`,
 			);
-			// Starter drops in model + CRUD + recipe, NOT a package.
+			// Skill-based vertical: no package, no starter code — just the embedded skill.
 			assert.ok(!existsSync(join(projectDir, "packages", "cms")));
 			assert.ok(
-				existsSync(join(projectDir, "packages", "db", "prisma", "cms.prisma")),
+				!existsSync(join(projectDir, "packages", "db", "prisma", "cms.prisma")),
 			);
 			assert.ok(
-				existsSync(
-					join(
-						projectDir,
-						"apps",
-						"web",
-						"src",
-						"app",
-						"api",
-						"cms",
-						"route.js",
-					),
+				!existsSync(
+					join(projectDir, "apps", "web", "src", "app", "api", "cms"),
 				),
 			);
-			assert.ok(existsSync(join(projectDir, "skills", "cms", "SKILL.md")));
+			assert.ok(
+				existsSync(join(projectDir, ".opencode", "skills", "cms", "SKILL.md")),
+			);
 		} finally {
 			cleanup(tmpDir);
 		}
@@ -537,7 +508,7 @@ describe("AI View Params", () => {
 			const quarkLink = JSON.parse(
 				readFileSync(join(tmpDir, projectName, ".quark-link.json"), "utf8"),
 			);
-			assert.deepStrictEqual(quarkLink.packages, []);
+			assert.deepStrictEqual(quarkLink.packages, ["db", "config", "ui"]);
 		} finally {
 			cleanup(tmpDir);
 		}
@@ -627,14 +598,14 @@ describe("AI View Params", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Test Group 5: recipe command
+// Test Group 5: skill command
 // ---------------------------------------------------------------------------
 
-describe("recipe command", () => {
-	it("recipe bookings prints the bookings recipe", () => {
+describe("skill command", () => {
+	it("skill bookings prints the bookings skill", () => {
 		const tmpDir = makeTempDir();
 		try {
-			const result = runCLI(["recipe", "bookings"], tmpDir);
+			const result = runCLI(["skill", "bookings"], tmpDir);
 			assert.strictEqual(
 				result.status,
 				0,
@@ -647,10 +618,10 @@ describe("recipe command", () => {
 		}
 	});
 
-	it("recipe model prints the add-model recipe", () => {
+	it("skill model prints the add-model skill", () => {
 		const tmpDir = makeTempDir();
 		try {
-			const result = runCLI(["recipe", "model"], tmpDir);
+			const result = runCLI(["skill", "model"], tmpDir);
 			assert.strictEqual(
 				result.status,
 				0,
@@ -662,10 +633,10 @@ describe("recipe command", () => {
 		}
 	});
 
-	it("recipe with unknown feature exits with code 1", () => {
+	it("skill with unknown feature exits with code 1", () => {
 		const tmpDir = makeTempDir();
 		try {
-			const result = runCLI(["recipe", "nope"], tmpDir);
+			const result = runCLI(["skill", "nope"], tmpDir);
 			assert.strictEqual(result.status, 1);
 			assert.ok((result.stdout + result.stderr).includes("No skill found"));
 		} finally {

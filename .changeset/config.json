@@ -9,9 +9,6 @@
 	"updateInternalDependencies": "patch",
 	"ignore": [
 		"@techstream/quark-admin",
-		"@techstream/quark-bookings",
-		"@techstream/quark-cms",
-		"@techstream/quark-crm",
 		"@techstream/quark-config",
 		"@techstream/quark-web",
 		"@techstream/quark-worker",

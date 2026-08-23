@@ -5,7 +5,7 @@
 
 ## Entry Point
 
-Start with [`MAIN.md`](./MAIN.md) - the project brief and a map to the rest of the context (`docs/`, `openapi.yaml`, `skills/`). This file is the detailed rules and conventions reference.
+Start with [`MAIN.md`](./MAIN.md) - the project brief and a map to the rest of the context (`docs/`, `openapi.yaml`, `.opencode/skills/`). This file is the detailed rules and conventions reference.
 
 ## Quick Start
 

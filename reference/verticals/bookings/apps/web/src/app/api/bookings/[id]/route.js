@@ -19,7 +19,10 @@ export async function GET(_request, { params }) {
 		const { id } = await params;
 		const booking = await prisma.booking.findUnique({ where: { id } });
 		if (!booking) {
-			return NextResponse.json({ message: "Booking not found" }, { status: 404 });
+			return NextResponse.json(
+				{ message: "Booking not found" },
+				{ status: 404 },
+			);
 		}
 		return NextResponse.json(booking);
 	} catch (error) {
@@ -33,7 +36,10 @@ export const PATCH = withCsrfProtection(async (request, { params }) => {
 		const { id } = await params;
 		const existing = await prisma.booking.findUnique({ where: { id } });
 		if (!existing) {
-			return NextResponse.json({ message: "Booking not found" }, { status: 404 });
+			return NextResponse.json(
+				{ message: "Booking not found" },
+				{ status: 404 },
+			);
 		}
 		const data = await validateBody(request, updateBookingSchema);
 		const booking = await prisma.booking.update({ where: { id }, data });
@@ -49,7 +55,10 @@ export const DELETE = withCsrfProtection(async (_request, { params }) => {
 		const { id } = await params;
 		const existing = await prisma.booking.findUnique({ where: { id } });
 		if (!existing) {
-			return NextResponse.json({ message: "Booking not found" }, { status: 404 });
+			return NextResponse.json(
+				{ message: "Booking not found" },
+				{ status: 404 },
+			);
 		}
 		await prisma.booking.delete({ where: { id } });
 		return NextResponse.json({ success: true });

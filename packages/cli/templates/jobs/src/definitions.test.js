@@ -13,7 +13,6 @@ describe("JOB_QUEUES", () => {
 		assert.strictEqual(JOB_QUEUES.FILES, "files-queue");
 	});
 
-
 	test("defines default queue", () => {
 		assert.strictEqual(JOB_QUEUES.DEFAULT, "default-queue");
 	});
@@ -49,9 +48,6 @@ describe("JOB_NAMES", () => {
 			"cleanup-orphaned-files",
 		);
 	});
-
-
-
 
 	test("defines exactly 3 job names", () => {
 		assert.strictEqual(Object.keys(JOB_NAMES).length, 3);

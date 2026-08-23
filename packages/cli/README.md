@@ -33,8 +33,8 @@ npx @techstream/quark-create-app@latest my-awesome-app
 # Add a feature (package or domain starter) to an existing project
 npx @techstream/quark-create-app add cms
 
-# Print an AI prompt recipe for a feature
-npx @techstream/quark-create-app recipe bookings
+# Print an embedded skill for a feature
+npx @techstream/quark-create-app skill bookings
 
 # Update Quark packages in an existing project
 npx @techstream/quark-create-app update
@@ -120,18 +120,18 @@ Seed the `MAIN.md` brief from a prompt (AI View):
 npx @techstream/quark-create-app my-app --no-prompts --prompt "A booking platform for salons"
 ```
 
-### recipe command
+### skill command
 
-Print an AI prompt recipe for a feature:
+Print an embedded skill for a feature:
 
 ```bash
-# Print the bookings starter recipe
-npx @techstream/quark-create-app recipe bookings
+# Print the bookings skill
+npx @techstream/quark-create-app skill bookings
 
-# Print a core recipe (model, endpoint, dashboard)
-npx @techstream/quark-create-app recipe model
-npx @techstream/quark-create-app recipe endpoint
-npx @techstream/quark-create-app recipe dashboard
+# Print a core skill (model, endpoint, dashboard)
+npx @techstream/quark-create-app skill model
+npx @techstream/quark-create-app skill endpoint
+npx @techstream/quark-create-app skill dashboard
 ```
 
 Available recipes: `model`, `endpoint`, `dashboard`, `bookings`, `crm`, `cms`, `ai`.
