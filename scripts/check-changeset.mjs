@@ -35,8 +35,16 @@ try {
 	// Best-effort; changeset status will surface any problem.
 }
 
+// Git sets GIT_DIR to the worktree gitdir when running hooks, which breaks
+// changeset's git-based changed-package detection. Unset it so git resolves
+// refs against the normal repository context.
+const env = { ...process.env };
+delete env.GIT_DIR;
+delete env.GIT_WORK_TREE;
+delete env.GIT_PREFIX;
+
 try {
-	run("pnpm changeset status --since=origin/main");
+	run("pnpm changeset status --since=origin/main", { env });
 } catch {
 	console.error(
 		"\n❌ Changeset required: a published package changed but no changeset was found.",
