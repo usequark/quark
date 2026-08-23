@@ -65,24 +65,12 @@ importers:
       '@techstream/quark-admin':
         specifier: workspace:*
         version: link:../../packages/admin
-      '@techstream/quark-ai':
-        specifier: workspace:*
-        version: link:../../packages/ai
-      '@techstream/quark-bookings':
-        specifier: workspace:*
-        version: link:../../packages/bookings
-      '@techstream/quark-cms':
-        specifier: workspace:*
-        version: link:../../packages/cms
       '@techstream/quark-config':
         specifier: workspace:*
         version: link:../../packages/config
       '@techstream/quark-core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@techstream/quark-crm':
-        specifier: workspace:*
-        version: link:../../packages/crm
       '@techstream/quark-db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -138,9 +126,6 @@ importers:
 
   apps/worker:
     dependencies:
-      '@techstream/quark-ai':
-        specifier: workspace:*
-        version: link:../../packages/ai
       '@techstream/quark-config':
         specifier: workspace:*
         version: link:../../packages/config
@@ -173,33 +158,6 @@ importers:
         specifier: workspace:*
         version: link:../core
 
-  packages/ai:
-    dependencies:
-      '@techstream/quark-config':
-        specifier: workspace:*
-        version: link:../config
-      '@techstream/quark-core':
-        specifier: workspace:*
-        version: link:../core
-      '@techstream/quark-db':
-        specifier: workspace:*
-        version: link:../db
-      zod:
-        specifier: ^4.3.6
-        version: 4.3.6
-
-  packages/bookings:
-    dependencies:
-      '@techstream/quark-core':
-        specifier: workspace:*
-        version: link:../core
-      react:
-        specifier: ^19.0.0
-        version: 19.2.4
-      zod:
-        specifier: ^4.3.6
-        version: 4.3.6
-
   packages/cli:
     dependencies:
       chalk:
@@ -217,18 +175,6 @@ importers:
       prompts:
         specifier: ^2.4.2
         version: 2.4.2
-
-  packages/cms:
-    dependencies:
-      '@techstream/quark-admin':
-        specifier: workspace:*
-        version: link:../admin
-      '@techstream/quark-core':
-        specifier: workspace:*
-        version: link:../core
-      zod:
-        specifier: ^4.3.6
-        version: 4.3.6
 
   packages/config:
     dependencies:
@@ -272,18 +218,6 @@ importers:
       '@types/node':
         specifier: ^25.3.5
         version: 25.3.5
-
-  packages/crm:
-    dependencies:
-      '@techstream/quark-core':
-        specifier: workspace:*
-        version: link:../core
-      '@techstream/quark-db':
-        specifier: workspace:*
-        version: link:../db
-      zod:
-        specifier: ^4.3.6
-        version: 4.3.6
 
   packages/db:
     dependencies:
