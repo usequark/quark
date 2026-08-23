@@ -1,4 +1,8 @@
-import { parsePaginationQuery, validateBody, withCsrfProtection } from "@techstream/quark-core";
+import {
+	parsePaginationQuery,
+	validateBody,
+	withCsrfProtection,
+} from "@techstream/quark-core";
 import { prisma } from "@techstream/quark-db";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -19,7 +23,12 @@ const createConversationSchema = z.object({
 
 export async function GET(request) {
 	try {
-		const session = await requireRole(["admin", "lead_dev", "editor", "viewer"]);
+		const session = await requireRole([
+			"admin",
+			"lead_dev",
+			"editor",
+			"viewer",
+		]);
 		const { searchParams } = new URL(request.url);
 		const { skip, take, meta } = parsePaginationQuery(searchParams);
 

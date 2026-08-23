@@ -11,7 +11,12 @@ const updateConversationSchema = z.object({
 
 export async function GET(_request, { params }) {
 	try {
-		const session = await requireRole(["admin", "lead_dev", "editor", "viewer"]);
+		const session = await requireRole([
+			"admin",
+			"lead_dev",
+			"editor",
+			"viewer",
+		]);
 		const { id } = await params;
 
 		const conversation = await prisma.aiConversation.findUnique({

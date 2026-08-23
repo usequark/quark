@@ -1,4 +1,8 @@
-import { parsePaginationQuery, validateBody, withCsrfProtection } from "@techstream/quark-core";
+import {
+	parsePaginationQuery,
+	validateBody,
+	withCsrfProtection,
+} from "@techstream/quark-core";
 import { prisma } from "@techstream/quark-db";
 import { NextResponse } from "next/server";
 import { z } from "zod";
