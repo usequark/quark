@@ -37,6 +37,64 @@ A CRM manages relationships with companies and contacts, and tracks deals throug
 6. Add admin views (pipeline board, deal forms) if required.
 7. Add tests near the changed code.
 
+## Example model
+
+```prisma
+model Company {
+  id        String    @id @default(cuid())
+  name      String
+  website   String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  contacts  Contact[]
+  deals     Deal[]
+}
+
+model Contact {
+  id        String   @id @default(cuid())
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name      String
+  email     String?
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Deal {
+  id        String   @id @default(cuid())
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  title     String
+  value     Decimal  @default(0)
+  stage     String   @default("lead")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+```
+
+## Example validation schema
+
+```js
+const createDealSchema = z.object({
+  companyId: z.string().min(1),
+  title: z.string().min(1).max(200),
+  value: z.coerce.number().nonnegative(),
+  stage: z.string().min(1),
+});
+```
+
+## Example test pattern
+
+```js
+import { test } from "node:test";
+import assert from "node:assert";
+
+test("pipeline summary totals deal value by stage", async () => {
+  // arrange → act → assert
+});
+```
+
 ## End result
 
 A working CRM where users can manage companies, contacts, and deals through a configurable pipeline — with the models, endpoints, metrics, and admin views following Quark conventions.

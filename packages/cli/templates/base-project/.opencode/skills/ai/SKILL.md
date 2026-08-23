@@ -38,6 +38,51 @@ An AI assistant manages conversations with an LLM, with optional streaming, tool
 6. Add background jobs for context extraction/compaction if required.
 7. Add tests near the changed code.
 
+## Example model
+
+```prisma
+model AiConversation {
+  id        String       @id @default(cuid())
+  userId    String
+  title     String?
+  messages  AiMessage[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([userId])
+}
+
+model AiMessage {
+  id             String         @id @default(cuid())
+  conversationId String
+  conversation   AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String
+  content        String
+  createdAt      DateTime       @default(now())
+}
+```
+
+## Example validation schema
+
+```js
+const createMessageSchema = z.object({
+  conversationId: z.string().min(1),
+  role: z.enum(["user", "assistant"]),
+  content: z.string().min(1),
+});
+```
+
+## Example test pattern
+
+```js
+import { test } from "node:test";
+import assert from "node:assert";
+
+test("conversation is scoped to its owner", async () => {
+  // arrange → act → assert
+});
+```
+
 ## End result
 
 A working AI assistant where users can hold conversations with an LLM, with streaming, tool calling, and workflows as required — with the models, endpoints, jobs, and UI following Quark conventions.

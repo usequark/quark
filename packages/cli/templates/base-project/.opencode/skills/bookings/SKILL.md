@@ -37,6 +37,57 @@ A booking system manages reservations of a resource (a service, a lane, a room, 
 6. Add background jobs for reminders/notifications if required.
 7. Add tests near the changed code.
 
+## Example model
+
+```prisma
+model Booking {
+  id            String        @id @default(cuid())
+  customerName  String
+  customerEmail String
+  date          DateTime
+  startTime     DateTime
+  durationMins  Int
+  status        BookingStatus @default(PENDING)
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([date, status])
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+```
+
+## Example validation schema
+
+```js
+const createBookingSchema = z.object({
+  customerName: z.string().min(1).max(200),
+  customerEmail: z.string().email(),
+  date: z.string().min(1),
+  startTime: z.string().min(1),
+  durationMins: z.number().int().positive(),
+  notes: z.string().optional(),
+});
+```
+
+## Example test pattern
+
+```js
+import { test } from "node:test";
+import assert from "node:assert";
+
+test("create booking rejects double-booking", async () => {
+  // arrange → act → assert
+  // Use a model factory from @techstream/quark-core/testing.
+});
+```
+
 ## End result
 
 A working booking system where users can view availability, create a booking, and have it validated against capacity and scheduling rules — with the models, endpoints, and jobs following Quark conventions.

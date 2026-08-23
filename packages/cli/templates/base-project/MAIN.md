@@ -7,7 +7,7 @@
 1. `CLAUDE.md` - project rules and conventions (keep this updated)
 2. `docs/` - guides and walkthroughs
 3. `openapi.yaml` - API contract
-4. `skills/` - embedded skills (how to build bookings, CRM, CMS, AI, and more on this project)
+4. `.opencode/skills/` - embedded skills (how to build bookings, CRM, CMS, AI, and more on this project)
 
 ## Quick start
 

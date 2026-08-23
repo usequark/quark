@@ -161,9 +161,33 @@ async function runMinimalSmoke() {
 			throw new Error(`Base scaffold still references ${demoted}`);
 		}
 	}
-	for (const skill of ["bookings", "crm", "cms", "ai"]) {
-		if (!fs.existsSync(path.join(projectDir, "skills", skill, "SKILL.md"))) {
+	// Every embedded skill must be present (vertical + generic).
+	const skills = [
+		"bookings",
+		"crm",
+		"cms",
+		"ai",
+		"add-model",
+		"add-endpoint",
+		"add-dashboard",
+	];
+	for (const skill of skills) {
+		if (
+			!fs.existsSync(
+				path.join(projectDir, ".opencode", "skills", skill, "SKILL.md"),
+			)
+		) {
 			throw new Error(`Missing embedded skill: ${skill}`);
+		}
+	}
+
+	// The `skill` command must print each vertical skill.
+	for (const skill of ["bookings", "crm", "cms", "ai"]) {
+		const res = await execa("pnpm", ["dlx", cliPackageSpec, "skill", skill], {
+			cwd: projectDir,
+		});
+		if (!res.stdout.includes("Skill")) {
+			throw new Error(`skill command failed for ${skill}`);
 		}
 	}
 

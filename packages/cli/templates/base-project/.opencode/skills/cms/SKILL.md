@@ -37,6 +37,52 @@ A CMS manages structured content with an editorial workflow. The core entities a
 6. Add public rendering (`[slug]` route) with SEO metadata.
 7. Add tests near the changed code.
 
+## Example model
+
+```prisma
+model Page {
+  id        String     @id @default(cuid())
+  title     String
+  slug      String     @unique
+  body      String
+  excerpt   String?
+  status    PageStatus @default(DRAFT)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([status, slug])
+}
+
+enum PageStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+```
+
+## Example validation schema
+
+```js
+const createPageSchema = z.object({
+  title: z.string().min(1).max(255),
+  slug: z.string().min(1).regex(/^[a-z0-9-]+$/),
+  body: z.string(),
+  excerpt: z.string().optional(),
+  status: z.enum(["DRAFT", "PUBLISHED", "ARCHIVED"]).default("DRAFT"),
+});
+```
+
+## Example test pattern
+
+```js
+import { test } from "node:test";
+import assert from "node:assert";
+
+test("published page renders on the public slug route", async () => {
+  // arrange → act → assert
+});
+```
+
 ## End result
 
 A working CMS where editors can create, review, and publish content that renders on the public site — with the models, endpoints, editorial flow, and public routes following Quark conventions.
