@@ -14,7 +14,9 @@ import { formatProjectDisplayName } from "./utils.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const templatesDir = path.join(__dirname, "../templates");
 const pkg = await fs.readJSON(path.join(__dirname, "../package.json"));
-const REQUIRED_PACKAGES = ["db", "config"];
+// db, config, and ui are always scaffolded: the base web app (layout, auth,
+// example-page) imports the ui package, so a scaffold without it is broken.
+const REQUIRED_PACKAGES = ["db", "config", "ui"];
 const SCAFFOLD_CHECK_IGNORED_FILES = new Set([".env", ".quark-link.json"]);
 
 const program = new Command();
@@ -369,6 +371,7 @@ function replaceDepsScope(deps, scope, selectedPackages) {
 			if (
 				packageName === "db" ||
 				packageName === "config" ||
+				packageName === "ui" ||
 				selectedPackages.includes(packageName)
 			) {
 				deps[`@${scope}/${packageName}`] = value;
@@ -1377,7 +1380,7 @@ STORAGE_PROVIDER=local
 				scaffoldedDate: scaffoldedAt,
 				projectName,
 				requiredPackages: REQUIRED_PACKAGES,
-				packages: features,
+				packages: [...REQUIRED_PACKAGES, ...features],
 				authAllowSignup: allowSignup,
 				// Track that worker is paired with jobs (not independently selectable)
 				hasWorker: features.includes("jobs"),
