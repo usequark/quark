@@ -286,7 +286,7 @@ describe("Feature Validation", () => {
 			);
 
 			const projectDir = join(tmpDir, projectName);
-			const addResult = runCLI(["add", "cms"], projectDir);
+			const addResult = runCLI(["add", "cms", "--skip-install"], projectDir);
 			assert.strictEqual(
 				addResult.status,
 				0,
