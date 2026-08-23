@@ -217,8 +217,8 @@ function getPairedTemplatesForFeatures(features) {
 /**
  * Drop a domain starter into a scaffolded project.
  * Copies the starter template (generic Prisma model + CRUD endpoint) from
- * templates/starters/<starter>/ and the matching recipe from
- * templates/base-project/recipes/<starter>.md.
+ * templates/starters/<starter>/. The matching skill is already scaffolded in
+ * the base template's skills/ directory.
  * @param {string} targetDir - Project root
  * @param {string} starter - Starter name (bookings, crm, cms, ai)
  * @param {string} scope - Project scope (for import rewriting)
@@ -238,19 +238,6 @@ async function applyStarter(targetDir, starter, scope) {
 	await fs.copy(starterDir, targetDir);
 	await replaceImportsInSourceFiles(targetDir, scope);
 
-	// Copy the matching recipe into the project's recipes/ dir.
-	const recipeSrc = path.join(
-		templatesDir,
-		"base-project",
-		"recipes",
-		`${starter}.md`,
-	);
-	if (await fs.pathExists(recipeSrc)) {
-		const recipeDir = path.join(targetDir, "recipes");
-		await fs.ensureDir(recipeDir);
-		await fs.copy(recipeSrc, path.join(recipeDir, `${starter}.md`));
-	}
-
 	console.log(chalk.green(`    ✓ ${starter} (domain starter)`));
 }
 
@@ -261,10 +248,10 @@ function buildFeatureRows(features) {
 		admin:
 			"| Admin panel | Included | `packages/admin/README.md`, `apps/web/src/app/admin/` |",
 		bookings:
-			"| Bookings starter | Included | `recipes/bookings.md`, `apps/web/src/app/api/bookings/` |",
-		crm: "| CRM starter | Included | `recipes/crm.md`, `apps/web/src/app/api/crm/` |",
-		cms: "| CMS starter | Included | `recipes/cms.md`, `apps/web/src/app/api/cms/` |",
-		ai: "| AI assistant starter | Included | `recipes/ai.md`, `apps/web/src/app/api/ai/` |",
+			"| Bookings skill | Included | `skills/bookings/SKILL.md`, `apps/web/src/app/api/bookings/` |",
+		crm: "| CRM skill | Included | `skills/crm/SKILL.md`, `apps/web/src/app/api/crm/` |",
+		cms: "| CMS skill | Included | `skills/cms/SKILL.md`, `apps/web/src/app/api/cms/` |",
+		ai: "| AI assistant skill | Included | `skills/ai/SKILL.md`, `apps/web/src/app/api/ai/` |",
 	};
 
 	const selectedRows = features
@@ -293,10 +280,10 @@ function buildFirstEditLines(features) {
 		admin:
 			"- `packages/admin/src/config.js` and `apps/web/src/app/admin/` - tune model labels, hidden fields, and admin pages",
 		bookings:
-			"- `recipes/bookings.md` and `apps/web/src/app/api/bookings/` - extend the booking model and CRUD",
-		crm: "- `recipes/crm.md` and `apps/web/src/app/api/crm/` - extend the CRM model and CRUD",
-		cms: "- `recipes/cms.md` and `apps/web/src/app/api/cms/` - extend the CMS model and CRUD",
-		ai: "- `recipes/ai.md` and `apps/web/src/app/api/ai/` - extend the AI assistant model and CRUD",
+			"- `skills/bookings/SKILL.md` and `apps/web/src/app/api/bookings/` - extend the booking model and CRUD",
+		crm: "- `skills/crm/SKILL.md` and `apps/web/src/app/api/crm/` - extend the CRM model and CRUD",
+		cms: "- `skills/cms/SKILL.md` and `apps/web/src/app/api/cms/` - extend the CMS model and CRUD",
+		ai: "- `skills/ai/SKILL.md` and `apps/web/src/app/api/ai/` - extend the AI assistant model and CRUD",
 	};
 
 	const selectedLines = features
@@ -317,10 +304,10 @@ function buildFeatureGuideLines(features) {
 		admin:
 			"- `packages/admin/README.md` - admin configuration, model overrides, and route ownership",
 		bookings:
-			"- `recipes/bookings.md` - how to extend the booking starter into a full booking system",
-		crm: "- `recipes/crm.md` - how to extend the CRM starter into a full pipeline",
-		cms: "- `recipes/cms.md` - how to extend the CMS starter into a full content system",
-		ai: "- `recipes/ai.md` - how to extend the AI assistant starter into a full assistant",
+			"- `skills/bookings/SKILL.md` - how to extend the booking starter into a full booking system",
+		crm: "- `skills/crm/SKILL.md` - how to extend the CRM starter into a full pipeline",
+		cms: "- `skills/cms/SKILL.md` - how to extend the CMS starter into a full content system",
+		ai: "- `skills/ai/SKILL.md` - how to extend the AI assistant starter into a full assistant",
 	};
 
 	const selectedLines = features
@@ -1024,18 +1011,6 @@ program
 				}
 			}
 
-			// Step 6c: Prune vertical recipes not selected. The base-project template
-			// ships the full recipes/ library (core + verticals); vertical recipes ship
-			// only with their feature (F2/F4 contract).
-			const recipesDir = path.join(targetDir, "recipes");
-			if (await fs.pathExists(recipesDir)) {
-				for (const starter of STARTER_FEATURES) {
-					if (!features.includes(starter)) {
-						await fs.remove(path.join(recipesDir, `${starter}.md`));
-					}
-				}
-			}
-
 			// Step 7: Update all package.json dependencies to use correct scope
 			console.log(chalk.cyan("\n  🔧 Updating app dependencies..."));
 
@@ -1713,9 +1688,17 @@ async function detectInstalledFeatures(projectDir) {
 	for (const feature of Object.keys(FEATURE_META)) {
 		const meta = FEATURE_META[feature];
 		if (meta.starter) {
-			// Starters are detected by their recipe file in recipes/.
-			const recipePath = path.join(projectDir, "recipes", `${feature}.md`);
-			if (await fs.pathExists(recipePath)) {
+			// Starters are detected by their API route (the skill is always present).
+			const apiRoute = path.join(
+				projectDir,
+				"apps",
+				"web",
+				"src",
+				"app",
+				"api",
+				feature,
+			);
+			if (await fs.pathExists(apiRoute)) {
 				installed.push(feature);
 			}
 			continue;
@@ -2444,7 +2427,7 @@ program
 	)
 	.description("Print an AI prompt recipe for a feature")
 	.action(async (feature) => {
-		const recipeName =
+		const skillName =
 			feature === "model"
 				? "add-model"
 				: feature === "endpoint"
@@ -2452,24 +2435,25 @@ program
 					: feature === "dashboard"
 						? "add-dashboard"
 						: feature;
-		const recipePath = path.join(
+		const skillPath = path.join(
 			templatesDir,
 			"base-project",
-			"recipes",
-			`${recipeName}.md`,
+			"skills",
+			skillName,
+			"SKILL.md",
 		);
 
-		if (!(await fs.pathExists(recipePath))) {
+		if (!(await fs.pathExists(skillPath))) {
 			console.error(
 				chalk.red(
-					`✗ No recipe found for "${feature}". Available: model, endpoint, dashboard, bookings, crm, cms, ai`,
+					`✗ No skill found for "${feature}". Available: model, endpoint, dashboard, bookings, crm, cms, ai`,
 				),
 			);
 			process.exit(1);
 		}
 
-		const recipe = await fs.readFile(recipePath, "utf-8");
-		console.log(recipe);
+		const skill = await fs.readFile(skillPath, "utf-8");
+		console.log(skill);
 	});
 
 /**

@@ -1,7 +1,7 @@
 // Generic AI model — a starting point for an AI assistant domain.
 // Merge this into packages/db/prisma/schema.prisma, then run:
 //   pnpm db:generate && pnpm db:migrate
-// See recipes/ai.md for the full extension path.
+// See skills/ai/SKILL.md for the full extension path.
 
 enum AiRole {
 	user

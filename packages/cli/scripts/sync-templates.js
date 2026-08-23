@@ -84,10 +84,21 @@ const SYNC_DIRS = [
 	{
 		src: "apps/worker",
 		dest: "worker",
-		// Demoted verticals are now AI skills, not scaffolded packages.
+		// Demoted AI vertical is now a skill, not a scaffolded package. Exclude
+		// the AI handlers and libs from the scaffolded worker.
 		localExcludes: [
 			/^apps\/worker\/src\/handlers\/ai\.js$/,
 			/^apps\/worker\/src\/handlers\/ai\.test\.js$/,
+			/^apps\/worker\/src\/handlers\/context-extraction\.js$/,
+			/^apps\/worker\/src\/handlers\/context-extraction\.test\.js$/,
+			/^apps\/worker\/src\/handlers\/conversation-compact\.js$/,
+			/^apps\/worker\/src\/lib\/openrouter\.js$/,
+			/^apps\/worker\/src\/lib\/openrouter\.test\.js$/,
+			/^apps\/worker\/src\/lib\/summarize\.js$/,
+			/^apps\/worker\/src\/lib\/summarize\.test\.js$/,
+			/^apps\/worker\/src\/lib\/truncation\.js$/,
+			/^apps\/worker\/src\/lib\/truncation\.test\.js$/,
+			/^apps\/worker\/src\/lib\/tools\//,
 		],
 	},
 	{ src: "packages/db", dest: "base-project/packages/db" },
@@ -237,6 +248,7 @@ const TRANSFORMS = {
 	"config/package.json": transformOptionalPackageJson,
 	"ui/package.json": transformOptionalPackageJson,
 	"jobs/package.json": transformOptionalPackageJson,
+	"jobs/src/definitions.js": transformJobsDefinitions,
 	"admin/package.json": transformOptionalPackageJson,
 	"cms/package.json": transformOptionalPackageJson,
 	"ai/package.json": transformOptionalPackageJson,
@@ -294,12 +306,38 @@ function transformWebPackageJson(content) {
 	return `${JSON.stringify(pkg, null, "\t")}\n`;
 }
 
+function transformJobsDefinitions(content) {
+	// Demoted AI vertical is now a skill, not a scaffolded package. Remove the
+	// AI queue and AI job names from the scaffolded jobs package.
+	return content
+		.replace(/^\t*AI: "ai-queue",\n/gm, "")
+		.replace(/^\t*AI_AGENT_TASK: "ai-agent-task",\n/gm, "")
+		.replace(/^\t*AI_CONTEXT_EXTRACTION: "ai-context-extraction",\n/gm, "")
+		.replace(/^\t*AI_CONVERSATION_COMPACT: "ai-conversation-compact",\n/gm, "");
+}
+
 function transformWorkerHandlersIndex(content) {
 	// Demoted AI vertical is now a skill, not a scaffolded package. Remove the
-	// ai.js handler import and its jobHandlers entry (ai.js is excluded from sync).
+	// AI handler imports and their jobHandlers entries (excluded from sync).
 	return content
 		.replace(/^\t*import \{ handleAiAgentTask \} from "\.\/ai\.js";\n/gm, "")
-		.replace(/^\t*\[JOB_NAMES\.AI_AGENT_TASK\]: handleAiAgentTask,\n/gm, "");
+		.replace(
+			/^\t*import \{ handleContextExtraction \} from "\.\/context-extraction\.js";\n/gm,
+			"",
+		)
+		.replace(
+			/^\t*import \{ handleConversationCompact \} from "\.\/conversation-compact\.js";\n/gm,
+			"",
+		)
+		.replace(/^\t*\[JOB_NAMES\.AI_AGENT_TASK\]: handleAiAgentTask,\n/gm, "")
+		.replace(
+			/^\t*\[JOB_NAMES\.AI_CONTEXT_EXTRACTION\]: handleContextExtraction,\n/gm,
+			"",
+		)
+		.replace(
+			/^\t*\[JOB_NAMES\.AI_CONVERSATION_COMPACT\]: handleConversationCompact,\n/gm,
+			"",
+		);
 }
 
 function transformWebNextConfig(content) {

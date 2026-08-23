@@ -6,7 +6,7 @@ Scaffolded with [Quark](https://github.com/Bobnoddle/quark) on __QUARK_SCAFFOLD_
 
 - `docs/START_HERE.md` - current onboarding path for this project
 - `docs/FIRST_FEATURE.md` - add your first domain model, query helper, and page
-- `recipes/` - prompt library of feature recipes (add a model, endpoint, dashboard, or a domain starter)
+- `skills/` - embedded skills (add a model, endpoint, dashboard, or build a booking/CRM/CMS/AI system)
 - `CLAUDE.md` - AI tool context for Claude Code, Cursor, Copilot, and others
 
 ## Local Development
