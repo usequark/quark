@@ -22,7 +22,6 @@
 	"license": "ISC",
 	"packageManager": "pnpm@10.12.1",
 	"dependencies": {
-		"@techstream/quark-ai": "workspace:*",
 		"@techstream/quark-config": "workspace:*",
 		"@techstream/quark-core": "workspace:*",
 		"@techstream/quark-db": "workspace:*",
