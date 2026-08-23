@@ -2001,8 +2001,14 @@ program
 	)
 	.description("Add an optional package to an existing Quark project")
 	.option("--force", "Skip safety checks (uncommitted changes)")
+	.option("--skip-install", "Skip pnpm install after adding")
 	.action(async (feature, options) => {
 		console.log(chalk.blue.bold(`\n📦 Quark Add: ${feature}\n`));
+
+		// The global `--skip-install` (on the create program) shadows the add
+		// subcommand's option in commander, so also check process.argv directly.
+		const skipInstall =
+			options.skipInstall || process.argv.includes("--skip-install");
 
 		const projectDir = process.cwd();
 
@@ -2349,19 +2355,23 @@ program
 			console.log(chalk.green(`\n  ✓ .quark-link.json updated`));
 
 			// --- Run pnpm install ---
-			console.log(chalk.cyan("\n  📦 Installing dependencies..."));
-			try {
-				await execa("pnpm", ["install"], {
-					cwd: projectDir,
-					stdio: "inherit",
-				});
-				console.log(chalk.green(`\n  ✓ Dependencies installed`));
-			} catch {
-				console.warn(
-					chalk.yellow(
-						`\n  ⚠️  pnpm install failed. Run it manually to resolve.`,
-					),
-				);
+			if (!skipInstall) {
+				console.log(chalk.cyan("\n  📦 Installing dependencies..."));
+				try {
+					await execa("pnpm", ["install"], {
+						cwd: projectDir,
+						stdio: "inherit",
+					});
+					console.log(chalk.green(`\n  ✓ Dependencies installed`));
+				} catch {
+					console.warn(
+						chalk.yellow(
+							`\n  ⚠️  pnpm install failed. Run it manually to resolve.`,
+						),
+					);
+				}
+			} else {
+				console.log(chalk.dim("\n  · Skipping pnpm install (--skip-install)"));
 			}
 
 			// --- Success ---

@@ -67,7 +67,7 @@
 	},
 	"simple-git-hooks": {
 		"pre-commit": "pnpm nano-staged && node packages/cli/scripts/sync-templates.js --pre-commit",
-		"pre-push": "pnpm test"
+		"pre-push": "node scripts/check-changeset.mjs && pnpm test"
 	},
 	"nano-staged": {
 		"packages/cli/templates/**": [],

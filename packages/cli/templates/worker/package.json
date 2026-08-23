@@ -11,7 +11,7 @@
 	},
 	"scripts": {
 		"clean": "rm -rf dist",
-		"test": "node --test 'src/**/*.test.js'",
+		"test": "node ../../scripts/run-tests.mjs src --exclude=integration.test.js",
 		"dev": "tsx watch src/index.js",
 		"start:deploy": "node src/index.js",
 		"preflight": "node src/index.js --preflight",
@@ -22,7 +22,6 @@
 	"license": "ISC",
 	"packageManager": "pnpm@10.12.1",
 	"dependencies": {
-		"@techstream/quark-ai": "workspace:*",
 		"@techstream/quark-config": "workspace:*",
 		"@techstream/quark-core": "^2.0.0",
 		"@techstream/quark-db": "workspace:*",
