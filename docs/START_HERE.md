@@ -24,6 +24,8 @@ pnpm dev
 
 Open `http://localhost:3000`.
 
+Then open `MAIN.md` in the scaffolded project - it is the "read this first" entry point for you and your AI tool, routing to `CLAUDE.md`, `docs/`, `openapi.yaml`, and the embedded skills (placed per your `--harness` choice, default `.opencode/skills/`).
+
 ## Know what Quark gives you
 
 Quark always gives you:
