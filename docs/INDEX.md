@@ -18,7 +18,6 @@ Entry point: [../README.md](../README.md)
 | [../packages/ui/README.md](../packages/ui/README.md) | UI package catalog and import rules |
 | [../packages/jobs/README.md](../packages/jobs/README.md) | Jobs package, worker pairing, and extension points |
 | [../packages/admin/README.md](../packages/admin/README.md) | Admin package behavior and customization entry points |
-| [../packages/cms/README.md](../packages/cms/README.md) | CMS package structure and content configuration |
 | [AI_TOOLS.md](./AI_TOOLS.md) | AI coding tools guide (Claude Code, Cursor, Copilot) |
 | [UMAMI.md](./UMAMI.md) | Optional Umami integration review and setup guidance |
 
@@ -41,8 +40,8 @@ Entry point: [../README.md](../README.md)
 
 | Document | Purpose |
 |----------|---------|
-| [../PLAN_SUMMARY.md](../PLAN_SUMMARY.md) | Current roadmap and status summary; start here for active work |
-| [../PLAN.md](../PLAN.md) | Detailed active plan plus retained historical notes |
+| [../reference/PLAN_SUMMARY.md](../reference/PLAN_SUMMARY.md) | Current roadmap and status summary; start here for active work |
+| [../reference/PLAN.md](../reference/PLAN.md) | Detailed active plan plus retained historical notes |
 | [IMPLEMENTATION_CHECKLIST.md](./IMPLEMENTATION_CHECKLIST.md) | Task tracker with progress percentages |
 | [DESIGN_NOTES.md](./DESIGN_NOTES.md) | Design direction for reducing Quark overhead (API-first, two-view CLI, minified admin/verticals) |
 | [FEATURE_PLAN.md](./FEATURE_PLAN.md) | Isolated, agent-executable feature plan (F1–F8) with contracts and dependencies |

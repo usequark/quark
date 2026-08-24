@@ -98,6 +98,9 @@ my-awesome-app/
 ├── .env                      ← Auto-generated secure secrets
 ├── .quark-link.json          ← Tracks Quark version & packages
 ├── .gitignore
+├── MAIN.md                     ← "Read this first" project brief & entry point
+├── CLAUDE.md                   ← AI context: stack, patterns, key files
+├── .opencode/skills/           ← Embedded domain skills (harness-selectable)
 ├── package.json
 ├── pnpm-workspace.yaml
 ├── turbo.json

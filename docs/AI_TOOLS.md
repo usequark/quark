@@ -40,16 +40,29 @@ The AI immediately produces idiomatic code: correct imports, Zod-validated Serve
 
 ## What Gets Generated
 
-When you run `npx @techstream/quark-create-app my-app`, three AI context files are created with your project's actual scope, selected packages, and scaffold date already substituted:
+When you run `npx @techstream/quark-create-app my-app`, the following AI context files are created with your project's actual scope, selected packages, and scaffold date already substituted:
 
 | File | Tool(s) | Purpose |
 |---|---|---|
+| `MAIN.md` | Any tool / human | Project brief and "read this first" entry point routing to CLAUDE.md, docs/, openapi.yaml, and skills |
 | `CLAUDE.md` | Claude Code, Aider, any tool reading CLAUDE.md | Full project reference: stack, patterns, key files, all layers |
 | `.cursor/rules/quark.mdc` | Cursor | `alwaysApply` rule set - compact, actionable, fires on every file |
 | `.github/copilot-instructions.md` | GitHub Copilot, Continue.dev, Cody, Zed | Inline conventions + VS Code skill pointer |
 | `.github/skills/project-context/SKILL.md` | GitHub Copilot (VS Code) | Rich structured skill for the Copilot skill system |
 
-All four files contain your project's actual `@scope`, selected packages, and scaffold date - no placeholders remain after scaffolding.
+All files contain your project's actual `@scope`, selected packages, and scaffold date - no placeholders remain after scaffolding.
+
+## Embedded Skills
+
+Every scaffold also ships domain skills (bookings, CRM, CMS, AI assistant, plus `add-model`, `add-endpoint`, `add-dashboard` recipes) that teach your AI tool how to extend the project using Quark's exact patterns. Use the `--harness` flag to choose where they are placed for auto-loading:
+
+```bash
+npx @techstream/quark-create-app my-app --harness claude    # .claude/skills/
+npx @techstream/quark-create-app my-app --harness copilot   # .github/skills/
+npx @techstream/quark-create-app my-app                     # default: .opencode/skills/
+```
+
+Scaffolded docs (`MAIN.md`, `CLAUDE.md`, `README.md`) reference the selected harness's skill directory automatically.
 
 ## What Each Tool Uses
 

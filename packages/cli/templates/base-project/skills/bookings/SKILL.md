@@ -39,29 +39,87 @@ A booking system manages reservations of a resource (a service, a lane, a room, 
 
 ## Example model
 
+A booking system typically needs a resource (staff/service), availability slots, and bookings:
+
 ```prisma
-model Booking {
-  id            String        @id @default(cuid())
-  customerName  String
-  customerEmail String
-  date          DateTime
-  startTime     DateTime
-  durationMins  Int
-  status        BookingStatus @default(PENDING)
-  notes         String?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-
-  @@index([date, status])
-}
-
 enum BookingStatus {
   PENDING
   CONFIRMED
   CANCELLED
   COMPLETED
+  NO_SHOW
+}
+
+model ServiceType {
+  id        String   @id @default(cuid())
+  name      String
+  duration  Int      // minutes
+  price     Float?
+  capacity  Int      @default(1) // max simultaneous bookings per slot
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Staff {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AvailabilitySlot {
+  id          String      @id @default(cuid())
+  serviceId   String
+  service     ServiceType @relation(fields: [serviceId], references: [id])
+  staffId     String?
+  startTime   DateTime
+  endTime     DateTime
+  capacity    Int         @default(1)
+  bookedCount Int         @default(0)
+  active      Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([serviceId, staffId, startTime, endTime])
+}
+
+model Booking {
+  id            String         @id @default(cuid())
+  userId        String?
+  slotId        String
+  slot          AvailabilitySlot @relation(fields: [slotId], references: [id])
+  serviceTypeId String
+  serviceType   ServiceType    @relation(fields: [serviceTypeId], references: [id])
+  staffId       String?
+  name          String
+  email         String
+  phone         String?
+  notes         String?
+  status        BookingStatus  @default(PENDING)
+  cancelToken   String?        @unique // self-service cancel URL token
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([userId, status])
+  @@index([slotId, status])
+  @@index([email, status])
 }
 ```
+
+## Booking status state machine
+
+```
+PENDING → CONFIRMED (admin confirm or auto-confirm)
+PENDING → CANCELLED (guest self-service via cancelToken)
+CONFIRMED → COMPLETED (manual or auto after slot end)
+CONFIRMED → CANCELLED (admin or guest within policy window)
+CONFIRMED → NO_SHOW (admin manual)
+```
+
+Enforce transitions with a `canTransition(from, to)` guard and an `applyTransition(booking, newStatus)` that sets `cancelledAt`/`cancelToken`. Prevent double-booking by checking slot `bookedCount < capacity` in the create action.
 
 ## Example validation schema
 

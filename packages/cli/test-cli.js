@@ -123,10 +123,7 @@ try {
 			name: "CMS skill exists",
 			test: () =>
 				fs.existsSync(
-					path.join(
-						__dirname,
-						"templates/base-project/.opencode/skills/cms/SKILL.md",
-					),
+					path.join(__dirname, "templates/base-project/skills/cms/SKILL.md"),
 				),
 		},
 	];

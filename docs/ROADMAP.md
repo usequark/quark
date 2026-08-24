@@ -1,19 +1,12 @@
 # Quark Monorepo Expansion Roadmap
 
-> **⚠️ Partially Superseded** - This document predates the active deployment roadmap and the later business strategy. For the current authoritative plans, see:
->
-> - **[../PLAN.md](../PLAN.md)** - Active deployment roadmap plus archived planning notes
-> - **[../PLAN_SUMMARY.md](../PLAN_SUMMARY.md)** - Executive summary of the active deployment roadmap
-> - **[BUSINESS_PITCH.md](BUSINESS_PITCH.md)** - Product positioning, pricing, and go-to-market context
->
-> This roadmap remains useful for **implementation details** (Prisma schema options, config expansion, NextAuth setup) from the older expansion work. The phase numbers and timelines below are outdated - defer to PLAN.md and PLAN_SUMMARY.md for the current sequence.
+> **⚠️ Partially Superseded** - This document predates the current API-first, skills-based direction. It remains useful for **implementation details** (Prisma schema options, config expansion, NextAuth setup) from the older expansion work. The phase numbers and timelines below are outdated.
 >
 > **Current package distribution model:**
 > | Package | Type | Optional? | Requires |
 > |---|---|---|---|
 > | `@techstream/quark-core` | Published (npm) | No | - |
 > | `@techstream/quark-create-app` | Published (npm) | No | - |
-> | `@techstream/quark-ai` | Published (npm) | Yes | `quark-core` |
 > | `@yourapp/config` | Scaffolded (CLI) | No | - |
 > | `@yourapp/db` | Scaffolded (CLI) | No | - |
 > | `@yourapp/ui` | Scaffolded (CLI) | Yes | - |

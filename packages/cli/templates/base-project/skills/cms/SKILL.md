@@ -39,26 +39,46 @@ A CMS manages structured content with an editorial workflow. The core entities a
 
 ## Example model
 
+A CMS manages content (pages/posts) plus a media library:
+
 ```prisma
-model Page {
-  id        String     @id @default(cuid())
-  title     String
-  slug      String     @unique
-  body      String
-  excerpt   String?
-  status    PageStatus @default(DRAFT)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-
-  @@index([status, slug])
-}
-
-enum PageStatus {
+enum ContentStatus {
   DRAFT
   PUBLISHED
   ARCHIVED
 }
+
+model Page {
+  id          String        @id @default(cuid())
+  title       String
+  slug        String        @unique
+  body        String        @db.Text
+  excerpt     String?
+  status      ContentStatus @default(DRAFT)
+  publishedAt DateTime?
+  authorId    String
+  author      User          @relation(fields: [authorId], references: [id])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([status])
+  @@index([slug])
+}
+
+model MediaAsset {
+  id        String   @id @default(cuid())
+  url       String
+  alt       String?
+  mimeType  String
+  size      Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 ```
+
+## Editorial flow
+
+Content follows a status lifecycle: **draft → published → archived**. Enforce transitions in the publish/archive actions, set `publishedAt` on publish, and render only `PUBLISHED` content on the public `[slug]` route. Media uploads follow the existing `apps/web/src/app/api/files/` pattern.
 
 ## Example validation schema
 
