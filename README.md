@@ -90,9 +90,8 @@ Scaffolded projects already include this in the generated web Dockerfile, `apps/
 | UI package (`ui`) | **Optional scaffold** | `packages/ui/README.md` |
 | Jobs + worker (`jobs`) | **Optional scaffold** | `packages/jobs/README.md`, `apps/worker/README.md` |
 | Admin panel (`admin`) | **Optional scaffold** | `packages/admin/README.md` |
-| CMS (`cms`) | **Optional scaffold** | `packages/cms/README.md` |
+| Embedded skills (bookings, CRM, CMS, AI) | **Included in every scaffold** | `.opencode/skills/` (or selected harness dir) |
 | AI project context | **Included in every scaffold** | `CLAUDE.md`, `.github/copilot-instructions.md`, `.github/skills/project-context/SKILL.md` |
-| `@techstream/quark-ai` | **Planned** | `PLAN_SUMMARY.md`, `docs/ROADMAP.md` |
 
 ---
 

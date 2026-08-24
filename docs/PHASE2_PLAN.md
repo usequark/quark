@@ -8,7 +8,7 @@
 > 4. Phase 4 - self-hosted/provider expansion
 > 5. Phase 5 - Quark Cloud
 >
-> Keep the admin package material below as historical exploration only. The current authoritative summaries are [../PLAN_SUMMARY.md](../PLAN_SUMMARY.md) and [../PLAN.md](../PLAN.md).
+> Keep the admin package material below as historical exploration only. The current authoritative summaries are [../reference/PLAN_SUMMARY.md](../reference/PLAN_SUMMARY.md) and [../reference/PLAN.md](../reference/PLAN.md).
 
 ## Overview
 
@@ -1011,6 +1011,6 @@ Steps 2–5 can be done first (pure JS, fully testable). Steps 6–10 depend on 
 - **Audit logging** - admin CRUD operations are not logged to AuditLog. Can be added by users.
 - **Custom actions** - no model-specific action buttons. Users extend ModelForm after scaffolding.
 - **Dark mode** - admin uses light Tailwind classes only. Users add dark mode via UI component `theme` prop.
-- **Multi-tenant** - mentioned in PLAN.md as a CLI flag. Separate from admin, not in scope.
+- **Multi-tenant** - mentioned in reference/PLAN.md as a CLI flag. Separate from admin, not in scope.
 
 These omissions are intentional - the admin is a starting point that users customize. Shipping less is better than shipping fragile abstractions.
