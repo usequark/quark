@@ -1,5 +1,16 @@
 # @techstream/quark-create-app
 
+## 1.19.1
+
+### Patch Changes
+
+- [#81](https://github.com/Bobnoddle/quark/pull/81) [`3834d86`](https://github.com/Bobnoddle/quark/commit/3834d869df94d1edc1b5d0a389ca3ae01fbfc002) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - fix(smoke): approve msgpackr-extract build in standalone core check
+
+  pnpm 10+ ignores build scripts not explicitly allowed, so the standalone core
+  smoke check (`pnpm add @techstream/quark-core next react react-dom`) failed with
+  `ERR_PNPM_IGNORED_BUILDS` for the transitive `msgpackr-extract` dependency. The
+  smoke test now passes `--allow-build=msgpackr-extract`.
+
 ## 1.19.0
 
 ### Minor Changes
