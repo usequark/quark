@@ -231,9 +231,20 @@ async function runStandaloneCoreSmoke() {
 		{ spaces: 2 },
 	);
 
-	await run("pnpm", ["add", corePackageSpec, "next", "react", "react-dom"], {
-		cwd: coreProjectDir,
-	});
+	// pnpm 10+ ignores build scripts not explicitly allowed; approve msgpackr-extract
+	// (a transitive dep of quark-core) so the install doesn't fail.
+	await run(
+		"pnpm",
+		[
+			"add",
+			"--allow-build=msgpackr-extract",
+			corePackageSpec,
+			"next",
+			"react",
+			"react-dom",
+		],
+		{ cwd: coreProjectDir },
+	);
 	await runCoreImportCheck(coreProjectDir);
 }
 
