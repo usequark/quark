@@ -694,11 +694,41 @@ function shouldSyncForPreCommit() {
 			encoding: "utf-8",
 		});
 		const sourceDirPattern =
-			/^(scripts\/|apps\/|packages\/(db|config|ui|jobs|admin|opencode)\/|turbo\.json|docker-compose(\.override)?\.yml|pnpm-workspace\.yaml)/;
+			/^(scripts\/|apps\/|packages\/(db|config|ui|jobs|admin|opencode)\/|turbo\.json|docker-compose(\.override)?\.yml|pnpm-workspace\.yaml|package\.json)/;
 		return staged.split("\n").some((f) => sourceDirPattern.test(f));
 	} catch {
 		return false;
 	}
+}
+
+/**
+ * Sync pnpm.overrides from the monorepo root package.json into the
+ * hand-authored scaffold root package.json template. The template file is
+ * template-only (different scripts, naming, onlyBuiltDependencies), but its
+ * security overrides must mirror the monorepo's single source of truth.
+ * @returns {{ action: string, file: string } | null}
+ */
+function syncRootOverrides() {
+	const srcPath = path.join(ROOT, "package.json");
+	const destPath = path.join(TEMPLATES, "base-project/package.json");
+
+	const rootOverrides = JSON.parse(fs.readFileSync(srcPath, "utf-8")).pnpm
+		?.overrides;
+	const templatePkg = JSON.parse(fs.readFileSync(destPath, "utf-8"));
+
+	if (
+		JSON.stringify(templatePkg.pnpm?.overrides ?? null) ===
+		JSON.stringify(rootOverrides ?? null)
+	) {
+		return null;
+	}
+
+	if (!CHECK_MODE) {
+		templatePkg.pnpm = { ...templatePkg.pnpm, overrides: rootOverrides };
+		fs.writeFileSync(destPath, `${JSON.stringify(templatePkg, null, "\t")}\n`);
+	}
+
+	return { action: "updated", file: "base-project/package.json (overrides)" };
 }
 
 function main() {
@@ -731,6 +761,10 @@ function main() {
 		const change = syncFile(srcPath, destPath, mapping.dest);
 		if (change) allChanges.push(change);
 	}
+
+	// Sync pnpm.overrides from monorepo root into scaffold root template
+	const overridesChange = syncRootOverrides();
+	if (overridesChange) allChanges.push(overridesChange);
 
 	// Report results
 	if (allChanges.length === 0) {
