@@ -19,6 +19,14 @@ const pkg = await fs.readJSON(path.join(__dirname, "../package.json"));
 const REQUIRED_PACKAGES = ["db", "config", "ui"];
 const SCAFFOLD_CHECK_IGNORED_FILES = new Set([".env", ".quark-link.json"]);
 
+// AI harness → directory where embedded skills are placed for auto-loading.
+const HARNESS_SKILL_DIRS = {
+	opencode: ".opencode/skills",
+	claude: ".claude/skills",
+	copilot: ".github/skills",
+};
+const DEFAULT_HARNESS = "opencode";
+
 const program = new Command();
 
 program
@@ -216,17 +224,17 @@ function getPairedTemplatesForFeatures(features) {
 	return pairs;
 }
 
-function buildFeatureRows(features) {
+function buildFeatureRows(features, harnessSkillDir) {
 	const rows = {
 		ui: "| UI package | Included | `packages/ui/README.md` |",
 		jobs: "| Jobs + worker | Included | `packages/jobs/README.md`, `apps/worker/src/handlers/` |",
 		admin:
 			"| Admin panel | Included | `packages/admin/README.md`, `apps/web/src/app/admin/` |",
 		bookings:
-			"| Bookings skill | Included | `.opencode/skills/bookings/SKILL.md`, `apps/web/src/app/api/bookings/` |",
-		crm: "| CRM skill | Included | `.opencode/skills/crm/SKILL.md`, `apps/web/src/app/api/crm/` |",
-		cms: "| CMS skill | Included | `.opencode/skills/cms/SKILL.md`, `apps/web/src/app/api/cms/` |",
-		ai: "| AI assistant skill | Included | `.opencode/skills/ai/SKILL.md`, `apps/web/src/app/api/ai/` |",
+			"| Bookings skill | Included | `${harnessSkillDir}/bookings/SKILL.md`, `apps/web/src/app/api/bookings/` |",
+		crm: "| CRM skill | Included | `${harnessSkillDir}/crm/SKILL.md`, `apps/web/src/app/api/crm/` |",
+		cms: "| CMS skill | Included | `${harnessSkillDir}/cms/SKILL.md`, `apps/web/src/app/api/cms/` |",
+		ai: "| AI assistant skill | Included | `${harnessSkillDir}/ai/SKILL.md`, `apps/web/src/app/api/ai/` |",
 	};
 
 	const selectedRows = features
@@ -248,17 +256,17 @@ function buildOptionalAppLines(features) {
 	return lines.join("");
 }
 
-function buildFirstEditLines(features) {
+function buildFirstEditLines(features, harnessSkillDir) {
 	const lines = {
 		ui: "- `packages/ui/src/` - adjust primitives or add app-specific UI components",
 		jobs: "- `packages/jobs/src/definitions.js` and `apps/worker/src/handlers/` - define and process background jobs",
 		admin:
 			"- `packages/admin/src/config.js` and `apps/web/src/app/admin/` - tune model labels, hidden fields, and admin pages",
 		bookings:
-			"- `.opencode/skills/bookings/SKILL.md` and `apps/web/src/app/api/bookings/` - extend the booking model and CRUD",
-		crm: "- `.opencode/skills/crm/SKILL.md` and `apps/web/src/app/api/crm/` - extend the CRM model and CRUD",
-		cms: "- `.opencode/skills/cms/SKILL.md` and `apps/web/src/app/api/cms/` - extend the CMS model and CRUD",
-		ai: "- `.opencode/skills/ai/SKILL.md` and `apps/web/src/app/api/ai/` - extend the AI assistant model and CRUD",
+			"- `${harnessSkillDir}/bookings/SKILL.md` and `apps/web/src/app/api/bookings/` - extend the booking model and CRUD",
+		crm: "- `${harnessSkillDir}/crm/SKILL.md` and `apps/web/src/app/api/crm/` - extend the CRM model and CRUD",
+		cms: "- `${harnessSkillDir}/cms/SKILL.md` and `apps/web/src/app/api/cms/` - extend the CMS model and CRUD",
+		ai: "- `${harnessSkillDir}/ai/SKILL.md` and `apps/web/src/app/api/ai/` - extend the AI assistant model and CRUD",
 	};
 
 	const selectedLines = features
@@ -272,17 +280,17 @@ function buildFirstEditLines(features) {
 	return selectedLines.join("\n");
 }
 
-function buildFeatureGuideLines(features) {
+function buildFeatureGuideLines(features, harnessSkillDir) {
 	const lines = {
 		ui: "- `packages/ui/README.md` - component catalog, import rules, and extension notes",
 		jobs: "- `packages/jobs/README.md` - queue names, worker pairing, and the job-extension workflow",
 		admin:
 			"- `packages/admin/README.md` - admin configuration, model overrides, and route ownership",
 		bookings:
-			"- `.opencode/skills/bookings/SKILL.md` - how to extend the booking starter into a full booking system",
-		crm: "- `.opencode/skills/crm/SKILL.md` - how to extend the CRM starter into a full pipeline",
-		cms: "- `.opencode/skills/cms/SKILL.md` - how to extend the CMS starter into a full content system",
-		ai: "- `.opencode/skills/ai/SKILL.md` - how to extend the AI assistant starter into a full assistant",
+			"- `${harnessSkillDir}/bookings/SKILL.md` - how to extend the booking starter into a full booking system",
+		crm: "- `${harnessSkillDir}/crm/SKILL.md` - how to extend the CRM starter into a full pipeline",
+		cms: "- `${harnessSkillDir}/cms/SKILL.md` - how to extend the CMS starter into a full content system",
+		ai: "- `${harnessSkillDir}/ai/SKILL.md` - how to extend the AI assistant starter into a full assistant",
 	};
 
 	const selectedLines = features
@@ -503,6 +511,10 @@ program
 		"--prompt <prompt>",
 		"Product brief used to populate MAIN.md (AI View)",
 	)
+	.option(
+		"--harness <harness>",
+		"AI harness for embedded skills (opencode, claude, copilot)",
+	)
 	.option("--skip-install", "Skip pnpm install and Prisma generate steps")
 	.option("--skip-docker", "Skip Docker orphan-volume cleanup")
 	.action(async (projectName, options) => {
@@ -632,6 +644,39 @@ program
 			await copyTemplate("base-project", targetDir, {
 				"@myquark": `@${scope}`,
 			});
+
+			// Step 1b: Place embedded skills in the selected AI harness directory.
+			const harness = options.harness || DEFAULT_HARNESS;
+			const harnessSkillDir = HARNESS_SKILL_DIRS[harness];
+			if (harnessSkillDir) {
+				const neutralSkills = path.join(targetDir, "skills");
+				if (await fs.pathExists(neutralSkills)) {
+					const destSkills = path.join(targetDir, harnessSkillDir);
+					await fs.ensureDir(destSkills);
+					await fs.copy(neutralSkills, destSkills);
+					await fs.remove(neutralSkills);
+					console.log(
+						chalk.green(
+							`    ✓ Embedded skills → ${harnessSkillDir} (${harness})`,
+						),
+					);
+				}
+				// Point the scaffolded docs at the harness skill directory.
+				for (const doc of ["MAIN.md", "CLAUDE.md", "README.md"]) {
+					const docPath = path.join(targetDir, doc);
+					if (await fs.pathExists(docPath)) {
+						let content = await fs.readFile(docPath, "utf-8");
+						content = content.replace(/\.opencode\/skills/g, harnessSkillDir);
+						await fs.writeFile(docPath, content);
+					}
+				}
+			} else {
+				console.log(
+					chalk.yellow(
+						`    ⚠ Unknown harness "${harness}". Skills left in skills/ (no auto-load).`,
+					),
+				);
+			}
 
 			// Step 2: Create apps directory
 			await fs.ensureDir(path.join(targetDir, "apps"));
@@ -1381,9 +1426,18 @@ STORAGE_PROVIDER=local
 				.join("\n");
 			const optionalAppLines = buildOptionalAppLines(features);
 			const optionalBlock = optionalLines ? `${optionalLines}\n` : "";
-			const featureRows = buildFeatureRows(features);
-			const firstEditLines = buildFirstEditLines(features);
-			const featureGuideLines = buildFeatureGuideLines(features);
+			const featureRows = buildFeatureRows(
+				features,
+				harnessSkillDir || "skills",
+			);
+			const firstEditLines = buildFirstEditLines(
+				features,
+				harnessSkillDir || "skills",
+			);
+			const featureGuideLines = buildFeatureGuideLines(
+				features,
+				harnessSkillDir || "skills",
+			);
 
 			// Step 10b: Substitute variables in project-context SKILL.md
 			const skillPath = path.join(
@@ -2408,7 +2462,6 @@ program
 		const skillPath = path.join(
 			templatesDir,
 			"base-project",
-			".opencode",
 			"skills",
 			skillName,
 			"SKILL.md",
