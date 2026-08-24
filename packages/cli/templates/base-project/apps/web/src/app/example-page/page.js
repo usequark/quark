@@ -13,7 +13,7 @@ import {
 	Navbar,
 	Textarea,
 } from "@techstream/quark-ui";
-import { getPageMetadata } from "../lib/seo/site-metadata.js";
+import { getPageMetadata } from "../../lib/seo/site-metadata.js";
 
 export const metadata = getPageMetadata({
 	title: "Quark Example Page",
