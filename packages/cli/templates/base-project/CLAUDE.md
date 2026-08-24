@@ -115,7 +115,7 @@ All UI components come from `@__QUARK_SCOPE__/ui`. They are Tailwind-only, depen
   - **Per-section error handling** - each streamed section should wrap data fetching in try/catch and return an error fallback rather than crashing the page.
 - Run the loading-state audit to find gaps: `pnpm check:loading`.
 - **Page checklist** - every new route should include:
-  - `export const metadata` - title and description.
+  - `export const metadata` - title and description. Use `getPageMetadata()` from `apps/web/src/lib/seo/site-metadata.js`; follow the page-title convention in the `seo` skill (50-60 chars, brand suffix applied once).
   - `loading.js` - sibling loading.js using `<Skeleton>` from `@__QUARK_SCOPE__/ui` for all async DB-fetching pages.
   - `error.js` - route-level error boundary with a user-facing fallback.
 - User feedback → `useToast()` hook (client component).

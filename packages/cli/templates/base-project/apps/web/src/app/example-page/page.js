@@ -13,12 +13,14 @@ import {
 	Navbar,
 	Textarea,
 } from "@techstream/quark-ui";
+import { getPageMetadata } from "../lib/seo/site-metadata.js";
 
-export const metadata = {
+export const metadata = getPageMetadata({
 	title: "Quark Example Page",
 	description:
 		"A production-style public page built from the shared Quark UI package.",
-};
+	path: "/example-page",
+});
 
 const NAV_LINKS = [
 	{ label: "Why Quark", href: "#why-quark" },

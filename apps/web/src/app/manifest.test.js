@@ -41,7 +41,7 @@ describe("Build-time SEO metadata", () => {
 
 		assert.strictEqual(metadata.applicationName, config.appName);
 		assert.strictEqual(metadata.title.default, config.appName);
-		assert.strictEqual(metadata.title.template, `%s · ${config.appName}`);
+		assert.strictEqual(metadata.title.template, `%s | ${config.appName}`);
 		assert.strictEqual(metadata.openGraph.title, config.appName);
 		assert.strictEqual(metadata.twitter.title, config.appName);
 	});
