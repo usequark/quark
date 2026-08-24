@@ -1,5 +1,33 @@
 # @techstream/quark-create-app
 
+## 1.19.0
+
+### Minor Changes
+
+- [#79](https://github.com/Bobnoddle/quark/pull/79) [`900c3b7`](https://github.com/Bobnoddle/quark/commit/900c3b75425b8e29c209b5f463f8802e0617ecca) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - feat: archive vertical packages and remove vertical code from the monorepo
+
+  - **Archived the vertical packages** (`@techstream/quark-ai`, `@techstream/quark-cms`, `@techstream/quark-crm`, `@techstream/quark-bookings`) to `reference/verticals/packages/`. They are now reference implementations only — the skills point to them.
+  - **Removed the vertical code from the monorepo's apps**: the AI/CRM/bookings API routes, the CMS content subsystem, and the worker AI handlers are gone from `apps/web` and `apps/worker`. The monorepo now reflects the minimal scaffold (infrastructure + skills).
+  - The scaffold was already clean; this removes the vertical code from the monorepo's own reference apps.
+
+- [#79](https://github.com/Bobnoddle/quark/pull/79) [`900c3b7`](https://github.com/Bobnoddle/quark/commit/900c3b75425b8e29c209b5f463f8802e0617ecca) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - feat: make verticals skill-only; embed skills in .opencode/skills; rename recipe → skill
+
+  - **Verticals are now skill-only**: `bookings`, `crm`, `cms`, and `ai` no longer scaffold starter code. Selecting one just recognizes the feature — the embedded skill (always present) teaches the AI to build it. The starter templates are archived to `reference/verticals/`.
+  - **Skills embedded for auto-loading**: the skills moved from `skills/` to `.opencode/skills/`, the location opencode auto-loads on context match (no need to point the AI at them).
+  - **`recipe` command renamed to `skill`**: `quark skill <feature>` prints an embedded skill.
+  - **Skills enriched**: each vertical skill now includes example Prisma models, Zod validation schemas, and test patterns.
+  - **Smoke test expanded**: verifies all embedded skills are present and the `skill` command works.
+
+### Patch Changes
+
+- [#79](https://github.com/Bobnoddle/quark/pull/79) [`900c3b7`](https://github.com/Bobnoddle/quark/commit/900c3b75425b8e29c209b5f463f8802e0617ecca) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - fix(cli): make ui a required package so minimal scaffolds work
+
+  The base web app (layout, auth, example-page) imports the `ui` package, but a
+  minimal scaffold (`--features ""` or `--preset minimal`) did not include it,
+  producing a broken scaffold that failed `pnpm doctor:ci`. `ui` is now always
+  scaffolded (alongside `db` and `config`), and the web app dependency + `.quark-link.json`
+  reflect it so the doctor check passes.
+
 ## 1.18.0
 
 ### Minor Changes
