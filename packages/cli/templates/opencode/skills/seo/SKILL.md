@@ -12,9 +12,25 @@ Apply SEO best practices to improve organic search visibility and content discov
 - Use semantic/LSI terms (topically related words) to strengthen relevance signals.
 
 ## Title Tag and Meta Description Formulas
-- **Title tag**: Primary keyword + secondary keyword (or brand) | 50-60 characters. Front-load the keyword.
+- **Title tag**: Primary keyword + secondary keyword (or brand) | 50-60 characters. Front-load the keyword. Google truncates by pixel width (~580px), so treat 60 characters as a soft ceiling.
 - **Meta description**: 150-160 characters. Include primary keyword, a benefit statement, and a CTA. Entice the click without misleading.
 - Every page must have a unique title tag and meta description - no duplicates.
+
+### Page-title convention
+The root layout sets `title.template: "%s | Brand"` and the homepage overrides it with `title: { absolute: "Brand" }`. All other pages use `getPageMetadata()` from `apps/web/src/lib/seo/site-metadata.js`, which renders `{ absolute }` titles so the brand suffix is applied exactly once.
+
+| Page type | Pattern | Example |
+|---|---|---|
+| Homepage | `Brand` (absolute, no suffix) | `Acme Plumbing` |
+| Money / service page | `Service + Location \| Brand` (keyword-first; only when targeting a geographic query) | `Emergency Plumber in Calgary \| Acme` |
+| Trust page | `About Us \| Brand` / `Contact Us \| Brand` | `Contact Us \| Acme` |
+| Detail page | `Entity \| Brand` | `Residential Drain Cleaning \| Acme` |
+| CMS-driven page | SEO title decoupled from visible H1 | H1 may be editorial; title stays 50-60 chars |
+
+Rules:
+- Keep every title within 50-60 characters including the brand suffix - shorten the entity portion, never drop the brand.
+- On CMS-driven pages the SEO title and the visible H1 are independent fields; optimize each for its surface.
+- Never append the brand manually in a page's metadata when using `getPageMetadata()` - double suffixes (`Page | Brand | Brand`) are a defect.
 
 ## Heading Hierarchy
 - One H1 per page, matching the user's search intent and containing the primary keyword.

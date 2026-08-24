@@ -79,6 +79,7 @@ docker compose up -d  # Start infrastructure
 - `packages/config/src/validate-env.js` - Environment variable validation
 - `apps/web/src/app/` - Next.js App Router pages and API routes
 - `apps/web/src/lib/auth.js` - Authentication configuration
+- `apps/web/src/lib/seo/site-metadata.js` - `getSiteMetadata()` (root layout) and `getPageMetadata()` for per-page titles; see the `seo` skill for the page-title convention
 - `apps/web/src/lib/analytics/umami-config.js` - Optional Umami URL and replay gating
 - `apps/worker/src/handlers/` - Background job handlers
 
