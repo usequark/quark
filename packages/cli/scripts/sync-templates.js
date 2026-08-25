@@ -79,6 +79,11 @@ const SYNC_DIRS = [
 			// Demoted verticals are now AI skills, not scaffolded packages.
 			/^apps\/web\/src\/app\/api\/ai\//,
 			/^apps\/web\/src\/app\/api\/admin\/crm\//,
+			// Test files excluded from scaffold template
+			/^apps\/web\/src\/.*\.test\.js$/,
+			// Test infrastructure files excluded from scaffold template
+			/^apps\/web\/scripts\/register-test-hooks\.mjs$/,
+			/^apps\/web\/scripts\/test-alias-loader\.mjs$/,
 		],
 	},
 	{
@@ -99,13 +104,31 @@ const SYNC_DIRS = [
 			/^apps\/worker\/src\/lib\/truncation\.js$/,
 			/^apps\/worker\/src\/lib\/truncation\.test\.js$/,
 			/^apps\/worker\/src\/lib\/tools\//,
+			// All test files excluded from scaffold template
+			/^apps\/worker\/src\/.*\.test\.js$/,
 		],
 	},
-	{ src: "packages/db", dest: "base-project/packages/db" },
+	{
+		src: "packages/db",
+		dest: "base-project/packages/db",
+		localExcludes: [/^packages\/db\/src\/.*\.test\.js$/],
+	},
 	{ src: "packages/config", dest: "config" },
-	{ src: "packages/ui", dest: "ui" },
-	{ src: "packages/jobs", dest: "jobs" },
-	{ src: "packages/admin", dest: "admin" },
+	{
+		src: "packages/ui",
+		dest: "ui",
+		localExcludes: [/^packages\/ui\/src\/.*\.test\.js$/],
+	},
+	{
+		src: "packages/jobs",
+		dest: "jobs",
+		localExcludes: [/^packages\/jobs\/src\/.*\.test\.js$/],
+	},
+	{
+		src: "packages/admin",
+		dest: "admin",
+		localExcludes: [/^packages\/admin\/src\/.*\.test\.js$/],
+	},
 	// Admin routes live inside apps/web but are scaffolded separately (conditionally)
 	{ src: "apps/web/src/app/admin", dest: "admin-routes" },
 ];
@@ -220,6 +243,9 @@ const TEMPLATE_ONLY = new Set([
 	// Base-project sitemap is a simpler version (no CMS dependency);
 	// the CMS-capable sitemap lives in cms-public template
 	"base-project/apps/web/src/app/sitemap.js",
+	// Lighter version of globals.css — keeps design tokens + Tailwind bridge,
+	// drops monorepo-only home page, auth layout, and animation styles.
+	"base-project/apps/web/src/app/globals.css",
 
 	// OpenCode deploy config - scaffolded conditionally via --features ai
 	"opencode",
@@ -644,7 +670,8 @@ function syncDirectory(mapping) {
 		if (change) changes.push(change);
 	}
 
-	// Clean stale files: files in template that don't exist in source
+	// Clean stale files: files in template that don't exist in source,
+	// AND files excluded from sync that already exist in template.
 	// (but only within synced directories, and only non-template-only files)
 	const templateFiles = collectFiles(destDir);
 	for (const rel of templateFiles) {
@@ -653,13 +680,40 @@ function syncDirectory(mapping) {
 
 		const srcRelativeToRoot = `${mapping.src}/${rel}`;
 
-		// If excluded, it's expected to NOT be in source - don't delete from template
-		// (template may have its own version of excluded files, like migrations)
+		// If globally excluded, don't touch it in template
 		if (isExcluded(srcRelativeToRoot)) continue;
-		if (mapping.localExcludes?.some((p) => p.test(srcRelativeToRoot))) continue;
+
+		const isLocallyExcluded = mapping.localExcludes?.some((p) =>
+			p.test(srcRelativeToRoot),
+		);
 
 		const srcPath = path.join(srcDir, rel);
-		if (!fs.existsSync(srcPath)) {
+		const srcExists = fs.existsSync(srcPath);
+
+		// Locally excluded files that exist in source should be removed from template
+		// (they are excluded from sync, so the template copy is stale/unnecessary)
+		if (isLocallyExcluded && srcExists) {
+			if (!CHECK_MODE) {
+				const filePath = path.join(destDir, rel);
+				fs.unlinkSync(filePath);
+				let parent = path.dirname(filePath);
+				while (parent !== destDir) {
+					if (fs.readdirSync(parent).length === 0) {
+						fs.rmdirSync(parent);
+						parent = path.dirname(parent);
+					} else {
+						break;
+					}
+				}
+			}
+			changes.push({ action: "deleted", file: destRelative });
+			continue;
+		}
+
+		// Skip further cleanup for locally excluded files that don't exist in source
+		if (isLocallyExcluded) continue;
+
+		if (!srcExists) {
 			if (!CHECK_MODE) {
 				const filePath = path.join(destDir, rel);
 				fs.unlinkSync(filePath);
