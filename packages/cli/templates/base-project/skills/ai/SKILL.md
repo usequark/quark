@@ -25,7 +25,7 @@ An AI assistant manages conversations with an LLM, with optional streaming, tool
 - **API routes** live in `apps/web/src/app/api/ai/`. Guard with `requireRole`, validate with Zod via `validateBody`, wrap mutations in `withCsrfProtection`. Follow `apps/web/src/app/api/ai/conversations/route.js` as the reference shape.
 - **Streaming** uses a `chat/stream` route that streams assistant responses.
 - **Background jobs** (context extraction, compaction) dispatch via `createQueue`/`addJob` from `@techstream/quark-core` and handle in `apps/worker/src/handlers/`.
-- **Chat UI** lives under `apps/web/src/app/admin/ai/` using the neutral admin shell patterns.
+- **Chat UI** lives under `apps/web/src/app/admin/ai/` (see the admin-dashboard skill).
 - **Auth** via `getCurrentSession` from `@techstream/quark-core`.
 
 ## Workflow

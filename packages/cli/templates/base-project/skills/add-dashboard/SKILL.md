@@ -10,7 +10,6 @@ Add a decision dashboard in admin: metric cards showing decision-relevant values
 ## Framework context (build on Quark)
 
 - **Admin** is an operations shell — show decision-relevant values (counts, totals, statuses), not raw CRUD tables.
-- **Metric-card pattern** lives in `apps/web/src/app/admin/_patterns/Dashboard.js`.
 - **Server Actions** are `"use server"`, validate with Zod, and use `createLogger()`.
 - **Data access** goes through query helpers in `packages/db/src/queries.js` — never call `prisma.*` directly.
 
@@ -23,7 +22,7 @@ Add a decision dashboard in admin: metric cards showing decision-relevant values
 
 ## Patterns to follow
 
-- Use the metric-card pattern from `apps/web/src/app/admin/_patterns/Dashboard.js`.
+- Metric cards show decision-relevant values (counts, totals, statuses), not raw tables.
 - Server Actions are `"use server"`, validate with Zod, and use `createLogger()`.
 - Every async page that fetches from the database needs a sibling `loading.js` using `<Skeleton>`.
 - Add `export const metadata` (title + description) to the page.

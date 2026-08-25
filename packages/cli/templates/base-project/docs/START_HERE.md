@@ -15,13 +15,12 @@ Every Quark scaffold gives you:
 - `apps/web` - the Next.js app
 - `packages/db` - Prisma schema, client, and query helpers
 - `packages/config` - validated environment config
-- optional local packages like `ui`, `jobs`, `admin`, and `cms`
+- optional local packages like `ui` and `jobs`
 
 The package READMEs explain optional features if they are present:
 
 - `packages/ui/README.md`
 - `packages/jobs/README.md`
-- `packages/admin/README.md`
 - `packages/cms/README.md`
 
 ## Best order to learn the codebase

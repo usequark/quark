@@ -24,7 +24,7 @@ A CMS manages structured content with an editorial workflow. The core entities a
 - **API routes** live in `apps/web/src/app/api/<resource>/`. Guard with `requireRole`, validate with Zod via `validateBody`, wrap mutations in `withCsrfProtection`. Follow `apps/web/src/app/api/users/route.js` as the reference shape.
 - **Media uploads** follow the existing `apps/web/src/app/api/files/` pattern.
 - **Public rendering** uses a `[slug]` route; published content only, with SEO metadata.
-- **Admin views** live under `apps/web/src/app/admin/` using the neutral admin shell patterns.
+- **Admin views** live under `apps/web/src/app/admin/` (see the admin-dashboard skill).
 - **Auth** via `getCurrentSession` from `@techstream/quark-core`.
 
 ## Workflow

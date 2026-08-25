@@ -224,17 +224,10 @@ function getPairedTemplatesForFeatures(features) {
 	return pairs;
 }
 
-function buildFeatureRows(features, harnessSkillDir) {
+function buildFeatureRows(features) {
 	const rows = {
 		ui: "| UI package | Included | `packages/ui/README.md` |",
 		jobs: "| Jobs + worker | Included | `packages/jobs/README.md`, `apps/worker/src/handlers/` |",
-		admin:
-			"| Admin panel | Included | `packages/admin/README.md`, `apps/web/src/app/admin/` |",
-		bookings:
-			"| Bookings skill | Included | `${harnessSkillDir}/bookings/SKILL.md`, `apps/web/src/app/api/bookings/` |",
-		crm: "| CRM skill | Included | `${harnessSkillDir}/crm/SKILL.md`, `apps/web/src/app/api/crm/` |",
-		cms: "| CMS skill | Included | `${harnessSkillDir}/cms/SKILL.md`, `apps/web/src/app/api/cms/` |",
-		ai: "| AI assistant skill | Included | `${harnessSkillDir}/ai/SKILL.md`, `apps/web/src/app/api/ai/` |",
 	};
 
 	const selectedRows = features
@@ -256,17 +249,10 @@ function buildOptionalAppLines(features) {
 	return lines.join("");
 }
 
-function buildFirstEditLines(features, harnessSkillDir) {
+function buildFirstEditLines(features) {
 	const lines = {
 		ui: "- `packages/ui/src/` - adjust primitives or add app-specific UI components",
 		jobs: "- `packages/jobs/src/definitions.js` and `apps/worker/src/handlers/` - define and process background jobs",
-		admin:
-			"- `packages/admin/src/config.js` and `apps/web/src/app/admin/` - tune model labels, hidden fields, and admin pages",
-		bookings:
-			"- `${harnessSkillDir}/bookings/SKILL.md` and `apps/web/src/app/api/bookings/` - extend the booking model and CRUD",
-		crm: "- `${harnessSkillDir}/crm/SKILL.md` and `apps/web/src/app/api/crm/` - extend the CRM model and CRUD",
-		cms: "- `${harnessSkillDir}/cms/SKILL.md` and `apps/web/src/app/api/cms/` - extend the CMS model and CRUD",
-		ai: "- `${harnessSkillDir}/ai/SKILL.md` and `apps/web/src/app/api/ai/` - extend the AI assistant model and CRUD",
 	};
 
 	const selectedLines = features
@@ -280,17 +266,10 @@ function buildFirstEditLines(features, harnessSkillDir) {
 	return selectedLines.join("\n");
 }
 
-function buildFeatureGuideLines(features, harnessSkillDir) {
+function buildFeatureGuideLines(features) {
 	const lines = {
 		ui: "- `packages/ui/README.md` - component catalog, import rules, and extension notes",
 		jobs: "- `packages/jobs/README.md` - queue names, worker pairing, and the job-extension workflow",
-		admin:
-			"- `packages/admin/README.md` - admin configuration, model overrides, and route ownership",
-		bookings:
-			"- `${harnessSkillDir}/bookings/SKILL.md` - how to extend the booking starter into a full booking system",
-		crm: "- `${harnessSkillDir}/crm/SKILL.md` - how to extend the CRM starter into a full pipeline",
-		cms: "- `${harnessSkillDir}/cms/SKILL.md` - how to extend the CMS starter into a full content system",
-		ai: "- `${harnessSkillDir}/ai/SKILL.md` - how to extend the AI assistant starter into a full assistant",
 	};
 
 	const selectedLines = features
@@ -501,7 +480,7 @@ program
 	)
 	.option(
 		"--features <features>",
-		"Comma-separated list of optional features to include (ui,jobs,admin,bookings,crm,cms,ai)",
+		"Comma-separated list of optional features to include (ui,jobs)",
 	)
 	.option(
 		"--preset <preset>",
@@ -766,7 +745,7 @@ program
 			} else if (!options.prompts) {
 				// Use defaults when --no-prompts is set without --features
 				console.log(chalk.cyan("\n  🎯 Configuring optional features..."));
-				features = ["ui", "jobs"]; // Default to ui + jobs (not admin, cms, crm, ai)
+				features = ["ui", "jobs"];
 				console.log(
 					chalk.green(
 						`  Using default features: ${features.join(", ")} (non-interactive mode)`,
@@ -808,31 +787,6 @@ program
 								title: "Background Jobs (packages/jobs + apps/worker)",
 								value: "jobs",
 								selected: true,
-							},
-							{
-								title: "Admin Dashboard (packages/admin) [requires: ui]",
-								value: "admin",
-								selected: false,
-							},
-							{
-								title: "Bookings skill (AI builds it on demand)",
-								value: "bookings",
-								selected: false,
-							},
-							{
-								title: "CRM skill (AI builds it on demand)",
-								value: "crm",
-								selected: false,
-							},
-							{
-								title: "CMS skill (AI builds it on demand)",
-								value: "cms",
-								selected: false,
-							},
-							{
-								title: "AI assistant skill (AI builds it on demand)",
-								value: "ai",
-								selected: false,
 							},
 						],
 					},
@@ -934,93 +888,6 @@ program
 					await copyTemplate("worker", workerDir);
 					console.log(chalk.green(`    ✓ worker (paired with jobs)`));
 				}
-
-				// If admin selected, also scaffold admin routes into apps/web/src/app/admin
-				if (pairedTemplates.includes("admin-routes")) {
-					const adminRoutesTemplatePath = path.join(
-						templatesDir,
-						"admin-routes",
-					);
-					if (await fs.pathExists(adminRoutesTemplatePath)) {
-						const adminRoutesDir = path.join(
-							targetDir,
-							"apps",
-							"web",
-							"src",
-							"app",
-							"admin",
-						);
-						await fs.ensureDir(adminRoutesDir);
-						await copyTemplate("admin-routes", adminRoutesDir);
-						console.log(chalk.green(`    ✓ admin routes (paired with admin)`));
-					}
-				}
-
-				if (pairedTemplates.includes("cms-routes")) {
-					const cmsRoutesTemplatePath = path.join(templatesDir, "cms-routes");
-					if (await fs.pathExists(cmsRoutesTemplatePath)) {
-						const cmsRoutesDir = path.join(
-							targetDir,
-							"apps",
-							"web",
-							"src",
-							"app",
-							"admin",
-							"cms",
-						);
-						await fs.ensureDir(cmsRoutesDir);
-						await copyTemplate("cms-routes", cmsRoutesDir);
-						console.log(chalk.green(`    ✓ cms routes (paired with cms)`));
-					}
-				}
-
-				if (pairedTemplates.includes("cms-public")) {
-					const cmsPublicTemplatePath = path.join(templatesDir, "cms-public");
-					if (await fs.pathExists(cmsPublicTemplatePath)) {
-						const cmsPublicDir = path.join(targetDir, "apps", "web", "src");
-						await fs.ensureDir(cmsPublicDir);
-						await copyTemplate("cms-public", cmsPublicDir);
-						console.log(
-							chalk.green(`    ✓ cms public pages (paired with cms)`),
-						);
-					}
-				}
-
-				if (pairedTemplates.includes("crm-routes")) {
-					const crmRoutesTemplatePath = path.join(templatesDir, "crm-routes");
-					if (await fs.pathExists(crmRoutesTemplatePath)) {
-						const crmRoutesDir = path.join(
-							targetDir,
-							"apps",
-							"web",
-							"src",
-							"app",
-							"admin",
-							"crm",
-						);
-						await fs.ensureDir(crmRoutesDir);
-						await copyTemplate("crm-routes", crmRoutesDir);
-						console.log(chalk.green(`    ✓ crm routes (paired with crm)`));
-					}
-				}
-
-				if (pairedTemplates.includes("ai-routes")) {
-					const aiRoutesDir = path.join(
-						targetDir,
-						"apps",
-						"web",
-						"src",
-						"app",
-						"admin",
-						"ai",
-					);
-					await fs.ensureDir(aiRoutesDir);
-					const aiTplDir = path.join(templatesDir, "ai-routes");
-					if (await fs.pathExists(aiTplDir)) {
-						await copyTemplate("ai-routes", aiRoutesDir);
-						console.log(chalk.green(`    ✓ AI chat UI (paired with ai)`));
-					}
-				}
 			}
 
 			// Step 7: Update all package.json dependencies to use correct scope
@@ -1111,8 +978,10 @@ program
 				}
 			}
 
-			// Step 7e: Strip admin link from landing page when admin not selected
-			if (!features.includes("admin")) {
+			// Step 7e: Strip the admin dashboard link from the landing page.
+			// The admin UI is no longer scaffolded; the embedded admin skill
+			// teaches the AI to build a dashboard on demand.
+			{
 				const homePath = path.join(
 					targetDir,
 					"apps",
@@ -1418,26 +1287,15 @@ STORAGE_PROVIDER=local
 					const labels = {
 						ui: "Shared UI components",
 						jobs: "Job queue definitions",
-						admin: "Auto-generated admin dashboard",
-						cms: "CMS content models and helpers",
 					};
 					return `│   ├── ${f}/           # ${labels[f] || f}`;
 				})
 				.join("\n");
 			const optionalAppLines = buildOptionalAppLines(features);
 			const optionalBlock = optionalLines ? `${optionalLines}\n` : "";
-			const featureRows = buildFeatureRows(
-				features,
-				harnessSkillDir || "skills",
-			);
-			const firstEditLines = buildFirstEditLines(
-				features,
-				harnessSkillDir || "skills",
-			);
-			const featureGuideLines = buildFeatureGuideLines(
-				features,
-				harnessSkillDir || "skills",
-			);
+			const featureRows = buildFeatureRows(features);
+			const firstEditLines = buildFirstEditLines(features);
+			const featureGuideLines = buildFeatureGuideLines(features);
 
 			// Step 10b: Substitute variables in project-context SKILL.md
 			const skillPath = path.join(
@@ -1605,25 +1463,17 @@ STORAGE_PROVIDER=local
  *
  * Two kinds of feature:
  * - `package` (default): scaffolds a workspace package (and optional paired
- *   apps/routes). e.g. ui, jobs, admin.
+ *   apps/routes). e.g. ui, jobs.
  * - `starter`: drops in a minified domain starter (generic Prisma model + CRUD
  *   endpoint + recipe) from `templates/starters/<starter>/`. No workspace
- *   package, no paired routes. e.g. bookings, crm, cms, ai.
+ *   package, no paired routes.
  */
 const FEATURE_META = {
 	ui: { requires: [], packages: ["ui"], pairs: [] },
 	jobs: { requires: [], packages: ["jobs"], pairs: ["worker"] },
-	admin: {
-		requires: ["ui"],
-		packages: ["admin"],
-		pairs: ["admin-routes"],
-	},
-	// Verticals are skill-based: the embedded skill (always scaffolded) teaches
-	// the AI to build them. No starter code is scaffolded.
-	bookings: { requires: [], skill: "bookings" },
-	crm: { requires: [], skill: "crm" },
-	cms: { requires: [], skill: "cms" },
-	ai: { requires: [], skill: "ai" },
+	// Admin dashboard and domain verticals (bookings, crm, cms, ai) are not
+	// scaffolded features. All embedded skills ship with every build and the
+	// AI builds them on demand - see the skill index in <harness>/skills/.
 };
 
 function resolveFeatureSelection(features) {
@@ -1662,9 +1512,9 @@ function resolveFeatureSelection(features) {
  * @type {Record<string, string[]>}
  */
 const FEATURE_PRESETS = {
-	"client-work": ["ui", "jobs", "admin"],
-	"internal-tool": ["ui", "admin"],
-	product: ["ui", "jobs", "admin"],
+	"client-work": ["ui", "jobs"],
+	"internal-tool": ["ui"],
+	product: ["ui", "jobs"],
 	minimal: [],
 };
 
@@ -1997,10 +1847,7 @@ async function rewriteWorkspaceDeps(pkgJsonPath, scope, workspacePackages) {
 
 program
 	.command("add")
-	.argument(
-		"<feature>",
-		"Feature to add (ui, jobs, admin, bookings, crm, cms, ai)",
-	)
+	.argument("<feature>", "Feature to add (ui, jobs)")
 	.description("Add an optional package to an existing Quark project")
 	.option("--force", "Skip safety checks (uncommitted changes)")
 	.option("--skip-install", "Skip pnpm install after adding")
@@ -2164,169 +2011,6 @@ program
 							await replaceImportsInSourceFiles(workerDir, scope);
 							console.log(chalk.green(`    ✓ apps/worker (paired with jobs)`));
 						}
-					} else if (pair === "admin-routes") {
-						const adminRoutesDir = path.join(
-							projectDir,
-							"apps",
-							"web",
-							"src",
-							"app",
-							"admin",
-						);
-						if (await fs.pathExists(adminRoutesDir)) {
-							console.log(
-								chalk.dim(
-									`    · apps/web/src/app/admin already exists - skipping copy`,
-								),
-							);
-						} else {
-							await copyTemplate("admin-routes", adminRoutesDir);
-							await replaceImportsInSourceFiles(adminRoutesDir, scope);
-							console.log(
-								chalk.green(`    ✓ apps/web/src/app/admin (paired with admin)`),
-							);
-						}
-					} else if (pair === "cms-routes") {
-						const cmsRoutesDir = path.join(
-							projectDir,
-							"apps",
-							"web",
-							"src",
-							"app",
-							"admin",
-							"cms",
-						);
-						if (await fs.pathExists(cmsRoutesDir)) {
-							console.log(
-								chalk.dim(
-									`    · apps/web/src/app/admin/cms already exists - skipping copy`,
-								),
-							);
-						} else {
-							await copyTemplate("cms-routes", cmsRoutesDir);
-							await replaceImportsInSourceFiles(cmsRoutesDir, scope);
-							console.log(
-								chalk.green(
-									`    ✓ apps/web/src/app/admin/cms (paired with cms)`,
-								),
-							);
-						}
-					} else if (pair === "cms-public") {
-						const cmsPublicDir = path.join(projectDir, "apps", "web", "src");
-						await copyTemplate("cms-public", cmsPublicDir);
-						await replaceImportsInSourceFiles(cmsPublicDir, scope);
-						console.log(
-							chalk.green(
-								`    ✓ apps/web/src (cms public pages, paired with cms)`,
-							),
-						);
-					} else if (pair === "crm-routes") {
-						const crmRoutesDir = path.join(
-							projectDir,
-							"apps",
-							"web",
-							"src",
-							"app",
-							"admin",
-							"crm",
-						);
-						if (await fs.pathExists(crmRoutesDir)) {
-							console.log(
-								chalk.dim(
-									`    · apps/web/src/app/admin/crm already exists - skipping copy`,
-								),
-							);
-						} else {
-							await copyTemplate("crm-routes", crmRoutesDir);
-							await replaceImportsInSourceFiles(crmRoutesDir, scope);
-							console.log(
-								chalk.green(
-									`    ✓ apps/web/src/app/admin/crm (paired with crm)`,
-								),
-							);
-						}
-						// API routes for CRM live in the base-project template and are
-						// removed at scaffold time when crm is not selected - restore them.
-						const crmApiRoutesSrc = path.join(
-							templatesDir,
-							"base-project",
-							"apps",
-							"web",
-							"src",
-							"app",
-							"api",
-							"admin",
-							"crm",
-						);
-						const crmApiRoutesDest = path.join(
-							projectDir,
-							"apps",
-							"web",
-							"src",
-							"app",
-							"api",
-							"admin",
-							"crm",
-						);
-						if (await fs.pathExists(crmApiRoutesSrc)) {
-							await fs.copy(crmApiRoutesSrc, crmApiRoutesDest);
-							await replaceImportsInSourceFiles(crmApiRoutesDest, scope);
-							console.log(
-								chalk.green(
-									`    ✓ apps/web/src/app/api/admin/crm (API routes)`,
-								),
-							);
-						}
-					} else if (pair === "ai-routes") {
-						const aiRoutesDir = path.join(
-							projectDir,
-							"apps",
-							"web",
-							"src",
-							"app",
-							"admin",
-							"ai",
-						);
-						if (await fs.pathExists(aiRoutesDir)) {
-							console.log(
-								chalk.dim(`    · admin/ai already exists - skipping copy`),
-							);
-						} else {
-							const aiTplDir = path.join(templatesDir, "ai-routes");
-							if (await fs.pathExists(aiTplDir)) {
-								await copyTemplate("ai-routes", aiRoutesDir);
-								await replaceImportsInSourceFiles(aiRoutesDir, scope);
-								console.log(chalk.green(`    ✓ AI chat UI (paired with ai)`));
-							}
-						}
-						// API routes for AI live in the base-project template and are
-						// removed at scaffold time when ai is not selected - restore them.
-						const aiApiRoutesSrc = path.join(
-							templatesDir,
-							"base-project",
-							"apps",
-							"web",
-							"src",
-							"app",
-							"api",
-							"ai",
-						);
-						const aiApiRoutesDest = path.join(
-							projectDir,
-							"apps",
-							"web",
-							"src",
-							"app",
-							"api",
-							"ai",
-						);
-						if (await fs.pathExists(aiApiRoutesSrc)) {
-							await fs.copy(aiApiRoutesSrc, aiApiRoutesDest);
-							await replaceImportsInSourceFiles(aiApiRoutesDest, scope);
-							console.log(
-								chalk.green(`    ✓ apps/web/src/app/api/ai (API routes)`),
-							);
-						}
 					}
 				}
 
@@ -2385,14 +2069,7 @@ program
 			console.log(chalk.green.bold(`\n✅ Added "${feature}" successfully!\n`));
 
 			// Feature-specific next steps
-			if (feature === "admin") {
-				console.log(chalk.cyan("Next steps:"));
-				console.log(chalk.white("  1. pnpm dev"));
-				console.log(chalk.white("  2. Visit http://localhost:3000/admin"));
-				console.log(
-					chalk.white("  3. Edit packages/admin/src/config.js to customize\n"),
-				);
-			} else if (feature === "jobs") {
+			if (feature === "jobs") {
 				console.log(chalk.cyan("Next steps:"));
 				console.log(chalk.white("  1. Define jobs in packages/jobs/src/"));
 				console.log(
@@ -2407,24 +2084,6 @@ program
 					),
 				);
 				console.log(chalk.white("  2. pnpm dev\n"));
-			} else if (feature === "cms") {
-				console.log(chalk.cyan("Next steps:"));
-				console.log(chalk.white("  1. pnpm dev"));
-				console.log(chalk.white("  2. Visit http://localhost:3000/admin/cms"));
-				console.log(
-					chalk.white(
-						"  3. Edit packages/cms/src/config.js to customize content types\n",
-					),
-				);
-			} else if (feature === "crm") {
-				console.log(chalk.cyan("Next steps:"));
-				console.log(chalk.white("  1. pnpm dev"));
-				console.log(chalk.white("  2. Visit http://localhost:3000/admin/crm"));
-				console.log(
-					chalk.white(
-						"  3. Edit packages/crm/src/config.js to customize pipeline stages\n",
-					),
-				);
 			}
 
 			console.log(
