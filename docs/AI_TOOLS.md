@@ -54,7 +54,7 @@ All files contain your project's actual `@scope`, selected packages, and scaffol
 
 ## Embedded Skills
 
-Every scaffold also ships domain skills (bookings, CRM, CMS, AI assistant, plus `add-model`, `add-endpoint`, `add-dashboard` recipes) that teach your AI tool how to extend the project using Quark's exact patterns. Use the `--harness` flag to choose where they are placed for auto-loading:
+Every scaffold also ships domain skills (bookings, CRM, CMS, AI assistant, plus `add-model`, `add-endpoint`, `add-dashboard`) that teach your AI tool how to extend the project using Quark's exact patterns. Use the `--harness` flag to choose where they are placed for auto-loading:
 
 ```bash
 npx @techstream/quark-create-app my-app --harness claude    # .claude/skills/

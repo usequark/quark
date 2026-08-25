@@ -1465,7 +1465,7 @@ STORAGE_PROVIDER=local
  * - `package` (default): scaffolds a workspace package (and optional paired
  *   apps/routes). e.g. ui, jobs.
  * - `starter`: drops in a minified domain starter (generic Prisma model + CRUD
- *   endpoint + recipe) from `templates/starters/<starter>/`. No workspace
+ *   endpoint + skill) from `templates/starters/<starter>/`. No workspace
  *   package, no paired routes.
  */
 const FEATURE_META = {

@@ -45,26 +45,26 @@ It is deliberately neutral (plain Tailwind, no themed UI) so it never leaks a de
 
 ### 2.3 Verticals = domain starters, not packages
 
-Vertical features (`bookings`, `crm`, `cms`, `ai`) become **minified domain starters**: a generic endpoint + generic DB fields + a recipe. No UI, no admin pages, no domain-specific business logic. The user or AI extends it.
+Vertical features (`bookings`, `crm`, `cms`, `ai`) become **skill-only verticals**: no scaffolded code - the embedded skill carries the domain knowledge and the AI builds the system on demand.
 
 ```
-# what `add bookings` (or --features bookings) drops in:
-recipes/bookings.md                        # how to extend it
-packages/db/prisma/booking.prisma          # generic Booking model
+# what the bookings skill teaches the AI to build:
+<harness>/skills/bookings/SKILL.md         # domain context + Quark patterns
+packages/db/prisma/booking.prisma          # generic Booking model (AI-generated)
 apps/web/src/app/api/bookings/route.js     # CRUD: create/read/update/delete
 apps/web/src/app/api/bookings/[id]/route.js
 ```
 
-The original full packages are **demoted/hidden** (archived to `reference/`), not deleted, so the domain logic is preserved as recipe source and validation oracle.
+The original full packages are **demoted/hidden** (archived to `reference/`), not deleted, so the domain logic is preserved as reference source and validation oracle.
 
-### 2.4 MAIN.md + Prompt Library
+### 2.4 MAIN.md + Embedded Skills
 
-- **`MAIN.md`** — a single "read this first" GPS at repo root that routes the agent: project brief → `CLAUDE.md` (rules) → `docs/` (guides) → `openapi.yaml` (contract) → `recipes/` (feature specs). Token-efficient bootstrap: *"Read MAIN.md, then build X."*
-- **Prompt Library (`recipes/`)** — markdown feature specs. Each recipe: what it builds, files created, patterns to follow, the prompt to paste. This is the vibe-coder differentiator and the home for the verticals' domain knowledge.
+- **`MAIN.md`** — a single "read this first" GPS at repo root that routes the agent: project brief → `CLAUDE.md` (rules) → `docs/` (guides) → `openapi.yaml` (contract) → `<harness>/skills/` (feature specs). Token-efficient bootstrap: *"Read MAIN.md, then build X."*
+- **Embedded Skills (`<harness>/skills/`)** — markdown feature specs placed for auto-loading by the chosen AI harness. Each skill: what it builds, patterns to follow, workflow, end-result shape, and a pointer to the archived reference implementation. This is the vibe-coder differentiator and the home for the verticals' domain knowledge.
 
 ### 2.5 Package scope reduction
 
-Reduce the scaffolded package surface from 12 to ~8, and convert the 4 verticals from packages to starters + recipes.
+Reduce the scaffolded package surface from 12 to ~8, and convert the 4 verticals from packages to skills.
 
 ## 3. Decisions
 
@@ -73,11 +73,11 @@ Reduce the scaffolded package surface from 12 to ~8, and convert the 4 verticals
 | D1 | API-first: Quark = backend contract + agent context | Matches the vibe-coder market; AI is the UI layer |
 | D2 | Two-view CLI (Human + AI) | Human gets simple questions; AI gets a deterministic contract |
 | D3 | Admin = neutral operations shell (patterns + CRUD fallback) | Serves decision-making, not data management; no design leak |
-| D4 | Verticals = minified domain starters (endpoint + model + recipe) | Lean, honest 80/20; user/AI builds the 20% |
-| D5 | Recipes carry the domain knowledge | Replaces the value that used to live in full packages |
+| D4 | Verticals = skill-only (AI builds on demand) | Lean, honest 80/20; user/AI builds the 20% |
+| D5 | Skills carry the domain knowledge | Replaces the value that used to live in full packages |
 | D6 | MAIN.md single entry point | Token-efficient agent bootstrap (create-vibe-app pattern) |
 | D7 | Quark logo embedded in scaffolded page | Brand anchor; already ~80% present |
-| D8 | Demote/hide originals (archive to `reference/`), don't delete | Preserve tested logic as recipe source + validation oracle |
+| D8 | Demote/hide originals (archive to `reference/`), don't delete | Preserve tested logic as reference source + validation oracle |
 | D9 | Decouple admin from themed UI + design-system skill | Kills the design-language contamination vector |
 
 ## 4. Target Architecture
@@ -94,10 +94,10 @@ Reduce the scaffolded package surface from 12 to ~8, and convert the 4 verticals
 | `worker` | scaffolded | keep (opt-in) | Queues |
 | `ui` | scaffolded | keep (opt-in) | Public-page theming only |
 | `admin` | scaffolded | keep (opt-in, operations shell) | Decision layer |
-| `bookings` | scaffolded | **starter + recipe** | Vertical |
-| `crm` | scaffolded | **starter + recipe** | Vertical |
-| `cms` | scaffolded | **starter + recipe** | Vertical |
-| `ai` | scaffolded | **starter + recipe** | Vertical |
+| `bookings` | scaffolded | **skill-only** | Vertical |
+| `crm` | scaffolded | **skill-only** | Vertical |
+| `cms` | scaffolded | **skill-only** | Vertical |
+| `ai` | scaffolded | **skill-only** | Vertical |
 
 ### 4.2 CLI map
 
@@ -119,7 +119,7 @@ create <name> --features crm,ai        # AI View: deterministic params
 create <name> --preset client-work     # AI View: preset bundle
 create <name> --prompt "..."           # AI View: brief from prompt
 add <feature>                          # add a domain starter / package later
-recipe <feature>                       # print an AI prompt recipe
+skill <feature>                        # print an embedded skill
 update | update --check | update --scaffold-check
 flags: --no-prompts --preset --features --prompt --skip-install --skip-docker
 ```
@@ -141,7 +141,7 @@ admin-routes/
 ## 5. Non-goals & Open Questions
 
 - **No scaffold-time LLM dependency.** The CLI stays fast and offline; the agent scopes during development, not at scaffold time.
-- **Recipe quality is the risk.** The minified verticals are *less* than the originals; the recipe must carry the domain knowledge or functionality is lost.
+- **Skill quality is the risk.** The skill-only verticals ship no code; the skills must carry the domain knowledge or functionality is lost.
 - **Open:** exact `--preset` bundles (client-work / internal-tool / product / minimal) and their feature mappings.
 - **Open:** whether `worker` stays opt-in or moves to a starter.
 - **Locked:** the archived originals live in `reference/` at the monorepo root (keeps the archive with the code; F4 creates it).

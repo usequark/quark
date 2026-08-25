@@ -11,7 +11,7 @@
 | #64 | Plan docs | `main` | MERGED |
 | #66 | C (F7 logo, F1 MAIN.md) | `quark-scaffold-opinionation` | MERGED |
 | #67 | B (F3 admin shell, F8 decouple) | `quark-scaffold-opinionation` | MERGED — **fragile** |
-| #68 | A (F2 recipes, F4 starters, F6 scope, F5 CLI) | `quark-scaffold-opinionation` | MERGED |
+| #68 | A (F2 skills, F4 starters, F6 scope, F5 CLI) | `quark-scaffold-opinionation` | MERGED |
 
 All lane work is on `quark-scaffold-opinionation`. Diff vs `main`: **162 files, +3087 / −3946**.
 
@@ -26,7 +26,7 @@ All lane work is on `quark-scaffold-opinionation`. Diff vs `main`: **162 files, 
 | F3 admin shell | `packages/cli/templates/admin-routes/` | ❌ **NO — redo in source** |
 | F7 logo | `apps/web/src/app/page.js` (source) | ✅ template == source |
 | F1 MAIN.md | `base-project/MAIN.md` (outside synced dest) | ✅ preserved |
-| F2 recipes/ | `base-project/recipes/` (outside synced dest) | ✅ preserved |
+| F2 skills/ | `base-project/skills/` (outside synced dest) | ✅ preserved |
 | F4 starters/ | `templates/starters/` (not in sync map) | ✅ preserved |
 | F4 reference/ | repo root | ✅ preserved |
 | F5/F6 CLI | `packages/cli/` (not templates) | ✅ preserved |
@@ -59,12 +59,12 @@ On `quark-scaffold-opinionation` (after Phase 0 merges):
 - [ ] `pnpm test` (requires Docker: `docker compose up -d`)
 - [ ] `node packages/cli/scripts/sync-templates.js --check` → clean
 - [ ] Scaffold smoke test: `node packages/cli/scripts/smoke-published.js`
-- [ ] Confirm preserved: `recipes/`, `starters/`, `MAIN.md`, `reference/` all present in a scaffold
+- [ ] Confirm preserved: `skills/`, `starters/`, `MAIN.md`, `reference/` all present in a scaffold
 
 ### Phase 2 — Merge to `main`
 
 1. Open PR `quark-scaffold-opinionation` → `main`.
-2. Review the 162-file diff (focus: admin-routes now source-backed, recipes/starters/MAIN.md added, verticals moved to `reference/`, CLI two-view + `recipe` command).
+2. Review the 162-file diff (focus: admin-routes now source-backed, skills/starters/MAIN.md added, verticals moved to `reference/`, CLI two-view + `skill` command).
 3. Merge (squash or merge — follow repo convention).
 
 ## 4. Rollback
