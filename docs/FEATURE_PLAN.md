@@ -21,9 +21,9 @@ For every feature, an agent must respect:
 | ID | Feature | Depends on | Parallel-safe |
 |----|---------|-----------|---------------|
 | F1 | MAIN.md + entry-point context | F2 (structure) | after F2 |
-| F2 | Prompt Library (`recipes/`) | — | ✅ now |
+| F2 | Prompt Library (`skills/`) | — | ✅ now |
 | F3 | Minified admin operations shell | — | ✅ now |
-| F4 | Minified verticals (domain starters) | F2 (recipe format) | after F2 |
+| F4 | Minified verticals (domain starters) | F2 (skill format) | after F2 |
 | F5 | Two-view CLI | F6 (feature list) | after F6 |
 | F6 | Package scope reduction | F4 (starter set) | after F4 |
 | F7 | Quark logo in scaffold | — | ✅ now |
@@ -42,45 +42,45 @@ For every feature, an agent must respect:
 - `packages/cli/templates/base-project/CLAUDE.md` (add a pointer to MAIN.md)
 
 **Contract (produces):**
-- `MAIN.md` at scaffold root containing: project brief placeholder, links to `CLAUDE.md`, `docs/`, `openapi.yaml`, `recipes/`.
+- `MAIN.md` at scaffold root containing: project brief placeholder, links to `CLAUDE.md`, `docs/`, `openapi.yaml`, `skills/`.
 - `CLAUDE.md` references `MAIN.md` as the entry point.
 
-**Dependencies:** F2 (references `recipes/` path — consume the agreed path, do not create it).
+**Dependencies:** F2 (references `skills/` path — consume the agreed path, do not create it).
 
 **Verification:** Scaffold a project; confirm `MAIN.md` exists and `CLAUDE.md` links to it; confirm the brief placeholder is populated from the CLI description.
 
-**Isolation boundary:** Do NOT create `recipes/` (F2 owns it). Do NOT edit the CLI (F5 owns it).
+**Isolation boundary:** Do NOT create `skills/` (F2 owns it). Do NOT edit the CLI (F5 owns it).
 
 ---
 
-## F2 — Prompt Library (`recipes/`)
+## F2 — Prompt Library (`skills/`)
 
-**Goal:** A library of markdown feature recipes that agents execute against Quark conventions.
+**Goal:** A library of markdown feature skills that agents execute against Quark conventions.
 
-**Name:** `recipes/` (locked). Established in the AI-boilerplate space; distinct from `docs/` (reference) and `templates/` (code). Rejected: `prompts/` (too raw), `playbooks/` (ops-flavored), `blueprints/` (structure-flavored).
+**Name:** `skills/` (locked). Established in the AI-boilerplate space; distinct from `docs/` (reference) and `templates/` (code). Rejected: `prompts/` (too raw), `playbooks/` (ops-flavored), `blueprints/` (structure-flavored).
 
 **Location (two contexts):**
-- **Source of truth (monorepo):** `packages/cli/templates/base-project/recipes/` — scaffolded into projects.
-- **Scaffolded project:** `<project>/recipes/` at repo root — agents find it immediately; `MAIN.md` links to it.
+- **Source of truth (monorepo):** `packages/cli/templates/base-project/skills/` — scaffolded into projects.
+- **Scaffolded project:** `<project>/skills/` at repo root — agents find it immediately; `MAIN.md` links to it.
 
 **Scope:**
-- `packages/cli/templates/base-project/recipes/` (new directory)
-- `packages/cli/templates/base-project/recipes/README.md` (how to use + how to write a recipe)
-- `packages/cli/templates/base-project/recipes/_TEMPLATE.md` (recipe format: frontmatter + body)
-- `packages/cli/templates/base-project/recipes/add-model.md` (core: add a Prisma model + query helpers)
-- `packages/cli/templates/base-project/recipes/add-endpoint.md` (core: add a CRUD endpoint)
-- `packages/cli/templates/base-project/recipes/add-dashboard.md` (core: add a decision dashboard to admin)
+- `packages/cli/templates/base-project/skills/` (new directory)
+- `packages/cli/templates/base-project/skills/README.md` (how to use + how to write a skill)
+- `packages/cli/templates/base-project/skills/_TEMPLATE.md` (skill format: frontmatter + body)
+- `packages/cli/templates/base-project/skills/add-model.md` (core: add a Prisma model + query helpers)
+- `packages/cli/templates/base-project/skills/add-endpoint.md` (core: add a CRUD endpoint)
+- `packages/cli/templates/base-project/skills/add-dashboard.md` (core: add a decision dashboard to admin)
 
 **What ships (do NOT ship the whole library):**
 - **Core set ships by default:** `README.md`, `_TEMPLATE.md`, `add-model.md`, `add-endpoint.md`, `add-dashboard.md`.
-- **Vertical recipes ship with their feature** (F4 owns those): `add bookings` → `recipes/bookings.md`, `--features crm` → `recipes/crm.md`, etc.
-- **Full library lives in the monorepo**, pulled on demand via `add <feature>` / `recipe <feature>`.
+- **Vertical skills ship with their feature** (F4 owns those): `add bookings` → `skills/bookings.md`, `--features crm` → `skills/crm.md`, etc.
+- **Full library lives in the monorepo**, pulled on demand via `add <feature>` / `skill <feature>`.
 
 **Structure (flat, for agent discoverability):**
 ```
-recipes/
-  README.md          # how to use + how to write a recipe
-  _TEMPLATE.md       # the recipe format (frontmatter + body)
+skills/
+  README.md          # how to use + how to write a skill
+  _TEMPLATE.md       # the skill format (frontmatter + body)
   add-model.md       # core: add a Prisma model + query helpers
   add-endpoint.md    # core: add a CRUD endpoint
   add-dashboard.md   # core: add a decision dashboard to admin
@@ -90,7 +90,7 @@ recipes/
   ai.md              # vertical (F4)
 ```
 
-**Recipe format (frontmatter + markdown body):**
+**Skill format (frontmatter + markdown body):**
 ```markdown
 ---
 name: Add a booking system
@@ -106,18 +106,18 @@ depends: [db, admin]
 ## Patterns to follow
 ## Prompt to paste
 ```
-The `files` list is the contract — it tells the agent exactly what to create and lets the CLI validate a recipe produced the right output.
+The `files` list is the contract — it tells the agent exactly what to create and lets the CLI validate a skill produced the right output.
 
 **Contract (produces):**
-- A documented recipe format: *what it builds, files created, patterns to follow, the prompt to paste* (frontmatter + body).
-- The `recipes/` path that F1 and F4 reference.
-- The core recipe set (`README.md`, `_TEMPLATE.md`, `add-model.md`, `add-endpoint.md`, `add-dashboard.md`).
+- A documented skill format: *what it builds, files created, patterns to follow, the prompt to paste* (frontmatter + body).
+- The `skills/` path that F1 and F4 reference.
+- The core skill set (`README.md`, `_TEMPLATE.md`, `add-model.md`, `add-endpoint.md`, `add-dashboard.md`).
 
 **Dependencies:** none.
 
-**Verification:** A recipe template renders correctly in a scaffolded project; `recipes/README.md` documents the format; the core set is present in a base scaffold.
+**Verification:** A skill template renders correctly in a scaffolded project; `skills/README.md` documents the format; the core set is present in a base scaffold.
 
-**Isolation boundary:** Do NOT write domain-specific/vertical recipes (F4 owns those). Do NOT create `MAIN.md` (F1 owns it). Do NOT wire recipes into the CLI `add`/`recipe` commands (F5 owns that).
+**Isolation boundary:** Do NOT write domain-specific/vertical skills (F4 owns those). Do NOT create `MAIN.md` (F1 owns it). Do NOT wire skills into the CLI `add`/`skill` commands (F5 owns that).
 
 ---
 
@@ -145,21 +145,21 @@ The `files` list is the contract — it tells the agent exactly what to create a
 
 ## F4 — Minified verticals (domain starters)
 
-**Goal:** Convert `bookings`, `crm`, `cms`, `ai` from full packages into minified domain starters (generic endpoint + model + recipe).
+**Goal:** Convert `bookings`, `crm`, `cms`, `ai` from full packages into minified domain starters (generic endpoint + model + skill).
 
 **Scope:**
 - `packages/cli/templates/starters/` (new: `bookings/`, `crm/`, `cms/`, `ai/` — each a generic endpoint + Prisma model)
-- `packages/cli/templates/base-project/recipes/<vertical>.md` (vertical recipes: `bookings.md`, `crm.md`, `cms.md`, `ai.md` — using F2's format)
-- `reference/` (new, archive of the original full packages for recipe source + validation)
+- `packages/cli/templates/base-project/skills/<vertical>.md` (vertical skills: `bookings.md`, `crm.md`, `cms.md`, `ai.md` — using F2's format)
+- `reference/` (new, archive of the original full packages for skill source + validation)
 
 **Contract (produces):**
 - A `starters/<vertical>/` with: a generic Prisma model and a CRUD endpoint.
-- A vertical recipe `recipes/<vertical>.md` (F2 format) that documents the extension path.
+- A vertical skill `skills/<vertical>.md` (F2 format) that documents the extension path.
 - The set of starter names that F6 uses to define the CLI feature list.
 
-**Dependencies:** F2 (recipe format + the `recipes/` path).
+**Dependencies:** F2 (skill format + the `skills/` path).
 
-**Verification:** `add bookings` drops in the generic Booking model + CRUD endpoint + recipe; the recipe documents the extension path.
+**Verification:** `add bookings` drops in the generic Booking model + CRUD endpoint + skill; the skill documents the extension path.
 
 **Isolation boundary:** Do NOT edit the CLI (F5/F6 own it). Do NOT delete the originals — archive them to `reference/` (D8).
 
@@ -170,19 +170,19 @@ The `files` list is the contract — it tells the agent exactly what to create a
 **Goal:** Restructure the CLI into a Human View (product-shaped questions + advanced) and an AI View (deterministic params).
 
 **Scope:**
-- `packages/cli/src/index.js` (prompt flow + param handling + `recipe` command)
-- `packages/cli/test-flags.js` (AI View param tests + `recipe` command tests)
-- `packages/cli/README.md` (document both views + param contract + `recipe` command)
+- `packages/cli/src/index.js` (prompt flow + param handling + `skill` command)
+- `packages/cli/test-flags.js` (AI View param tests + `skill` command tests)
+- `packages/cli/README.md` (document both views + param contract + `skill` command)
 
 **Contract (produces):**
 - Human View: "Describe your app" → brief → `MAIN.md`; advanced expander for full config.
 - AI View: documented `--features`, `--preset`, `--prompt`, `--no-prompts`; deterministic output.
-- `recipe <feature>` command: prints an AI prompt recipe for a feature.
-- The param contract + `recipe` command documented in `packages/cli/README.md` (F5's own file — NOT `CLAUDE.md`/`MAIN.md`, which F1 owns).
+- `skill <feature>` command: prints an AI prompt skill for a feature.
+- The param contract + `skill` command documented in `packages/cli/README.md` (F5's own file — NOT `CLAUDE.md`/`MAIN.md`, which F1 owns).
 
 **Dependencies:** F6 (the feature list it exposes).
 
-**Verification:** `pnpm --filter @techstream/quark-create-app test` passes; `test-flags.js` covers the AI View params and the `recipe` command; a `--no-prompts` run is deterministic.
+**Verification:** `pnpm --filter @techstream/quark-create-app test` passes; `test-flags.js` covers the AI View params and the `skill` command; a `--no-prompts` run is deterministic.
 
 **Isolation boundary:** Do NOT edit templates (F1–F4 own them). Do NOT define the feature list (F6 owns it) — consume it. Do NOT edit `CLAUDE.md`/`MAIN.md` (F1 owns them).
 
@@ -247,7 +247,7 @@ The `files` list is the contract — it tells the agent exactly what to create a
 ## Dependency Graph
 
 ```
-F2 (recipes) ──► F4 (starters) ──► F6 (scope) ──► F5 (CLI views)
+F2 (skills) ──► F4 (starters) ──► F6 (scope) ──► F5 (CLI views)
 F3 (admin shell) ──► F8 (design decouple)
 F7 (logo)  [independent]
 F1 (MAIN.md) ── depends on F2 path
@@ -265,4 +265,4 @@ After F6: **F5**.
 
 - Each feature verifies in isolation (see per-feature Verification).
 - After all features land, run the full suite: `pnpm test`, `pnpm lint`, and a scaffold smoke test (`packages/cli/scripts/smoke-published.js`).
-- Confirm the scaffolded project: has `MAIN.md` + `recipes/`, neutral admin shell, starters resolvable via `add`/`--features`, logo present, and no design-language leak.
+- Confirm the scaffolded project: has `MAIN.md` + `skills/`, neutral admin shell, starters resolvable via `add`/`--features`, logo present, and no design-language leak.

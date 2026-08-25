@@ -134,7 +134,7 @@ npx @techstream/quark-create-app skill endpoint
 npx @techstream/quark-create-app skill dashboard
 ```
 
-Available recipes: `model`, `endpoint`, `dashboard`, `bookings`, `crm`, `cms`, `ai`.
+Available skills: `model`, `endpoint`, `dashboard`, `bookings`, `crm`, `cms`, `ai`.
 
 ### Skip Installation Steps
 
