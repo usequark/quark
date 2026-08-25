@@ -24,7 +24,7 @@ A CRM manages relationships with companies and contacts, and tracks deals throug
 - **Data access** goes through query helpers in `packages/db/src/queries.js` — never call `prisma.*` directly in pages/actions.
 - **API routes** live in `apps/web/src/app/api/<resource>/`. Guard with `requireRole`, validate with Zod via `validateBody`, wrap mutations in `withCsrfProtection`. Follow `apps/web/src/app/api/users/route.js` as the reference shape.
 - **Server Actions** (preferred for mutations) use `"use server"`, Zod validation, and `AppError`/`ValidationError` from `@techstream/quark-core/errors`.
-- **Admin views** live under `apps/web/src/app/admin/` using the neutral admin shell patterns (`_patterns/Dashboard.js`, `_patterns/ActionForm.js`).
+- **Admin views** live under `apps/web/src/app/admin/` (see the admin-dashboard skill).
 - **Auth** via `getCurrentSession` from `@techstream/quark-core`.
 
 ## Workflow

@@ -160,7 +160,7 @@ if (forgotPwContent && forgotPwContent.includes("quark-auth-layout")) {
 
 // ── Check S3: Source files import packages not installed ───────────────────────
 {
-	const optionalPackages = ["ui", "jobs", "admin"];
+	const optionalPackages = ["ui", "jobs"];
 	const scope = (() => {
 		try {
 			const pkg = JSON.parse(read("package.json") ?? "{}");

@@ -125,13 +125,12 @@ describe("Feature Validation", () => {
 		}
 	});
 
-	it("admin feature scaffolds admin without CMS package or routes", () => {
+	it("admin is no longer a scaffoldable feature (skills ship instead)", () => {
 		const tmpDir = makeTempDir();
-		const projectName = "test-admin-app";
 		try {
 			const result = runCLI(
 				[
-					projectName,
+					"test-admin-app",
 					"--no-prompts",
 					"--features",
 					"ui,admin",
@@ -140,62 +139,64 @@ describe("Feature Validation", () => {
 				],
 				tmpDir,
 			);
-			assert.strictEqual(
-				result.status,
-				0,
-				`Expected exit 0\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
-			);
+			assert.strictEqual(result.status, 1);
+			assert.ok(result.stderr.includes("Invalid features: admin"));
 
-			const projectDir = join(tmpDir, projectName);
-			assert.ok(existsSync(join(projectDir, "packages", "admin")));
-			assert.ok(!existsSync(join(projectDir, "packages", "cms")));
+			// Default scaffold ships no admin UI but bundles all skills.
+			const scaffold = runCLI(
+				[
+					"test-admin-app",
+					"--no-prompts",
+					"--features",
+					"ui,jobs",
+					"--skip-install",
+					"--skip-docker",
+				],
+				tmpDir,
+			);
+			assert.strictEqual(scaffold.status, 0);
+
+			const projectDir = join(tmpDir, "test-admin-app");
+			assert.ok(!existsSync(join(projectDir, "packages", "admin")));
 			assert.ok(
-				!existsSync(
+				!existsSync(join(projectDir, "apps", "web", "src", "app", "admin")),
+			);
+			assert.ok(
+				existsSync(
 					join(
 						projectDir,
-						"apps",
-						"web",
-						"src",
-						"app",
-						"admin",
-						"cms",
-						"page.js",
+						".opencode",
+						"skills",
+						"admin-dashboard",
+						"SKILL.md",
 					),
+				),
+			);
+			assert.ok(
+				existsSync(
+					join(projectDir, ".opencode", "skills", "quark-skills", "SKILL.md"),
 				),
 			);
 
 			const webPackageJson = JSON.parse(
 				readFileSync(join(projectDir, "apps", "web", "package.json"), "utf8"),
 			);
-			assert.ok(!webPackageJson.dependencies[`@test-admin-app/cms`]);
-
-			const adminLayout = readFileSync(
-				join(projectDir, "apps", "web", "src", "app", "admin", "layout.js"),
-				"utf8",
-			);
-			assert.ok(!adminLayout.includes("@techstream/quark-cms"));
-
-			const nextConfig = readFileSync(
-				join(projectDir, "apps", "web", "next.config.js"),
-				"utf8",
-			);
-			assert.ok(!nextConfig.includes("@test-admin-app/cms"));
+			assert.ok(!webPackageJson.dependencies["@test-admin-app/admin"]);
 		} finally {
 			cleanup(tmpDir);
 		}
 	});
 
-	it("cms feature resolves as a skill (no package, no starter code)", () => {
+	it("all skills are bundled regardless of selected features", () => {
 		const tmpDir = makeTempDir();
 		const projectName = "test-cms-app";
-		const scope = projectName.toLowerCase().replace(/[^a-z0-9-]/g, "");
 		try {
 			const result = runCLI(
 				[
 					projectName,
 					"--no-prompts",
 					"--features",
-					"cms",
+					"ui",
 					"--skip-install",
 					"--skip-docker",
 				],
@@ -208,41 +209,49 @@ describe("Feature Validation", () => {
 			);
 
 			const projectDir = join(tmpDir, projectName);
-			// Skill-based vertical: no package, no starter code — just the embedded skill.
+			for (const skill of [
+				"cms",
+				"crm",
+				"bookings",
+				"ai",
+				"admin-dashboard",
+				"quark-skills",
+			]) {
+				assert.ok(
+					existsSync(
+						join(projectDir, ".opencode", "skills", skill, "SKILL.md"),
+					),
+					`missing skill: ${skill}`,
+				);
+			}
+
+			// No vertical starter code is scaffolded.
 			assert.ok(!existsSync(join(projectDir, "packages", "cms")));
-			assert.ok(
-				!existsSync(join(projectDir, "packages", "db", "prisma", "cms.prisma")),
-			);
 			assert.ok(
 				!existsSync(
 					join(projectDir, "apps", "web", "src", "app", "api", "cms"),
 				),
 			);
 			assert.ok(
-				existsSync(join(projectDir, ".opencode", "skills", "cms", "SKILL.md")),
+				!existsSync(join(projectDir, "apps", "web", "src", "app", "api", "ai")),
+			);
+			assert.ok(
+				!existsSync(
+					join(projectDir, "apps", "web", "src", "app", "api", "admin", "crm"),
+				),
 			);
 
 			// No workspace dep on a cms package.
 			const webPackageJson = JSON.parse(
 				readFileSync(join(projectDir, "apps", "web", "package.json"), "utf8"),
 			);
-			assert.ok(!webPackageJson.dependencies[`@${scope}/cms`]);
-
-			// Legacy base-project cms/ai API routes (importing archived packages) are removed.
-			assert.ok(
-				!existsSync(
-					join(projectDir, "apps", "web", "src", "app", "api", "admin", "crm"),
-				),
-			);
-			assert.ok(
-				!existsSync(join(projectDir, "apps", "web", "src", "app", "api", "ai")),
-			);
+			assert.ok(!webPackageJson.dependencies["@test-cms-app/cms"]);
 		} finally {
 			cleanup(tmpDir);
 		}
 	});
 
-	it("add cms resolves as a skill (no package, no starter code)", () => {
+	it("add cms exits with unknown-feature error (skills are always bundled)", () => {
 		const tmpDir = makeTempDir();
 		const projectName = "test-add-admin-app";
 		try {
@@ -257,29 +266,14 @@ describe("Feature Validation", () => {
 				],
 				tmpDir,
 			);
-			assert.strictEqual(
-				createResult.status,
-				0,
-				`Expected exit 0\nstdout: ${createResult.stdout}\nstderr: ${createResult.stderr}`,
-			);
+			assert.strictEqual(createResult.status, 0);
 
 			const projectDir = join(tmpDir, projectName);
 			const addResult = runCLI(["add", "cms", "--skip-install"], projectDir);
-			assert.strictEqual(
-				addResult.status,
-				0,
-				`Expected exit 0\nstdout: ${addResult.stdout}\nstderr: ${addResult.stderr}`,
-			);
-			// Skill-based vertical: no package, no starter code — just the embedded skill.
-			assert.ok(!existsSync(join(projectDir, "packages", "cms")));
-			assert.ok(
-				!existsSync(join(projectDir, "packages", "db", "prisma", "cms.prisma")),
-			);
-			assert.ok(
-				!existsSync(
-					join(projectDir, "apps", "web", "src", "app", "api", "cms"),
-				),
-			);
+			assert.strictEqual(addResult.status, 1);
+			assert.ok(addResult.stderr.includes('Unknown feature: "cms"'));
+
+			// The bundled skill is still present for the AI to use on demand.
 			assert.ok(
 				existsSync(join(projectDir, ".opencode", "skills", "cms", "SKILL.md")),
 			);
@@ -514,7 +508,7 @@ describe("AI View Params", () => {
 		}
 	});
 
-	it("--preset client-work resolves to ui,jobs,admin", () => {
+	it("--preset client-work resolves to ui,jobs", () => {
 		const tmpDir = makeTempDir();
 		const projectName = "test-preset-client";
 		try {
@@ -539,7 +533,7 @@ describe("AI View Params", () => {
 			);
 			assert.ok(quarkLink.packages.includes("ui"));
 			assert.ok(quarkLink.packages.includes("jobs"));
-			assert.ok(quarkLink.packages.includes("admin"));
+			assert.ok(!quarkLink.packages.includes("admin"));
 		} finally {
 			cleanup(tmpDir);
 		}

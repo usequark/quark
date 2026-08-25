@@ -115,9 +115,14 @@ try {
 			test: () => fs.existsSync(path.join(__dirname, "templates/config")),
 		},
 		{
-			name: "Admin template has README",
+			name: "Admin dashboard skill exists",
 			test: () =>
-				fs.existsSync(path.join(__dirname, "templates/admin/README.md")),
+				fs.existsSync(
+					path.join(
+						__dirname,
+						"templates/base-project/skills/admin-dashboard/SKILL.md",
+					),
+				),
 		},
 		{
 			name: "CMS skill exists",
@@ -185,7 +190,7 @@ try {
 				"--skip-install",
 				"--skip-docker",
 				"--features",
-				"ui,admin",
+				"ui,jobs",
 				"--signup",
 				"disabled",
 			],

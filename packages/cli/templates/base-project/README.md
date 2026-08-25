@@ -15,6 +15,7 @@ Scaffolded with [Quark](https://github.com/Bobnoddle/quark) on __QUARK_SCAFFOLD_
 docker compose up -d   # Start PostgreSQL, Redis, Mailpit
 pnpm install           # Install dependencies
 pnpm db:migrate        # Apply migrations
+pnpm db:seed           # Seed the database (admin user + sample data)
 pnpm dev               # Start the app (and worker, if included)
 ```
 

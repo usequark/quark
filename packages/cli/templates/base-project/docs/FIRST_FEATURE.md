@@ -71,5 +71,4 @@ If the feature needs more infrastructure, add it only when necessary:
 
 - `ui` for reusable components
 - `jobs` for async work
-- `admin` for internal CRUD
 - `cms` for editorial content workflows

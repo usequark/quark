@@ -43,9 +43,6 @@ function isRuntimeAppPath(relativePath) {
 		/^packages\/cli\/templates\/worker\/src\/.*\.(?:js|jsx|mjs)$/.test(
 			relativePath,
 		) ||
-		/^packages\/cli\/templates\/(?:admin-routes|cms-routes)\/.*\.(?:js|jsx|mjs)$/.test(
-			relativePath,
-		) ||
 		/^packages\/cli\/templates\/base-project\/apps\/.*\.(?:js|jsx|mjs)$/.test(
 			relativePath,
 		)
@@ -56,10 +53,7 @@ function isSourceFile(relativePath) {
 	return (
 		/^apps\/.*\/src\/.*\.(?:js|jsx|mjs)$/.test(relativePath) ||
 		/^packages\/.*\/src\/.*\.(?:js|jsx|mjs)$/.test(relativePath) ||
-		/^packages\/cli\/templates\/(?:worker|admin|cms|config|jobs|ui)\/src\/.*\.(?:js|jsx|mjs)$/.test(
-			relativePath,
-		) ||
-		/^packages\/cli\/templates\/(?:admin-routes|cms-routes)\/.*\.(?:js|jsx|mjs)$/.test(
+		/^packages\/cli\/templates\/(?:worker|config|jobs|ui)\/src\/.*\.(?:js|jsx|mjs)$/.test(
 			relativePath,
 		) ||
 		/^packages\/cli\/templates\/base-project\/apps\/.*\.(?:js|jsx|mjs)$/.test(
