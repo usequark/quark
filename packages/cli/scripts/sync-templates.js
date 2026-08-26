@@ -117,7 +117,11 @@ const SYNC_DIRS = [
 	{
 		src: "packages/ui",
 		dest: "ui",
-		localExcludes: [/^packages\/ui\/src\/.*\.test\.js$/],
+		localExcludes: [
+			/^packages\/ui\/src\/.*\.test\.js$/,
+			// Themes removed — goes against minimal Quark approach
+			/^packages\/ui\/themes\//,
+		],
 	},
 	{
 		src: "packages/jobs",
@@ -243,8 +247,12 @@ const TEMPLATE_ONLY = new Set([
 	// Base-project sitemap is a simpler version (no CMS dependency);
 	// the CMS-capable sitemap lives in cms-public template
 	"base-project/apps/web/src/app/sitemap.js",
+	// UI README is a minimal quickstart, not the full monorepo docs
+	"ui/README.md",
+	// Worker README is a minimal quickstart, not the full monorepo docs
+	"worker/README.md",
 
-	// OpenCode deploy config - scaffolded conditionally via --features ai
+	// OpenCode deploy config - removed (no longer used)
 	"opencode",
 ]);
 
