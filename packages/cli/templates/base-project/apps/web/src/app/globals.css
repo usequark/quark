@@ -56,6 +56,11 @@
 
 	/* App shell */
 	--quark-page-bg: var(--color-bg);
+	--quark-grid-line: rgba(255, 255, 255, 0.07);
+	--quark-home-muted: #4e5870;
+	--quark-home-sep: #2c3450;
+	--quark-home-link-idle: #7886a8;
+	--quark-home-link-hover: var(--color-primary);
 
 	/*
 	 * ─── COMPONENT CSS VARIABLES ──────────────────────────────────────────────
@@ -302,6 +307,11 @@
 		--color-info: #0891b2;
 		--color-info-muted: rgba(8, 145, 178, 0.08);
 
+		--quark-grid-line: rgba(0, 0, 0, 0.07);
+		--quark-home-muted: #9ca3af;
+		--quark-home-sep: #d1d5db;
+		--quark-home-link-idle: #6b7280;
+
 		--checkbox-bg: transparent;
 		--checkbox-border: #d1d5db;
 		--checkbox-accent: #2563eb;
@@ -341,6 +351,11 @@
 
 	--color-info: #0891b2;
 	--color-info-muted: rgba(8, 145, 178, 0.08);
+
+	--quark-grid-line: rgba(0, 0, 0, 0.07);
+	--quark-home-muted: #9ca3af;
+	--quark-home-sep: #d1d5db;
+	--quark-home-link-idle: #6b7280;
 
 	--checkbox-bg: transparent;
 	--checkbox-border: #d1d5db;
@@ -662,4 +677,123 @@ dialog {
 
 .animate-slide-in-back {
 	animation: slide-in-from-left 300ms ease-out both;
+}
+
+/*
+ * ─── HOME PAGE ─────────────────────────────────────────────────────────────
+ */
+.quark-home-main,
+.quark-page-grid {
+	background-color: var(--quark-page-bg);
+	background-image:
+		linear-gradient(var(--quark-grid-line) 1px, transparent 1px),
+		linear-gradient(90deg, var(--quark-grid-line) 1px, transparent 1px);
+	background-size: 40px 40px;
+}
+
+.quark-home-label {
+	color: var(--quark-home-muted);
+	font-size: 11px;
+	letter-spacing: 0.15em;
+}
+
+.quark-home-sep {
+	color: var(--quark-home-sep);
+	font-family: monospace;
+}
+
+.quark-home-link {
+	color: var(--quark-home-link-idle);
+	text-decoration: none;
+	font-family: monospace;
+	transition: color 0.15s ease;
+}
+
+.quark-home-link:hover {
+	color: var(--quark-home-link-hover);
+}
+
+.quark-home-link:focus-visible {
+	outline: 1px solid var(--quark-home-link-hover);
+	outline-offset: 2px;
+	border-radius: 2px;
+}
+
+.quark-home-external-icon {
+	display: inline-block;
+	width: 0.65em;
+	height: 0.65em;
+	margin-left: 3px;
+	vertical-align: 0.05em;
+	opacity: 0.6;
+	transition: opacity 0.15s ease;
+}
+
+.quark-home-link:hover .quark-home-external-icon {
+	opacity: 1;
+}
+
+/*
+ * ─── AUTH LAYOUT ─────────────────────────────────────────────────────────────
+ *
+ * Split-panel auth layout: authority branding panel (left) + form panel (right).
+ * On mobile the authority panel collapses - only the logo bar is shown.
+ */
+.quark-auth-layout {
+	display: grid;
+	grid-template-columns: 1fr;
+	min-height: 100dvh;
+}
+
+@media (min-width: 768px) {
+	.quark-auth-layout {
+		grid-template-columns: 2fr 3fr;
+	}
+}
+
+.quark-auth-panel {
+	animation: quark-auth-enter 300ms linear both;
+}
+
+.quark-auth-brand {
+	display: none;
+	background-color: var(--color-bg);
+	background-image:
+		linear-gradient(var(--quark-grid-line) 1px, transparent 1px),
+		linear-gradient(90deg, var(--quark-grid-line) 1px, transparent 1px);
+	background-size: 40px 40px;
+	border-right: 1px solid var(--color-border);
+}
+
+@media (min-width: 768px) {
+	.quark-auth-brand {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		padding: 3rem;
+	}
+}
+
+.quark-auth-form {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	padding: 2rem 1.5rem;
+	background-color: var(--color-surface);
+}
+
+@media (min-width: 768px) {
+	.quark-auth-form {
+		padding: 3rem;
+	}
+}
+
+@keyframes quark-auth-enter {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
 }
