@@ -1,6 +1,10 @@
 import { QuarkLogo } from "@techstream/quark-ui";
 import Link from "next/link";
 
+export const metadata = {
+	title: "Auth Error",
+};
+
 const ERROR_MESSAGES = {
 	Configuration: "There is a problem with the server configuration.",
 	AccessDenied: "Access denied. You do not have permission to sign in.",
