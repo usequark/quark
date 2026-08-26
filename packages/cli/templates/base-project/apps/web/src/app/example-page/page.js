@@ -56,7 +56,7 @@ export default function ExamplePage() {
 						</h1>
 						<p className="max-w-2xl text-base leading-7 text-text-muted sm:text-lg">
 							This page demonstrates shared layout and content primitives
-						.compose into a production-style public route.
+						composed into a production-style public route.
 						</p>
 					</div>
 
