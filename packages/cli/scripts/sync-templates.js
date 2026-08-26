@@ -243,9 +243,6 @@ const TEMPLATE_ONLY = new Set([
 	// Base-project sitemap is a simpler version (no CMS dependency);
 	// the CMS-capable sitemap lives in cms-public template
 	"base-project/apps/web/src/app/sitemap.js",
-	// Lighter version of globals.css — keeps design tokens + Tailwind bridge,
-	// drops monorepo-only home page, auth layout, and animation styles.
-	"base-project/apps/web/src/app/globals.css",
 
 	// OpenCode deploy config - scaffolded conditionally via --features ai
 	"opencode",
