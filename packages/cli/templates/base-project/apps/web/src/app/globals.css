@@ -601,7 +601,6 @@
 }
 
 /* Toast SVG strokes — per-variant dark overrides.
->>>>>>> 932257a (feat(ui): refactor to CSS variable theming system with 8 design presets)
  * Light uses :root defaults (white strokes on dark toast bg).
  * The blocking script in layout.js ensures data-theme is always set. */
 [data-theme="dark"] [data-toast-variant="default"] {

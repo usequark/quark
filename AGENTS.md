@@ -1,7 +1,5 @@
 # Quark - Agent Context
 
-> Full contributor guide: `CLAUDE.md`. This file surfaces the rules and gotchas most likely to cause agent mistakes.
-
 ## Non-Negotiable Rules
 
 - **ESM only** - `import`/`export` everywhere. Never `require()` or `module.exports`.
@@ -29,17 +27,41 @@ CI runs this automatically via the release workflow. Running it locally breaks t
 docker compose up -d  # PostgreSQL + Redis + Mailpit
 pnpm test
 ```
-Tests will fail silently or with connection errors if Postgres/Redis aren't up.
 
 ### UI imports - no deep imports
 Import from `@techstream/quark-ui` (monorepo) or `@<scope>/ui` (scaffolded projects).
 Never use `@/components/ui/*` - that Shadcn convention is not used here.
 Shared exports also include `ErrorBanner`, `Footer`, `Navbar`/`MobileNavbar`, and `RichText`; extend them with `className` before inventing one-off replacements.
-For public-page work, inspect `apps/web/src/app/example-page/page.js`, `apps/web/src/app/playground/page.js`, and `packages/ui/README.md` first.
 
 ### Two packages are published; everything else is scaffolded
 - **Published:** `@techstream/quark-core`, `@techstream/quark-create-app`
 - **Scaffolded (local-only):** `config`, `db`, `ui`, `jobs`, `admin` - these are excluded from versioning and npm publish.
+
+## Quick Setup
+
+```bash
+pnpm install
+docker compose up -d     # PostgreSQL, Redis, Mailpit
+pnpm db:generate         # Generate Prisma client
+pnpm dev                 # Start all apps (web + worker)
+```
+
+## Project Structure
+
+```
+quark/
+├── apps/
+│   ├── web/          # Next.js 16 reference app (App Router, Server Actions)
+│   └── worker/       # BullMQ background worker
+├── packages/
+│   ├── cli/          # @techstream/quark-create-app (published to npm)
+│   ├── core/         # @techstream/quark-core (published to npm)
+│   ├── db/           # Prisma schema + client + queries
+│   ├── config/       # Environment validation + config loading
+│   ├── ui/           # Shared UI components (Tailwind, scaffold template)
+│   └── jobs/         # BullMQ job type definitions (scaffold template)
+└── docs/             # Architecture, API, roadmap docs
+```
 
 ## Key Commands
 
@@ -51,3 +73,95 @@ For public-page work, inspect `apps/web/src/app/example-page/page.js`, `apps/web
 | `pnpm db:generate` | Regenerate Prisma client |
 | `pnpm db:migrate` | Run Prisma migrations |
 | `pnpm changeset` | Create a changeset (interactive, before opening a PR) |
+| `pnpm --filter @techstream/quark-create-app sync-templates` | Sync scaffold templates from source |
+| `pnpm --filter @techstream/quark-create-app sync-templates:check` | Check for template drift |
+
+## Coding Conventions
+
+- **ESM only** - `import`/`export`. Never `require()` or `module.exports`.
+- **No TypeScript** - `.js` and `.jsx` files only.
+- **Linting** - Biome for all formatting and linting.
+- **Validation** - Zod for all Server Actions and API routes.
+- **Errors** - `AppError` / `ValidationError` from `@techstream/quark-core/errors` in app/runtime code.
+- **Logging** - `createLogger(name)` from `@techstream/quark-core` in app/runtime code.
+- **DB models** - Always include `createdAt` and `updatedAt` on every Prisma model.
+
+## UI & Design System
+
+The `packages/ui` directory contains Tailwind-only, dependency-free Server Component-safe primitives.
+
+Available exports: `Button`, `Input`, `Label`, `Textarea`, `Select`, `Checkbox`, `Badge`, `Card`/`CardHeader`/`CardTitle`/`CardContent`/`CardFooter`, `Table`/`TableHeader`/`TableBody`/`TableRow`/`TableHead`/`TableCell`, `Skeleton`, `ErrorBanner`, `Footer`, `Navbar`/`MobileNavbar`, `RichText`, `Dialog` (client), `Toast`/`useToast` (client), `ThemeProvider`/`useTheme` (client).
+
+Import from `@techstream/quark-ui` (monorepo) or `@<scope>/ui` (scaffolded projects) - never deep-import.
+
+## Template Sync
+
+`packages/cli/templates/` is **generated from monorepo source** - never edited manually (except `TEMPLATE_ONLY` files).
+
+After changing any source file in `apps/web/`, `apps/worker/`, `packages/db/`, `packages/config/`, `packages/ui/`, or `packages/jobs/`:
+
+```bash
+pnpm --filter @techstream/quark-create-app sync-templates
+```
+
+**`TEMPLATE_ONLY` files** are never overwritten by sync: `CLAUDE.md`, `.cursor/rules/quark.mdc`, `SKILL.md`, GitHub workflows, scaffold READMEs, root `package.json`, biome configs, migrations, and the `opencode` directory.
+
+## Release Workflow
+
+1. Make changes on a branch
+2. Run `pnpm changeset` (interactive) to create a changeset file
+3. Commit code + changeset, open PR
+4. CI runs lint + test + build + changeset-check
+5. Merge to `main`
+6. Release workflow auto-opens a "chore: version packages" PR
+7. Review + merge → publishes to npm + creates GitHub Release
+
+**CRITICAL:** Never run `pnpm changeset version` locally.
+
+## Testing
+
+```bash
+docker compose up -d  # Required: Postgres 16 + Redis 7
+pnpm test             # Run all tests
+```
+
+Tests are co-located: `feature.test.js` next to `feature.js`. Uses Node.js built-in `node --test`.
+
+## Key Patterns
+
+### Error Handling
+```js
+import { AppError, ValidationError } from "@techstream/quark-core/errors";
+throw new ValidationError("Email is required");
+throw new AppError("Not found", 404, "NOT_FOUND");
+```
+
+### Auth Session
+```js
+import { auth } from "@/lib/auth";
+const session = await auth();
+if (!session) redirect("/auth/signin");
+```
+
+### Server Actions
+```js
+"use server";
+import { z } from "zod";
+import { ValidationError, AppError } from "@techstream/quark-core/errors";
+import { prisma } from "@__QUARK_SCOPE__/db";
+
+const schema = z.object({ title: z.string().min(1) });
+
+export async function createItem(formData) {
+  const parsed = schema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) throw new ValidationError(parsed.error.flatten());
+  return prisma.item.create({ data: parsed.data });
+}
+```
+
+## Architecture Decisions
+
+- **Why no TypeScript?** Lower barrier to contribution; Zod provides runtime type safety at all system boundaries.
+- **Why scaffolded (not published) for ui/db/config/jobs?** Projects own their data layer and UI components. No framework-level coupling after scaffold.
+- **Why Railway?** Zero-config Postgres + Redis + env injection + tag-based promotion.
+- **Why BullMQ?** Redis-backed, production-grade queue with retries, deduplication, priorities, and built-in metrics hooks.

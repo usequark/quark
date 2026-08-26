@@ -1,6 +1,10 @@
 import { QuarkLogo } from "@techstream/quark-ui";
 import Link from "next/link";
 
+export const metadata = {
+	title: "Forgot Password",
+};
+
 export default function ForgotPasswordPage() {
 	return (
 		<div className="quark-auth-layout">
