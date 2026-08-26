@@ -14,10 +14,9 @@ const rowCls =
 	"border-b border-[var(--table-border)] transition-colors hover:bg-[var(--table-row-hover-bg)] active:bg-[var(--table-row-active-bg)]";
 
 const headCls =
-	"h-11 px-3 text-left align-middle font-medium text-[--table-head-text] dark:font-mono dark:text-xs dark:uppercase dark:tracking-widest";
+	"h-11 text-left align-middle font-medium text-[--table-head-text]";
 
-const cellCls =
-	"p-3 align-middle text-[--table-cell-text] dark:font-mono dark:text-sm";
+const cellCls = "align-middle text-[--table-cell-text]";
 
 const sortButtonCls =
 	"group inline-flex w-full items-center justify-between gap-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-[var(--table-ring)] rounded-[--radius-default]";
@@ -102,6 +101,14 @@ export function TableHead({
 			"th",
 			{
 				className: `${headCls} ${className}`.trim(),
+				style: {
+					paddingLeft: "var(--table-head-padding-x)",
+					paddingRight: "var(--table-head-padding-x)",
+					fontSize: "var(--table-head-font-size)",
+					textTransform: "var(--table-head-text-transform)",
+					letterSpacing: "var(--table-head-text-tracking)",
+					fontFamily: "var(--table-head-font-family)",
+				},
 				...props,
 			},
 			children,
@@ -112,6 +119,14 @@ export function TableHead({
 		"th",
 		{
 			className: `${headCls} ${className}`.trim(),
+			style: {
+				paddingLeft: "var(--table-head-padding-x)",
+				paddingRight: "var(--table-head-padding-x)",
+				fontSize: "var(--table-head-font-size)",
+				textTransform: "var(--table-head-text-transform)",
+				letterSpacing: "var(--table-head-text-tracking)",
+				fontFamily: "var(--table-head-font-family)",
+			},
 			"aria-sort": toAriaSort(direction),
 			...props,
 		},
@@ -144,6 +159,11 @@ export function TableHead({
 export function TableCell({ className = "", ...props }) {
 	return React.createElement("td", {
 		className: `${cellCls} ${className}`.trim(),
+		style: {
+			padding: "var(--table-cell-padding)",
+			fontSize: "var(--table-cell-font-size)",
+			fontFamily: "var(--table-cell-font-family)",
+		},
 		...props,
 	});
 }

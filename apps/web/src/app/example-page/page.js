@@ -56,7 +56,7 @@ export default function ExamplePage() {
 						</h1>
 						<p className="max-w-2xl text-base leading-7 text-text-muted sm:text-lg">
 							This page demonstrates shared layout and content primitives
-						composed into a production-style public route.
+							composed into a production-style public route.
 						</p>
 					</div>
 
@@ -95,10 +95,7 @@ export default function ExamplePage() {
 									"Theme tokens drive all component styles — override to retheme.",
 							},
 						].map((item) => (
-							<Card
-								key={item.label}
-								className="bg-surface/90 backdrop-blur-sm"
-							>
+							<Card key={item.label} className="bg-surface/90 backdrop-blur-sm">
 								<CardContent className="space-y-3 pt-6">
 									<p className="font-mono text-xs uppercase tracking-[0.2em] text-text-faint">
 										{item.label}

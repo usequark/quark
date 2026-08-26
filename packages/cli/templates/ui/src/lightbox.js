@@ -9,7 +9,7 @@ const DIALOG_CLS =
 const NAV_BTN_CLS =
 	"inline-flex items-center gap-1.5 rounded-[--radius-default] border border-[--lightbox-btn-border] px-3 py-1.5 text-sm font-medium text-[--lightbox-btn-text] transition-colors duration-200 hover:bg-[--lightbox-btn-hover-bg] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lightbox-btn-ring)] cursor-pointer";
 const CLOSE_BTN_CLS =
-	"rounded-[--radius-default] border border-[--lightbox-btn-border] px-2 py-1 text-sm font-medium text-[--lightbox-btn-text] transition-colors duration-200 hover:bg-[--lightbox-btn-hover-bg] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lightbox-btn-ring)] flex items-center cursor-pointer";
+	"rounded-[--radius-default] border border-[--lightbox-btn-border] font-medium text-[--lightbox-btn-text] transition-colors duration-200 hover:bg-[--lightbox-btn-hover-bg] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lightbox-btn-ring)] flex items-center cursor-pointer";
 
 const IMG_CLS =
 	"max-h-[72vh] w-auto max-w-full rounded-[--radius-default] object-contain transition-all duration-200 ease-out";
@@ -98,6 +98,13 @@ export function Lightbox({
 					ref: closeButtonRef,
 					onClick: onClose,
 					className: CLOSE_BTN_CLS,
+					style: {
+						paddingLeft: "var(--lightbox-close-padding-x)",
+						paddingRight: "var(--lightbox-close-padding-x)",
+						paddingTop: "var(--lightbox-close-padding-y)",
+						paddingBottom: "var(--lightbox-close-padding-y)",
+						fontSize: "var(--lightbox-close-font-size)",
+					},
 				},
 				React.createElement(X, { className: "size-4", "aria-hidden": true }),
 			),
@@ -140,6 +147,13 @@ export function Lightbox({
 						type: "button",
 						onClick: onPrevious,
 						className: NAV_BTN_CLS,
+						style: {
+							paddingLeft: "var(--lightbox-btn-padding-x)",
+							paddingRight: "var(--lightbox-btn-padding-x)",
+							paddingTop: "var(--lightbox-btn-padding-y)",
+							paddingBottom: "var(--lightbox-btn-padding-y)",
+							fontSize: "var(--lightbox-btn-font-size)",
+						},
 					},
 					React.createElement(ChevronLeft, {
 						className: "size-4",
@@ -155,8 +169,14 @@ export function Lightbox({
 					"p",
 					{
 						key: "counter",
-						className:
-							"min-w-16 text-center font-mono text-xs uppercase tracking-[0.16em] text-[--lightbox-counter-text]",
+						className: "text-center text-[--lightbox-counter-text]",
+						style: {
+							minWidth: "var(--lightbox-counter-min-width)",
+							fontSize: "var(--lightbox-counter-font-size)",
+							fontFamily: "var(--lightbox-counter-font-family)",
+							textTransform: "var(--lightbox-counter-text-transform)",
+							letterSpacing: "var(--lightbox-counter-text-tracking)",
+						},
 					},
 					`${currentIndex} / ${totalCount}`,
 				),
@@ -171,6 +191,13 @@ export function Lightbox({
 						type: "button",
 						onClick: onNext,
 						className: NAV_BTN_CLS,
+						style: {
+							paddingLeft: "var(--lightbox-btn-padding-x)",
+							paddingRight: "var(--lightbox-btn-padding-x)",
+							paddingTop: "var(--lightbox-btn-padding-y)",
+							paddingBottom: "var(--lightbox-btn-padding-y)",
+							fontSize: "var(--lightbox-btn-font-size)",
+						},
 					},
 					"Next ",
 					React.createElement(ChevronRight, {
@@ -185,7 +212,8 @@ export function Lightbox({
 				"div",
 				{
 					key: "nav",
-					className: "mt-4 flex items-center justify-center gap-2",
+					className: "mt-4 flex items-center justify-center",
+					style: { gap: "var(--lightbox-nav-gap)" },
 				},
 				...navChildren,
 			),

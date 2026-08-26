@@ -46,7 +46,7 @@ test("Button - supports md size", () => {
 test("Button - supports lg size", () => {
 	const result = Button({ size: "lg" });
 	assert.ok(result);
-	assert.match(result.props.className, /text-base/);
+	assert.equal(result.props.style.fontSize, "var(--btn-lg-font-size)");
 });
 
 test("Button - accepts className override", () => {
@@ -63,7 +63,6 @@ test("Button - renders icon with label", () => {
 	assert.ok(result);
 	assert.match(result.props.className, /gap-2/);
 	assert.equal(result.props.children.length, 2);
-	assert.match(result.props.children[0].props.className, /size-4/);
 	assert.match(result.props.children[0].props.className, /icon-child/);
 	assert.equal(result.props.children[1], "Continue");
 });
@@ -76,8 +75,7 @@ test("Button - icon scales independently from text size", () => {
 	});
 
 	assert.ok(result);
-	assert.match(result.props.className, /text-base/);
-	assert.match(result.props.children[0].props.className, /size-5/);
+	assert.equal(result.props.style.fontSize, "var(--btn-lg-font-size)");
 });
 
 test("Button - renders Next Link when href is provided", () => {

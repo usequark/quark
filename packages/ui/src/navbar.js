@@ -7,42 +7,42 @@ const mobileShellCls =
 	"relative w-full border-b border-[--navbar-border] bg-[--navbar-mobile-bg] shadow-[var(--navbar-inset-shadow)]";
 const mobileShellOpenCls =
 	"relative w-full border-b border-transparent bg-[--navbar-mobile-bg] shadow-[var(--navbar-inset-shadow)]";
-const containerCls = "mx-auto w-full px-4 sm:px-6 lg:px-8";
-const desktopInnerCls = "flex h-[4.5rem] items-center justify-center gap-6";
+const containerCls = "mx-auto w-full";
+const desktopInnerCls = "flex items-center justify-center gap-6";
 const leftZoneCls = "flex items-center mr-auto";
 const rightZoneCls = "flex items-center justify-end ml-auto";
 const logoCls =
-	"inline-flex items-center gap-2.5 rounded-[--radius-default] px-1.5 py-1 text-base font-semibold tracking-wide text-[--navbar-text] transition-colors hover:text-[--navbar-logo-hover]";
+	"inline-flex items-center gap-2.5 rounded-[--radius-default] px-1.5 py-1 font-semibold tracking-wide text-[--navbar-text] transition-colors hover:text-[--navbar-logo-hover]";
 const markCls =
-	"inline-flex h-8 w-8 items-center justify-center rounded-[--radius-default] border border-[--navbar-mark-border] bg-[--navbar-mark-bg] text-[11px] font-bold uppercase tracking-widest text-[--navbar-mark-text]";
+	"inline-flex items-center justify-center rounded-[--radius-default] border border-[--navbar-mark-border] bg-[--navbar-mark-bg] font-bold uppercase text-[--navbar-mark-text]";
 const centerNavCls = "flex min-w-0 justify-center";
 const desktopListCls = "flex items-center gap-3";
 const desktopLinkCls =
-	"inline-flex h-10 items-center rounded-[--radius-default] px-3.5 text-base font-medium text-[--navbar-text-muted] transition-colors hover:bg-[--navbar-hover-bg] hover:text-[--navbar-hover-text]";
+	"inline-flex items-center rounded-[--radius-default] font-medium text-[--navbar-text-muted] transition-colors hover:bg-[--navbar-hover-bg] hover:text-[--navbar-hover-text]";
 
 const desktopDropdownWrapCls =
 	"group inline-flex cursor-pointer items-center rounded-[--radius-default] transition-colors hover:bg-[--navbar-hover-bg]";
 const desktopDropdownLinkCls =
-	"flex items-center text-base font-medium text-[--navbar-text-muted] transition-colors group-hover:text-[--navbar-hover-text]";
+	"flex items-center font-medium text-[--navbar-text-muted] transition-colors group-hover:text-[--navbar-hover-text]";
 const desktopDropdownChevronCls =
 	"flex items-center px-2 pt-1 text-[--navbar-text-muted] transition-colors group-hover:text-[--navbar-hover-text] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--navbar-ring)] rounded-r-[--radius-default]";
 const actionCls =
-	"inline-flex h-11 items-center justify-center whitespace-nowrap rounded-[--radius-default] border border-[--navbar-action-border] bg-[--navbar-action-bg] px-5 text-base font-semibold text-[--navbar-action-text] transition-colors hover:border-[--navbar-action-hover-border] hover:bg-[--navbar-action-hover-bg] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--navbar-ring)]";
+	"inline-flex items-center justify-center whitespace-nowrap rounded-[--radius-default] border border-[--navbar-action-border] bg-[--navbar-action-bg] font-semibold text-[--navbar-action-text] transition-colors hover:border-[--navbar-action-hover-border] hover:bg-[--navbar-action-hover-bg] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--navbar-ring)]";
 
-const mobileInnerCls = "flex h-14 items-center justify-between gap-4";
+const mobileInnerCls = "flex items-center justify-between gap-4";
 const mobileToggleCls =
-	"inline-flex h-10 w-10 items-center justify-center rounded-[--radius-default] text-[--navbar-text-muted] transition-colors hover:text-[--navbar-hover-text] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--navbar-ring)]";
+	"inline-flex items-center justify-center rounded-[--radius-default] text-[--navbar-text-muted] transition-colors hover:text-[--navbar-hover-text] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--navbar-ring)]";
 const mobilePanelWrapCls =
 	"absolute inset-x-0 top-full z-[80] overflow-y-auto overscroll-contain [touch-action:pan-y] [-webkit-overflow-scrolling:touch] origin-top";
 const mobilePanelCls =
 	"border-y border-[--navbar-border] bg-[--navbar-mobile-panel-bg] will-change-transform transition-all duration-300 ease-out";
 const mobileLinkCls =
-	"flex min-h-12 w-full items-center justify-between px-4 text-left text-base font-medium text-[--navbar-text-muted] transition-colors hover:bg-[--navbar-hover-bg] hover:text-[--navbar-hover-text]";
+	"flex w-full items-center justify-between text-left font-medium text-[--navbar-text-muted] transition-colors hover:bg-[--navbar-hover-bg] hover:text-[--navbar-hover-text]";
 const mobileSubLinkCls =
-	"block px-6 py-2 text-sm text-[--navbar-text-muted] transition-colors hover:bg-[--navbar-hover-bg] hover:text-[--navbar-hover-text]";
-const mobileActionWrapCls = "px-3 pb-3 pt-2";
+	"block text-[--navbar-text-muted] transition-colors hover:bg-[--navbar-hover-bg] hover:text-[--navbar-hover-text]";
+const mobileActionWrapCls = "";
 const mobileActionCls =
-	"inline-flex h-10 w-full items-center justify-center rounded-[--radius-default] border border-[--navbar-action-border] bg-[--navbar-action-bg] px-4 text-sm font-semibold text-[--navbar-action-text] transition-colors hover:border-[--navbar-action-hover-border] hover:bg-[--navbar-action-hover-bg] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--navbar-ring)]";
+	"inline-flex w-full items-center justify-center rounded-[--radius-default] border border-[--navbar-action-border] bg-[--navbar-action-bg] font-semibold text-[--navbar-action-text] transition-colors hover:border-[--navbar-action-hover-border] hover:bg-[--navbar-action-hover-bg] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--navbar-ring)]";
 
 const DEFAULT_LINKS = [
 	{ label: "Home", href: "#" },
@@ -90,7 +90,17 @@ function renderLogo(logo) {
 		null,
 		React.createElement(
 			"span",
-			{ "aria-hidden": "true", className: markCls },
+			{
+				"aria-hidden": "true",
+				className: markCls,
+				style: {
+					width: "var(--navbar-mark-width)",
+					height: "var(--navbar-mark-height)",
+					fontSize: "var(--navbar-mark-font-size)",
+					textTransform: "var(--navbar-mark-text-transform)",
+					letterSpacing: "var(--navbar-mark-text-tracking)",
+				},
+			},
 			text.slice(0, 1),
 		),
 		React.createElement("span", { className: "text-lg" }, text),
@@ -101,13 +111,24 @@ function renderAction(action, className = actionCls) {
 	if (!action) return null;
 	const label = action.label ?? "Action";
 
+	const actionStyle = {
+		height: "var(--navbar-action-height)",
+		paddingLeft: "var(--navbar-action-padding-x)",
+		paddingRight: "var(--navbar-action-padding-x)",
+		fontSize: "var(--navbar-action-font-size)",
+	};
+
 	if (action.href) {
-		return React.createElement("a", { href: action.href, className }, label);
+		return React.createElement(
+			"a",
+			{ href: action.href, className, style: actionStyle },
+			label,
+		);
 	}
 
 	return React.createElement(
 		"button",
-		{ type: "button", className, onClick: action.onClick },
+		{ type: "button", className, style: actionStyle, onClick: action.onClick },
 		label,
 	);
 }
@@ -176,10 +197,19 @@ export function Navbar({
 		},
 		React.createElement(
 			"div",
-			{ className: `${containerCls} ${maxWidthClassName}`.trim() },
+			{
+				className: `${containerCls} ${maxWidthClassName}`.trim(),
+				style: {
+					paddingLeft: "var(--navbar-container-padding-x)",
+					paddingRight: "var(--navbar-container-padding-x)",
+				},
+			},
 			React.createElement(
 				"div",
-				{ className: desktopInnerCls },
+				{
+					className: desktopInnerCls,
+					style: { height: "var(--navbar-desktop-height)" },
+				},
 				React.createElement(
 					"div",
 					{ className: leftZoneCls },
@@ -202,7 +232,16 @@ export function Navbar({
 									{ key: `${link.label}-${index}` },
 									React.createElement(
 										"a",
-										{ href: link.href ?? "#", className: desktopLinkCls },
+										{
+											href: link.href ?? "#",
+											className: desktopLinkCls,
+											style: {
+												paddingLeft: "var(--navbar-link-padding-x)",
+												paddingRight: "var(--navbar-link-padding-x)",
+												height: "var(--navbar-link-height)",
+												fontSize: "var(--navbar-link-font-size)",
+											},
+										},
 										link.label,
 									),
 								);
@@ -232,7 +271,14 @@ export function Navbar({
 										"a",
 										{
 											href: link.href ?? "#",
-											className: `${desktopDropdownLinkCls} rounded-l-[--radius-default] px-3.5 py-2`,
+											className: `${desktopDropdownLinkCls} rounded-l-[--radius-default]`,
+											style: {
+												paddingLeft: "var(--navbar-link-padding-x)",
+												paddingRight: "var(--navbar-link-padding-x)",
+												paddingTop: "0.5rem",
+												paddingBottom: "0.5rem",
+												fontSize: "var(--navbar-link-font-size)",
+											},
 										},
 										link.label,
 									),
@@ -255,7 +301,8 @@ export function Navbar({
 											{
 												role: "menu",
 												className:
-													"absolute left-0 top-[calc(100%+0.6rem)] z-40 w-48 rounded-[--radius-default] border border-[--navbar-border] bg-[--navbar-dropdown-bg] shadow-[var(--navbar-dropdown-shadow)]",
+													"absolute left-0 top-[calc(100%+0.6rem)] z-40 rounded-[--radius-default] border border-[--navbar-border] bg-[--navbar-dropdown-bg] shadow-[var(--navbar-dropdown-shadow)]",
+												style: { width: "var(--navbar-dropdown-width)" },
 											},
 											...(link.items ?? []).map((item, itemIndex) =>
 												React.createElement(
@@ -265,7 +312,18 @@ export function Navbar({
 														href: item.href ?? "#",
 														role: "menuitem",
 														className:
-															"block rounded-[--radius-default] px-3.5 py-2.5 text-base text-[--navbar-text-muted] transition-colors hover:bg-[--navbar-hover-bg] hover:text-[--navbar-hover-text]",
+															"block rounded-[--radius-default] text-[--navbar-text-muted] transition-colors hover:bg-[--navbar-hover-bg] hover:text-[--navbar-hover-text]",
+														style: {
+															paddingLeft:
+																"var(--navbar-dropdown-item-padding-x)",
+															paddingRight:
+																"var(--navbar-dropdown-item-padding-x)",
+															paddingTop:
+																"var(--navbar-dropdown-item-padding-y)",
+															paddingBottom:
+																"var(--navbar-dropdown-item-padding-y)",
+															fontSize: "var(--navbar-dropdown-item-font-size)",
+														},
 														onClick: () => setOpenIndex(null),
 													},
 													item.label,
@@ -386,10 +444,20 @@ export function MobileNavbar({
 		},
 		React.createElement(
 			"div",
-			{ className: `${containerCls} ${maxWidthClassName} relative`.trim() },
+			{
+				className: `${containerCls} ${maxWidthClassName} relative`.trim(),
+				style: {
+					paddingLeft: "var(--navbar-container-padding-x)",
+					paddingRight: "var(--navbar-container-padding-x)",
+				},
+			},
 			React.createElement(
 				"div",
-				{ ref: barRef, className: mobileInnerCls },
+				{
+					ref: barRef,
+					className: mobileInnerCls,
+					style: { height: "var(--navbar-mobile-height)" },
+				},
 				React.createElement(
 					"a",
 					{ href: logoHref, className: logoCls },
@@ -406,6 +474,10 @@ export function MobileNavbar({
 						"aria-expanded": menuOpen,
 						onClick: () => {
 							setMenuOpen((state) => !state);
+						},
+						style: {
+							width: "var(--navbar-mobile-toggle-width)",
+							height: "var(--navbar-mobile-toggle-height)",
 						},
 					},
 					React.createElement(
@@ -470,6 +542,14 @@ export function MobileNavbar({
 													{
 														href: link.href ?? "#",
 														className: mobileLinkCls,
+														style: {
+															minHeight: "var(--navbar-mobile-link-min-height)",
+															paddingLeft:
+																"var(--navbar-mobile-link-padding-x)",
+															paddingRight:
+																"var(--navbar-mobile-link-padding-x)",
+															fontSize: "var(--navbar-mobile-link-font-size)",
+														},
 														onClick: () => setMenuOpen(false),
 													},
 													link.label,
@@ -486,6 +566,12 @@ export function MobileNavbar({
 												{
 													type: "button",
 													className: mobileLinkCls,
+													style: {
+														minHeight: "var(--navbar-mobile-link-min-height)",
+														paddingLeft: "var(--navbar-mobile-link-padding-x)",
+														paddingRight: "var(--navbar-mobile-link-padding-x)",
+														fontSize: "var(--navbar-mobile-link-font-size)",
+													},
 													"aria-expanded": submenuOpen,
 													onClick: () => toggleSubmenu(index),
 												},
@@ -520,6 +606,18 @@ export function MobileNavbar({
 																	{
 																		href: item.href ?? "#",
 																		className: mobileSubLinkCls,
+																		style: {
+																			paddingLeft:
+																				"var(--navbar-mobile-sublink-padding-x)",
+																			paddingRight:
+																				"var(--navbar-mobile-sublink-padding-x)",
+																			paddingTop:
+																				"var(--navbar-mobile-sublink-padding-y)",
+																			paddingBottom:
+																				"var(--navbar-mobile-sublink-padding-y)",
+																			fontSize:
+																				"var(--navbar-mobile-sublink-font-size)",
+																		},
 																		onClick: () => {
 																			setMenuOpen(false);
 																			setOpenSubmenus({});
@@ -538,7 +636,15 @@ export function MobileNavbar({
 								action
 									? React.createElement(
 											"div",
-											{ className: mobileActionWrapCls },
+											{
+												className: mobileActionWrapCls,
+												style: {
+													paddingLeft: "var(--navbar-container-padding-x)",
+													paddingRight: "var(--navbar-container-padding-x)",
+													paddingTop: "0.5rem",
+													paddingBottom: "0.75rem",
+												},
+											},
 											renderAction(action, mobileActionCls),
 										)
 									: null,

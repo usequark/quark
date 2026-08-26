@@ -8,16 +8,31 @@ const base =
 const variantCls =
 	"bg-[--btn-bg] border border-[--btn-border] text-[--btn-text] rounded-[--btn-radius] hover:brightness-[var(--btn-hover-brightness)] hover:shadow-[var(--btn-hover-shadow)] hover:bg-[var(--btn-hover-bg)] hover:text-[var(--btn-hover-text)] hover:opacity-[var(--btn-hover-opacity)] focus-visible:ring-[var(--btn-ring)]";
 
-const sizes = {
-	sm: "h-8 px-3 text-sm",
-	md: "h-10 px-4 text-sm",
-	lg: "h-11 px-6 text-base",
+const sizeStyles = {
+	sm: {
+		height: "var(--btn-sm-height)",
+		paddingLeft: "var(--btn-sm-padding-x)",
+		paddingRight: "var(--btn-sm-padding-x)",
+		fontSize: "var(--btn-sm-font-size)",
+	},
+	md: {
+		height: "var(--btn-md-height)",
+		paddingLeft: "var(--btn-md-padding-x)",
+		paddingRight: "var(--btn-md-padding-x)",
+		fontSize: "var(--btn-md-font-size)",
+	},
+	lg: {
+		height: "var(--btn-lg-height)",
+		paddingLeft: "var(--btn-lg-padding-x)",
+		paddingRight: "var(--btn-lg-padding-x)",
+		fontSize: "var(--btn-lg-font-size)",
+	},
 };
 
 const iconSizes = {
-	sm: "size-4",
-	md: "size-4",
-	lg: "size-5",
+	sm: "var(--btn-icon-sm)",
+	md: "var(--btn-icon-md)",
+	lg: "var(--btn-icon-lg)",
 };
 
 function buildIcon(icon, size) {
@@ -45,7 +60,7 @@ function buildIcon(icon, size) {
 }
 
 export function Button({
-	variant = "primary",
+	variant = "default",
 	size = "md",
 	className = "",
 	href,
@@ -61,8 +76,8 @@ export function Button({
 		children !== null && children !== undefined && children !== false;
 	const hasIcon = Boolean(icon);
 	const spacing = hasIcon && hasLabel ? "gap-2" : "";
-	const cls =
-		`${base} ${variantCls} ${sizes[size] ?? sizes.md} ${spacing} ${className}`.trim();
+	const cls = `${base} ${variantCls} ${spacing} ${className}`.trim();
+	const sizeStyle = sizeStyles[size] ?? sizeStyles.md;
 	const buttonType =
 		type === "submit" || type === "reset" || type === "button"
 			? type
@@ -87,6 +102,7 @@ export function Button({
 				target,
 				rel: anchorRel,
 				className: cls,
+				style: sizeStyle,
 				"data-btn-variant": variant,
 				"aria-disabled": loading || undefined,
 				...props,
@@ -100,6 +116,7 @@ export function Button({
 		{
 			type: buttonType,
 			className: cls,
+			style: sizeStyle,
 			"data-btn-variant": variant,
 			disabled: loading || props.disabled,
 			...props,

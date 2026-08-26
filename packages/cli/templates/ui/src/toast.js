@@ -98,15 +98,27 @@ export function Toast({
 			"data-toast-variant": variant,
 			onMouseEnter: () => setHovered(true),
 			onMouseLeave: () => setHovered(false),
-			style: animStyle,
-			className: `fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-[--radius-default] px-4 py-3 text-sm transition-colors duration-200 ${variantCls}`,
+			className: `fixed z-50 flex items-center gap-3 rounded-[--radius-default] transition-colors duration-200 ${variantCls}`,
+			style: {
+				...animStyle,
+				bottom: "var(--toast-bottom)",
+				right: "var(--toast-right)",
+				paddingLeft: "var(--toast-padding-x)",
+				paddingRight: "var(--toast-padding-x)",
+				paddingTop: "var(--toast-padding-y)",
+				paddingBottom: "var(--toast-padding-y)",
+				fontSize: "var(--toast-font-size)",
+			},
 		},
 		React.createElement("span", null, message),
 		React.createElement(
 			"div",
 			{
-				className:
-					"relative ml-2 flex h-6 w-6 shrink-0 items-center justify-center",
+				className: "relative ml-2 flex shrink-0 items-center justify-center",
+				style: {
+					width: "var(--toast-icon-size)",
+					height: "var(--toast-icon-size)",
+				},
 			},
 			hovered
 				? React.createElement(
@@ -116,7 +128,11 @@ export function Toast({
 							"aria-label": "Dismiss notification",
 							onClick: onClose,
 							className:
-								"flex h-6 w-6 cursor-pointer items-center justify-center rounded-[--radius-default] text-base leading-none opacity-80 transition-all hover:bg-black/10 dark:hover:bg-white/10 hover:opacity-100 active:bg-black/20 dark:active:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
+								"flex cursor-pointer items-center justify-center rounded-[--radius-default] leading-none opacity-80 transition-all hover:bg-black/10 dark:hover:bg-white/10 hover:opacity-100 active:bg-black/20 dark:active:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
+							style: {
+								width: "var(--toast-dismiss-size)",
+								height: "var(--toast-dismiss-size)",
+							},
 						},
 						React.createElement(
 							"svg",

@@ -10,7 +10,7 @@ import React, {
 } from "react";
 
 const triggerCls =
-	"flex h-10 w-full items-center justify-between rounded-[--radius-default] border border-[--select-border] bg-[--select-bg] px-3 text-sm text-[--select-text] shadow-sm transition-all duration-200 cursor-pointer hover:border-[--select-border-hover] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--select-ring)] disabled:cursor-not-allowed disabled:opacity-50";
+	"flex w-full items-center justify-between rounded-[--radius-default] border border-[--select-border] bg-[--select-bg] text-[--select-text] shadow-sm transition-all duration-200 cursor-pointer hover:border-[--select-border-hover] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--select-ring)] disabled:cursor-not-allowed disabled:opacity-50";
 
 const panelCls =
 	"absolute z-30 max-h-60 w-full overflow-auto rounded-[--radius-default] border border-[--select-border] bg-[--select-panel-bg] shadow-xl origin-top transition-all duration-200 ease-out";
@@ -243,6 +243,12 @@ export function Select({
 				"aria-controls": panelId,
 				"aria-required": required,
 				className: `${triggerCls} ${className}`.trim(),
+				style: {
+					height: "var(--select-height)",
+					paddingLeft: "var(--select-padding-x)",
+					paddingRight: "var(--select-padding-x)",
+					fontSize: "var(--select-font-size)",
+				},
 				...props,
 			},
 			React.createElement(
@@ -276,7 +282,16 @@ export function Select({
 			options.length === 0
 				? React.createElement(
 						"p",
-						{ className: "px-2.5 py-2 text-sm text-[--select-text-faint]" },
+						{
+							className: "text-[--select-text-faint]",
+							style: {
+								paddingLeft: "var(--select-empty-padding-x)",
+								paddingRight: "var(--select-empty-padding-x)",
+								paddingTop: "var(--select-empty-padding-y)",
+								paddingBottom: "var(--select-empty-padding-y)",
+								fontSize: "var(--select-empty-font-size)",
+							},
+						},
 						"No options",
 					)
 				: options.map((option) => {

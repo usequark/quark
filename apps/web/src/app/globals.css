@@ -5,16 +5,210 @@
 @custom-variant dark (&:is([data-theme="dark"] *));
 
 /*
- * ─── DESIGN TOKEN LAYER ─────────────────────────────────────────────────────
+ * ─── DESIGN TOKEN ARCHITECTURE ───────────────────────────────────────────────
  *
- * All UI component colours, borders, and radii are driven from these CSS vars.
- * To fully retheme a scaffolded project, override any token in this block -
- * no component source files need to be edited.
+ * This file defines two layers:
  *
- * Dark-first: :root holds dark defaults.
- * Light values activate via prefers-color-scheme or explicit [data-theme="light"].
+ * 1. NEUTRAL LAYER (:root base)
+ *    - Structural tokens that every component needs (spacing, sizing, radii)
+ *    - Minimal color defaults that work in any context
+ *    - Override these to retheme without touching component source
+ *
+ * 2. OPINIONATED LAYER (Quark defaults)
+ *    - The specific blue/gray palette that ships with Quark
+ *    - Delete this block to start with a blank canvas
+ *    - Or replace with your own brand tokens
+ *
+ * Components consume CSS variables, never hardcoded values.
+ * To fully retheme: override tokens in the neutral layer.
  */
 :root {
+	/*
+	 * ─── NEUTRAL TOKENS ────────────────────────────────────────────────────────
+	 *
+	 * Structural tokens that every component needs. These are theme-independent
+	 * and provide the baseline for any design system.
+	 */
+
+	/* Shape */
+	--radius-default: 0px;
+
+	/* Typography - neutral defaults */
+	--label-text-transform: none;
+	--label-text-tracking: normal;
+
+	/* Badge */
+	--badge-text-transform: uppercase;
+	--badge-text-tracking: 0.05em;
+	--badge-min-width: auto;
+	--badge-padding-x: 0.625rem;
+	--badge-padding-y: 0.125rem;
+	--badge-font-size: 0.75rem;
+
+	/* Button */
+	--btn-sm-height: 2rem;
+	--btn-sm-padding-x: 0.75rem;
+	--btn-sm-font-size: 0.875rem;
+	--btn-md-height: 2.5rem;
+	--btn-md-padding-x: 1rem;
+	--btn-md-font-size: 0.875rem;
+	--btn-lg-height: 2.75rem;
+	--btn-lg-padding-x: 1.5rem;
+	--btn-lg-font-size: 1rem;
+	--btn-icon-sm: 1rem;
+	--btn-icon-md: 1rem;
+	--btn-icon-lg: 1.25rem;
+
+	/* Input */
+	--input-height: 2.5rem;
+	--input-padding-x: 0.75rem;
+	--input-font-size: 0.875rem;
+
+	/* Textarea */
+	--textarea-padding-x: 0.75rem;
+	--textarea-padding-y: 0.5rem;
+	--textarea-font-size: 0.875rem;
+
+	/* Select */
+	--select-height: 2.5rem;
+	--select-padding-x: 0.75rem;
+	--select-font-size: 0.875rem;
+	--select-option-padding-x: 0.625rem;
+	--select-option-padding-y: 0.5rem;
+	--select-option-font-size: 0.875rem;
+	--select-empty-padding-x: 0.625rem;
+	--select-empty-padding-y: 0.5rem;
+	--select-empty-font-size: 0.875rem;
+
+	/* Dialog */
+	--dialog-padding-x: 1.25rem;
+	--dialog-padding-y: 1rem;
+
+	/* Card */
+	--card-header-padding: 1.5rem;
+	--card-header-gap: 0.375rem;
+	--card-content-padding: 1.5rem;
+	--card-content-padding-top: 0;
+	--card-footer-padding: 1.5rem;
+	--card-footer-padding-top: 0;
+
+	/* Form Field */
+	--form-field-gap: 0.375rem;
+
+	/* Table */
+	--table-head-height: 2.75rem;
+	--table-head-padding-x: 0.75rem;
+	--table-head-font-size: 0.875rem;
+	--table-head-text-transform: none;
+	--table-head-text-tracking: normal;
+	--table-head-font-family: inherit;
+	--table-cell-padding: 0.75rem;
+	--table-cell-font-size: 0.875rem;
+	--table-cell-font-family: inherit;
+
+	/* Navbar */
+	--navbar-desktop-height: 4.5rem;
+	--navbar-container-padding-x: 1rem;
+	--navbar-mobile-height: 3.5rem;
+	--navbar-mark-height: 2rem;
+	--navbar-mark-width: 2rem;
+	--navbar-mark-font-size: 11px;
+	--navbar-mark-text-transform: uppercase;
+	--navbar-mark-text-tracking: 0.1em;
+	--navbar-link-padding-x: 0.875rem;
+	--navbar-link-height: 2.5rem;
+	--navbar-link-font-size: 1rem;
+	--navbar-action-height: 2.75rem;
+	--navbar-action-padding-x: 1.25rem;
+	--navbar-action-font-size: 1rem;
+	--navbar-dropdown-width: 12rem;
+	--navbar-dropdown-item-padding-x: 0.875rem;
+	--navbar-dropdown-item-padding-y: 0.625rem;
+	--navbar-dropdown-item-font-size: 1rem;
+	--navbar-mobile-toggle-height: 2.5rem;
+	--navbar-mobile-toggle-width: 2.5rem;
+	--navbar-mobile-link-min-height: 3rem;
+	--navbar-mobile-link-padding-x: 1rem;
+	--navbar-mobile-link-font-size: 1rem;
+	--navbar-mobile-sublink-padding-x: 1.5rem;
+	--navbar-mobile-sublink-padding-y: 0.5rem;
+	--navbar-mobile-sublink-font-size: 0.875rem;
+	--navbar-mobile-action-padding-x: 1rem;
+	--navbar-mobile-action-height: 2.5rem;
+	--navbar-mobile-action-font-size: 0.875rem;
+
+	/* Footer */
+	--footer-container-max-width: 80rem;
+	--footer-container-padding-x: 1rem;
+	--footer-container-padding-y: 2rem;
+	--footer-mark-height: 2.75rem;
+	--footer-mark-width: 2.75rem;
+	--footer-cta-padding-x: 1.5rem;
+	--footer-cta-padding-y: 0.625rem;
+	--footer-cta-font-size: 0.875rem;
+	--footer-column-title-font-size: 0.75rem;
+	--footer-column-title-text-transform: uppercase;
+	--footer-column-title-text-tracking: 0.2em;
+	--footer-column-title-font-family: monospace;
+	--footer-column-gap: 0.625rem;
+	--footer-bottom-gap: 0.75rem;
+
+	/* Lightbox */
+	--lightbox-padding-x: 0.75rem;
+	--lightbox-padding-y: 1rem;
+	--lightbox-dialog-padding: 0.75rem;
+	--lightbox-btn-padding-x: 0.75rem;
+	--lightbox-btn-padding-y: 0.375rem;
+	--lightbox-btn-font-size: 0.875rem;
+	--lightbox-close-padding-x: 0.5rem;
+	--lightbox-close-padding-y: 0.25rem;
+	--lightbox-close-font-size: 0.875rem;
+	--lightbox-counter-min-width: 4rem;
+	--lightbox-counter-font-size: 0.75rem;
+	--lightbox-counter-font-family: monospace;
+	--lightbox-counter-text-transform: uppercase;
+	--lightbox-counter-text-tracking: 0.16em;
+	--lightbox-nav-gap: 0.5rem;
+
+	/* RichText */
+	--richtext-padding-x: 0.75rem;
+	--richtext-padding-y: 0.5rem;
+	--richtext-toolbar-padding-x: 0.5rem;
+	--richtext-toolbar-padding-y: 0.375rem;
+	--richtext-toolbar-gap: 0.125rem;
+	--richtext-btn-size: 1.75rem;
+	--richtext-separator-height: 1.25rem;
+	--richtext-separator-width: 1px;
+	--richtext-separator-margin-x: 0.25rem;
+
+	/* Error Banner */
+	--error-banner-margin-bottom: 1rem;
+	--error-banner-padding-x: 0.75rem;
+	--error-banner-padding-y: 0.5rem;
+	--error-banner-font-size: 0.875rem;
+
+	/* Toast */
+	--toast-bottom: 1rem;
+	--toast-right: 1rem;
+	--toast-padding-x: 1rem;
+	--toast-padding-y: 0.75rem;
+	--toast-font-size: 0.875rem;
+	--toast-icon-size: 1.5rem;
+	--toast-dismiss-size: 1.5rem;
+
+	/* Skeleton */
+	--skeleton-radius: 0.5rem;
+
+	/* Spinner */
+	--spinner-size: 1rem;
+
+	/*
+	 * ─── OPINIONATED TOKENS (Quark Defaults) ───────────────────────────────────
+	 *
+	 * Delete or replace this entire block to start with a blank canvas.
+	 * These values define the specific Quark blue/gray aesthetic.
+	 */
+
 	/* Primary brand colour */
 	--color-primary: #377dff;
 	--color-primary-hover: #5594ff;
@@ -50,10 +244,6 @@
 	/* Semantic: info */
 	--color-info: #22d3ee;
 	--color-info-muted: rgba(34, 211, 238, 0.1);
-
-	/* Shape - sharp geometry by default (expert-designer spec) */
-	/* Projects that prefer rounded corners set --radius-default: 0.25rem */
-	--radius-default: 0px;
 
 	/* App shell */
 	--quark-page-bg: var(--color-bg);
@@ -450,6 +640,16 @@
  * ─── BUTTON VARIANTS ─────────────────────────────────────────────────────────
  * Each variant overrides the generic --btn-* variables.
  */
+[data-btn-variant="default"] {
+	--btn-bg: var(--color-surface);
+	--btn-border: var(--color-border);
+	--btn-text: var(--color-text);
+	--btn-hover-brightness: 1;
+	--btn-hover-shadow: none;
+	--btn-hover-bg: var(--color-surface-hover);
+	--btn-hover-text: var(--color-text);
+	--btn-ring: var(--color-border-hover);
+}
 [data-btn-variant="primary"] {
 	--btn-bg: var(--color-primary-hover);
 	--btn-border: var(--color-primary-hover);

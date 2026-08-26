@@ -1,11 +1,11 @@
 "use client";
 
-import { useLayoutEffect, useState } from "react";
 import {
 	THEME_ATTR,
 	THEME_CHANGE_EVENT,
 	THEME_STORAGE_KEY,
-} from "../../lib/theme.js";
+} from "@techstream/quark-ui/theme-constants";
+import { useLayoutEffect, useState } from "react";
 
 /**
  * Text-link theme toggle for the home page nav.
