@@ -1257,7 +1257,7 @@ STORAGE_PROVIDER=local
 				scaffoldedDate: scaffoldedAt,
 				projectName,
 				requiredPackages: REQUIRED_PACKAGES,
-				packages: [...REQUIRED_PACKAGES, ...features],
+				packages: [...new Set([...REQUIRED_PACKAGES, ...features])],
 				authAllowSignup: allowSignup,
 				// Track that worker is paired with jobs (not independently selectable)
 				hasWorker: features.includes("jobs"),
