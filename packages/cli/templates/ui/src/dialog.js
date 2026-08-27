@@ -31,7 +31,7 @@ const dialogCls =
 	"backdrop:bg-[var(--dialog-backdrop)] border border-[--dialog-border] bg-[--dialog-bg] p-0 w-full max-w-lg rounded-[--radius-default]";
 
 const headerCls =
-	"flex items-center justify-between border-b border-[--dialog-border]";
+	"flex items-center justify-between border-b border-[--dialog-border] px-5 py-4";
 
 const titleCls =
 	"text-base font-bold tracking-tight text-[--dialog-title-text]";
@@ -39,7 +39,7 @@ const titleCls =
 const closeCls =
 	"flex h-8 w-8 cursor-pointer items-center justify-center text-lg text-[--dialog-text-muted] transition-colors duration-200 linear hover:text-[--dialog-title-text] hover:bg-[--dialog-close-hover-bg] active:bg-[--dialog-close-hover-bg] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--dialog-close-ring)] rounded-[--radius-default]";
 
-const bodyCls = "text-[--dialog-text-muted]";
+const bodyCls = "px-5 py-4 text-[--dialog-text-muted]";
 
 export function Dialog({ open, onClose, title, children, className = "" }) {
 	const ref = useRef(null);
@@ -118,15 +118,7 @@ export function Dialog({ open, onClose, title, children, className = "" }) {
 		// Header
 		React.createElement(
 			"div",
-			{
-				className: headerCls,
-				style: {
-					paddingLeft: "var(--dialog-padding-x)",
-					paddingRight: "var(--dialog-padding-x)",
-					paddingTop: "var(--dialog-padding-y)",
-					paddingBottom: "var(--dialog-padding-y)",
-				},
-			},
+			{ className: headerCls },
 			React.createElement("h2", { className: titleCls }, title),
 			React.createElement(
 				"button",
@@ -140,18 +132,6 @@ export function Dialog({ open, onClose, title, children, className = "" }) {
 			),
 		),
 		// Body
-		React.createElement(
-			"div",
-			{
-				className: bodyCls,
-				style: {
-					paddingLeft: "var(--dialog-padding-x)",
-					paddingRight: "var(--dialog-padding-x)",
-					paddingTop: "var(--dialog-padding-y)",
-					paddingBottom: "var(--dialog-padding-y)",
-				},
-			},
-			children,
-		),
+		React.createElement("div", { className: bodyCls }, children),
 	);
 }

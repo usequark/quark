@@ -4,14 +4,13 @@ import React from "react";
  * Animated SVG spinner for loading states.
  * Server Component-safe — uses Tailwind's animate-spin.
  */
-export function Spinner({ className = "", label = "Loading" }) {
+export function Spinner({ className = "h-4 w-4", label = "Loading" }) {
 	return React.createElement(
 		"svg",
 		{
 			role: "img",
 			"aria-label": label,
 			className: `animate-spin ${className}`,
-			style: { width: "var(--spinner-size)", height: "var(--spinner-size)" },
 			viewBox: "0 0 24 24",
 			fill: "none",
 		},

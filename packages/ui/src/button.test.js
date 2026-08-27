@@ -46,7 +46,7 @@ test("Button - supports md size", () => {
 test("Button - supports lg size", () => {
 	const result = Button({ size: "lg" });
 	assert.ok(result);
-	assert.equal(result.props.style.fontSize, "var(--btn-lg-font-size)");
+	assert.match(result.props.className, /text-base/);
 });
 
 test("Button - accepts className override", () => {
@@ -75,7 +75,7 @@ test("Button - icon scales independently from text size", () => {
 	});
 
 	assert.ok(result);
-	assert.equal(result.props.style.fontSize, "var(--btn-lg-font-size)");
+	assert.match(result.props.className, /text-base/);
 });
 
 test("Button - renders Next Link when href is provided", () => {

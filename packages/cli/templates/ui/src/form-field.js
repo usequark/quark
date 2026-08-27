@@ -30,14 +30,7 @@ export function FormField({
 
 	return React.createElement(
 		"div",
-		{
-			className: `min-w-0 ${className}`.trim(),
-			style: {
-				display: "flex",
-				flexDirection: "column",
-				gap: "var(--form-field-gap)",
-			},
-		},
+		{ className: `min-w-0 space-y-1.5 ${className}`.trim() },
 		label ? React.createElement(Label, { htmlFor: fieldId }, label) : null,
 		children
 			? React.createElement("div", childrenWrapperProps, children)

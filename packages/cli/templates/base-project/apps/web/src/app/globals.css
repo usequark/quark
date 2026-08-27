@@ -33,13 +33,7 @@
 	/* Shape */
 	--radius-default: 0px;
 
-	/* Typography - neutral defaults */
-	--label-text-transform: none;
-	--label-text-tracking: normal;
-
 	/* Badge */
-	--badge-text-transform: uppercase;
-	--badge-text-tracking: 0.05em;
 	--badge-min-width: auto;
 	--badge-padding-x: 0.625rem;
 	--badge-padding-y: 0.125rem;
@@ -98,13 +92,7 @@
 	/* Table */
 	--table-head-height: 2.75rem;
 	--table-head-padding-x: 0.75rem;
-	--table-head-font-size: 0.875rem;
-	--table-head-text-transform: none;
-	--table-head-text-tracking: normal;
-	--table-head-font-family: inherit;
 	--table-cell-padding: 0.75rem;
-	--table-cell-font-size: 0.875rem;
-	--table-cell-font-family: inherit;
 
 	/* Navbar */
 	--navbar-desktop-height: 4.5rem;
@@ -113,8 +101,6 @@
 	--navbar-mark-height: 2rem;
 	--navbar-mark-width: 2rem;
 	--navbar-mark-font-size: 11px;
-	--navbar-mark-text-transform: uppercase;
-	--navbar-mark-text-tracking: 0.1em;
 	--navbar-link-padding-x: 0.875rem;
 	--navbar-link-height: 2.5rem;
 	--navbar-link-font-size: 1rem;
@@ -147,9 +133,6 @@
 	--footer-cta-padding-y: 0.625rem;
 	--footer-cta-font-size: 0.875rem;
 	--footer-column-title-font-size: 0.75rem;
-	--footer-column-title-text-transform: uppercase;
-	--footer-column-title-text-tracking: 0.2em;
-	--footer-column-title-font-family: monospace;
 	--footer-column-gap: 0.625rem;
 	--footer-bottom-gap: 0.75rem;
 
@@ -165,9 +148,6 @@
 	--lightbox-close-font-size: 0.875rem;
 	--lightbox-counter-min-width: 4rem;
 	--lightbox-counter-font-size: 0.75rem;
-	--lightbox-counter-font-family: monospace;
-	--lightbox-counter-text-transform: uppercase;
-	--lightbox-counter-text-tracking: 0.16em;
 	--lightbox-nav-gap: 0.5rem;
 
 	/* RichText */
@@ -201,6 +181,14 @@
 
 	/* Spinner */
 	--spinner-size: 1rem;
+
+	/* Theme Toggle */
+	--toggle-height: 28px;
+	--toggle-padding-x: 10px;
+	--toggle-padding-x-right: 12px;
+	--toggle-radius: 14px;
+	--toggle-gap: 6px;
+	--toggle-font-size: 12px;
 
 	/*
 	 * ─── OPINIONATED TOKENS (Quark Defaults) ───────────────────────────────────
@@ -244,6 +232,31 @@
 	/* Semantic: info */
 	--color-info: #22d3ee;
 	--color-info-muted: rgba(34, 211, 238, 0.1);
+
+	/*
+	 * ─── QUARK TYPOGRAPHIC OPINIONS ─────────────────────────────────────────────
+	 *
+	 * The specific typographic identity that was previously hardcoded in components.
+	 * Delete these to revert to neutral defaults from the structural layer.
+	 */
+	--label-text-transform: uppercase;
+	--label-text-tracking: 0.1em;
+	--badge-text-transform: uppercase;
+	--badge-text-tracking: 0.05em;
+	--table-head-text-transform: uppercase;
+	--table-head-text-tracking: 0.1em;
+	--table-head-font-family: monospace;
+	--table-head-font-size: 0.75rem;
+	--table-cell-font-family: monospace;
+	--table-cell-font-size: 0.875rem;
+	--navbar-mark-text-transform: uppercase;
+	--navbar-mark-text-tracking: 0.1em;
+	--footer-column-title-text-transform: uppercase;
+	--footer-column-title-text-tracking: 0.2em;
+	--footer-column-title-font-family: monospace;
+	--lightbox-counter-text-transform: uppercase;
+	--lightbox-counter-text-tracking: 0.16em;
+	--lightbox-counter-font-family: monospace;
 
 	/* App shell */
 	--quark-page-bg: var(--color-bg);
