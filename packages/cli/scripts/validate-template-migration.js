@@ -61,8 +61,26 @@ function main() {
 	);
 
 	console.error("❌ Template migration drift detected.");
+	console.error("");
+	console.error("   The template migration SQL must match the source schema.");
 	console.error(
-		"   Update packages/cli/templates/base-project/packages/db/prisma/migrations/20260202061128_initial/migration.sql to match packages/db/prisma/schema.prisma.",
+		"   Do NOT edit template files directly — they are synced from monorepo source.",
+	);
+	console.error("");
+	console.error("   To fix, regenerate the migration SQL:");
+	console.error(
+		"     pnpm --filter @techstream/quark-db exec prisma migrate diff \\",
+	);
+	console.error(
+		"       --from-empty --to-schema prisma/schema.prisma --script \\",
+	);
+	console.error(
+		"       > packages/cli/templates/base-project/packages/db/prisma/migrations/20260202061128_initial/migration.sql",
+	);
+	console.error("");
+	console.error("   Or run sync-templates to validate:");
+	console.error(
+		"     pnpm --filter @techstream/quark-create-app sync-templates",
 	);
 
 	if (missingStatements.length > 0) {

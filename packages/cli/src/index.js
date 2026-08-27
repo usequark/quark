@@ -105,6 +105,93 @@ async function findAvailablePort(startPort, maxAttempts = 20) {
 }
 
 /**
+ * Domain models to strip from the Prisma schema during scaffold.
+ * These models are taught via embedded skills and added on demand,
+ * keeping the initial scaffold lean.
+ */
+const DOMAIN_MODELS_TO_STRIP = [
+	// CRM
+	"Company",
+	"Contact",
+	"Deal",
+	// CMS
+	"Page",
+	"MediaAsset",
+	"AppConfig",
+	"ContentStatus",
+	"Context",
+	"ContextSource",
+	// AI
+	"AiConversation",
+	"AiMessage",
+	"AiToolPermission",
+	"AiToolEvent",
+	"AiWorkflow",
+	"AiRole",
+	// Booking
+	"Staff",
+	"StaffService",
+	"ServiceType",
+	"AvailabilitySlot",
+	"Booking",
+	"BookingStatus",
+];
+
+/**
+ * Trim domain models from a Prisma schema file.
+ * Removes model blocks, enum blocks, and relation fields that reference removed models.
+ */
+function trimPrismaSchema(content) {
+	const lines = content.split("\n");
+	const result = [];
+
+	for (let i = 0; i < lines.length; i++) {
+		const line = lines[i];
+		const trimmed = line.trim();
+
+		// Check if this line starts a model or enum we want to strip
+		const modelMatch = trimmed.match(/^(model|enum)\s+(\w+)/);
+		if (modelMatch && DOMAIN_MODELS_TO_STRIP.includes(modelMatch[2])) {
+			// Skip this block - count braces to find end
+			let braceDepth = 0;
+			for (let j = i; j < lines.length; j++) {
+				for (const char of lines[j]) {
+					if (char === "{") braceDepth++;
+					if (char === "}") braceDepth--;
+				}
+				if (braceDepth === 0) {
+					i = j;
+					break;
+				}
+			}
+			continue;
+		}
+
+		// Check if this line is a relation field referencing a stripped model
+		let isRelationField = false;
+		for (const model of DOMAIN_MODELS_TO_STRIP) {
+			const lowerModel = model.charAt(0).toLowerCase() + model.slice(1);
+			if (
+				trimmed.match(
+					new RegExp(`^${lowerModel}s?\\s+${model}(\\[\\]|\\?|\\s+@)`),
+				)
+			) {
+				isRelationField = true;
+				break;
+			}
+		}
+
+		if (isRelationField) {
+			continue;
+		}
+
+		result.push(line);
+	}
+
+	return result.join("\n").replace(/\n{3,}/g, "\n\n");
+}
+
+/**
  * Copy a template directory to the target location, with variable substitution
  */
 async function copyTemplate(templateName, targetDir, variables = {}) {
@@ -691,6 +778,26 @@ program
 					`${JSON.stringify(pkgJson, null, "	")}\n`,
 				);
 				console.log(chalk.green(`    ✓ ${reqPkg} (required)`));
+			}
+
+			// Step 4b: Trim domain models from Prisma schema
+			// Keeps the scaffold lean — domain models are taught via embedded skills
+			const schemaPath = path.join(
+				targetDir,
+				"packages",
+				"db",
+				"prisma",
+				"schema.prisma",
+			);
+			if (await fs.pathExists(schemaPath)) {
+				const schemaContent = await fs.readFile(schemaPath, "utf-8");
+				const trimmed = trimPrismaSchema(schemaContent);
+				if (trimmed !== schemaContent) {
+					await fs.writeFile(schemaPath, trimmed);
+					console.log(
+						chalk.green("    ✓ Prisma schema trimmed (domain models removed)"),
+					);
+				}
 			}
 
 			// Step 5: Ask which optional features to eject
