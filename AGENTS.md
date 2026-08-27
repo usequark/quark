@@ -19,6 +19,9 @@ After changing source files in `apps/web/`, `apps/worker/`, `packages/db/`, `pac
 pnpm --filter @techstream/quark-create-app sync-templates
 ```
 
+### Schema trimming
+The CLI trims domain models (CRM, CMS, AI, Booking) from the scaffolded Prisma schema by default, keeping only 7 core models. Use `--full-schema` to keep all models. The source schema always contains all models — trimming happens at scaffold time via `trimPrismaSchema()` in `packages/cli/src/index.js`.
+
 ### Never run `pnpm changeset version` locally
 CI runs this automatically via the release workflow. Running it locally breaks the automated PR process.
 

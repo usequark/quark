@@ -635,6 +635,16 @@ program
 			);
 			options.prompts = false;
 		}
+
+		// Deprecation warning for --no-prompts (now implicit when options are provided)
+		if (options.prompts === false && !hasConfigOptions) {
+			console.log(
+				chalk.yellow(
+					"  ⚠ --no-prompts is deprecated. Options now auto-skip prompts.",
+				),
+			);
+		}
+
 		const requestedSignupPreference = resolveSignupPreference(options.signup);
 
 		// Clean up orphaned Docker volumes from a previous project with the same name.

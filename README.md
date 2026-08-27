@@ -49,6 +49,19 @@ The CLI will:
 - Generate secure `.env` secrets automatically
 - Run `pnpm install`
 
+**CLI Options:**
+
+| Flag | Description |
+|------|-------------|
+| `--features ui,jobs` | Include optional packages (ui, jobs) |
+| `--preset <name>` | Use a preset bundle (client-work, internal-tool, product, minimal) |
+| `--signup enabled\|disabled` | Control public self-service signup |
+| `--full-schema` | Keep all Prisma models (default: trimmed to 7 core models) |
+| `--skip-install` | Skip pnpm install and Prisma generate |
+| `--prompt "brief"` | Set the product brief for MAIN.md |
+
+Providing any config option automatically skips interactive prompts.
+
 ### 2. Run development
 
 ```bash
