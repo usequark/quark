@@ -186,9 +186,6 @@ CREATE TABLE "AppConfig" (
     CONSTRAINT "AppConfig_pkey" PRIMARY KEY ("id")
 );
 
--- CreateIndex
-CREATE UNIQUE INDEX "AppConfig_key_key" ON "AppConfig"("key");
-
 -- CreateTable
 CREATE TABLE "Page" (
     "id" TEXT NOT NULL,
@@ -504,6 +501,9 @@ CREATE INDEX "Deal_companyId_idx" ON "Deal"("companyId");
 
 -- CreateIndex
 CREATE INDEX "Deal_createdAt_idx" ON "Deal"("createdAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "AppConfig_key_key" ON "AppConfig"("key");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Page_slug_key" ON "Page"("slug");
