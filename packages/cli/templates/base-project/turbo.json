@@ -95,6 +95,12 @@
 				"ADMIN_NAME"
 			]
 		},
+		"sync-templates": {
+			"cache": false
+		},
+		"sync-templates:check": {
+			"cache": false
+		},
 		"dev": {
 			"cache": false,
 			"persistent": true,
