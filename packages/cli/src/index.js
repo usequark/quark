@@ -583,6 +583,10 @@ program
 	)
 	.option("--skip-install", "Skip pnpm install and Prisma generate steps")
 	.option("--skip-docker", "Skip Docker orphan-volume cleanup")
+	.option(
+		"--full-schema",
+		"Keep all Prisma models (skip domain model trimming)",
+	)
 	.action(async (projectName, options) => {
 		console.log(
 			chalk.blue.bold(
@@ -781,23 +785,30 @@ program
 			}
 
 			// Step 4b: Trim domain models from Prisma schema
+			// Step 4b: Trim domain models from Prisma schema (unless --full-schema)
 			// Keeps the scaffold lean — domain models are taught via embedded skills
-			const schemaPath = path.join(
-				targetDir,
-				"packages",
-				"db",
-				"prisma",
-				"schema.prisma",
-			);
-			if (await fs.pathExists(schemaPath)) {
-				const schemaContent = await fs.readFile(schemaPath, "utf-8");
-				const trimmed = trimPrismaSchema(schemaContent);
-				if (trimmed !== schemaContent) {
-					await fs.writeFile(schemaPath, trimmed);
-					console.log(
-						chalk.green("    ✓ Prisma schema trimmed (domain models removed)"),
-					);
+			if (!options.fullSchema) {
+				const schemaPath = path.join(
+					targetDir,
+					"packages",
+					"db",
+					"prisma",
+					"schema.prisma",
+				);
+				if (await fs.pathExists(schemaPath)) {
+					const schemaContent = await fs.readFile(schemaPath, "utf-8");
+					const trimmed = trimPrismaSchema(schemaContent);
+					if (trimmed !== schemaContent) {
+						await fs.writeFile(schemaPath, trimmed);
+						console.log(
+							chalk.green(
+								"    ✓ Prisma schema trimmed (domain models removed)",
+							),
+						);
+					}
 				}
+			} else {
+				console.log(chalk.dim("    · Keeping full schema (--full-schema)"));
 			}
 
 			// Step 5: Ask which optional features to eject
