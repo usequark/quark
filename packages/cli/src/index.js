@@ -617,6 +617,24 @@ program
 		const scope = projectName.toLowerCase().replace(/[^a-z0-9-]/g, "");
 		const appDisplayName = formatProjectDisplayName(projectName);
 		const appDescription = `${appDisplayName} application`;
+
+		// Auto-detect interactive mode: if any config options are provided,
+		// skip prompts automatically. Only show prompts when no options given.
+		const hasConfigOptions =
+			options.features !== undefined ||
+			options.preset !== undefined ||
+			options.signup !== undefined ||
+			options.prompt !== undefined ||
+			options.harness !== undefined ||
+			options.fullSchema;
+		if (hasConfigOptions && options.prompts !== false) {
+			console.log(
+				chalk.dim(
+					"  ℹ Configuration options provided — skipping interactive prompts",
+				),
+			);
+			options.prompts = false;
+		}
 		const requestedSignupPreference = resolveSignupPreference(options.signup);
 
 		// Clean up orphaned Docker volumes from a previous project with the same name.
