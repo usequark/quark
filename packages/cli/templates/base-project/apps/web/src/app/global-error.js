@@ -5,15 +5,15 @@ import Link from "next/link";
 export default function GlobalError({ reset }) {
 	return (
 		<html lang="en">
-			<body style={{ margin: 0, background: "#05070a" }}>
+			<body style={{ margin: 0, background: "var(--color-bg, #05070a)" }}>
 				<main
 					className="fixed inset-0 flex flex-col items-center justify-center"
-					style={{ background: "#05070a" }}
+					style={{ background: "var(--color-bg, #05070a)" }}
 				>
 					<p
 						className="font-mono uppercase"
 						style={{
-							color: "#3a3a4a",
+							color: "var(--color-text-faint, #3a3a4a)",
 							fontSize: "11px",
 							letterSpacing: "0.15em",
 						}}
@@ -22,7 +22,10 @@ export default function GlobalError({ reset }) {
 					</p>
 					<p
 						className="font-mono mt-2"
-						style={{ color: "#2a2a3a", fontSize: "11px" }}
+						style={{
+							color: "var(--color-text-faint, #2a2a3a)",
+							fontSize: "11px",
+						}}
 					>
 						something went wrong
 					</p>
@@ -43,7 +46,7 @@ export default function GlobalError({ reset }) {
 						>
 							try again
 						</button>
-						<span style={{ color: "#2a2a3a" }}>·</span>
+						<span style={{ color: "var(--color-text-faint, #2a2a3a)" }}>·</span>
 						<Link href="/" className="quark-home-link">
 							← home
 						</Link>

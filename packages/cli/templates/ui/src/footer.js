@@ -1,19 +1,18 @@
 import React from "react";
 
 const footerCls = "border-t border-[--footer-border] bg-[--footer-bg]";
-const containerCls = "mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-10";
+const containerCls = "mx-auto";
 const topGridCls =
 	"grid gap-8 sm:gap-10 md:grid-cols-2 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]";
 const brandRowCls = "flex items-center gap-3";
 const markCls =
-	"flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[--footer-mark-bg] text-lg font-bold text-[--footer-mark-text] sm:h-12 sm:w-12 sm:text-xl";
+	"flex shrink-0 items-center justify-center rounded-2xl bg-[--footer-mark-bg] font-bold text-[--footer-mark-text]";
 const brandNameCls =
 	"text-2xl font-bold tracking-tight text-[--footer-text] sm:text-3xl";
 const brandTextCls = "max-w-md text-sm leading-7 text-[--footer-text-muted]";
 const ctaCls =
-	"inline-flex w-full items-center justify-center rounded-full border border-[--footer-cta-border] px-6 py-2.5 text-sm font-semibold text-[--footer-mark-text] transition-colors hover:bg-[--footer-cta-hover-bg] sm:w-auto";
-const columnTitleCls =
-	"mb-4 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-[--footer-text-faint]";
+	"inline-flex w-full items-center justify-center rounded-full border border-[--footer-cta-border] font-semibold text-[--footer-mark-text] transition-colors hover:bg-[--footer-cta-hover-bg] sm:w-auto";
+const columnTitleCls = "mb-4 font-semibold text-[--footer-text-faint]";
 const columnListCls = "space-y-2.5";
 const linkCls =
 	"break-words text-[--footer-text-muted] transition-colors hover:text-[--footer-link-hover]";
@@ -100,7 +99,16 @@ export function Footer({
 		{ className: `${footerCls} ${className}`.trim() },
 		React.createElement(
 			"div",
-			{ className: containerCls },
+			{
+				className: containerCls,
+				style: {
+					maxWidth: "var(--footer-container-max-width)",
+					paddingLeft: "var(--footer-container-padding-x)",
+					paddingRight: "var(--footer-container-padding-x)",
+					paddingTop: "var(--footer-container-padding-y)",
+					paddingBottom: "var(--footer-container-padding-y)",
+				},
+			},
 			React.createElement(
 				"div",
 				{ className: topGridCls },
@@ -114,7 +122,14 @@ export function Footer({
 							? mark
 							: React.createElement(
 									"span",
-									{ className: markCls, "aria-hidden": "true" },
+									{
+										className: markCls,
+										"aria-hidden": "true",
+										style: {
+											width: "var(--footer-mark-width)",
+											height: "var(--footer-mark-height)",
+										},
+									},
 									brandName.charAt(0).toUpperCase(),
 								),
 						React.createElement("h2", { className: brandNameCls }, brandName),
@@ -126,7 +141,17 @@ export function Footer({
 					),
 					React.createElement(
 						"a",
-						{ href: ctaHref, className: ctaCls },
+						{
+							href: ctaHref,
+							className: ctaCls,
+							style: {
+								paddingLeft: "var(--footer-cta-padding-x)",
+								paddingRight: "var(--footer-cta-padding-x)",
+								paddingTop: "var(--footer-cta-padding-y)",
+								paddingBottom: "var(--footer-cta-padding-y)",
+								fontSize: "var(--footer-cta-font-size)",
+							},
+						},
 						ctaLabel,
 					),
 				),
@@ -140,7 +165,15 @@ export function Footer({
 						},
 						React.createElement(
 							"h3",
-							{ className: columnTitleCls },
+							{
+								className: columnTitleCls,
+								style: {
+									fontSize: "var(--footer-column-title-font-size)",
+									textTransform: "var(--footer-column-title-text-transform)",
+									letterSpacing: "var(--footer-column-title-text-tracking)",
+									fontFamily: "var(--footer-column-title-font-family)",
+								},
+							},
 							column?.title,
 						),
 						React.createElement(

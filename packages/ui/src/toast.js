@@ -98,8 +98,8 @@ export function Toast({
 			"data-toast-variant": variant,
 			onMouseEnter: () => setHovered(true),
 			onMouseLeave: () => setHovered(false),
-			style: animStyle,
 			className: `fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-[--radius-default] px-4 py-3 text-sm transition-colors duration-200 ${variantCls}`,
+			style: animStyle,
 		},
 		React.createElement("span", null, message),
 		React.createElement(

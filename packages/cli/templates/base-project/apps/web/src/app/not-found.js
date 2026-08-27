@@ -7,18 +7,22 @@ export const metadata = {
 export default function NotFound() {
 	return (
 		<main
-			style={{ background: "#05070a" }}
 			className="fixed inset-0 flex flex-col items-center justify-center"
+			style={{ background: "var(--color-bg, #05070a)" }}
 		>
 			<p
 				className="font-mono uppercase"
-				style={{ color: "#3a3a4a", fontSize: "11px", letterSpacing: "0.15em" }}
+				style={{
+					color: "var(--color-text-faint, #3a3a4a)",
+					fontSize: "11px",
+					letterSpacing: "0.15em",
+				}}
 			>
 				404
 			</p>
 			<p
 				className="font-mono mt-2"
-				style={{ color: "#2a2a3a", fontSize: "11px" }}
+				style={{ color: "var(--color-text-faint, #2a2a3a)", fontSize: "11px" }}
 			>
 				page not found
 			</p>

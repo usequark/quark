@@ -12,22 +12,22 @@ const desktopInnerCls = "flex h-[4.5rem] items-center justify-center gap-6";
 const leftZoneCls = "flex items-center mr-auto";
 const rightZoneCls = "flex items-center justify-end ml-auto";
 const logoCls =
-	"inline-flex items-center gap-2.5 rounded-[--radius-default] px-1.5 py-1 text-base font-semibold tracking-wide text-[--navbar-text] transition-colors hover:text-[--navbar-logo-hover]";
+	"inline-flex items-center gap-2.5 rounded-[--radius-default] px-1.5 py-1 font-semibold tracking-wide text-[--navbar-text] transition-colors hover:text-[--navbar-logo-hover]";
 const markCls =
-	"inline-flex h-8 w-8 items-center justify-center rounded-[--radius-default] border border-[--navbar-mark-border] bg-[--navbar-mark-bg] text-[11px] font-bold uppercase tracking-widest text-[--navbar-mark-text]";
+	"inline-flex h-8 w-8 items-center justify-center rounded-[--radius-default] border border-[--navbar-mark-border] bg-[--navbar-mark-bg] font-bold text-[--navbar-mark-text]";
 const centerNavCls = "flex min-w-0 justify-center";
 const desktopListCls = "flex items-center gap-3";
 const desktopLinkCls =
-	"inline-flex h-10 items-center rounded-[--radius-default] px-3.5 text-base font-medium text-[--navbar-text-muted] transition-colors hover:bg-[--navbar-hover-bg] hover:text-[--navbar-hover-text]";
+	"inline-flex h-10 items-center rounded-[--radius-default] px-3.5 font-medium text-[--navbar-text-muted] transition-colors hover:bg-[--navbar-hover-bg] hover:text-[--navbar-hover-text]";
 
 const desktopDropdownWrapCls =
 	"group inline-flex cursor-pointer items-center rounded-[--radius-default] transition-colors hover:bg-[--navbar-hover-bg]";
 const desktopDropdownLinkCls =
-	"flex items-center text-base font-medium text-[--navbar-text-muted] transition-colors group-hover:text-[--navbar-hover-text]";
+	"flex items-center font-medium text-[--navbar-text-muted] transition-colors group-hover:text-[--navbar-hover-text]";
 const desktopDropdownChevronCls =
 	"flex items-center px-2 pt-1 text-[--navbar-text-muted] transition-colors group-hover:text-[--navbar-hover-text] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--navbar-ring)] rounded-r-[--radius-default]";
 const actionCls =
-	"inline-flex h-11 items-center justify-center whitespace-nowrap rounded-[--radius-default] border border-[--navbar-action-border] bg-[--navbar-action-bg] px-5 text-base font-semibold text-[--navbar-action-text] transition-colors hover:border-[--navbar-action-hover-border] hover:bg-[--navbar-action-hover-bg] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--navbar-ring)]";
+	"inline-flex h-11 items-center justify-center whitespace-nowrap rounded-[--radius-default] border border-[--navbar-action-border] bg-[--navbar-action-bg] px-5 font-semibold text-[--navbar-action-text] transition-colors hover:border-[--navbar-action-hover-border] hover:bg-[--navbar-action-hover-bg] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--navbar-ring)]";
 
 const mobileInnerCls = "flex h-14 items-center justify-between gap-4";
 const mobileToggleCls =
@@ -37,12 +37,12 @@ const mobilePanelWrapCls =
 const mobilePanelCls =
 	"border-y border-[--navbar-border] bg-[--navbar-mobile-panel-bg] will-change-transform transition-all duration-300 ease-out";
 const mobileLinkCls =
-	"flex min-h-12 w-full items-center justify-between px-4 text-left text-base font-medium text-[--navbar-text-muted] transition-colors hover:bg-[--navbar-hover-bg] hover:text-[--navbar-hover-text]";
+	"flex min-h-12 w-full items-center justify-between px-4 text-left font-medium text-[--navbar-text-muted] transition-colors hover:bg-[--navbar-hover-bg] hover:text-[--navbar-hover-text]";
 const mobileSubLinkCls =
-	"block px-6 py-2 text-sm text-[--navbar-text-muted] transition-colors hover:bg-[--navbar-hover-bg] hover:text-[--navbar-hover-text]";
+	"block px-6 py-2 text-[--navbar-text-muted] transition-colors hover:bg-[--navbar-hover-bg] hover:text-[--navbar-hover-text]";
 const mobileActionWrapCls = "px-3 pb-3 pt-2";
 const mobileActionCls =
-	"inline-flex h-10 w-full items-center justify-center rounded-[--radius-default] border border-[--navbar-action-border] bg-[--navbar-action-bg] px-4 text-sm font-semibold text-[--navbar-action-text] transition-colors hover:border-[--navbar-action-hover-border] hover:bg-[--navbar-action-hover-bg] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--navbar-ring)]";
+	"inline-flex h-10 w-full items-center justify-center rounded-[--radius-default] border border-[--navbar-action-border] bg-[--navbar-action-bg] px-4 font-semibold text-[--navbar-action-text] transition-colors hover:border-[--navbar-action-hover-border] hover:bg-[--navbar-action-hover-bg] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--navbar-ring)]";
 
 const DEFAULT_LINKS = [
 	{ label: "Home", href: "#" },
@@ -90,7 +90,14 @@ function renderLogo(logo) {
 		null,
 		React.createElement(
 			"span",
-			{ "aria-hidden": "true", className: markCls },
+			{
+				"aria-hidden": "true",
+				className: markCls,
+				style: {
+					textTransform: "var(--navbar-mark-text-transform)",
+					letterSpacing: "var(--navbar-mark-text-tracking)",
+				},
+			},
 			text.slice(0, 1),
 		),
 		React.createElement("span", { className: "text-lg" }, text),
@@ -386,10 +393,20 @@ export function MobileNavbar({
 		},
 		React.createElement(
 			"div",
-			{ className: `${containerCls} ${maxWidthClassName} relative`.trim() },
+			{
+				className: `${containerCls} ${maxWidthClassName} relative`.trim(),
+				style: {
+					paddingLeft: "var(--navbar-container-padding-x)",
+					paddingRight: "var(--navbar-container-padding-x)",
+				},
+			},
 			React.createElement(
 				"div",
-				{ ref: barRef, className: mobileInnerCls },
+				{
+					ref: barRef,
+					className: mobileInnerCls,
+					style: { height: "var(--navbar-mobile-height)" },
+				},
 				React.createElement(
 					"a",
 					{ href: logoHref, className: logoCls },
@@ -470,6 +487,14 @@ export function MobileNavbar({
 													{
 														href: link.href ?? "#",
 														className: mobileLinkCls,
+														style: {
+															minHeight: "var(--navbar-mobile-link-min-height)",
+															paddingLeft:
+																"var(--navbar-mobile-link-padding-x)",
+															paddingRight:
+																"var(--navbar-mobile-link-padding-x)",
+															fontSize: "var(--navbar-mobile-link-font-size)",
+														},
 														onClick: () => setMenuOpen(false),
 													},
 													link.label,
@@ -486,6 +511,12 @@ export function MobileNavbar({
 												{
 													type: "button",
 													className: mobileLinkCls,
+													style: {
+														minHeight: "var(--navbar-mobile-link-min-height)",
+														paddingLeft: "var(--navbar-mobile-link-padding-x)",
+														paddingRight: "var(--navbar-mobile-link-padding-x)",
+														fontSize: "var(--navbar-mobile-link-font-size)",
+													},
 													"aria-expanded": submenuOpen,
 													onClick: () => toggleSubmenu(index),
 												},
@@ -520,6 +551,18 @@ export function MobileNavbar({
 																	{
 																		href: item.href ?? "#",
 																		className: mobileSubLinkCls,
+																		style: {
+																			paddingLeft:
+																				"var(--navbar-mobile-sublink-padding-x)",
+																			paddingRight:
+																				"var(--navbar-mobile-sublink-padding-x)",
+																			paddingTop:
+																				"var(--navbar-mobile-sublink-padding-y)",
+																			paddingBottom:
+																				"var(--navbar-mobile-sublink-padding-y)",
+																			fontSize:
+																				"var(--navbar-mobile-sublink-font-size)",
+																		},
 																		onClick: () => {
 																			setMenuOpen(false);
 																			setOpenSubmenus({});
@@ -538,7 +581,15 @@ export function MobileNavbar({
 								action
 									? React.createElement(
 											"div",
-											{ className: mobileActionWrapCls },
+											{
+												className: mobileActionWrapCls,
+												style: {
+													paddingLeft: "var(--navbar-container-padding-x)",
+													paddingRight: "var(--navbar-container-padding-x)",
+													paddingTop: "0.5rem",
+													paddingBottom: "0.75rem",
+												},
+											},
 											renderAction(action, mobileActionCls),
 										)
 									: null,

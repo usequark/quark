@@ -15,22 +15,24 @@ const sizes = {
 };
 
 const iconSizes = {
-	sm: "size-4",
-	md: "size-4",
-	lg: "size-5",
+	sm: "var(--btn-icon-sm)",
+	md: "var(--btn-icon-md)",
+	lg: "var(--btn-icon-lg)",
 };
 
 function buildIcon(icon, size) {
 	if (!icon) return null;
 
-	const iconClass = `${iconSizes[size] ?? iconSizes.md} shrink-0`;
+	const iconSize = iconSizes[size] ?? iconSizes.md;
+	const iconStyle = { width: iconSize, height: iconSize, flexShrink: 0 };
 
 	if (React.isValidElement(icon)) {
 		const existingClassName = icon.props.className ?? "";
 		return React.cloneElement(icon, {
 			"aria-hidden": true,
 			focusable: false,
-			className: `${iconClass} ${existingClassName}`.trim(),
+			className: `${existingClassName}`.trim(),
+			style: { ...iconStyle, ...icon.props.style },
 		});
 	}
 
@@ -38,14 +40,14 @@ function buildIcon(icon, size) {
 		"span",
 		{
 			"aria-hidden": true,
-			className: iconClass,
+			style: iconStyle,
 		},
 		icon,
 	);
 }
 
 export function Button({
-	variant = "primary",
+	variant = "default",
 	size = "md",
 	className = "",
 	href,

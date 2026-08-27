@@ -103,7 +103,7 @@ export function useTheme() {
  * Displays "🌙 Dark Mode" when dark, "☀ Light Mode" when light.
  * Must be rendered inside a ThemeProvider.
  */
-export function ThemeToggle({ className = "", style = {} }) {
+export function ThemeToggle({ className = "" }) {
 	const { theme, setTheme } = useTheme();
 	const isDark = theme === "dark";
 
@@ -116,7 +116,7 @@ export function ThemeToggle({ className = "", style = {} }) {
 					height: "13",
 					viewBox: "0 0 24 24",
 					fill: "currentColor",
-					style: { flexShrink: 0 },
+					className: "shrink-0",
 				},
 				React.createElement("path", {
 					d: "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z",
@@ -134,7 +134,7 @@ export function ThemeToggle({ className = "", style = {} }) {
 					strokeWidth: "2",
 					strokeLinecap: "round",
 					strokeLinejoin: "round",
-					style: { flexShrink: 0 },
+					className: "shrink-0",
 				},
 				React.createElement("circle", { cx: "12", cy: "12", r: "5" }),
 				React.createElement("line", { x1: "12", y1: "1", x2: "12", y2: "3" }),
@@ -174,28 +174,20 @@ export function ThemeToggle({ className = "", style = {} }) {
 			onClick: () => setTheme(isDark ? "light" : "dark"),
 			"aria-label": `Switch to ${isDark ? "light" : "dark"} theme`,
 			"aria-pressed": isDark,
-			className: className || undefined,
+			className:
+				`inline-flex items-center cursor-pointer whitespace-nowrap shrink-0 outline-none transition-[background,border-color,color] duration-150 ease-in ${className || ""}`.trim(),
 			style: {
-				display: "inline-flex",
-				alignItems: "center",
-				gap: "6px",
-				height: "28px",
-				paddingLeft: "10px",
-				paddingRight: "12px",
-				borderRadius: "14px",
+				gap: "var(--toggle-gap, 6px)",
+				height: "var(--toggle-height, 28px)",
+				paddingLeft: "var(--toggle-padding-x, 10px)",
+				paddingRight: "var(--toggle-padding-x-right, 12px)",
+				borderRadius: "var(--toggle-radius, 14px)",
 				border: "1px solid var(--toggle-track-border)",
 				background: "var(--toggle-track-bg)",
-				color: "var(--text-muted)",
-				cursor: "pointer",
-				fontSize: "12px",
+				color: "var(--toggle-text, var(--color-text-muted))",
+				fontSize: "var(--toggle-font-size, 12px)",
 				fontWeight: "500",
 				letterSpacing: "0.01em",
-				whiteSpace: "nowrap",
-				transition:
-					"background 0.15s ease, border-color 0.15s ease, color 0.15s ease",
-				outline: "none",
-				flexShrink: 0,
-				...style,
 			},
 		},
 		icon,
