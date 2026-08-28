@@ -113,7 +113,7 @@ async function scaffoldProject({ name, features }) {
 			cliPackageSpec,
 			name,
 			"--no-prompts",
-			"--features",
+			"--packages",
 			features,
 			"--skip-docker",
 		],

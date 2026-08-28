@@ -5,6 +5,10 @@ Scaffold a new Quark project with sensible defaults for full-stack JavaScript de
 ## Installation
 
 ```bash
+# Interactive — prompts for project name, description, and options
+npx @techstream/quark-create-app@latest
+
+# Non-interactive — provide project name as argument
 npx @techstream/quark-create-app@latest my-awesome-app
 ```
 
@@ -27,11 +31,12 @@ pnpm dev
 ## Commands
 
 ```bash
-# Create a new project
-npx @techstream/quark-create-app@latest my-awesome-app
+# Create a new project (interactive or with name argument)
+npx @techstream/quark-create-app@latest
+npx @techstream/quark-create-app@latest my-app
 
-# Add a feature (package or domain starter) to an existing project
-npx @techstream/quark-create-app add cms
+# Add a package to an existing project
+npx @techstream/quark-create-app add jobs
 
 # Print an embedded skill for a feature
 npx @techstream/quark-create-app skill bookings
@@ -54,70 +59,62 @@ Aliases:
 - `create-quark-app`
 - `quark-update`
 
-## Two Views
+## Interactive Mode
 
-The CLI exposes two views over the same engine:
+When run without arguments, the CLI prompts for:
 
-- **Human View (default, no params)** — interactive, product-shaped questions. It asks you to describe your app (which seeds `MAIN.md`), then an **advanced** expander for full package/custom configuration. Progressive disclosure: simple by default.
-- **AI View (params)** — a documented, deterministic flag surface (`--features`, `--preset`, `--prompt`, `--no-prompts`) that an agent calls reliably. Same params → same scaffold, every time.
-
-### Human View
-
-```bash
-# Interactive: describe your app, then configure features
-npx @techstream/quark-create-app my-app
-```
-
-### AI View (deterministic params)
-
-Skip all interactive prompts and use defaults:
+1. **Project name** — becomes the directory name, npm scope, and env vars
+2. **Description** — seeds `MAIN.md` and `.env` `APP_NAME`/`APP_DESCRIPTION`
+3. **Background jobs** — include BullMQ worker for emails, webhooks, scheduled tasks
+4. **Public signup** — allow self-service user registration
 
 ```bash
-# Create project without prompts
-npx @techstream/quark-create-app my-app --no-prompts
+npx @techstream/quark-create-app@latest
+# ? Project name: my-app
+# ? Describe your app: A platform for booking salon appointments
+# ? Include background jobs (emails, webhooks, scheduled tasks)? Yes
+# ? Allow public self-service signup? Yes
 ```
 
-### Custom Features
+## Non-Interactive Mode
 
-Specify which optional features to include (default: `ui,jobs`; valid: `ui`, `jobs`, `admin`, `bookings`, `crm`, `cms`, `ai`):
+Skip all prompts with flags:
+
+```bash
+npx @techstream/quark-create-app@latest my-app --no-prompts
+```
+
+### Packages
+
+Specify which optional packages to include (default: `ui,jobs`; valid: `ui`, `jobs`):
 
 ```bash
 # Only include UI package
-npx @techstream/quark-create-app my-app --no-prompts --features ui
+npx @techstream/quark-create-app@latest my-app --no-prompts --packages ui
 
 # Include both UI and Jobs
-npx @techstream/quark-create-app my-app --no-prompts --features ui,jobs
-
-# Include admin plus the CMS starter explicitly
-npx @techstream/quark-create-app my-app --no-prompts --features ui,admin,cms
+npx @techstream/quark-create-app@latest my-app --no-prompts --packages ui,jobs
 
 # Minimal setup (no optional packages)
-npx @techstream/quark-create-app my-app --no-prompts --features ""
+npx @techstream/quark-create-app@latest my-app --no-prompts --packages ""
 ```
 
-### Presets
-
-Bundle a set of features with one flag:
-
-```bash
-# Client-work bundle (ui, jobs, admin)
-npx @techstream/quark-create-app my-app --no-prompts --preset client-work
-
-# Internal tool (ui, admin)
-npx @techstream/quark-create-app my-app --no-prompts --preset internal-tool
-
-# Minimal (no optional features)
-npx @techstream/quark-create-app my-app --no-prompts --preset minimal
-```
-
-Valid presets: `client-work`, `internal-tool`, `product`, `minimal`.
+`ui` is always included automatically as a required dependency.
 
 ### Product brief
 
-Seed the `MAIN.md` brief from a prompt (AI View):
+Seed the `MAIN.md` brief from a flag:
 
 ```bash
-npx @techstream/quark-create-app my-app --no-prompts --prompt "A booking platform for salons"
+npx @techstream/quark-create-app@latest my-app --no-prompts --prompt "A booking platform for salons"
+```
+
+### Signup
+
+Control public self-service signup (default: `enabled`):
+
+```bash
+npx @techstream/quark-create-app@latest my-app --no-prompts --signup disabled
 ```
 
 ### skill command
@@ -126,12 +123,12 @@ Print an embedded skill for a feature:
 
 ```bash
 # Print the bookings skill
-npx @techstream/quark-create-app skill bookings
+npx @techstream/quark-create-app@latest skill bookings
 
 # Print a core skill (model, endpoint, dashboard)
-npx @techstream/quark-create-app skill model
-npx @techstream/quark-create-app skill endpoint
-npx @techstream/quark-create-app skill dashboard
+npx @techstream/quark-create-app@latest skill model
+npx @techstream/quark-create-app@latest skill endpoint
+npx @techstream/quark-create-app@latest skill dashboard
 ```
 
 Available skills: `model`, `endpoint`, `dashboard`, `bookings`, `crm`, `cms`, `ai`.
@@ -142,7 +139,7 @@ Create the project structure without running package installation:
 
 ```bash
 # Create project but skip pnpm install
-npx @techstream/quark-create-app my-app --no-prompts --skip-install
+npx @techstream/quark-create-app@latest my-app --no-prompts --skip-install
 
 # Useful for CI/CD where you'll install dependencies separately
 ```
@@ -153,16 +150,16 @@ Control whether to remove Docker volumes from previous cleanup:
 
 ```bash
 # Keep Docker working directories (useful in CI/CD)
-npx @techstream/quark-create-app my-app --no-prompts --skip-docker
+npx @techstream/quark-create-app@latest my-app --no-prompts --skip-docker
 ```
 
 ### Complete Example: Full Automation
 
 ```bash
 # Create, install, and setup everything automatically
-npx @techstream/quark-create-app my-app \
+npx @techstream/quark-create-app@latest my-app \
   --no-prompts \
-  --features ui,jobs \
+  --packages ui,jobs \
   && cd my-app \
   && docker compose up -d \
   && pnpm db:migrate \
@@ -200,5 +197,5 @@ QUARK_CLI_BUILD_TEST=1 pnpm test:build
 ## Support
 
 For issues, questions, and discussions:
-- 🐛 [Issue Tracker](https://github.com/Bobnoddle/quark/issues)
-- 💬 [Discussions](https://github.com/Bobnoddle/quark/discussions)
+- [Issue Tracker](https://github.com/Bobnoddle/quark/issues)
+- [Discussions](https://github.com/Bobnoddle/quark/discussions)
