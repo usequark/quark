@@ -1,5 +1,37 @@
 # @techstream/quark-create-app
 
+## 1.20.0
+
+### Minor Changes
+
+- [#87](https://github.com/Bobnoddle/quark/pull/87) [`3ed5109`](https://github.com/Bobnoddle/quark/commit/3ed510924b99e7efdbf09c197cba445806ee61f6) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Bundle all embedded skills with every scaffold and remove the admin dashboard UI. The CLI no longer asks which skills to include — features are now `ui` and `jobs` only, and all skills (including a new `admin-dashboard` skill preserving the CRUD-generation patterns and a `quark-skills` index) ship with every build. The `admin`, `bookings`, `crm`, `cms`, and `ai` feature flags are removed; the dev seed no longer inserts domain-specific demo data; the scaffolded README now includes the `pnpm db:seed` step.
+
+- [#83](https://github.com/Bobnoddle/quark/pull/83) [`2af89ff`](https://github.com/Bobnoddle/quark/commit/2af89ff6409fe6fa8904c52cccefaeeee4d68cbb) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - feat: make embedded skills harness-generic via --harness flag
+
+  The embedded skills are no longer opencode-specific. The CLI now accepts a
+  `--harness <opencode|claude|copilot>` flag (default `opencode`) and places the
+  skills in the selected harness's auto-load directory (`.opencode/skills/`,
+  `.claude/skills/`, or `.github/skills/`). The scaffolded docs and feature rows
+  reference the selected harness's skill directory.
+
+- [#85](https://github.com/Bobnoddle/quark/pull/85) [`c732267`](https://github.com/Bobnoddle/quark/commit/c73226748f76b554a35345b005fbe9a95eaf8a3b) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Standardize scaffolded page-title convention: add getPageMetadata() helper to the web SEO lib, switch the title template separator from "·" to "|", and document page-title formulas in the seo skill and project context files.
+
+### Patch Changes
+
+- [#83](https://github.com/Bobnoddle/quark/pull/83) [`2af89ff`](https://github.com/Bobnoddle/quark/commit/2af89ff6409fe6fa8904c52cccefaeeee4d68cbb) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - docs: enrich booking/CMS skills; remove stale vertical + agency docs
+
+  - **Enriched the bookings skill** with the full booking schema (Staff, ServiceType, AvailabilitySlot, Booking), the booking status state machine, and scheduling rules.
+  - **Enriched the CMS skill** with the content status lifecycle and media library model.
+  - **Removed stale vertical docs** (`BOOKING-SYSTEM-DESIGN.md`, `CMS_OUTLINE.md`) — their domain knowledge is now in the skills.
+  - **Removed agency docs** (Techstream pricing/marketing/strategy) and the stale business pitch — they belong in a separate repo.
+  - **Removed leftover artifacts** (`technical-task.html`, `PLAN.md`, `PLAN_SUMMARY.md` archived to `reference/`).
+
+- [#88](https://github.com/Bobnoddle/quark/pull/88) [`36c9ced`](https://github.com/Bobnoddle/quark/commit/36c9ced83208254190e9295db17af7b3077a9fa9) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - docs: replace remaining recipe terminology with skills across docs, CLI comments, and the reference archive README
+
+- [#89](https://github.com/Bobnoddle/quark/pull/89) [`e14a134`](https://github.com/Bobnoddle/quark/commit/e14a1349843fec1ea24af02efe5a3841646b9aee) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Slim template footprint by excluding test files from scaffolded projects, reducing globals.css to essential design tokens, and trimming the example page. The sync-templates engine now removes locally-excluded files from templates (not just skips syncing them). Stale planning docs archived.
+
+- [#86](https://github.com/Bobnoddle/quark/pull/86) [`ec97a10`](https://github.com/Bobnoddle/quark/commit/ec97a10d11ad6003daa31585b72952beafc5cccb) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Sync pnpm.overrides from the monorepo root into the scaffold root template so scaffolded projects pick up security overrides (deepmerge-ts, fast-uri) and stop failing Trivy image scans.
+
 ## 1.19.1
 
 ### Patch Changes
