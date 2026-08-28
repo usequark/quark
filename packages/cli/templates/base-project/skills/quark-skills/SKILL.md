@@ -27,6 +27,7 @@ These teach the AI to build a complete vertical on demand. No starter code is sc
 | cms | `cms/SKILL.md` | Content modeling, authoring, and publishing systems. |
 | ai | `ai/SKILL.md` | AI assistant features (chat, completions) on app data. |
 | payment | `payment/SKILL.md` | Stripe payment integration, checkout, webhooks, fulfillment. |
+| i18n | `i18n/SKILL.md` | Internationalization, locale routing, localized CMS content, hreflang SEO. |
 
 ## How to use skills
 

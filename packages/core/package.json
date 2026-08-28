@@ -9,6 +9,7 @@
 		"./errors": "./src/errors.js",
 		"./logger": "./src/logger.js",
 		"./storage": "./src/storage.js",
+		"./locale": "./src/locale.js",
 		"./stripe": "./src/stripe.js",
 		"./testing": "./src/testing/index.js"
 	},
