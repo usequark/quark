@@ -9,6 +9,7 @@
 		"./errors": "./src/errors.js",
 		"./logger": "./src/logger.js",
 		"./storage": "./src/storage.js",
+		"./stripe": "./src/stripe.js",
 		"./testing": "./src/testing/index.js"
 	},
 	"dependencies": {
@@ -21,13 +22,17 @@
 	},
 	"peerDependencies": {
 		"@aws-sdk/client-s3": "^3.1004.0",
-		"@aws-sdk/s3-request-presigner": "^3.1004.0"
+		"@aws-sdk/s3-request-presigner": "^3.1004.0",
+		"stripe": "^17.0.0"
 	},
 	"peerDependenciesMeta": {
 		"@aws-sdk/client-s3": {
 			"optional": true
 		},
 		"@aws-sdk/s3-request-presigner": {
+			"optional": true
+		},
+		"stripe": {
 			"optional": true
 		}
 	},
