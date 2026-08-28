@@ -14,8 +14,8 @@ import { formatProjectDisplayName } from "./utils.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const templatesDir = path.join(__dirname, "../templates");
 const pkg = await fs.readJSON(path.join(__dirname, "../package.json"));
-// db, config, and ui are always scaffolded: the base web app (layout, auth,
-// example-page) imports the ui package, so a scaffold without it is broken.
+// db, config, and ui are always scaffolded: the base web app (layout, auth)
+// imports the ui package, so a scaffold without it is broken.
 const REQUIRED_PACKAGES = ["db", "config", "ui"];
 const SCAFFOLD_CHECK_IGNORED_FILES = new Set([".env", ".quark-link.json"]);
 

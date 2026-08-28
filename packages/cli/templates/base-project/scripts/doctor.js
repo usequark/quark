@@ -255,18 +255,6 @@ if (exists("apps/web/src/app/layout/_components/FloatingThemeToggle.js")) {
 	);
 }
 
-// ── Check E3: Playground page present (only relevant with UI package) ─────────
-if (hasUI && exists("apps/web/src/app/playground")) {
-	warn(
-		"playground",
-		"branding",
-		"Playground page is still present",
-		"apps/web/src/app/playground/",
-		"Consider removing the playground before going to production",
-		true,
-	);
-}
-
 // ── Check E4: APP_NAME / APP_DESCRIPTION still reference "Quark" ──────────────
 const envContent = read(".env");
 if (envContent) {
@@ -405,9 +393,6 @@ if (FIX && !CI) {
 			} else if (f.key === "quark-layout-scaffold") {
 				remove("apps/web/src/app/layout/_components");
 				console.log(fmt.green("  ✓ Removed apps/web/src/app/layout/_components/"));
-			} else if (f.key === "playground") {
-				remove("apps/web/src/app/playground");
-				console.log(fmt.green(`  ✓ Removed apps/web/src/app/playground/`));
 			}
 		}
 		console.log();
