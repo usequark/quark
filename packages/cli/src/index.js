@@ -583,6 +583,10 @@ program
 	)
 	.option("--skip-install", "Skip pnpm install and Prisma generate steps")
 	.option("--skip-docker", "Skip Docker orphan-volume cleanup")
+	.option(
+		"--full-schema",
+		"Keep all Prisma models (skip domain model trimming)",
+	)
 	.action(async (projectName, options) => {
 		console.log(
 			chalk.blue.bold(
@@ -613,6 +617,34 @@ program
 		const scope = projectName.toLowerCase().replace(/[^a-z0-9-]/g, "");
 		const appDisplayName = formatProjectDisplayName(projectName);
 		const appDescription = `${appDisplayName} application`;
+
+		// Auto-detect interactive mode: if any config options are provided,
+		// skip prompts automatically. Only show prompts when no options given.
+		const hasConfigOptions =
+			options.features !== undefined ||
+			options.preset !== undefined ||
+			options.signup !== undefined ||
+			options.prompt !== undefined ||
+			options.harness !== undefined ||
+			options.fullSchema;
+		if (hasConfigOptions && options.prompts !== false) {
+			console.log(
+				chalk.dim(
+					"  ℹ Configuration options provided — skipping interactive prompts",
+				),
+			);
+			options.prompts = false;
+		}
+
+		// Deprecation warning for --no-prompts (now implicit when options are provided)
+		if (options.prompts === false && !hasConfigOptions) {
+			console.log(
+				chalk.yellow(
+					"  ⚠ --no-prompts is deprecated. Options now auto-skip prompts.",
+				),
+			);
+		}
+
 		const requestedSignupPreference = resolveSignupPreference(options.signup);
 
 		// Clean up orphaned Docker volumes from a previous project with the same name.
@@ -781,23 +813,30 @@ program
 			}
 
 			// Step 4b: Trim domain models from Prisma schema
+			// Step 4b: Trim domain models from Prisma schema (unless --full-schema)
 			// Keeps the scaffold lean — domain models are taught via embedded skills
-			const schemaPath = path.join(
-				targetDir,
-				"packages",
-				"db",
-				"prisma",
-				"schema.prisma",
-			);
-			if (await fs.pathExists(schemaPath)) {
-				const schemaContent = await fs.readFile(schemaPath, "utf-8");
-				const trimmed = trimPrismaSchema(schemaContent);
-				if (trimmed !== schemaContent) {
-					await fs.writeFile(schemaPath, trimmed);
-					console.log(
-						chalk.green("    ✓ Prisma schema trimmed (domain models removed)"),
-					);
+			if (!options.fullSchema) {
+				const schemaPath = path.join(
+					targetDir,
+					"packages",
+					"db",
+					"prisma",
+					"schema.prisma",
+				);
+				if (await fs.pathExists(schemaPath)) {
+					const schemaContent = await fs.readFile(schemaPath, "utf-8");
+					const trimmed = trimPrismaSchema(schemaContent);
+					if (trimmed !== schemaContent) {
+						await fs.writeFile(schemaPath, trimmed);
+						console.log(
+							chalk.green(
+								"    ✓ Prisma schema trimmed (domain models removed)",
+							),
+						);
+					}
 				}
+			} else {
+				console.log(chalk.dim("    · Keeping full schema (--full-schema)"));
 			}
 
 			// Step 5: Ask which optional features to eject
