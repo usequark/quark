@@ -15,9 +15,7 @@ export default function Home() {
 			<QuarkAnimation />
 
 			<div className="quark-home-footer flex flex-col items-center gap-6 pt-8 pb-8">
-				<p className="quark-home-label font-mono uppercase">
-					Your Quark App
-				</p>
+				<p className="quark-home-label font-mono uppercase">Your Quark App</p>
 
 				{/* Build prompt */}
 				<div className="quark-home-prompt max-w-lg w-full px-4">
