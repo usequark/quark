@@ -1,5 +1,11 @@
 # @techstream/quark-create-app
 
+## 1.20.1
+
+### Patch Changes
+
+- [#93](https://github.com/Bobnoddle/quark/pull/93) [`146915a`](https://github.com/Bobnoddle/quark/commit/146915af1082ec0f53f4a8cb803af716d9fb01de) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Auto-generate ADMIN_PASSWORD during scaffolding so `pnpm db:seed` works out of the box on fresh projects.
+
 ## 1.20.0
 
 ### Minor Changes
