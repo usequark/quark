@@ -203,8 +203,11 @@ const EXCLUDE_PATTERNS = [
 	/^packages\/config\/coverage\//,
 	/^packages\/config\/src\/.*\.test\.js$/,
 
-	// Playground: monorepo reference only - scaffolded conditionally via CLI when ui is selected
+	// Playground: monorepo reference only - not scaffolded
 	/^apps\/web\/src\/app\/playground\//,
+
+	// Example page: monorepo reference only - not scaffolded
+	/^apps\/web\/src\/app\/example-page\//,
 
 	// Bookings: monorepo-only feature (package not published to npm)
 	/^apps\/web\/src\/app\/book\//,
