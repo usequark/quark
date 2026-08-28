@@ -197,11 +197,11 @@ async function runE2ETest() {
 
 		// Run CLI with --no-prompts
 		const cliPath = path.join(__dirname, "src/index.js");
-		log.info("Running: quark-create-app --no-prompts --features ui,jobs");
+		log.info("Running: quark-create-app --no-prompts --packages ui,jobs");
 
 		await execute(
 			"node",
-			[cliPath, PROJECT_NAME, "--no-prompts", "--features", "ui,jobs"],
+			[cliPath, PROJECT_NAME, "--no-prompts", "--packages", "ui,jobs"],
 			{
 				cwd: E2E_TEST_DIR,
 				stdio: "inherit",

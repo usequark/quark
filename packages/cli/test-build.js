@@ -314,7 +314,7 @@ async function runScenario({ name, projectName, features }) {
 			cliPath,
 			projectName,
 			"--no-prompts",
-			"--features",
+			"--packages",
 			features,
 			"--signup",
 			"enabled",

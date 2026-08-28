@@ -189,7 +189,7 @@ try {
 				"--no-prompts",
 				"--skip-install",
 				"--skip-docker",
-				"--features",
+				"--packages",
 				"ui,jobs",
 				"--signup",
 				"disabled",

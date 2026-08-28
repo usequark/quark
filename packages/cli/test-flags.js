@@ -2,7 +2,7 @@
 
 /**
  * Extended CLI flag tests for @techstream/quark-create-app
- * Tests the --no-prompts, --features, --skip-install, and --skip-docker flags.
+ * Tests the --no-prompts, --packages, --skip-install, and --skip-docker flags.
  * Run with: node packages/cli/test-flags.js
  */
 
@@ -55,7 +55,7 @@ describe("Feature Validation", () => {
 				[
 					"test-app",
 					"--no-prompts",
-					"--features",
+					"--packages",
 					"ui,jobs",
 					"--skip-install",
 					"--skip-docker",
@@ -72,14 +72,14 @@ describe("Feature Validation", () => {
 		}
 	});
 
-	it("invalid features foo,bar exit with code 1 and print Invalid features", () => {
+	it("invalid packages foo,bar exit with code 1 and print Invalid packages", () => {
 		const tmpDir = makeTempDir();
 		try {
 			const result = runCLI(
 				[
 					"test-app",
 					"--no-prompts",
-					"--features",
+					"--packages",
 					"foo,bar",
 					"--skip-install",
 					"--skip-docker",
@@ -93,8 +93,8 @@ describe("Feature Validation", () => {
 			);
 			const combined = result.stdout + result.stderr;
 			assert.ok(
-				combined.includes("Invalid features"),
-				`Expected "Invalid features" in output\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
+				combined.includes("Invalid packages"),
+				`Expected "Invalid packages" in output\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
 			);
 		} finally {
 			cleanup(tmpDir);
@@ -108,7 +108,7 @@ describe("Feature Validation", () => {
 				[
 					"test-app",
 					"--no-prompts",
-					"--features",
+					"--packages",
 					"ui",
 					"--skip-install",
 					"--skip-docker",
@@ -132,7 +132,7 @@ describe("Feature Validation", () => {
 				[
 					"test-admin-app",
 					"--no-prompts",
-					"--features",
+					"--packages",
 					"ui,admin",
 					"--skip-install",
 					"--skip-docker",
@@ -140,14 +140,14 @@ describe("Feature Validation", () => {
 				tmpDir,
 			);
 			assert.strictEqual(result.status, 1);
-			assert.ok(result.stderr.includes("Invalid features: admin"));
+			assert.ok(result.stderr.includes("Invalid packages: admin"));
 
 			// Default scaffold ships no admin UI but bundles all skills.
 			const scaffold = runCLI(
 				[
 					"test-admin-app",
 					"--no-prompts",
-					"--features",
+					"--packages",
 					"ui,jobs",
 					"--skip-install",
 					"--skip-docker",
@@ -195,7 +195,7 @@ describe("Feature Validation", () => {
 				[
 					projectName,
 					"--no-prompts",
-					"--features",
+					"--packages",
 					"ui",
 					"--skip-install",
 					"--skip-docker",
@@ -259,7 +259,7 @@ describe("Feature Validation", () => {
 				[
 					projectName,
 					"--no-prompts",
-					"--features",
+					"--packages",
 					"ui",
 					"--skip-install",
 					"--skip-docker",
@@ -289,7 +289,7 @@ describe("Feature Validation", () => {
 				[
 					"test-app",
 					"--no-prompts",
-					"--features",
+					"--packages",
 					"",
 					"--skip-install",
 					"--skip-docker",
@@ -313,7 +313,7 @@ describe("Feature Validation", () => {
 				[
 					"test-app",
 					"--no-prompts",
-					"--features",
+					"--packages",
 					"ui,invalid",
 					"--skip-install",
 					"--skip-docker",
@@ -441,7 +441,7 @@ describe("Skip Flags", () => {
 // ---------------------------------------------------------------------------
 
 describe("Non-Interactive Mode", () => {
-	it("--no-prompts reports the default feature selection", () => {
+	it("--no-prompts reports the default package selection", () => {
 		const tmpDir = makeTempDir();
 		try {
 			const result = runCLI(
@@ -450,16 +450,16 @@ describe("Non-Interactive Mode", () => {
 			);
 			assert.ok(
 				result.stdout.includes(
-					"Using default features: ui, jobs (non-interactive mode)",
+					"Using default packages: ui, jobs (non-interactive mode)",
 				),
-				`Expected default feature summary in stdout\nstdout: ${result.stdout}`,
+				`Expected default package summary in stdout\nstdout: ${result.stdout}`,
 			);
 		} finally {
 			cleanup(tmpDir);
 		}
 	});
 
-	it("--no-prompts omits the interactive package prompt", () => {
+	it("--no-prompts omits the interactive prompts", () => {
 		const tmpDir = makeTempDir();
 		try {
 			const result = runCLI(
@@ -474,91 +474,10 @@ describe("Non-Interactive Mode", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Test Group 4: AI View params (--preset, --prompt)
+// Test Group 4: AI View params (--prompt)
 // ---------------------------------------------------------------------------
 
 describe("AI View Params", () => {
-	it("--preset minimal scaffolds no optional features", () => {
-		const tmpDir = makeTempDir();
-		const projectName = "test-preset-minimal";
-		try {
-			const result = runCLI(
-				[
-					projectName,
-					"--no-prompts",
-					"--preset",
-					"minimal",
-					"--skip-install",
-					"--skip-docker",
-				],
-				tmpDir,
-			);
-			assert.strictEqual(
-				result.status,
-				0,
-				`Expected exit 0\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
-			);
-			assert.ok(result.stdout.includes('Using preset "minimal"'));
-			const quarkLink = JSON.parse(
-				readFileSync(join(tmpDir, projectName, ".quark-link.json"), "utf8"),
-			);
-			assert.deepStrictEqual(quarkLink.packages, ["db", "config", "ui"]);
-		} finally {
-			cleanup(tmpDir);
-		}
-	});
-
-	it("--preset client-work resolves to ui,jobs", () => {
-		const tmpDir = makeTempDir();
-		const projectName = "test-preset-client";
-		try {
-			const result = runCLI(
-				[
-					projectName,
-					"--no-prompts",
-					"--preset",
-					"client-work",
-					"--skip-install",
-					"--skip-docker",
-				],
-				tmpDir,
-			);
-			assert.strictEqual(
-				result.status,
-				0,
-				`Expected exit 0\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
-			);
-			const quarkLink = JSON.parse(
-				readFileSync(join(tmpDir, projectName, ".quark-link.json"), "utf8"),
-			);
-			assert.ok(quarkLink.packages.includes("ui"));
-			assert.ok(quarkLink.packages.includes("jobs"));
-			assert.ok(!quarkLink.packages.includes("admin"));
-		} finally {
-			cleanup(tmpDir);
-		}
-	});
-
-	it("invalid --preset exits with code 1", () => {
-		const tmpDir = makeTempDir();
-		try {
-			const result = runCLI(
-				[
-					"test-app",
-					"--no-prompts",
-					"--preset",
-					"bogus",
-					"--skip-install",
-					"--skip-docker",
-				],
-				tmpDir,
-			);
-			assert.strictEqual(result.status, 1);
-		} finally {
-			cleanup(tmpDir);
-		}
-	});
-
 	it("--prompt seeds the brief in .quark-link.json", () => {
 		const tmpDir = makeTempDir();
 		const projectName = "test-prompt-app";
@@ -567,7 +486,7 @@ describe("AI View Params", () => {
 				[
 					projectName,
 					"--no-prompts",
-					"--features",
+					"--packages",
 					"ui",
 					"--prompt",
 					"A booking platform for salons",

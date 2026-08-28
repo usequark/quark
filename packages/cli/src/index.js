@@ -556,7 +556,7 @@ function resolveSignupPreference(optionValue) {
 }
 
 program
-	.argument("<project-name>", "Name of the project to create")
+	.argument("[project-name]", "Name of the project to create")
 	.option(
 		"--no-prompts",
 		"Skip interactive prompts and use default/provided values",
@@ -566,12 +566,8 @@ program
 		'Public self-service signup mode for the scaffolded project ("enabled" or "disabled")',
 	)
 	.option(
-		"--features <features>",
-		"Comma-separated list of optional features to include (ui,jobs)",
-	)
-	.option(
-		"--preset <preset>",
-		"Preset bundle of features (client-work, internal-tool, product, minimal)",
+		"--packages <packages>",
+		"Comma-separated list of optional packages to include (ui,jobs)",
 	)
 	.option(
 		"--prompt <prompt>",
@@ -613,6 +609,37 @@ program
 			}
 		}
 
+		// If no project name provided, prompt for it (interactive only)
+		if (!projectName) {
+			if (options.prompts === false) {
+				console.error(
+					chalk.red(
+						"\n  ✖ Project name is required in non-interactive mode.\n",
+					),
+				);
+				process.exit(1);
+			}
+			const nameResponse = await prompts({
+				type: "text",
+				name: "value",
+				message: "Project name:",
+				validate: (v) => {
+					if (!v || !/^[a-zA-Z0-9._-]+$/.test(v)) {
+						return "Only letters, numbers, hyphens, underscores, and dots allowed";
+					}
+					if (v.startsWith(".") || v.includes("..")) {
+						return "Must not start with '.' or contain '..'";
+					}
+					return true;
+				},
+			});
+			if (!nameResponse.value) {
+				console.log(chalk.yellow("\n⚠️  Setup cancelled."));
+				process.exit(0);
+			}
+			projectName = nameResponse.value;
+		}
+
 		const targetDir = validateProjectName(projectName);
 		const scope = projectName.toLowerCase().replace(/[^a-z0-9-]/g, "");
 		const appDisplayName = formatProjectDisplayName(projectName);
@@ -621,8 +648,7 @@ program
 		// Auto-detect interactive mode: if any config options are provided,
 		// skip prompts automatically. Only show prompts when no options given.
 		const hasConfigOptions =
-			options.features !== undefined ||
-			options.preset !== undefined ||
+			options.packages !== undefined ||
 			options.signup !== undefined ||
 			options.prompt !== undefined ||
 			options.harness !== undefined ||
@@ -839,14 +865,14 @@ program
 				console.log(chalk.dim("    · Keeping full schema (--full-schema)"));
 			}
 
-			// Step 5: Ask which optional features to eject
+			// Step 5: Determine which optional packages to scaffold
 			let features;
 			let brief = options.prompt?.trim() || `${appDisplayName} application`;
-			if (!options.prompts && options.features !== undefined) {
-				// Parse features from CLI flag
-				console.log(chalk.cyan("\n  🎯 Configuring optional features..."));
+			if (!options.prompts && options.packages !== undefined) {
+				// Parse packages from CLI flag
+				console.log(chalk.cyan("\n  🎯 Configuring optional packages..."));
 				const validFeatures = Object.keys(FEATURE_META);
-				features = options.features
+				features = options.packages
 					.split(",")
 					.map((f) => f.trim())
 					.filter((f) => f.length > 0);
@@ -857,7 +883,7 @@ program
 				);
 				if (invalidFeatures.length > 0) {
 					throw new Error(
-						`Invalid features: ${invalidFeatures.join(", ")}. Valid options are: ${validFeatures.join(", ")}`,
+						`Invalid packages: ${invalidFeatures.join(", ")}. Valid options are: ${validFeatures.join(", ")}`,
 					);
 				}
 
@@ -869,93 +895,71 @@ program
 				if (autoIncluded.length > 0) {
 					console.log(
 						chalk.yellow(
-							`    ℹ Automatically included required features: ${autoIncluded.join(", ")}`,
+							`    ℹ Automatically included required packages: ${autoIncluded.join(", ")}`,
 						),
 					);
 				}
 
 				console.log(
 					chalk.green(
-						`  Selected features: ${features.join(", ") || "none"} (non-interactive mode)`,
-					),
-				);
-			} else if (!options.prompts && options.preset !== undefined) {
-				// AI View: --preset bundle
-				console.log(chalk.cyan("\n  🎯 Configuring optional features..."));
-				features = resolvePresetFeatures(options.preset);
-				console.log(
-					chalk.green(
-						`  Using preset "${options.preset}": ${features.join(", ") || "none"} (non-interactive mode)`,
+						`  Selected packages: ${features.join(", ") || "none"} (non-interactive mode)`,
 					),
 				);
 			} else if (!options.prompts) {
-				// Use defaults when --no-prompts is set without --features
-				console.log(chalk.cyan("\n  🎯 Configuring optional features..."));
+				// Use defaults when --no-prompts is set without --packages
+				console.log(chalk.cyan("\n  🎯 Configuring optional packages..."));
 				features = ["ui", "jobs"];
 				console.log(
 					chalk.green(
-						`  Using default features: ${features.join(", ")} (non-interactive mode)`,
+						`  Using default packages: ${features.join(", ")} (non-interactive mode)`,
 					),
 				);
 			} else {
-				// Human View: product-shaped questions first, then advanced config.
-				console.log(chalk.cyan("\n  💡 Describe your app...\n"));
+				// Interactive: simple Y/n prompts
+				console.log(chalk.cyan("\n  💡 Let's set up your project...\n"));
 				const briefResponse = await prompts({
 					type: "text",
 					name: "brief",
-					message:
-						"Describe your app in a sentence or two (this seeds MAIN.md):",
+					message: "Describe your app in a sentence or two (seeds MAIN.md):",
 					initial: `${appDisplayName} application`,
 				});
 				brief = briefResponse.brief;
 				if (!brief) {
-					console.log(chalk.yellow("\n\u26A0\uFE0F  Setup cancelled."));
+					console.log(chalk.yellow("\n⚠️  Setup cancelled."));
 					await fs.remove(targetDir);
 					process.exit(0);
 				}
 				brief = brief.trim();
 
-				// Advanced expander — full package/custom config.
-				console.log(chalk.cyan("\n  🎯 Configuring optional features...\n"));
-				const response = await prompts([
-					{
-						type: "multiselect",
-						name: "features",
-						message: "Which optional packages would you like to include?",
-						instructions: false,
-						choices: [
-							{
-								title: "UI Components (packages/ui)",
-								value: "ui",
-								selected: true,
-							},
-							{
-								title: "Background Jobs (packages/jobs + apps/worker)",
-								value: "jobs",
-								selected: true,
-							},
-						],
-					},
-				]);
-
-				features = response.features;
-
-				// Handle prompt cancellation (Ctrl+C)
-				if (!features) {
-					console.log(chalk.yellow("\n\u26A0\uFE0F  Setup cancelled."));
+				console.log("");
+				const jobsResponse = await prompts({
+					type: "confirm",
+					name: "value",
+					message:
+						"Include background jobs (emails, webhooks, scheduled tasks)?",
+					initial: true,
+				});
+				if (typeof jobsResponse.value !== "boolean") {
+					console.log(chalk.yellow("\n⚠️  Setup cancelled."));
 					await fs.remove(targetDir);
 					process.exit(0);
 				}
 
-				const requestedFeatures = [...features];
-				features = resolveFeatureSelection(features);
+				const selectedFeatures = ["ui"];
+				if (jobsResponse.value) {
+					selectedFeatures.push("jobs");
+				}
+
+				features = resolveFeatureSelection(selectedFeatures);
+
+				const requestedFeatures = [...selectedFeatures];
 				const autoIncluded = features.filter(
 					(feature) => !requestedFeatures.includes(feature),
 				);
 				if (autoIncluded.length > 0) {
 					console.log(
 						chalk.yellow(
-							`    ℹ Automatically included required features: ${autoIncluded.join(", ")}.`,
+							`    ℹ Automatically included required packages: ${autoIncluded.join(", ")}.`,
 						),
 					);
 				}
@@ -982,16 +986,14 @@ program
 			} else {
 				console.log(chalk.cyan("\n  🔐 Configuring authentication...\n"));
 				const authResponse = await prompts({
-					type: "toggle",
+					type: "confirm",
 					name: "allowSignup",
 					message: "Allow public self-service signup?",
 					initial: true,
-					active: "yes",
-					inactive: "no",
 				});
 
 				if (typeof authResponse.allowSignup !== "boolean") {
-					console.log(chalk.yellow("\n\u26A0\uFE0F  Setup cancelled."));
+					console.log(chalk.yellow("\n⚠️  Setup cancelled."));
 					await fs.remove(targetDir);
 					process.exit(0);
 				}
@@ -1661,32 +1663,6 @@ function resolveFeatureSelection(features) {
 }
 
 /**
- * Preset bundles of optional features (AI View --preset).
- * @type {Record<string, string[]>}
- */
-const FEATURE_PRESETS = {
-	"client-work": ["ui", "jobs"],
-	"internal-tool": ["ui"],
-	product: ["ui", "jobs"],
-	minimal: [],
-};
-
-/**
- * Resolve a --preset value into a feature list.
- * @param {string} preset
- * @returns {string[]}
- */
-function resolvePresetFeatures(preset) {
-	const features = FEATURE_PRESETS[preset];
-	if (!features) {
-		throw new Error(
-			`Invalid preset: "${preset}". Valid options are: ${Object.keys(FEATURE_PRESETS).join(", ")}`,
-		);
-	}
-	return [...features];
-}
-
-/**
  * Detect the project scope from existing package.json files.
  * Reads root package.json and extracts the scope from the name field.
  * @param {string} projectDir
@@ -1823,7 +1799,7 @@ async function createReferenceScaffold(projectDir, quarkLink) {
 		"--no-prompts",
 		"--skip-install",
 		"--skip-docker",
-		"--features",
+		"--packages",
 		comparisonFeatures.join(","),
 		"--signup",
 		allowSignup ? "enabled" : "disabled",
@@ -2000,7 +1976,7 @@ async function rewriteWorkspaceDeps(pkgJsonPath, scope, workspacePackages) {
 
 program
 	.command("add")
-	.argument("<feature>", "Feature to add (ui, jobs)")
+	.argument("<feature>", "Package to add (ui, jobs)")
 	.description("Add an optional package to an existing Quark project")
 	.option("--force", "Skip safety checks (uncommitted changes)")
 	.option("--skip-install", "Skip pnpm install after adding")
