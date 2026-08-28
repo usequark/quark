@@ -1344,6 +1344,7 @@ STORAGE_PROVIDER=local
 			// Generate secure random values
 			const dbPassword = generateSecurePassword(24);
 			const nextAuthSecret = generateSecureSecret(32);
+			const adminPassword = generateSecurePassword(24);
 
 			// Create .env with auto-generated secure values
 			const envContent = `# --- Database Configuration ---
@@ -1388,10 +1389,16 @@ STORAGE_PROVIDER=local
 
 # --- Database Seeding ---
 # SEED_PROFILE=dev             # Options: dev (default), minimal (users only - use for production initial seed)
+ADMIN_PASSWORD=${adminPassword}
 `;
 			await fs.writeFile(path.join(targetDir, ".env"), envContent);
 			console.log(
 				chalk.green(`    ✓ .env (with auto-generated secure secrets)`),
+			);
+			console.log(
+				chalk.dim(
+					`      Admin password: ${adminPassword} (shown once — save it if needed)`,
+				),
 			);
 
 			// Step 11: Create .quark-link.json to track Quark version
