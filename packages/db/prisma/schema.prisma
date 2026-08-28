@@ -433,36 +433,6 @@ enum BookingStatus {
   NO_SHOW
 }
 
-model Staff {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  title     String?
-  bio       String?  @db.Text
-  image     String?
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  services  StaffService[]
-  slots     AvailabilitySlot[]
-  bookings  Booking[]
-
-  @@index([active])
-}
-
-model StaffService {
-  id        String      @id @default(cuid())
-  staffId   String
-  staff     Staff       @relation(fields: [staffId], references: [id], onDelete: Cascade)
-  serviceId String
-  service   ServiceType @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-
-  @@unique([staffId, serviceId])
-}
-
 model ServiceType {
   id          String   @id @default(cuid())
   name        String
@@ -477,7 +447,6 @@ model ServiceType {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  staff   StaffService[]
   slots   AvailabilitySlot[]
   bookings Booking[]
 
@@ -490,7 +459,6 @@ model AvailabilitySlot {
   service     ServiceType @relation(fields: [serviceId], references: [id])
   slotScopeKey String
   staffId     String?
-  staff       Staff?      @relation(fields: [staffId], references: [id])
   startTime   DateTime
   endTime     DateTime
   capacity    Int         @default(1)
@@ -518,7 +486,6 @@ model Booking {
   serviceTypeId   String
   serviceType     ServiceType    @relation(fields: [serviceTypeId], references: [id])
   staffId         String?
-  staff           Staff?         @relation(fields: [staffId], references: [id])
   durationMinutes Int            @default(30)
   name            String
   email           String

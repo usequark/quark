@@ -1,3 +1,4 @@
+
 -- CreateSchema
 CREATE SCHEMA IF NOT EXISTS "public";
 
@@ -313,32 +314,6 @@ CREATE TABLE "AiWorkflow" (
 );
 
 -- CreateTable
-CREATE TABLE "Staff" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "email" TEXT NOT NULL,
-    "title" TEXT,
-    "bio" TEXT,
-    "image" TEXT,
-    "active" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "Staff_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "StaffService" (
-    "id" TEXT NOT NULL,
-    "staffId" TEXT NOT NULL,
-    "serviceId" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "StaffService_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "ServiceType" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -596,15 +571,6 @@ CREATE INDEX "AiWorkflow_enabled_idx" ON "AiWorkflow"("enabled");
 CREATE INDEX "AiWorkflow_createdAt_idx" ON "AiWorkflow"("createdAt");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Staff_email_key" ON "Staff"("email");
-
--- CreateIndex
-CREATE INDEX "Staff_active_idx" ON "Staff"("active");
-
--- CreateIndex
-CREATE UNIQUE INDEX "StaffService_staffId_serviceId_key" ON "StaffService"("staffId", "serviceId");
-
--- CreateIndex
 CREATE INDEX "ServiceType_active_idx" ON "ServiceType"("active");
 
 -- CreateIndex
@@ -689,16 +655,7 @@ ALTER TABLE "AiToolEvent" ADD CONSTRAINT "AiToolEvent_userId_fkey" FOREIGN KEY (
 ALTER TABLE "AiWorkflow" ADD CONSTRAINT "AiWorkflow_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "StaffService" ADD CONSTRAINT "StaffService_staffId_fkey" FOREIGN KEY ("staffId") REFERENCES "Staff"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "StaffService" ADD CONSTRAINT "StaffService_serviceId_fkey" FOREIGN KEY ("serviceId") REFERENCES "ServiceType"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "AvailabilitySlot" ADD CONSTRAINT "AvailabilitySlot_serviceId_fkey" FOREIGN KEY ("serviceId") REFERENCES "ServiceType"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "AvailabilitySlot" ADD CONSTRAINT "AvailabilitySlot_staffId_fkey" FOREIGN KEY ("staffId") REFERENCES "Staff"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Booking" ADD CONSTRAINT "Booking_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -708,7 +665,4 @@ ALTER TABLE "Booking" ADD CONSTRAINT "Booking_slotId_fkey" FOREIGN KEY ("slotId"
 
 -- AddForeignKey
 ALTER TABLE "Booking" ADD CONSTRAINT "Booking_serviceTypeId_fkey" FOREIGN KEY ("serviceTypeId") REFERENCES "ServiceType"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Booking" ADD CONSTRAINT "Booking_staffId_fkey" FOREIGN KEY ("staffId") REFERENCES "Staff"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 

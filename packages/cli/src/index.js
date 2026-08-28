@@ -129,8 +129,6 @@ const DOMAIN_MODELS_TO_STRIP = [
 	"AiWorkflow",
 	"AiRole",
 	// Booking
-	"Staff",
-	"StaffService",
 	"ServiceType",
 	"AvailabilitySlot",
 	"Booking",
