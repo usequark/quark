@@ -35,11 +35,6 @@ Quark takes a hybrid approach:
 │  - PrismaClient instantiation                       │
 │  - Query builders for your domain                   │
 ├─────────────────────────────────────────────────────┤
-│  @techstream/quark-admin (npmjs.org, optional)      │
-│  - Prisma DMMF introspection (runtime, no codegen)  │
-│  - Auto-generated CRUD admin UI at /admin           │
-│  - Field-type → input mapping, RBAC enforcement     │
-├─────────────────────────────────────────────────────┤
 │  @yourapp/ui (Local - Optional)                     │
 │  - Full component library with dark mode support    │
 │  - ThemeProvider, QuarkLogo, Badge, Button, Card,   │
@@ -592,20 +587,19 @@ Core evolves based on real usage patterns!
 
 ---
 
-## Admin UI (`@techstream/quark-admin`)
+## Admin Dashboard (Skill-based)
 
-An optional published package that auto-generates a complete CRUD admin interface from your Prisma schema using DMMF introspection. No generated code - the admin UI reflects your live schema at runtime.
+The admin is built on demand via the `admin-dashboard` embedded skill. No admin package is scaffolded — the AI generates the admin area when you request it.
 
-### What it does
+### What the skill teaches the AI to build
 
-- Reads all Prisma models and fields via `@prisma/client/runtime/library` DMMF
-- Renders a collapsible sidebar of all model names
-- Generates list/detail/create/edit views for every model automatically
-- Maps Prisma field types to appropriate form inputs via `field-map.js`: strings → text, booleans → checkbox, enums → select, DateTime → datetime-local, numbers → number
-- Filters fields by `isListVisible()`, `isEditable()` so internal IDs and timestamps display correctly but aren't editable in forms
-- Enforces `role: "admin"` via the RBAC middleware - every admin route requires an authenticated admin session
+- Authenticated admin routes at `/admin` with role guards via `requireRole`
+- List, create, edit, and delete screens for each domain model
+- Dashboard with decision-relevant metric cards
+- Audit logging for mutations
+- Neutral operations shell (plain Tailwind, no themed UI leakage)
 
-### Routes
+### Routes (AI-generated)
 
 | Path | Purpose |
 |---|---|
@@ -614,26 +608,15 @@ An optional published package that auto-generates a complete CRUD admin interfac
 | `/admin/[model]/new` | Create form |
 | `/admin/[model]/[id]` | Edit/view form with delete |
 
-### Key components
+### How to enable
+
+The admin is not a scaffolded package. Ask your AI to build it:
 
 ```
-apps/web/src/app/admin/
-├── layout.js              # Admin shell: sidebar + auth guard
-├── page.js                # Dashboard
-├── [model]/page.js        # List view → ModelTable
-├── [model]/new/page.js    # Create form → ModelForm
-├── [model]/[id]/page.js   # Edit/view → ModelForm
-└── _components/
-    ├── Sidebar.js          # Model navigation (from DMMF)
-    ├── ModelTable.js       # Generic record list
-    ├── ModelForm.js        # Generic create/edit form
-    ├── FieldRenderer.js    # Field type → input mapping
-    └── AdminThemeToggle.js # Compact theme toggle for admin sidebar
+"Build an admin dashboard for managing my models"
 ```
 
-### Enabling the admin
-
-Select it during scaffolding (`--packages ui,jobs`) or via the interactive CLI prompt. The templates (admin routes + `@techstream/quark-admin` dependency) are copied into your project at scaffold time.
+The AI reads the `admin-dashboard` skill and generates the admin routes, components, and server actions following Quark conventions.
 
 ---
 

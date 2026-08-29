@@ -101,7 +101,7 @@ Scaffolded projects already include this in the generated web Dockerfile, `apps/
 
 **Optional:** `jobs` (+ `worker` for background processing)
 
-**Built on demand:** Domain systems (bookings, CRM, CMS, ecommerce, AI) are not scaffolded packages. Every project ships embedded skills that teach your AI tool to build them. See `.opencode/skills/quark-skills/SKILL.md` in your scaffolded project.
+**Built on demand:** Domain systems (bookings, CRM, CMS, ecommerce, AI) are not scaffolded packages. Every project ships embedded skills that teach your AI tool to build them. See `.opencode/skills/` in your scaffolded project.
 
 ---
 

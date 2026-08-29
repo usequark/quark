@@ -46,7 +46,7 @@ Entry point: [../README.md](../README.md)
 
 | Document | Purpose |
 |----------|---------|
-| [ARCHIVE.md](./ARCHIVE.md) | Entry point for older planning material and why it was archived |
+| [ARCHIVE.md](./archive/ARCHIVE.md) | Entry point for older planning material and why it was archived |
 | [ROADMAP.md](./archive/ROADMAP.md) | Original expansion roadmap (predates skill-based architecture) |
 | [IMPLEMENTATION_CHECKLIST.md](./archive/IMPLEMENTATION_CHECKLIST.md) | Task tracker with progress percentages |
 | [FEATURE_PLAN.md](./archive/FEATURE_PLAN.md) | Isolated, agent-executable feature plan (F1–F8) |
