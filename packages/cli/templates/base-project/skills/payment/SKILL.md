@@ -33,12 +33,25 @@ Key concepts:
 
 ## Checkout sessions
 
+### Zod validation for checkout input
+
+```js
+import { z } from "zod";
+
+export const checkoutSchema = z.object({
+  priceId: z.string().min(1),
+  quantity: z.number().int().positive().default(1),
+  successUrl: z.string().url().optional(),
+  cancelUrl: z.string().url().optional(),
+});
+```
+
 ### One-time payment
 
 ```js
 import { createStripeClient } from "@techstream/quark-core/stripe";
 
-const stripe = createStripeClient();
+const stripe = await createStripeClient();
 const session = await stripe.checkout.sessions.create({
   mode: "payment",
   customer: stripeCustomerId, // or omit to create anonymous checkout
@@ -81,7 +94,7 @@ export async function POST(request) {
 
   let event;
   try {
-    event = getStripeWebhookEvent(body, signature);
+    event = await getStripeWebhookEvent(body, signature);
   } catch (err) {
     log.error("webhook signature verification failed", { error: err.message });
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
@@ -132,7 +145,7 @@ export async function POST(request) {
 
 ### Event verification
 
-`getStripeWebhookEvent(body, signature)` calls `stripe.webhooks.constructEvent()` under the hood. It reads `STRIPE_WEBHOOK_SECRET` from env and throws if the signature is invalid.
+`await getStripeWebhookEvent(body, signature)` calls `stripe.webhooks.constructEvent()` under the hood. It reads `STRIPE_WEBHOOK_SECRET` from env and throws if the signature is invalid.
 
 ### Common events to handle
 
@@ -154,7 +167,6 @@ model WebhookEvent {
   stripeEventId  String   @unique
   type           String
   payload        Json
-  processedAt    DateTime @default(now())
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -173,7 +185,7 @@ import { createStripeClient } from "@techstream/quark-core/stripe";
 export async function getOrCreateStripeCustomer(user) {
   if (user.stripeCustomerId) return user.stripeCustomerId;
 
-  const stripe = createStripeClient();
+  const stripe = await createStripeClient();
   const customer = await stripe.customers.create({
     email: user.email,
     name: user.name,
@@ -196,7 +208,6 @@ Add to your User model in Prisma schema:
 ```prisma
 model User {
   // ... existing fields
-  stripeCustomerId String?  @unique
   stripeCustomerId String?  @unique
 }
 ```
@@ -263,3 +274,7 @@ test("handleCheckoutCompleted updates booking status", async () => {
 ## Reference
 
 Stripe docs: https://docs.stripe.com
+
+## End result
+
+A working payment system where users can complete Stripe Checkout for one-time or subscription payments, webhooks verify signatures and deduplicate events via `WebhookEvent`, Stripe customers are created lazily and stored on the User model, and post-payment fulfillment (booking confirmation, order status, access grants) runs idempotently — all following Quark conventions.

@@ -8,10 +8,10 @@
  * Usage:
  *   import { createStripeClient, getStripeWebhookEvent } from "@techstream/quark-core/stripe";
  *
- *   const stripe = createStripeClient();
+ *   const stripe = await createStripeClient();
  *   const session = await stripe.checkout.sessions.create({ ... });
  *
- *   const event = getStripeWebhookEvent(body, signature);
+ *   const event = await getStripeWebhookEvent(body, signature);
  */
 
 function isMissingPackageError(error, packageName) {
@@ -64,15 +64,15 @@ export async function createStripeClient(options = {}) {
 /**
  * Verifies a Stripe webhook signature and returns the parsed event.
  *
- * Reads STRIPE_WEBHOOK_SECRET from environment variables.
+ * Reads STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET from environment variables.
  *
  * @param {string | Buffer} body - Raw request body
  * @param {string | null} signature - Value of the stripe-signature header
  * @returns {Promise<import("stripe").Stripe.Event>} Verified Stripe event
- * @throws {Error} If signature is invalid or STRIPE_WEBHOOK_SECRET is not set
+ * @throws {Error} If signature is invalid, or required env vars are not set
  */
 export async function getStripeWebhookEvent(body, signature) {
-	const { default: Stripe } = await importStripePackage();
+	const stripe = await createStripeClient();
 
 	const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 	if (!webhookSecret) {
@@ -84,10 +84,6 @@ export async function getStripeWebhookEvent(body, signature) {
 	if (!signature) {
 		throw new Error("Missing stripe-signature header");
 	}
-
-	const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-		apiVersion: "2025-08-27.basil",
-	});
 
 	return stripe.webhooks.constructEvent(body, signature, webhookSecret);
 }

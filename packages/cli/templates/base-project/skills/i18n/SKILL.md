@@ -33,6 +33,7 @@ A localized app must handle locale detection, routing, content translation, and 
 - **Middleware:** `next-intl/middleware` handles locale detection, redirects, and 404s. Configure in `src/i18n/middleware.js`.
 - **Request config:** `getRequestConfig` from `next-intl/server` resolves the locale per request and loads message files.
 - **Models:** CMS models get a `locale String` field. Queries filter by locale with fallback chain.
+- **Validation** — Zod for all Server Actions and API routes. Use a locale enum for localized content submissions.
 - **Auth** via `getCurrentSession` from `@techstream/quark-core`.
 - **Locale utilities** from `@techstream/quark-core/locale`: `getDefaultLocale()`, `getSupportedLocales()`, `isLocaleSupported()`.
 
@@ -180,6 +181,21 @@ export async function generateMetadata({ params }) {
 }
 ```
 
+## Example: Zod validation for localized content
+
+```js
+import { z } from "zod";
+import { isLocaleSupported } from "@techstream/quark-core/locale";
+
+export const localizedPageSchema = z.object({
+  title: z.string().min(1).max(255),
+  slug: z.string().min(1).max(255),
+  body: z.string().min(1),
+  locale: z.string().refine(isLocaleSupported, "Unsupported locale"),
+  status: z.enum(["DRAFT", "PUBLISHED"]).default("DRAFT"),
+});
+```
+
 ## Workflow summary
 
 1. Install `next-intl`, configure routing + middleware + request config.
@@ -193,3 +209,7 @@ export async function generateMetadata({ params }) {
 ## Reference
 
 A full integration spec is archived at `docs/strategy/07-quark-i18n-integration.md`. Study it for the complete middleware matcher, scope decisions (what lives under `[locale]`), and edge cases.
+
+## End result
+
+A localized Quark app where users switch languages via a prefix-based URL scheme, locale is detected from URL → cookie → header → default, CMS content is filtered by locale with fallback, SEO metadata includes `hreflang` alternates and locale-aware sitemaps, and all content submissions validate locale against the configured supported set — following Quark conventions throughout.

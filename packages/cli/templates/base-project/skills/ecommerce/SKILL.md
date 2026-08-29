@@ -37,6 +37,161 @@ An ecommerce system manages a product catalog, shopping cart, checkout flow, ord
 6. Build checkout: address collection → shipping method → payment → order creation with inventory decrement.
 7. Add tests near the changed code.
 
+## Example: Prisma models
+
+```prisma
+enum OrderStatus {
+  PENDING
+  PAID
+  PROCESSING
+  FULFILLED
+  DELIVERED
+  REFUNDED
+  CANCELLED
+}
+
+model Product {
+  id          String          @id @default(cuid())
+  name        String
+  slug        String          @unique
+  description String?         @db.Text
+  basePrice   Decimal         @db.Decimal(10, 2)
+  currency    String          @default("USD")
+  images      String[]
+  active      Boolean         @default(true)
+  categoryId  String?
+  category    Category?       @relation(fields: [categoryId], references: [id])
+  variants    ProductVariant[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([slug])
+  @@index([categoryId])
+  @@index([active])
+}
+
+model ProductVariant {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sku       String   @unique
+  name      String
+  price     Decimal  @db.Decimal(10, 2)
+  stock     Int      @default(0)
+  reserved  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productId])
+  @@index([sku])
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?   @db.Text
+  parentId    String?
+  parent      Category? @relation("CategoryTree", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryTree")
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([slug])
+  @@index([parentId])
+}
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String?
+  user      User?      @relation(fields: [userId], references: [id])
+  sessionId String?    @unique
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([userId])
+  @@index([sessionId])
+}
+
+model CartItem {
+  id        String         @id @default(cuid())
+  cartId    String
+  cart      Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+  quantity  Int            @default(1)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@unique([cartId, variantId])
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  userId          String?
+  user            User?       @relation(fields: [userId], references: [id])
+  status          OrderStatus @default(PENDING)
+  email           String
+  shippingName    String
+  shippingAddress String    @db.Text
+  shippingCity    String
+  shippingZip     String
+  shippingCountry String
+  total           Decimal     @db.Decimal(10, 2)
+  currency        String      @default("USD")
+  stripeSessionId String?     @unique
+  paidAt          DateTime?
+  fulfilledAt     DateTime?
+  deliveredAt     DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  items           OrderItem[]
+
+  @@index([userId, status])
+  @@index([status])
+  @@index([stripeSessionId])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id        String         @id @default(cuid())
+  orderId   String
+  order     Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+  quantity  Int
+  unitPrice Decimal        @db.Decimal(10, 2)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([orderId])
+}
+```
+
+## Example: Zod validation
+
+```js
+import { z } from "zod";
+
+export const addToCartSchema = z.object({
+  cartId: z.string().min(1),
+  variantId: z.string().min(1),
+  quantity: z.coerce.number().int().positive().default(1),
+});
+
+export const checkoutSchema = z.object({
+  cartId: z.string().min(1),
+  email: z.string().email(),
+  shippingName: z.string().min(1),
+  shippingAddress: z.string().min(1),
+  shippingCity: z.string().min(1),
+  shippingZip: z.string().min(1),
+  shippingCountry: z.string().min(2).max(2),
+});
+```
+
 ## Sub-skills
 
 The ecommerce domain is split into focused sub-skills. Load the one that matches your current task:
