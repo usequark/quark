@@ -313,6 +313,7 @@ function buildFeatureRows(features) {
 	const rows = {
 		ui: "| UI package | Included | `packages/ui/README.md` |",
 		jobs: "| Jobs + worker | Included | `packages/jobs/README.md`, `apps/worker/src/handlers/` |",
+		pwa: "| PWA support | Included | `apps/web/next.config.pwa.js` |",
 	};
 
 	const selectedRows = features
@@ -338,6 +339,7 @@ function buildFirstEditLines(features) {
 	const lines = {
 		ui: "- `packages/ui/src/` - adjust primitives or add app-specific UI components",
 		jobs: "- `packages/jobs/src/definitions.js` and `apps/worker/src/handlers/` - define and process background jobs",
+		pwa: "- `apps/web/next.config.pwa.js` - PWA caching config, `public/manifest.json` - app manifest",
 	};
 
 	const selectedLines = features
@@ -355,6 +357,7 @@ function buildFeatureGuideLines(features) {
 	const lines = {
 		ui: "- `packages/ui/README.md` - component catalog, import rules, and extension notes",
 		jobs: "- `packages/jobs/README.md` - queue names, worker pairing, and the job-extension workflow",
+		pwa: "- `apps/web/next.config.pwa.js` - PWA caching strategies and service worker configuration",
 	};
 
 	const selectedLines = features
@@ -565,7 +568,7 @@ program
 	)
 	.option(
 		"--packages <packages>",
-		"Comma-separated list of optional packages to include (ui,jobs)",
+		"Comma-separated list of optional packages to include (ui,jobs,pwa)",
 	)
 	.option(
 		"--prompt <prompt>",
@@ -948,6 +951,21 @@ program
 					selectedFeatures.push("jobs");
 				}
 
+				const pwaResponse = await prompts({
+					type: "confirm",
+					name: "enabled",
+					message: "Enable PWA support (offline, installable)?",
+					initial: false,
+				});
+				if (typeof pwaResponse.enabled !== "boolean") {
+					console.log(chalk.yellow("\n⚠️  Setup cancelled."));
+					await fs.remove(targetDir);
+					process.exit(0);
+				}
+				if (pwaResponse.enabled) {
+					selectedFeatures.push("pwa");
+				}
+
 				features = resolveFeatureSelection(selectedFeatures);
 
 				const requestedFeatures = [...selectedFeatures];
@@ -1034,6 +1052,47 @@ program
 					await copyTemplate("worker", workerDir);
 					console.log(chalk.green(`    ✓ worker (paired with jobs)`));
 				}
+			}
+
+			// Step 6b: Copy PWA files to web app if selected
+			if (features.includes("pwa")) {
+				console.log(chalk.cyan("\n  📋 Setting up PWA support..."));
+				const pwaTemplateDir = path.join(templatesDir, "pwa");
+				const webDir = path.join(targetDir, "apps/web");
+
+				// Copy next.config.pwa.js
+				await fs.copy(
+					path.join(pwaTemplateDir, "next.config.pwa.js"),
+					path.join(webDir, "next.config.pwa.js"),
+				);
+
+				// Copy public/manifest.json and public/sw.js (merge with existing public/)
+				await fs.copy(
+					path.join(pwaTemplateDir, "public"),
+					path.join(webDir, "public"),
+					{
+						overwrite: false,
+					},
+				);
+
+				// Add @ducanh2912/next-pwa to apps/web/package.json dependencies
+				const webPkgPath = path.join(webDir, "package.json");
+				const webPkg = await fs.readJSON(webPkgPath);
+				webPkg.dependencies["@ducanh2912/next-pwa"] = "^11.0.0";
+				await fs.writeJSON(webPkgPath, webPkg, { spaces: 2 });
+
+				// Modify next.config.js to import and use the PWA wrapper
+				const configPath = path.join(webDir, "next.config.js");
+				let config = await fs.readFile(configPath, "utf-8");
+				config = config.replace(
+					/export default nextConfig;/,
+					'import withPwa from "./next.config.pwa.js";\n\nexport default withPwa(nextConfig);',
+				);
+				await fs.writeFile(configPath, config);
+
+				console.log(
+					chalk.green("    ✓ PWA support enabled (manifest + service worker)"),
+				);
 			}
 
 			// Step 7: Update all package.json dependencies to use correct scope
@@ -1440,6 +1499,7 @@ ADMIN_PASSWORD=${adminPassword}
 					const labels = {
 						ui: "Shared UI components",
 						jobs: "Job queue definitions",
+						pwa: "PWA support",
 					};
 					return `│   ├── ${f}/           # ${labels[f] || f}`;
 				})
@@ -1624,6 +1684,7 @@ ADMIN_PASSWORD=${adminPassword}
 const FEATURE_META = {
 	ui: { requires: [], packages: ["ui"], pairs: [] },
 	jobs: { requires: [], packages: ["jobs"], pairs: ["worker"] },
+	pwa: { requires: [], packages: [], pairs: [] },
 	// Admin dashboard and domain verticals (bookings, crm, cms, ai) are not
 	// scaffolded features. All embedded skills ship with every build and the
 	// AI builds them on demand - see the skill index in <harness>/skills/.
@@ -1695,6 +1756,17 @@ async function detectInstalledFeatures(projectDir) {
 		const meta = FEATURE_META[feature];
 		if (meta.skill) {
 			if (quarkLinkPackages.includes(feature)) {
+				installed.push(feature);
+			}
+			continue;
+		}
+		// PWA has no workspace package — detect by config file in web app
+		if (feature === "pwa") {
+			if (
+				await fs.pathExists(
+					path.join(projectDir, "apps", "web", "next.config.pwa.js"),
+				)
+			) {
 				installed.push(feature);
 			}
 			continue;
@@ -1974,7 +2046,7 @@ async function rewriteWorkspaceDeps(pkgJsonPath, scope, workspacePackages) {
 
 program
 	.command("add")
-	.argument("<feature>", "Package to add (ui, jobs)")
+	.argument("<feature>", "Package to add (ui, jobs, pwa)")
 	.description("Add an optional package to an existing Quark project")
 	.option("--force", "Skip safety checks (uncommitted changes)")
 	.option("--skip-install", "Skip pnpm install after adding")
@@ -2088,6 +2160,46 @@ program
 							`    ✓ ${feat} (skill — build it with the embedded skill)`,
 						),
 					);
+					continue;
+				}
+
+				// PWA modifies the web app, not a workspace package
+				if (feat === "pwa") {
+					const pwaTemplateDir = path.join(templatesDir, "pwa");
+					const webDir = path.join(projectDir, "apps/web");
+
+					if (await fs.pathExists(path.join(webDir, "next.config.pwa.js"))) {
+						console.log(chalk.dim("    · PWA already configured - skipping"));
+					} else {
+						await fs.copy(
+							path.join(pwaTemplateDir, "next.config.pwa.js"),
+							path.join(webDir, "next.config.pwa.js"),
+						);
+						await fs.copy(
+							path.join(pwaTemplateDir, "public"),
+							path.join(webDir, "public"),
+							{ overwrite: false },
+						);
+
+						const webPkgPath = path.join(webDir, "package.json");
+						const webPkg = await fs.readJSON(webPkgPath);
+						webPkg.dependencies["@ducanh2912/next-pwa"] = "^11.0.0";
+						await fs.writeJSON(webPkgPath, webPkg, { spaces: 2 });
+
+						const configPath = path.join(webDir, "next.config.js");
+						let config = await fs.readFile(configPath, "utf-8");
+						config = config.replace(
+							/export default nextConfig;/,
+							'import withPwa from "./next.config.pwa.js";\n\nexport default withPwa(nextConfig);',
+						);
+						await fs.writeFile(configPath, config);
+
+						console.log(
+							chalk.green(
+								"    ✓ PWA support enabled (manifest + service worker)",
+							),
+						);
+					}
 					continue;
 				}
 
@@ -2211,6 +2323,21 @@ program
 					),
 				);
 				console.log(chalk.white("  2. pnpm dev\n"));
+			} else if (feature === "pwa") {
+				console.log(chalk.cyan("Next steps:"));
+				console.log(
+					chalk.white(
+						"  1. Edit public/manifest.json to set your app name and theme color",
+					),
+				);
+				console.log(
+					chalk.white("  2. Replace public/quark.svg with your app icon"),
+				);
+				console.log(
+					chalk.white(
+						"  3. pnpm build (service worker is generated at build time)\n",
+					),
+				);
 			}
 
 			console.log(

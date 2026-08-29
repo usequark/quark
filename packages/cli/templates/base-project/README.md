@@ -42,6 +42,16 @@ Optional features can be added later with:
 npx @techstream/quark-create-app add <feature>
 ```
 
+### PWA (Optional)
+
+When enabled, your app includes:
+- `public/manifest.json` — web app manifest for installability
+- Service worker via `@ducanh2912/next-pwa` — offline caching for static assets
+- Modified `next.config.js` — PWA wrapper applied in production only
+
+Edit `public/manifest.json` to set your app name, theme color, and icons.
+The service worker is generated at build time — no manual maintenance needed.
+
 ## First Files to Edit
 
 - `packages/db/prisma/schema.prisma` - add your domain models
