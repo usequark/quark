@@ -121,10 +121,11 @@ All generated files are good defaults - extend, don't replace. Add your own rule
 ```markdown
 ## Domain Conventions
 
-### Billing
-- All Stripe interactions go through `apps/web/src/lib/stripe.js`.
-- Never store payment methods in our DB - use Stripe Customer ID only.
-- Webhook handler: `apps/web/src/app/api/stripe/webhook/route.js`.
+### Payment Integration
+Payment integration (Stripe checkout, webhooks, customer management) is built on demand via the payment skill. When the user requests payment features, load the payment skill first. Key conventions:
+- Never store payment methods in the DB — use Stripe Customer ID only.
+- All Stripe interactions go through a `lib/stripe.js` helper the AI generates.
+- Webhook handler lives at `apps/web/src/app/api/stripe/webhook/route.js`.
 ```
 
 ## For Quark Contributors

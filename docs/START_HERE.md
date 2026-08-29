@@ -42,7 +42,7 @@ Optional scaffolded features:
 | `ui` | Local Tailwind UI primitives | `packages/ui/README.md` |
 | `jobs` | Local job definitions + `apps/worker` | `packages/jobs/README.md` |
 
-Domain systems (bookings, CRM, CMS, AI) are not scaffolded features - every scaffold ships the embedded skills that teach your AI tool to build them on demand. See the skill index in `<harness>/skills/` (default `.opencode/skills/quark-skills/SKILL.md`).
+Domain systems (bookings, CRM, CMS, AI) are not scaffolded features - every scaffold ships the embedded skills that teach your AI tool to build them on demand. See the skill index in `<harness>/skills/` (default `.opencode/skills/`).
 
 ## Learn the project layout fast
 

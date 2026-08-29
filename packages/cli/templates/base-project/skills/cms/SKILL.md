@@ -107,6 +107,4 @@ test("published page renders on the public slug route", async () => {
 
 A working CMS where editors can create, review, and publish content that renders on the public site — with the models, endpoints, editorial flow, and public routes following Quark conventions.
 
-## Reference
 
-A full reference implementation is archived at `reference/verticals/cms/` and `reference/verticals/cms-routes/`. Study it for the complete content model, editorial flow, and public rendering, then adapt to the user's requirements.

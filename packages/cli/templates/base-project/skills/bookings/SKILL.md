@@ -321,6 +321,4 @@ test("applyTransition throws on invalid transition", () => {
 
 A working booking system where users can view availability, create a booking, and have it validated against capacity and scheduling rules — with the models, endpoints, and jobs following Quark conventions.
 
-## Reference
 
-A full reference implementation is archived at `reference/verticals/bookings/`. Study it for the complete model set, validation, and scheduling logic, then adapt to the user's requirements.

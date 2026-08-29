@@ -206,10 +206,6 @@ export const localizedPageSchema = z.object({
 6. Add `hreflang` alternates and locale-aware sitemap.
 7. Test detection chain: URL → cookie → Accept-Language → default.
 
-## Reference
-
-A full integration spec is archived at `docs/strategy/07-quark-i18n-integration.md`. Study it for the complete middleware matcher, scope decisions (what lives under `[locale]`), and edge cases.
-
 ## End result
 
 A localized Quark app where users switch languages via a prefix-based URL scheme, locale is detected from URL → cookie → header → default, CMS content is filtered by locale with fallback, SEO metadata includes `hreflang` alternates and locale-aware sitemaps, and all content submissions validate locale against the configured supported set — following Quark conventions throughout.

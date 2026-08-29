@@ -99,6 +99,4 @@ test("pipeline summary totals deal value by stage", async () => {
 
 A working CRM where users can manage companies, contacts, and deals through a configurable pipeline — with the models, endpoints, metrics, and admin views following Quark conventions.
 
-## Reference
 
-A full reference implementation is archived at `reference/verticals/crm/`. Study it for the complete model set, pipeline config, and metrics logic, then adapt to the user's requirements.
