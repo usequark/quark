@@ -34,7 +34,6 @@ export default function MediaAssetCard({ asset, href, deleteAction }) {
 						sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
 					/>
 				) : isSvg ? (
-					// biome-ignore lint/performance/noImgElement: SVGs need unoptimized rendering
 					<img
 						src={assetUrl}
 						alt={asset.alt ?? asset.filename}

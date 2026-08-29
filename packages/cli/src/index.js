@@ -313,6 +313,7 @@ function buildFeatureRows(features) {
 	const rows = {
 		ui: "| UI package | Included | `packages/ui/README.md` |",
 		jobs: "| Jobs + worker | Included | `packages/jobs/README.md`, `apps/worker/src/handlers/` |",
+		pwa: "| PWA support | Included | `apps/web/public/sw.js`, `apps/web/src/app/manifest.json` |",
 	};
 
 	const selectedRows = features
@@ -338,6 +339,7 @@ function buildFirstEditLines(features) {
 	const lines = {
 		ui: "- `packages/ui/src/` - adjust primitives or add app-specific UI components",
 		jobs: "- `packages/jobs/src/definitions.js` and `apps/worker/src/handlers/` - define and process background jobs",
+		pwa: "- `apps/web/public/sw.js` - service worker caching config, `src/app/manifest.json` - app manifest",
 	};
 
 	const selectedLines = features
@@ -355,6 +357,7 @@ function buildFeatureGuideLines(features) {
 	const lines = {
 		ui: "- `packages/ui/README.md` - component catalog, import rules, and extension notes",
 		jobs: "- `packages/jobs/README.md` - queue names, worker pairing, and the job-extension workflow",
+		pwa: "- `apps/web/public/sw.js` - service worker caching strategies and offline behavior",
 	};
 
 	const selectedLines = features
@@ -565,7 +568,7 @@ program
 	)
 	.option(
 		"--packages <packages>",
-		"Comma-separated list of optional packages to include (ui,jobs)",
+		"Comma-separated list of optional packages to include (ui,jobs,pwa)",
 	)
 	.option(
 		"--prompt <prompt>",
@@ -948,6 +951,21 @@ program
 					selectedFeatures.push("jobs");
 				}
 
+				const pwaResponse = await prompts({
+					type: "confirm",
+					name: "enabled",
+					message: "Enable PWA support (offline, installable)?",
+					initial: false,
+				});
+				if (typeof pwaResponse.enabled !== "boolean") {
+					console.log(chalk.yellow("\n⚠️  Setup cancelled."));
+					await fs.remove(targetDir);
+					process.exit(0);
+				}
+				if (pwaResponse.enabled) {
+					selectedFeatures.push("pwa");
+				}
+
 				features = resolveFeatureSelection(selectedFeatures);
 
 				const requestedFeatures = [...selectedFeatures];
@@ -1034,6 +1052,66 @@ program
 					await copyTemplate("worker", workerDir);
 					console.log(chalk.green(`    ✓ worker (paired with jobs)`));
 				}
+			}
+
+			// Step 6b: Copy PWA files to web app if selected
+			if (features.includes("pwa")) {
+				console.log(chalk.cyan("\n  📋 Setting up PWA support..."));
+				const pwaTemplateDir = path.join(templatesDir, "pwa");
+				const webDir = path.join(targetDir, "apps/web");
+
+				// Copy manifest.json to app/ (Next.js serves it natively)
+				await fs.copy(
+					path.join(pwaTemplateDir, "app/manifest.json"),
+					path.join(webDir, "src/app/manifest.json"),
+				);
+
+				// Substitute placeholders in manifest
+				const manifestPath = path.join(webDir, "src/app/manifest.json");
+				let manifest = await fs.readFile(manifestPath, "utf-8");
+				manifest = manifest.replace(/__QUARK_APP_NAME__/g, appDisplayName);
+				manifest = manifest.replace(
+					/__QUARK_APP_DESCRIPTION__/g,
+					appDescription,
+				);
+				await fs.writeFile(manifestPath, manifest);
+
+				// Copy sw.js to public/
+				await fs.copy(
+					path.join(pwaTemplateDir, "public/sw.js"),
+					path.join(webDir, "public/sw.js"),
+				);
+
+				// Copy PWARegister client component
+				await fs.copy(
+					path.join(pwaTemplateDir, "app/_components/PWARegister.js"),
+					path.join(webDir, "src/app/_components/PWARegister.js"),
+				);
+
+				// Inject PWARegister into layout.js
+				const layoutPath = path.join(webDir, "src/app/layout.js");
+				let layout = await fs.readFile(layoutPath, "utf-8");
+
+				// Add import (after the last existing import)
+				layout = layout.replace(
+					/import UmamiWebVitals from/,
+					'import PWARegister from "./_components/PWARegister.js";\nimport UmamiWebVitals from',
+				);
+
+				// Add viewport export (before generateMetadata)
+				layout = layout.replace(
+					/export function generateMetadata/,
+					'export const viewport = {\n\tthemeColor: "#000000",\n};\n\nexport function generateMetadata',
+				);
+
+				// Add <PWARegister /> to body (before {children})
+				layout = layout.replace(/<body>/, "<body>\n\t\t\t<PWARegister />");
+
+				await fs.writeFile(layoutPath, layout);
+
+				console.log(
+					chalk.green("    ✓ PWA support enabled (manifest + service worker)"),
+				);
 			}
 
 			// Step 7: Update all package.json dependencies to use correct scope
@@ -1440,6 +1518,7 @@ ADMIN_PASSWORD=${adminPassword}
 					const labels = {
 						ui: "Shared UI components",
 						jobs: "Job queue definitions",
+						pwa: "PWA support",
 					};
 					return `│   ├── ${f}/           # ${labels[f] || f}`;
 				})
@@ -1624,6 +1703,7 @@ ADMIN_PASSWORD=${adminPassword}
 const FEATURE_META = {
 	ui: { requires: [], packages: ["ui"], pairs: [] },
 	jobs: { requires: [], packages: ["jobs"], pairs: ["worker"] },
+	pwa: { requires: [], packages: [], pairs: [] },
 	// Admin dashboard and domain verticals (bookings, crm, cms, ai) are not
 	// scaffolded features. All embedded skills ship with every build and the
 	// AI builds them on demand - see the skill index in <harness>/skills/.
@@ -1695,6 +1775,25 @@ async function detectInstalledFeatures(projectDir) {
 		const meta = FEATURE_META[feature];
 		if (meta.skill) {
 			if (quarkLinkPackages.includes(feature)) {
+				installed.push(feature);
+			}
+			continue;
+		}
+		// PWA has no workspace package — detect by PWARegister component in web app
+		if (feature === "pwa") {
+			if (
+				await fs.pathExists(
+					path.join(
+						projectDir,
+						"apps",
+						"web",
+						"src",
+						"app",
+						"_components",
+						"PWARegister.js",
+					),
+				)
+			) {
 				installed.push(feature);
 			}
 			continue;
@@ -1974,7 +2073,7 @@ async function rewriteWorkspaceDeps(pkgJsonPath, scope, workspacePackages) {
 
 program
 	.command("add")
-	.argument("<feature>", "Package to add (ui, jobs)")
+	.argument("<feature>", "Package to add (ui, jobs, pwa)")
 	.description("Add an optional package to an existing Quark project")
 	.option("--force", "Skip safety checks (uncommitted changes)")
 	.option("--skip-install", "Skip pnpm install after adding")
@@ -2088,6 +2187,77 @@ program
 							`    ✓ ${feat} (skill — build it with the embedded skill)`,
 						),
 					);
+					continue;
+				}
+
+				// PWA modifies the web app, not a workspace package
+				if (feat === "pwa") {
+					const pwaTemplateDir = path.join(templatesDir, "pwa");
+					const webDir = path.join(projectDir, "apps/web");
+
+					if (
+						await fs.pathExists(
+							path.join(webDir, "src/app/_components/PWARegister.js"),
+						)
+					) {
+						console.log(chalk.dim("    · PWA already configured - skipping"));
+					} else {
+						// Copy manifest.json to app/
+						await fs.copy(
+							path.join(pwaTemplateDir, "app/manifest.json"),
+							path.join(webDir, "src/app/manifest.json"),
+						);
+
+						// Substitute placeholders in manifest
+						const addManifestPath = path.join(webDir, "src/app/manifest.json");
+						let addManifest = await fs.readFile(addManifestPath, "utf-8");
+						const addAppName = formatProjectDisplayName(quarkLink.projectName);
+						addManifest = addManifest.replace(
+							/__QUARK_APP_NAME__/g,
+							addAppName,
+						);
+						addManifest = addManifest.replace(
+							/__QUARK_APP_DESCRIPTION__/g,
+							`${addAppName} application`,
+						);
+						await fs.writeFile(addManifestPath, addManifest);
+
+						// Copy sw.js to public/
+						await fs.copy(
+							path.join(pwaTemplateDir, "public/sw.js"),
+							path.join(webDir, "public/sw.js"),
+						);
+
+						// Copy PWARegister client component
+						await fs.copy(
+							path.join(pwaTemplateDir, "app/_components/PWARegister.js"),
+							path.join(webDir, "src/app/_components/PWARegister.js"),
+						);
+
+						// Inject PWARegister into layout.js
+						const layoutPath = path.join(webDir, "src/app/layout.js");
+						let layout = await fs.readFile(layoutPath, "utf-8");
+
+						layout = layout.replace(
+							/import UmamiWebVitals from/,
+							'import PWARegister from "./_components/PWARegister.js";\nimport UmamiWebVitals from',
+						);
+
+						layout = layout.replace(
+							/export function generateMetadata/,
+							'export const viewport = {\n\tthemeColor: "#000000",\n};\n\nexport function generateMetadata',
+						);
+
+						layout = layout.replace(/<body>/, "<body>\n\t\t\t<PWARegister />");
+
+						await fs.writeFile(layoutPath, layout);
+
+						console.log(
+							chalk.green(
+								"    ✓ PWA support enabled (manifest + service worker)",
+							),
+						);
+					}
 					continue;
 				}
 
@@ -2211,6 +2381,24 @@ program
 					),
 				);
 				console.log(chalk.white("  2. pnpm dev\n"));
+			} else if (feature === "pwa") {
+				console.log(chalk.cyan("Next steps:"));
+				console.log(
+					chalk.white(
+						"  1. Edit src/app/manifest.json to set your app name and theme color",
+					),
+				);
+				console.log(
+					chalk.white("  2. Replace public/quark.svg with your app icon"),
+				);
+				console.log(
+					chalk.white(
+						"  3. Customize public/sw.js caching strategies if needed",
+					),
+				);
+				console.log(
+					chalk.white("  4. pnpm build (test SW registration in production)\n"),
+				);
 			}
 
 			console.log(

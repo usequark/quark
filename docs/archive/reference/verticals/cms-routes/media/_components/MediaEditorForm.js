@@ -177,7 +177,6 @@ function UploadDropzone() {
 			>
 				{preview ? (
 					<div className="p-4 flex flex-col items-center gap-2">
-						{/* biome-ignore lint/performance/noImgElement: data URL preview cannot be optimized by next/image */}
 						<img
 							src={preview}
 							alt="Preview"
@@ -268,7 +267,6 @@ function CurrentAssetPanel({ asset, assetUrl }) {
 					onClick={() => setLightboxOpen(true)}
 					className="group relative rounded-[--radius-default] border border-border bg-surface-hover/40 p-4 flex items-center justify-center min-h-56 cursor-zoom-in"
 				>
-					{/* biome-ignore lint/performance/noImgElement: SVGs should render as original files */}
 					<img
 						src={assetUrl}
 						alt={asset.alt ?? asset.filename}

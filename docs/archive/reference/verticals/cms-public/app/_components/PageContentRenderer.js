@@ -412,7 +412,6 @@ function renderRichContent(text, className) {
 		return React.createElement("div", {
 			className:
 				`${className} [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-2 [&_li]:my-0.5`.trim(),
-			// biome-ignore lint/security/noDangerouslySetInnerHtml: rich text HTML is sanitized
 			dangerouslySetInnerHTML: { __html: sanitized },
 		});
 	}
