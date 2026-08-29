@@ -155,7 +155,8 @@ Railway with two services: **web** (`apps/web`) and **worker** (`apps/worker`). 
 | `apps/web/src/app/` | Next.js pages and API routes |
 | `apps/web/src/lib/auth.js` | NextAuth configuration |
 | `apps/worker/src/handlers/` | Job handler functions |
-| `apps/web/next.config.pwa.js` | PWA configuration (if enabled) |
+| `apps/web/public/sw.js` | Service worker (if PWA enabled) |
+| `apps/web/src/app/manifest.json` | PWA manifest (if enabled) |
 
 ---
 

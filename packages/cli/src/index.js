@@ -313,7 +313,7 @@ function buildFeatureRows(features) {
 	const rows = {
 		ui: "| UI package | Included | `packages/ui/README.md` |",
 		jobs: "| Jobs + worker | Included | `packages/jobs/README.md`, `apps/worker/src/handlers/` |",
-		pwa: "| PWA support | Included | `apps/web/next.config.pwa.js` |",
+		pwa: "| PWA support | Included | `apps/web/public/sw.js`, `apps/web/src/app/manifest.json` |",
 	};
 
 	const selectedRows = features
@@ -339,7 +339,7 @@ function buildFirstEditLines(features) {
 	const lines = {
 		ui: "- `packages/ui/src/` - adjust primitives or add app-specific UI components",
 		jobs: "- `packages/jobs/src/definitions.js` and `apps/worker/src/handlers/` - define and process background jobs",
-		pwa: "- `apps/web/next.config.pwa.js` - PWA caching config, `public/manifest.json` - app manifest",
+		pwa: "- `apps/web/public/sw.js` - service worker caching config, `src/app/manifest.json` - app manifest",
 	};
 
 	const selectedLines = features
@@ -357,7 +357,7 @@ function buildFeatureGuideLines(features) {
 	const lines = {
 		ui: "- `packages/ui/README.md` - component catalog, import rules, and extension notes",
 		jobs: "- `packages/jobs/README.md` - queue names, worker pairing, and the job-extension workflow",
-		pwa: "- `apps/web/next.config.pwa.js` - PWA caching strategies and service worker configuration",
+		pwa: "- `apps/web/public/sw.js` - service worker caching strategies and offline behavior",
 	};
 
 	const selectedLines = features
@@ -1060,35 +1060,44 @@ program
 				const pwaTemplateDir = path.join(templatesDir, "pwa");
 				const webDir = path.join(targetDir, "apps/web");
 
-				// Copy next.config.pwa.js
+				// Copy manifest.json to app/ (Next.js serves it natively)
 				await fs.copy(
-					path.join(pwaTemplateDir, "next.config.pwa.js"),
-					path.join(webDir, "next.config.pwa.js"),
+					path.join(pwaTemplateDir, "app/manifest.json"),
+					path.join(webDir, "src/app/manifest.json"),
 				);
 
-				// Copy public/manifest.json and public/sw.js (merge with existing public/)
+				// Copy sw.js to public/
 				await fs.copy(
-					path.join(pwaTemplateDir, "public"),
-					path.join(webDir, "public"),
-					{
-						overwrite: false,
-					},
+					path.join(pwaTemplateDir, "public/sw.js"),
+					path.join(webDir, "public/sw.js"),
 				);
 
-				// Add @ducanh2912/next-pwa to apps/web/package.json dependencies
-				const webPkgPath = path.join(webDir, "package.json");
-				const webPkg = await fs.readJSON(webPkgPath);
-				webPkg.dependencies["@ducanh2912/next-pwa"] = "^11.0.0";
-				await fs.writeJSON(webPkgPath, webPkg, { spaces: 2 });
-
-				// Modify next.config.js to import and use the PWA wrapper
-				const configPath = path.join(webDir, "next.config.js");
-				let config = await fs.readFile(configPath, "utf-8");
-				config = config.replace(
-					/export default nextConfig;/,
-					'import withPwa from "./next.config.pwa.js";\n\nexport default withPwa(nextConfig);',
+				// Copy PWARegister client component
+				await fs.copy(
+					path.join(pwaTemplateDir, "app/_components/PWARegister.js"),
+					path.join(webDir, "src/app/_components/PWARegister.js"),
 				);
-				await fs.writeFile(configPath, config);
+
+				// Inject PWARegister into layout.js
+				const layoutPath = path.join(webDir, "src/app/layout.js");
+				let layout = await fs.readFile(layoutPath, "utf-8");
+
+				// Add import (after the last existing import)
+				layout = layout.replace(
+					/import UmamiWebVitals from/,
+					'import PWARegister from "./_components/PWARegister.js";\nimport UmamiWebVitals from',
+				);
+
+				// Add viewport export (before generateMetadata)
+				layout = layout.replace(
+					/export function generateMetadata/,
+					'export const viewport = {\n\tthemeColor: "#000000",\n};\n\nexport function generateMetadata',
+				);
+
+				// Add <PWARegister /> to body (before {children})
+				layout = layout.replace(/<body>/, "<body>\n\t\t\t<PWARegister />");
+
+				await fs.writeFile(layoutPath, layout);
 
 				console.log(
 					chalk.green("    ✓ PWA support enabled (manifest + service worker)"),
@@ -1760,11 +1769,19 @@ async function detectInstalledFeatures(projectDir) {
 			}
 			continue;
 		}
-		// PWA has no workspace package — detect by config file in web app
+		// PWA has no workspace package — detect by PWARegister component in web app
 		if (feature === "pwa") {
 			if (
 				await fs.pathExists(
-					path.join(projectDir, "apps", "web", "next.config.pwa.js"),
+					path.join(
+						projectDir,
+						"apps",
+						"web",
+						"src",
+						"app",
+						"_components",
+						"PWARegister.js",
+					),
 				)
 			) {
 				installed.push(feature);
@@ -2168,31 +2185,48 @@ program
 					const pwaTemplateDir = path.join(templatesDir, "pwa");
 					const webDir = path.join(projectDir, "apps/web");
 
-					if (await fs.pathExists(path.join(webDir, "next.config.pwa.js"))) {
+					if (
+						await fs.pathExists(
+							path.join(webDir, "src/app/_components/PWARegister.js"),
+						)
+					) {
 						console.log(chalk.dim("    · PWA already configured - skipping"));
 					} else {
+						// Copy manifest.json to app/
 						await fs.copy(
-							path.join(pwaTemplateDir, "next.config.pwa.js"),
-							path.join(webDir, "next.config.pwa.js"),
-						);
-						await fs.copy(
-							path.join(pwaTemplateDir, "public"),
-							path.join(webDir, "public"),
-							{ overwrite: false },
+							path.join(pwaTemplateDir, "app/manifest.json"),
+							path.join(webDir, "src/app/manifest.json"),
 						);
 
-						const webPkgPath = path.join(webDir, "package.json");
-						const webPkg = await fs.readJSON(webPkgPath);
-						webPkg.dependencies["@ducanh2912/next-pwa"] = "^11.0.0";
-						await fs.writeJSON(webPkgPath, webPkg, { spaces: 2 });
-
-						const configPath = path.join(webDir, "next.config.js");
-						let config = await fs.readFile(configPath, "utf-8");
-						config = config.replace(
-							/export default nextConfig;/,
-							'import withPwa from "./next.config.pwa.js";\n\nexport default withPwa(nextConfig);',
+						// Copy sw.js to public/
+						await fs.copy(
+							path.join(pwaTemplateDir, "public/sw.js"),
+							path.join(webDir, "public/sw.js"),
 						);
-						await fs.writeFile(configPath, config);
+
+						// Copy PWARegister client component
+						await fs.copy(
+							path.join(pwaTemplateDir, "app/_components/PWARegister.js"),
+							path.join(webDir, "src/app/_components/PWARegister.js"),
+						);
+
+						// Inject PWARegister into layout.js
+						const layoutPath = path.join(webDir, "src/app/layout.js");
+						let layout = await fs.readFile(layoutPath, "utf-8");
+
+						layout = layout.replace(
+							/import UmamiWebVitals from/,
+							'import PWARegister from "./_components/PWARegister.js";\nimport UmamiWebVitals from',
+						);
+
+						layout = layout.replace(
+							/export function generateMetadata/,
+							'export const viewport = {\n\tthemeColor: "#000000",\n};\n\nexport function generateMetadata',
+						);
+
+						layout = layout.replace(/<body>/, "<body>\n\t\t\t<PWARegister />");
+
+						await fs.writeFile(layoutPath, layout);
 
 						console.log(
 							chalk.green(
@@ -2327,7 +2361,7 @@ program
 				console.log(chalk.cyan("Next steps:"));
 				console.log(
 					chalk.white(
-						"  1. Edit public/manifest.json to set your app name and theme color",
+						"  1. Edit src/app/manifest.json to set your app name and theme color",
 					),
 				);
 				console.log(
@@ -2335,8 +2369,11 @@ program
 				);
 				console.log(
 					chalk.white(
-						"  3. pnpm build (service worker is generated at build time)\n",
+						"  3. Customize public/sw.js caching strategies if needed",
 					),
+				);
+				console.log(
+					chalk.white("  4. pnpm build (test SW registration in production)\n"),
 				);
 			}
 
