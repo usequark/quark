@@ -87,6 +87,4 @@ test("conversation is scoped to its owner", async () => {
 
 A working AI assistant where users can hold conversations with an LLM, with streaming, tool calling, and workflows as required — with the models, endpoints, jobs, and UI following Quark conventions.
 
-## Reference
 
-A full reference implementation is archived at `reference/verticals/ai/` and `reference/verticals/ai-routes/`. Study it for the complete conversation model, streaming, tool-permission flow, and workflow engine, then adapt to the user's requirements.
