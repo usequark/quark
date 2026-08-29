@@ -328,23 +328,23 @@ React components and UI primitives for your application. The full component libr
 
 ---
 
-#### `@techstream/quark-admin` (Optional, Published)
+#### Admin Dashboard (Skill-based)
 
-An auto-generated CRUD admin UI powered by Prisma DMMF introspection. Enable it by selecting the `admin` feature during scaffolding.
+The admin is built on demand via the `admin-dashboard` embedded skill. No admin package is scaffolded — the AI generates the admin area when you request it.
 
 ```bash
-# Enable during scaffold
-npx @techstream/quark-create-app my-app --packages ui,jobs
+# The admin is not a scaffolded package. Ask your AI to build it:
+# "Build an admin dashboard for managing my models"
 ```
 
-**What you get:**
-- Full admin interface at `/admin` - lists all your Prisma models
-- List, create, edit, and delete records for every model - zero config
-- Field-type aware forms: strings → text inputs, booleans → checkboxes, enums → dropdowns, DateTimes → datetime pickers
-- Automatic protection: only users with `role: "admin"` can access the admin
-- Dark mode support via the shared theme system
+**What the skill teaches the AI to build:**
+- Authenticated admin routes at `/admin` with role guards
+- List, create, edit, and delete screens for each domain model
+- Dashboard with decision-relevant metric cards
+- Audit logging for mutations
+- Neutral operations shell (plain Tailwind, no themed UI leakage)
 
-No code generation - the admin reads your schema at runtime via DMMF, so it automatically reflects schema changes without any regeneration step.
+The admin reads your schema at runtime via Prisma DMMF, so it automatically reflects schema changes without any regeneration step.
 
 ---
 

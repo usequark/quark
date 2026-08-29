@@ -342,7 +342,7 @@ Each package should have a README with:
 |------|---------|
 | `README.md` | Project overview, getting started |
 | `docs/API.md` | API reference documentation |
-| `docs/ROADMAP.md` | Future plans and architecture |
+| `docs/DESIGN_NOTES.md` | Architecture decisions and design direction |
 | `docs/MAINTAINABILITY.md` | This document |
 | `CHANGELOG.md` | Version history (per package) |
 | `CONTRIBUTING.md` | Contribution guidelines |
