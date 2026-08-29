@@ -125,7 +125,6 @@ export default function MessageBubble({
 }) {
 	const contentRef = useRef(null);
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: scroll into view when message or streaming state changes
 	useEffect(() => {
 		if (contentRef.current) {
 			contentRef.current.scrollIntoView({ behavior: "smooth" });

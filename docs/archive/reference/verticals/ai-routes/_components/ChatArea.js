@@ -21,7 +21,6 @@ export default function ChatArea({
 	const scrollRef = useRef(null);
 	const bottomRef = useRef(null);
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: scroll to bottom when messages, streaming, or proposal changes
 	useEffect(() => {
 		bottomRef.current?.scrollIntoView({ behavior: "smooth" });
 	}, [messages, streamingContent, toolProposal]);
