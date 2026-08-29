@@ -1066,6 +1066,16 @@ program
 					path.join(webDir, "src/app/manifest.json"),
 				);
 
+				// Substitute placeholders in manifest
+				const manifestPath = path.join(webDir, "src/app/manifest.json");
+				let manifest = await fs.readFile(manifestPath, "utf-8");
+				manifest = manifest.replace(/__QUARK_APP_NAME__/g, appDisplayName);
+				manifest = manifest.replace(
+					/__QUARK_APP_DESCRIPTION__/g,
+					appDescription,
+				);
+				await fs.writeFile(manifestPath, manifest);
+
 				// Copy sw.js to public/
 				await fs.copy(
 					path.join(pwaTemplateDir, "public/sw.js"),
@@ -2197,6 +2207,20 @@ program
 							path.join(pwaTemplateDir, "app/manifest.json"),
 							path.join(webDir, "src/app/manifest.json"),
 						);
+
+						// Substitute placeholders in manifest
+						const addManifestPath = path.join(webDir, "src/app/manifest.json");
+						let addManifest = await fs.readFile(addManifestPath, "utf-8");
+						const addAppName = formatProjectDisplayName(quarkLink.projectName);
+						addManifest = addManifest.replace(
+							/__QUARK_APP_NAME__/g,
+							addAppName,
+						);
+						addManifest = addManifest.replace(
+							/__QUARK_APP_DESCRIPTION__/g,
+							`${addAppName} application`,
+						);
+						await fs.writeFile(addManifestPath, addManifest);
 
 						// Copy sw.js to public/
 						await fs.copy(
