@@ -185,15 +185,13 @@ export async function generateMetadata({ params }) {
 
 ```js
 import { z } from "zod";
-import { getSupportedLocales } from "@techstream/quark-core/locale";
-
-const supportedLocales = getSupportedLocales();
+import { isLocaleSupported } from "@techstream/quark-core/locale";
 
 export const localizedPageSchema = z.object({
   title: z.string().min(1).max(255),
   slug: z.string().min(1).max(255),
   body: z.string().min(1),
-  locale: z.enum(supportedLocales),
+  locale: z.string().refine(isLocaleSupported, "Unsupported locale"),
   status: z.enum(["DRAFT", "PUBLISHED"]).default("DRAFT"),
 });
 ```

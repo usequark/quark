@@ -40,110 +40,133 @@ An ecommerce system manages a product catalog, shopping cart, checkout flow, ord
 ## Example: Prisma models
 
 ```prisma
-model Product {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String   @unique
-  description String?  @db.Text
-  priceCents  Int
-  imageUrls   String[]
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+enum OrderStatus {
+  PENDING
+  PAID
+  PROCESSING
+  FULFILLED
+  DELIVERED
+  REFUNDED
+  CANCELLED
+}
 
-  variants  ProductVariant[]
-  categories ProductCategory[]
-  cartItems CartItem[]
-  orderItems OrderItem[]
+model Product {
+  id          String          @id @default(cuid())
+  name        String
+  slug        String          @unique
+  description String?         @db.Text
+  basePrice   Decimal         @db.Decimal(10, 2)
+  currency    String          @default("USD")
+  images      String[]
+  active      Boolean         @default(true)
+  categoryId  String?
+  category    Category?       @relation(fields: [categoryId], references: [id])
+  variants    ProductVariant[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([slug])
+  @@index([categoryId])
+  @@index([active])
 }
 
 model ProductVariant {
-  id         String   @id @default(cuid())
-  productId  String
-  product    Product  @relation(fields: [productId], references: [id])
-  name       String
-  sku        String   @unique
-  priceCents Int
-  stock      Int      @default(0)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sku       String   @unique
+  name      String
+  price     Decimal  @db.Decimal(10, 2)
+  stock     Int      @default(0)
+  reserved  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productId])
+  @@index([sku])
 }
 
 model Category {
-  id       String   @id @default(cuid())
-  name     String
-  slug     String   @unique
-  parentId String?
-  parent   Category? @relation("CategoryTree", fields: [parentId], references: [id])
-  children Category[] @relation("CategoryTree")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?   @db.Text
+  parentId    String?
+  parent      Category? @relation("CategoryTree", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryTree")
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  products ProductCategory[]
-}
-
-model ProductCategory {
-  productId  String
-  product    Product  @relation(fields: [productId], references: [id])
-  categoryId String
-  category   Category @relation(fields: [categoryId], references: [id])
-
-  @@id([productId, categoryId])
+  @@index([slug])
+  @@index([parentId])
 }
 
 model Cart {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   userId    String?
-  sessionId String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  user      User?      @relation(fields: [userId], references: [id])
+  sessionId String?    @unique
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 
-  items CartItem[]
+  @@index([userId])
+  @@index([sessionId])
 }
 
 model CartItem {
-  id         String   @id @default(cuid())
-  cartId     String
-  cart       Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  productId  String
-  product    Product  @relation(fields: [productId], references: [id])
-  variantId  String?
-  quantity   Int      @default(1)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        String         @id @default(cuid())
+  cartId    String
+  cart      Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+  quantity  Int            @default(1)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@unique([cartId, variantId])
 }
 
 model Order {
   id              String      @id @default(cuid())
-  userId          String
+  userId          String?
+  user            User?       @relation(fields: [userId], references: [id])
   status          OrderStatus @default(PENDING)
-  totalCents      Int
-  shippingAddress Json?
+  email           String
+  shippingName    String
+  shippingAddress String    @db.Text
+  shippingCity    String
+  shippingZip     String
+  shippingCountry String
+  total           Decimal     @db.Decimal(10, 2)
+  currency        String      @default("USD")
   stripeSessionId String?     @unique
-  stripePaymentId String?
+  paidAt          DateTime?
+  fulfilledAt     DateTime?
+  deliveredAt     DateTime?
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
+  items           OrderItem[]
 
-  items OrderItem[]
+  @@index([userId, status])
+  @@index([status])
+  @@index([stripeSessionId])
+  @@index([createdAt])
 }
 
 model OrderItem {
-  id        String  @id @default(cuid())
+  id        String         @id @default(cuid())
   orderId   String
-  order     Order   @relation(fields: [orderId], references: [id])
-  productId String
-  product   Product @relation(fields: [productId], references: [id])
+  order     Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
   quantity  Int
-  priceCents Int
-}
+  unitPrice Decimal        @db.Decimal(10, 2)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 
-enum OrderStatus {
-  PENDING
-  PAID
-  SHIPPED
-  DELIVERED
-  CANCELLED
-  REFUNDED
+  @@index([orderId])
 }
 ```
 
@@ -153,21 +176,19 @@ enum OrderStatus {
 import { z } from "zod";
 
 export const addToCartSchema = z.object({
-  productId: z.string().min(1),
-  variantId: z.string().min(1).optional(),
-  quantity: z.number().int().positive().default(1),
+  cartId: z.string().min(1),
+  variantId: z.string().min(1),
+  quantity: z.coerce.number().int().positive().default(1),
 });
 
 export const checkoutSchema = z.object({
-  shippingAddress: z.object({
-    line1: z.string().min(1),
-    line2: z.string().optional(),
-    city: z.string().min(1),
-    state: z.string().min(1),
-    postalCode: z.string().min(1),
-    country: z.string().min(2).max(2),
-  }),
-  shippingMethod: z.enum(["standard", "express"]),
+  cartId: z.string().min(1),
+  email: z.string().email(),
+  shippingName: z.string().min(1),
+  shippingAddress: z.string().min(1),
+  shippingCity: z.string().min(1),
+  shippingZip: z.string().min(1),
+  shippingCountry: z.string().min(2).max(2),
 });
 ```
 

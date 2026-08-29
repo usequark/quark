@@ -94,7 +94,7 @@ export async function POST(request) {
 
   let event;
   try {
-    event = getStripeWebhookEvent(body, signature);
+    event = await getStripeWebhookEvent(body, signature);
   } catch (err) {
     log.error("webhook signature verification failed", { error: err.message });
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
@@ -145,7 +145,7 @@ export async function POST(request) {
 
 ### Event verification
 
-`getStripeWebhookEvent(body, signature)` calls `stripe.webhooks.constructEvent()` under the hood. It reads `STRIPE_WEBHOOK_SECRET` from env and throws if the signature is invalid.
+`await getStripeWebhookEvent(body, signature)` calls `stripe.webhooks.constructEvent()` under the hood. It reads `STRIPE_WEBHOOK_SECRET` from env and throws if the signature is invalid.
 
 ### Common events to handle
 
@@ -167,7 +167,6 @@ model WebhookEvent {
   stripeEventId  String   @unique
   type           String
   payload        Json
-  processedAt    DateTime @default(now())
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

@@ -99,11 +99,11 @@ export async function createOrder(formData) {
     }
 
     for (const item of cart.items) {
-      const updated = await tx.productVariant.update({
-        where: { id: item.variantId },
+      const updated = await tx.productVariant.updateMany({
+        where: { id: item.variantId, stock: { gte: item.quantity } },
         data: { stock: { decrement: item.quantity } },
       });
-      if (updated.stock < 0) {
+      if (updated.count === 0) {
         throw new AppError(`Out of stock: ${item.variant.name}`, 409, "OUT_OF_STOCK");
       }
     }
