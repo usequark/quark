@@ -53,7 +53,7 @@ The CLI will:
 
 | Flag | Description |
 |------|-------------|
-| `--features ui,jobs` | Include optional packages (ui, jobs) |
+| `--packages ui,jobs` | Include optional packages (ui, jobs) |
 | `--preset <name>` | Use a preset bundle (client-work, internal-tool, product, minimal) |
 | `--signup enabled\|disabled` | Control public self-service signup |
 | `--full-schema` | Keep all Prisma models (default: trimmed to 7 core models) |
@@ -95,16 +95,13 @@ Scaffolded projects already include this in the generated web Dockerfile, `apps/
 
 ---
 
-## Available in Quark Today
+## What Quark Gives You
 
-| Capability | Status | Where to start |
-|---|---|---|
-| Core runtime (`@techstream/quark-core`) | **Available now** | `packages/core/`, [Architecture](./docs/ARCHITECTURE.md) |
-| UI package (`ui`) | **Optional scaffold** | `packages/ui/README.md` |
-| Jobs + worker (`jobs`) | **Optional scaffold** | `packages/jobs/README.md`, `apps/worker/README.md` |
-| Admin panel (`admin`) | **Optional scaffold** | `packages/admin/README.md` |
-| Embedded skills (bookings, CRM, CMS, AI) | **Included in every scaffold** | `.opencode/skills/` (or selected harness dir) |
-| AI project context | **Included in every scaffold** | `CLAUDE.md`, `.github/copilot-instructions.md`, `.github/skills/project-context/SKILL.md` |
+**Always scaffolded:** `db` (Prisma), `config` (env validation), `ui` (Tailwind primitives)
+
+**Optional:** `jobs` (+ `worker` for background processing)
+
+**Built on demand:** Domain systems (bookings, CRM, CMS, ecommerce, AI) are not scaffolded packages. Every project ships embedded skills that teach your AI tool to build them. See `.opencode/skills/quark-skills/SKILL.md` in your scaffolded project.
 
 ---
 
@@ -216,9 +213,9 @@ pnpm changeset --empty
 - **[First Feature Guide](./docs/FIRST_FEATURE.md)** - End-to-end walkthrough for adding a real domain feature
 - **[Documentation Index](./docs/INDEX.md)** - Start here to navigate all documentation
 - **[Developer Guide](./copilot-instructions.md)** - Setup, conventions, and workflows
-- **[Architecture](./docs/ARCHITECTURE.md)** - Core design patterns and inheritance model
+- **[Architecture](./docs/ARCHITECTURE.md)** - Core design patterns and distribution model
 - **[API Reference](./docs/API.md)** - API documentation and endpoints
 - **[Security Guide](./docs/SECURITY.md)** - Security features, checklists, and incident response
 - **[Usage Guide](./docs/QUARK_USAGE.md)** - Full development and CLI workflow
 - **[Maintainability Guide](./docs/MAINTAINABILITY.md)** - Code style and best practices
-- **[Roadmap](./docs/ROADMAP.md)** - Long-term vision and strategic direction
+- **[Design Notes](./docs/DESIGN_NOTES.md)** - Accepted architectural direction and design decisions

@@ -334,7 +334,7 @@ An auto-generated CRUD admin UI powered by Prisma DMMF introspection. Enable it 
 
 ```bash
 # Enable during scaffold
-npx @techstream/quark-create-app my-app --features ui,jobs,admin
+npx @techstream/quark-create-app my-app --packages ui,jobs
 ```
 
 **What you get:**

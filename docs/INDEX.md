@@ -40,15 +40,14 @@ Entry point: [../README.md](../README.md)
 
 | Document | Purpose |
 |----------|---------|
-| [../reference/PLAN_SUMMARY.md](../reference/PLAN_SUMMARY.md) | Current roadmap and status summary; start here for active work |
-| [../reference/PLAN.md](../reference/PLAN.md) | Detailed active plan plus retained historical notes |
-| [IMPLEMENTATION_CHECKLIST.md](./IMPLEMENTATION_CHECKLIST.md) | Task tracker with progress percentages |
-| [DESIGN_NOTES.md](./DESIGN_NOTES.md) | Design direction for reducing Quark overhead (API-first, two-view CLI, minified admin/verticals) |
-| [FEATURE_PLAN.md](./FEATURE_PLAN.md) | Isolated, agent-executable feature plan (F1–F8) with contracts and dependencies |
-| [MERGE_PLAN.md](./MERGE_PLAN.md) | Sequence to merge the scaffold opinionation work into `main` (incl. F3 source rework) |
+| [DESIGN_NOTES.md](./DESIGN_NOTES.md) | Accepted design direction — the source of truth for architecture decisions |
 
 ## Historical Archive
 
 | Document | Purpose |
 |----------|---------|
 | [ARCHIVE.md](./ARCHIVE.md) | Entry point for older planning material and why it was archived |
+| [ROADMAP.md](./archive/ROADMAP.md) | Original expansion roadmap (predates skill-based architecture) |
+| [IMPLEMENTATION_CHECKLIST.md](./archive/IMPLEMENTATION_CHECKLIST.md) | Task tracker with progress percentages |
+| [FEATURE_PLAN.md](./archive/FEATURE_PLAN.md) | Isolated, agent-executable feature plan (F1–F8) |
+| [MERGE_PLAN.md](./archive/MERGE_PLAN.md) | Sequence to merge the scaffold opinionation work into `main` |

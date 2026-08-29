@@ -38,13 +38,13 @@ pnpm dev
 
 ```bash
 # Create with only UI package (no jobs)
-npx @techstream/quark-create-app my-app --no-prompts --features ui
+npx @techstream/quark-create-app my-app --no-prompts --packages ui
 
 # Create with only Jobs package (no UI)
-npx @techstream/quark-create-app my-app --no-prompts --features jobs
+npx @techstream/quark-create-app my-app --no-prompts --packages jobs
 
 # Minimal setup (no optional packages)
-npx @techstream/quark-create-app my-app --no-prompts --features ""
+npx @techstream/quark-create-app my-app --no-prompts --packages ""
 ```
 
 ### CI/CD Pipeline Example
@@ -54,7 +54,7 @@ npx @techstream/quark-create-app my-app --no-prompts --features ""
 # Create project without installation (install separately in CI)
 npx @techstream/quark-create-app my-app \
   --no-prompts \
-  --features ui,jobs \
+  --packages ui,jobs \
   --skip-install
 
 cd my-app
@@ -72,7 +72,7 @@ If features don't install correctly:
 
 ```bash
 # Verify feature names - valid options: ui, jobs
-npx @techstream/quark-create-app my-app --no-prompts --features ui,jobs
+npx @techstream/quark-create-app my-app --no-prompts --packages ui,jobs
 
 # Check that paths are created
 ls -la my-app/packages/

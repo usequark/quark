@@ -74,7 +74,7 @@ Quark takes a hybrid approach:
 - JSDoc for IDE support
 - Common interfaces
 
-❌ **Database Client** (moved to local `@yourapp/db`)
+❌ **Database Client** (lives in local `@yourapp/db`)
 - Prisma schema is always customized per app
 - Client instantiation requires app-specific connection config
 
@@ -285,134 +285,37 @@ export const jobHandlers = {
 
 ### Example 4: Database Client
 
-**In Core:**
+**Core has NO database client — this is by design:**
 ```javascript
-// @techstream/quark-core/src/db/index.js
-export const createDbClient = (options = {}) => {
-  const globalForPrisma = globalThis;
-  const prisma = globalForPrisma.prisma || new PrismaClient(options);
-  
-  if (process.env.NODE_ENV !== "production") {
-    globalForPrisma.prisma = prisma;
-  }
-  
-  return prisma;
-};
+// ✅ Core has NO database code
+// @techstream/quark-core exports: auth, queues, validation, errors ONLY
 ```
 
-**In Your App:**
+**In Your Local DB Package:**
 ```javascript
-// @techstream/quark-web/lib/db.js
-import { createDbClient } from "@techstream/quark-core";
+// packages/db/src/client.js - YOU own this
+import { PrismaClient } from "./generated/prisma/client.js";
 
-// Use with defaults - zero configuration!
-const db = createDbClient();
+const globalForPrisma = globalThis;
+export const prisma = globalForPrisma.prisma || new PrismaClient();
 
-// Or customize middleware
-const db = createDbClient({
-  middleware: [
-    {
-      $use: async (params, next) => {
-        const before = Date.now();
-        const result = await next(params);
-        const after = Date.now();
-        
-        // Custom logging
-        console.log(`${params.model}.${params.action} took ${after - before}ms`);
-        
-        return result;
-      },
-    },
-  ],
-});
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = prisma;
+}
 ```
 
 **Key Points:**
-- Core handles singleton pattern automatically
-- Apps get working database with zero setup
-- Can add middleware if needed
+- Core has NO database client (no Prisma dependency)
+- Each app creates client based on its own schema
+- Your schema.prisma is completely custom
 
-## Ejection Patterns
+## Domain Logic: Skills, Not Ejection
 
-### Pattern 1: Selective Override
+Domain-specific logic (bookings, CRM, CMS, ecommerce, AI) is no longer scaffolded as packages. Instead, embedded skills teach AI tools to build these systems on demand. See `docs/DESIGN_NOTES.md` for the design rationale.
 
-Use core for some things, replace others:
+Skills live in `<harness>/skills/` (default `.opencode/skills/`). Each skill contains domain context, Quark framework patterns, example models, and a workflow. The AI reads the skill and generates code that fits the user's exact requirements.
 
-```javascript
-// Keep core auth
-import { createAuthConfig } from "@techstream/quark-core";
-
-// Use custom queue setup
-import Queue from "bullmq";
-
-const authConfig = createAuthConfig({ providers: [...] });
-const customQueue = new Queue("special", { custom: "options" });
-```
-
-### Pattern 2: Middleware Injection
-
-Add behavior without changing core:
-
-```javascript
-import { createDbClient } from "@techstream/quark-core";
-
-const db = createDbClient({
-  middleware: [
-    // Add logging
-    loggingMiddleware,
-    // Add audit trail
-    auditMiddleware,
-    // Add performance monitoring
-    performanceMiddleware,
-  ]
-});
-```
-
-### Pattern 3: Wrapper Functions
-
-Create application-specific wrappers around core:
-
-```javascript
-// lib/api-utils.js
-import { requireAuth, UnauthorizedError } from "@techstream/quark-core";
-
-export const withAuth = (handler) => {
-  return async (req, res) => {
-    const session = await getSession({ req });
-    const userId = requireAuth(session);
-    return handler(userId, req, res);
-  };
-};
-
-// api/users/profile.js
-import { withAuth } from "@/lib/api-utils";
-
-export default withAuth(async (userId, req, res) => {
-  const user = await db.user.findUnique({ where: { id: userId } });
-  res.json(user);
-});
-```
-
-### Pattern 4: Extension Classes
-
-Extend core error types:
-
-```javascript
-// Extend core error with app context
-class AppApiError extends AppError {
-  constructor(message, statusCode, code, context = {}) {
-    super(message, statusCode, code);
-    this.context = context;
-  }
-  
-  toJSON() {
-    return {
-      ...super.toJSON(),
-      context: this.context,
-    };
-  }
-}
-```
+Reference implementations are archived at `reference/verticals/` — study them for the complete model set, validation, and business logic, then adapt to the user's requirements.
 
 ## Migration Guide
 
@@ -420,45 +323,30 @@ class AppApiError extends AppError {
 
 ```bash
 # 1. Create new app
-pnpm create quark my-app
+npx @techstream/quark-create-app my-app
 
-# 2. Inherit core automatically
-import { createDbClient } from "@techstream/quark-core";
+# 2. Core provides auth, queues, validation, errors
+import { auth } from "@techstream/quark-core";
+import { prisma } from "@yourapp/db";
 
-# 3. Start using core utilities
-const db = createDbClient(); // Works immediately
+# 3. Build domain features using skills
+# The AI reads the embedded skill and generates code on demand
 ```
 
-### Migrating Existing App
+### Adding Domain Features
 
-```javascript
-// Before: everything in one file
-// app/lib/auth.js
-export const config = { providers: [...], ... };
+Domain logic is built on demand via skills, not scaffolded as packages:
 
-// After: use core, eject what you need
-// app/lib/auth.js
-import { createAuthConfig } from "@techstream/quark-core";
+```bash
+# The embedded skills teach your AI tool to build:
+# - Bookings system (model, CRUD, business logic)
+# - CRM (contacts, deals, pipeline)
+# - CMS (pages, content, publishing)
+# - E-commerce (products, orders, checkout)
+# - AI features (assistants, RAG, embeddings)
 
-export const config = createAuthConfig({
-  providers: [...],
-  callbacks: { /* your custom logic */ }
-});
+# Reference implementations archived at reference/verticals/
 ```
-
-## When to Eject
-
-**Eject when you need:**
-- Custom authentication providers (GitHub, Google, SAML, etc.)
-- Domain-specific errors
-- Specialized queue configurations
-- Database middleware for logging/auditing
-- Application-specific utilities
-
-**Don't eject if:**
-- Core provides what you need
-- You're trying to replace core entirely
-- It's temporary test code
 
 ## Best Practices
 
@@ -493,33 +381,14 @@ import { config } from "./config"; // App-specific
 import { db } from "./db";         // App-specific
 ```
 
-### 3. Document Your Ejections
-
-```javascript
-// lib/auth.js
-/**
- * Authentication config for MyApp
- * 
- * Extends @techstream/quark-core with:
- * - GitHub OAuth provider
- * - Custom role field in JWT
- * - Email domain validation
- */
-import { createAuthConfig } from "@techstream/quark-core";
-
-export const authConfig = createAuthConfig({
-  // Our customizations here...
-});
-```
-
-### 4. Test Core Separately
+### 3. Test Core Separately
 
 ```bash
 # Core has its own tests
 cd packages/core
 pnpm test
 
-# Apps test their ejections
+# Apps test their customizations
 cd apps/web
 pnpm test
 ```
@@ -603,7 +472,7 @@ All tests use the `--no-prompts` flag to run without user input:
 
 ```javascript
 // test-e2e-full.js
-await execute(`${cliPath} ${projectName} --no-prompts --features ui,jobs`, {
+await execute(`${cliPath} ${projectName} --no-prompts --packages ui,jobs`, {
   cwd: E2E_TEST_DIR,
   timeout: 60000,
 });
@@ -764,7 +633,7 @@ apps/web/src/app/admin/
 
 ### Enabling the admin
 
-Select it during scaffolding (`--features ui,jobs,admin`) or via the interactive CLI prompt. The templates (admin routes + `@techstream/quark-admin` dependency) are copied into your project at scaffold time.
+Select it during scaffolding (`--packages ui,jobs`) or via the interactive CLI prompt. The templates (admin routes + `@techstream/quark-admin` dependency) are copied into your project at scaffold time.
 
 ---
 

@@ -1,3 +1,5 @@
+> **Archived.** This spec describes a scaffolded package approach (`packages/i18n/`) that predates the skill-based architecture. The technical decisions (next-intl, prefix-based routing, CMS locale field) remain valid and should be referenced when building the i18n skill. The implementation approach (CLI transforms, `--features i18n`, template restructuring) is outdated.
+
 # Quark i18n Integration
 
 > Implementation-ready spec for adding internationalization (i18n) to Quark.

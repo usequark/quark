@@ -1,3 +1,5 @@
+> **Archived.** This document predates the skill-based architecture described in `docs/DESIGN_NOTES.md`. It remains useful for historical context on Prisma schema options and NextAuth setup patterns, but the phase numbers, timelines, and package expansion plans are outdated.
+
 # Quark Monorepo Expansion Roadmap
 
 > **⚠️ Partially Superseded** - This document predates the current API-first, skills-based direction. It remains useful for **implementation details** (Prisma schema options, config expansion, NextAuth setup) from the older expansion work. The phase numbers and timelines below are outdated.

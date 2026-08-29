@@ -1,10 +1,9 @@
 # Quark Design Notes
 
-> Status: Draft for review
-> Date: August 2026
-> Companion: [FEATURE_PLAN.md](./FEATURE_PLAN.md) — the isolated, agent-executable feature plan.
+> **Status: Accepted** (August 2026)
+> This is the source of truth for Quark's architectural direction.
 
-This document captures the design direction for reducing Quark's overhead while keeping it a low-effort, low-opinionation scaffold. It is the "why" and "what"; the feature plan is the "how".
+This document captures the design direction for reducing Quark's overhead while keeping it a low-effort, low-opinionation scaffold.
 
 ---
 
@@ -30,7 +29,7 @@ The user describes the product; the AI (or the user) scopes it. Quark provides t
 The CLI exposes two views over the same engine:
 
 - **Human View (default, no params).** Interactive, product-shaped questions ("Describe your app in a sentence or two") with an **advanced** expander for full package/custom configuration. Progressive disclosure: simple by default.
-- **AI View (params).** A documented, deterministic flag surface (`--features`, `--preset`, `--prompt`, `--no-prompts`) that an agent calls reliably. Same params → same scaffold, every time.
+- **AI View (params).** A documented, deterministic flag surface (`--packages`, `--preset`, `--prompt`, `--no-prompts`) that an agent calls reliably. Same params → same scaffold, every time.
 
 ### 2.2 Admin = operations shell, not CRUD
 
@@ -68,17 +67,17 @@ Reduce the scaffolded package surface from 12 to ~8, and convert the 4 verticals
 
 ## 3. Decisions
 
-| ID | Decision | Rationale |
-|----|----------|-----------|
-| D1 | API-first: Quark = backend contract + agent context | Matches the vibe-coder market; AI is the UI layer |
-| D2 | Two-view CLI (Human + AI) | Human gets simple questions; AI gets a deterministic contract |
-| D3 | Admin = neutral operations shell (patterns + CRUD fallback) | Serves decision-making, not data management; no design leak |
-| D4 | Verticals = skill-only (AI builds on demand) | Lean, honest 80/20; user/AI builds the 20% |
-| D5 | Skills carry the domain knowledge | Replaces the value that used to live in full packages |
-| D6 | MAIN.md single entry point | Token-efficient agent bootstrap (create-vibe-app pattern) |
-| D7 | Quark logo embedded in scaffolded page | Brand anchor; already ~80% present |
-| D8 | Demote/hide originals (archive to `reference/`), don't delete | Preserve tested logic as reference source + validation oracle |
-| D9 | Decouple admin from themed UI + design-system skill | Kills the design-language contamination vector |
+| ID | Decision | Status | Rationale |
+|----|----------|--------|-----------|
+| D1 | API-first: Quark = backend contract + agent context | ✅ Accepted | Matches the vibe-coder market; AI is the UI layer |
+| D2 | Two-view CLI (Human + AI) | ✅ Accepted | Human gets simple questions; AI gets a deterministic contract |
+| D3 | Admin = neutral operations shell (patterns + CRUD fallback) | ✅ Accepted | Serves decision-making, not data management; no design leak |
+| D4 | Verticals = skill-only (AI builds on demand) | ✅ Accepted | Lean, honest 80/20; user/AI builds the 20% |
+| D5 | Skills carry the domain knowledge | ✅ Accepted | Replaces the value that used to live in full packages |
+| D6 | MAIN.md single entry point | ✅ Accepted | Token-efficient agent bootstrap (create-vibe-app pattern) |
+| D7 | Quark logo embedded in scaffolded page | ✅ Present | Brand anchor; already ~80% present |
+| D8 | Demote/hide originals (archive to `reference/`), don't delete | ✅ Accepted | Preserve tested logic as reference source + validation oracle |
+| D9 | Decouple admin from themed UI + design-system skill | ✅ Accepted | Kills the design-language contamination vector |
 
 ## 4. Target Architecture
 
@@ -107,7 +106,7 @@ create <name>
   └─ multiselect: [ui] [jobs] [admin] [cms] [crm] [ai]
 add <feature>
 update | update --check | update --scaffold-check
-flags: --no-prompts --features --skip-install --skip-docker
+flags: --no-prompts --packages --skip-install --skip-docker
 ```
 
 **Target:**
@@ -115,13 +114,13 @@ flags: --no-prompts --features --skip-install --skip-docker
 create <name>                          # Human View: product-shaped questions + advanced
   └─ "Describe your app in a sentence or two."  → brief → MAIN.md
   └─ [advanced] full package/custom config
-create <name> --features crm,ai        # AI View: deterministic params
+create <name> --packages crm,ai        # AI View: deterministic params
 create <name> --preset client-work     # AI View: preset bundle
 create <name> --prompt "..."           # AI View: brief from prompt
 add <feature>                          # add a domain starter / package later
 skill <feature>                        # print an embedded skill
 update | update --check | update --scaffold-check
-flags: --no-prompts --preset --features --prompt --skip-install --skip-docker
+flags: --no-prompts --preset --packages --prompt --skip-install --skip-docker
 ```
 
 ### 4.3 Admin structure (target)
