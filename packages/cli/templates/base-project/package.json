@@ -11,6 +11,7 @@
 		"clean:deep": "node scripts/clean-workspace.mjs --deep",
 		"build": "dotenv -- turbo run build",
 		"dev": "dotenv -- node scripts/dev-preflight.mjs && dotenv -- turbo run dev",
+		"dev:mobile": "pnpm --filter @myquark/mobile start",
 		"lint": "turbo run lint",
 		"standards": "node scripts/check-standards.mjs",
 		"check:loading": "node scripts/check-loading.mjs",
