@@ -43,6 +43,7 @@ model User {
   aiToolEvents      AiToolEvent[]
   aiWorkflows       AiWorkflow[]
   bookings      Booking[]
+  devices       Device[]
 
   @@index([email])
   @@index([createdAt])
@@ -164,6 +165,24 @@ model AuditLog {
   @@index([userId])
   @@index([action])
   @@index([entity])
+  @@index([createdAt])
+}
+
+// ─── Device Model (Mobile Push Notifications) ────────────────────────────────
+
+model Device {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platform  String   // "ios" | "android"
+  pushToken String
+  deviceId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, deviceId])
+  @@index([userId])
+  @@index([pushToken])
   @@index([createdAt])
 }
 

@@ -1,4 +1,3 @@
-
 -- CreateSchema
 CREATE SCHEMA IF NOT EXISTS "public";
 
@@ -124,6 +123,19 @@ CREATE TABLE "AuditLog" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "AuditLog_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Device" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "platform" TEXT NOT NULL,
+    "pushToken" TEXT NOT NULL,
+    "deviceId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Device_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -448,6 +460,18 @@ CREATE INDEX "AuditLog_entity_idx" ON "AuditLog"("entity");
 CREATE INDEX "AuditLog_createdAt_idx" ON "AuditLog"("createdAt");
 
 -- CreateIndex
+CREATE INDEX "Device_userId_idx" ON "Device"("userId");
+
+-- CreateIndex
+CREATE INDEX "Device_pushToken_idx" ON "Device"("pushToken");
+
+-- CreateIndex
+CREATE INDEX "Device_createdAt_idx" ON "Device"("createdAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Device_userId_deviceId_key" ON "Device"("userId", "deviceId");
+
+-- CreateIndex
 CREATE INDEX "Company_name_idx" ON "Company"("name");
 
 -- CreateIndex
@@ -623,6 +647,9 @@ ALTER TABLE "File" ADD CONSTRAINT "File_uploadedById_fkey" FOREIGN KEY ("uploade
 
 -- AddForeignKey
 ALTER TABLE "AuditLog" ADD CONSTRAINT "AuditLog_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Device" ADD CONSTRAINT "Device_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Contact" ADD CONSTRAINT "Contact_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE SET NULL ON UPDATE CASCADE;

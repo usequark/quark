@@ -1,0 +1,36 @@
+{
+  "name": "@myquark/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "dev": "expo start --non-interactive",
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write ."
+  },
+  "dependencies": {
+    "expo": "~55.0.0",
+    "expo-apple-authentication": "~55.0.0",
+    "expo-auth-session": "~55.0.0",
+    "expo-crypto": "~55.0.0",
+    "expo-device": "~55.0.0",
+    "expo-notifications": "~55.0.0",
+    "expo-router": "~55.0.0",
+    "expo-secure-store": "~55.0.0",
+    "expo-status-bar": "~55.0.0",
+    "expo-updates": "~55.0.0",
+    "react": "19.2.0",
+    "react-native": "0.83.0",
+    "react-native-safe-area-context": "~5.5.0",
+    "react-native-screens": "~4.11.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.7",
+    "@types/react": "~19.2.0",
+    "typescript": "~5.7.0"
+  }
+}
