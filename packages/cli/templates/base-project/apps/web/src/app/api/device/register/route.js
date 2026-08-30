@@ -2,6 +2,7 @@ import { validateBody, withCsrfProtection } from "@techstream/quark-core";
 import { prisma } from "@techstream/quark-db";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { extractBearerPayload } from "../../../lib/jwt";
 import { handleError } from "../../error-handler";
 
 const deviceRegisterSchema = z.object({
@@ -17,47 +18,15 @@ const deviceRegisterSchema = z.object({
  */
 export const POST = withCsrfProtection(async (request) => {
 	try {
-		// Extract user ID from Bearer token
-		const authHeader = request.headers.get("authorization");
-		if (!authHeader?.startsWith("Bearer ")) {
+		const payload = await extractBearerPayload(request);
+		if (!payload?.sub) {
 			return NextResponse.json(
 				{ message: "Authentication required" },
 				{ status: 401 },
 			);
 		}
 
-		// Verify the JWT to get the user ID
-		const { jwtVerify } = await import("jose");
-		const { getAuthSecret } = await import("@techstream/quark-core");
-		const secret = getAuthSecret();
-		if (!secret) {
-			return NextResponse.json(
-				{ message: "Server configuration error" },
-				{ status: 500 },
-			);
-		}
-
-		const token = authHeader.slice(7);
-		let payload;
-		try {
-			const result = await jwtVerify(token, new TextEncoder().encode(secret), {
-				issuer: "quark-mobile",
-			});
-			payload = result.payload;
-		} catch {
-			return NextResponse.json(
-				{ message: "Invalid or expired token" },
-				{ status: 401 },
-			);
-		}
-
 		const userId = payload.sub;
-		if (!userId) {
-			return NextResponse.json(
-				{ message: "Invalid token: no user ID" },
-				{ status: 401 },
-			);
-		}
 
 		const { platform, pushToken, deviceId } = await validateBody(
 			request,

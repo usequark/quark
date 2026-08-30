@@ -4,7 +4,9 @@
  * No Firebase SDK — uses HTTP APIs with service account credentials from env.
  */
 
+import { AppError, ValidationError } from "@techstream/quark-core/errors";
 import { prisma } from "@techstream/quark-db";
+import { importPKCS8, SignJWT } from "jose";
 
 const APNS_KEY = process.env.APNS_KEY;
 const APNS_KEY_ID = process.env.APNS_KEY_ID;
@@ -23,7 +25,7 @@ export async function handleSendPushNotification(bullJob, logger) {
 	const { userId, title, body: notificationBody, data } = bullJob.data;
 
 	if (!userId || !title || !notificationBody) {
-		throw new Error("Missing required fields: userId, title, body");
+		throw new ValidationError("Missing required fields: userId, title, body");
 	}
 
 	// Fetch all devices for the user
@@ -74,12 +76,13 @@ export async function handleSendPushNotification(bullJob, logger) {
  */
 async function generateAPNsToken() {
 	if (!APNS_KEY || !APNS_KEY_ID || !APNS_TEAM_ID) {
-		throw new Error(
+		throw new AppError(
 			"APNs credentials not configured (APNS_KEY, APNS_KEY_ID, APNS_TEAM_ID)",
+			500,
+			"APNS_NOT_CONFIGURED",
 		);
 	}
 
-	const { SignJWT, importPKCS8 } = await import("jose");
 	const privateKey = await importPKCS8(APNS_KEY, "ES256");
 	const now = Math.floor(Date.now() / 1000);
 
@@ -96,7 +99,7 @@ async function generateAPNsToken() {
  */
 async function sendAPNs(token, title, body, data = {}) {
 	if (!APNS_KEY) {
-		throw new Error("APNs not configured");
+		throw new AppError("APNs not configured", 500, "APNS_NOT_CONFIGURED");
 	}
 
 	const jwt = await generateAPNsToken();
@@ -127,7 +130,11 @@ async function sendAPNs(token, title, body, data = {}) {
 
 	if (!response.ok) {
 		const errorBody = await response.text();
-		throw new Error(`APNs error ${response.status}: ${errorBody}`);
+		throw new AppError(
+			`APNs error ${response.status}: ${errorBody}`,
+			502,
+			"APNS_ERROR",
+		);
 	}
 }
 
@@ -136,13 +143,16 @@ async function sendAPNs(token, title, body, data = {}) {
  */
 async function getFCMAccessToken() {
 	if (!GCP_SERVICE_ACCOUNT) {
-		throw new Error("GCP_SERVICE_ACCOUNT not configured");
+		throw new AppError(
+			"GCP_SERVICE_ACCOUNT not configured",
+			500,
+			"FCM_NOT_CONFIGURED",
+		);
 	}
 
 	const serviceAccount = JSON.parse(GCP_SERVICE_ACCOUNT);
 	const now = Math.floor(Date.now() / 1000);
 
-	const { SignJWT, importPKCS8 } = await import("jose");
 	const privateKey = await importPKCS8(serviceAccount.private_key, "RS256");
 
 	const jwt = await new SignJWT({
@@ -167,7 +177,11 @@ async function getFCMAccessToken() {
 
 	if (!tokenResponse.ok) {
 		const error = await tokenResponse.text();
-		throw new Error(`FCM token exchange failed: ${error}`);
+		throw new AppError(
+			`FCM token exchange failed: ${error}`,
+			502,
+			"FCM_TOKEN_EXCHANGE_FAILED",
+		);
 	}
 
 	const { access_token } = await tokenResponse.json();
@@ -182,7 +196,11 @@ async function sendFCM(token, title, body, data = {}) {
 
 	const projectId = JSON.parse(GCP_SERVICE_ACCOUNT || "{}").project_id;
 	if (!projectId) {
-		throw new Error("GCP project_id not found in service account");
+		throw new AppError(
+			"GCP project_id not found in service account",
+			500,
+			"FCM_NOT_CONFIGURED",
+		);
 	}
 
 	const message = {
@@ -207,6 +225,10 @@ async function sendFCM(token, title, body, data = {}) {
 
 	if (!response.ok) {
 		const errorBody = await response.text();
-		throw new Error(`FCM error ${response.status}: ${errorBody}`);
+		throw new AppError(
+			`FCM error ${response.status}: ${errorBody}`,
+			502,
+			"FCM_ERROR",
+		);
 	}
 }

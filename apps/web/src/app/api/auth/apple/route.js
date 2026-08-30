@@ -1,15 +1,10 @@
-import {
-	createLogger,
-	getAuthSecret,
-	validateBody,
-} from "@techstream/quark-core";
+import { validateBody } from "@techstream/quark-core";
 import { user } from "@techstream/quark-db";
-import { SignJWT } from "jose";
+import { importJWK, jwtVerify } from "jose";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { issueTokenPair } from "../../../lib/jwt";
 import { handleError } from "../../error-handler";
-
-const logger = createLogger("auth-apple");
 
 const appleAuthSchema = z.object({
 	identityToken: z.string().min(1),
@@ -44,8 +39,6 @@ export async function POST(request) {
 		}
 
 		// Verify the token using Apple's public key
-		// In production, use jose's jwtVerify with the imported JWK
-		const { importJWK, jwtVerify } = await import("jose");
 		const publicKey = await importJWK(matchingKey, "RS256");
 
 		let payload;
@@ -80,43 +73,8 @@ export async function POST(request) {
 			});
 		}
 
-		// Issue custom JWT
-		const secret = getAuthSecret();
-		if (!secret) {
-			logger.error("NEXTAUTH_SECRET not configured");
-			return NextResponse.json(
-				{ message: "Server configuration error" },
-				{ status: 500 },
-			);
-		}
-
-		const secretKey = new TextEncoder().encode(secret);
-		const now = Math.floor(Date.now() / 1000);
-
-		const token = await new SignJWT({
-			sub: existingUser.id,
-			email: existingUser.email,
-			name: existingUser.name,
-			role: existingUser.role,
-		})
-			.setProtectedHeader({ alg: "HS256" })
-			.setIssuedAt(now)
-			.setExpirationTime("1h")
-			.setIssuer("quark-mobile")
-			.sign(secretKey);
-
-		const refreshToken = await new SignJWT({
-			sub: existingUser.id,
-			type: "refresh",
-		})
-			.setProtectedHeader({ alg: "HS256" })
-			.setIssuedAt(now)
-			.setExpirationTime("30d")
-			.setIssuer("quark-mobile")
-			.sign(secretKey);
-
-		const expiresAt = new Date(now * 1000 + 60 * 60 * 1000).toISOString();
-
+		const { token, refreshToken, expiresAt } =
+			await issueTokenPair(existingUser);
 		return NextResponse.json({ token, refreshToken, expiresAt });
 	} catch (error) {
 		return handleError(error);

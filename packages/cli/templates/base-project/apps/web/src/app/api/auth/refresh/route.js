@@ -1,11 +1,7 @@
-import {
-	createLogger,
-	getAuthSecret,
-	validateBody,
-} from "@techstream/quark-core";
-import { jwtVerify, SignJWT } from "jose";
+import { createLogger, validateBody } from "@techstream/quark-core";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { issueTokenPair, verifyMobileToken } from "../../../lib/jwt";
 import { handleError } from "../../error-handler";
 
 const logger = createLogger("auth-refresh");
@@ -22,25 +18,9 @@ export async function POST(request) {
 	try {
 		const { refreshToken } = await validateBody(request, refreshRequestSchema);
 
-		const secret = getAuthSecret();
-		if (!secret) {
-			logger.error("NEXTAUTH_SECRET not configured");
-			return NextResponse.json(
-				{ message: "Server configuration error" },
-				{ status: 500 },
-			);
-		}
-
-		const secretKey = new TextEncoder().encode(secret);
-
-		let payload;
-		try {
-			const result = await jwtVerify(refreshToken, secretKey, {
-				issuer: "quark-mobile",
-			});
-			payload = result.payload;
-		} catch (error) {
-			logger.warn("Invalid refresh token", { error: error.message });
+		const payload = await verifyMobileToken(refreshToken);
+		if (!payload) {
+			logger.warn("Invalid refresh token");
 			return NextResponse.json(
 				{ message: "Invalid or expired refresh token" },
 				{ status: 401 },
@@ -54,19 +34,12 @@ export async function POST(request) {
 			);
 		}
 
-		const now = Math.floor(Date.now() / 1000);
-
-		const token = await new SignJWT({
-			sub: payload.sub,
+		const { token } = await issueTokenPair({
+			id: payload.sub,
 			email: payload.email,
 			name: payload.name,
 			role: payload.role,
-		})
-			.setProtectedHeader({ alg: "HS256" })
-			.setIssuedAt(now)
-			.setExpirationTime("1h")
-			.setIssuer("quark-mobile")
-			.sign(secretKey);
+		});
 
 		return NextResponse.json({ token });
 	} catch (error) {

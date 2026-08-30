@@ -3,7 +3,7 @@
 ## Non-Negotiable Rules
 
 - **ESM only** - `import`/`export` everywhere. Never `require()` or `module.exports`.
-- **No authored TypeScript** - `.js` and `.jsx` files only. Generated code may emit typed artifacts, but repo code should not add `.ts`, `.tsx`, type annotations, or `tsconfig`.
+- **No authored TypeScript** - `.js` and `.jsx` files only. Generated code may emit typed artifacts, but repo code should not add `.ts`, `.tsx`, type annotations, or `tsconfig`. Exception: scaffold templates (e.g. `packages/cli/templates/mobile/`) may use `.ts`/`.tsx` when required by the target ecosystem (React Native / Expo).
 - **No `throw new Error()` in app/runtime code** - use `AppError` / `ValidationError` from `@techstream/quark-core/errors`. Native `Error` is reserved for library, bootstrap, CLI, and test code.
 - **No `console.log/error` in app/runtime code** - use `createLogger(name)` from `@techstream/quark-core`. Console output is reserved for bootstrap, CLI, and test code.
 - **Zod required** - all Server Actions and API routes must validate with Zod. No exceptions.
