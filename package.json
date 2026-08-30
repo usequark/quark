@@ -10,6 +10,8 @@
 		"clean:deep": "node scripts/clean-workspace.mjs --deep",
 		"build": "dotenv -- turbo run build",
 		"dev": "dotenv -- tsx scripts/dev-preflight.mjs && dotenv -- turbo run dev",
+		"dev:mobile": "pnpm --filter @techstream/quark-mobile start",
+		"build:mobile": "pnpm --filter @techstream/quark-mobile export",
 		"lint": "biome format --write && biome check --write",
 		"lint:unsafe": "biome format --write && biome check --write --unsafe",
 		"lint:all": "turbo run lint",
