@@ -2310,11 +2310,15 @@ program
 							}
 						}
 
-						// Add build:mobile script to root package.json
+						// Add mobile scripts to root package.json
 						const rootPkgPath = path.join(projectDir, "package.json");
 						if (await fs.pathExists(rootPkgPath)) {
 							const rootPkg = await fs.readJSON(rootPkgPath);
 							rootPkg.scripts = rootPkg.scripts || {};
+							if (!rootPkg.scripts["dev:mobile"]) {
+								rootPkg.scripts["dev:mobile"] =
+									`pnpm --filter @${scope}/mobile start`;
+							}
 							if (!rootPkg.scripts["build:mobile"]) {
 								rootPkg.scripts["build:mobile"] =
 									`pnpm --filter @${scope}/mobile export`;
@@ -2528,12 +2532,15 @@ model Device {
 				console.log(
 					chalk.white("  2. Set EXPO_PUBLIC_API_URL in apps/mobile/.env"),
 				);
+				console.log(chalk.white("  3. pnpm dev (starts web + worker)"));
 				console.log(
-					chalk.white("  3. pnpm dev (starts web, worker, and mobile)"),
+					chalk.white(
+						"  4. pnpm dev:mobile (starts Expo in a second terminal)",
+					),
 				);
 				console.log(
 					chalk.white(
-						"  4. Configure APNs/FCM env vars for push notifications\n",
+						"  5. Configure APNs/FCM env vars for push notifications\n",
 					),
 				);
 			}
