@@ -1704,6 +1704,7 @@ const FEATURE_META = {
 	ui: { requires: [], packages: ["ui"], pairs: [] },
 	jobs: { requires: [], packages: ["jobs"], pairs: ["worker"] },
 	pwa: { requires: [], packages: [], pairs: [] },
+	mobile: { requires: [], packages: [], pairs: [] },
 	// Admin dashboard and domain verticals (bookings, crm, cms, ai) are not
 	// scaffolded features. All embedded skills ship with every build and the
 	// AI builds them on demand - see the skill index in <harness>/skills/.
@@ -2261,6 +2262,128 @@ program
 					continue;
 				}
 
+				// Mobile app scaffolds apps/mobile from the template
+				if (feat === "mobile") {
+					const mobileTemplateDir = path.join(templatesDir, "mobile");
+					const mobileDir = path.join(projectDir, "apps/mobile");
+
+					if (await fs.pathExists(mobileDir)) {
+						console.log(
+							chalk.dim("    · apps/mobile already exists - skipping copy"),
+						);
+					} else {
+						await fs.ensureDir(mobileDir);
+						await fs.copy(mobileTemplateDir, mobileDir);
+
+						// Replace placeholder variables in template files
+						const mobileAppName = formatProjectDisplayName(
+							quarkLink.projectName,
+						);
+						const mobileFiles = ["app.json", "package.json", "README.md"];
+
+						for (const relPath of mobileFiles) {
+							const filePath = path.join(mobileDir, relPath);
+							if (await fs.pathExists(filePath)) {
+								let content = await fs.readFile(filePath, "utf-8");
+								content = content.replace(/__QUARK_APP_NAME__/g, mobileAppName);
+								content = content.replace(
+									/__QUARK_PROJECT_NAME__/g,
+									quarkLink.projectName,
+								);
+								await fs.writeFile(filePath, content);
+							}
+						}
+
+						await updatePackageJsonName(
+							path.join(mobileDir, "package.json"),
+							scope,
+						);
+
+						// Add EXPO_PUBLIC_API_URL to .env.example
+						const envExamplePath = path.join(projectDir, ".env.example");
+						if (await fs.pathExists(envExamplePath)) {
+							let envContent = await fs.readFile(envExamplePath, "utf-8");
+							if (!envContent.includes("EXPO_PUBLIC_API_URL")) {
+								envContent +=
+									"\n# --- Mobile App ---\nEXPO_PUBLIC_API_URL=http://localhost:3000\n";
+								await fs.writeFile(envExamplePath, envContent);
+							}
+						}
+
+						// Add build:mobile script to root package.json
+						const rootPkgPath = path.join(projectDir, "package.json");
+						if (await fs.pathExists(rootPkgPath)) {
+							const rootPkg = await fs.readJSON(rootPkgPath);
+							rootPkg.scripts = rootPkg.scripts || {};
+							if (!rootPkg.scripts["build:mobile"]) {
+								rootPkg.scripts["build:mobile"] =
+									`pnpm --filter @${scope}/mobile export`;
+							}
+							await fs.writeFile(
+								rootPkgPath,
+								`${JSON.stringify(rootPkg, null, "\t")}\n`,
+							);
+						}
+
+						// Add DEVICE model to Prisma schema
+						const schemaPath = path.join(
+							projectDir,
+							"packages/db/prisma/schema.prisma",
+						);
+						if (await fs.pathExists(schemaPath)) {
+							let schema = await fs.readFile(schemaPath, "utf-8");
+							if (!schema.includes("model Device")) {
+								// Add before CRM models section
+								const deviceModel = `
+// ─── Device Model (Mobile Push Notifications) ────────────────────────────────
+
+model Device {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platform  String   // "ios" | "android"
+  pushToken String
+  deviceId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, deviceId])
+  @@index([userId])
+  @@index([pushToken])
+  @@index([createdAt])
+}
+`;
+								schema = schema.replace(
+									/\/\/ ─── CRM Models/,
+									`${deviceModel}// ─── CRM Models`,
+								);
+								// Add devices relation to User model
+								schema = schema.replace(
+									/bookings\s+Booking\[\]/,
+									"bookings      Booking[]\n  devices       Device[]",
+								);
+								await fs.writeFile(schemaPath, schema);
+							}
+						}
+
+						console.log(
+							chalk.green("    ✓ Mobile app scaffolded (apps/mobile)"),
+						);
+						console.log(
+							chalk.green("    ✓ DEVICE model added to Prisma schema"),
+						);
+						console.log(
+							chalk.green("    ✓ EXPO_PUBLIC_API_URL added to .env.example"),
+						);
+						console.log(
+							chalk.dim(
+								"    · API routes (token, refresh, device/register) already in base template",
+							),
+						);
+					}
+					continue;
+				}
+
 				// 1. Copy package template
 				for (const packageName of packageNames) {
 					const packageDir = path.join(projectDir, "packages", packageName);
@@ -2398,6 +2521,20 @@ program
 				);
 				console.log(
 					chalk.white("  4. pnpm build (test SW registration in production)\n"),
+				);
+			} else if (feature === "mobile") {
+				console.log(chalk.cyan("Next steps:"));
+				console.log(chalk.white("  1. pnpm install"));
+				console.log(
+					chalk.white("  2. Set EXPO_PUBLIC_API_URL in apps/mobile/.env"),
+				);
+				console.log(
+					chalk.white("  3. pnpm dev (starts web, worker, and mobile)"),
+				);
+				console.log(
+					chalk.white(
+						"  4. Configure APNs/FCM env vars for push notifications\n",
+					),
 				);
 			}
 
