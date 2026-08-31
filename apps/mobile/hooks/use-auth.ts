@@ -4,11 +4,6 @@ import {
 	signOut as authSignOut,
 	isAuthenticated as checkAuth,
 } from "../lib/auth";
-import {
-	configureNotificationHandler,
-	registerDevice,
-	registerForPushNotifications,
-} from "../lib/notifications";
 
 interface AuthState {
 	isAuthenticated: boolean;
@@ -40,11 +35,9 @@ export function useAuthInit() {
 	const [, setState] = useState<AuthState>(globalAuthState);
 
 	useEffect(() => {
-		try {
-			configureNotificationHandler();
-		} catch {
-			// Non-critical in Expo Go
-		}
+		import("../lib/notifications")
+			.then((m) => m.configureNotificationHandler())
+			.catch(() => {});
 
 		(async () => {
 			try {
@@ -113,6 +106,9 @@ export function useAuth(): AuthState {
 
 	const registerPushToken = useCallback(async () => {
 		try {
+			const { registerForPushNotifications, registerDevice } = await import(
+				"../lib/notifications"
+			);
 			const token = await registerForPushNotifications();
 			if (token) {
 				await registerDevice(token);

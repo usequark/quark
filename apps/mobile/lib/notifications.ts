@@ -1,5 +1,3 @@
-import * as Device from "expo-device";
-import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 import { apiClient } from "./api-client";
 
@@ -8,9 +6,12 @@ import { apiClient } from "./api-client";
  * Must be called after authentication.
  */
 export async function registerForPushNotifications(): Promise<string | null> {
+	const Device = await import("expo-device");
 	if (!Device.isDevice) {
 		return null;
 	}
+
+	const Notifications = await import("expo-notifications");
 
 	const { status: existingStatus } = await Notifications.getPermissionsAsync();
 	let finalStatus = existingStatus;
@@ -63,7 +64,8 @@ export async function registerDevice(pushToken: string): Promise<void> {
 /**
  * Configure foreground notification handling.
  */
-export function configureNotificationHandler() {
+export async function configureNotificationHandler() {
+	const Notifications = await import("expo-notifications");
 	Notifications.setNotificationHandler({
 		handleNotification: async () => ({
 			shouldShowBanner: true,
