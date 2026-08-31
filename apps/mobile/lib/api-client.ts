@@ -1,6 +1,6 @@
 import { getConfig } from "./config";
+import { ApiError, type AppClientError } from "./errors";
 import { clearTokens, getRefreshToken, getToken, storeTokens } from "./storage";
-import { type AppClientError, ApiError } from "./errors";
 
 interface ApiResponse<T = unknown> {
 	data: T;
@@ -79,10 +79,10 @@ export async function apiClient<T = unknown>(
 		}
 		throw buildError({
 			name: "NetworkError",
-				message: error instanceof Error ? error.message : "Network error",
-				code: "NETWORK_ERROR",
-				statusCode: 0,
-			});
+			message: error instanceof Error ? error.message : "Network error",
+			code: "NETWORK_ERROR",
+			statusCode: 0,
+		});
 	}
 }
 
@@ -121,7 +121,8 @@ async function parseResponse<T>(response: Response): Promise<ApiResponse<T>> {
 		const errorData = data as Partial<AppClientError>;
 		throw buildError({
 			name: errorData.name || "ApiError",
-			message: errorData.message || `Request failed with status ${response.status}`,
+			message:
+				errorData.message || `Request failed with status ${response.status}`,
 			code: errorData.code || "UNKNOWN_ERROR",
 			statusCode: response.status,
 			details: errorData.details,

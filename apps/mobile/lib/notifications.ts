@@ -1,5 +1,5 @@
-import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
+import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 import { apiClient } from "./api-client";
 
@@ -46,7 +46,9 @@ export async function registerDevice(pushToken: string): Promise<void> {
 	const { Platform: PlatformModule } = await import("react-native");
 	const Constants = await import("expo-constants");
 	const deviceId =
-		Constants.default?.installationId || Constants.default?.expoConfig?.extra?.eas?.projectId || "unknown";
+		Constants.default?.installationId ||
+		Constants.default?.expoConfig?.extra?.eas?.projectId ||
+		"unknown";
 
 	await apiClient("/api/device/register", {
 		method: "POST",
@@ -64,7 +66,8 @@ export async function registerDevice(pushToken: string): Promise<void> {
 export function configureNotificationHandler() {
 	Notifications.setNotificationHandler({
 		handleNotification: async () => ({
-			shouldShowAlert: true,
+			shouldShowBanner: true,
+			shouldShowList: true,
 			shouldPlaySound: true,
 			shouldSetBadge: false,
 		}),

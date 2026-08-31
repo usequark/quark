@@ -65,6 +65,9 @@ importers:
       expo-auth-session:
         specifier: ~57.0.10
         version: 57.0.10(expo@57.0.18)(react-native@0.86.3(@babel/core@7.29.7)(@react-native/metro-config@0.87.1(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3)
+      expo-constants:
+        specifier: ~57.0.15
+        version: 57.0.16(expo@57.0.18)(react-native@0.86.3(@babel/core@7.29.7)(@react-native/metro-config@0.87.1(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3))
       expo-crypto:
         specifier: ~57.0.2
         version: 57.0.2(expo@57.0.18)
@@ -96,14 +99,14 @@ importers:
         specifier: ~5.7.0
         version: 5.7.0(react-native@0.86.3(@babel/core@7.29.7)(@react-native/metro-config@0.87.1(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3)
       react-native-screens:
-        specifier: ~4.26.2
+        specifier: ~4.26.0
         version: 4.26.2(react-native@0.86.3(@babel/core@7.29.7)(@react-native/metro-config@0.87.1(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3)
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.4.7
         version: 2.4.7
       '@types/react':
-        specifier: ~19.2.0
+        specifier: ~19.2.2
         version: 19.2.14
       typescript:
         specifier: ~6.0.3

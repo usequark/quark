@@ -25,7 +25,14 @@ export default function SignInScreen() {
 
 	return (
 		<View style={{ flex: 1, justifyContent: "center", padding: 20 }}>
-			<Text style={{ fontSize: 28, fontWeight: "bold", marginBottom: 32, textAlign: "center" }}>
+			<Text
+				style={{
+					fontSize: 28,
+					fontWeight: "bold",
+					marginBottom: 32,
+					textAlign: "center",
+				}}
+			>
 				Welcome Back
 			</Text>
 
@@ -78,9 +85,13 @@ export default function SignInScreen() {
 				</Text>
 			</Pressable>
 
-			<Pressable onPress={() => router.push("/(auth)/sign-up")} style={{ marginTop: 16, alignItems: "center" }}>
+			<Pressable
+				onPress={() => router.push("/(auth)/sign-up")}
+				style={{ marginTop: 16, alignItems: "center" }}
+			>
 				<Text style={{ color: "#666" }}>
-					Don't have an account? <Text style={{ fontWeight: "600" }}>Sign Up</Text>
+					Don't have an account?{" "}
+					<Text style={{ fontWeight: "600" }}>Sign Up</Text>
 				</Text>
 			</Pressable>
 		</View>

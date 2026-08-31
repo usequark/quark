@@ -1,5 +1,5 @@
-import { Pressable, Text, View } from "react-native";
 import { useRouter } from "expo-router";
+import { Pressable, Text, View } from "react-native";
 import { useAuth } from "../../hooks/use-auth";
 
 export default function SettingsScreen() {
@@ -12,8 +12,17 @@ export default function SettingsScreen() {
 	}
 
 	return (
-		<View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 20 }}>
-			<Text style={{ fontSize: 24, fontWeight: "bold", marginBottom: 24 }}>Settings</Text>
+		<View
+			style={{
+				flex: 1,
+				justifyContent: "center",
+				alignItems: "center",
+				padding: 20,
+			}}
+		>
+			<Text style={{ fontSize: 24, fontWeight: "bold", marginBottom: 24 }}>
+				Settings
+			</Text>
 
 			<Pressable
 				onPress={handleSignOut}
@@ -24,7 +33,9 @@ export default function SettingsScreen() {
 					borderRadius: 8,
 				}}
 			>
-				<Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>Sign Out</Text>
+				<Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>
+					Sign Out
+				</Text>
 			</Pressable>
 		</View>
 	);

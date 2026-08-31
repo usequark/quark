@@ -1,6 +1,6 @@
 import { apiClient } from "./api-client";
 import { getConfig } from "./config";
-import { storeTokens, clearTokens, getToken } from "./storage";
+import { clearTokens, getToken, storeTokens } from "./storage";
 
 interface TokenResponse {
 	token: string;
