@@ -46,8 +46,11 @@ Shared exports also include `ErrorBanner`, `Footer`, `Navbar`/`MobileNavbar`, an
 pnpm install
 docker compose up -d     # PostgreSQL, Redis, Mailpit
 pnpm db:generate         # Generate Prisma client
+npx expo login -b        # Required for mobile dev - run BEFORE pnpm dev
 pnpm dev                 # Start all apps (web + worker)
 ```
+
+**IMPORTANT:** When developing with mobile, you must run `npx expo login -b` before `pnpm dev`, otherwise you will not be able to load the dev deployment.
 
 ## Project Structure
 
