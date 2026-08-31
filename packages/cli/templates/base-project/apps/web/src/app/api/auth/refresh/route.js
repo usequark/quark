@@ -1,7 +1,7 @@
 import { createLogger, validateBody } from "@techstream/quark-core";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { issueTokenPair, verifyMobileToken } from "../../../lib/jwt";
+import { issueTokenPair, verifyMobileToken } from "../../../../lib/jwt";
 import { handleError } from "../../error-handler";
 
 const logger = createLogger("auth-refresh");
