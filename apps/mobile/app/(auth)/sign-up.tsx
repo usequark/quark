@@ -34,8 +34,11 @@ export default function SignUpScreen() {
 			Alert.alert("Success", "Account created! Please sign in.", [
 				{ text: "OK", onPress: () => router.replace("/(auth)/sign-in") },
 			]);
-		} catch (error) {
-			Alert.alert("Sign Up Failed", error.message || "Registration failed");
+		} catch (error: unknown) {
+			Alert.alert(
+				"Sign Up Failed",
+				error instanceof Error ? error.message : "Registration failed",
+			);
 		} finally {
 			setLoading(false);
 		}

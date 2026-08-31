@@ -18,8 +18,11 @@ export default function SignInScreen() {
 		try {
 			await signIn(email, password);
 			router.replace("/(app)");
-		} catch (error) {
-			Alert.alert("Sign In Failed", error.message || "Invalid credentials");
+		} catch (error: unknown) {
+			Alert.alert(
+				"Sign In Failed",
+				error instanceof Error ? error.message : "Invalid credentials",
+			);
 		}
 	}
 
