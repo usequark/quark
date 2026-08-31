@@ -3,7 +3,7 @@ import { user } from "@techstream/quark-db";
 import { importJWK, jwtVerify } from "jose";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { issueTokenPair } from "../../../lib/jwt";
+import { issueTokenPair } from "../../../../lib/jwt";
 import { handleError } from "../../error-handler";
 
 const appleAuthSchema = z.object({

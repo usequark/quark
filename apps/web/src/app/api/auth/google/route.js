@@ -2,7 +2,7 @@ import { validateBody } from "@techstream/quark-core";
 import { user } from "@techstream/quark-db";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { issueTokenPair } from "../../../lib/jwt";
+import { issueTokenPair } from "../../../../lib/jwt";
 import { handleError } from "../../error-handler";
 
 const googleAuthSchema = z.object({
