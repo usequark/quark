@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { prisma } from "../src/index.js";
 
@@ -7,7 +8,7 @@ import { prisma } from "../src/index.js";
  * Also called by seedDev to avoid duplication.
  *
  * Required env vars:
- *   ADMIN_PASSWORD - min 12 characters, no default (generate: openssl rand -base64 24)
+ *   ADMIN_PASSWORD - min 12 characters, auto-generates if missing (generate: openssl rand -base64 24)
  * Optional env vars:
  *   ADMIN_EMAIL    - defaults to admin@example.com
  *   ADMIN_NAME     - defaults to Admin
@@ -15,15 +16,16 @@ import { prisma } from "../src/index.js";
 async function seedMinimal(prisma) {
 	const seedProfile = process.env.SEED_PROFILE || "dev";
 	const adminEmail = process.env.ADMIN_EMAIL;
-	const adminPassword = process.env.ADMIN_PASSWORD;
+	let adminPassword = process.env.ADMIN_PASSWORD;
 	const adminName = process.env.ADMIN_NAME || "Admin";
 
 	if (!adminPassword) {
-		throw new Error(
-			"ADMIN_PASSWORD is required to seed the admin user.\n" +
-				"  Set it in your .env file (minimum 12 characters).\n" +
-				"  Generate one: openssl rand -base64 24",
+		const generated = randomBytes(24).toString("base64url");
+		console.log(
+			"⚠️  ADMIN_PASSWORD not set — auto-generated a random password.\n" +
+				"  Save it if you need to log in as admin.",
 		);
+		adminPassword = generated;
 	}
 	if (adminPassword.length < 12) {
 		throw new Error("ADMIN_PASSWORD must be at least 12 characters.");
