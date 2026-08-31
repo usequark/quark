@@ -66,7 +66,8 @@ export async function registerDevice(pushToken: string): Promise<void> {
 export function configureNotificationHandler() {
 	Notifications.setNotificationHandler({
 		handleNotification: async () => ({
-			shouldShowAlert: true,
+			shouldShowBanner: true,
+			shouldShowList: true,
 			shouldPlaySound: true,
 			shouldSetBadge: false,
 		}),

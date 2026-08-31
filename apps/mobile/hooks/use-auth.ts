@@ -37,7 +37,7 @@ function notifyListeners() {
  * Initialize auth state on app launch.
  */
 export function useAuthInit() {
-	const [state, setState] = useState<AuthState>(globalAuthState);
+	const [, setState] = useState<AuthState>(globalAuthState);
 
 	useEffect(() => {
 		configureNotificationHandler();
