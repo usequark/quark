@@ -40,7 +40,11 @@ export function useAuthInit() {
 	const [, setState] = useState<AuthState>(globalAuthState);
 
 	useEffect(() => {
-		configureNotificationHandler();
+		try {
+			configureNotificationHandler();
+		} catch {
+			// Non-critical in Expo Go
+		}
 
 		(async () => {
 			try {

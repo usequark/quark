@@ -38,9 +38,7 @@
 				}
 			]
 		],
-		"experiments": {
-			"typedRoutes": true
-		},
+
 		"updates": {
 			"url": "https://u.expo.dev/quark",
 			"fallbackToCacheTimeout": 0
