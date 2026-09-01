@@ -2,7 +2,7 @@ import { validateBody, withCsrfProtection } from "@techstream/quark-core";
 import { prisma } from "@techstream/quark-db";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { extractBearerPayload } from "../../../lib/jwt";
+import { extractBearerPayload } from "../../../../lib/jwt";
 import { handleError } from "../../error-handler";
 
 const deviceRegisterSchema = z.object({
