@@ -25,7 +25,11 @@ const consoleAllowlist = [
 	/^packages\/cli\/templates\/admin\/src\/introspect\.js$/,
 ];
 
-const typeScriptAllowlist = [/\/src\/generated\//];
+const typeScriptAllowlist = [
+	/\/src\/generated\//,
+	/^apps\/mobile\//,
+	/^packages\/cli\/templates\/mobile\//,
+];
 
 function normalizePath(filePath) {
 	return path.relative(rootDir, filePath).split(path.sep).join("/");
