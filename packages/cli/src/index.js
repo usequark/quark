@@ -888,6 +888,13 @@ program
 					);
 				}
 
+				// Mobile is added post-creation via `quark add mobile`
+				if (features.includes("mobile")) {
+					throw new Error(
+						'Mobile app cannot be included during project creation. Run "quark add mobile" after scaffolding.',
+					);
+				}
+
 				const requestedFeatures = [...features];
 				features = resolveFeatureSelection(features);
 				const autoIncluded = features.filter(
@@ -2289,6 +2296,12 @@ program
 								content = content.replace(
 									/__QUARK_PROJECT_NAME__/g,
 									quarkLink.projectName,
+								);
+								// Replace EAS project ID with a placeholder that users
+								// fill in after running `eas init`
+								content = content.replace(
+									/__QUARK_EAS_PROJECT_ID__/g,
+									"YOUR_EAS_PROJECT_ID",
 								);
 								await fs.writeFile(filePath, content);
 							}

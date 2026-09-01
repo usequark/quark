@@ -135,6 +135,14 @@ const SYNC_DIRS = [
 	},
 	// Admin routes live inside apps/web but are scaffolded separately (conditionally)
 	{ src: "apps/web/src/app/admin", dest: "admin-routes" },
+	{
+		src: "apps/mobile",
+		dest: "mobile",
+		localExcludes: [
+			// Biome config is template-only (Tailwind CSS support, scoped includes)
+			/^apps\/mobile\/biome\.json$/,
+		],
+	},
 ];
 
 /**
@@ -254,6 +262,12 @@ const TEMPLATE_ONLY = new Set([
 	"ui/README.md",
 	// Worker README is a minimal quickstart, not the full monorepo docs
 	"worker/README.md",
+	// Mobile: biome config is template-only (Tailwind CSS support, scoped includes)
+	"mobile/biome.json",
+	// Mobile: scaffold checklist is hand-maintained for users
+	"mobile/CHECKLIST.md",
+	// Mobile: scaffold README is different from monorepo docs
+	"mobile/README.md",
 
 	// OpenCode deploy config - removed (no longer used)
 	"opencode",
@@ -287,6 +301,10 @@ const TRANSFORMS = {
 	"admin/package.json": transformOptionalPackageJson,
 	"cms/package.json": transformOptionalPackageJson,
 	"ai/package.json": transformOptionalPackageJson,
+	// Mobile: use @myquark placeholder scope
+	"mobile/package.json": transformMobilePackageJson,
+	// Mobile: substitute project placeholders in app.json
+	"mobile/app.json": transformMobileAppJson,
 };
 
 function transformScaffoldDockerIgnore(content) {
@@ -523,6 +541,65 @@ function transformOptionalPackageJson(content) {
 function extractShortName(fullName) {
 	const lastSegment = fullName.split("/").pop();
 	return lastSegment.replace(/^quark-/, "");
+}
+
+function transformMobilePackageJson(content) {
+	const pkg = JSON.parse(content);
+
+	// Use @myquark placeholder scope (CLI replaces with user's scope)
+	pkg.name = "@myquark/mobile";
+
+	// Remove private flag
+	delete pkg.private;
+
+	// Remove monorepo-only fields
+	delete pkg.description;
+	delete pkg.keywords;
+	delete pkg.author;
+	delete pkg.license;
+	delete pkg.packageManager;
+	delete pkg.types;
+
+	// Remove devDependencies that are monorepo workspace refs
+	if (pkg.devDependencies) {
+		for (const dep of Object.keys(pkg.devDependencies)) {
+			if (dep.startsWith("@techstream/quark-")) {
+				delete pkg.devDependencies[dep];
+			}
+		}
+		if (Object.keys(pkg.devDependencies).length === 0) {
+			delete pkg.devDependencies;
+		}
+	}
+
+	return `${JSON.stringify(pkg, null, "\t")}\n`;
+}
+
+function transformMobileAppJson(content) {
+	const appJson = JSON.parse(content);
+
+	// Add runtimeVersion for expo-updates (required by EAS OTA)
+	if (!appJson.expo.runtimeVersion) {
+		appJson.expo.runtimeVersion = { policy: "appVersion" };
+	}
+
+	// Serialize then substitute placeholders for values the CLI replaces at scaffold time
+	let result = JSON.stringify(appJson, null, "\t");
+	result = result.replace(/"quark"/g, '"__QUARK_PROJECT_NAME__"');
+	result = result.replace(/"Quark"/g, '"__QUARK_APP_NAME__"');
+	result = result.replace(/"placeholder"/g, '"__QUARK_EAS_PROJECT_ID__"');
+	// Bundle identifier uses project name (dots/hyphens replaced at scaffold time)
+	result = result.replace(
+		/"com\.quark\.app"/g,
+		'"com.__QUARK_PROJECT_NAME__.app"',
+	);
+	// Updates URL uses project slug (replaced at scaffold time)
+	result = result.replace(
+		/https:\/\/u\.expo\.dev\/quark/g,
+		"https://u.expo.dev/__QUARK_PROJECT_NAME__",
+	);
+
+	return `${result}\n`;
 }
 
 // ─── Sync Engine ───────────────────────────────────────────────────────────────

@@ -1,4 +1,8 @@
-import { makeRedirectUri, useAuthRequest, ResponseType } from "expo-auth-session";
+import {
+	makeRedirectUri,
+	ResponseType,
+	useAuthRequest,
+} from "expo-auth-session";
 import { useEffect } from "react";
 import { getConfig } from "./config";
 import { storeTokens } from "./storage";

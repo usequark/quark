@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import { configureNotificationHandler, registerDevice, registerForPushNotifications } from "../lib/notifications";
-import { isAuthenticated as checkAuth, signIn as authSignIn, signOut as authSignOut } from "../lib/auth";
+import {
+	signIn as authSignIn,
+	signOut as authSignOut,
+	isAuthenticated as checkAuth,
+} from "../lib/auth";
 
 interface AuthState {
 	isAuthenticated: boolean;
@@ -29,10 +32,12 @@ function notifyListeners() {
  * Initialize auth state on app launch.
  */
 export function useAuthInit() {
-	const [state, setState] = useState<AuthState>(globalAuthState);
+	const [, setState] = useState<AuthState>(globalAuthState);
 
 	useEffect(() => {
-		configureNotificationHandler();
+		import("../lib/notifications")
+			.then((m) => m.configureNotificationHandler())
+			.catch(() => {});
 
 		(async () => {
 			try {
@@ -81,18 +86,29 @@ export function useAuth(): AuthState {
 
 	const signIn = useCallback(async (email: string, password: string) => {
 		await authSignIn(email, password);
-		globalAuthState = { ...globalAuthState, isAuthenticated: true, isLoading: false };
+		globalAuthState = {
+			...globalAuthState,
+			isAuthenticated: true,
+			isLoading: false,
+		};
 		notifyListeners();
 	}, []);
 
 	const signOut = useCallback(async () => {
 		await authSignOut();
-		globalAuthState = { ...globalAuthState, isAuthenticated: false, isLoading: false };
+		globalAuthState = {
+			...globalAuthState,
+			isAuthenticated: false,
+			isLoading: false,
+		};
 		notifyListeners();
 	}, []);
 
 	const registerPushToken = useCallback(async () => {
 		try {
+			const { registerForPushNotifications, registerDevice } = await import(
+				"../lib/notifications"
+			);
 			const token = await registerForPushNotifications();
 			if (token) {
 				await registerDevice(token);

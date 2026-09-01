@@ -109,6 +109,18 @@ test("CSRF Module", async (t) => {
 		});
 	});
 
+	await t.test("requireCsrfToken skips Bearer-authenticated requests", () => {
+		const request = mockRequest({
+			method: "POST",
+			url: "http://localhost/api/device/register",
+			headers: { authorization: "Bearer some-jwt-token" },
+		});
+
+		assert.doesNotThrow(() => {
+			requireCsrfToken(request);
+		});
+	});
+
 	await t.test("requireCsrfToken validates POST with cookie token", () => {
 		const token = generateCsrfToken();
 		const request = mockRequest({

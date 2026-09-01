@@ -34,8 +34,11 @@ export default function SignUpScreen() {
 			Alert.alert("Success", "Account created! Please sign in.", [
 				{ text: "OK", onPress: () => router.replace("/(auth)/sign-in") },
 			]);
-		} catch (error) {
-			Alert.alert("Sign Up Failed", error.message || "Registration failed");
+		} catch (error: unknown) {
+			Alert.alert(
+				"Sign Up Failed",
+				error instanceof Error ? error.message : "Registration failed",
+			);
 		} finally {
 			setLoading(false);
 		}
@@ -43,7 +46,14 @@ export default function SignUpScreen() {
 
 	return (
 		<View style={{ flex: 1, justifyContent: "center", padding: 20 }}>
-			<Text style={{ fontSize: 28, fontWeight: "bold", marginBottom: 32, textAlign: "center" }}>
+			<Text
+				style={{
+					fontSize: 28,
+					fontWeight: "bold",
+					marginBottom: 32,
+					textAlign: "center",
+				}}
+			>
 				Create Account
 			</Text>
 
@@ -111,9 +121,13 @@ export default function SignUpScreen() {
 				</Text>
 			</Pressable>
 
-			<Pressable onPress={() => router.back()} style={{ marginTop: 16, alignItems: "center" }}>
+			<Pressable
+				onPress={() => router.back()}
+				style={{ marginTop: 16, alignItems: "center" }}
+			>
 				<Text style={{ color: "#666" }}>
-					Already have an account? <Text style={{ fontWeight: "600" }}>Sign In</Text>
+					Already have an account?{" "}
+					<Text style={{ fontWeight: "600" }}>Sign In</Text>
 				</Text>
 			</Pressable>
 		</View>

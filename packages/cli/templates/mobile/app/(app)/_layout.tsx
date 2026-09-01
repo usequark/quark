@@ -1,6 +1,6 @@
 import { Redirect, Tabs } from "expo-router";
-import { useAuth } from "../../hooks/use-auth";
 import { AuthGate } from "../../components/AuthGate";
+import { useAuth } from "../../hooks/use-auth";
 
 export default function AppLayout() {
 	const { isAuthenticated, isLoading } = useAuth();
