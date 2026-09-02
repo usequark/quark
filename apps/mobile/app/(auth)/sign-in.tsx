@@ -27,7 +27,10 @@ export default function SignInScreen() {
 	}
 
 	return (
-		<View style={{ flex: 1, justifyContent: "center", padding: 20 }}>
+		<View
+			style={{ flex: 1, justifyContent: "center", padding: 20 }}
+			accessibilityLabel="Sign in screen"
+		>
 			<Text
 				style={{
 					fontSize: 28,
@@ -35,6 +38,7 @@ export default function SignInScreen() {
 					marginBottom: 32,
 					textAlign: "center",
 				}}
+				accessibilityRole="header"
 			>
 				Welcome Back
 			</Text>
@@ -54,6 +58,8 @@ export default function SignInScreen() {
 					marginBottom: 12,
 					fontSize: 16,
 				}}
+				accessibilityLabel="Email address"
+				accessibilityHint="Enter your email address to sign in"
 			/>
 
 			<TextInput
@@ -70,6 +76,8 @@ export default function SignInScreen() {
 					marginBottom: 20,
 					fontSize: 16,
 				}}
+				accessibilityLabel="Password"
+				accessibilityHint="Enter your password to sign in"
 			/>
 
 			<Pressable
@@ -82,6 +90,9 @@ export default function SignInScreen() {
 					alignItems: "center",
 					opacity: isLoading ? 0.6 : 1,
 				}}
+				accessibilityLabel="Sign in"
+				accessibilityRole="button"
+				accessibilityState={{ disabled: isLoading }}
 			>
 				<Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>
 					{isLoading ? "Signing in..." : "Sign In"}
@@ -91,6 +102,9 @@ export default function SignInScreen() {
 			<Pressable
 				onPress={() => router.push("/(auth)/sign-up")}
 				style={{ marginTop: 16, alignItems: "center" }}
+				accessibilityLabel="Go to sign up screen"
+				accessibilityRole="button"
+				accessibilityHint="Opens the account creation screen"
 			>
 				<Text style={{ color: "#666" }}>
 					Don't have an account?{" "}

@@ -1,4 +1,4 @@
-import { validateBody, withCsrfProtection } from "@techstream/quark-core";
+import { validateBody } from "@techstream/quark-core";
 import { prisma } from "@techstream/quark-db";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -16,7 +16,7 @@ const deviceRegisterSchema = z.object({
  * Register a mobile device for push notifications.
  * Requires authentication via Bearer token.
  */
-export const POST = withCsrfProtection(async (request) => {
+export async function POST(request) {
 	try {
 		const payload = await extractBearerPayload(request);
 		if (!payload?.sub) {
@@ -54,4 +54,4 @@ export const POST = withCsrfProtection(async (request) => {
 	} catch (error) {
 		return handleError(error);
 	}
-});
+}

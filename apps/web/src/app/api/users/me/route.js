@@ -11,7 +11,13 @@ import { handleError } from "../../error-handler";
 async function requireBearerUser(request) {
 	const payload = await extractBearerPayload(request);
 	if (!payload?.sub) {
-		return { userId: null, response: NextResponse.json({ message: "Authentication required" }, { status: 401 }) };
+		return {
+			userId: null,
+			response: NextResponse.json(
+				{ message: "Authentication required" },
+				{ status: 401 },
+			),
+		};
 	}
 	return { userId: payload.sub, response: null };
 }
@@ -28,10 +34,7 @@ export async function GET(request) {
 
 		const foundUser = await user.findById(userId);
 		if (!foundUser) {
-			return NextResponse.json(
-				{ message: "User not found" },
-				{ status: 404 },
-			);
+			return NextResponse.json({ message: "User not found" }, { status: 404 });
 		}
 
 		return NextResponse.json(foundUser);
@@ -52,10 +55,7 @@ export const PATCH = withCsrfProtection(async (request) => {
 
 		const existingUser = await user.findById(userId);
 		if (!existingUser) {
-			return NextResponse.json(
-				{ message: "User not found" },
-				{ status: 404 },
-			);
+			return NextResponse.json({ message: "User not found" }, { status: 404 });
 		}
 
 		const data = await validateBody(request, userUpdateSchema);

@@ -110,6 +110,8 @@ async function findAvailablePort(startPort, maxAttempts = 20) {
  * keeping the initial scaffold lean.
  */
 const DOMAIN_MODELS_TO_STRIP = [
+	// Mobile
+	"Device",
 	// CRM
 	"Company",
 	"Contact",
@@ -171,7 +173,9 @@ function trimPrismaSchema(content) {
 			const lowerModel = model.charAt(0).toLowerCase() + model.slice(1);
 			if (
 				trimmed.match(
-					new RegExp(`^${lowerModel}s?\\s+${model}(\\[\\]|\\?|\\s+@)`),
+					new RegExp(
+						`^(${lowerModel}|${lowerModel}s)\\s+${model}(\\[\\]|\\?|\\s+@)`,
+					),
 				)
 			) {
 				isRelationField = true;
@@ -2376,8 +2380,8 @@ model Device {
 								);
 								// Add devices relation to User model
 								schema = schema.replace(
-									/bookings\s+Booking\[\]/,
-									"bookings      Booking[]\n  devices       Device[]",
+									/(\bbookings\s+Booking\[\])/,
+									"$1\n  devices       Device[]",
 								);
 								await fs.writeFile(schemaPath, schema);
 							}

@@ -268,6 +268,8 @@ const TEMPLATE_ONLY = new Set([
 	"mobile/CHECKLIST.md",
 	// Mobile: scaffold README is different from monorepo docs
 	"mobile/README.md",
+	// Mobile: .env.example is template-only (not synced from source)
+	"mobile/.env.example",
 
 	// OpenCode deploy config - removed (no longer used)
 	"opencode",

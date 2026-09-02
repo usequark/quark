@@ -87,10 +87,7 @@ test("mobile app.json has runtimeVersion for OTA updates", () => {
 });
 
 test("mobile app.json has __QUARK_PROJECT_NAME__ placeholder in slug", () => {
-	const content = readFileSync(
-		join(TEMPLATES_DIR, "mobile/app.json"),
-		"utf-8",
-	);
+	const content = readFileSync(join(TEMPLATES_DIR, "mobile/app.json"), "utf-8");
 	assert.ok(
 		content.includes("__QUARK_PROJECT_NAME__"),
 		"app.json should contain __QUARK_PROJECT_NAME__ placeholder",
@@ -98,10 +95,7 @@ test("mobile app.json has __QUARK_PROJECT_NAME__ placeholder in slug", () => {
 });
 
 test("mobile app.json has __QUARK_EAS_PROJECT_ID__ placeholder", () => {
-	const content = readFileSync(
-		join(TEMPLATES_DIR, "mobile/app.json"),
-		"utf-8",
-	);
+	const content = readFileSync(join(TEMPLATES_DIR, "mobile/app.json"), "utf-8");
 	assert.ok(
 		content.includes("__QUARK_EAS_PROJECT_ID__"),
 		"app.json should contain __QUARK_EAS_PROJECT_ID__ placeholder",
@@ -229,10 +223,7 @@ test("mobile template has no stray __QUARK_ placeholders in source files", () =>
 	];
 
 	for (const file of sourceFiles) {
-		const content = readFileSync(
-			join(TEMPLATES_DIR, "mobile", file),
-			"utf-8",
-		);
+		const content = readFileSync(join(TEMPLATES_DIR, "mobile", file), "utf-8");
 		assert.ok(
 			!content.includes("__QUARK_"),
 			`${file} contains unreplaced __QUARK_ placeholder`,

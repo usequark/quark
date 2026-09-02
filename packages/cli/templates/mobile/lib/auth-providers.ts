@@ -1,6 +1,7 @@
 import * as AppleAuthentication from "expo-apple-authentication";
 import * as Crypto from "expo-crypto";
 import { getConfig } from "./config";
+import { ApiError } from "./errors";
 import { storeTokens } from "./storage";
 
 interface SocialAuthResponse {
@@ -17,7 +18,12 @@ interface SocialAuthResponse {
 export async function signInWithApple(): Promise<void> {
 	const isAvailable = await AppleAuthentication.isAvailableAsync();
 	if (!isAvailable) {
-		throw new Error("Apple Sign In is not available on this device");
+		throw new ApiError({
+			name: "AuthError",
+			message: "Apple Sign In is not available on this device",
+			code: "APPLE_UNAVAILABLE",
+			statusCode: 400,
+		});
 	}
 
 	const nonce = Crypto.randomUUID();
@@ -35,7 +41,12 @@ export async function signInWithApple(): Promise<void> {
 	});
 
 	if (!credential.identityToken) {
-		throw new Error("Apple Sign In failed: no identity token");
+		throw new ApiError({
+			name: "AuthError",
+			message: "Apple Sign In failed: no identity token received",
+			code: "APPLE_NO_TOKEN",
+			statusCode: 400,
+		});
 	}
 
 	const config = getConfig();
@@ -50,7 +61,12 @@ export async function signInWithApple(): Promise<void> {
 
 	if (!response.ok) {
 		const error = await response.json().catch(() => null);
-		throw new Error(error?.message || "Apple authentication failed");
+		throw new ApiError({
+			name: "AuthError",
+			message: error?.message || "Apple authentication failed",
+			code: "APPLE_AUTH_FAILED",
+			statusCode: 401,
+		});
 	}
 
 	const data: SocialAuthResponse = await response.json();
