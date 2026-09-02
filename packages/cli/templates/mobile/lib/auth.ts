@@ -88,3 +88,13 @@ export async function getProfile(): Promise<UserProfile> {
 	const { data } = await apiClient<UserProfile>("/api/users/me");
 	return data;
 }
+
+export async function updateProfile(
+	updates: Partial<Pick<UserProfile, "name">>,
+): Promise<UserProfile> {
+	const { data } = await apiClient<UserProfile>("/api/users/me", {
+		method: "PATCH",
+		body: JSON.stringify(updates),
+	});
+	return data;
+}

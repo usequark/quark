@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { useTheme } from "../../components/ThemeProvider";
 import { useAuth } from "../../hooks/use-auth";
-import { getProfile } from "../../lib/auth";
+import { getProfile, updateProfile } from "../../lib/auth";
 
 interface UserProfile {
 	id: string;
@@ -57,9 +57,15 @@ export default function ProfileScreen() {
 			return;
 		}
 		setSaving(true);
-		// TODO: Implement profile update API call
-		Alert.alert("Saved", "Profile updated successfully");
-		setSaving(false);
+		try {
+			const updated = await updateProfile({ name: name.trim() });
+			setProfile(updated);
+			Alert.alert("Saved", "Profile updated successfully");
+		} catch {
+			Alert.alert("Error", "Failed to update profile. Please try again.");
+		} finally {
+			setSaving(false);
+		}
 	}
 
 	if (loading) {
