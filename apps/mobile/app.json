@@ -33,6 +33,9 @@
 			"url": "https://u.expo.dev/quark",
 			"fallbackToCacheTimeout": 0
 		},
+		"runtimeVersion": {
+			"policy": "appVersion"
+		},
 		"extra": {
 			"eas": {
 				"projectId": "placeholder"

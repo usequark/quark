@@ -110,6 +110,8 @@ async function findAvailablePort(startPort, maxAttempts = 20) {
  * keeping the initial scaffold lean.
  */
 const DOMAIN_MODELS_TO_STRIP = [
+	// Mobile
+	"Device",
 	// CRM
 	"Company",
 	"Contact",
@@ -171,7 +173,9 @@ function trimPrismaSchema(content) {
 			const lowerModel = model.charAt(0).toLowerCase() + model.slice(1);
 			if (
 				trimmed.match(
-					new RegExp(`^${lowerModel}s?\\s+${model}(\\[\\]|\\?|\\s+@)`),
+					new RegExp(
+						`^(${lowerModel}|${lowerModel}s)\\s+${model}(\\[\\]|\\?|\\s+@)`,
+					),
 				)
 			) {
 				isRelationField = true;
@@ -885,6 +889,13 @@ program
 				if (invalidFeatures.length > 0) {
 					throw new Error(
 						`Invalid packages: ${invalidFeatures.join(", ")}. Valid options are: ${validFeatures.join(", ")}`,
+					);
+				}
+
+				// Mobile is added post-creation via `quark add mobile`
+				if (features.includes("mobile")) {
+					throw new Error(
+						'Mobile app cannot be included during project creation. Run "quark add mobile" after scaffolding.',
 					);
 				}
 
@@ -2290,6 +2301,12 @@ program
 									/__QUARK_PROJECT_NAME__/g,
 									quarkLink.projectName,
 								);
+								// Replace EAS project ID with a placeholder that users
+								// fill in after running `eas init`
+								content = content.replace(
+									/__QUARK_EAS_PROJECT_ID__/g,
+									"YOUR_EAS_PROJECT_ID",
+								);
 								await fs.writeFile(filePath, content);
 							}
 						}
@@ -2363,8 +2380,8 @@ model Device {
 								);
 								// Add devices relation to User model
 								schema = schema.replace(
-									/bookings\s+Booking\[\]/,
-									"bookings      Booking[]\n  devices       Device[]",
+									/(\bbookings\s+Booking\[\])/,
+									"$1\n  devices       Device[]",
 								);
 								await fs.writeFile(schemaPath, schema);
 							}

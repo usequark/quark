@@ -34,16 +34,30 @@ export default function SignUpScreen() {
 			Alert.alert("Success", "Account created! Please sign in.", [
 				{ text: "OK", onPress: () => router.replace("/(auth)/sign-in") },
 			]);
-		} catch (error) {
-			Alert.alert("Sign Up Failed", error.message || "Registration failed");
+		} catch (error: unknown) {
+			Alert.alert(
+				"Sign Up Failed",
+				error instanceof Error ? error.message : "Registration failed",
+			);
 		} finally {
 			setLoading(false);
 		}
 	}
 
 	return (
-		<View style={{ flex: 1, justifyContent: "center", padding: 20 }}>
-			<Text style={{ fontSize: 28, fontWeight: "bold", marginBottom: 32, textAlign: "center" }}>
+		<View
+			style={{ flex: 1, justifyContent: "center", padding: 20 }}
+			accessibilityLabel="Create account screen"
+		>
+			<Text
+				style={{
+					fontSize: 28,
+					fontWeight: "bold",
+					marginBottom: 32,
+					textAlign: "center",
+				}}
+				accessibilityRole="header"
+			>
 				Create Account
 			</Text>
 
@@ -60,6 +74,8 @@ export default function SignUpScreen() {
 					marginBottom: 12,
 					fontSize: 16,
 				}}
+				accessibilityLabel="Full name"
+				accessibilityHint="Enter your full name"
 			/>
 
 			<TextInput
@@ -77,6 +93,8 @@ export default function SignUpScreen() {
 					marginBottom: 12,
 					fontSize: 16,
 				}}
+				accessibilityLabel="Email address"
+				accessibilityHint="Enter your email address"
 			/>
 
 			<TextInput
@@ -93,6 +111,8 @@ export default function SignUpScreen() {
 					marginBottom: 20,
 					fontSize: 16,
 				}}
+				accessibilityLabel="Password"
+				accessibilityHint="Choose a password for your account"
 			/>
 
 			<Pressable
@@ -105,15 +125,25 @@ export default function SignUpScreen() {
 					alignItems: "center",
 					opacity: loading ? 0.6 : 1,
 				}}
+				accessibilityLabel="Create account"
+				accessibilityRole="button"
+				accessibilityState={{ disabled: loading }}
 			>
 				<Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>
 					{loading ? "Creating account..." : "Sign Up"}
 				</Text>
 			</Pressable>
 
-			<Pressable onPress={() => router.back()} style={{ marginTop: 16, alignItems: "center" }}>
+			<Pressable
+				onPress={() => router.back()}
+				style={{ marginTop: 16, alignItems: "center" }}
+				accessibilityLabel="Go to sign in screen"
+				accessibilityRole="button"
+				accessibilityHint="Opens the sign in screen"
+			>
 				<Text style={{ color: "#666" }}>
-					Already have an account? <Text style={{ fontWeight: "600" }}>Sign In</Text>
+					Already have an account?{" "}
+					<Text style={{ fontWeight: "600" }}>Sign In</Text>
 				</Text>
 			</Pressable>
 		</View>

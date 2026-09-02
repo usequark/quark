@@ -69,9 +69,13 @@ export function requireCsrfToken(request) {
 	// Skip CSRF check for:
 	// - Safe methods (GET, HEAD, OPTIONS)
 	// - NextAuth routes (they have their own CSRF protection)
+	// - Bearer-authenticated requests (e.g. mobile app) - CSRF exploits ambient
+	//   cookie credentials; an Authorization header is not sent automatically
+	//   by browsers, so cross-site forgery is not possible.
 	if (
 		["GET", "HEAD", "OPTIONS"].includes(method) ||
-		path.startsWith("/api/auth/")
+		path.startsWith("/api/auth/") ||
+		request.headers.get("authorization")?.startsWith("Bearer ")
 	) {
 		return;
 	}

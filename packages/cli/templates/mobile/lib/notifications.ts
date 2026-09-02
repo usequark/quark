@@ -1,5 +1,3 @@
-import * as Notifications from "expo-notifications";
-import * as Device from "expo-device";
 import { Platform } from "react-native";
 import { apiClient } from "./api-client";
 
@@ -8,9 +6,12 @@ import { apiClient } from "./api-client";
  * Must be called after authentication.
  */
 export async function registerForPushNotifications(): Promise<string | null> {
+	const Device = await import("expo-device");
 	if (!Device.isDevice) {
 		return null;
 	}
+
+	const Notifications = await import("expo-notifications");
 
 	const { status: existingStatus } = await Notifications.getPermissionsAsync();
 	let finalStatus = existingStatus;
@@ -46,7 +47,9 @@ export async function registerDevice(pushToken: string): Promise<void> {
 	const { Platform: PlatformModule } = await import("react-native");
 	const Constants = await import("expo-constants");
 	const deviceId =
-		Constants.default?.installationId || Constants.default?.expoConfig?.extra?.eas?.projectId || "unknown";
+		Constants.default?.installationId ||
+		Constants.default?.expoConfig?.extra?.eas?.projectId ||
+		"unknown";
 
 	await apiClient("/api/device/register", {
 		method: "POST",
@@ -61,10 +64,12 @@ export async function registerDevice(pushToken: string): Promise<void> {
 /**
  * Configure foreground notification handling.
  */
-export function configureNotificationHandler() {
+export async function configureNotificationHandler() {
+	const Notifications = await import("expo-notifications");
 	Notifications.setNotificationHandler({
 		handleNotification: async () => ({
-			shouldShowAlert: true,
+			shouldShowBanner: true,
+			shouldShowList: true,
 			shouldPlaySound: true,
 			shouldSetBadge: false,
 		}),

@@ -1,5 +1,6 @@
 import { apiClient } from "./api-client";
 import { getConfig } from "./config";
+import { ApiError } from "./errors";
 import { clearTokens, getToken, storeTokens } from "./storage";
 
 interface TokenResponse {
@@ -29,7 +30,12 @@ export async function signIn(email: string, password: string): Promise<void> {
 
 	if (!response.ok) {
 		const error = await response.json().catch(() => null);
-		throw new Error(error?.message || "Invalid credentials");
+		throw new ApiError({
+			name: "AuthError",
+			message: error?.message || "Invalid credentials",
+			code: "INVALID_CREDENTIALS",
+			statusCode: 401,
+		});
 	}
 
 	const data: TokenResponse = await response.json();
@@ -43,7 +49,13 @@ export async function signOut(): Promise<void> {
 export async function refreshToken(): Promise<string> {
 	const { getRefreshToken } = await import("./storage");
 	const refreshTokenValue = await getRefreshToken();
-	if (!refreshTokenValue) throw new Error("No refresh token");
+	if (!refreshTokenValue)
+		throw new ApiError({
+			name: "AuthError",
+			message: "No refresh token available",
+			code: "NO_REFRESH_TOKEN",
+			statusCode: 401,
+		});
 
 	const config = getConfig();
 	const response = await fetch(`${config.apiUrl}/api/auth/refresh`, {
@@ -54,7 +66,12 @@ export async function refreshToken(): Promise<string> {
 
 	if (!response.ok) {
 		await clearTokens();
-		throw new Error("Token refresh failed");
+		throw new ApiError({
+			name: "AuthError",
+			message: "Token refresh failed",
+			code: "TOKEN_REFRESH_FAILED",
+			statusCode: 401,
+		});
 	}
 
 	const data: RefreshResponse = await response.json();
@@ -69,5 +86,15 @@ export async function isAuthenticated(): Promise<boolean> {
 
 export async function getProfile(): Promise<UserProfile> {
 	const { data } = await apiClient<UserProfile>("/api/users/me");
+	return data;
+}
+
+export async function updateProfile(
+	updates: Partial<Pick<UserProfile, "name">>,
+): Promise<UserProfile> {
+	const { data } = await apiClient<UserProfile>("/api/users/me", {
+		method: "PATCH",
+		body: JSON.stringify(updates),
+	});
 	return data;
 }

@@ -1,6 +1,11 @@
-import { makeRedirectUri, useAuthRequest, ResponseType } from "expo-auth-session";
+import {
+	makeRedirectUri,
+	ResponseType,
+	useAuthRequest,
+} from "expo-auth-session";
 import { useEffect } from "react";
 import { getConfig } from "./config";
+import { ApiError } from "./errors";
 import { storeTokens } from "./storage";
 
 interface SocialAuthResponse {
@@ -20,10 +25,10 @@ const discovery = {
  * Returns the request function and any error.
  */
 export function useGoogleAuth() {
-	const config = getConfig();
 	const redirectUri = makeRedirectUri({
-		scheme: config.apiUrl.replace(/^https?:\/\//, "").split("/")[0],
+		scheme: "com.myquark.app",
 		path: "google",
+		native: "com.myquark.app://google",
 	});
 
 	const [request, response, promptAsync] = useAuthRequest(
@@ -56,7 +61,12 @@ async function exchangeGoogleToken(idToken: string): Promise<void> {
 
 	if (!response.ok) {
 		const error = await response.json().catch(() => null);
-		throw new Error(error?.message || "Google authentication failed");
+		throw new ApiError({
+			name: "AuthError",
+			message: error?.message || "Google authentication failed",
+			code: "GOOGLE_AUTH_FAILED",
+			statusCode: 401,
+		});
 	}
 
 	const data: SocialAuthResponse = await response.json();

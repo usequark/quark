@@ -18,7 +18,7 @@ export async function getProfile() {
  * Update the current user's profile.
  * @param {object} updates - Fields to update
  */
-export async function updateProfile(updates) {
+export async function updateProfile(updates: Record<string, unknown>) {
 	const { data } = await apiClient("/api/users/me", {
 		method: "PATCH",
 		body: JSON.stringify(updates),
@@ -41,7 +41,7 @@ export async function listItems(params = {}) {
  * Get a single item by ID.
  * @param {string} id
  */
-export async function getItem(id) {
+export async function getItem(id: string) {
 	const { data } = await apiClient(`/api/items/${id}`);
 	return data;
 }
@@ -50,7 +50,7 @@ export async function getItem(id) {
  * Create a new item.
  * @param {object} itemData
  */
-export async function createItem(itemData) {
+export async function createItem(itemData: Record<string, unknown>) {
 	const { data } = await apiClient("/api/items", {
 		method: "POST",
 		body: JSON.stringify(itemData),
@@ -63,7 +63,7 @@ export async function createItem(itemData) {
  * @param {string} id
  * @param {object} updates
  */
-export async function updateItem(id, updates) {
+export async function updateItem(id: string, updates: Record<string, unknown>) {
 	const { data } = await apiClient(`/api/items/${id}`, {
 		method: "PATCH",
 		body: JSON.stringify(updates),
@@ -75,7 +75,7 @@ export async function updateItem(id, updates) {
  * Delete an item.
  * @param {string} id
  */
-export async function deleteItem(id) {
+export async function deleteItem(id: string) {
 	const { data } = await apiClient(`/api/items/${id}`, {
 		method: "DELETE",
 	});

@@ -18,14 +18,28 @@ export default function SignInScreen() {
 		try {
 			await signIn(email, password);
 			router.replace("/(app)");
-		} catch (error) {
-			Alert.alert("Sign In Failed", error.message || "Invalid credentials");
+		} catch (error: unknown) {
+			Alert.alert(
+				"Sign In Failed",
+				error instanceof Error ? error.message : "Invalid credentials",
+			);
 		}
 	}
 
 	return (
-		<View style={{ flex: 1, justifyContent: "center", padding: 20 }}>
-			<Text style={{ fontSize: 28, fontWeight: "bold", marginBottom: 32, textAlign: "center" }}>
+		<View
+			style={{ flex: 1, justifyContent: "center", padding: 20 }}
+			accessibilityLabel="Sign in screen"
+		>
+			<Text
+				style={{
+					fontSize: 28,
+					fontWeight: "bold",
+					marginBottom: 32,
+					textAlign: "center",
+				}}
+				accessibilityRole="header"
+			>
 				Welcome Back
 			</Text>
 
@@ -44,6 +58,8 @@ export default function SignInScreen() {
 					marginBottom: 12,
 					fontSize: 16,
 				}}
+				accessibilityLabel="Email address"
+				accessibilityHint="Enter your email address to sign in"
 			/>
 
 			<TextInput
@@ -60,6 +76,8 @@ export default function SignInScreen() {
 					marginBottom: 20,
 					fontSize: 16,
 				}}
+				accessibilityLabel="Password"
+				accessibilityHint="Enter your password to sign in"
 			/>
 
 			<Pressable
@@ -72,15 +90,25 @@ export default function SignInScreen() {
 					alignItems: "center",
 					opacity: isLoading ? 0.6 : 1,
 				}}
+				accessibilityLabel="Sign in"
+				accessibilityRole="button"
+				accessibilityState={{ disabled: isLoading }}
 			>
 				<Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>
 					{isLoading ? "Signing in..." : "Sign In"}
 				</Text>
 			</Pressable>
 
-			<Pressable onPress={() => router.push("/(auth)/sign-up")} style={{ marginTop: 16, alignItems: "center" }}>
+			<Pressable
+				onPress={() => router.push("/(auth)/sign-up")}
+				style={{ marginTop: 16, alignItems: "center" }}
+				accessibilityLabel="Go to sign up screen"
+				accessibilityRole="button"
+				accessibilityHint="Opens the account creation screen"
+			>
 				<Text style={{ color: "#666" }}>
-					Don't have an account? <Text style={{ fontWeight: "600" }}>Sign Up</Text>
+					Don't have an account?{" "}
+					<Text style={{ fontWeight: "600" }}>Sign Up</Text>
 				</Text>
 			</Pressable>
 		</View>

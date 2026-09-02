@@ -1,4 +1,4 @@
-import { getAuthSecret } from "@techstream/quark-core";
+import { AppError, getAuthSecret } from "@techstream/quark-core";
 import { jwtVerify, SignJWT } from "jose";
 
 const ISSUER = "quark-mobile";
@@ -22,7 +22,7 @@ function getSecretKey() {
  */
 export async function issueTokenPair(user) {
 	const secretKey = getSecretKey();
-	if (!secretKey) throw new Error("NEXTAUTH_SECRET not configured");
+	if (!secretKey) throw new AppError("NEXTAUTH_SECRET not configured", 500);
 
 	const now = Math.floor(Date.now() / 1000);
 
