@@ -1,8 +1,6 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, Pressable, Text, TextInput, View } from "react-native";
-import { useThemeTokens } from "../../lib/tokens";
-import { createStyles } from "../../lib/styles";
 
 export default function SignUpScreen() {
 	const router = useRouter();
@@ -10,8 +8,6 @@ export default function SignUpScreen() {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [loading, setLoading] = useState(false);
-	const t = useThemeTokens();
-	const s = createStyles(t);
 
 	async function handleSignUp() {
 		if (!name || !email || !password) {
@@ -50,7 +46,7 @@ export default function SignUpScreen() {
 
 	return (
 		<View
-			style={{ ...s.screen, justifyContent: "center", padding: 20 }}
+			style={{ flex: 1, justifyContent: "center", padding: 20 }}
 			accessibilityLabel="Create account screen"
 		>
 			<Text
@@ -59,7 +55,6 @@ export default function SignUpScreen() {
 					fontWeight: "bold",
 					marginBottom: 32,
 					textAlign: "center",
-					color: t.text,
 				}}
 				accessibilityRole="header"
 			>
@@ -68,13 +63,16 @@ export default function SignUpScreen() {
 
 			<TextInput
 				placeholder="Name"
-				placeholderTextColor={t.muted}
 				value={name}
 				onChangeText={setName}
 				autoComplete="name"
 				style={{
-					...s.input,
+					borderWidth: 1,
+					borderColor: "#ccc",
+					borderRadius: 8,
+					padding: 12,
 					marginBottom: 12,
+					fontSize: 16,
 				}}
 				accessibilityLabel="Full name"
 				accessibilityHint="Enter your full name"
@@ -82,15 +80,18 @@ export default function SignUpScreen() {
 
 			<TextInput
 				placeholder="Email"
-				placeholderTextColor={t.muted}
 				value={email}
 				onChangeText={setEmail}
 				autoCapitalize="none"
 				keyboardType="email-address"
 				autoComplete="email"
 				style={{
-					...s.input,
+					borderWidth: 1,
+					borderColor: "#ccc",
+					borderRadius: 8,
+					padding: 12,
 					marginBottom: 12,
+					fontSize: 16,
 				}}
 				accessibilityLabel="Email address"
 				accessibilityHint="Enter your email address"
@@ -98,14 +99,17 @@ export default function SignUpScreen() {
 
 			<TextInput
 				placeholder="Password"
-				placeholderTextColor={t.muted}
 				value={password}
 				onChangeText={setPassword}
 				secureTextEntry
 				autoComplete="password-new"
 				style={{
-					...s.input,
+					borderWidth: 1,
+					borderColor: "#ccc",
+					borderRadius: 8,
+					padding: 12,
 					marginBottom: 20,
+					fontSize: 16,
 				}}
 				accessibilityLabel="Password"
 				accessibilityHint="Choose a password for your account"
@@ -115,28 +119,31 @@ export default function SignUpScreen() {
 				onPress={handleSignUp}
 				disabled={loading}
 				style={{
-					...s.primaryButton,
+					backgroundColor: "#000",
+					padding: 14,
+					borderRadius: 8,
+					alignItems: "center",
 					opacity: loading ? 0.6 : 1,
 				}}
 				accessibilityLabel="Create account"
 				accessibilityRole="button"
 				accessibilityState={{ disabled: loading }}
 			>
-				<Text style={s.primaryButtonText}>
+				<Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>
 					{loading ? "Creating account..." : "Sign Up"}
 				</Text>
 			</Pressable>
 
 			<Pressable
 				onPress={() => router.back()}
-				style={s.linkButton}
+				style={{ marginTop: 16, alignItems: "center" }}
 				accessibilityLabel="Go to sign in screen"
 				accessibilityRole="button"
 				accessibilityHint="Opens the sign in screen"
 			>
-				<Text style={s.linkButtonText}>
+				<Text style={{ color: "#666" }}>
 					Already have an account?{" "}
-					<Text style={s.linkText}>Sign In</Text>
+					<Text style={{ fontWeight: "600" }}>Sign In</Text>
 				</Text>
 			</Pressable>
 		</View>

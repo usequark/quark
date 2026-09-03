@@ -6,10 +6,9 @@ import {
 	Text,
 	View,
 } from "react-native";
+import { useTheme } from "../../components/ThemeProvider";
 import { useAuth } from "../../hooks/use-auth";
 import { getProfile } from "../../lib/auth";
-import { useThemeTokens } from "../../lib/tokens";
-import { createStyles } from "../../lib/styles";
 
 interface UserProfile {
 	id: string;
@@ -20,11 +19,17 @@ interface UserProfile {
 
 export default function HomeScreen() {
 	const { isAuthenticated } = useAuth();
-	const t = useThemeTokens();
-	const s = createStyles(t);
+	const theme = useTheme();
 	const [profile, setProfile] = useState<UserProfile | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [refreshing, setRefreshing] = useState(false);
+
+	const isDark = theme === "dark";
+	const bgColor = isDark ? "#000" : "#fff";
+	const textColor = isDark ? "#fff" : "#000";
+	const mutedColor = isDark ? "#888" : "#666";
+	const cardBg = isDark ? "#1c1c1e" : "#f2f2f7";
+	const borderColor = isDark ? "#38383a" : "#e5e5ea";
 
 	const fetchProfile = useCallback(async () => {
 		try {
@@ -52,42 +57,89 @@ export default function HomeScreen() {
 	if (loading) {
 		return (
 			<View
-				style={{ ...s.screen, justifyContent: "center", alignItems: "center" }}
+				style={{
+					flex: 1,
+					justifyContent: "center",
+					alignItems: "center",
+					backgroundColor: bgColor,
+				}}
 				accessibilityLabel="Loading home screen"
 				accessibilityRole="progressbar"
 			>
-				<ActivityIndicator size="large" color={t.primary} />
+				<ActivityIndicator size="large" color={isDark ? "#fff" : "#000"} />
 			</View>
 		);
 	}
 
 	return (
 		<ScrollView
-			style={s.screen}
-			contentContainerStyle={s.scrollContent}
+			style={{ flex: 1, backgroundColor: bgColor }}
+			contentContainerStyle={{ padding: 20 }}
 			refreshControl={
 				<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
 			}
 			accessibilityLabel="Home screen content"
 		>
-			<Text style={s.header} accessibilityRole="header">
+			<Text
+				style={{
+					fontSize: 28,
+					fontWeight: "bold",
+					color: textColor,
+					marginBottom: 8,
+				}}
+				accessibilityRole="header"
+			>
 				Welcome{profile?.name ? `, ${profile.name}` : ""}
 			</Text>
-			<Text style={{ fontSize: 16, color: t.muted, marginBottom: 24 }}>
+			<Text style={{ fontSize: 16, color: mutedColor, marginBottom: 24 }}>
 				{profile?.email || "Signed in to your account"}
 			</Text>
 
-			<View style={s.card} accessibilityLabel="Account info card" accessibilityRole="summary">
-				<Text style={s.label}>Account</Text>
-				<Text style={s.value}>{profile?.name || "No name set"}</Text>
-				<Text style={{ fontSize: 14, color: t.muted, marginTop: 4 }}>
+			<View
+				style={{
+					backgroundColor: cardBg,
+					borderRadius: 12,
+					padding: 16,
+					marginBottom: 16,
+					borderWidth: 1,
+					borderColor,
+				}}
+				accessibilityLabel="Account info card"
+				accessibilityRole="summary"
+			>
+				<Text style={{ fontSize: 14, color: mutedColor, marginBottom: 4 }}>
+					Account
+				</Text>
+				<Text style={{ fontSize: 16, color: textColor, fontWeight: "500" }}>
+					{profile?.name || "No name set"}
+				</Text>
+				<Text style={{ fontSize: 14, color: mutedColor, marginTop: 4 }}>
 					{profile?.email}
 				</Text>
 			</View>
 
-			<View style={s.cardLast} accessibilityLabel="Quick actions card" accessibilityRole="summary">
-				<Text style={s.label}>Role</Text>
-				<Text style={{ ...s.value, textTransform: "capitalize" }}>
+			<View
+				style={{
+					backgroundColor: cardBg,
+					borderRadius: 12,
+					padding: 16,
+					borderWidth: 1,
+					borderColor,
+				}}
+				accessibilityLabel="Quick actions card"
+				accessibilityRole="summary"
+			>
+				<Text style={{ fontSize: 14, color: mutedColor, marginBottom: 4 }}>
+					Role
+				</Text>
+				<Text
+					style={{
+						fontSize: 16,
+						color: textColor,
+						fontWeight: "500",
+						textTransform: "capitalize",
+					}}
+				>
 					{profile?.role || "viewer"}
 				</Text>
 			</View>

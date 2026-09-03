@@ -16,7 +16,6 @@ export class ApiError extends Error {
 	code: string;
 	statusCode: number;
 	details?: unknown;
-	timestamp: string;
 
 	constructor(error: AppClientError) {
 		super(error.message);
@@ -24,18 +23,6 @@ export class ApiError extends Error {
 		this.code = error.code;
 		this.statusCode = error.statusCode;
 		this.details = error.details;
-		this.timestamp = error.timestamp || new Date().toISOString();
-	}
-
-	toJSON() {
-		return {
-			name: this.name,
-			message: this.message,
-			code: this.code,
-			statusCode: this.statusCode,
-			timestamp: this.timestamp,
-			...(this.details !== undefined && { details: this.details }),
-		};
 	}
 }
 

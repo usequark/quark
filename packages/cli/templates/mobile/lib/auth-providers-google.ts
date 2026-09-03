@@ -11,6 +11,7 @@ import { storeTokens } from "./storage";
 interface SocialAuthResponse {
 	token: string;
 	refreshToken: string;
+	expiresAt: string;
 }
 
 const discovery = {
@@ -22,14 +23,12 @@ const discovery = {
 /**
  * Hook-based Google Sign-In using expo-auth-session.
  * Returns the request function and any error.
- * Requires EXPO_PUBLIC_APP_SCHEME env var (e.g. "com.mycompany.myapp").
  */
 export function useGoogleAuth() {
-	const scheme = process.env.EXPO_PUBLIC_APP_SCHEME || "com.myquark.app";
 	const redirectUri = makeRedirectUri({
-		scheme,
+		scheme: "com.myquark.app",
 		path: "google",
-		native: `${scheme}://google`,
+		native: "com.myquark.app://google",
 	});
 
 	const [request, response, promptAsync] = useAuthRequest(

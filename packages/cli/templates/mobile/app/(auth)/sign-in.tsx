@@ -2,16 +2,12 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, Pressable, Text, TextInput, View } from "react-native";
 import { useAuth } from "../../hooks/use-auth";
-import { useThemeTokens } from "../../lib/tokens";
-import { createStyles } from "../../lib/styles";
 
 export default function SignInScreen() {
 	const router = useRouter();
 	const { signIn, isLoading } = useAuth();
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
-	const t = useThemeTokens();
-	const s = createStyles(t);
 
 	async function handleSignIn() {
 		if (!email || !password) {
@@ -32,7 +28,7 @@ export default function SignInScreen() {
 
 	return (
 		<View
-			style={{ ...s.screen, justifyContent: "center", padding: 20 }}
+			style={{ flex: 1, justifyContent: "center", padding: 20 }}
 			accessibilityLabel="Sign in screen"
 		>
 			<Text
@@ -41,7 +37,6 @@ export default function SignInScreen() {
 					fontWeight: "bold",
 					marginBottom: 32,
 					textAlign: "center",
-					color: t.text,
 				}}
 				accessibilityRole="header"
 			>
@@ -50,15 +45,18 @@ export default function SignInScreen() {
 
 			<TextInput
 				placeholder="Email"
-				placeholderTextColor={t.muted}
 				value={email}
 				onChangeText={setEmail}
 				autoCapitalize="none"
 				keyboardType="email-address"
 				autoComplete="email"
 				style={{
-					...s.input,
+					borderWidth: 1,
+					borderColor: "#ccc",
+					borderRadius: 8,
+					padding: 12,
 					marginBottom: 12,
+					fontSize: 16,
 				}}
 				accessibilityLabel="Email address"
 				accessibilityHint="Enter your email address to sign in"
@@ -66,14 +64,17 @@ export default function SignInScreen() {
 
 			<TextInput
 				placeholder="Password"
-				placeholderTextColor={t.muted}
 				value={password}
 				onChangeText={setPassword}
 				secureTextEntry
 				autoComplete="password"
 				style={{
-					...s.input,
+					borderWidth: 1,
+					borderColor: "#ccc",
+					borderRadius: 8,
+					padding: 12,
 					marginBottom: 20,
+					fontSize: 16,
 				}}
 				accessibilityLabel="Password"
 				accessibilityHint="Enter your password to sign in"
@@ -83,28 +84,31 @@ export default function SignInScreen() {
 				onPress={handleSignIn}
 				disabled={isLoading}
 				style={{
-					...s.primaryButton,
+					backgroundColor: "#000",
+					padding: 14,
+					borderRadius: 8,
+					alignItems: "center",
 					opacity: isLoading ? 0.6 : 1,
 				}}
 				accessibilityLabel="Sign in"
 				accessibilityRole="button"
 				accessibilityState={{ disabled: isLoading }}
 			>
-				<Text style={s.primaryButtonText}>
+				<Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>
 					{isLoading ? "Signing in..." : "Sign In"}
 				</Text>
 			</Pressable>
 
 			<Pressable
 				onPress={() => router.push("/(auth)/sign-up")}
-				style={s.linkButton}
+				style={{ marginTop: 16, alignItems: "center" }}
 				accessibilityLabel="Go to sign up screen"
 				accessibilityRole="button"
 				accessibilityHint="Opens the account creation screen"
 			>
-				<Text style={s.linkButtonText}>
+				<Text style={{ color: "#666" }}>
 					Don't have an account?{" "}
-					<Text style={s.linkText}>Sign Up</Text>
+					<Text style={{ fontWeight: "600" }}>Sign Up</Text>
 				</Text>
 			</Pressable>
 		</View>

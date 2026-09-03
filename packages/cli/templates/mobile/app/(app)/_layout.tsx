@@ -1,5 +1,4 @@
 import { Redirect, Tabs } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
 import { AuthGate } from "../../components/AuthGate";
 import { useAuth } from "../../hooks/use-auth";
 
@@ -22,9 +21,6 @@ export default function AppLayout() {
 					options={{
 						title: "Home",
 						tabBarLabel: "Home",
-						tabBarIcon: ({ color, size }) => (
-							<Ionicons name="home-outline" size={size} color={color} />
-						),
 					}}
 				/>
 				<Tabs.Screen
@@ -32,9 +28,6 @@ export default function AppLayout() {
 					options={{
 						title: "Profile",
 						tabBarLabel: "Profile",
-						tabBarIcon: ({ color, size }) => (
-							<Ionicons name="person-outline" size={size} color={color} />
-						),
 					}}
 				/>
 				<Tabs.Screen
@@ -42,9 +35,6 @@ export default function AppLayout() {
 					options={{
 						title: "Settings",
 						tabBarLabel: "Settings",
-						tabBarIcon: ({ color, size }) => (
-							<Ionicons name="settings-outline" size={size} color={color} />
-						),
 					}}
 				/>
 			</Tabs>
