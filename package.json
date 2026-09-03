@@ -71,5 +71,10 @@
 	},
 	"dependencies": {
 		"@prisma/client": "^7.8.0"
+	},
+	"pnpm": {
+		"overrides": {
+			"fast-uri": ">=4.1.3"
+		}
 	}
 }
