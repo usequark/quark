@@ -1,13 +1,32 @@
+# dependencies
 node_modules/
-.DS_Store
-dist/
-build/
-coverage/
+
+# environment
 .env
 .env.local
 .env.*.local
-*.log
-.quark-auto-clean.json
+
+# next.js
 .next/
 out/
+
+# build artifacts
+dist/
+build/
+
+# testing
+coverage/
+
+# misc
+.DS_Store
+*.log
+.quark-auto-clean.json
+
+# turbo
 .turbo/
+
+# prisma
+packages/db/src/generated/
+
+# uploads
+**/uploads/

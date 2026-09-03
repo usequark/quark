@@ -13,7 +13,6 @@
 			"!**/dist",
 			"!**/.turbo",
 			"!**/coverage",
-			"!**/docs",
 			"!packages/db/src/generated"
 		]
 	},
