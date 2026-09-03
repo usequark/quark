@@ -17,7 +17,8 @@
  *   2. Applies exclusions (monorepo-only files, generated code, coverage)
  *   3. Applies transforms (package.json naming, dependency adjustments)
  *   4. Preserves template-only files (generation templates, scaffolding configs)
- *   5. Cleans stale files from template that no longer exist in source
+ *   5. Generates template-only files from source data (package.json, .gitignore, biome.json)
+ *   6. Cleans stale files from template that no longer exist in source
  *
  * In CI, run with --check after the sync step to catch uncommitted drift.
  */
@@ -27,6 +28,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { GENERATORS } from "./generate-templates.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "../../..");
@@ -243,12 +245,11 @@ const TEMPLATE_ONLY = new Set([
 	"base-project/.github/dependabot.yml",
 	// Scaffold starter README (different from monorepo README)
 	"base-project/README.md",
-	// Template .gitignore (includes .env, .next, etc.)
-	"base-project/.gitignore",
-	// Root package.json with @myquark scope placeholder
+	// GENERATED files — produced by generate-templates.js, never synced from source
 	"base-project/package.json",
-	// Biome config - template has Tailwind CSS support and scoped file includes
+	"base-project/.gitignore",
 	"base-project/biome.json",
+	// Biome child config - scaffold-specific scoped includes
 	"base-project/apps/web/biome.json",
 	// Migrations: template maintains its own squashed initial migration
 	"base-project/packages/db/prisma/migrations",
@@ -906,6 +907,32 @@ function main() {
 	// Sync pnpm.overrides from monorepo root into scaffold root template
 	const overridesChange = syncRootOverrides();
 	if (overridesChange) allChanges.push(overridesChange);
+
+	// Generate template-only files from source data (package.json, .gitignore, biome.json)
+	// These files are never synced from source — they're computed from it.
+	for (const { dest, generate } of GENERATORS) {
+		const content = generate();
+		const destPath = path.join(TEMPLATES, dest);
+
+		if (CHECK_MODE) {
+			if (!fs.existsSync(destPath)) {
+				allChanges.push({ action: "created", file: `GENERATED: ${dest}` });
+			} else {
+				const existing = fs.readFileSync(destPath, "utf-8");
+				if (existing !== content) {
+					allChanges.push({ action: "updated", file: `GENERATED: ${dest}` });
+				}
+			}
+		} else {
+			fs.mkdirSync(path.dirname(destPath), { recursive: true });
+			const existed = fs.existsSync(destPath);
+			fs.writeFileSync(destPath, content);
+			allChanges.push({
+				action: existed ? "updated" : "created",
+				file: `GENERATED: ${dest}`,
+			});
+		}
+	}
 
 	// Report results
 	if (allChanges.length === 0) {
