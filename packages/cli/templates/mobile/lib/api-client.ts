@@ -49,12 +49,21 @@ export async function apiClient<T = unknown>(
 			if (refreshed) {
 				const retryHeaders = new Headers(headers);
 				retryHeaders.set("Authorization", `Bearer ${refreshed}`);
-				const retryResponse = await fetch(`${config.apiUrl}${path}`, {
-					...fetchOptions,
-					headers: retryHeaders,
-					signal: controller.signal,
-				});
-				return parseResponse<T>(retryResponse);
+				const retryController = new AbortController();
+				const retryTimer = setTimeout(
+					() => retryController.abort(),
+					timeout,
+				);
+				try {
+					const retryResponse = await fetch(`${config.apiUrl}${path}`, {
+						...fetchOptions,
+						headers: retryHeaders,
+						signal: retryController.signal,
+					});
+					return parseResponse<T>(retryResponse);
+				} finally {
+					clearTimeout(retryTimer);
+				}
 			}
 			await clearTokens();
 			throw buildError({

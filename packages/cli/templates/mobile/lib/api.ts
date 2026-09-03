@@ -6,27 +6,6 @@ import { apiClient } from "./api-client";
  */
 
 /**
- * Get the current user's profile.
- * @returns {Promise<{ id: string, email: string, name: string | null, role: string }>}
- */
-export async function getProfile() {
-	const { data } = await apiClient("/api/users/me");
-	return data;
-}
-
-/**
- * Update the current user's profile.
- * @param {object} updates - Fields to update
- */
-export async function updateProfile(updates: Record<string, unknown>) {
-	const { data } = await apiClient("/api/users/me", {
-		method: "PATCH",
-		body: JSON.stringify(updates),
-	});
-	return data;
-}
-
-/**
  * List items with pagination.
  * @param {object} params - Query parameters
  */

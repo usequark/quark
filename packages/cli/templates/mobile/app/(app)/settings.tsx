@@ -1,19 +1,14 @@
 import { useRouter } from "expo-router";
 import { Pressable, Text, View } from "react-native";
-import { useTheme } from "../../components/ThemeProvider";
 import { useAuth } from "../../hooks/use-auth";
+import { useThemeTokens } from "../../lib/tokens";
+import { createStyles } from "../../lib/styles";
 
 export default function SettingsScreen() {
 	const router = useRouter();
 	const { signOut } = useAuth();
-	const theme = useTheme();
-
-	const isDark = theme === "dark";
-	const bgColor = isDark ? "#000" : "#fff";
-	const textColor = isDark ? "#fff" : "#000";
-	const mutedColor = isDark ? "#888" : "#666";
-	const cardBg = isDark ? "#1c1c1e" : "#f2f2f7";
-	const borderColor = isDark ? "#38383a" : "#e5e5ea";
+	const t = useThemeTokens();
+	const s = createStyles(t);
 
 	async function handleSignOut() {
 		await signOut();
@@ -21,38 +16,15 @@ export default function SettingsScreen() {
 	}
 
 	return (
-		<View
-			style={{ flex: 1, backgroundColor: bgColor, padding: 20 }}
-			accessibilityLabel="Settings screen"
-		>
-			<Text
-				style={{
-					fontSize: 28,
-					fontWeight: "bold",
-					color: textColor,
-					marginBottom: 24,
-				}}
-				accessibilityRole="header"
-			>
+		<View style={{ ...s.screen, padding: 20 }} accessibilityLabel="Settings screen">
+			<Text style={s.header} accessibilityRole="header">
 				Settings
 			</Text>
 
-			<View
-				style={{
-					backgroundColor: cardBg,
-					borderRadius: 12,
-					padding: 16,
-					marginBottom: 16,
-					borderWidth: 1,
-					borderColor,
-				}}
-				accessibilityLabel="App info section"
-			>
-				<Text style={{ fontSize: 14, color: mutedColor, marginBottom: 4 }}>
-					App
-				</Text>
-				<Text style={{ fontSize: 16, color: textColor }}>Quark Mobile</Text>
-				<Text style={{ fontSize: 14, color: mutedColor, marginTop: 4 }}>
+			<View style={s.card} accessibilityLabel="App info section">
+				<Text style={s.label}>App</Text>
+				<Text style={s.value}>Quark Mobile</Text>
+				<Text style={{ fontSize: 14, color: t.muted, marginTop: 4 }}>
 					Version 0.1.0
 				</Text>
 			</View>
@@ -60,7 +32,7 @@ export default function SettingsScreen() {
 			<Pressable
 				onPress={handleSignOut}
 				style={{
-					backgroundColor: "#ff3b30",
+					backgroundColor: t.danger,
 					paddingHorizontal: 24,
 					paddingVertical: 14,
 					borderRadius: 8,

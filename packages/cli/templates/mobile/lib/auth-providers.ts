@@ -7,7 +7,6 @@ import { storeTokens } from "./storage";
 interface SocialAuthResponse {
 	token: string;
 	refreshToken: string;
-	expiresAt: string;
 }
 
 /**
