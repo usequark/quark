@@ -1,9 +1,14 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, Pressable, Text, TextInput, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useThemeTokens } from "../../lib/theme-tokens";
 
 export default function SignUpScreen() {
 	const router = useRouter();
+	const { bgColor, textColor, mutedColor, inputBg, borderColor, isDark } =
+		useThemeTokens();
+	const insets = useSafeAreaInsets();
 	const [name, setName] = useState("");
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
@@ -46,13 +51,20 @@ export default function SignUpScreen() {
 
 	return (
 		<View
-			style={{ flex: 1, justifyContent: "center", padding: 20 }}
+			style={{
+				flex: 1,
+				justifyContent: "center",
+				padding: 20,
+				paddingTop: insets.top + 20,
+				backgroundColor: bgColor,
+			}}
 			accessibilityLabel="Create account screen"
 		>
 			<Text
 				style={{
 					fontSize: 28,
 					fontWeight: "bold",
+					color: textColor,
 					marginBottom: 32,
 					textAlign: "center",
 				}}
@@ -63,16 +75,19 @@ export default function SignUpScreen() {
 
 			<TextInput
 				placeholder="Name"
+				placeholderTextColor={mutedColor}
 				value={name}
 				onChangeText={setName}
 				autoComplete="name"
 				style={{
+					backgroundColor: inputBg,
 					borderWidth: 1,
-					borderColor: "#ccc",
+					borderColor,
 					borderRadius: 8,
 					padding: 12,
 					marginBottom: 12,
 					fontSize: 16,
+					color: textColor,
 				}}
 				accessibilityLabel="Full name"
 				accessibilityHint="Enter your full name"
@@ -80,18 +95,21 @@ export default function SignUpScreen() {
 
 			<TextInput
 				placeholder="Email"
+				placeholderTextColor={mutedColor}
 				value={email}
 				onChangeText={setEmail}
 				autoCapitalize="none"
 				keyboardType="email-address"
 				autoComplete="email"
 				style={{
+					backgroundColor: inputBg,
 					borderWidth: 1,
-					borderColor: "#ccc",
+					borderColor,
 					borderRadius: 8,
 					padding: 12,
 					marginBottom: 12,
 					fontSize: 16,
+					color: textColor,
 				}}
 				accessibilityLabel="Email address"
 				accessibilityHint="Enter your email address"
@@ -99,17 +117,20 @@ export default function SignUpScreen() {
 
 			<TextInput
 				placeholder="Password"
+				placeholderTextColor={mutedColor}
 				value={password}
 				onChangeText={setPassword}
 				secureTextEntry
 				autoComplete="password-new"
 				style={{
+					backgroundColor: inputBg,
 					borderWidth: 1,
-					borderColor: "#ccc",
+					borderColor,
 					borderRadius: 8,
 					padding: 12,
 					marginBottom: 20,
 					fontSize: 16,
+					color: textColor,
 				}}
 				accessibilityLabel="Password"
 				accessibilityHint="Choose a password for your account"
@@ -119,7 +140,7 @@ export default function SignUpScreen() {
 				onPress={handleSignUp}
 				disabled={loading}
 				style={{
-					backgroundColor: "#000",
+					backgroundColor: isDark ? "#fff" : "#000",
 					padding: 14,
 					borderRadius: 8,
 					alignItems: "center",
@@ -129,7 +150,13 @@ export default function SignUpScreen() {
 				accessibilityRole="button"
 				accessibilityState={{ disabled: loading }}
 			>
-				<Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>
+				<Text
+					style={{
+						color: isDark ? "#000" : "#fff",
+						fontSize: 16,
+						fontWeight: "600",
+					}}
+				>
 					{loading ? "Creating account..." : "Sign Up"}
 				</Text>
 			</Pressable>
@@ -141,9 +168,9 @@ export default function SignUpScreen() {
 				accessibilityRole="button"
 				accessibilityHint="Opens the sign in screen"
 			>
-				<Text style={{ color: "#666" }}>
+				<Text style={{ color: mutedColor }}>
 					Already have an account?{" "}
-					<Text style={{ fontWeight: "600" }}>Sign In</Text>
+					<Text style={{ fontWeight: "600", color: textColor }}>Sign In</Text>
 				</Text>
 			</Pressable>
 		</View>
