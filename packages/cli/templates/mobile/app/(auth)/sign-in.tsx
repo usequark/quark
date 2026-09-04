@@ -1,11 +1,16 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, Pressable, Text, TextInput, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useThemeTokens } from "../../lib/theme-tokens";
 import { useAuth } from "../../hooks/use-auth";
 
 export default function SignInScreen() {
 	const router = useRouter();
 	const { signIn, isLoading } = useAuth();
+	const { bgColor, textColor, mutedColor, cardBg, borderColor, inputBg, isDark } =
+		useThemeTokens();
+	const insets = useSafeAreaInsets();
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 
@@ -28,13 +33,20 @@ export default function SignInScreen() {
 
 	return (
 		<View
-			style={{ flex: 1, justifyContent: "center", padding: 20 }}
+			style={{
+				flex: 1,
+				justifyContent: "center",
+				padding: 20,
+				paddingTop: insets.top + 20,
+				backgroundColor: bgColor,
+			}}
 			accessibilityLabel="Sign in screen"
 		>
 			<Text
 				style={{
 					fontSize: 28,
 					fontWeight: "bold",
+					color: textColor,
 					marginBottom: 32,
 					textAlign: "center",
 				}}
@@ -45,18 +57,21 @@ export default function SignInScreen() {
 
 			<TextInput
 				placeholder="Email"
+				placeholderTextColor={mutedColor}
 				value={email}
 				onChangeText={setEmail}
 				autoCapitalize="none"
 				keyboardType="email-address"
 				autoComplete="email"
 				style={{
+					backgroundColor: inputBg,
 					borderWidth: 1,
-					borderColor: "#ccc",
+					borderColor,
 					borderRadius: 8,
 					padding: 12,
 					marginBottom: 12,
 					fontSize: 16,
+					color: textColor,
 				}}
 				accessibilityLabel="Email address"
 				accessibilityHint="Enter your email address to sign in"
@@ -64,17 +79,20 @@ export default function SignInScreen() {
 
 			<TextInput
 				placeholder="Password"
+				placeholderTextColor={mutedColor}
 				value={password}
 				onChangeText={setPassword}
 				secureTextEntry
 				autoComplete="password"
 				style={{
+					backgroundColor: inputBg,
 					borderWidth: 1,
-					borderColor: "#ccc",
+					borderColor,
 					borderRadius: 8,
 					padding: 12,
 					marginBottom: 20,
 					fontSize: 16,
+					color: textColor,
 				}}
 				accessibilityLabel="Password"
 				accessibilityHint="Enter your password to sign in"
@@ -84,7 +102,7 @@ export default function SignInScreen() {
 				onPress={handleSignIn}
 				disabled={isLoading}
 				style={{
-					backgroundColor: "#000",
+					backgroundColor: isDark ? "#fff" : "#000",
 					padding: 14,
 					borderRadius: 8,
 					alignItems: "center",
@@ -94,7 +112,13 @@ export default function SignInScreen() {
 				accessibilityRole="button"
 				accessibilityState={{ disabled: isLoading }}
 			>
-				<Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>
+				<Text
+					style={{
+						color: isDark ? "#000" : "#fff",
+						fontSize: 16,
+						fontWeight: "600",
+					}}
+				>
 					{isLoading ? "Signing in..." : "Sign In"}
 				</Text>
 			</Pressable>
@@ -106,9 +130,9 @@ export default function SignInScreen() {
 				accessibilityRole="button"
 				accessibilityHint="Opens the account creation screen"
 			>
-				<Text style={{ color: "#666" }}>
+				<Text style={{ color: mutedColor }}>
 					Don't have an account?{" "}
-					<Text style={{ fontWeight: "600" }}>Sign Up</Text>
+					<Text style={{ fontWeight: "600", color: textColor }}>Sign Up</Text>
 				</Text>
 			</Pressable>
 		</View>

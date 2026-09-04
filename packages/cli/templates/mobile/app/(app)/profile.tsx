@@ -8,7 +8,8 @@ import {
 	TextInput,
 	View,
 } from "react-native";
-import { useTheme } from "../../components/ThemeProvider";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useThemeTokens } from "../../lib/theme-tokens";
 import { useAuth } from "../../hooks/use-auth";
 import { getProfile, updateProfile } from "../../lib/auth";
 
@@ -21,19 +22,13 @@ interface UserProfile {
 
 export default function ProfileScreen() {
 	const { isAuthenticated } = useAuth();
-	const theme = useTheme();
+	const { bgColor, textColor, mutedColor, cardBg, borderColor, inputBg, isDark } =
+		useThemeTokens();
+	const insets = useSafeAreaInsets();
 	const [profile, setProfile] = useState<UserProfile | null>(null);
 	const [name, setName] = useState("");
 	const [loading, setLoading] = useState(true);
 	const [saving, setSaving] = useState(false);
-
-	const isDark = theme === "dark";
-	const bgColor = isDark ? "#000" : "#fff";
-	const textColor = isDark ? "#fff" : "#000";
-	const mutedColor = isDark ? "#888" : "#666";
-	const cardBg = isDark ? "#1c1c1e" : "#f2f2f7";
-	const borderColor = isDark ? "#38383a" : "#e5e5ea";
-	const inputBg = isDark ? "#2c2c2e" : "#fff";
 
 	useEffect(() => {
 		if (isAuthenticated) {
@@ -88,7 +83,10 @@ export default function ProfileScreen() {
 	return (
 		<ScrollView
 			style={{ flex: 1, backgroundColor: bgColor }}
-			contentContainerStyle={{ padding: 20 }}
+			contentContainerStyle={{
+				padding: 20,
+				paddingTop: insets.top + 20,
+			}}
 			accessibilityLabel="Profile screen"
 		>
 			<Text
