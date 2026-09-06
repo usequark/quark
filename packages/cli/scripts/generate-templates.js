@@ -211,9 +211,7 @@ function main() {
 
 	if (CHECK_MODE) {
 		const issues = stale.length + missing.length;
-		console.log(
-			`❌ ${issues} generated template(s) are stale or missing:\n`,
-		);
+		console.log(`❌ ${issues} generated template(s) are stale or missing:\n`);
 		for (const r of stale) console.log(`  ~ ${r.file} (content differs)`);
 		for (const r of missing) console.log(`  - ${r.file} (missing)`);
 		console.log(

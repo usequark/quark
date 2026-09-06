@@ -22,8 +22,15 @@ interface UserProfile {
 
 export default function ProfileScreen() {
 	const { isAuthenticated } = useAuth();
-	const { bgColor, textColor, mutedColor, cardBg, borderColor, inputBg, isDark } =
-		useThemeTokens();
+	const {
+		bgColor,
+		textColor,
+		mutedColor,
+		cardBg,
+		borderColor,
+		inputBg,
+		isDark,
+	} = useThemeTokens();
 	const insets = useSafeAreaInsets();
 	const [profile, setProfile] = useState<UserProfile | null>(null);
 	const [name, setName] = useState("");
