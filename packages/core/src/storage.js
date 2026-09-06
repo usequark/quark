@@ -28,7 +28,7 @@ function isMissingPackageError(error, packageName) {
 
 async function importS3ClientPackage() {
 	try {
-		return await import("@aws-sdk/client-s3");
+		return await import(/* webpackIgnore: true */ "@aws-sdk/client-s3");
 	} catch (error) {
 		if (isMissingPackageError(error, "@aws-sdk/client-s3")) {
 			throw new Error(
@@ -41,7 +41,9 @@ async function importS3ClientPackage() {
 
 async function importS3PresignerPackage() {
 	try {
-		return await import("@aws-sdk/s3-request-presigner");
+		return await import(
+			/* webpackIgnore: true */ "@aws-sdk/s3-request-presigner"
+		);
 	} catch (error) {
 		if (isMissingPackageError(error, "@aws-sdk/s3-request-presigner")) {
 			throw new Error(
