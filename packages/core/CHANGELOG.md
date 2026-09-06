@@ -1,5 +1,15 @@
 # @techstream/quark-core
 
+## 2.4.2
+
+### Patch Changes
+
+- [#99](https://github.com/Bobnoddle/quark/pull/99) [`877a16e`](https://github.com/Bobnoddle/quark/commit/877a16e1a492b1366ddabb1672383318905b4710) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add Stripe integration utility (createStripeClient, getStripeWebhookEvent) as optional peer dependency.
+
+- [#119](https://github.com/Bobnoddle/quark/pull/119) [`f2ff17b`](https://github.com/Bobnoddle/quark/commit/f2ff17be10b869aa117decaa5b3bd80b6748c508) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Exempt Bearer-authenticated requests from CSRF protection — mobile app push registration no longer fails with 401
+
+- [#127](https://github.com/Bobnoddle/quark/pull/127) [`bc56633`](https://github.com/Bobnoddle/quark/commit/bc56633a06d90d173f81cc8933b3f1651a5dac7e) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Keep S3 storage imports available in standalone deployments.
+
 ## 2.4.1
 
 ### Patch Changes

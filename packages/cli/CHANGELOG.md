@@ -1,5 +1,19 @@
 # @techstream/quark-create-app
 
+## 1.21.0
+
+### Minor Changes
+
+- [#105](https://github.com/Bobnoddle/quark/pull/105) [`8fd6870`](https://github.com/Bobnoddle/quark/commit/8fd6870dcf504d7b5090c9ceac9f5cadb4600292) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add optional PWA support as a scaffolded package. When selected via `--packages pwa`, the scaffold generates a Next.js native manifest (`app/manifest.json`), a vanilla service worker (`public/sw.js`) with cache-first static assets and network-first navigation, and a client component for SW registration. Zero external dependencies — no Workbox, no next-pwa, no config file modifications.
+
+### Patch Changes
+
+- [#116](https://github.com/Bobnoddle/quark/pull/116) [`7d1f5b7`](https://github.com/Bobnoddle/quark/commit/7d1f5b750b1502984a07f16e650afd71ffc7adad) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Fix incorrect relative import paths for jwt in auth API route templates
+
+- [#119](https://github.com/Bobnoddle/quark/pull/119) [`f2ff17b`](https://github.com/Bobnoddle/quark/commit/f2ff17be10b869aa117decaa5b3bd80b6748c508) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Sync mobile template from monorepo source, add OTA runtimeVersion, reject mobile in create flow with guidance to use `quark add mobile`
+
+- [#122](https://github.com/Bobnoddle/quark/pull/122) [`f719e69`](https://github.com/Bobnoddle/quark/commit/f719e694d0fb6fabb9a7a9537bce34ea88b8cd9e) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add template drift prevention: generate-templates.js produces template-only files from source data, sync-watch.js provides real-time auto-sync during development.
+
 ## 1.20.1
 
 ### Patch Changes
