@@ -35,36 +35,48 @@ export default function AppLayout() {
 					tabBarInactiveTintColor: isDark ? "#888" : "#666",
 				}}
 			>
-			<Tabs.Screen
-				name="index"
-				options={{
-					title: "Home",
-					tabBarLabel: "Home",
-					tabBarIcon: ({ color, size }) => (
-						<Ionicons name="home-outline" size={size} color={color as string} />
-					),
-				}}
-			/>
-			<Tabs.Screen
-				name="profile"
-				options={{
-					title: "Profile",
-					tabBarLabel: "Profile",
-					tabBarIcon: ({ color, size }) => (
-						<Ionicons name="person-outline" size={size} color={color as string} />
-					),
-				}}
-			/>
-			<Tabs.Screen
-				name="settings"
-				options={{
-					title: "Settings",
-					tabBarLabel: "Settings",
-					tabBarIcon: ({ color, size }) => (
-						<Ionicons name="settings-outline" size={size} color={color as string} />
-					),
-				}}
-			/>
+				<Tabs.Screen
+					name="index"
+					options={{
+						title: "Home",
+						tabBarLabel: "Home",
+						tabBarIcon: ({ color, size }) => (
+							<Ionicons
+								name="home-outline"
+								size={size}
+								color={color as string}
+							/>
+						),
+					}}
+				/>
+				<Tabs.Screen
+					name="profile"
+					options={{
+						title: "Profile",
+						tabBarLabel: "Profile",
+						tabBarIcon: ({ color, size }) => (
+							<Ionicons
+								name="person-outline"
+								size={size}
+								color={color as string}
+							/>
+						),
+					}}
+				/>
+				<Tabs.Screen
+					name="settings"
+					options={{
+						title: "Settings",
+						tabBarLabel: "Settings",
+						tabBarIcon: ({ color, size }) => (
+							<Ionicons
+								name="settings-outline"
+								size={size}
+								color={color as string}
+							/>
+						),
+					}}
+				/>
 			</Tabs>
 		</AuthGate>
 	);
