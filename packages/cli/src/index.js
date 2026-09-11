@@ -2220,7 +2220,7 @@ model Device {
 					if (await fs.pathExists(packageDir)) {
 						console.log(
 							chalk.dim(
-								`    · packages/$packageNamealready exists - skipping copy`,
+								`    · packages/${packageName} already exists - skipping copy`,
 							),
 						);
 					} else {
@@ -2235,7 +2235,7 @@ model Device {
 							finalWorkspacePackages,
 						);
 						await replaceImportsInSourceFiles(packageDir, scope);
-						console.log(chalk.green(`    ✓ packages/$packageName`));
+						console.log(chalk.green(`    ✓ packages/${packageName}`));
 					}
 				}
 
