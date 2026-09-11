@@ -8,7 +8,7 @@ export function getDefaultLocale() {
 
 export function getSupportedLocales() {
 	const env = process.env.SUPPORTED_LOCALES;
-	if (!env || !env.trim()) return SUPPORTED_LOCALES_FALLBACK;
+	if (!env?.trim()) return SUPPORTED_LOCALES_FALLBACK;
 	return env
 		.split(",")
 		.map((l) => l.trim())

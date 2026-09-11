@@ -44,7 +44,7 @@ export async function parseMultipart(request, options = {}) {
 	} = options;
 
 	const contentType = request.headers.get("content-type");
-	if (!contentType || !contentType.includes("multipart/form-data")) {
+	if (!contentType?.includes("multipart/form-data")) {
 		throw new Error("Request is not multipart/form-data");
 	}
 

@@ -51,7 +51,6 @@ const WATCH_FILES = [
 
 let syncTimeout = null;
 let isSyncing = false;
-let syncCount = 0;
 
 function scheduleSync(reason) {
 	if (isSyncing) return;
@@ -60,7 +59,6 @@ function scheduleSync(reason) {
 	if (syncTimeout) clearTimeout(syncTimeout);
 	syncTimeout = setTimeout(async () => {
 		isSyncing = true;
-		syncCount++;
 
 		const prefix = `\x1b[2m${new Date().toISOString().slice(11, 19)}\x1b[0m`;
 		console.log(`${prefix} 🔄 Syncing templates (${reason})...`);
@@ -105,7 +103,7 @@ function startWatching() {
 	for (const dir of WATCH_DIRS) {
 		const absDir = path.join(ROOT, dir);
 		try {
-			watch(absDir, { recursive: true }, (eventType, filename) => {
+			watch(absDir, { recursive: true }, (_eventType, filename) => {
 				if (!filename) return;
 				// Skip test files, generated code, node_modules
 				if (

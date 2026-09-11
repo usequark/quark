@@ -20,7 +20,7 @@ export async function POST(request) {
 		const { email, password } = await validateBody(request, tokenRequestSchema);
 
 		const existingUser = await user.findByEmail(email);
-		if (!existingUser || !existingUser.password) {
+		if (!existingUser?.password) {
 			return NextResponse.json(
 				{ message: "Invalid credentials" },
 				{ status: 401 },
