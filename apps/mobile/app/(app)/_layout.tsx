@@ -41,7 +41,11 @@ export default function AppLayout() {
 						title: "Home",
 						tabBarLabel: "Home",
 						tabBarIcon: ({ color, size }) => (
-							<Ionicons name="home-outline" size={size} color={color} />
+							<Ionicons
+								name="home-outline"
+								size={size}
+								color={color as string}
+							/>
 						),
 					}}
 				/>
@@ -51,7 +55,11 @@ export default function AppLayout() {
 						title: "Profile",
 						tabBarLabel: "Profile",
 						tabBarIcon: ({ color, size }) => (
-							<Ionicons name="person-outline" size={size} color={color} />
+							<Ionicons
+								name="person-outline"
+								size={size}
+								color={color as string}
+							/>
 						),
 					}}
 				/>
@@ -61,7 +69,11 @@ export default function AppLayout() {
 						title: "Settings",
 						tabBarLabel: "Settings",
 						tabBarIcon: ({ color, size }) => (
-							<Ionicons name="settings-outline" size={size} color={color} />
+							<Ionicons
+								name="settings-outline"
+								size={size}
+								color={color as string}
+							/>
 						),
 					}}
 				/>
