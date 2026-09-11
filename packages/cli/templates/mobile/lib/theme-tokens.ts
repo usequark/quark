@@ -1,4 +1,4 @@
-import { useTheme } from "./ThemeProvider";
+import { useTheme } from "../components/ThemeProvider";
 
 export function useThemeTokens() {
 	const theme = useTheme();

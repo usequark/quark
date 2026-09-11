@@ -105,95 +105,6 @@ async function findAvailablePort(startPort, maxAttempts = 20) {
 }
 
 /**
- * Domain models to strip from the Prisma schema during scaffold.
- * These models are taught via embedded skills and added on demand,
- * keeping the initial scaffold lean.
- */
-const DOMAIN_MODELS_TO_STRIP = [
-	// Mobile
-	"Device",
-	// CRM
-	"Company",
-	"Contact",
-	"Deal",
-	// CMS
-	"Page",
-	"MediaAsset",
-	"AppConfig",
-	"ContentStatus",
-	"Context",
-	"ContextSource",
-	// AI
-	"AiConversation",
-	"AiMessage",
-	"AiToolPermission",
-	"AiToolEvent",
-	"AiWorkflow",
-	"AiRole",
-	// Booking
-	"ServiceType",
-	"AvailabilitySlot",
-	"Booking",
-	"BookingStatus",
-];
-
-/**
- * Trim domain models from a Prisma schema file.
- * Removes model blocks, enum blocks, and relation fields that reference removed models.
- */
-function trimPrismaSchema(content) {
-	const lines = content.split("\n");
-	const result = [];
-
-	for (let i = 0; i < lines.length; i++) {
-		const line = lines[i];
-		const trimmed = line.trim();
-
-		// Check if this line starts a model or enum we want to strip
-		const modelMatch = trimmed.match(/^(model|enum)\s+(\w+)/);
-		if (modelMatch && DOMAIN_MODELS_TO_STRIP.includes(modelMatch[2])) {
-			// Skip this block - count braces to find end
-			let braceDepth = 0;
-			for (let j = i; j < lines.length; j++) {
-				for (const char of lines[j]) {
-					if (char === "{") braceDepth++;
-					if (char === "}") braceDepth--;
-				}
-				if (braceDepth === 0) {
-					i = j;
-					break;
-				}
-			}
-			continue;
-		}
-
-		// Check if this line is a relation field referencing a stripped model
-		let isRelationField = false;
-		for (const model of DOMAIN_MODELS_TO_STRIP) {
-			const lowerModel = model.charAt(0).toLowerCase() + model.slice(1);
-			if (
-				trimmed.match(
-					new RegExp(
-						`^(${lowerModel}|${lowerModel}s)\\s+${model}(\\[\\]|\\?|\\s+@)`,
-					),
-				)
-			) {
-				isRelationField = true;
-				break;
-			}
-		}
-
-		if (isRelationField) {
-			continue;
-		}
-
-		result.push(line);
-	}
-
-	return result.join("\n").replace(/\n{3,}/g, "\n\n");
-}
-
-/**
  * Copy a template directory to the target location, with variable substitution
  */
 async function copyTemplate(templateName, targetDir, variables = {}) {
@@ -445,12 +356,6 @@ async function patchNextConfig(webDir, scope, selectedPackages) {
 	const optionalEntries = {
 		ui: `@${scope}/ui`,
 		jobs: `@${scope}/jobs`,
-		admin: `@${scope}/admin`,
-		cms: `@${scope}/cms`,
-		// crm and ai are domain starters (never workspace packages) — their
-		// transpilePackages entries are always removed.
-		crm: `@${scope}/crm`,
-		ai: `@${scope}/ai`,
 	};
 
 	for (const [feature, pkg] of Object.entries(optionalEntries)) {
@@ -470,20 +375,11 @@ async function patchNextConfig(webDir, scope, selectedPackages) {
 
 /**
  * Replace @techstream/quark-* import paths in all .js source files
- * for workspace packages (db, jobs, ui, config, admin, cms) with @scope/* equivalents.
+ * for workspace packages (db, jobs, ui, config) with @scope/* equivalents.
  * Registry packages (@techstream/quark-core) are left untouched.
  */
 async function replaceImportsInSourceFiles(dir, scope) {
-	const workspacePackages = [
-		"db",
-		"jobs",
-		"ui",
-		"config",
-		"admin",
-		"cms",
-		"crm",
-		"ai",
-	];
+	const workspacePackages = ["db", "jobs", "ui", "config"];
 	const entries = await fs.readdir(dir, { withFileTypes: true });
 
 	for (const entry of entries) {
@@ -584,10 +480,6 @@ program
 	)
 	.option("--skip-install", "Skip pnpm install and Prisma generate steps")
 	.option("--skip-docker", "Skip Docker orphan-volume cleanup")
-	.option(
-		"--full-schema",
-		"Keep all Prisma models (skip domain model trimming)",
-	)
 	.action(async (projectName, options) => {
 		console.log(
 			chalk.blue.bold(
@@ -656,8 +548,7 @@ program
 			options.packages !== undefined ||
 			options.signup !== undefined ||
 			options.prompt !== undefined ||
-			options.harness !== undefined ||
-			options.fullSchema;
+			options.harness;
 		if (hasConfigOptions && options.prompts !== false) {
 			console.log(
 				chalk.dim(
@@ -841,33 +732,6 @@ program
 					`${JSON.stringify(pkgJson, null, "	")}\n`,
 				);
 				console.log(chalk.green(`    ✓ ${reqPkg} (required)`));
-			}
-
-			// Step 4b: Trim domain models from Prisma schema
-			// Step 4b: Trim domain models from Prisma schema (unless --full-schema)
-			// Keeps the scaffold lean — domain models are taught via embedded skills
-			if (!options.fullSchema) {
-				const schemaPath = path.join(
-					targetDir,
-					"packages",
-					"db",
-					"prisma",
-					"schema.prisma",
-				);
-				if (await fs.pathExists(schemaPath)) {
-					const schemaContent = await fs.readFile(schemaPath, "utf-8");
-					const trimmed = trimPrismaSchema(schemaContent);
-					if (trimmed !== schemaContent) {
-						await fs.writeFile(schemaPath, trimmed);
-						console.log(
-							chalk.green(
-								"    ✓ Prisma schema trimmed (domain models removed)",
-							),
-						);
-					}
-				}
-			} else {
-				console.log(chalk.dim("    · Keeping full schema (--full-schema)"));
 			}
 
 			// Step 5: Determine which optional packages to scaffold
@@ -1213,49 +1077,6 @@ program
 				}
 			}
 
-			// Step 7e: Strip the admin dashboard link from the landing page.
-			// The admin UI is no longer scaffolded; the embedded admin skill
-			// teaches the AI to build a dashboard on demand.
-			{
-				const homePath = path.join(
-					targetDir,
-					"apps",
-					"web",
-					"src",
-					"app",
-					"page.js",
-				);
-				if (await fs.pathExists(homePath)) {
-					let content = await fs.readFile(homePath, "utf-8");
-					// Remove the {/* @quark:start:admin */} ... {/* @quark:end:admin */} block
-					content = content.replace(
-						/[ \t]*\{\/\* @quark:start:admin \*\/\}[\s\S]*?\{\/\* @quark:end:admin \*\/\}\n?/,
-						"",
-					);
-					await fs.writeFile(homePath, content);
-				}
-			}
-
-			// Step 7f: Remove legacy vertical API routes from the base-project template.
-			// The base-project ships crm/ai API routes that import the now-archived
-			// vertical packages (@techstream/quark-crm, @techstream/quark-ai/*). These
-			// are always removed; the embedded skills teach the AI to build them.
-			await fs.remove(
-				path.join(
-					targetDir,
-					"apps",
-					"web",
-					"src",
-					"app",
-					"api",
-					"admin",
-					"crm",
-				),
-			);
-			await fs.remove(
-				path.join(targetDir, "apps", "web", "src", "app", "api", "ai"),
-			);
-
 			// Step 8: Create .env.example file
 			console.log(chalk.cyan("\n  📋 Creating environment configuration..."));
 			const envExampleTemplate = `# ⚠️  IMPORTANT: Copy this file to .env and fill in the values for your environment.
@@ -1433,7 +1254,6 @@ STORAGE_PROVIDER=local
 			// Generate secure random values
 			const dbPassword = generateSecurePassword(24);
 			const nextAuthSecret = generateSecureSecret(32);
-			const adminPassword = generateSecurePassword(24);
 
 			// Create .env with auto-generated secure values
 			const envContent = `# --- Database Configuration ---
@@ -1478,16 +1298,10 @@ STORAGE_PROVIDER=local
 
 # --- Database Seeding ---
 # SEED_PROFILE=dev             # Options: dev (default), minimal (users only - use for production initial seed)
-ADMIN_PASSWORD=${adminPassword}
-`;
+#`;
 			await fs.writeFile(path.join(targetDir, ".env"), envContent);
 			console.log(
 				chalk.green(`    ✓ .env (with auto-generated secure secrets)`),
-			);
-			console.log(
-				chalk.dim(
-					`      Admin password: ${adminPassword} (shown once — save it if needed)`,
-				),
 			);
 
 			// Step 11: Create .quark-link.json to track Quark version
@@ -1500,6 +1314,7 @@ ADMIN_PASSWORD=${adminPassword}
 				projectName,
 				requiredPackages: REQUIRED_PACKAGES,
 				packages: [...new Set([...REQUIRED_PACKAGES, ...features])],
+				featureVersions: {},
 				authAllowSignup: allowSignup,
 				// Track that worker is paired with jobs (not independently selectable)
 				hasWorker: features.includes("jobs"),
@@ -1663,12 +1478,6 @@ ADMIN_PASSWORD=${adminPassword}
 					`  Toggle signup any time in development by editing AUTH_ALLOW_SIGNUP in .env\n`,
 				),
 			);
-			console.log(
-				chalk.dim(
-					`  Tip: set SEED_PROFILE=minimal in .env for a lean seed (admin user only)\n`,
-				),
-			);
-
 			console.log(chalk.cyan("Build with AI:"));
 			console.log(
 				chalk.white(`  Open CLAUDE.md in your AI tool, then tell it:`),
@@ -2354,8 +2163,9 @@ program
 						if (await fs.pathExists(schemaPath)) {
 							let schema = await fs.readFile(schemaPath, "utf-8");
 							if (!schema.includes("model Device")) {
-								// Add before CRM models section
+								// Insert Device model after AuditLog
 								const deviceModel = `
+
 // ─── Device Model (Mobile Push Notifications) ────────────────────────────────
 
 model Device {
@@ -2375,12 +2185,12 @@ model Device {
 }
 `;
 								schema = schema.replace(
-									/\/\/ ─── CRM Models/,
-									`${deviceModel}// ─── CRM Models`,
+									/(\/\/ Audit Log Model[\s\S]*?^}\s)/m,
+									`$1${deviceModel}`,
 								);
 								// Add devices relation to User model
 								schema = schema.replace(
-									/(\bbookings\s+Booking\[\])/,
+									/(files\s+File\[\])/,
 									"$1\n  devices       Device[]",
 								);
 								await fs.writeFile(schemaPath, schema);
@@ -2483,6 +2293,22 @@ model Device {
 			quarkLink.hasWorker = allFeatures.includes("jobs");
 			quarkLink.lastAddedFeature = feature;
 			quarkLink.lastModifiedDate = new Date().toISOString();
+			// Track per-feature versions for migration detection
+			if (!quarkLink.featureVersions) quarkLink.featureVersions = {};
+			for (const addedFeature of toAdd) {
+				const featurePkgPath = path.join(
+					projectDir,
+					addedFeature === "mobile" ? "apps" : "packages",
+					addedFeature,
+					"package.json",
+				);
+				if (await fs.pathExists(featurePkgPath)) {
+					const featurePkg = JSON.parse(
+						await fs.readFile(featurePkgPath, "utf-8"),
+					);
+					quarkLink.featureVersions[addedFeature] = featurePkg.version;
+				}
+			}
 			await fs.writeFile(quarkLinkPath, JSON.stringify(quarkLink, null, "	"));
 			console.log(chalk.green(`\n  ✓ .quark-link.json updated`));
 
@@ -2582,7 +2408,7 @@ program
 	.command("skill")
 	.argument(
 		"<feature>",
-		"Feature to print a skill for (model, endpoint, dashboard, bookings, crm, cms, ai)",
+		"Feature to print a skill for (model, endpoint, dashboard)",
 	)
 	.description("Print an embedded skill for a feature")
 	.action(async (feature) => {
@@ -2605,7 +2431,7 @@ program
 		if (!(await fs.pathExists(skillPath))) {
 			console.error(
 				chalk.red(
-					`✗ No skill found for "${feature}". Available: model, endpoint, dashboard, bookings, crm, cms, ai`,
+					`✗ No skill found for "${feature}". Available: model, endpoint, dashboard`,
 				),
 			);
 			process.exit(1);

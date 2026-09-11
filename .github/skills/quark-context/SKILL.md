@@ -25,7 +25,6 @@ Scaffolded (local-only) packages:
 | `@<app>/web` | Yes | Next.js application |
 | `@<app>/ui` | Optional | Tailwind UI primitives |
 | `@<app>/jobs` + `@<app>/worker` | Optional (paired) | BullMQ job definitions + worker process |
-| `@<app>/admin` | Optional | Auto-generated CRUD admin UI (requires `db` + `ui`) |
 
 ## Tech Stack
 
@@ -267,7 +266,6 @@ Both profiles are idempotent (safe to re-run). Staging full wipe: `prisma migrat
 
 | Layer | What it does |
 |---|---|
-| **Admin guard** | `getToken()` reads the JWT - redirects unauthenticated users to `/auth/signin?callbackUrl=…` and non-admin roles to `/`. Covers `/admin` and `/admin/*` exactly (not prefix-matched on `/administrators` etc.). |
 | **Metrics guard** | If `METRICS_TOKEN` env var is set, `/api/metrics` requires `Authorization: Bearer <token>` or `x-metrics-token` header. Unset = unprotected (safe for dev). |
 | **Rate limiting** | 100 req/15 min for API, 5 req/15 min for `/api/auth/*`. In-memory by default; swap `proxy.js` for `proxy.redis.js` in multi-instance deployments. |
 | **CORS** | Allowed origins from `getAllowedOrigins()` in `@<app>/config`. Preflight `OPTIONS` returns 204. |
@@ -275,13 +273,9 @@ Both profiles are idempotent (safe to re-run). Staging full wipe: `prisma migrat
 | **Body size limits** | 2 MB for API, 10 MB for uploads (configurable via `API_BODY_SIZE_LIMIT` / `UPLOAD_SIZE_LIMIT`). |
 
 **Key patterns:**
-- `proxy()` is `async` - required because `adminGuard` awaits `getToken()`.
-- Path matching for `/admin` uses `pathname === "/admin" || pathname.startsWith("/admin/")` - never bare `startsWith("/admin")`.
 - `callbackUrl` includes `pathname + search` to preserve query params across the redirect.
 - The `config.matcher` excludes `_next/static`, `_next/image`, favicon, and common image types.
 - `proxy.redis.js` is an alternative implementation with Redis-backed rate limiting - not synced to templates, only the in-memory `proxy.js` is.
-
-**Auth defence-in-depth:** The admin guard in `proxy.js` is the edge layer. `requireRole("admin")` inside each Server Action and Route Handler is the Node.js layer. Both must remain - the layout check alone does not protect Server Action URLs from raw `fetch()` calls.
 
 ## Template Sync
 

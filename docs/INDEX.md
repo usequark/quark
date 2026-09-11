@@ -17,7 +17,6 @@ Entry point: [../README.md](../README.md)
 |----------|---------|
 | [../packages/ui/README.md](../packages/ui/README.md) | UI package catalog and import rules |
 | [../packages/jobs/README.md](../packages/jobs/README.md) | Jobs package, worker pairing, and extension points |
-| [../packages/admin/README.md](../packages/admin/README.md) | Admin package behavior and customization entry points |
 | [AI_TOOLS.md](./AI_TOOLS.md) | AI coding tools guide (Claude Code, Cursor, Copilot) |
 | [UMAMI.md](./UMAMI.md) | Optional Umami integration review and setup guidance |
 

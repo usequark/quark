@@ -155,10 +155,36 @@ jobs:
           echo "All required scaffold files present"
         shell: bash
 
+  mobile:
+    name: Mobile
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm --filter @techstream/quark-mobile lint
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+        working-directory: apps/mobile
+
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: [lint, test, template-drift, scaffold-windows]
+    needs: [lint, test, template-drift, scaffold-windows, mobile]
     steps:
       - name: Checkout
         uses: actions/checkout@v6

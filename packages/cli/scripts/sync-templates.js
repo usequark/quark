@@ -61,26 +61,7 @@ const SYNC_DIRS = [
 	{
 		src: "apps/web",
 		dest: "base-project/apps/web",
-		// Admin routes are scaffolded conditionally via admin-routes template - exclude from base project
-		// CMS public files are scaffolded conditionally via cms-public template
 		localExcludes: [
-			/^apps\/web\/src\/app\/admin\//,
-			/^apps\/web\/src\/lib\/content\//,
-			/^apps\/web\/src\/lib\/load-cms-config\.js$/,
-			/^apps\/web\/src\/lib\/public-content-routes\.js$/,
-			/^apps\/web\/src\/lib\/public-content\.js$/,
-			/^apps\/web\/src\/lib\/public-content-cache\.js$/,
-			/^apps\/web\/src\/lib\/public-content-revalidation\.js$/,
-			/^apps\/web\/src\/lib\/public-content\.test\.js$/,
-			/^apps\/web\/src\/lib\/public-content-routes\.test\.js$/,
-			/^apps\/web\/src\/lib\/load-cms-config\.test\.js$/,
-			/^apps\/web\/src\/adminIntrospect\.test\.js$/,
-			/^apps\/web\/src\/app\/_components\/PageContentRenderer\.js$/,
-			/^apps\/web\/src\/app\/\[slug\]\//,
-			/^apps\/web\/src\/app\/api\/cms\//,
-			// Demoted verticals are now AI skills, not scaffolded packages.
-			/^apps\/web\/src\/app\/api\/ai\//,
-			/^apps\/web\/src\/app\/api\/admin\/crm\//,
 			// Test files excluded from scaffold template
 			/^apps\/web\/src\/.*\.test\.js$/,
 			// Test infrastructure files excluded from scaffold template
@@ -91,21 +72,7 @@ const SYNC_DIRS = [
 	{
 		src: "apps/worker",
 		dest: "worker",
-		// Demoted AI vertical is now a skill, not a scaffolded package. Exclude
-		// the AI handlers and libs from the scaffolded worker.
 		localExcludes: [
-			/^apps\/worker\/src\/handlers\/ai\.js$/,
-			/^apps\/worker\/src\/handlers\/ai\.test\.js$/,
-			/^apps\/worker\/src\/handlers\/context-extraction\.js$/,
-			/^apps\/worker\/src\/handlers\/context-extraction\.test\.js$/,
-			/^apps\/worker\/src\/handlers\/conversation-compact\.js$/,
-			/^apps\/worker\/src\/lib\/openrouter\.js$/,
-			/^apps\/worker\/src\/lib\/openrouter\.test\.js$/,
-			/^apps\/worker\/src\/lib\/summarize\.js$/,
-			/^apps\/worker\/src\/lib\/summarize\.test\.js$/,
-			/^apps\/worker\/src\/lib\/truncation\.js$/,
-			/^apps\/worker\/src\/lib\/truncation\.test\.js$/,
-			/^apps\/worker\/src\/lib\/tools\//,
 			// All test files excluded from scaffold template
 			/^apps\/worker\/src\/.*\.test\.js$/,
 		],
@@ -130,13 +97,6 @@ const SYNC_DIRS = [
 		dest: "jobs",
 		localExcludes: [/^packages\/jobs\/src\/.*\.test\.js$/],
 	},
-	{
-		src: "packages/admin",
-		dest: "admin",
-		localExcludes: [/^packages\/admin\/src\/.*\.test\.js$/],
-	},
-	// Admin routes live inside apps/web but are scaffolded separately (conditionally)
-	{ src: "apps/web/src/app/admin", dest: "admin-routes" },
 	{
 		src: "apps/mobile",
 		dest: "mobile",
@@ -256,8 +216,7 @@ const TEMPLATE_ONLY = new Set([
 	// Doctor and prepare scripts are hand-authored for scaffolded projects
 	"base-project/scripts/doctor.js",
 	"base-project/scripts/prepare.js",
-	// Base-project sitemap is a simpler version (no CMS dependency);
-	// the CMS-capable sitemap lives in cms-public template
+	// Base-project sitemap is a simpler version (no CMS dependency)
 	"base-project/apps/web/src/app/sitemap.js",
 	// UI README is a minimal quickstart, not the full monorepo docs
 	"ui/README.md",
@@ -301,9 +260,6 @@ const TRANSFORMS = {
 	"jobs/package.json": transformOptionalPackageJson,
 	"jobs/src/definitions.js": transformJobsDefinitions,
 	"jobs/src/definitions.test.js": transformJobsDefinitionsTest,
-	"admin/package.json": transformOptionalPackageJson,
-	"cms/package.json": transformOptionalPackageJson,
-	"ai/package.json": transformOptionalPackageJson,
 	// Mobile: use @myquark placeholder scope
 	"mobile/package.json": transformMobilePackageJson,
 	// Mobile: substitute project placeholders in app.json
@@ -337,17 +293,6 @@ function transformWebPackageJson(content) {
 	// Remove monorepo-only scripts
 	delete pkg.scripts?.["test:integration"];
 
-	// Demoted verticals are monorepo-only packages (not published to npm);
-	// they are now AI skills, not scaffolded packages.
-	for (const pkgName of [
-		"@techstream/quark-bookings",
-		"@techstream/quark-ai",
-		"@techstream/quark-cms",
-		"@techstream/quark-crm",
-	]) {
-		delete pkg.dependencies?.[pkgName];
-	}
-
 	// Core is installed from npm (not workspace) in scaffolded projects
 	if (pkg.dependencies?.["@techstream/quark-core"]) {
 		pkg.dependencies["@techstream/quark-core"] = CORE_VERSION_PIN;
@@ -363,82 +308,19 @@ function transformWebPackageJson(content) {
 }
 
 function transformJobsDefinitionsTest(content) {
-	// Demoted AI vertical is now a skill, not a scaffolded package. Remove the
-	// AI queue/job-name test cases and fix the queue/job-name counts.
-	return content
-		.replace(
-			/\n\ttest\("defines AI queue", \(\) => \{\n\t\tassert\.strictEqual\(JOB_QUEUES\.AI, "ai-queue"\);\n\t\}\);\n/g,
-			"\n",
-		)
-		.replace(
-			/\n\t\tassert\.strictEqual\(typeof JOB_QUEUES\.AI, "string"\);\n/g,
-			"\n",
-		)
-		.replace(/defines exactly 4 queues/g, "defines exactly 3 queues")
-		.replace(
-			/Object\.keys\(JOB_QUEUES\)\.length, 4\)/g,
-			"Object.keys(JOB_QUEUES).length, 3)",
-		)
-		.replace(
-			/\n\ttest\("defines AI agent task job name", \(\) => \{\n\t\tassert\.strictEqual\(JOB_NAMES\.AI_AGENT_TASK, "ai-agent-task"\);\n\t\}\);\n/g,
-			"\n",
-		)
-		.replace(
-			/\n\ttest\("defines AI context extraction job name", \(\) => \{\n\t\tassert\.strictEqual\(\n\t\t\tJOB_NAMES\.AI_CONTEXT_EXTRACTION,\n\t\t\t"ai-context-extraction",\n\t\t\);\n\t\}\);\n/g,
-			"\n",
-		)
-		.replace(
-			/\n\ttest\("defines AI conversation compact job name", \(\) => \{\n\t\tassert\.strictEqual\(\n\t\t\tJOB_NAMES\.AI_CONVERSATION_COMPACT,\n\t\t\t"ai-conversation-compact",\n\t\t\);\n\t\}\);\n/g,
-			"\n",
-		)
-		.replace(/defines exactly 6 job names/g, "defines exactly 3 job names")
-		.replace(
-			/Object\.keys\(JOB_NAMES\)\.length, 6\)/g,
-			"Object.keys(JOB_NAMES).length, 3)",
-		);
+	return content;
 }
 
 function transformJobsDefinitions(content) {
-	// Demoted AI vertical is now a skill, not a scaffolded package. Remove the
-	// AI queue and AI job names from the scaffolded jobs package.
-	return content
-		.replace(/^\t*AI: "ai-queue",\n/gm, "")
-		.replace(/^\t*AI_AGENT_TASK: "ai-agent-task",\n/gm, "")
-		.replace(/^\t*AI_CONTEXT_EXTRACTION: "ai-context-extraction",\n/gm, "")
-		.replace(/^\t*AI_CONVERSATION_COMPACT: "ai-conversation-compact",\n/gm, "");
+	return content;
 }
 
 function transformWorkerHandlersIndex(content) {
-	// Demoted AI vertical is now a skill, not a scaffolded package. Remove the
-	// AI handler imports and their jobHandlers entries (excluded from sync).
-	return content
-		.replace(/^\t*import \{ handleAiAgentTask \} from "\.\/ai\.js";\n/gm, "")
-		.replace(
-			/^\t*import \{ handleContextExtraction \} from "\.\/context-extraction\.js";\n/gm,
-			"",
-		)
-		.replace(
-			/^\t*import \{ handleConversationCompact \} from "\.\/conversation-compact\.js";\n/gm,
-			"",
-		)
-		.replace(/^\t*\[JOB_NAMES\.AI_AGENT_TASK\]: handleAiAgentTask,\n/gm, "")
-		.replace(
-			/^\t*\[JOB_NAMES\.AI_CONTEXT_EXTRACTION\]: handleContextExtraction,\n/gm,
-			"",
-		)
-		.replace(
-			/^\t*\[JOB_NAMES\.AI_CONVERSATION_COMPACT\]: handleConversationCompact,\n/gm,
-			"",
-		);
+	return content;
 }
 
 function transformWebNextConfig(content) {
-	// Remove demoted vertical references (monorepo-only packages, not published
-	// to npm; they are now AI skills, not scaffolded packages).
-	return content.replace(
-		/^\t\t"@techstream\/quark-(bookings|ai|cms|crm)",\n/gm,
-		"",
-	);
+	return content;
 }
 
 function transformWorkerPackageJson(content) {
@@ -450,17 +332,6 @@ function transformWorkerPackageJson(content) {
 	// Core is installed from npm (not workspace) in scaffolded projects
 	if (pkg.dependencies?.["@techstream/quark-core"]) {
 		pkg.dependencies["@techstream/quark-core"] = CORE_VERSION_PIN;
-	}
-
-	// Demoted verticals are monorepo-only packages (not published to npm);
-	// they are now AI skills, not scaffolded packages.
-	for (const pkgName of [
-		"@techstream/quark-ai",
-		"@techstream/quark-cms",
-		"@techstream/quark-crm",
-		"@techstream/quark-bookings",
-	]) {
-		delete pkg.dependencies?.[pkgName];
 	}
 
 	// Use run-tests.mjs (module-mocks flag + integration test exclusion),
@@ -836,7 +707,7 @@ function shouldSyncForPreCommit() {
 			encoding: "utf-8",
 		});
 		const sourceDirPattern =
-			/^(scripts\/|apps\/|packages\/(db|config|ui|jobs|admin|opencode)\/|turbo\.json|docker-compose(\.override)?\.yml|pnpm-workspace\.yaml|package\.json)/;
+			/^(scripts\/|apps\/|packages\/(db|config|ui|jobs|opencode)\/|turbo\.json|docker-compose(\.override)?\.yml|pnpm-workspace\.yaml|package\.json)/;
 		return staged.split("\n").some((f) => sourceDirPattern.test(f));
 	} catch {
 		return false;

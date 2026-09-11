@@ -17,46 +17,13 @@ import {
 import { NextResponse } from "next/server";
 
 import { buildContentSecurityPolicy } from "./lib/analytics/umami-csp.js";
-import { getProxyToken, getRateLimitBucket } from "./lib/proxy-auth";
+import { getRateLimitBucket } from "./lib/proxy-auth";
 
 const logger = createLogger("proxy");
 
 // Initialize Redis client (lazy initialization)
 let redisClient = null;
 let rateLimiter = null;
-
-async function adminGuard(request) {
-	const { pathname, search } = request.nextUrl;
-	if (pathname !== "/admin" && !pathname.startsWith("/admin/")) return null;
-
-	const token = await getProxyToken(request);
-
-	if (!token) {
-		const signinUrl = new URL("/auth/signin", request.url);
-		signinUrl.searchParams.set("callbackUrl", pathname + search);
-		return NextResponse.redirect(signinUrl);
-	}
-
-	if (token.role === "admin") {
-		return null;
-	}
-
-	const isCmsPath =
-		pathname === "/admin/cms" || pathname.startsWith("/admin/cms/");
-	if (token.role === "editor" && isCmsPath) {
-		return null;
-	}
-
-	if (token.role === "editor" && pathname === "/admin") {
-		return NextResponse.redirect(new URL("/admin/cms", request.url));
-	}
-
-	if (token.role !== "admin") {
-		return NextResponse.redirect(new URL("/", request.url));
-	}
-
-	return null;
-}
 
 function metricsGuard(request) {
 	const { pathname } = request.nextUrl;
@@ -169,9 +136,6 @@ const REQUEST_SIZE_LIMITS = {
 };
 
 export async function proxy(request) {
-	const adminResponse = await adminGuard(request);
-	if (adminResponse) return adminResponse;
-
 	const metricsResponse = metricsGuard(request);
 	if (metricsResponse) return metricsResponse;
 

@@ -38,7 +38,7 @@ Shared exports also include `ErrorBanner`, `Footer`, `Navbar`/`MobileNavbar`, an
 
 ### Two packages are published; everything else is scaffolded
 - **Published:** `@techstream/quark-core`, `@techstream/quark-create-app`
-- **Scaffolded (local-only):** `config`, `db`, `ui`, `jobs`, `admin` - these are excluded from versioning and npm publish.
+- **Scaffolded (local-only):** `config`, `db`, `ui`, `jobs` - these are excluded from versioning and npm publish.
 
 ## Quick Setup
 

@@ -7,9 +7,9 @@ import {
 	View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useThemeTokens } from "../../lib/theme-tokens";
 import { useAuth } from "../../hooks/use-auth";
 import { getProfile } from "../../lib/auth";
+import { useThemeTokens } from "../../lib/theme-tokens";
 
 interface UserProfile {
 	id: string;

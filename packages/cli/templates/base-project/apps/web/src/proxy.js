@@ -3,52 +3,18 @@
  * Handles auth guards, rate limiting, CORS, and security headers.
  *
  * Guards (in order):
- *   1. Admin route guard    - verifies JWT role at the edge before any layout
- *                             or Server Action under /admin is reached.
- *   2. Metrics guard        - optionally protects /api/metrics with a bearer
+ *   1. Metrics guard        - optionally protects /api/metrics with a bearer
  *                             token. Set METRICS_TOKEN in env to enable.
- *   3. Rate limiting, CORS, security headers for all API routes.
+ *   2. Rate limiting, CORS, security headers for all API routes.
  */
 
 import { getAllowedOrigins } from "@techstream/quark-config/app-url";
 import { NextResponse } from "next/server";
 
 import { buildContentSecurityPolicy } from "./lib/analytics/umami-csp.js";
-import { getProxyToken, getRateLimitBucket } from "./lib/proxy-auth";
+import { getRateLimitBucket } from "./lib/proxy-auth";
 
-// ─── 1. Admin route guard ────────────────────────────────────────────────────
-
-async function adminGuard(request) {
-	const { pathname, search } = request.nextUrl;
-	if (pathname !== "/admin" && !pathname.startsWith("/admin/")) return null;
-
-	const token = await getProxyToken(request);
-
-	if (!token) {
-		const signinUrl = new URL("/auth/signin", request.url);
-		signinUrl.searchParams.set("callbackUrl", pathname + search);
-		return NextResponse.redirect(signinUrl);
-	}
-
-	const isAdmin = token.role === "admin" || token.role === "client_admin";
-	if (isAdmin) {
-		return null; // authorized - continue
-	}
-
-	const isCmsPath =
-		pathname === "/admin/cms" || pathname.startsWith("/admin/cms/");
-	if (token.role === "editor" && isCmsPath) {
-		return null; // editors can manage CMS routes only
-	}
-
-	if (token.role === "editor" && pathname === "/admin") {
-		return NextResponse.redirect(new URL("/admin/cms", request.url));
-	}
-
-	return NextResponse.redirect(new URL("/", request.url));
-}
-
-// ─── 2. Metrics guard ────────────────────────────────────────────────────────
+// ─── 1. Metrics guard ────────────────────────────────────────────────────────
 
 function metricsGuard(request) {
 	const { pathname } = request.nextUrl;
@@ -178,9 +144,6 @@ const REQUEST_SIZE_LIMITS = {
 };
 
 export async function proxy(request) {
-	const adminResponse = await adminGuard(request);
-	if (adminResponse) return adminResponse;
-
 	const metricsResponse = metricsGuard(request);
 	if (metricsResponse) return metricsResponse;
 
