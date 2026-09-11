@@ -1,6 +1,10 @@
 /**
- * Client-side error type mirroring AppError.toJSON() shape.
- * No Node.js dependencies.
+ * Mobile equivalent of @techstream/quark-core's AppError.
+ *
+ * React Native cannot import Node.js packages, so this module defines a
+ * client-side error class whose shape mirrors AppError.toJSON() — same
+ * fields (code, statusCode, details) — so the web API's error responses
+ * are consumed identically. Keep the two in sync if adding new fields.
  */
 export interface AppClientError {
 	name: string;

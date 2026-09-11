@@ -1314,6 +1314,7 @@ STORAGE_PROVIDER=local
 				projectName,
 				requiredPackages: REQUIRED_PACKAGES,
 				packages: [...new Set([...REQUIRED_PACKAGES, ...features])],
+				featureVersions: {},
 				authAllowSignup: allowSignup,
 				// Track that worker is paired with jobs (not independently selectable)
 				hasWorker: features.includes("jobs"),
@@ -2292,6 +2293,22 @@ model Device {
 			quarkLink.hasWorker = allFeatures.includes("jobs");
 			quarkLink.lastAddedFeature = feature;
 			quarkLink.lastModifiedDate = new Date().toISOString();
+			// Track per-feature versions for migration detection
+			if (!quarkLink.featureVersions) quarkLink.featureVersions = {};
+			for (const addedFeature of toAdd) {
+				const featurePkgPath = path.join(
+					projectDir,
+					addedFeature === "mobile" ? "apps" : "packages",
+					addedFeature,
+					"package.json",
+				);
+				if (await fs.pathExists(featurePkgPath)) {
+					const featurePkg = JSON.parse(
+						await fs.readFile(featurePkgPath, "utf-8"),
+					);
+					quarkLink.featureVersions[addedFeature] = featurePkg.version;
+				}
+			}
 			await fs.writeFile(quarkLinkPath, JSON.stringify(quarkLink, null, "	"));
 			console.log(chalk.green(`\n  ✓ .quark-link.json updated`));
 
