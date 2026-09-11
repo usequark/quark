@@ -1,4 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <title>Quark</title>
   <!--
     Quark logo - SVG master
     Geometry mirrors QuarkAnimation.js constants (ring/dash thickness ratio ~0.20)

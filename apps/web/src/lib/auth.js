@@ -69,7 +69,7 @@ const providers = [
 			try {
 				const existingUser = await user.findByEmail(credentials.email);
 
-				if (!existingUser || !existingUser.password) {
+				if (!existingUser?.password) {
 					return null;
 				}
 

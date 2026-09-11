@@ -29,7 +29,7 @@ function readJson(relPath) {
 	return JSON.parse(fs.readFileSync(path.join(ROOT, relPath), "utf-8"));
 }
 
-function readText(relPath) {
+function _readText(relPath) {
 	return fs.readFileSync(path.join(ROOT, relPath), "utf-8");
 }
 
@@ -59,7 +59,7 @@ function generateRootPackageJson() {
 		result.pnpm = { ...result.pnpm, overrides: root.pnpm.overrides };
 	}
 
-	return JSON.stringify(result, null, "\t") + "\n";
+	return `${JSON.stringify(result, null, "\t")}\n`;
 }
 
 /**
@@ -71,8 +71,6 @@ function generateRootPackageJson() {
  * - Adds scaffold-specific entries (.quark-auto-clean.json)
  */
 function generateGitignore() {
-	const root = readText(".gitignore");
-
 	const scaffoldEntries = [
 		"# dependencies",
 		"node_modules/",
@@ -108,7 +106,7 @@ function generateGitignore() {
 		"**/uploads/",
 	];
 
-	return scaffoldEntries.join("\n") + "\n";
+	return `${scaffoldEntries.join("\n")}\n`;
 }
 
 /**
@@ -134,7 +132,7 @@ function generateRootBiomeJson() {
 		},
 	};
 
-	return JSON.stringify(result, null, "\t") + "\n";
+	return `${JSON.stringify(result, null, "\t")}\n`;
 }
 
 // ─── File Manifest ────────────────────────────────────────────────────────────

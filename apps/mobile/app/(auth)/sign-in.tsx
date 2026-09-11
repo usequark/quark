@@ -8,15 +8,8 @@ import { useThemeTokens } from "../../lib/theme-tokens";
 export default function SignInScreen() {
 	const router = useRouter();
 	const { signIn, isLoading } = useAuth();
-	const {
-		bgColor,
-		textColor,
-		mutedColor,
-		cardBg,
-		borderColor,
-		inputBg,
-		isDark,
-	} = useThemeTokens();
+	const { bgColor, textColor, mutedColor, borderColor, inputBg, isDark } =
+		useThemeTokens();
 	const insets = useSafeAreaInsets();
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");

@@ -48,7 +48,7 @@ export async function createBooking({ prisma, data }) {
 		include: { service: true },
 	});
 
-	if (!slot || !slot.active) {
+	if (!slot?.active) {
 		throw new AppError(
 			"Selected time slot is not available",
 			400,
