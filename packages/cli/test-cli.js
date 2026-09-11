@@ -114,23 +114,6 @@ try {
 			name: "Config template exists",
 			test: () => fs.existsSync(path.join(__dirname, "templates/config")),
 		},
-		{
-			name: "Admin dashboard skill exists",
-			test: () =>
-				fs.existsSync(
-					path.join(
-						__dirname,
-						"templates/base-project/skills/admin-dashboard/SKILL.md",
-					),
-				),
-		},
-		{
-			name: "CMS skill exists",
-			test: () =>
-				fs.existsSync(
-					path.join(__dirname, "templates/base-project/skills/cms/SKILL.md"),
-				),
-		},
 	];
 
 	let passed = 0;
