@@ -2,6 +2,8 @@
 
 This document explains Quark's distribution architecture and the philosophy behind what gets published to the registry versus what gets scaffolded locally.
 
+> **Note:** The `admin` role in the RBAC system is an auth concept (highest privilege level). It is unrelated to the removed `@techstream/quark-admin` package, which was a scaffolded CRUD UI.
+
 ## The Problem We're Solving
 
 Traditional web frameworks force a choice:
@@ -584,39 +586,6 @@ To rebrand a scaffolded project:
 5. Update brand copy in the auth page brand panels (`auth/signin/page.js`, `auth/register/page.js`)
 
 Core evolves based on real usage patterns!
-
----
-
-## Admin Dashboard (Skill-based)
-
-The admin is built on demand via the `admin-dashboard` embedded skill. No admin package is scaffolded — the AI generates the admin area when you request it.
-
-### What the skill teaches the AI to build
-
-- Authenticated admin routes at `/admin` with role guards via `requireRole`
-- List, create, edit, and delete screens for each domain model
-- Dashboard with decision-relevant metric cards
-- Audit logging for mutations
-- Neutral operations shell (plain Tailwind, no themed UI leakage)
-
-### Routes (AI-generated)
-
-| Path | Purpose |
-|---|---|
-| `/admin` | Dashboard - lists all models with record counts |
-| `/admin/[model]` | List view with all records |
-| `/admin/[model]/new` | Create form |
-| `/admin/[model]/[id]` | Edit/view form with delete |
-
-### How to enable
-
-The admin is not a scaffolded package. Ask your AI to build it:
-
-```
-"Build an admin dashboard for managing my models"
-```
-
-The AI reads the `admin-dashboard` skill and generates the admin routes, components, and server actions following Quark conventions.
 
 ---
 

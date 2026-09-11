@@ -16,6 +16,7 @@ function normalizeSqlStatements(sql) {
 	const withoutComments = sql
 		.split(/\r?\n/)
 		.filter((line) => !line.trim().startsWith("--"))
+		.filter((line) => !line.trim().startsWith("Loaded Prisma config"))
 		.join("\n");
 
 	return withoutComments

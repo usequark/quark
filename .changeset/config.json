@@ -8,7 +8,6 @@
 	"baseBranch": "main",
 	"updateInternalDependencies": "patch",
 	"ignore": [
-		"@techstream/quark-admin",
 		"@techstream/quark-config",
 		"@techstream/quark-web",
 		"@techstream/quark-worker",

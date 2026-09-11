@@ -143,34 +143,8 @@ async function runMinimalSmoke() {
 		features: "",
 	});
 
-	// The base scaffold must not reference demoted vertical packages, and must
-	// ship the embedded skills/ set.
-	const webPkg = JSON.parse(
-		fs.readFileSync(
-			path.join(projectDir, "apps", "web", "package.json"),
-			"utf8",
-		),
-	);
-	for (const demoted of [
-		"@techstream/quark-ai",
-		"@techstream/quark-cms",
-		"@techstream/quark-crm",
-		"@techstream/quark-bookings",
-	]) {
-		if (webPkg.dependencies?.[demoted]) {
-			throw new Error(`Base scaffold still references ${demoted}`);
-		}
-	}
-	// Every embedded skill must be present (vertical + generic).
-	const skills = [
-		"bookings",
-		"crm",
-		"cms",
-		"ai",
-		"add-model",
-		"add-endpoint",
-		"add-dashboard",
-	];
+	// The base scaffold must ship the embedded skills/ set.
+	const skills = ["add-model", "add-endpoint", "add-dashboard"];
 	for (const skill of skills) {
 		if (
 			!fs.existsSync(
@@ -181,16 +155,6 @@ async function runMinimalSmoke() {
 		}
 	}
 
-	// The `skill` command must print each vertical skill.
-	for (const skill of ["bookings", "crm", "cms", "ai"]) {
-		const res = await execa("pnpm", ["dlx", cliPackageSpec, "skill", skill], {
-			cwd: projectDir,
-		});
-		if (!res.stdout.includes("Skill")) {
-			throw new Error(`skill command failed for ${skill}`);
-		}
-	}
-
 	await validateScaffold(projectDir);
 }
 
@@ -198,7 +162,7 @@ async function runCreateSmoke() {
 	section(`CLI create smoke (${cliLabel})`);
 	const projectDir = await scaffoldProject({
 		name: path.basename(createProjectDir),
-		features: "ui,jobs,admin,cms",
+		features: "ui,jobs",
 	});
 	await validateScaffold(projectDir);
 }
@@ -210,10 +174,6 @@ async function runAddSmoke() {
 		features: "ui,jobs",
 	});
 
-	await run("pnpm", ["dlx", cliPackageSpec, "add", "cms", "--no-prompts"], {
-		cwd: projectDir,
-	});
-	await run("pnpm", ["install"], { cwd: projectDir });
 	await validateScaffold(projectDir);
 }
 

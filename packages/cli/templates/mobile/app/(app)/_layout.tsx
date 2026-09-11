@@ -1,10 +1,10 @@
+import { Ionicons } from "@expo/vector-icons";
 import { Redirect, Tabs } from "expo-router";
 import { Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
 import { AuthGate } from "../../components/AuthGate";
-import { useAuth } from "../../hooks/use-auth";
 import { useTheme } from "../../components/ThemeProvider";
+import { useAuth } from "../../hooks/use-auth";
 
 export default function AppLayout() {
 	const { isAuthenticated, isLoading } = useAuth();

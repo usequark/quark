@@ -2,8 +2,8 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, Pressable, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useThemeTokens } from "../../lib/theme-tokens";
 import { useAuth } from "../../hooks/use-auth";
+import { useThemeTokens } from "../../lib/theme-tokens";
 
 export default function SignInScreen() {
 	const router = useRouter();

@@ -1,8 +1,8 @@
 import { useRouter } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useThemeTokens } from "../../lib/theme-tokens";
 import { useAuth } from "../../hooks/use-auth";
+import { useThemeTokens } from "../../lib/theme-tokens";
 
 export default function SettingsScreen() {
 	const router = useRouter();

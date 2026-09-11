@@ -328,26 +328,6 @@ React components and UI primitives for your application. The full component libr
 
 ---
 
-#### Admin Dashboard (Skill-based)
-
-The admin is built on demand via the `admin-dashboard` embedded skill. No admin package is scaffolded — the AI generates the admin area when you request it.
-
-```bash
-# The admin is not a scaffolded package. Ask your AI to build it:
-# "Build an admin dashboard for managing my models"
-```
-
-**What the skill teaches the AI to build:**
-- Authenticated admin routes at `/admin` with role guards
-- List, create, edit, and delete screens for each domain model
-- Dashboard with decision-relevant metric cards
-- Audit logging for mutations
-- Neutral operations shell (plain Tailwind, no themed UI leakage)
-
-The admin reads your schema at runtime via Prisma DMMF, so it automatically reflects schema changes without any regeneration step.
-
----
-
 ## Dark Mode / Theme System
 
 Quark uses a **dark-mode-first** theme system. Every scaffolded project ships with full dark and light mode support, zero flash on load.

@@ -12,10 +12,10 @@
  * Requires: chokidar (already a devDependency via turbo)
  */
 
+import { execFile } from "node:child_process";
 import { watch } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
@@ -31,7 +31,6 @@ const WATCH_DIRS = [
 	"packages/config",
 	"packages/ui",
 	"packages/jobs",
-	"packages/admin",
 ];
 
 // Individual files to watch (from sync-templates.js SYNC_FILES)

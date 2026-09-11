@@ -80,7 +80,7 @@ The central identity model. Used by NextAuth for authentication and by the appli
 | `name` | `String?` | - | Display name |
 | `password` | `String?` | - | Bcrypt hash (12 rounds). Null for OAuth-only users |
 | `image` | `String?` | - | Avatar URL |
-| `role` | `String` | Default: `"viewer"` | RBAC role (`admin`, `editor`, `viewer`) |
+| `role` | `String` | Default: `"viewer"` | RBAC role (`admin`, `editor`, `viewer`). The `admin` role is an auth concept (highest privilege level) — unrelated to the removed `@techstream/quark-admin` package. |
 | `createdAt` | `DateTime` | Default: `now()` | - |
 | `updatedAt` | `DateTime` | `@updatedAt` | - |
 
