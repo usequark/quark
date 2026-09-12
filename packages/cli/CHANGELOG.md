@@ -1,5 +1,15 @@
 # @techstream/quark-create-app
 
+## 1.22.0
+
+### Minor Changes
+
+- [#131](https://github.com/Bobnoddle/quark/pull/131) [`10cf35d`](https://github.com/Bobnoddle/quark/commit/10cf35d87ea02c22210aee85b41b32df79cc549c) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Remove domain vertical models (CRM, CMS, AI, Booking, Admin) from default scaffold. Domain features are now taught via embedded skills and added on demand, keeping the initial scaffold lean. The Prisma schema trimming logic (`trimPrismaSchema`) and domain-specific template directories (`admin/`, `admin-routes/`, `skills/admin-dashboard/`, `skills/ai/`, `skills/bookings/`, `skills/cms/`, `skills/crm/`) are removed.
+
+### Patch Changes
+
+- [#130](https://github.com/Bobnoddle/quark/pull/130) [`b3d07b4`](https://github.com/Bobnoddle/quark/commit/b3d07b4133bea19da7693b43fab2cced1cfb85cb) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Apply optional chaining refactors and sync templates after Biome 2.5 upgrade
+
 ## 1.21.0
 
 ### Minor Changes

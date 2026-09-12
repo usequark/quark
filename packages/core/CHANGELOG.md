@@ -1,5 +1,11 @@
 # @techstream/quark-core
 
+## 2.4.3
+
+### Patch Changes
+
+- [#130](https://github.com/Bobnoddle/quark/pull/130) [`b3d07b4`](https://github.com/Bobnoddle/quark/commit/b3d07b4133bea19da7693b43fab2cced1cfb85cb) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Apply optional chaining refactors and sync templates after Biome 2.5 upgrade
+
 ## 2.4.2
 
 ### Patch Changes
