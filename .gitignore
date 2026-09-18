@@ -24,9 +24,17 @@ tmp-npm-smoke/
 **/dist
 
 # misc
-.DS_Store
+**/.DS_Store
 *.pem
+*.swp
+*.swo
+*~
 .quark-auto-clean.json
+
+# IDE
+.idea/
+.vscode/
+*.code-workspace
 
 # debug
 npm-debug.log*
@@ -42,6 +50,9 @@ yarn-error.log*
 
 # conductor (machine-local settings)
 .conductor/settings.local.toml
+
+# railway (project link - machine-specific)
+.railway/config.json
 
 # vercel
 **/.vercel

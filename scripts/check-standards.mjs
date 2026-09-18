@@ -29,6 +29,8 @@ const typeScriptAllowlist = [
 	/\/src\/generated\//,
 	/^apps\/mobile\//,
 	/^packages\/cli\/templates\/mobile\//,
+	/^packages\/cli\/templates\/.*\.railway\/railway\.ts$/,
+	/^\.railway\/railway\.ts$/,
 ];
 
 function normalizePath(filePath) {

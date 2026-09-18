@@ -53,4 +53,4 @@ await addJob(queue, JOB_NAMES.MY_TASK, { userId: "123" });
 | `src/index.js` | Worker entry point, queue registration |
 | `src/handlers/` | Job handler functions |
 | `src/lib/` | Shared utilities (tokens, Railway helpers) |
-| `railway.json` | Railway deployment config |
+| `railway.json` | Railway deployment config *(deprecated - use `.railway/railway.ts`)* |

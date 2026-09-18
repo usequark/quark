@@ -76,7 +76,7 @@ pnpm dev
 
 Quark's generated web app uses a Next.js standalone deploy path for container platforms. For Docker, Railway, and other self-hosted container deployments, the web process must bind `HOSTNAME=0.0.0.0` so it listens on the container interface instead of `localhost`.
 
-Scaffolded projects already include this in the generated web Dockerfile, `apps/web/railway.json`, and `.env.railway.example`. If a deploy starts but is unreachable externally, check `HOSTNAME` first and let the platform provide `PORT`.
+Scaffolded projects already include this in the generated web Dockerfile, `.railway/railway.ts`, and `.env.railway.example`. If a deploy starts but is unreachable externally, check `HOSTNAME` first and let the platform provide `PORT`.
 
 ---
 

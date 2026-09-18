@@ -47,6 +47,7 @@ const REQUIRED_WEB_RAILWAY_COMMANDS = {
 	buildCommand:
 		"pnpm install --frozen-lockfile && pnpm db:generate && pnpm --dir apps/web build:deploy",
 	startCommand: "HOSTNAME=0.0.0.0 pnpm --dir apps/web start:deploy",
+	preDeploy: "pnpm db:migrate:deploy",
 };
 const REQUIRED_WEB_DOCKERFILE_SNIPPETS = [
 	`FROM ${PINNED_NODE_BASE_IMAGE} AS builder`,
@@ -127,26 +128,29 @@ async function assertGeneratedDeployContract(projectPath) {
 		}
 	}
 
-	const railwayConfig = await fs.readJson(
-		path.join(projectPath, "apps/web/railway.json"),
+	const railwayConfig = await fs.readFile(
+		path.join(projectPath, ".railway/railway.ts"),
+		"utf8",
 	);
 
-	if (
-		railwayConfig.build?.buildCommand !==
-		REQUIRED_WEB_RAILWAY_COMMANDS.buildCommand
-	) {
+	if (!railwayConfig.includes(REQUIRED_WEB_RAILWAY_COMMANDS.buildCommand)) {
 		throw new Error(
-			`Generated web app has unexpected Railway build command: ${railwayConfig.build?.buildCommand ?? "missing"}`,
+			`Generated IaC file is missing expected Railway build command`,
 		);
 	}
 
-	if (
-		railwayConfig.deploy?.startCommand !==
-		REQUIRED_WEB_RAILWAY_COMMANDS.startCommand
-	) {
+	if (!railwayConfig.includes(REQUIRED_WEB_RAILWAY_COMMANDS.startCommand)) {
 		throw new Error(
-			`Generated web app has unexpected Railway start command: ${railwayConfig.deploy?.startCommand ?? "missing"}`,
+			`Generated IaC file is missing expected Railway start command`,
 		);
+	}
+
+	if (!railwayConfig.includes(REQUIRED_WEB_RAILWAY_COMMANDS.preDeploy)) {
+		throw new Error(`Generated IaC file is missing expected preDeploy command`);
+	}
+
+	if (!railwayConfig.includes("preserve()")) {
+		throw new Error(`Generated IaC file is missing preserve() for secrets`);
 	}
 
 	const webDockerfile = await fs.readFile(

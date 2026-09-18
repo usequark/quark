@@ -12,6 +12,7 @@ const webServiceContract = Object.freeze({
 	required: true,
 	relativeRootDir: "apps/web",
 	relativePackageJsonPath: "apps/web/package.json",
+	relativeIacPath: ".railway/railway.ts",
 	runtime: Object.freeze({
 		type: "node",
 		relativeEntrypoint: "apps/web/.next/standalone/apps/web/server.js",
@@ -25,6 +26,7 @@ const workerServiceContract = Object.freeze({
 	required: false,
 	relativeRootDir: "apps/worker",
 	relativePackageJsonPath: "apps/worker/package.json",
+	relativeIacPath: ".railway/railway.ts",
 	runtime: Object.freeze({
 		type: "node",
 		relativeEntrypoint: "apps/worker/src/index.js",
@@ -37,6 +39,7 @@ const opencodeServiceContract = Object.freeze({
 	required: false,
 	relativeRootDir: "apps/opencode",
 	relativePackageJsonPath: "apps/opencode/package.json",
+	relativeIacPath: ".railway/railway.ts",
 	runtime: Object.freeze({
 		type: "node",
 		relativeEntrypoint: "apps/opencode/Dockerfile",
