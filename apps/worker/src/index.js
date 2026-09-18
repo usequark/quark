@@ -166,6 +166,72 @@ export async function waitForRedis(
 	);
 }
 
+/**
+ * Waits for the database schema to be ready (migrations applied).
+ * Queries a known table to verify the schema exists, retrying on failure.
+ * This prevents the "Failed to persist job event" error when the worker
+ * starts before web service migrations finish.
+ *
+ * @param {Function} healthCheck - Async function that performs a DB query. Throws on failure.
+ * @param {Object} config
+ * @param {number} config.maxRetries - Maximum retry attempts (default: 30)
+ * @param {number} config.intervalMs - Delay between retries in ms (default: 2000)
+ * @returns {Promise<boolean>}
+ */
+export async function waitForDatabase(
+	healthCheck = async () => {
+		await prisma.$queryRaw`SELECT 1`;
+		return true;
+	},
+	config = {},
+) {
+	const {
+		maxRetries = parseInt(process.env.WORKER_DB_RETRIES || "30", 10),
+		intervalMs = parseInt(process.env.WORKER_DB_INTERVAL_MS || "2000", 10),
+	} = config;
+
+	const reportThrottledError = throttledError(logger, 5000);
+
+	for (let attempt = 1; attempt <= maxRetries; attempt++) {
+		try {
+			const isReady = await healthCheck();
+			if (isReady) {
+				logger.info(`Database schema ready (attempt ${attempt}/${maxRetries})`);
+				return true;
+			}
+		} catch (error) {
+			const message = (error.message || "") + (error.code || "");
+			const isSchemaError =
+				message.includes("relation") ||
+				message.includes("table") ||
+				message.includes("does not exist") ||
+				message.includes("P2021") ||
+				message.includes("P1000") ||
+				message.includes("Can't reach database");
+
+			if (isSchemaError || isConnectionError(error)) {
+				reportThrottledError(error);
+				if (attempt < maxRetries) {
+					await new Promise((resolve) => setTimeout(resolve, intervalMs));
+				}
+			} else {
+				// Non-schema error (e.g. query syntax) — fail immediately
+				throw new AppError(
+					`Database health check failed: ${error.message}`,
+					503,
+					"DATABASE_HEALTH_CHECK_FAILED",
+				);
+			}
+		}
+	}
+
+	throw new AppError(
+		`Database schema not ready after ${maxRetries} attempts. Ensure migrations have run.`,
+		503,
+		"DATABASE_SCHEMA_NOT_READY",
+	);
+}
+
 // ============================================================================
 // PREFLIGHT MODE
 // ============================================================================
@@ -315,6 +381,12 @@ async function startWorker() {
 		);
 
 		logger.info("Redis connected", { address: getRedisUrl() });
+
+		// Wait for database schema to be ready (migrations may still be running)
+		logger.info("Checking database schema readiness...");
+		await waitForDatabase(isDevMode ? { maxRetries: 5, intervalMs: 1000 } : {});
+		logger.info("Database schema ready");
+
 		// Register a worker for each queue
 		await Promise.all(
 			Object.values(JOB_QUEUES).map((queueName) =>

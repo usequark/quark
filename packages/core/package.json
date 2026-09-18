@@ -1,8 +1,19 @@
 {
 	"name": "@techstream/quark-core",
 	"version": "2.4.3",
+	"description": "Core utilities for Quark apps: auth, BullMQ queues, Redis, email, storage, rate limiting, logging, and error handling",
 	"type": "module",
 	"main": "src/index.js",
+	"homepage": "https://github.com/Bobnoddle/quark#readme",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Bobnoddle/quark.git",
+		"directory": "packages/core"
+	},
+	"bugs": {
+		"url": "https://github.com/Bobnoddle/quark/issues"
+	},
+	"author": "Quark Contributors",
 	"exports": {
 		".": "./src/index.js",
 		"./auth": "./src/auth/index.js",

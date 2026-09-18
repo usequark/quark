@@ -1,17 +1,18 @@
 import path from "node:path";
 import chalk from "chalk";
-import fs from "fs-extra";
 import { generateSecret, sleep } from "../utils.js";
 import {
+	applyIacConfig,
 	checkRailwayCLI,
 	checkRailwayLogin,
-	deleteService,
-	deployService,
 	ensurePlugin,
 	ensureRailwayProject,
-	ensureService,
+	escapeTsString,
+	generateIacFile,
+	getDeploymentStatus,
 	getExistingVariable,
 	getServiceUrl,
+	installRailwaySdk,
 	removeServiceDomain,
 	setProjectVariables,
 } from "./adapters/index.js";
@@ -45,19 +46,6 @@ async function healthCheckService(url) {
 		chalk.yellow(`  ⚠ Health check timed out: ${lastError} - verify manually`),
 	);
 	return false;
-}
-
-async function validateProject(cwd, discovery) {
-	const issues = [];
-	for (const service of discovery.services) {
-		const rjPath = path.join(cwd, service.relativeRootDir, "railway.json");
-		if (!fs.existsSync(rjPath)) {
-			issues.push(
-				`Service "${service.name}" missing railway.json at ${path.join(service.relativeRootDir, "railway.json")}`,
-			);
-		}
-	}
-	return issues;
 }
 
 export async function deployToRailway(options = {}) {
@@ -109,17 +97,6 @@ export async function deployToRailway(options = {}) {
 		),
 	);
 
-	// --- Step 3b: Pre-deploy validation ---
-	const issues = await validateProject(cwd, discovery);
-	if (issues.length > 0) {
-		for (const issue of issues) {
-			console.error(chalk.red(`  ✖ ${issue}`));
-		}
-		throw new Error(
-			"Pre-deploy validation failed - missing railway.json files",
-		);
-	}
-
 	// --- Step 4: Ensure Railway project ---
 	console.log(chalk.cyan("  Ensuring Railway project..."));
 	try {
@@ -163,170 +140,137 @@ export async function deployToRailway(options = {}) {
 		}
 	}
 
-	// --- Step 6: Set required project-level variables (preserve existing secrets) ---
+	// --- Step 6: Preserve existing secrets across deploys ---
 	const projectLabel = path.basename(cwd);
 	let authSecret;
 	let nextAuthSecret;
 
-	// --- Step 7: Generate multi-service railway.json ---
-	const rootRailwayJson = path.join(cwd, "railway.json");
-	const hadExistingRootRailway = fs.existsSync(rootRailwayJson);
-	const servicesConfig = [];
+	if (discovery.services.length > 0) {
+		const firstSvc = discovery.services[0];
 
-	for (const service of discovery.services) {
-		const rjPath = path.join(cwd, service.relativeRootDir, "railway.json");
-		if (fs.existsSync(rjPath)) {
-			const raw = fs.readJsonSync(rjPath);
-			const { $schema, ...config } = raw;
-			servicesConfig.push({
-				name: service.name,
-				rootDir: service.relativeRootDir,
-				...config,
-			});
-		}
+		const existingAuthSecret = await getExistingVariable("AUTH_SECRET", {
+			cwd,
+			environment,
+			serviceName: firstSvc.name,
+		});
+		authSecret = existingAuthSecret || generateSecret();
+
+		const existingNextAuthSecret = await getExistingVariable(
+			"NEXTAUTH_SECRET",
+			{
+				cwd,
+				environment,
+				serviceName: firstSvc.name,
+			},
+		);
+		nextAuthSecret = existingNextAuthSecret || generateSecret();
 	}
 
-	if (servicesConfig.length > 0 && !hadExistingRootRailway) {
-		await fs.writeJson(
-			rootRailwayJson,
-			{
-				$schema: "https://railway.com/railway.schema.json",
-				services: servicesConfig,
+	// --- Step 7: Generate IaC file (.railway/railway.ts) ---
+	console.log(chalk.cyan("  Generating IaC configuration..."));
+	const iacPath = `${cwd}/.railway/railway.ts`;
+
+	await generateIacFile({
+		iacPath,
+		services: discovery.services,
+		// Pass raw name — generateIacFile handles escaping internally
+		projectName: projectName || projectLabel,
+		variableRefs: {
+			DATABASE_URL: `\${{${pgServiceName}.DATABASE_URL}}`,
+			REDIS_URL: `\${{${redisServiceName}.REDIS_URL}}`,
+			NODE_ENV: '"production"',
+			APP_NAME: `"${escapeTsString(projectLabel)}"`,
+			APP_DESCRIPTION: `"${escapeTsString(`${projectLabel} - Quark application`)}"`,
+		},
+		secrets: {
+			AUTH_SECRET: "preserve()",
+			NEXTAUTH_SECRET: "preserve()",
+		},
+		serviceVars: {
+			worker: {
+				WORKER_CONCURRENCY: '"5"',
 			},
-			{ spaces: 2 },
+			web: {
+				AUTH_ALLOW_SIGNUP: '"false"',
+				HOSTNAME: '"0.0.0.0"',
+				STORAGE_PROVIDER: '"local"',
+			},
+		},
+	});
+	console.log(chalk.green(`  ✔ IaC file generated at .railway/railway.ts`));
+
+	// --- Step 8: Install Railway SDK (required for IaC evaluation) ---
+	console.log(chalk.cyan("  Installing Railway SDK..."));
+	try {
+		await installRailwaySdk({ cwd });
+		console.log(chalk.green("  ✔ Railway SDK installed"));
+	} catch (error) {
+		// SDK is mandatory — railway config apply cannot evaluate .railway/railway.ts without it
+		console.error(
+			chalk.red(`  ✖ Failed to install Railway SDK: ${error.message}`),
+		);
+		throw new Error(
+			`Railway SDK installation failed. The generated IaC file requires the "railway" package.\n` +
+				`Install it manually: pnpm add -D railway\n` +
+				`Original error: ${error.message}`,
 		);
 	}
 
-	// --- Step 8: Deploy each service ---
-	const results = [];
-	const createdServices = [];
+	// --- Step 9: Set dynamic variable references (infrastructure wiring) ---
+	// These values cannot be represented in IaC: Railway reference strings
+	// like ${{Postgres.DATABASE_URL}} resolve at runtime, and secrets use
+	// preserve() to keep existing Railway-managed values.
+	//
+	// Variables are set BEFORE IaC apply because:
+	// - setProjectVariables uses --skip-deploys (no redundant redeploy)
+	// - IaC apply then triggers a single deployment with all variables in place
+	// - Status check after apply sees the correct deployment
 	let anyVarFailed = false;
 
-	try {
-		for (const [index, service] of discovery.services.entries()) {
-			const svc = await ensureService(service.name, { cwd });
-			if (svc.created) {
-				createdServices.push(service.name);
-			}
+	for (const service of discovery.services) {
+		const sharedVars = [
+			{ key: "DATABASE_URL", value: `\${{${pgServiceName}.DATABASE_URL}}` },
+			{ key: "REDIS_URL", value: `\${{${redisServiceName}.REDIS_URL}}` },
+			{ key: "APP_NAME", value: projectLabel },
+			{
+				key: "APP_DESCRIPTION",
+				value: `${projectLabel} - Quark application`,
+			},
+			{ key: "NODE_ENV", value: "production" },
+			{ key: "AUTH_SECRET", value: authSecret },
+			{ key: "NEXTAUTH_SECRET", value: nextAuthSecret },
+			{ key: "STORAGE_PROVIDER", value: "local" },
+		];
 
-			// Preserve secrets across deploys (check first service, reuse for all)
-			if (index === 0) {
-				const existingAuthSecret = await getExistingVariable("AUTH_SECRET", {
-					cwd,
-					environment,
-					serviceName: service.name,
-				});
-				authSecret = existingAuthSecret || generateSecret();
+		const webVars = [
+			...sharedVars,
+			{ key: "AUTH_ALLOW_SIGNUP", value: "false" },
+			{ key: "HOSTNAME", value: "0.0.0.0" },
+		];
 
-				const existingNextAuthSecret = await getExistingVariable(
-					"NEXTAUTH_SECRET",
-					{
-						cwd,
-						environment,
-						serviceName: service.name,
-					},
-				);
-				nextAuthSecret = existingNextAuthSecret || generateSecret();
-			}
+		const workerVars = [
+			...sharedVars,
+			{ key: "WORKER_CONCURRENCY", value: "5" },
+		];
 
-			// Set variables for this service in a single API call per service
-			const sharedVars = [
-				{ key: "DATABASE_URL", value: `\${{${pgServiceName}.DATABASE_URL}}` },
-				{ key: "REDIS_URL", value: `\${{${redisServiceName}.REDIS_URL}}` },
-				{ key: "APP_NAME", value: projectLabel },
-				{
-					key: "APP_DESCRIPTION",
-					value: `${projectLabel} - Quark application`,
-				},
-				{ key: "NODE_ENV", value: "production" },
-				{ key: "AUTH_SECRET", value: authSecret },
-				{ key: "NEXTAUTH_SECRET", value: nextAuthSecret },
-				{ key: "STORAGE_PROVIDER", value: "local" },
-			];
+		const serviceVars = service.kind === "worker" ? workerVars : webVars;
 
-			const webVars = [
-				...sharedVars,
-				{ key: "AUTH_ALLOW_SIGNUP", value: "false" },
-				{ key: "HOSTNAME", value: "0.0.0.0" },
-			];
-
-			const workerVars = [
-				...sharedVars,
-				{ key: "WORKER_CONCURRENCY", value: "5" },
-			];
-
-			const serviceVars = service.kind === "worker" ? workerVars : webVars;
-
-			try {
-				const ok = await setProjectVariables(serviceVars, {
-					cwd,
-					environment,
-					serviceName: service.name,
-				});
-				if (!ok) {
-					anyVarFailed = true;
-				}
-			} catch (error) {
-				console.error(
-					chalk.yellow(
-						`  ⚠ Could not set variables for "${service.name}": ${error.message}`,
-					),
-				);
+		try {
+			const ok = await setProjectVariables(serviceVars, {
+				cwd,
+				environment,
+				serviceName: service.name,
+			});
+			if (!ok) {
 				anyVarFailed = true;
 			}
-
-			try {
-				await deployService(service.name, { cwd, environment });
-				const url = await getServiceUrl(service.name, { cwd });
-				results.push({
-					kind: service.kind,
-					name: service.name,
-					success: true,
-					url: service.kind === "worker" ? null : url,
-				});
-				console.log(chalk.green(`  ✔ ${service.name} deployed`));
-				if (service.kind !== "worker" && url) {
-					console.log(chalk.white(`    → ${url}`));
-				}
-
-				// Post-deploy health check for web service
-				if (service.kind === "web" && url) {
-					await healthCheckService(url);
-				}
-
-				// Remove default Railway domain for worker (unused)
-				if (service.kind === "worker") {
-					const removed = await removeServiceDomain(service.name, { cwd });
-					if (removed) {
-						console.log(chalk.dim(`  · Worker domain removed`));
-					}
-				}
-			} catch (error) {
-				console.error(chalk.red(`  ✖ ${error.message}`));
-				results.push({
-					kind: service.kind,
-					name: service.name,
-					success: false,
-					url: null,
-				});
-
-				if (createdServices.includes(service.name)) {
-					try {
-						await deleteService(service.name, { cwd });
-						console.log(chalk.dim(`  · Rolled back service "${service.name}"`));
-					} catch {
-						// Best-effort cleanup
-					}
-				}
-			}
-		}
-	} finally {
-		if (!hadExistingRootRailway && servicesConfig.length > 0) {
-			try {
-				await fs.unlink(rootRailwayJson);
-			} catch {
-				// Best-effort cleanup
-			}
+		} catch (error) {
+			console.error(
+				chalk.yellow(
+					`  ⚠ Could not set variables for "${service.name}": ${error.message}`,
+				),
+			);
+			anyVarFailed = true;
 		}
 	}
 
@@ -334,64 +278,153 @@ export async function deployToRailway(options = {}) {
 		console.log(chalk.green("  ✔ Required variables set"));
 	}
 
-	// --- Step 9: Summary ---
-	const allSucceeded = results.every((r) => r.success);
+	// --- Step 10: Apply IaC configuration ---
+	// Apply AFTER variables are set so the resulting deployment uses all
+	// configured values. The status check below sees this deployment.
+	console.log(chalk.cyan("  Applying IaC configuration..."));
+	const applyResult = await applyIacConfig({ cwd });
+
+	if (!applyResult.success) {
+		console.error(chalk.red(`  ✖ IaC apply failed: ${applyResult.output}`));
+		throw new Error(`IaC apply failed: ${applyResult.output}`);
+	}
+	console.log(chalk.green("  ✔ IaC configuration applied"));
+
+	// --- Step 11: Verify deployment status after IaC apply ---
+	// railway config apply triggers builds but may not wait for them to complete.
+	// Poll deployment status to verify the apply actually resulted in a healthy deploy.
+	const results = [];
+
+	for (const service of discovery.services) {
+		if (service.kind === "web") {
+			// Check deployment status
+			const { status } = await getDeploymentStatus(service.name, {
+				cwd,
+				environment,
+			});
+
+			if (status === "CRASHED" || status === "FAILED") {
+				console.error(
+					chalk.red(
+						`  ✖ ${service.name} deployment failed (status: ${status})`,
+					),
+				);
+				results.push({
+					kind: service.kind,
+					name: service.name,
+					success: false,
+					healthy: false,
+					url: null,
+				});
+				continue;
+			}
+
+			// Deployment is building/deploying or succeeded — check health
+			const url = await getServiceUrl(service.name, { cwd });
+			if (url) {
+				console.log(chalk.cyan(`  Checking ${service.name} health...`));
+				const healthy = await healthCheckService(url);
+				results.push({
+					kind: service.kind,
+					name: service.name,
+					success: true,
+					healthy,
+					url,
+				});
+			} else {
+				results.push({
+					kind: service.kind,
+					name: service.name,
+					success: status === "SUCCESS" || status === "HEALTHY",
+					healthy: false,
+					url: null,
+				});
+			}
+		} else {
+			// Worker: verify deployment didn't crash
+			const { status } = await getDeploymentStatus(service.name, {
+				cwd,
+				environment,
+			});
+
+			const deployed = status !== "CRASHED" && status !== "FAILED";
+
+			// Remove default Railway domain for worker (unused)
+			if (deployed) {
+				const removed = await removeServiceDomain(service.name, { cwd });
+				if (removed) {
+					console.log(chalk.dim(`  · Worker domain removed`));
+				}
+			}
+
+			results.push({
+				kind: service.kind,
+				name: service.name,
+				success: deployed,
+				healthy: deployed,
+				url: null,
+			});
+		}
+	}
+
+	// --- Step 12: Summary ---
+	const allDeployed = results.every((r) => r.success);
+	const allHealthy = results.every((r) => r.healthy !== false);
 
 	console.log(chalk.blue.bold("\n📋 Deploy Summary\n"));
 	for (const result of results) {
 		const icon = result.success ? chalk.green("✔") : chalk.red("✖");
+		const healthIcon =
+			result.healthy === false ? chalk.yellow(" ⚠ unhealthy") : "";
 		const url = result.url ? chalk.white(` → ${result.url}`) : "";
-		console.log(`  ${icon} ${result.name}${url}`);
+		console.log(`  ${icon} ${result.name}${url}${healthIcon}`);
 	}
 
-	if (allSucceeded) {
+	if (allDeployed && allHealthy) {
 		console.log(chalk.green.bold("\n✅ Deploy complete!\n"));
+	} else if (allDeployed && !allHealthy) {
+		console.log(
+			chalk.yellow.bold("\n⚠ Deploy complete but health check failed!\n"),
+		);
+		console.log(
+			chalk.yellow(
+				"  The service was deployed but did not become healthy within the timeout.",
+			),
+		);
+		console.log(
+			chalk.yellow("  Check Railway logs: `railway logs --service web`"),
+		);
+		console.log("");
+	} else {
+		console.log(chalk.red.bold("\n❌ Deploy failed - see errors above\n"));
+	}
 
-		if (anyVarFailed) {
-			console.log(
-				chalk.yellow("  ⚠ Some environment variables could not be set."),
-			);
-			console.log(
-				chalk.yellow("     Your services may not work correctly without them."),
-			);
-			console.log(
-				chalk.yellow(
-					"     Run `railway variable set KEY=VALUE --service <name>` to fix.\n",
-				),
-			);
-		}
+	if (anyVarFailed) {
+		console.log(
+			chalk.yellow("  ⚠ Some environment variables could not be set."),
+		);
+		console.log(
+			chalk.yellow("     Your services may not work correctly without them."),
+		);
+		console.log(
+			chalk.yellow(
+				"     Run `railway variable set KEY=VALUE --service <name>` to fix.\n",
+			),
+		);
+	}
 
+	if (allDeployed) {
 		console.log(chalk.cyan("Next steps:"));
 		console.log(
 			chalk.white("  1. Configure custom domains in your Railway dashboard"),
 		);
 		console.log(chalk.white(""));
-		console.log(chalk.white("  2. Connect GitHub for auto-deploys on push:"));
-		console.log(
-			chalk.dim(
-				"     Railway dashboard → Project Settings → Git Integration → Connect repo",
-			),
-		);
-		console.log(
-			chalk.dim(
-				"     Then set per-service config (Root Directory: /, Config as Code Path below):",
-			),
-		);
-		for (const result of results) {
-			if (result.success) {
-				const configPath = `apps/${result.name === "worker" ? "worker" : result.name}/railway.json`;
-				console.log(chalk.dim(`       ${result.name.padEnd(8)} ${configPath}`));
-			}
-		}
-		console.log(chalk.white(""));
 		console.log(
 			chalk.white(
-				"  3. Run `quark deploy status` to check deployment status\n",
+				"  2. Run `quark deploy status` to check deployment status\n",
 			),
 		);
-	} else {
-		console.log(chalk.red.bold("\n❌ Deploy failed - see errors above\n"));
 	}
 
-	return { success: allSucceeded, services: results };
+	return { success: allDeployed, healthy: allHealthy, services: results };
 }

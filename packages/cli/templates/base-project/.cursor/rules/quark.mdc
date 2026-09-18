@@ -169,4 +169,4 @@ New env vars must be registered in `packages/config/src/validate-env.js` before 
 
 ## Deployment
 
-Railway: two services (`web` + `worker`). Migrations auto-run on deploy via `releaseCommand` in `apps/web/railway.json`. Env vars managed in Railway dashboard - never committed.
+Railway: two services (`web` + `worker`). Migrations auto-run on deploy via `preDeploy` in `.railway/railway.ts`. Env vars managed in Railway dashboard - never committed.

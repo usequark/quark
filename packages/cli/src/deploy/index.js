@@ -1,4 +1,5 @@
 export {
+	applyIacConfig,
 	checkRailwayCLI,
 	checkRailwayLogin,
 	deleteService,
@@ -6,8 +7,12 @@ export {
 	ensurePlugin,
 	ensureRailwayProject,
 	ensureService,
+	escapeTsString,
+	generateIacFile,
+	getDeploymentStatus,
 	getExistingVariable,
 	getServiceUrl,
+	installRailwaySdk,
 	isProjectLinked,
 	listProjects,
 	RAILWAY,

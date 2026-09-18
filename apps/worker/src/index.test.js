@@ -10,6 +10,7 @@ import {
 	getJobHandlerOrThrow,
 	isConnectionError,
 	throttledError,
+	waitForDatabase,
 	waitForRedis,
 	waitForWorkerReady,
 } from "./index.js";
@@ -577,6 +578,116 @@ describe("waitForRedis", () => {
 			process.env.WORKER_HEALTH_RETRIES = originalRetries;
 			process.env.WORKER_HEALTH_INTERVAL_MS = originalInterval;
 		}
+	});
+});
+
+// ---------------------------------------------------------------------------
+// waitForDatabase
+// ---------------------------------------------------------------------------
+
+describe("waitForDatabase", () => {
+	test("returns true when database is ready immediately", async () => {
+		const healthCheck = mock.fn(async () => true);
+		const result = await waitForDatabase(healthCheck, {
+			maxRetries: 3,
+			intervalMs: 10,
+		});
+
+		assert.strictEqual(result, true);
+		assert.strictEqual(healthCheck.mock.callCount(), 1);
+	});
+
+	test("retries and succeeds when schema becomes available", async () => {
+		let attempts = 0;
+		const healthCheck = mock.fn(async () => {
+			attempts++;
+			if (attempts < 3) {
+				const err = new Error('relation "Job" does not exist');
+				err.code = "P2021";
+				throw err;
+			}
+			return true;
+		});
+
+		const result = await waitForDatabase(healthCheck, {
+			maxRetries: 5,
+			intervalMs: 10,
+		});
+
+		assert.strictEqual(result, true);
+		assert.strictEqual(healthCheck.mock.callCount(), 3);
+	});
+
+	test("fails after max retries exhausted", async () => {
+		const healthCheck = mock.fn(async () => {
+			const err = new Error('relation "Job" does not exist');
+			err.code = "P2021";
+			throw err;
+		});
+
+		await assert.rejects(
+			() =>
+				waitForDatabase(healthCheck, {
+					maxRetries: 2,
+					intervalMs: 10,
+				}),
+			(error) => {
+				assert.ok(error instanceof AppError);
+				assert.strictEqual(error.code, "DATABASE_SCHEMA_NOT_READY");
+				assert.match(
+					error.message,
+					/Database schema not ready after 2 attempts/,
+				);
+				return true;
+			},
+		);
+
+		assert.strictEqual(healthCheck.mock.callCount(), 2);
+	});
+
+	test("stops retrying on non-schema errors", async () => {
+		const healthCheck = mock.fn(async () => {
+			throw new Error("Invalid SQL syntax");
+		});
+
+		await assert.rejects(
+			() =>
+				waitForDatabase(healthCheck, {
+					maxRetries: 5,
+					intervalMs: 10,
+				}),
+			(error) => {
+				assert.ok(error instanceof AppError);
+				assert.strictEqual(error.code, "DATABASE_HEALTH_CHECK_FAILED");
+				assert.strictEqual(
+					error.message,
+					"Database health check failed: Invalid SQL syntax",
+				);
+				return true;
+			},
+		);
+
+		// Should fail immediately, not retry 5 times
+		assert.strictEqual(healthCheck.mock.callCount(), 1);
+	});
+
+	test("retries on connection errors", async () => {
+		let attempts = 0;
+		const healthCheck = mock.fn(async () => {
+			attempts++;
+			if (attempts < 3) {
+				throw new Error("ECONNREFUSED 127.0.0.1:5432");
+			}
+			return true;
+		});
+
+		const result = await waitForDatabase(healthCheck, {
+			maxRetries: 5,
+			intervalMs: 10,
+		});
+
+		assert.strictEqual(result, true);
+		assert.strictEqual(healthCheck.mock.callCount(), 3);
 	});
 });
 

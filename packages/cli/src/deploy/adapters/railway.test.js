@@ -103,6 +103,88 @@ test("DIAGNOSTIC_CODES are frozen", async () => {
 	});
 });
 
+// --- IaC adapter tests ---
+
+test("generateIacFile creates .railway/railway.ts with preserve() for secrets", async () => {
+	const { generateIacFile } = await import("./iac.js");
+	const tmpDir = await makeTempDir();
+	const iacPath = path.join(tmpDir, ".railway", "railway.ts");
+
+	await generateIacFile({
+		iacPath,
+		services: [
+			{ name: "web", kind: "web", relativeRootDir: "apps/web" },
+			{ name: "worker", kind: "worker", relativeRootDir: "apps/worker" },
+		],
+		secrets: {
+			AUTH_SECRET: "preserve()",
+			NEXTAUTH_SECRET: "preserve()",
+		},
+		variableRefs: {
+			DATABASE_URL: "${{Postgres.DATABASE_URL}}",
+			REDIS_URL: "${{Redis.REDIS_URL}}",
+		},
+		serviceVars: {
+			worker: { WORKER_CONCURRENCY: '"5"' },
+		},
+		projectName: "test-project",
+	});
+
+	const content = await fs.readFile(iacPath, "utf8");
+	assert.ok(content.includes("import { defineRailway"));
+	assert.ok(content.includes('service("web"'));
+	assert.ok(content.includes('service("worker"'));
+	assert.ok(content.includes("preserve()"));
+	assert.ok(content.includes("${{Postgres.DATABASE_URL}}"));
+	assert.ok(content.includes("${{Redis.REDIS_URL}}"));
+	assert.ok(content.includes("pnpm db:migrate:deploy"));
+	assert.ok(content.includes("/api/health"));
+	assert.ok(content.includes("WORKER_CONCURRENCY"));
+	assert.ok(content.includes('"test-project"'));
+	// Must NOT contain github() source — CLI deploys manage settings, not sources
+	assert.ok(
+		!content.includes("github("),
+		"Generated IaC must not reference github()",
+	);
+	assert.ok(
+		!content.includes("source:"),
+		"Generated IaC must not include source field",
+	);
+});
+
+test("escapeTsString escapes dangerous characters", async () => {
+	const { escapeTsString } = await import("./iac.js");
+
+	assert.strictEqual(escapeTsString('hello"world'), 'hello\\"world');
+	assert.strictEqual(escapeTsString("back\\slash"), "back\\\\slash");
+	assert.strictEqual(escapeTsString("line\nbreak"), "line\\nbreak");
+	assert.strictEqual(escapeTsString("dollar${}"), "dollar\\${}");
+	assert.strictEqual(escapeTsString("cr\rreturn"), "cr\\rreturn");
+	assert.strictEqual(escapeTsString("safe-value"), "safe-value");
+});
+
+test("generateIacFile escapes service names with special chars", async () => {
+	const { generateIacFile } = await import("./iac.js");
+	const tmpDir = await makeTempDir();
+	const iacPath = path.join(tmpDir, ".railway", "railway.ts");
+
+	await generateIacFile({
+		iacPath,
+		services: [
+			{ name: 'my "web" app', kind: "web", relativeRootDir: "apps/web" },
+		],
+		projectName: 'project "name"',
+	});
+
+	const content = await fs.readFile(iacPath, "utf8");
+	// Variable name uses sanitized identifier (underscores, not escaped quotes)
+	assert.ok(content.includes('const my_web_app = service("my \\"web\\" app"'));
+	// Project name is escaped in string, not double-escaped
+	assert.ok(content.includes('project("project \\"name\\""'));
+	// Resources list uses identifiers
+	assert.ok(content.includes("resources: [my_web_app]"));
+});
+
 // --- Environment flag forwarding tests ---
 // These use a mock railway CLI on PATH to verify --environment is
 // forwarded to execa for each function that supports it.

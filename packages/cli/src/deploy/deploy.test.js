@@ -54,6 +54,11 @@ test("adapters index exports all expected functions", async () => {
 		"tryLinkProject",
 		"RailwayError",
 		"RAILWAY_DIAGNOSTIC_CODES",
+		"generateIacFile",
+		"applyIacConfig",
+		"installRailwaySdk",
+		"escapeTsString",
+		"getDeploymentStatus",
 	];
 	for (const name of expectedExports) {
 		assert.ok(name in mod, `Expected export "${name}" to exist`);
@@ -88,6 +93,11 @@ test("deploy index exports all expected functions", async () => {
 		"tryLinkProject",
 		"RailwayError",
 		"RAILWAY_DIAGNOSTIC_CODES",
+		"generateIacFile",
+		"applyIacConfig",
+		"installRailwaySdk",
+		"escapeTsString",
+		"getDeploymentStatus",
 	];
 	for (const name of expectedExports) {
 		assert.ok(name in mod, `Expected export "${name}" to exist`);

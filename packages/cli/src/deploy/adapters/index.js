@@ -1,4 +1,11 @@
 export {
+	applyIacConfig,
+	escapeTsString,
+	generateIacFile,
+	getDeploymentStatus,
+	installRailwaySdk,
+} from "./iac.js";
+export {
 	checkRailwayCLI,
 	checkRailwayLogin,
 	DIAGNOSTIC_CODES as RAILWAY_DIAGNOSTIC_CODES,

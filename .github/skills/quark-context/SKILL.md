@@ -241,7 +241,7 @@ Run via `pnpm db:seed`, configured in `prisma.config.js` as `tsx prisma/seed.js`
 
 Both profiles are idempotent (safe to re-run). Staging full wipe: `prisma migrate reset --force` (calls seed automatically).
 
-**Migrations on deploy** are automated via `releaseCommand` in `apps/web/railway.json`: `prisma migrate deploy` runs before traffic switches on every Railway deploy.
+**Migrations on deploy** are automated via `preDeploy` in `.railway/railway.ts`: `prisma migrate deploy` runs before traffic switches on every Railway deploy.
 
 ## Key Commands
 
