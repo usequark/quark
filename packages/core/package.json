@@ -16,11 +16,20 @@
 	"author": "Quark Contributors",
 	"exports": {
 		".": "./src/index.js",
+		"./core": "./src/core.js",
+		"./admin": "./src/admin.js",
 		"./auth": "./src/auth/index.js",
+		"./auth/middleware": "./src/auth/middleware.js",
+		"./db": "./src/db.js",
+		"./email": "./src/email.js",
 		"./errors": "./src/errors.js",
-		"./logger": "./src/logger.js",
-		"./storage": "./src/storage.js",
 		"./locale": "./src/locale.js",
+		"./logger": "./src/logger.js",
+		"./metrics": "./src/metrics.js",
+		"./queue": "./src/queue/index.js",
+		"./sms": "./src/sms.js",
+		"./storage": "./src/storage.js",
+		"./storage/s3": "./src/storage-s3.js",
 		"./stripe": "./src/stripe.js",
 		"./testing": "./src/testing/index.js"
 	},
@@ -35,6 +44,7 @@
 	"peerDependencies": {
 		"@aws-sdk/client-s3": "^3.1004.0",
 		"@aws-sdk/s3-request-presigner": "^3.1004.0",
+		"pg": "^8.20.0",
 		"stripe": "^17.0.0"
 	},
 	"peerDependenciesMeta": {
@@ -42,6 +52,9 @@
 			"optional": true
 		},
 		"@aws-sdk/s3-request-presigner": {
+			"optional": true
+		},
+		"pg": {
 			"optional": true
 		},
 		"stripe": {
