@@ -24,10 +24,10 @@
 	"license": "ISC",
 	"packageManager": "pnpm@10.12.1",
 	"devDependencies": {
-		"@faker-js/faker": "^10.3.0",
+		"@faker-js/faker": "^10.6.0",
 		"@techstream/quark-config": "workspace:*",
 		"bcryptjs": "^3.0.3",
-		"prisma": "^7.8.0"
+		"prisma": "^7.10.0"
 	},
 	"dependencies": {
 		"@prisma/adapter-pg": "^7.8.0",
