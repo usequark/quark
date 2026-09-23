@@ -1,11 +1,13 @@
 import assert from "node:assert";
-import { mkdtemp, rm } from "node:fs/promises";
+import { copyFile, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Readable } from "node:stream";
 import { test } from "node:test";
+import { pathToFileURL } from "node:url";
 import {
 	createLocalStorage,
+	createS3Storage,
 	createStorage,
 	generateStorageKey,
 	getAssetUrl,
@@ -377,4 +379,72 @@ test("getSignedUploadUrl - S3 adapter exposes the method as a function", () => {
 		secretAccessKey: "secret",
 	});
 	assert.strictEqual(typeof storage.getSignedUploadUrl, "function");
+});
+
+// ---------------------------------------------------------------------------
+// S3 re-export from storage.js
+// ---------------------------------------------------------------------------
+
+test("Storage - createS3Storage is re-exported from storage.js", () => {
+	assert.strictEqual(typeof createS3Storage, "function");
+	const storage = createS3Storage({
+		bucket: "test-bucket",
+		accessKeyId: "key",
+		secretAccessKey: "secret",
+	});
+	assert.strictEqual(storage.provider, "s3");
+});
+
+// ---------------------------------------------------------------------------
+// Optional peer dependencies (AWS SDK)
+// ---------------------------------------------------------------------------
+
+// Copy the storage modules to a directory with no node_modules so the AWS SDK
+// is unresolvable, then prove that importing storage.js still works and that
+// the missing SDK only surfaces — with a helpful message — when an S3 method
+// is actually called.
+test("Storage - imports and runs local storage without the AWS SDK installed", async () => {
+	const dir = await mkdtemp(join(tmpdir(), "quark-storage-"));
+	try {
+		await copyFile(
+			new URL("./storage.js", import.meta.url),
+			join(dir, "storage.js"),
+		);
+		await copyFile(
+			new URL("./storage-s3.js", import.meta.url),
+			join(dir, "storage-s3.js"),
+		);
+
+		const isolated = await import(pathToFileURL(join(dir, "storage.js")).href);
+
+		const local = isolated.createLocalStorage({
+			directory: join(dir, "files"),
+		});
+		await local.put("hello.txt", "hi");
+		const { body } = await local.get("hello.txt");
+		assert.strictEqual(body.toString(), "hi");
+
+		const s3 = isolated.createS3Storage({
+			bucket: "test-bucket",
+			accessKeyId: "key",
+			secretAccessKey: "secret",
+		});
+		assert.strictEqual(s3.provider, "s3");
+		assert.strictEqual(
+			s3.getPublicUrl("a/b.png"),
+			"/api/files/a%2Fb.png",
+			"getPublicUrl must not require the SDK",
+		);
+
+		await assert.rejects(
+			() => s3.get("missing.png"),
+			/requires installing "@aws-sdk\/client-s3"/,
+		);
+		await assert.rejects(
+			() => s3.getSignedUploadUrl("upload.png"),
+			/requires installing "@aws-sdk\/client-s3"/,
+		);
+	} finally {
+		await rm(dir, { recursive: true, force: true });
+	}
 });

@@ -1,5 +1,7 @@
 // Authorization exports
 
+// Admin exports
+export * from "./admin.js";
 // Admin auth exports
 export * from "./admin-auth.js";
 // Auth exports
@@ -9,6 +11,8 @@ export * from "./authorization.js";
 export * from "./cache.js";
 // CSRF protection exports
 export * from "./csrf.js";
+// Database exports
+export * from "./db.js";
 // Database instrumentation exports
 export * from "./db-instrumentation.js";
 // Email service exports

@@ -264,6 +264,9 @@ importers:
       nodemailer:
         specifier: ^9.1.0
         version: 9.1.1
+      pg:
+        specifier: ^8.20.0
+        version: 8.20.0
       stripe:
         specifier: ^17.0.0
         version: 17.7.0

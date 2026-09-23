@@ -6,6 +6,7 @@
 import { UnauthorizedError } from "../errors.js";
 import { createLogger } from "../logger.js";
 
+export * from "./middleware.js";
 export * from "./password.js";
 
 const logger = createLogger({ name: "auth" });
