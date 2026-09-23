@@ -1,5 +1,11 @@
 # @techstream/quark-create-app
 
+## 1.23.0
+
+### Minor Changes
+
+- [#139](https://github.com/Bobnoddle/quark/pull/139) [`540d075`](https://github.com/Bobnoddle/quark/commit/540d07554d23ef9318346074dac5c756e4501123) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Migrate deploy CLI from deprecated railway.json Config as Code to Railway Infrastructure as Code (.railway/railway.ts). Adds railway config apply flow, IaC string escaping, deployment status verification, worker DB readiness checks, and public readiness files (LICENSE, CONTRIBUTING, CODE_OF_CONDUCT).
+
 ## 1.22.0
 
 ### Minor Changes
