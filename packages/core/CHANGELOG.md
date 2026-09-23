@@ -1,5 +1,11 @@
 # @techstream/quark-core
 
+## 2.5.0
+
+### Minor Changes
+
+- [#143](https://github.com/Bobnoddle/quark/pull/143) [`67cfc3b`](https://github.com/Bobnoddle/quark/commit/67cfc3bb636e5d76cafd603833b5bf1d6e54bce5) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add `admin`, `auth/middleware`, `core`, `db`, `email`, `metrics`, `queue`, `sms`, and `storage/s3` subpath exports. The S3 adapter now lives in its own module and loads the optional `@aws-sdk/*` peer dependencies lazily, so `@techstream/quark-core/storage` and the main barrel no longer require them at import time. `pingDatabase()` imports its optional `pg` peer lazily for the same reason, and `createPrismaClient()` namespaces its singleton per client instead of sharing one global slot. Existing `./locale`, `./logger`, and `./stripe` subpaths are unchanged.
+
 ## 2.4.3
 
 ### Patch Changes
