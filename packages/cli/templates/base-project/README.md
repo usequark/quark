@@ -104,6 +104,13 @@ git remote add origin https://github.com/<you>/__QUARK_PROJECT_NAME__.git
 git push -u origin main
 ```
 
+> **Nested inside an existing repository?** GitHub Actions only reads workflow
+> files from the repository root, so this project's `.github/workflows/*.yml`
+> will be ignored. Copy them into the parent repository's
+> `.github/workflows/` and add `working-directory: <path-to-this-project>` to
+> each job's steps (plus path filters so the workflows only run on changes in
+> this directory).
+
 ### 2. Deploy on Railway
 
 > **One-click Railway template coming soon.** For now, follow these steps:

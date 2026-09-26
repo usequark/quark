@@ -137,9 +137,70 @@ async function copyTemplate(templateName, targetDir, variables = {}) {
 }
 
 /**
- * Initialize a git repository and create an initial commit
+ * Resolve symlinks so paths reported by git and paths reported by the caller
+ * can be compared reliably (macOS tmpdirs are symlinked).
+ */
+function canonicalPath(dir) {
+	try {
+		return fs.realpathSync(dir);
+	} catch {
+		return path.resolve(dir);
+	}
+}
+
+/**
+ * Find the root of the git repository that contains a directory, if any.
+ * Returns null when the directory is not inside a git work tree.
+ */
+async function findEnclosingGitRoot(projectDir) {
+	try {
+		const { stdout } = await execa("git", ["rev-parse", "--show-toplevel"], {
+			cwd: projectDir,
+		});
+		const root = stdout.trim();
+		return root ? canonicalPath(root) : null;
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * Initialize a git repository and create an initial commit.
+ *
+ * When the project directory is already inside a git work tree, no nested
+ * repository is created: the enclosing repository tracks the project files.
+ * Set QUARK_FORCE_GIT_INIT=true to create a separate nested repository instead.
+ *
+ * @returns {Promise<{ initialized: boolean, existingRoot: string | null }>}
  */
 async function initializeGit(projectDir) {
+	if (process.env.QUARK_FORCE_GIT_INIT !== "true") {
+		const existingRoot = await findEnclosingGitRoot(projectDir);
+
+		if (existingRoot) {
+			console.log(
+				chalk.dim(`    · Already inside a git repository: ${existingRoot}`),
+			);
+			if (existingRoot === canonicalPath(projectDir)) {
+				console.log(
+					chalk.dim(`      Leaving the existing repository untouched.`),
+				);
+			} else {
+				console.log(
+					chalk.dim(
+						`      Skipping nested git init - this project will be tracked by that repository.`,
+					),
+				);
+			}
+			console.log(
+				chalk.dim(
+					`      Set QUARK_FORCE_GIT_INIT=true to create a separate nested repository.`,
+				),
+			);
+			return { initialized: false, existingRoot };
+		}
+	}
+
 	try {
 		// Initialize git repo
 		await execa("git", ["init"], { cwd: projectDir });
@@ -166,12 +227,67 @@ async function initializeGit(projectDir) {
 			},
 		);
 
-		return true;
+		return { initialized: true, existingRoot: null };
 	} catch (error) {
 		console.warn(
 			chalk.yellow(`⚠️  Git initialization failed: ${error.message}`),
 		);
+		return { initialized: false, existingRoot: null };
+	}
+}
+
+/**
+ * Substitute __QUARK_* placeholders in a single scaffold file.
+ * Writes only when the content actually changed.
+ */
+async function substitutePlaceholders(filePath, values) {
+	let content = await fs.readFile(filePath, "utf-8");
+	const before = content;
+
+	for (const [token, value] of Object.entries(values)) {
+		// Replacer function so `$` sequences in values are treated literally.
+		content = content.replaceAll(token, () => value);
+	}
+
+	if (content !== before) {
+		await fs.writeFile(filePath, content);
+	}
+}
+
+/**
+ * Recursively substitute __QUARK_* placeholders in every Markdown file.
+ */
+async function substitutePlaceholdersInMarkdownFiles(dir, values) {
+	const entries = await fs.readdir(dir, { withFileTypes: true });
+
+	for (const entry of entries) {
+		const fullPath = path.join(dir, entry.name);
+		if (entry.isDirectory()) {
+			await substitutePlaceholdersInMarkdownFiles(fullPath, values);
+		} else if (/\.md$/i.test(entry.name)) {
+			await substitutePlaceholders(fullPath, values);
+		}
+	}
+}
+
+/**
+ * Check whether a project directory has uncommitted (unstaged or staged) changes.
+ *
+ * The diff is scoped to the project directory so that a Quark project nested in
+ * a larger repository is not blocked by dirty sibling files elsewhere in that
+ * repository.
+ */
+async function hasUncommittedChanges(projectDir) {
+	try {
+		await execa("git", ["diff", "--exit-code", "--", "."], {
+			cwd: projectDir,
+		});
+		await execa("git", ["diff", "--cached", "--exit-code", "--", "."], {
+			cwd: projectDir,
+		});
 		return false;
+	} catch {
+		return true;
 	}
 }
 
@@ -1326,14 +1442,6 @@ STORAGE_PROVIDER=local
 			);
 			console.log(chalk.green(`    ✓ .quark-link.json`));
 
-			// Populate MAIN.md brief placeholder if MAIN.md exists (F1 owns the file).
-			const mainMdPath = path.join(targetDir, "MAIN.md");
-			if (await fs.pathExists(mainMdPath)) {
-				let mainMd = await fs.readFile(mainMdPath, "utf-8");
-				mainMd = mainMd.replace(/__QUARK_PROJECT_BRIEF__/g, brief);
-				await fs.writeFile(mainMdPath, mainMd);
-			}
-
 			// Step 10b + 10c: Generate all AI coding tool context files
 			console.log(chalk.cyan("\n  🤖 Generating AI context files..."));
 
@@ -1355,6 +1463,21 @@ STORAGE_PROVIDER=local
 			const firstEditLines = buildFirstEditLines(features);
 			const featureGuideLines = buildFeatureGuideLines(features);
 
+			// Every __QUARK_* placeholder used by scaffolded files. Keep this map as
+			// the single source of truth so template files cannot ship with
+			// un-substituted placeholders (guarded by scaffold-output.test.js).
+			const placeholderValues = {
+				__QUARK_SCOPE__: scope,
+				__QUARK_PROJECT_NAME__: projectName,
+				__QUARK_SCAFFOLD_DATE__: scaffoldDate,
+				__QUARK_OPTIONAL_APPS__: optionalAppLines,
+				__QUARK_OPTIONAL_PACKAGES__: optionalBlock,
+				__QUARK_FEATURE_ROWS__: featureRows,
+				__QUARK_FIRST_EDITS__: firstEditLines,
+				__QUARK_FEATURE_GUIDES__: featureGuideLines,
+				__QUARK_PROJECT_BRIEF__: brief,
+			};
+
 			// Step 10b: Substitute variables in project-context SKILL.md
 			const skillPath = path.join(
 				targetDir,
@@ -1364,17 +1487,7 @@ STORAGE_PROVIDER=local
 				"SKILL.md",
 			);
 			if (await fs.pathExists(skillPath)) {
-				let skillContent = await fs.readFile(skillPath, "utf-8");
-				skillContent = skillContent
-					.replace(/__QUARK_SCOPE__/g, scope)
-					.replace(/__QUARK_PROJECT_NAME__/g, projectName)
-					.replace(/__QUARK_SCAFFOLD_DATE__/g, scaffoldDate)
-					.replace(/__QUARK_OPTIONAL_APPS__/g, optionalAppLines)
-					.replace(/__QUARK_OPTIONAL_PACKAGES__/g, optionalBlock)
-					.replace(/__QUARK_FEATURE_ROWS__/g, featureRows)
-					.replace(/__QUARK_FIRST_EDITS__/g, firstEditLines)
-					.replace(/__QUARK_FEATURE_GUIDES__/g, featureGuideLines);
-				await fs.writeFile(skillPath, skillContent);
+				await substitutePlaceholders(skillPath, placeholderValues);
 				console.log(
 					chalk.green(`    ✓ .github/skills/project-context/SKILL.md`),
 				);
@@ -1391,29 +1504,81 @@ STORAGE_PROVIDER=local
 			for (const relPath of aiContextFiles) {
 				const filePath = path.join(targetDir, relPath);
 				if (await fs.pathExists(filePath)) {
-					let content = await fs.readFile(filePath, "utf-8");
-					content = content
-						.replace(/__QUARK_SCOPE__/g, scope)
-						.replace(/__QUARK_PROJECT_NAME__/g, projectName)
-						.replace(/__QUARK_SCAFFOLD_DATE__/g, scaffoldDate)
-						.replace(/__QUARK_OPTIONAL_APPS__/g, optionalAppLines)
-						.replace(/__QUARK_OPTIONAL_PACKAGES__/g, optionalBlock)
-						.replace(/__QUARK_FEATURE_ROWS__/g, featureRows)
-						.replace(/__QUARK_FIRST_EDITS__/g, firstEditLines)
-						.replace(/__QUARK_FEATURE_GUIDES__/g, featureGuideLines);
-					await fs.writeFile(filePath, content);
+					await substitutePlaceholders(filePath, placeholderValues);
 					console.log(chalk.green(`    ✓ ${relPath}`));
 				}
+			}
+
+			// Step 10d: Substitute variables in scaffolded docs, Railway config,
+			// and embedded skills (outside the AI-context file list above).
+			const scaffoldAssetFiles = [
+				"MAIN.md",
+				".env.railway.example",
+				".railway/railway.ts",
+			];
+			for (const relPath of scaffoldAssetFiles) {
+				const filePath = path.join(targetDir, relPath);
+				if (await fs.pathExists(filePath)) {
+					await substitutePlaceholders(filePath, placeholderValues);
+				}
+			}
+
+			const skillsPlaceholderDir = harnessSkillDir
+				? path.join(targetDir, harnessSkillDir)
+				: path.join(targetDir, "skills");
+			if (await fs.pathExists(skillsPlaceholderDir)) {
+				await substitutePlaceholdersInMarkdownFiles(
+					skillsPlaceholderDir,
+					placeholderValues,
+				);
+				console.log(
+					chalk.green(`    ✓ Embedded skill placeholders substituted`),
+				);
 			}
 
 			// Step 11: Initialize git repository
 			if (process.env.QUARK_SKIP_GIT_INIT === "true") {
 				console.log(chalk.dim("\n  · Skipping git initialization"));
 			} else {
-				console.log(chalk.cyan("\n  📝 Initializing git repository..."));
-				const gitInitialized = await initializeGit(targetDir);
-				if (gitInitialized) {
+				console.log(chalk.cyan("\n  📝 Setting up git..."));
+				const gitResult = await initializeGit(targetDir);
+				if (gitResult.initialized) {
 					console.log(chalk.green(`    ✓ Git initialized with initial commit`));
+				} else if (gitResult.existingRoot) {
+					console.log(
+						chalk.green(
+							`    ✓ Using existing git repository: ${gitResult.existingRoot}`,
+						),
+					);
+
+					// GitHub Actions only reads workflow files from the repository
+					// root, so warn when the scaffold's own workflows will be ignored.
+					if (gitResult.existingRoot !== canonicalPath(targetDir)) {
+						const relativeProjectPath = path.relative(
+							gitResult.existingRoot,
+							targetDir,
+						);
+						console.log(
+							chalk.yellow(
+								`\n    ⚠️  Nested project: GitHub only runs workflows stored at the repository root.`,
+							),
+						);
+						console.log(
+							chalk.white(
+								`       ${relativeProjectPath}/.github/workflows/*.yml will be ignored by GitHub Actions.`,
+							),
+						);
+						console.log(
+							chalk.white(
+								`       To enable CI/deploys, copy them into ${gitResult.existingRoot}/.github/workflows/`,
+							),
+						);
+						console.log(
+							chalk.white(
+								`       and set working-directory: ${relativeProjectPath} on each job's steps.\n`,
+							),
+						);
+					}
 				}
 			}
 
@@ -1952,24 +2117,17 @@ program
 			process.exit(0);
 		}
 
-		// --- Safety: check for uncommitted changes ---
-		if (!options.force) {
-			try {
-				await execa("git", ["diff", "--exit-code"], { cwd: projectDir });
-				await execa("git", ["diff", "--cached", "--exit-code"], {
-					cwd: projectDir,
-				});
-			} catch {
-				console.log(
-					chalk.yellow(
-						"⚠️  You have uncommitted changes. Commit or stash them first.",
-					),
-				);
-				console.log(
-					chalk.white("Use --force to skip this check (not recommended).\n"),
-				);
-				process.exit(1);
-			}
+		// --- Safety: check for uncommitted changes (project-scoped) ---
+		if (!options.force && (await hasUncommittedChanges(projectDir))) {
+			console.log(
+				chalk.yellow(
+					"⚠️  You have uncommitted changes. Commit or stash them first.",
+				),
+			);
+			console.log(
+				chalk.white("Use --force to skip this check (not recommended).\n"),
+			);
+			process.exit(1);
 		}
 
 		// --- Resolve dependency chain ---
@@ -2587,24 +2745,17 @@ program
 		}
 
 		try {
-			// Guard: check for both unstaged and staged changes
-			if (!options.force) {
-				try {
-					await execa("git", ["diff", "--exit-code"], { cwd: process.cwd() });
-					await execa("git", ["diff", "--cached", "--exit-code"], {
-						cwd: process.cwd(),
-					});
-				} catch {
-					console.log(
-						chalk.yellow(
-							"⚠️  You have uncommitted changes. Commit or stash them first.",
-						),
-					);
-					console.log(
-						chalk.white("Use --force to skip this check (not recommended).\n"),
-					);
-					process.exit(1);
-				}
+			// Guard: check for both unstaged and staged changes (project-scoped)
+			if (!options.force && (await hasUncommittedChanges(process.cwd()))) {
+				console.log(
+					chalk.yellow(
+						"⚠️  You have uncommitted changes. Commit or stash them first.",
+					),
+				);
+				console.log(
+					chalk.white("Use --force to skip this check (not recommended).\n"),
+				);
+				process.exit(1);
 			}
 
 			// Run pnpm update for all managed packages

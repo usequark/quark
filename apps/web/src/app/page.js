@@ -16,7 +16,7 @@ Ask the user: What is the business name and type? What services do they offer? D
 
 Build: Hero section with business name and tagline, services list, testimonials carousel, contact form with server-side Zod validation, SEO metadata (title, description, OG tags), responsive layout. Add a ContactInquiry Prisma model for form submissions with status tracking.
 
-Patterns to follow: Use AppError/ValidationError for error handling, prisma from @__QUARK_SCOPE__/db, validateBody with Zod, withCsrfProtection on POST routes.`,
+Patterns to follow: Use AppError/ValidationError for error handling, prisma from @techstream/quark-db, validateBody with Zod, withCsrfProtection on POST routes.`,
 	},
 	{
 		title: "Want a dashboard?",

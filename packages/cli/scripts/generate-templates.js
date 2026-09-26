@@ -114,6 +114,9 @@ function generateGitignore() {
  *
  * Derived from the monorepo's biome.json but adjusted for scaffold context:
  * - Removes monorepo-specific includes (!packages/cli/templates)
+ * - Marks the config as non-root so it stays composable when the project is
+ *   nested inside a larger repository (monorepo, Conductor workspace), where
+ *   Biome would otherwise reject it as a nested root configuration
  * - Keeps all other formatting/linting rules identical
  */
 function generateRootBiomeJson() {
@@ -126,6 +129,7 @@ function generateRootBiomeJson() {
 
 	const result = {
 		...root,
+		root: false,
 		files: {
 			...root.files,
 			includes,

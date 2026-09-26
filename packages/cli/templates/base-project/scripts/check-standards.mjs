@@ -21,9 +21,17 @@ const consoleAllowlist = [
 	/^packages\/cli\/src\//,
 	/^packages\/cli\/templates\/config\/src\/validate-env\.js$/,
 	/^packages\/cli\/templates\/base-project\/packages\/config\/src\/validate-env\.js$/,
+	/^packages\/admin\/src\/introspect\.js$/,
+	/^packages\/cli\/templates\/admin\/src\/introspect\.js$/,
 ];
 
-const typeScriptAllowlist = [/\/src\/generated\//];
+const typeScriptAllowlist = [
+	/\/src\/generated\//,
+	/^apps\/mobile\//,
+	/^packages\/cli\/templates\/mobile\//,
+	/^packages\/cli\/templates\/.*\.railway\/railway\.ts$/,
+	/^\.railway\/railway\.ts$/,
+];
 
 function normalizePath(filePath) {
 	return path.relative(rootDir, filePath).split(path.sep).join("/");
@@ -43,7 +51,10 @@ function isRuntimeAppPath(relativePath) {
 		/^packages\/cli\/templates\/worker\/src\/.*\.(?:js|jsx|mjs)$/.test(
 			relativePath,
 		) ||
-		/^packages\/cli\/templates\/base-project\/apps\/.*\.(?:js|jsx|mjs)$/.test(
+		/^packages\/cli\/templates\/(?:admin-routes|cms-routes)\/.*\.(?:js|jsx|mjs)$/.test(
+			relativePath,
+		) ||
+		/^packages\/cli\/templates\/base-project\/apps\/.*\/src\/.*\.(?:js|jsx|mjs)$/.test(
 			relativePath,
 		)
 	);
@@ -53,10 +64,13 @@ function isSourceFile(relativePath) {
 	return (
 		/^apps\/.*\/src\/.*\.(?:js|jsx|mjs)$/.test(relativePath) ||
 		/^packages\/.*\/src\/.*\.(?:js|jsx|mjs)$/.test(relativePath) ||
-		/^packages\/cli\/templates\/(?:worker|config|jobs|ui)\/src\/.*\.(?:js|jsx|mjs)$/.test(
+		/^packages\/cli\/templates\/(?:worker|admin|cms|config|jobs|ui)\/src\/.*\.(?:js|jsx|mjs)$/.test(
 			relativePath,
 		) ||
-		/^packages\/cli\/templates\/base-project\/apps\/.*\.(?:js|jsx|mjs)$/.test(
+		/^packages\/cli\/templates\/(?:admin-routes|cms-routes)\/.*\.(?:js|jsx|mjs)$/.test(
+			relativePath,
+		) ||
+		/^packages\/cli\/templates\/base-project\/apps\/.*\/src\/.*\.(?:js|jsx|mjs)$/.test(
 			relativePath,
 		) ||
 		/^packages\/cli\/templates\/base-project\/packages\/.*\/src\/.*\.(?:js|jsx|mjs)$/.test(
@@ -135,7 +149,10 @@ async function main() {
 		const content = await readFile(filePath, "utf8");
 
 		if (isRuntimeAppPath(relativePath) && !isTestFile(relativePath)) {
-			for (const lineNumber of findMatchingLines(content, throwNewErrorPattern)) {
+			for (const lineNumber of findMatchingLines(
+				content,
+				throwNewErrorPattern,
+			)) {
 				violations.push(
 					`${relativePath}:${lineNumber}: Use AppError/ValidationError in app runtime code instead of throw new Error().`,
 				);

@@ -16,7 +16,9 @@ let failed = false;
 
 function isDbBacked(pagePath) {
 	const content = readFileSync(pagePath, "utf-8");
-	return /@__QUARK_SCOPE__\/db/.test(content);
+	// Matches scoped db packages in scaffolds (@scope/db) and the monorepo
+	// package name (@techstream/quark-db).
+	return /@[^/"'\s]+\/(?:quark-)?db["']/.test(content);
 }
 
 function visit(dir) {
