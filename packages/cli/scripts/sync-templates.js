@@ -124,6 +124,10 @@ const SYNC_FILES = [
 		src: "scripts/run-tests.mjs",
 		dest: "base-project/scripts/run-tests.mjs",
 	},
+	{
+		src: "scripts/check-standards.mjs",
+		dest: "base-project/scripts/check-standards.mjs",
+	},
 	{ src: "turbo.json", dest: "base-project/turbo.json" },
 	{ src: "docker-compose.yml", dest: "base-project/docker-compose.yml" },
 	{
@@ -216,6 +220,8 @@ const TEMPLATE_ONLY = new Set([
 	// Doctor and prepare scripts are hand-authored for scaffolded projects
 	"base-project/scripts/doctor.js",
 	"base-project/scripts/prepare.js",
+	// Loading audit is hand-authored for scaffolded projects (no monorepo source)
+	"base-project/scripts/check-loading.mjs",
 	// Base-project sitemap is a simpler version (no CMS dependency)
 	"base-project/apps/web/src/app/sitemap.js",
 	// UI README is a minimal quickstart, not the full monorepo docs
