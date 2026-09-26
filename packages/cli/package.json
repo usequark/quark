@@ -28,7 +28,7 @@
 		"sync-templates": "node scripts/sync-templates.js",
 		"sync-templates:check": "node scripts/sync-templates.js --check",
 		"smoke:published": "node scripts/smoke-published.js",
-		"test": "node test-cli.js && node --test src/utils.test.js && node --test 'src/deploy/**/*.test.js' && node --test --test-concurrency=1 'src/deploy/**/*.integration.test.js'",
+		"test": "node test-cli.js && node --test src/utils.test.js && node --test src/prepare-hooks.test.js && node --test 'src/deploy/**/*.test.js' && node --test --test-concurrency=1 'src/deploy/**/*.integration.test.js'",
 		"test:build": "node test-build.js",
 		"test:e2e": "node test-e2e.js",
 		"test:e2e:full": "node test-e2e-full.js",

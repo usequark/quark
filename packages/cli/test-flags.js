@@ -7,7 +7,7 @@
  */
 
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path, { join } from "node:path";
@@ -21,11 +21,12 @@ const CLI = join(__dirname, "src/index.js");
  * Run the CLI synchronously and return the result.
  * Uses `process.execPath` to ensure the same Node.js binary is used.
  */
-function runCLI(args, cwd) {
+function runCLI(args, cwd, env = {}) {
 	return spawnSync(process.execPath, [CLI, ...args], {
 		cwd,
 		encoding: "utf8",
 		timeout: 60_000,
+		env: { ...process.env, ...env },
 	});
 }
 
@@ -552,6 +553,81 @@ describe("skill command", () => {
 			const result = runCLI(["skill", "nope"], tmpDir);
 			assert.strictEqual(result.status, 1);
 			assert.ok((result.stdout + result.stderr).includes("No skill found"));
+		} finally {
+			cleanup(tmpDir);
+		}
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Test Group 6: scaffolding inside an existing git repository
+// ---------------------------------------------------------------------------
+
+describe("Existing git repository", () => {
+	it("does not create a nested repo when scaffolded inside one", () => {
+		const tmpDir = makeTempDir();
+		try {
+			execFileSync("git", ["init", "-q"], { cwd: tmpDir });
+
+			const result = runCLI(
+				[
+					"nested-app",
+					"--no-prompts",
+					"--packages",
+					"ui",
+					"--skip-install",
+					"--skip-docker",
+				],
+				tmpDir,
+			);
+
+			assert.strictEqual(
+				result.status,
+				0,
+				`Expected exit 0\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
+			);
+			assert.ok(
+				!existsSync(join(tmpDir, "nested-app", ".git")),
+				"scaffold must not create a nested .git directory",
+			);
+			assert.ok(
+				(result.stdout + result.stderr).includes(
+					"Already inside a git repository",
+				),
+				`Expected existing-repo notice\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
+			);
+		} finally {
+			cleanup(tmpDir);
+		}
+	});
+
+	it("creates a nested repo when QUARK_FORCE_GIT_INIT=true", () => {
+		const tmpDir = makeTempDir();
+		try {
+			execFileSync("git", ["init", "-q"], { cwd: tmpDir });
+
+			const result = runCLI(
+				[
+					"nested-app",
+					"--no-prompts",
+					"--packages",
+					"ui",
+					"--skip-install",
+					"--skip-docker",
+				],
+				tmpDir,
+				{ QUARK_FORCE_GIT_INIT: "true" },
+			);
+
+			assert.strictEqual(
+				result.status,
+				0,
+				`Expected exit 0\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
+			);
+			assert.ok(
+				existsSync(join(tmpDir, "nested-app", ".git")),
+				"forced scaffold must create a nested .git directory",
+			);
 		} finally {
 			cleanup(tmpDir);
 		}

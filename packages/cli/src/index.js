@@ -137,9 +137,70 @@ async function copyTemplate(templateName, targetDir, variables = {}) {
 }
 
 /**
- * Initialize a git repository and create an initial commit
+ * Resolve symlinks so paths reported by git and paths reported by the caller
+ * can be compared reliably (macOS tmpdirs are symlinked).
+ */
+function canonicalPath(dir) {
+	try {
+		return fs.realpathSync(dir);
+	} catch {
+		return path.resolve(dir);
+	}
+}
+
+/**
+ * Find the root of the git repository that contains a directory, if any.
+ * Returns null when the directory is not inside a git work tree.
+ */
+async function findEnclosingGitRoot(projectDir) {
+	try {
+		const { stdout } = await execa("git", ["rev-parse", "--show-toplevel"], {
+			cwd: projectDir,
+		});
+		const root = stdout.trim();
+		return root ? canonicalPath(root) : null;
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * Initialize a git repository and create an initial commit.
+ *
+ * When the project directory is already inside a git work tree, no nested
+ * repository is created: the enclosing repository tracks the project files.
+ * Set QUARK_FORCE_GIT_INIT=true to create a separate nested repository instead.
+ *
+ * @returns {Promise<{ initialized: boolean, existingRoot: string | null }>}
  */
 async function initializeGit(projectDir) {
+	if (process.env.QUARK_FORCE_GIT_INIT !== "true") {
+		const existingRoot = await findEnclosingGitRoot(projectDir);
+
+		if (existingRoot) {
+			console.log(
+				chalk.dim(`    · Already inside a git repository: ${existingRoot}`),
+			);
+			if (existingRoot === canonicalPath(projectDir)) {
+				console.log(
+					chalk.dim(`      Leaving the existing repository untouched.`),
+				);
+			} else {
+				console.log(
+					chalk.dim(
+						`      Skipping nested git init - this project will be tracked by that repository.`,
+					),
+				);
+			}
+			console.log(
+				chalk.dim(
+					`      Set QUARK_FORCE_GIT_INIT=true to create a separate nested repository.`,
+				),
+			);
+			return { initialized: false, existingRoot };
+		}
+	}
+
 	try {
 		// Initialize git repo
 		await execa("git", ["init"], { cwd: projectDir });
@@ -166,12 +227,12 @@ async function initializeGit(projectDir) {
 			},
 		);
 
-		return true;
+		return { initialized: true, existingRoot: null };
 	} catch (error) {
 		console.warn(
 			chalk.yellow(`⚠️  Git initialization failed: ${error.message}`),
 		);
-		return false;
+		return { initialized: false, existingRoot: null };
 	}
 }
 
@@ -1410,10 +1471,16 @@ STORAGE_PROVIDER=local
 			if (process.env.QUARK_SKIP_GIT_INIT === "true") {
 				console.log(chalk.dim("\n  · Skipping git initialization"));
 			} else {
-				console.log(chalk.cyan("\n  📝 Initializing git repository..."));
-				const gitInitialized = await initializeGit(targetDir);
-				if (gitInitialized) {
+				console.log(chalk.cyan("\n  📝 Setting up git..."));
+				const gitResult = await initializeGit(targetDir);
+				if (gitResult.initialized) {
 					console.log(chalk.green(`    ✓ Git initialized with initial commit`));
+				} else if (gitResult.existingRoot) {
+					console.log(
+						chalk.green(
+							`    ✓ Using existing git repository: ${gitResult.existingRoot}`,
+						),
+					);
 				}
 			}
 
