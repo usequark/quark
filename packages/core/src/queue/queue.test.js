@@ -38,6 +38,74 @@ describe("getRegisteredQueues", () => {
 	});
 });
 
+// ─── createQueue close safety ────────────────────────────────────────────────
+// Regression: a closed queue used to stay in the singleton registry, so every
+// later createQueue(name) handed back the same poisoned, unusable instance.
+// Required behavior: close → evict → recreate → usable.
+
+describe("createQueue - close safety", () => {
+	const NAME = "test-close-recreate-queue";
+	let queue;
+
+	after(async () => {
+		await queue?.close().catch(() => {});
+	});
+
+	test("closing a queue evicts it from the registry", async () => {
+		queue = createQueue(NAME);
+		assert.ok(
+			getRegisteredQueues().has(NAME),
+			"queue should be registered while open",
+		);
+
+		await queue.close();
+
+		assert.ok(
+			!getRegisteredQueues().has(NAME),
+			"closed queue should be evicted from the registry",
+		);
+	});
+
+	test("createQueue after close returns a fresh, usable queue", async () => {
+		const first = queue; // the closed instance from the previous test
+
+		queue = createQueue(NAME);
+
+		assert.notStrictEqual(
+			queue,
+			first,
+			"should build a new instance instead of returning the closed one",
+		);
+		assert.ok(
+			getRegisteredQueues().has(NAME),
+			"new instance should be registered",
+		);
+
+		// "Usable" means it can actually reach Redis and enqueue a job
+		const client = await queue.client;
+		await client.ping();
+		const job = await queue.add("close-recreate-probe", { probe: true });
+		assert.ok(job.id, "fresh queue should enqueue a job");
+
+		await queue.obliterate({ force: true }).catch(() => {});
+	});
+
+	test("a queue closed outside the wrapper is still replaced", async () => {
+		const stale = queue;
+		// Bypass our evict-on-close wrapper and close via the prototype directly
+		await Object.getPrototypeOf(stale).close.call(stale);
+
+		queue = createQueue(NAME);
+
+		assert.notStrictEqual(
+			queue,
+			stale,
+			"a known-closed instance must never be handed out again",
+		);
+		assert.ok(getRegisteredQueues().has(NAME));
+	});
+});
+
 // ─── updateQueueDepths ────────────────────────────────────────────────────────
 
 describe("updateQueueDepths", () => {

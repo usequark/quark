@@ -258,18 +258,13 @@ async function preflight() {
 		await prisma.$queryRaw`SELECT 1`;
 		logger.info("✓ Database connected");
 
-		// Validate handlers are registered
+		// Validate handlers are registered for every known job name.
+		// No queues are created here - handler presence is a registry check,
+		// and createQueue() instances would only need closing again.
 		logger.info("Checking job handler registration...");
-		let handlerCount = 0;
-		for (const queueName of Object.values(JOB_QUEUES)) {
-			const queue = createQueue(queueName);
-			for (const jobName of Object.values(JOB_NAMES)) {
-				if (jobHandlers[jobName]) {
-					handlerCount++;
-				}
-			}
-			await queue.close();
-		}
+		const handlerCount = Object.values(JOB_NAMES).filter(
+			(jobName) => jobHandlers[jobName],
+		).length;
 		logger.info(`✓ ${handlerCount} job handlers registered`);
 
 		logger.info("✓ All preflight checks passed");

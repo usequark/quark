@@ -48,13 +48,46 @@ function getHealthCheckRedisConfig() {
 const queues = new Map();
 const queueConnections = new Map();
 
+/**
+ * Evicts a queue instance from the singleton registries.
+ * Only evicts when this exact instance is the registered one, so a stale
+ * close() can never remove a newer queue created under the same name.
+ * @param {string} name - Queue name
+ * @param {Queue} queue - Queue instance being evicted
+ */
+const evictQueue = (name, queue) => {
+	if (queues.get(name) === queue) {
+		queues.delete(name);
+		queueConnections.delete(name);
+	}
+};
+
+/**
+ * Best-effort check for an already-closed BullMQ queue.
+ * Prefers a public isClosed() when BullMQ exposes one; BullMQ 5 has none,
+ * so fall back to QueueBase's own `closing`/`closed` fields.
+ * @param {Queue} queue - Queue instance
+ * @returns {boolean}
+ */
+const isQueueClosed = (queue) => {
+	if (typeof queue.isClosed === "function") {
+		return queue.isClosed();
+	}
+	return Boolean(queue.closing || queue.closed);
+};
+
 const getRedisAddress = (redisConfig) => {
 	const cfg = redisConfig || getDefaultRedisConfig();
 	return `${cfg.host}:${cfg.port}`;
 };
 
 /**
- * Creates or retrieves a singleton BullMQ queue
+ * Creates or retrieves a singleton BullMQ queue.
+ *
+ * Close-safe: `queue.close()` evicts the instance from the registry, so a
+ * later `createQueue(name)` returns a fresh, usable queue instead of the
+ * closed one. While open, repeated calls return the same instance.
+ *
  * @param {string} name - Queue name
  * @param {Object} options - Queue options
  * @param {Object} options.redis - Redis connection config
@@ -62,8 +95,16 @@ const getRedisAddress = (redisConfig) => {
  * @returns {Queue} BullMQ Queue instance
  */
 export const createQueue = (name, options = {}) => {
-	if (queues.has(name)) {
-		return queues.get(name);
+	const existing = queues.get(name);
+	if (existing) {
+		// A closed queue is unusable - never hand it out again.
+		// (close() evicts below; this is a defensive check for a queue closed
+		// through some other path, e.g. during shutdown.)
+		if (isQueueClosed(existing)) {
+			evictQueue(name, existing);
+		} else {
+			return existing;
+		}
 	}
 
 	const {
@@ -87,6 +128,19 @@ export const createQueue = (name, options = {}) => {
 
 	queues.set(name, queue);
 	queueConnections.set(name, redis);
+
+	// Close-safe singleton: closing a queue evicts it from the registry so the
+	// next createQueue(name) builds a fresh instance instead of returning a
+	// poisoned, already-closed one. Eviction happens regardless of whether
+	// close() resolves - a failed close leaves the instance equally unusable.
+	const originalClose = queue.close.bind(queue);
+	queue.close = async (...closeArgs) => {
+		try {
+			return await originalClose(...closeArgs);
+		} finally {
+			evictQueue(name, queue);
+		}
+	};
 
 	// Clean up on graceful shutdown
 	queue.on("error", (error) => {
@@ -296,7 +350,9 @@ export const clearQueue = async (queue, options = {}) => {
  */
 export const closeAllQueues = async () => {
 	try {
-		for (const [name, queue] of queues) {
+		// Iterate over a snapshot: close() evicts each queue from the Map via
+		// the close-safe wrapper, so a live iteration would mutate as we walk it.
+		for (const [name, queue] of [...queues]) {
 			await queue.close();
 			logger.info(`Queue "${name}" closed`);
 		}
