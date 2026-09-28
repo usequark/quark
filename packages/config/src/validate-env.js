@@ -407,6 +407,15 @@ function collectWarnings() {
 		}
 	}
 
+	// Canonical origin: without it, Auth.js derives localhost and post-sign-in
+	// redirects can point at a different origin than the one the cookie was
+	// issued for (symptom: you land back on the homepage signed out).
+	if (!isTest && isProductionLike && !process.env.APP_URL) {
+		warnings.push(
+			"APP_URL not set: Auth.js and CORS origins will fall back to http://localhost. Set APP_URL to your real https origin before production.",
+		);
+	}
+
 	// Umami pair completeness
 	const umamiUrl = process.env.NEXT_PUBLIC_UMAMI_URL?.trim();
 	const umamiWebsiteId = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID?.trim();

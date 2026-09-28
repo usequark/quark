@@ -147,4 +147,30 @@ describe("scaffold output placeholders", () => {
 			"embedded skills must use the project scope",
 		);
 	});
+
+	it("generates a valid auth section in .env.example", () => {
+		const envExample = fs.readFileSync(
+			path.join(projectDir, ".env.example"),
+			"utf-8",
+		);
+
+		const secretLine = envExample
+			.split("\n")
+			.find((line) => line.startsWith("NEXTAUTH_SECRET="));
+		assert.ok(secretLine, ".env.example must define NEXTAUTH_SECRET");
+		const secret = secretLine.slice("NEXTAUTH_SECRET=".length);
+		assert.ok(
+			secret.length >= 32,
+			`NEXTAUTH_SECRET placeholder must be at least 32 characters (got ${secret.length}) - startup validation rejects shorter values`,
+		);
+
+		assert.ok(
+			!/NEXTAUTH_URL=.*\/api\/auth/.test(envExample),
+			"NEXTAUTH_URL must be a bare origin, never include a path",
+		);
+		assert.ok(
+			!envExample.includes("derived automatically from PORT"),
+			"APP_URL is not derived from PORT - do not claim it is",
+		);
+	});
 });

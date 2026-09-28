@@ -11,6 +11,8 @@ describe("app-url", () => {
 		"PORT",
 		"ALLOWED_ORIGINS",
 		"NODE_ENV",
+		"NEXT_DEV_ALLOWED_ORIGINS",
+		"ALLOWED_DEV_ORIGINS",
 	];
 
 	before(() => {
@@ -132,6 +134,64 @@ describe("app-url", () => {
 			const origins = getAllowedOrigins();
 			assert.ok(origins.includes("http://localhost:3000"));
 			assert.ok(origins.includes("http://localhost:3001"));
+		});
+
+		it("derives dev origins from process.env.PORT, not the config default", () => {
+			clearEnvKeys();
+			process.env.APP_URL = "https://myapp.com";
+			process.env.PORT = "4000";
+			const origins = getAllowedOrigins();
+			assert.ok(origins.includes("http://localhost:4000"));
+			assert.ok(origins.includes("http://localhost:4001"));
+			// Regression: string concatenation turned PORT=3000 into :30001
+			assert.ok(!origins.some((o) => o.includes(":30001")));
+			assert.ok(!origins.includes("http://localhost:3000"));
+		});
+
+		it("adds 127.0.0.1 loopback origins in development", () => {
+			clearEnvKeys();
+			process.env.APP_URL = "https://myapp.com";
+			process.env.PORT = "4000";
+			const origins = getAllowedOrigins();
+			assert.ok(origins.includes("http://127.0.0.1:4000"));
+			assert.ok(origins.includes("http://127.0.0.1:4001"));
+		});
+
+		it("does NOT add 127.0.0.1 in production", () => {
+			clearEnvKeys();
+			process.env.APP_URL = "https://myapp.com";
+			process.env.NODE_ENV = "production";
+			process.env.PORT = "4000";
+			const origins = getAllowedOrigins();
+			assert.ok(!origins.some((o) => o.includes("127.0.0.1")));
+			assert.ok(!origins.some((o) => o.includes("localhost")));
+		});
+
+		it("includes NEXT_DEV_ALLOWED_ORIGINS host extras in development", () => {
+			clearEnvKeys();
+			process.env.APP_URL = "https://myapp.com";
+			process.env.NEXT_DEV_ALLOWED_ORIGINS =
+				"192.168.1.50,http://my-laptop.local";
+			const origins = getAllowedOrigins();
+			assert.ok(origins.includes("http://192.168.1.50"));
+			assert.ok(origins.includes("http://my-laptop.local"));
+		});
+
+		it("includes ALLOWED_DEV_ORIGINS host extras in development", () => {
+			clearEnvKeys();
+			process.env.APP_URL = "https://myapp.com";
+			process.env.ALLOWED_DEV_ORIGINS = "tunnel.example.com";
+			const origins = getAllowedOrigins();
+			assert.ok(origins.includes("http://tunnel.example.com"));
+		});
+
+		it("does NOT include dev host extras in production", () => {
+			clearEnvKeys();
+			process.env.APP_URL = "https://myapp.com";
+			process.env.NODE_ENV = "production";
+			process.env.NEXT_DEV_ALLOWED_ORIGINS = "192.168.1.50";
+			const origins = getAllowedOrigins();
+			assert.ok(!origins.includes("http://192.168.1.50"));
 		});
 
 		it("does NOT add localhost in production", () => {

@@ -313,3 +313,67 @@ describe("Environment Validation - Umami contract", () => {
 		);
 	});
 });
+
+describe("Environment Validation - canonical origin warnings", () => {
+	let savedEnv;
+	let originalWarn;
+
+	beforeEach(() => {
+		savedEnv = { ...process.env };
+		originalWarn = console.warn;
+		console.warn = () => {};
+		resetConfig();
+		process.env.NEXTAUTH_SECRET = "test-secret-at-least-32-characters-long";
+		process.env.POSTGRES_USER = "test_user";
+		process.env.POSTGRES_PASSWORD = "test_pass";
+		process.env.POSTGRES_DB = "test_db";
+		process.env.REDIS_HOST = "localhost";
+	});
+
+	afterEach(() => {
+		console.warn = originalWarn;
+		for (const key of Object.keys(process.env)) {
+			if (!(key in savedEnv)) delete process.env[key];
+		}
+		for (const [key, value] of Object.entries(savedEnv)) {
+			process.env[key] = value;
+		}
+		resetConfig();
+	});
+
+	test("warns when APP_URL is missing in production", () => {
+		process.env.NODE_ENV = "production";
+		process.env.APP_DESCRIPTION = "A test application";
+		delete process.env.APP_URL;
+		delete process.env.NEXTAUTH_URL;
+
+		const result = validateEnv();
+
+		assert.deepEqual(result.warnings, [
+			"APP_URL not set: Auth.js and CORS origins will fall back to http://localhost. Set APP_URL to your real https origin before production.",
+		]);
+	});
+
+	test("does not warn about APP_URL when it is set in production", () => {
+		process.env.NODE_ENV = "production";
+		process.env.APP_DESCRIPTION = "A test application";
+		process.env.APP_URL = "https://myapp.com";
+
+		const result = validateEnv();
+
+		assert.deepEqual(result.warnings, []);
+	});
+
+	test("does not warn about APP_URL outside production", () => {
+		process.env.NODE_ENV = "development";
+		process.env.APP_DESCRIPTION = "A test application";
+		delete process.env.APP_URL;
+
+		const result = validateEnv();
+
+		assert.ok(
+			!result.warnings.some((w) => w.startsWith("APP_URL not set")),
+			`unexpected APP_URL warning in development: ${result.warnings}`,
+		);
+	});
+});

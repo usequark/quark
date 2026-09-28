@@ -102,9 +102,19 @@ const nextConfig = {
 	},
 
 	// Environment variables validation
+	//
+	// NEXTAUTH_URL is read by next-auth/react *in the browser*, so it has to be
+	// inlined at build time. Leaving it undefined when APP_URL/NEXTAUTH_URL are
+	// unset made the client fall back to next-auth's hardcoded
+	// http://localhost:3000/api/auth regardless of PORT or host. Derive the same
+	// fallback the server uses (packages/config/src/app-url.js) so both sides
+	// agree.
 	env: {
 		APP_URL: process.env.APP_URL,
-		NEXTAUTH_URL: process.env.NEXTAUTH_URL || process.env.APP_URL,
+		NEXTAUTH_URL:
+			process.env.NEXTAUTH_URL ||
+			process.env.APP_URL ||
+			`http://localhost:${process.env.PORT || 3000}`,
 	},
 
 	// Request body size limits (security)

@@ -1259,7 +1259,13 @@ MAIL_UI_PORT=8025
 # RESEND_API_KEY=re_xxxxxxxxxxxxx
 
 # --- Application URL ---
-# In development, APP_URL is derived automatically from PORT - no need to set it.
+# Canonical origin for the app. Auth.js pins every sign-in redirect and the
+# client-side Auth.js base URL to this, so it must match the origin you browse
+# on exactly (scheme + host + port).
+# In development it falls back to http://localhost:PORT - set it explicitly
+# whenever you use something else (127.0.0.1, a LAN IP, a tunnel, a different
+# port), otherwise the session cookie is issued for one host and the
+# post-sign-in redirect points at another, and you land back signed out.
 # In production, set this to your real domain:
 # APP_URL=https://yourdomain.com
 
@@ -1271,12 +1277,14 @@ APP_DESCRIPTION=${appDescription}
 
 # --- NextAuth Configuration ---
 # ⚠️  CRITICAL: Generate a secure secret with: openssl rand -base64 32
-# This secret is used to encrypt JWT tokens and session data
-NEXTAUTH_SECRET=CHANGE_ME_TO_STRONG_SECRET
+# This secret is used to encrypt JWT tokens and session data.
+# Must be at least 32 characters or startup validation fails.
+NEXTAUTH_SECRET=CHANGE_ME_TO_A_32_CHARACTERS_OR_LONGER_SECRET
 
-# NextAuth callback URL (auto-derived from APP_URL in development)
-# In production, explicitly set this to your domain:
-# NEXTAUTH_URL=https://yourdomain.com/api/auth
+# NextAuth callback URL. Normally leave this unset: it is derived from APP_URL.
+# Only set it if the auth endpoints live on a different origin, and never give
+# it a path - it must be a bare origin (scheme + host + port).
+# NEXTAUTH_URL=https://yourdomain.com
 
 # --- Authentication ---
 # Toggle during development without re-scaffolding.

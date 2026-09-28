@@ -2,12 +2,15 @@
  * APP_URL - Single source of truth for the application's canonical URL.
  *
  * Resolution order:
- *   1. APP_URL          (production - set to your real domain)
+ *   1. APP_URL          (canonical origin - set it in every environment)
  *   2. NEXTAUTH_URL     (legacy / backward-compat)
  *   3. http://localhost:${PORT || 3000}   (local dev fallback)
  *
- * In development PORT is the single source of truth for the web server port.
- * APP_URL is derived from it automatically so the two can never drift.
+ * In development PORT is the default source for the web server port, but
+ * APP_URL should still be set explicitly whenever the origin you browse on is
+ * not exactly localhost:PORT (127.0.0.1, a LAN IP, a tunnel, another port).
+ * Auth.js derives its post-sign-in redirect and its client-side base URL from
+ * this value, so a mismatch silently drops the session.
  * In production, set APP_URL explicitly (e.g. https://yourdomain.com).
  *
  * Derived values:
@@ -18,7 +21,6 @@
  */
 
 import { ValidationError } from "@techstream/quark-core/errors";
-import { getEnvironmentConfig } from "./environment.js";
 
 /**
  * Resolves the canonical application URL.
@@ -86,15 +88,37 @@ export function getAllowedOrigins() {
 				.filter(Boolean)
 		: [];
 
-	// In development, always allow the common local ports derived from env config
+	// In development, allow the ports the dev server actually listens on plus
+	// the loopback aliases people type by hand. `getEnvironmentConfig()` returns
+	// the hard-coded default (3000) and ignores `process.env.PORT`, so reading it
+	// here silently drifted from the real port whenever PORT was overridden.
 	const isDev = process.env.NODE_ENV !== "production";
-	const devPort = getEnvironmentConfig("development").server.port;
+	// resolveLocalPort() returns a string - parse before doing arithmetic or
+	// "3000" + 1 silently becomes "30001".
+	const devPort = Number.parseInt(resolveLocalPort(process.env.PORT), 10);
 	const devOrigins = isDev
-		? [`http://localhost:${devPort}`, `http://localhost:${devPort + 1}`]
+		? [
+				`http://localhost:${devPort}`,
+				`http://localhost:${devPort + 1}`,
+				`http://127.0.0.1:${devPort}`,
+				`http://127.0.0.1:${devPort + 1}`,
+			]
+		: [];
+
+	// Extra LAN/VPN dev hosts accepted by next.config.js `allowedDevOrigins`,
+	// so CORS and the Next.js dev host allow-list stay in agreement.
+	const devHostExtras = isDev
+		? ["NEXT_DEV_ALLOWED_ORIGINS", "ALLOWED_DEV_ORIGINS"].flatMap((key) =>
+				(process.env[key] ?? "")
+					.split(",")
+					.map((host) => host.trim())
+					.filter(Boolean)
+					.map((host) => (host.includes("://") ? host : `http://${host}`)),
+			)
 		: [];
 
 	// De-duplicate
-	return [...new Set([canonical, ...extras, ...devOrigins])];
+	return [...new Set([canonical, ...extras, ...devOrigins, ...devHostExtras])];
 }
 
 /**

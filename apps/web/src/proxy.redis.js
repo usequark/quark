@@ -83,6 +83,39 @@ async function getRateLimiter() {
 }
 
 /**
+ * Resolve the client IP for rate-limit keying.
+ *
+ * `NextRequest.ip` was removed in Next 15, so `request.ip` is always
+ * `undefined` here and every caller collapsed onto the literal key
+ * "unknown" — one shared bucket for the whole server. That let a single
+ * burst of 5 credential posts (the `auth` bucket) lock out sign-in for
+ * everyone for 15 minutes.
+ *
+ * Trust `x-forwarded-for`/`x-real-ip` only when you are actually behind a
+ * reverse proxy (Railway, Docker, nginx) that overwrites them; otherwise a
+ * client can spoof them to evade the limiter.
+ *
+ * @param {import("next/server").NextRequest} request
+ * @returns {string}
+ */
+function getClientIp(request) {
+	const forwardedFor = request.headers.get("x-forwarded-for");
+	if (forwardedFor) {
+		// Left-most entry is the originating client; later entries are proxies.
+		const client = forwardedFor
+			.split(",")
+			.map((value) => value.trim())
+			.filter(Boolean)[0];
+		if (client) return client;
+	}
+
+	const realIp = request.headers.get("x-real-ip");
+	if (realIp) return realIp.trim();
+
+	return "unknown";
+}
+
+/**
  * Rate limiting check
  */
 async function checkRateLimit(ip, path, method) {
@@ -177,7 +210,7 @@ export async function proxy(request) {
 
 	// Apply rate limiting to API routes only
 	if (pathname.startsWith("/api/")) {
-		const ip = request.ip || "unknown";
+		const ip = getClientIp(request);
 		const rateLimitBucket = getRateLimitBucket(pathname, request.method);
 		const maxRequests = RATE_LIMIT_PRESETS[rateLimitBucket].maxRequests;
 		const rateLimitResult = await checkRateLimit(ip, pathname, request.method);
