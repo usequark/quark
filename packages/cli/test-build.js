@@ -102,7 +102,11 @@ async function assertGeneratedAnalytics(projectPath) {
 	const webPackage = await fs.readJson(
 		path.join(projectPath, "apps/web/package.json"),
 	);
-	if (webPackage.dependencies?.rrweb !== "2.1.6") {
+	// Assert presence, not an exact version. The failure this guards against is
+	// a scaffold that drops the dependency entirely, so pinning the version only
+	// meant every rrweb bump broke the build for a non-reason.
+	const rrwebRange = webPackage.dependencies?.rrweb;
+	if (!rrwebRange) {
 		throw new Error("Generated web app is missing the rrweb dependency");
 	}
 }
