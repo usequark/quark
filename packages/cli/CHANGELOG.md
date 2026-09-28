@@ -1,5 +1,37 @@
 # @techstream/quark-create-app
 
+## 1.23.5
+
+### Patch Changes
+
+- [`42d588f`](https://github.com/Bobnoddle/quark/commit/42d588f5af37186a6b14de9d2ea6fd41622bc370) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Stop pinning rrweb's version in test-build, and correct the declared Node floor
+  
+  `test-build.js` asserted `dependencies.rrweb === "2.1.6"` while its own error
+  message said the dependency was "missing". The intent is presence, so any rrweb
+  bump broke the build for a non-reason - it already did once on a dependency
+  PR. It is now a presence check, still rejecting a missing, null or
+  devDependencies-only rrweb.
+  
+  `engines.node` was `>=22`, which is looser than what the dependency tree
+  actually requires. The binding constraint is not `commander@15` (>=22.12.0) as
+  previously assumed, but `react-native@0.87.1` (^22.13.0), so the floor is now
+  `>=22.13.0`. CI (`node-version: 22`) and the Dockerfiles (`node:22`) both
+  resolve to a current 22.x, so nothing needed pinning.
+
+- [`a3b3657`](https://github.com/Bobnoddle/quark/commit/a3b36572a9119b9883775267801438246266e74b) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Retry the lifecycle E2E once before failing the job
+  
+  A healthy run measures ~40s, but a shared runner with a cold module cache
+  measured 123s and tripped the 120s hard limit even though every phase passed
+  (`Total: 41.53s` was reported in the same run that later failed). The gate
+  decided the job from a single noisy sample, so a transient runner hiccup
+  turned CI red and trained people to ignore it.
+  
+  Thresholds are unchanged - a real regression still fails, it just has to fail
+  twice. The first attempt is `continue-on-error` and the retry owns the job
+  result, because in GitHub Actions a failed step latches the job to failure
+  even when a later step passes; branching on `steps.<id>.outcome` rather than
+  `failure()` is what makes the retry meaningful.
+
 ## 1.23.4
 
 ### Patch Changes
