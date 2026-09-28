@@ -1,5 +1,65 @@
 # @techstream/quark-create-app
 
+## 1.23.1
+
+### Patch Changes
+
+- [#144](https://github.com/Bobnoddle/quark/pull/144) [`0e8e1bf`](https://github.com/Bobnoddle/quark/commit/0e8e1bf9fd4400a1c85be688739da2d7498284ad) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Detect when a project would be scaffolded inside an existing git repository: warn that the project folder will sit one level below the repository root, and skip git initialisation so a nested repository is never created. Prevents broken pnpm workspaces, turbo and CI workflows caused by a nested project folder.
+
+- [#147](https://github.com/Bobnoddle/quark/pull/147) [`fae41f2`](https://github.com/Bobnoddle/quark/commit/fae41f280b90f1695d877b825ae79d31c874a75d) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Make `createQueue()` close-safe and drop dead queue churn from worker preflight.
+  
+  - `createQueue(name)` now evicts a queue from the singleton registry when it is closed, so the next `createQueue(name)` returns a fresh, usable instance instead of the poisoned, already-closed one. Queues closed through another path are also detected and replaced, and `closeAllQueues()` iterates a snapshot of the registry while close evicts entries.
+  - The worker `preflight()` health check no longer creates and immediately closes a queue per job queue — that code never used the queue and taught an unsafe pattern by example. Handler registration is now counted directly from the handler registry.
+
+- [`a4f89e9`](https://github.com/Bobnoddle/quark/commit/a4f89e901a467cf302a0b613b77bb8afb77ceb37) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Fix 5 env/auth bugs in scaffolded and monorepo apps
+  
+  - `next.config.js` now falls back to `http://localhost:${PORT}` for `NEXTAUTH_URL`, so the client-side Auth.js base URL matches the dev port instead of hardcoded `localhost:3000`
+  - Rate-limit keying uses a new `getClientIp()` helper (`x-forwarded-for` → `x-real-ip` → `unknown`) instead of the removed `NextRequest.ip`, which had collapsed every client into one shared bucket
+  - `getAllowedOrigins()` derives dev origins from `process.env.PORT` (with `127.0.0.1` and next-dev host extras) instead of the hard-coded config default, and no longer concatenates ports as strings
+  - `validateEnv()` now warns when `APP_URL` is missing in production/staging, where Auth.js and CORS silently fall back to `http://localhost`
+  - Scaffolded `.env.example` gets an accurate APP_URL comment, a ≥32-character `NEXTAUTH_SECRET` placeholder (the old one failed startup validation), and a path-free `NEXTAUTH_URL` comment
+
+- [`a79bda4`](https://github.com/Bobnoddle/quark/commit/a79bda48fc04a33fb865d7ad8f8239c6147ffd12) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Fix three scaffold-breaking bugs that made `test:build` (and the nightly Scaffold Container Security job) fail
+  
+  - **Corrupted initial migration.** `packages/db/prisma/migrations/20260202061128_initial/migration.sql` in the scaffold template began with Prisma's `Loaded Prisma config from prisma.config.js.` log line, captured because Prisma writes it to stdout and the diff was piped with `>`. Postgres rejected the migration with `42601 syntax error at or near "Loaded"`, so **every newly scaffolded project failed its first `db:migrate:deploy`**. `validate-template-migration.js` had been filtering that exact line out of its comparison, so it reported "matches the current schema" while shipping broken SQL — it now hard-fails on any non-SQL preamble, and a new `pnpm --filter @techstream/quark-create-app regen-migration` regenerates the file safely.
+  - **Invalid second build scenario.** `test-build.js` scaffolded with `--packages cms`, which the CLI rejects (`Invalid packages: cms`), so the scenario always aborted before testing anything. It now covers `pwa` instead.
+  - **PWA manifest conflict.** The `pwa` feature wrote `app/manifest.json` next to the base project's `app/manifest.js`, and Next.js failed the build with `Cannot find module for page: /manifest.webmanifest`. The feature now replaces `manifest.js` with the PWA variant.
+
+- [`bd76583`](https://github.com/Bobnoddle/quark/commit/bd765830f782fdcb5778850f3d313b145ce015c5) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Strip dev-only native binaries from the worker runtime image
+  
+  `pnpm deploy --prod` correctly drops `prisma` (a devDependency of `packages/db`),
+  but it keeps the peer subtrees pnpm auto-installed *for* that devDependency.
+  `prisma` declares `typescript` as an optional peer, and pnpm's `autoInstallPeers`
+  installs it anyway - resolving to `typescript@7`, the native Go build, which ships
+  a ~100 MB Go `tsc` carrying 10 HIGH CVEs (Go stdlib, `golang.org/x/text`,
+  `golang.org/x/net`).
+  
+  That made the nightly `Container Security` scan fail on the worker image. Nothing
+  at runtime needs it: the worker runs compiled JS and reaches Postgres through
+  `@prisma/client`. The worker Dockerfile now prunes the auto-installed peer
+  subtrees (including the peer-suffixed directories such as
+  `valibot@1.4.2_typescript@7.0.2` and nested `.bin/tsc` shims) before the deploy
+  output is copied into the runtime stage, and fails the build if a dev-only binary
+  reappears. Applied to the monorepo Dockerfile and the scaffold template.
+
+- [`2c93c88`](https://github.com/Bobnoddle/quark/commit/2c93c888ccb13b6df4ff5441ef19b536b9cd1709) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Sync generated templates after the development dependency bump
+  
+  `sync-templates:check` (Template Drift Check) failed on `main` after the
+  dependabot dev-dependency update, because the scaffold templates pin the same
+  version ranges. Re-synced `apps/web`, `db`, `ui`, `worker`, and `mobile`
+  template manifests so newly scaffolded projects install the current versions.
+
+- [#145](https://github.com/Bobnoddle/quark/pull/145) [`3b429ab`](https://github.com/Bobnoddle/quark/commit/3b429ab982c8c6696d6852435ca6b3ac7090993d) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Fix git hooks when a Quark project is scaffolded inside an existing git repository (monorepo, Conductor workspace).
+  
+  - `quark create` no longer creates a nested git repository when the target directory is already inside a git work tree; the enclosing repository tracks the project instead. Set `QUARK_FORCE_GIT_INIT=true` to opt into a separate nested repository.
+  - The scaffolded `scripts/prepare.js` now registers nested projects in a shared dispatcher: git runs hooks from the repository root, so each project's commands are executed from its own directory. Multiple nested Quark projects compose instead of overwriting each other, hooks owned by other tools are never overwritten or deleted, and hooks are no-ops in checkouts that do not contain the project.
+  - The scaffolded `biome.json` is marked as a non-root configuration so Biome resolves it correctly when the project lives below the repository root.
+  - `quark create` now warns that GitHub only runs workflows stored at the repository root when the project is nested, with the remediation steps for enabling CI.
+  - The scaffolded `scripts/check-loading.mjs` audit now detects DB-backed pages (it previously matched an un-substituted placeholder and always passed).
+  - AI prompts in the scaffolded home page use resolvable package names, and the remaining placeholders are substituted in `MAIN.md`, `.env.railway.example`, `.railway/railway.ts`, and the embedded skills.
+  - `quark add` and `quark update` scope their uncommitted-changes guard to the project directory, so dirty sibling files in a parent repository no longer block the commands.
+  - The scaffolded `scripts/check-standards.mjs` is synced from the monorepo, so it allows `apps/mobile` TypeScript after `quark add mobile`.
+
 ## 1.23.0
 
 ### Minor Changes
