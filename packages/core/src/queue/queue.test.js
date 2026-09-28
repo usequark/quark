@@ -2,6 +2,8 @@ import assert from "node:assert";
 import { after, before, describe, test } from "node:test";
 import { jobDuration, jobQueueDepth, jobsProcessedTotal } from "../metrics.js";
 import {
+	addJob,
+	checkQueueHealth,
 	createQueue,
 	createWorker,
 	getRegisteredQueues,
@@ -81,9 +83,10 @@ describe("createQueue - close safety", () => {
 			"new instance should be registered",
 		);
 
-		// "Usable" means it can actually reach Redis and enqueue a job
-		const client = await queue.client;
-		await client.ping();
+		// "Usable" means it can actually reach Redis and enqueue a job.
+		// Use the public readiness primitive - `client` is not stable across
+		// BullMQ majors and was removed in v6.
+		await queue.waitUntilReady();
 		const job = await queue.add("close-recreate-probe", { probe: true });
 		assert.ok(job.id, "fresh queue should enqueue a job");
 
@@ -103,6 +106,101 @@ describe("createQueue - close safety", () => {
 			"a known-closed instance must never be handed out again",
 		);
 		assert.ok(getRegisteredQueues().has(NAME));
+	});
+});
+
+// ─── addJob deduplication ─────────────────────────────────────────────────────
+// Regression: dedup was hand-rolled with a raw `SET NX` against `queue.client`.
+// BullMQ 6 removed that getter, so the `SET NX` threw, the best-effort `catch`
+// swallowed it, and every "deduplicated" job was enqueued anyway - silently.
+// These tests pin that dedup works through the public BullMQ option and that
+// we never reach for BullMQ internals to do it.
+
+describe("addJob - deduplication", () => {
+	const NAME = "test-dedup-queue";
+	let queue;
+
+	before(() => {
+		queue = createQueue(NAME);
+	});
+
+	after(async () => {
+		await queue?.obliterate({ force: true }).catch(() => {});
+		await queue?.close().catch(() => {});
+	});
+
+	test("a repeated dedupKey does not enqueue a second job", async () => {
+		const first = await addJob(
+			queue,
+			"dedup-probe",
+			{ n: 1 },
+			{
+				dedupKey: "probe-key",
+				dedupTTL: 60,
+			},
+		);
+		assert.ok(first?.id, "the first add should enqueue");
+
+		// BullMQ throttles the duplicate instead of creating a second job.
+		const second = await addJob(
+			queue,
+			"dedup-probe",
+			{ n: 2 },
+			{
+				dedupKey: "probe-key",
+				dedupTTL: 60,
+			},
+		);
+		assert.strictEqual(
+			second?.id,
+			first.id,
+			"a duplicate dedupKey must resolve to the already-queued job",
+		);
+
+		const waiting = await queue.getWaitingCount();
+		assert.strictEqual(waiting, 1, "only one job should be waiting");
+	});
+
+	test("different dedupKeys enqueue independently", async () => {
+		const a = await addJob(
+			queue,
+			"dedup-probe-b",
+			{ n: 1 },
+			{
+				dedupKey: "probe-a",
+				dedupTTL: 60,
+			},
+		);
+		const b = await addJob(
+			queue,
+			"dedup-probe-b",
+			{ n: 1 },
+			{
+				dedupKey: "probe-b",
+				dedupTTL: 60,
+			},
+		);
+		assert.notStrictEqual(
+			a.id,
+			b.id,
+			"distinct keys must produce distinct jobs",
+		);
+	});
+
+	test("no dedupKey means no deduplication", async () => {
+		const a = await addJob(queue, "dedup-probe-none", { n: 1 });
+		const b = await addJob(queue, "dedup-probe-none", { n: 1 });
+		assert.notStrictEqual(a.id, b.id, "jobs without a dedupKey always enqueue");
+	});
+});
+
+// ─── checkQueueHealth ─────────────────────────────────────────────────────────
+// Uses the public `waitUntilReady()`; a healthy Redis must report healthy, not
+// "unavailable" (which is what happened once BullMQ removed `queue.client`).
+
+describe("checkQueueHealth", () => {
+	test("reports healthy against a live Redis", async () => {
+		assert.strictEqual(await checkQueueHealth(), true);
 	});
 });
 

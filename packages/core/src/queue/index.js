@@ -228,9 +228,14 @@ export const createQueueEvents = (queueName, options = {}) => {
 
 /**
  * Utility to add a job to a queue with error handling.
- * Supports optional deduplication via a caller-provided dedupKey.
- * When dedupKey is set, uses Redis SET NX to atomically check-and-set,
- * preventing duplicate job creation within the dedupTTL window.
+ * Supports optional deduplication via a caller-provided dedupKey, mapped onto
+ * BullMQ's own `deduplication` job option.
+ *
+ * Deduplication used to be hand-rolled with a raw `SET NX` against
+ * `queue.client`. That reached into BullMQ internals for a feature BullMQ has
+ * provided natively since v5, and BullMQ 6 removed the public `client` getter -
+ * so the `SET NX` threw, the failure was swallowed by a best-effort `catch`,
+ * and deduplication silently stopped working. Use the supported option instead.
  *
  * @param {Queue} queue - BullMQ Queue instance
  * @param {string} jobName - Job name/type (e.g., 'send-welcome-email')
@@ -240,37 +245,26 @@ export const createQueueEvents = (queueName, options = {}) => {
  *   with this key will be created within the dedupTTL window.
  * @param {number} [jobOptions.dedupTTL=86400] - TTL in seconds for the dedup key (default 24h).
  *   The dedup key auto-expires, allowing legitimate re-sends after the TTL.
- * @returns {Promise<Job|null>} Queued job, or null if a duplicate was detected and skipped.
+ * @returns {Promise<Job|null>} Queued job, or null if BullMQ throttled the add
+ *   because a job with the same `dedupKey` is already in flight.
  * @throws {ServiceError} When the job fails to queue (not on dedup skip).
  */
 export const addJob = async (queue, jobName, data, jobOptions = {}) => {
-	// Extract dedup options before passing to BullMQ - it doesn't recognize them
+	// Map our dedup options onto BullMQ's native `deduplication` option.
+	// BullMQ expresses the TTL in milliseconds; ours is documented in seconds.
 	const { dedupKey, dedupTTL, ...bullOptions } = jobOptions;
-
-	// Optional deduplication: caller provides a key that identifies unique work.
-	// Uses Redis SET NX for atomic check-and-set - no race conditions.
-	if (dedupKey) {
-		try {
-			const client = await queue.client;
-			const dedupRedisKey = `job:dedup:${queue.name}:${jobName}:${dedupKey}`;
-			const ttl = dedupTTL ?? 86_400; // 24h default
-			const acquired = await client.set(dedupRedisKey, "1", "NX", "EX", ttl);
-			if (!acquired) {
-				return null; // Duplicate detected, silently skip
+	const options = dedupKey
+		? {
+				...bullOptions,
+				deduplication: {
+					id: dedupKey,
+					ttl: (dedupTTL ?? 86_400) * 1000,
+				},
 			}
-		} catch (error) {
-			// Dedup is best-effort - if Redis fails, let the job through rather than block
-			const logger = createLogger("queue:addJob");
-			logger.warn("Dedup check failed, allowing job through", {
-				error: error.message,
-				jobName,
-				dedupKey,
-			});
-		}
-	}
+		: bullOptions;
 
 	try {
-		const job = await queue.add(jobName, data, bullOptions);
+		const job = await queue.add(jobName, data, options);
 		return job;
 	} catch (error) {
 		throw new ServiceError(
@@ -368,6 +362,12 @@ export const closeAllQueues = async () => {
 
 /**
  * Health check for Redis connectivity
+ *
+ * Uses BullMQ's public `waitUntilReady()` rather than the raw `client` getter.
+ * `client` is not part of BullMQ's stable surface: BullMQ 6 removed it, which
+ * made this check report a healthy Redis as unavailable. `waitUntilReady()`
+ * is the supported readiness primitive and behaves the same on v5 and v6.
+ *
  * @returns {Promise<boolean>} True if Redis is accessible
  * @throws {ServiceError} When Redis is unreachable or misconfigured
  */
@@ -383,9 +383,7 @@ export const checkQueueHealth = async () => {
 		});
 		testQueue.on("error", () => {});
 		try {
-			// BullMQ v5: queue.client is an async getter - must be awaited
-			const client = await testQueue.client;
-			await client.ping();
+			await testQueue.waitUntilReady();
 			return true;
 		} catch (error) {
 			const code = error.code ?? null;
@@ -407,9 +405,7 @@ export const checkQueueHealth = async () => {
 	const redisAddr = getRedisAddress(queueConnections.get(firstQueue.name));
 
 	try {
-		// BullMQ v5: queue.client is an async getter - must be awaited
-		const client = await firstQueue.client;
-		await client.ping();
+		await firstQueue.waitUntilReady();
 		return true;
 	} catch (error) {
 		const code = error.code ?? null;
