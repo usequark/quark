@@ -4,6 +4,6 @@
 	"type": "module",
 	"main": "src/index.js",
 	"dependencies": {
-		"bullmq": "^5.70.4"
+		"bullmq": "^6.3.8"
 	}
 }
