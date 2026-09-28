@@ -4,9 +4,28 @@ updates:
     directory: /
     schedule:
       interval: weekly
+
+    # Split by semver update type. A single "production" group bundles patch,
+    # minor and major bumps into one PR, so a breaking change hides behind a
+    # wall of safe patches and gets rubber-stamped. Majors get their own PR.
     groups:
-      production:
+      production-majors:
         dependency-type: production
-      development:
+        update-types: ["major"]
+      development-majors:
         dependency-type: development
+        update-types: ["major"]
+      production-minor:
+        dependency-type: production
+        update-types: ["minor"]
+      production-patch:
+        dependency-type: production
+        update-types: ["patch"]
+      development-minor:
+        dependency-type: development
+        update-types: ["minor"]
+      development-patch:
+        dependency-type: development
+        update-types: ["patch"]
+
     open-pull-requests-limit: 10
