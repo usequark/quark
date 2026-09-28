@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
+import { mkdir, mkdtemp, realpath, rm } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import { test } from "node:test";
-import { formatProjectDisplayName } from "./utils.js";
+import { execa } from "execa";
+import { findEnclosingGitRepo, formatProjectDisplayName } from "./utils.js";
 
 // ---------------------------------------------------------------------------
 // Happy path - common slug patterns
@@ -60,4 +64,32 @@ test("formatProjectDisplayName - preserves casing of rest of word", () => {
 
 test("formatProjectDisplayName - short single-char name", () => {
 	assert.strictEqual(formatProjectDisplayName("a"), "A");
+});
+
+// ---------------------------------------------------------------------------
+// findEnclosingGitRepo
+// ---------------------------------------------------------------------------
+
+test("findEnclosingGitRepo - returns null outside a git work tree", async () => {
+	const dir = await mkdtemp(path.join(os.tmpdir(), "quark-utils-"));
+	try {
+		assert.strictEqual(await findEnclosingGitRepo(dir), null);
+	} finally {
+		await rm(dir, { recursive: true, force: true });
+	}
+});
+
+test("findEnclosingGitRepo - returns the repository root for any nested dir", async () => {
+	const dir = await mkdtemp(path.join(os.tmpdir(), "quark-utils-"));
+	try {
+		await execa("git", ["init"], { cwd: dir });
+		const nested = path.join(dir, "some", "nested", "dir");
+		await mkdir(nested, { recursive: true });
+
+		const expected = await realpath(dir);
+		assert.strictEqual(await findEnclosingGitRepo(dir), expected);
+		assert.strictEqual(await findEnclosingGitRepo(nested), expected);
+	} finally {
+		await rm(dir, { recursive: true, force: true });
+	}
 });

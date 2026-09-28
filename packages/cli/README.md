@@ -28,6 +28,15 @@ pnpm db:migrate
 pnpm dev
 ```
 
+## Scaffolding into an existing repository
+
+The scaffolder creates a new project folder and initialises a git repository inside it. Run it from inside an existing git repository and the project lands one level below that repository's root — where pnpm workspaces, turbo and GitHub Actions cannot see `package.json`, breaking installs and CI.
+
+The CLI detects this, prints a warning, and skips git initialisation so a nested repository is never created. Recommended alternatives:
+
+- Scaffold outside the repository, then push the project as its own repository.
+- Scaffold into a temporary folder, then move the files to the repository root before the first commit.
+
 ## Commands
 
 ```bash

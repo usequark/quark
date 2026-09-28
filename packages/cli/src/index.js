@@ -9,7 +9,7 @@ import { Command } from "commander";
 import { execa } from "execa";
 import fs from "fs-extra";
 import prompts from "prompts";
-import { formatProjectDisplayName } from "./utils.js";
+import { findEnclosingGitRepo, formatProjectDisplayName } from "./utils.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const templatesDir = path.join(__dirname, "../templates");
@@ -657,6 +657,31 @@ program
 		const scope = projectName.toLowerCase().replace(/[^a-z0-9-]/g, "");
 		const appDisplayName = formatProjectDisplayName(projectName);
 		const appDescription = `${appDisplayName} application`;
+
+		// Creating a project inside an existing git work tree nests the project
+		// folder (and, if we ran `git init`, a second repository) below the repo
+		// root. pnpm workspaces, turbo and CI workflows all expect package.json
+		// at the repository root, so warn loudly and never create a nested
+		// repository.
+		const enclosingRepo = await findEnclosingGitRepo(process.cwd());
+		if (enclosingRepo) {
+			console.log(
+				chalk.yellow(
+					`\n  ⚠️  This project will be created inside an existing git repository:\n` +
+						`      repository root : ${enclosingRepo}\n` +
+						`      project folder  : ${path.relative(enclosingRepo, targetDir) || projectName}\n\n` +
+						`      pnpm, turbo and GitHub Actions expect package.json at the\n` +
+						`      repository root, so a nested project folder breaks installs\n` +
+						`      and CI. Prefer one of:\n` +
+						`        • scaffold outside this repository, then push the project\n` +
+						`          as its own repository, or\n` +
+						`        • scaffold into a temporary folder and move the files to\n` +
+						`          the repository root before the first commit.\n\n` +
+						`      Git initialization will be skipped to avoid creating a\n` +
+						`      nested repository.\n`,
+				),
+			);
+		}
 
 		// Auto-detect interactive mode: if any config options are provided,
 		// skip prompts automatically. Only show prompts when no options given.
@@ -1544,6 +1569,12 @@ STORAGE_PROVIDER=local
 			// Step 11: Initialize git repository
 			if (process.env.QUARK_SKIP_GIT_INIT === "true") {
 				console.log(chalk.dim("\n  · Skipping git initialization"));
+			} else if (enclosingRepo) {
+				console.log(
+					chalk.dim(
+						"\n  · Skipping git initialization (inside an existing repository)",
+					),
+				);
 			} else {
 				console.log(chalk.cyan("\n  📝 Setting up git..."));
 				const gitResult = await initializeGit(targetDir);

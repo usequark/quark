@@ -1,4 +1,6 @@
 import crypto from "node:crypto";
+import path from "node:path";
+import { execa } from "execa";
 
 /**
  * Shared utilities for @techstream/quark-create-app
@@ -6,6 +8,31 @@ import crypto from "node:crypto";
 
 export function sleep(ms) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Find the root of the git work tree that contains `dir`, if any.
+ *
+ * Used to avoid scaffolding a project into a nested git repository: running
+ * `git init` inside an existing work tree creates a second, independent
+ * repository that shadows the outer one and breaks commits at the repo root.
+ *
+ * @param {string} dir - Directory to inspect (must already exist)
+ * @returns {Promise<string|null>} Absolute path to the enclosing repository
+ *   root, or null when `dir` is not inside a git work tree (or git is not
+ *   available)
+ */
+export async function findEnclosingGitRepo(dir) {
+	try {
+		const { stdout } = await execa("git", ["rev-parse", "--show-toplevel"], {
+			cwd: dir,
+		});
+		const topLevel = stdout.trim();
+		return topLevel ? path.resolve(topLevel) : null;
+	} catch {
+		// Not inside a work tree, or git is not installed
+		return null;
+	}
 }
 
 export function generateSecret(length = 32) {
