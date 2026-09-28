@@ -1,5 +1,62 @@
 # @techstream/quark-create-app
 
+## 1.23.3
+
+### Patch Changes
+
+- [#153](https://github.com/Bobnoddle/quark/pull/153) [`bdd0470`](https://github.com/Bobnoddle/quark/commit/bdd0470b3ce8100992e5a0a2bb08c37b2ec2ebb7) Thanks [@dependabot](https://github.com/apps/dependabot)! - Bump chalk 5→6, commander 14→15, execa 9→10 and @expo/vector-icons 14→15
+  
+  Split out of the 35-package dependabot PR by the semver-aware group config so
+  each major gets reviewed on its own.
+  
+  All four are ESM-only, which this repo already is, and all require Node ≥22
+  (commander ≥22.12.0); the pinned `node:22-alpine` image resolves to 22.23.3.
+  
+  Verified rather than assumed:
+  
+  - **chalk** — all 12 `chalk.*` call sites work, including `chalk.red.bold`
+    chaining; emits correct ANSI under `FORCE_COLOR` and plain text when piped.
+  - **commander** — real `quark --help` and `--version` invocations render.
+  - **execa** — `test:build` completes both scenarios (default and pwa) end to
+    end: scaffold, install, migrate, and Docker build.
+  - **@expo/vector-icons** — the `Ionicons` export chain and the
+    `name`/`size`/`color` props are unchanged; v15 loads icon fonts lazily.
+    Note the mobile app has no test or typecheck job in CI, so this one is not
+    covered by automation.
+
+- [#154](https://github.com/Bobnoddle/quark/pull/154) [`307d05d`](https://github.com/Bobnoddle/quark/commit/307d05d613966d2fcfb99be7b48b634b84fdd8cd) Thanks [@dependabot](https://github.com/apps/dependabot)! - Bump 16 minor dependencies, including next 16.3.6, react 19.3.0 and rrweb 2.1.6
+  
+  From dependabot's semver-aware `production-minor` group. Notable:
+  
+  - **rrweb 2.0.0-alpha.4 → 2.1.6** — the replay recorder's first non-prerelease.
+    `record()` keeps the same signature, and every option Quark passes
+    (`inlineStylesheet`, `slimDOMOptions` with its 8 `headMeta*`/`comment` keys,
+    `recordCanvas`, `recordCrossOriginIframes`, `checkoutEveryNms`) is still
+    present in the 2.1.6 runtime bundle.
+    `test-build.js` asserted the exact rrweb version, so it is updated to match.
+  - **next 16.1.6 → 16.3.6**, **react/react-dom 19.2 → 19.3**, **zod 4.3.6 → 4.6.5**,
+    **jose 6.0.11 → 6.2.12**, **pg 8.20 → 8.23**, **@aws-sdk/client-s3 3.1004 → 3.1140**,
+    **lucide-react 1.14 → 1.48**, **fs-extra 11.3 → 11.4**, plus type-only and
+    mobile packages.
+  
+  Verified: `test:build` completes both the default and pwa scenarios end to end
+  (scaffold, install, migrate, Docker build) with the synced templates;
+  `pnpm test` 9/9; lint and template drift clean.
+
+- [`6d5faf2`](https://github.com/Bobnoddle/quark/commit/6d5faf247f659a7dedd87425edb481343f885cea) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Stop the lifecycle E2E from hanging after it passes
+  
+  `test-e2e-full` launches the scaffolded app with `spawn("pnpm", ["dev"])`,
+  which starts a process tree (pnpm -> turbo -> next dev). Cleanup only sent
+  `SIGTERM` to the pnpm pid, so the grandchildren survived holding the stdio
+  pipes and the parent process never exited. The E2E job sat idle for ~9 minutes
+  after printing `Total Duration: 41.53s` and every phase passing, until GitHub
+  killed it at `timeout-minutes: 10` and reported the job as *cancelled* rather
+  than failed.
+  
+  The dev server now runs in its own process group (`detached: true`) and
+  cleanup signals the whole group, escalating to `SIGKILL` if anything ignores
+  `SIGTERM`. Verified the group signal reaches and reaps the tree.
+
 ## 1.23.2
 
 ### Patch Changes

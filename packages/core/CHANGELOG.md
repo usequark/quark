@@ -1,5 +1,16 @@
 # @techstream/quark-core
 
+## 2.5.3
+
+### Patch Changes
+
+- [#153](https://github.com/Bobnoddle/quark/pull/153) [`bdd0470`](https://github.com/Bobnoddle/quark/commit/bdd0470b3ce8100992e5a0a2bb08c37b2ec2ebb7) Thanks [@dependabot](https://github.com/apps/dependabot)! - Bump nodemailer 9→10
+  
+  The only breaking change in nodemailer 10 is "Node.js 20 or newer is required"
+  (this repo requires ≥22). `createTransport` and the SMTP transport options
+  (`host`, `port`, `secure`, `connectionTimeout`, `greetingTimeout`,
+  `socketTimeout`) are unchanged, so `email.js` needs no changes.
+
 ## 2.5.2
 
 ### Patch Changes
