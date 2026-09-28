@@ -5,11 +5,33 @@ updates:
     schedule:
       interval: weekly
       day: monday
+
+    # Split by semver update type instead of lumping every production bump into
+    # one PR. A single "production" group produced a 35-package PR mixing
+    # patch, minor and major bumps together, so 9 majors were queued behind a
+    # wall of safe patches and the one real breakage (bullmq 6 removing
+    # `queue.client`) was buried in CI noise. Majors get their own PR so a
+    # breaking change is reviewed on its own.
     groups:
-      production:
+      production-majors:
         dependency-type: production
-      development:
+        update-types: ["major"]
+      development-majors:
         dependency-type: development
+        update-types: ["major"]
+      production-minor:
+        dependency-type: production
+        update-types: ["minor"]
+      production-patch:
+        dependency-type: production
+        update-types: ["patch"]
+      development-minor:
+        dependency-type: development
+        update-types: ["minor"]
+      development-patch:
+        dependency-type: development
+        update-types: ["patch"]
+
     commit-message:
       prefix: "deps"
-    open-pull-requests-limit: 2
+    open-pull-requests-limit: 6
