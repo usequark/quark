@@ -124,6 +124,20 @@ pnpm --filter @techstream/quark-create-app sync-templates
 
 **CRITICAL:** Never run `pnpm changeset version` locally.
 
+**CRITICAL: Merge the release PR with a merge commit, never squash.**
+
+Changesets decides whether to publish by checking whether the current commit
+came from the `changeset-release/main` branch. A squash merge rewrites the
+commit message to `chore: version packages (#123)`, which drops the branch name,
+so the action concludes "no release was merged" and just regenerates the release
+PR. The release then **silently never publishes** - versions are bumped in
+`package.json` and CHANGELOG, CI is green, and npm keeps serving the old
+version. This happened for several releases before it was caught.
+
+Use GitHub's "Create a merge commit" option (or `gh pr merge --merge`) for
+release PRs. `scripts/check-release-published.mjs` fails CI if a squash-merged
+release commit reaches `main` without publishing.
+
 ## Testing
 
 ```bash

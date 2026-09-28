@@ -16,7 +16,9 @@ import { execSync } from "node:child_process";
 /** Run a command, returning trimmed stdout, or null if it failed. */
 function tryCapture(cmd, opts = {}) {
 	try {
-		return execSync(cmd, { encoding: "utf8", ...opts }).toString().trim();
+		return execSync(cmd, { encoding: "utf8", ...opts })
+			.toString()
+			.trim();
 	} catch {
 		return null;
 	}
@@ -99,7 +101,9 @@ try {
 	output = execSync("pnpm changeset status --since=origin/main", {
 		encoding: "utf8",
 		env,
-	}).toString().trim();
+	})
+		.toString()
+		.trim();
 } catch (error) {
 	failed = true;
 	output = `${error.stdout ?? ""}${error.stderr ?? ""}`.trim();
@@ -113,7 +117,11 @@ if (!failed) {
 // A history problem is not a missing changeset. The old version reported every
 // failure as "Changeset required", so a broken clone was blamed on the
 // developer for forgetting a changeset.
-if (/Failed to find where|diverge|not a git repository|bad revision|unknown revision/i.test(output)) {
+if (
+	/Failed to find where|diverge|not a git repository|bad revision|unknown revision/i.test(
+		output,
+	)
+) {
 	skipUndecidable(output.split("\n").find((line) => line.trim()) ?? "");
 }
 

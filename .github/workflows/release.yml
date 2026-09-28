@@ -34,6 +34,12 @@ jobs:
       - name: Disable git hooks
         run: git config core.hooksPath /dev/null
 
+      # IMPORTANT: merge release PRs with a MERGE COMMIT, not squash.
+      # Changesets detects a release by the `changeset-release/main` branch name
+      # in the commit message. A squash merge rewrites it to
+      # "chore: version packages (#123)", so this action skips publishing and
+      # only regenerates the release PR - the release then silently never
+      # reaches npm. Use "Create a merge commit" (gh pr merge --merge).
       - name: Create Release PR or Publish
         id: changesets
         uses: changesets/action@v1
@@ -47,6 +53,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
+
+      # Catches the squash-merge case above, which otherwise fails silently.
+      - name: Verify the release was published
+        run: node scripts/check-release-published.mjs
 
       - name: Create consolidated GitHub Release
         if: steps.changesets.outputs.published == 'true'
