@@ -102,7 +102,7 @@ async function assertGeneratedAnalytics(projectPath) {
 	const webPackage = await fs.readJson(
 		path.join(projectPath, "apps/web/package.json"),
 	);
-	if (webPackage.dependencies?.rrweb !== "2.0.0-alpha.4") {
+	if (webPackage.dependencies?.rrweb !== "2.1.6") {
 		throw new Error("Generated web app is missing the rrweb dependency");
 	}
 }
