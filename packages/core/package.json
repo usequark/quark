@@ -39,7 +39,7 @@
 		"bullmq": "^6.3.8",
 		"ioredis": "^6.0.0",
 		"nodemailer": "^10.0.10",
-		"zod": "^4.3.6"
+		"zod": "^4.6.5"
 	},
 	"peerDependencies": {
 		"@aws-sdk/client-s3": "^3.1004.0",
