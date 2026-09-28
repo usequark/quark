@@ -392,9 +392,15 @@ async function runE2ETest() {
 			const appPort = portMatch ? parseInt(portMatch[1], 10) : 3000;
 
 			log.info(`Launching: pnpm dev (port ${appPort})`);
+			// `detached` puts pnpm in its own process group. `pnpm dev` spawns
+			// grandchildren (turbo -> next dev); killing only the pnpm pid leaves
+			// them alive holding these stdio pipes, so this process never exits
+			// and the CI job is killed by its 10-minute timeout even though every
+			// phase passed. Cleanup kills the whole group (see killAppProcess).
 			appProcess = executeBackground("pnpm", ["dev"], {
 				cwd: PROJECT_PATH,
 				stdio: ["ignore", "pipe", "pipe"],
+				detached: true,
 			});
 
 			// Wait for app to start - allow it time to boot before checking
@@ -563,10 +569,23 @@ async function runE2ETest() {
 		// Cleanup
 		log.info("\n🧹 Cleaning up...");
 
-		// Kill app process
+		// Kill the whole dev-server process group, not just pnpm. See the
+		// `detached: true` note where the process is spawned.
 		if (appProcess?.proc && !appProcess.proc.killed) {
-			appProcess.proc.kill("SIGTERM");
+			const { pid } = appProcess.proc;
+			try {
+				process.kill(-pid, "SIGTERM");
+			} catch {
+				// Group already gone, or the platform rejected it.
+				appProcess.proc.kill("SIGTERM");
+			}
 			await new Promise((r) => setTimeout(r, 1000));
+			// Escalate if anything in the group ignored SIGTERM.
+			try {
+				process.kill(-pid, "SIGKILL");
+			} catch {
+				// Group is gone.
+			}
 		}
 
 		// Stop Docker Compose
