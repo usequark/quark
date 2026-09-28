@@ -36,10 +36,10 @@
 	"dependencies": {
 		"bcryptjs": "^3.0.3",
 		"busboy": "^1.6.0",
-		"bullmq": "^5.70.4",
-		"ioredis": "^5.10.0",
-		"nodemailer": "^9.1.0",
-		"zod": "^4.3.6"
+		"bullmq": "^6.3.8",
+		"ioredis": "^6.0.0",
+		"nodemailer": "^10.0.10",
+		"zod": "^4.6.5"
 	},
 	"peerDependencies": {
 		"@aws-sdk/client-s3": "^3.1004.0",
