@@ -93,3 +93,81 @@ test("deploy index exports all expected functions", async () => {
 		assert.ok(name in mod, `Expected export "${name}" to exist`);
 	}
 });
+
+test("validateProject flags invalid release key in worker railway.json", async () => {
+	const { validateProject } = await import("./deploy.js");
+	const tmpDir = await _makeTempDir();
+
+	await _writeJson(path.join(tmpDir, "apps/web/railway.json"), {
+		$schema: "https://railway.com/railway.schema.json",
+		build: { builder: "RAILPACK" },
+		deploy: { releaseCommand: "pnpm db:migrate:deploy" },
+	});
+	await _writeJson(path.join(tmpDir, "apps/worker/railway.json"), {
+		$schema: "https://railway.com/railway.schema.json",
+		build: { builder: "RAILPACK" },
+		deploy: { startCommand: "node src/index.js" },
+		release: { command: "pnpm db:migrate:deploy" },
+	});
+
+	const discovery = {
+		services: [
+			{ name: "web", relativeRootDir: "apps/web" },
+			{ name: "worker", relativeRootDir: "apps/worker" },
+		],
+	};
+
+	const { issues } = await validateProject(tmpDir, discovery);
+
+	assert.ok(
+		issues.some((i) => i.includes("worker") && i.includes("release")),
+		`Expected a release-key issue for the worker, got: ${JSON.stringify(issues)}`,
+	);
+	assert.ok(
+		!issues.some((i) => i.includes('"web"')),
+		`Did not expect issues for the web service, got: ${JSON.stringify(issues)}`,
+	);
+});
+
+test("validateProject warns on unknown top-level keys", async () => {
+	const { validateProject } = await import("./deploy.js");
+	const tmpDir = await _makeTempDir();
+
+	await _writeJson(path.join(tmpDir, "apps/web/railway.json"), {
+		$schema: "https://railway.com/railway.schema.json",
+		build: { builder: "RAILPACK" },
+		deploy: { releaseCommand: "pnpm db:migrate:deploy" },
+		mysteryKey: true,
+	});
+
+	const discovery = {
+		services: [{ name: "web", relativeRootDir: "apps/web" }],
+	};
+
+	const { issues, warnings } = await validateProject(tmpDir, discovery);
+
+	assert.equal(
+		issues.length,
+		0,
+		`Expected no blocking issues, got: ${JSON.stringify(issues)}`,
+	);
+	assert.ok(
+		warnings.some((w) => w.includes("mysteryKey")),
+		`Expected a warning about "mysteryKey", got: ${JSON.stringify(warnings)}`,
+	);
+});
+
+test("validateProject reports missing railway.json", async () => {
+	const { validateProject } = await import("./deploy.js");
+	const tmpDir = await _makeTempDir();
+
+	const discovery = {
+		services: [{ name: "web", relativeRootDir: "apps/web" }],
+	};
+
+	const { issues } = await validateProject(tmpDir, discovery);
+	assert.ok(
+		issues.some((i) => i.includes("missing railway.json")),
+		`Expected a missing-file issue, got: ${JSON.stringify(issues)}`,
+	);
+});

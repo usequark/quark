@@ -47,17 +47,72 @@ async function healthCheckService(url) {
 	return false;
 }
 
-async function validateProject(cwd, discovery) {
+const VALID_RAILWAY_TOP_LEVEL_KEYS = new Set([
+	"$schema",
+	"build",
+	"deploy",
+	"variables",
+	"services",
+]);
+
+/**
+ * Validate each discovered service's railway.json before deploying.
+ *
+ * Returns `{ issues, warnings }`:
+ * - `issues` are blocking problems (missing/invalid config) that abort the deploy.
+ * - `warnings` are non-blocking (e.g. unknown top-level keys that Railway ignores).
+ */
+export async function validateProject(cwd, discovery) {
 	const issues = [];
+	const warnings = [];
+
 	for (const service of discovery.services) {
-		const rjPath = path.join(cwd, service.relativeRootDir, "railway.json");
+		const relativePath = path.join(service.relativeRootDir, "railway.json");
+		const rjPath = path.join(cwd, relativePath);
+
 		if (!fs.existsSync(rjPath)) {
 			issues.push(
-				`Service "${service.name}" missing railway.json at ${path.join(service.relativeRootDir, "railway.json")}`,
+				`Service "${service.name}" missing railway.json at ${relativePath}`,
+			);
+			continue;
+		}
+
+		let config;
+		try {
+			config = fs.readJsonSync(rjPath);
+		} catch (error) {
+			issues.push(
+				`Service "${service.name}" railway.json is not valid JSON (${relativePath}): ${error.message}`,
+			);
+			continue;
+		}
+
+		if (!config || typeof config !== "object") {
+			issues.push(
+				`Service "${service.name}" railway.json must be a JSON object (${relativePath})`,
+			);
+			continue;
+		}
+
+		// Known-bug detection: `release` is not a valid Railway manifest key.
+		// Migrations run via `deploy.releaseCommand` on the web service only.
+		if (config.release) {
+			issues.push(
+				`Service "${service.name}" railway.json uses an invalid "release" key (${relativePath}). Migrations run via "deploy.releaseCommand" on the web service; remove the "release" block from the worker.`,
 			);
 		}
+
+		// Surface unknown top-level keys so they don't silently no-op.
+		for (const key of Object.keys(config)) {
+			if (!VALID_RAILWAY_TOP_LEVEL_KEYS.has(key) && key !== "release") {
+				warnings.push(
+					`Service "${service.name}" railway.json has unknown top-level key "${key}" (${relativePath}) - Railway will ignore it.`,
+				);
+			}
+		}
 	}
-	return issues;
+
+	return { issues, warnings };
 }
 
 export async function deployToRailway(options = {}) {
@@ -110,13 +165,16 @@ export async function deployToRailway(options = {}) {
 	);
 
 	// --- Step 3b: Pre-deploy validation ---
-	const issues = await validateProject(cwd, discovery);
+	const { issues, warnings } = await validateProject(cwd, discovery);
+	for (const warning of warnings) {
+		console.warn(chalk.yellow(`  ⚠ ${warning}`));
+	}
 	if (issues.length > 0) {
 		for (const issue of issues) {
 			console.error(chalk.red(`  ✖ ${issue}`));
 		}
 		throw new Error(
-			"Pre-deploy validation failed - missing railway.json files",
+			"Pre-deploy validation failed - fix the railway.json issues above",
 		);
 	}
 

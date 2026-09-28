@@ -2,6 +2,29 @@
 
 This guide covers deploying a Quark project to Railway using the built-in `quark deploy railway` command.
 
+> **⚠️ Deprecated: `railway.json` (Config as Code).**
+>
+> Railway deprecated Config as Code (`railway.json` / `railway.toml`) in favor of
+> **Infrastructure as Code** (`.railway/railway.ts`). Key consequences (verified
+> against a live `freightway` deploy on 2026-09-18):
+>
+> - **New services cannot opt into Config as Code.** The `railwayConfigFile`
+>   setting is ignored for new services — Railway emits a deprecation warning and
+>   does not read the file.
+> - **Hard cutoff 2026-12-01:** existing Config as Code files stop being read.
+> - **Replacement:** one `.railway/railway.ts` at the repo root describing the
+>   whole project (services, `github()` sources, `build`/`start`/`preDeploy`
+>   commands, `env`, `postgres()`/`redis()` databases, volumes). Applied with
+>   `railway config plan` / `railway config apply`, and requires the `railway`
+>   npm package as a devDependency.
+> - The `deploy.releaseCommand` migration concept maps to `preDeploy` (runs a
+>   command — e.g. `pnpm db:migrate:deploy` — between build and deploy).
+>
+> See [Infrastructure as Code](https://docs.railway.com/infrastructure-as-code)
+> and its [migration guide](https://docs.railway.com/infrastructure-as-code#migrating-from-config-as-code).
+> The `quark deploy railway` command and its `railway.json` templates below need
+> migration to the IaC model.
+
 ---
 
 ## Prerequisites
@@ -218,6 +241,7 @@ Railway Project
 ```
 
 - **Builder:** RAILPACK (Railway's build system, Nixpacks-compatible)
+- **Node version:** Pinned by the scaffold's `.nvmrc` (Node 22), matching the `node:22-alpine` Dockerfiles, so Railpack and Docker deploys use the same runtime
 - **Build:** Installs dependencies, generates Prisma client, builds the Next.js standalone output
 - **Release:** Runs database migrations before the new deployment starts receiving traffic
 - **Start:** Launches the Next.js standalone server bound to `0.0.0.0`
@@ -237,15 +261,12 @@ Railway Project
     "startCommand": "pnpm --dir apps/worker start:deploy",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 5
-  },
-  "release": {
-    "command": "pnpm db:migrate:deploy"
   }
 }
 ```
 
-- Similar build process, but no Next.js build step
-- Release command runs migrations before the worker starts
+- Similar build process, but no Next.js build step — the worker runs raw JavaScript via `node src/index.js`
+- No release command: database migrations run once, on the **web** service only (via `deploy.releaseCommand`). Running them from the worker too would be redundant and race with the web deploy.
 - No health check or domain (domains are removed by the deploy command)
 
 ### Root railway.json (temporary)
