@@ -24,9 +24,13 @@ const BUILD_SCENARIOS = [
 		features: "ui,jobs",
 	},
 	{
-		name: "cms",
-		projectName: "cli-build-cms-app",
-		features: "cms",
+		// The "cms" scenario used to pass `--packages cms`, but that was never a
+		// valid package (valid: ui, jobs, pwa, mobile), so it always died with
+		// "Invalid packages: cms" before exercising anything. Cover a non-default
+		// combination instead so the second scenario still tests something real.
+		name: "pwa",
+		projectName: "cli-build-pwa-app",
+		features: "pwa",
 	},
 ];
 const SHOULD_SCAN_GENERATED_IMAGES = process.env.QUARK_CLI_SCAN_IMAGES === "1";

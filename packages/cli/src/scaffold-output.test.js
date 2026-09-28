@@ -148,6 +148,58 @@ describe("scaffold output placeholders", () => {
 		);
 	});
 
+	it("generates a migration.sql that Postgres can execute", () => {
+		const migrationSql = fs.readFileSync(
+			path.join(
+				projectDir,
+				"packages/db/prisma/migrations/20260202061128_initial/migration.sql",
+			),
+			"utf-8",
+		);
+
+		// Regression: capturing `prisma migrate diff --script` with a plain `>`
+		// also writes Prisma's stdout log line into the SQL. Postgres rejects the
+		// whole migration with `42601 syntax error at or near "Loaded"`, so every
+		// scaffolded project failed its first `db:migrate:deploy`.
+		const lines = migrationSql
+			.split("\n")
+			.map((line) => line.trim())
+			.filter((line) => line.length > 0);
+
+		assert.ok(
+			!lines.some((line) => /^Loaded Prisma config/.test(line)),
+			"migration.sql must not contain Prisma's stdout log line",
+		);
+
+		const firstStatement = lines.find((line) => !line.startsWith("--"));
+		assert.ok(
+			/^(CREATE|ALTER|DROP|INSERT|UPDATE)\b/.test(firstStatement),
+			`migration.sql must begin with a SQL statement (got: ${firstStatement})`,
+		);
+	});
+
+	it("scaffolds the PWA manifest as manifest.js, not a conflicting manifest.json", () => {
+		const appDir = path.join(projectDir, "apps/web/src/app");
+
+		// Next.js serves app/manifest.js at /manifest.webmanifest. A sibling
+		// app/manifest.json (what the PWA feature used to write) makes the build
+		// fail with "Cannot find module for page: /manifest.webmanifest".
+		assert.ok(
+			!fs.existsSync(path.join(appDir, "manifest.json")),
+			"app/manifest.json must not be scaffolded alongside app/manifest.js",
+		);
+
+		const manifest = fs.readFileSync(path.join(appDir, "manifest.js"), "utf-8");
+		assert.ok(
+			!manifest.includes("@__QUARK_SCOPE__"),
+			"PWA manifest must use the project scope, not __QUARK_SCOPE__",
+		);
+		assert.ok(
+			manifest.includes(`@${PROJECT_NAME}/config`),
+			"PWA manifest must import config from the project scope",
+		);
+	});
+
 	it("generates a valid auth section in .env.example", () => {
 		const envExample = fs.readFileSync(
 			path.join(projectDir, ".env.example"),

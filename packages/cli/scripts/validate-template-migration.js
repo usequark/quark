@@ -12,11 +12,49 @@ const TEMPLATE_MIGRATION_PATH = path.join(
 	"packages/cli/templates/base-project/packages/db/prisma/migrations/20260202061128_initial/migration.sql",
 );
 
+/**
+ * Prisma writes `Loaded Prisma config from prisma.config.js.` to stdout, so it
+ * contaminates `migrate diff --script` output. It is stripped from the RENDERED
+ * diff only, for comparison purposes - a template file that actually contains
+ * this line is a hard failure (see findPreambleLines), because Postgres rejects
+ * it with `42601 syntax error at or near "Loaded"` and every scaffolded project
+ * then fails `prisma migrate deploy`.
+ */
+const PRISMA_LOG_NOISE = /^Loaded Prisma config\b/;
+
+/** First token of anything that legitimately starts a SQL statement. */
+const SQL_STATEMENT_START =
+	/^(CREATE|ALTER|DROP|INSERT|UPDATE|DELETE|GRANT|REVOKE|COMMENT|BEGIN|COMMIT|ROLLBACK|SET|RESET|WITH|TRUNCATE|REINDEX|ANALYZE|EXPLAIN)\b/i;
+
+function stripPrismaLogNoise(sql) {
+	return sql
+		.split(/\r?\n/)
+		.filter((line) => !PRISMA_LOG_NOISE.test(line.trim()))
+		.join("\n");
+}
+
+/**
+ * Return the leading lines of `sql` that are neither blank, nor SQL comments,
+ * nor the start of a real statement. A clean migration returns `[]`.
+ */
+function findPreambleLines(sql) {
+	const offenders = [];
+
+	for (const line of sql.split(/\r?\n/)) {
+		const trimmed = line.trim();
+		if (!trimmed) continue;
+		if (trimmed.startsWith("--") || trimmed.startsWith("/*")) continue;
+		if (SQL_STATEMENT_START.test(trimmed)) return offenders;
+		offenders.push(line);
+	}
+
+	return offenders;
+}
+
 function normalizeSqlStatements(sql) {
 	const withoutComments = sql
 		.split(/\r?\n/)
 		.filter((line) => !line.trim().startsWith("--"))
-		.filter((line) => !line.trim().startsWith("Loaded Prisma config"))
 		.join("\n");
 
 	return withoutComments
@@ -42,10 +80,41 @@ function formatStatementPreview(statement) {
 }
 
 function main() {
-	const expectedStatements = normalizeSqlStatements(renderSchemaSql());
-	const actualStatements = normalizeSqlStatements(
-		fs.readFileSync(TEMPLATE_MIGRATION_PATH, "utf8"),
+	const templateSql = fs.readFileSync(TEMPLATE_MIGRATION_PATH, "utf8");
+	const preamble = findPreambleLines(templateSql);
+
+	if (preamble.length > 0) {
+		console.error("❌ Template migration starts with a non-SQL preamble.");
+		console.error("");
+		console.error(
+			"   Postgres executes this file verbatim, so anything that is",
+		);
+		console.error("   not SQL makes `prisma migrate deploy` fail with:");
+		console.error('     42601 syntax error at or near "..."');
+		console.error("   and every newly scaffolded project ships that failure.");
+		console.error("");
+		console.error("   Offending line(s):");
+		for (const line of preamble.slice(0, 5)) {
+			console.error(`     ${line}`);
+		}
+		console.error("");
+		console.error(
+			"   Prisma prints `Loaded Prisma config from prisma.config.js.` to",
+		);
+		console.error(
+			"   stdout, so it lands in the file when the diff is captured",
+		);
+		console.error("   with a plain `>`. Regenerate safely instead:");
+		console.error(
+			"     pnpm --filter @techstream/quark-create-app regen-migration",
+		);
+		process.exit(1);
+	}
+
+	const expectedStatements = normalizeSqlStatements(
+		stripPrismaLogNoise(renderSchemaSql()),
 	);
+	const actualStatements = normalizeSqlStatements(templateSql);
 
 	if (JSON.stringify(expectedStatements) === JSON.stringify(actualStatements)) {
 		console.log("✅ Template migration matches the current schema.");
@@ -70,13 +139,17 @@ function main() {
 	console.error("");
 	console.error("   To fix, regenerate the migration SQL:");
 	console.error(
-		"     pnpm --filter @techstream/quark-db exec prisma migrate diff \\",
+		"     pnpm --filter @techstream/quark-create-app regen-migration",
+	);
+	console.error("");
+	console.error(
+		"   Do NOT capture `prisma migrate diff` with a plain `>` - Prisma",
 	);
 	console.error(
-		"       --from-empty --to-schema prisma/schema.prisma --script \\",
+		"   writes its `Loaded Prisma config ...` log line to stdout and it",
 	);
 	console.error(
-		"       > packages/cli/templates/base-project/packages/db/prisma/migrations/20260202061128_initial/migration.sql",
+		"   would be written into the SQL file as an invalid statement.",
 	);
 	console.error("");
 	console.error("   Or run sync-templates to validate:");

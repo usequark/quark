@@ -344,7 +344,7 @@ function buildFeatureRows(features) {
 	const rows = {
 		ui: "| UI package | Included | `packages/ui/README.md` |",
 		jobs: "| Jobs + worker | Included | `packages/jobs/README.md`, `apps/worker/src/handlers/` |",
-		pwa: "| PWA support | Included | `apps/web/public/sw.js`, `apps/web/src/app/manifest.json` |",
+		pwa: "| PWA support | Included | `apps/web/public/sw.js`, `apps/web/src/app/manifest.js` |",
 	};
 
 	const selectedRows = features
@@ -370,7 +370,7 @@ function buildFirstEditLines(features) {
 	const lines = {
 		ui: "- `packages/ui/src/` - adjust primitives or add app-specific UI components",
 		jobs: "- `packages/jobs/src/definitions.js` and `apps/worker/src/handlers/` - define and process background jobs",
-		pwa: "- `apps/web/public/sw.js` - service worker caching config, `src/app/manifest.json` - app manifest",
+		pwa: "- `apps/web/public/sw.js` - service worker caching config, `src/app/manifest.js` - app manifest (replaces the base manifest)",
 	};
 
 	const selectedLines = features
@@ -1051,21 +1051,18 @@ program
 				const pwaTemplateDir = path.join(templatesDir, "pwa");
 				const webDir = path.join(targetDir, "apps/web");
 
-				// Copy manifest.json to app/ (Next.js serves it natively)
+				// Replace the base manifest.js. Next.js serves app/manifest.js at
+				// /manifest.webmanifest; adding a sibling app/manifest.json made the
+				// build fail with "Cannot find module for page: /manifest.webmanifest".
 				await fs.copy(
-					path.join(pwaTemplateDir, "app/manifest.json"),
-					path.join(webDir, "src/app/manifest.json"),
+					path.join(pwaTemplateDir, "app/manifest.js"),
+					path.join(webDir, "src/app/manifest.js"),
 				);
 
-				// Substitute placeholders in manifest
-				const manifestPath = path.join(webDir, "src/app/manifest.json");
-				let manifest = await fs.readFile(manifestPath, "utf-8");
-				manifest = manifest.replace(/__QUARK_APP_NAME__/g, appDisplayName);
-				manifest = manifest.replace(
-					/__QUARK_APP_DESCRIPTION__/g,
-					appDescription,
-				);
-				await fs.writeFile(manifestPath, manifest);
+				// Point the PWA manifest at this project's scope.
+				await substitutePlaceholders(path.join(webDir, "src/app/manifest.js"), {
+					__QUARK_SCOPE__: scope,
+				});
 
 				// Copy sw.js to public/
 				await fs.copy(
@@ -2189,25 +2186,18 @@ program
 					) {
 						console.log(chalk.dim("    · PWA already configured - skipping"));
 					} else {
-						// Copy manifest.json to app/
+						// Replace the base manifest.js - see the scaffold-time copy for
+						// why a sibling manifest.json breaks the Next.js build.
 						await fs.copy(
-							path.join(pwaTemplateDir, "app/manifest.json"),
-							path.join(webDir, "src/app/manifest.json"),
+							path.join(pwaTemplateDir, "app/manifest.js"),
+							path.join(webDir, "src/app/manifest.js"),
 						);
 
-						// Substitute placeholders in manifest
-						const addManifestPath = path.join(webDir, "src/app/manifest.json");
-						let addManifest = await fs.readFile(addManifestPath, "utf-8");
-						const addAppName = formatProjectDisplayName(quarkLink.projectName);
-						addManifest = addManifest.replace(
-							/__QUARK_APP_NAME__/g,
-							addAppName,
+						// Point the PWA manifest at this project's scope.
+						await substitutePlaceholders(
+							path.join(webDir, "src/app/manifest.js"),
+							{ __QUARK_SCOPE__: scope },
 						);
-						addManifest = addManifest.replace(
-							/__QUARK_APP_DESCRIPTION__/g,
-							`${addAppName} application`,
-						);
-						await fs.writeFile(addManifestPath, addManifest);
 
 						// Copy sw.js to public/
 						await fs.copy(
