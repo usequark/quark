@@ -36,8 +36,8 @@
 	"dependencies": {
 		"bcryptjs": "^3.0.3",
 		"busboy": "^1.6.0",
-		"bullmq": "^5.70.4",
-		"ioredis": "^5.10.0",
+		"bullmq": "^6.3.8",
+		"ioredis": "^6.0.0",
 		"nodemailer": "^9.1.0",
 		"zod": "^4.3.6"
 	},
