@@ -678,7 +678,10 @@ program
 						`        • scaffold into a temporary folder and move the files to\n` +
 						`          the repository root before the first commit.\n\n` +
 						`      Git initialization will be skipped to avoid creating a\n` +
-						`      nested repository.\n`,
+						`      nested repository.\n\n` +
+						`      GitHub only runs workflows stored at the repository root, so\n` +
+						`      <project>/.github/workflows/*.yml will be ignored by GitHub\n` +
+						`      Actions.\n`,
 				),
 			);
 		}
