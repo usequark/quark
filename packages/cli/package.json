@@ -1,6 +1,6 @@
 {
 	"name": "@techstream/quark-create-app",
-	"version": "1.23.1",
+	"version": "1.23.2",
 	"description": "CLI to scaffold new Quark projects with Next.js, Prisma, BullMQ, and Railway deployment",
 	"type": "module",
 	"homepage": "https://github.com/Bobnoddle/quark#readme",

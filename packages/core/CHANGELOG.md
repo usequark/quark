@@ -1,5 +1,35 @@
 # @techstream/quark-core
 
+## 2.5.2
+
+### Patch Changes
+
+- [#149](https://github.com/Bobnoddle/quark/pull/149) [`0b147d8`](https://github.com/Bobnoddle/quark/commit/0b147d8fbf51436c461c56cebad37cc479a816a4) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Bump bullmq to v6
+  
+  The queue module no longer reaches for BullMQ's removed public `queue.client`
+  getter; deduplication uses BullMQ's native `deduplication` option and
+  `checkQueueHealth` uses `waitUntilReady()`. See 740707b for the behavioural
+  detail. Split out of dependabot [#137](https://github.com/Bobnoddle/quark/issues/137) for individual review.
+
+- [`740707b`](https://github.com/Bobnoddle/quark/commit/740707b93545b58e20655899919e7b08f421f337) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Use BullMQ's public APIs for job deduplication and health checks
+  
+  `addJob`'s deduplication was hand-rolled with a raw `SET NX` against
+  `queue.client`, a BullMQ internal that v6 removed. The `SET NX` then threw, a
+  best-effort `catch` swallowed the error, and every "deduplicated" job was
+  enqueued anyway - silently, with only a WARN in the logs. Deduplication now maps
+  `dedupKey`/`dedupTTL` onto BullMQ's own `deduplication` job option, which has
+  existed since v5 and matches the documented return contract (a duplicate
+  resolves to the already-queued job).
+  
+  `checkQueueHealth` used the same removed getter to ping Redis, so on v6 it
+  reported a healthy Redis as unavailable and worker preflight would fail. It now
+  uses `waitUntilReady()`, the supported readiness primitive, which behaves the
+  same on v5 and v6.
+  
+  Neither change alters behaviour on the pinned bullmq 5: verified 547/547 core
+  tests pass on 5.70.4, and on 6.3.9 the fix passes where the previous code fails
+  the close-safety test and silently loses deduplication.
+
 ## 2.5.1
 
 ### Patch Changes
