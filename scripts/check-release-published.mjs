@@ -1,8 +1,4 @@
 #!/usr/bin/env node
-// biome-ignore-all lint/suspicious/noUndeclaredEnvVars: GITHUB_OUTPUT is a real
-// CI input to this script, set by the runner. turbo.json declares no globalEnv
-// at all, so the rule cannot see it; declaring the repo-wide env surface is a
-// separate change with its own caching implications.
 /**
  * Guard against a release that bumps versions but never publishes, and tell the
  * release workflow whether this run actually published anything.

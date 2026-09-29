@@ -232,7 +232,6 @@ function runTaskClean() {
 	}
 
 	const rootPackageName = readRootPackageName();
-	// biome-ignore lint/suspicious/noUndeclaredEnvVars: injected by npm/pnpm at runtime to locate the package manager, not a build input
 	const npmExecPath = process.env.npm_execpath;
 	const command = npmExecPath
 		? process.execPath
@@ -354,7 +353,6 @@ export function maybeAutoClean({ logger = console, now = Date.now() } = {}) {
 		return { reason: "ci", status: "skipped" };
 	}
 
-	// biome-ignore lint/suspicious/noUndeclaredEnvVars: local escape hatch for repo tooling, never set in CI, not a build input
 	if (process.env.QUARK_SKIP_AUTO_CLEAN === "1") {
 		logger.log("Skipping Quark auto-clean (QUARK_SKIP_AUTO_CLEAN=1)");
 		return { reason: "explicit", status: "skipped" };
