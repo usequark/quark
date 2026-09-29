@@ -78,3 +78,51 @@ describe("dependabot config", () => {
 		});
 	}
 });
+
+/**
+ * The auto-merge workflow is the other half of the split, and the only part
+ * that actually merges anything.
+ *
+ * Splitting dependabot into per-severity groups changes what a human sees. It
+ * does not change what merges unattended - that is gated solely by
+ * `update-type == 'version-update:semver-patch'`. A dependency that ships a
+ * breaking change in a *patch* passes straight through, and that is exactly how
+ * bullmq 6's `queue.client` removal reached this repo. Majors already need a
+ * human by virtue of not matching; this test keeps it that way.
+ *
+ * The monorepo runs this workflow; the template ships an equivalent one, so a
+ * scaffolded project inherits the same gate.
+ */
+const AUTO_MERGE_WORKFLOWS = [
+	["monorepo", ".github/workflows/dependabot-auto-merge.yml"],
+	[
+		"scaffold template",
+		"packages/cli/templates/base-project/.github/workflows/dependabot-auto-merge.yml",
+	],
+];
+
+describe("dependabot auto-merge gate", () => {
+	for (const [label, relativePath] of AUTO_MERGE_WORKFLOWS) {
+		it(`${label} gates auto-merge on the semver update type`, () => {
+			const text = readConfig(relativePath);
+
+			assert.match(
+				text,
+				/version-update:semver-patch/,
+				"the auto-merge gate must key on the semver patch update type, so minors and majors still need a human",
+			);
+		});
+
+		it(`${label} does not merge every dependabot update`, () => {
+			const text = readConfig(relativePath);
+
+			// An unconditional `gh pr merge` would auto-merge majors unattended,
+			// which is precisely how the bullmq break nearly landed.
+			assert.doesNotMatch(
+				text,
+				/if:\s*github\.actor\s*==\s*'dependabot\[bot\]'\n\s*steps:/,
+				"auto-merge must be gated on the update type, not just the actor",
+			);
+		});
+	}
+});
