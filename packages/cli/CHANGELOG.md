@@ -1,5 +1,47 @@
 # @techstream/quark-create-app
 
+## 1.23.6
+
+### Patch Changes
+
+- [#161](https://github.com/Bobnoddle/quark/pull/161) [`5783d7b`](https://github.com/Bobnoddle/quark/commit/5783d7b59312571aa16416cd1af8fb99359164d6) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Stop paying for scaffolded projects' CI on changes that cannot break it
+  
+  Every scaffolded project inherited three CI costs that bought nothing on most
+  commits, and one of them quietly removed a safety net.
+  
+  - Docs-only and `docs/**` changes no longer trigger CI. Every README tweak was
+    paying for a full monorepo install, a lint pass and a test run.
+  - The Windows job ran on every push and pull request, at the 2x Windows
+    billing multiplier, purely to prove `pnpm install` resolves the lockfile -
+    which the Linux jobs already cover. It is now `workflow_dispatch` only. The
+    check is preserved, just not paid for by default.
+  - CI now declares `permissions: contents: read` and a `concurrency` group that
+    cancels superseded runs.
+  
+  `install-windows.yml` is added to the `TEMPLATE_ONLY` list so template sync
+  never overwrites it, matching the sibling workflow entries.
+
+- [`6bd092a`](https://github.com/Bobnoddle/quark/commit/6bd092aff3a3a073da0c2e4e4a92af47e0957d0d) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Clear all 13 Biome lint warnings, each with a stated reason
+  
+  `noTemplateCurlyInString` (10) was firing on Railway's own `${{Service.VAR}}`
+  reference syntax in `.railway/railway.ts` and in the adapter test fixtures that
+  exist to exercise that syntax, plus the escaper test for a literal `${}`. The
+  rule cannot distinguish those from a missed template interpolation, so both
+  files carry a file-scoped `biome-ignore-all` explaining why.
+  
+  `noUndeclaredEnvVars` (3) was firing on `npm_execpath` and the two
+  `QUARK_SKIP_*` escape hatches in `scripts/`. These are repo tooling, not app or
+  build inputs, and are suppressed individually.
+  
+  I also tried allowing them centrally via `allowedEnvVars` in `biome.json`, and
+  rejected it: `turbo.json` declares no `globalEnv` at all, so explicitly
+  configuring the rule activated it repo-wide and took the count from 13 to 194.
+  Fixing that properly means declaring the real env surface in `turbo.json`, which
+  is a separate change with its own caching implications.
+  
+  The rules stay active - verified that a genuinely undeclared variable and a
+  missed template literal in an unsuppressed file are both still reported.
+
 ## 1.23.5
 
 ### Patch Changes
