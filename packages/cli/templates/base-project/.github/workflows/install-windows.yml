@@ -1,0 +1,27 @@
+name: Install (Windows)
+
+# Windows runners bill at 2x the Linux rate. This workflow only proves that
+# `pnpm install` resolves the lockfile, which the Linux CI jobs already cover,
+# so it runs on demand only rather than on every push and pull request.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  install-windows:
+    name: Install (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
