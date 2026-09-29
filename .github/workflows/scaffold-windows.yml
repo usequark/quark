@@ -1,0 +1,56 @@
+name: Scaffold Smoke Test (Windows)
+
+# Windows runners bill at 2x the Linux rate. This was 71s of the 458s of job
+# minutes in run 36503734029 - the second most expensive job in CI, and not
+# worth paying for on every pull request. It only proves the scaffolder works
+# on Windows, so it gates the pull requests that can break that (changes under
+# packages/cli) and nothing else.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "packages/cli/**"
+      - "packages/cli/package.json"
+      - "pnpm-lock.yaml"
+  pull_request:
+    paths:
+      - "packages/cli/**"
+      - "packages/cli/package.json"
+      - "pnpm-lock.yaml"
+
+permissions:
+  contents: read
+
+jobs:
+  scaffold-windows:
+    name: Scaffold smoke test (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Scaffold test project
+        run: node packages/cli/src/index.js test-project --no-prompts --skip-install --skip-docker
+        shell: bash
+
+      - name: Verify required packages exist
+        run: |
+          test -f test-project/packages/config/package.json || (echo "FAIL: packages/config/package.json missing" && exit 1)
+          test -f test-project/packages/db/package.json    || (echo "FAIL: packages/db/package.json missing"     && exit 1)
+          test -f test-project/package.json                || (echo "FAIL: root package.json missing"             && exit 1)
+          echo "All required scaffold files present"
+        shell: bash

@@ -1,0 +1,65 @@
+name: Container Security
+
+# Builds the web and worker images and scans them for HIGH/CRITICAL
+# vulnerabilities. At 144s of the 458s of job minutes in run 36503734029 this
+# was the single most expensive job in CI, and paying it on every docs or
+# refactor change buys nothing. It is limited to the paths that can actually
+# change an image, and gated on those paths in pull requests too - a bad
+# Dockerfile or a dependency that pulls a vulnerable binary must not reach
+# main unchecked. The nightly sweep additionally catches base-image CVEs that
+# arrive out of band, with no commit to trigger a path filter.
+on:
+  schedule:
+    - cron: "37 3 * * 1-5"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "**/Dockerfile"
+      - "package.json"
+      - "pnpm-lock.yaml"
+  pull_request:
+    paths:
+      - "**/Dockerfile"
+      - "package.json"
+      - "pnpm-lock.yaml"
+
+permissions:
+  contents: read
+
+jobs:
+  container-security:
+    name: Container Security
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Build web image
+        run: docker build -f apps/web/Dockerfile -t quark-ci-web .
+
+      - name: Build worker image
+        run: docker build -f apps/worker/Dockerfile -t quark-ci-worker .
+
+      - name: Scan web image
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy:0.64.1 image \
+            --scanners vuln \
+            --skip-version-check \
+            --severity HIGH,CRITICAL \
+            --exit-code 1 \
+            quark-ci-web:latest
+
+      - name: Scan worker image
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy:0.64.1 image \
+            --scanners vuln \
+            --skip-version-check \
+            --severity HIGH,CRITICAL \
+            --exit-code 1 \
+            quark-ci-worker:latest

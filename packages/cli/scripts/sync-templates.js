@@ -205,6 +205,7 @@ const TEMPLATE_ONLY = new Set([
 	"base-project/.github/workflows/ci.yml",
 	"base-project/.github/workflows/release.yml",
 	"base-project/.github/workflows/dependabot-auto-merge.yml",
+	"base-project/.github/workflows/install-windows.yml",
 	// Dependabot config - scaffolded projects have a simpler version
 	"base-project/.github/dependabot.yml",
 	// Scaffold starter README (different from monorepo README)

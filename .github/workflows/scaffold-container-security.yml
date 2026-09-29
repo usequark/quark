@@ -1,9 +1,16 @@
 name: Scaffold Container Security
 
+# Builds the images that the CLI actually scaffolds and scans them. This is
+# separate from container-security.yml, which scans this repo's own images.
+# The generated output only changes when the templates or base images change,
+# so a weekly run is enough rather than daily.
 on:
   schedule:
-    - cron: "0 6 * * *"
+    - cron: "23 4 * * 1"
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   scaffold-container-security:
