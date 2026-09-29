@@ -54,16 +54,31 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
 
-      # Catches the squash-merge case above, which otherwise fails silently.
+      # Catches the squash-merge case above, which otherwise fails silently, and
+      # reports whether this run actually published anything.
+      #
+      # This does NOT use changesets/action's `published` output. That output is
+      # set only when the publish printed `New tag:`, which `changeset publish`
+      # emits solely from tagPublish() - guarded by the configured *tagger*. This
+      # repo has no tagger, so the output was permanently "false" and the release
+      # step below was skipped on every release from 1.23.3 to 1.23.6. npm is
+      # no substitute: the registry took ~9 minutes to serve a new version here,
+      # far longer than this step will wait. The signal is taken from the repo
+      # instead - a published package's version advancing between HEAD~1 and HEAD.
       - name: Verify the release was published
+        id: release-guard
         run: node scripts/check-release-published.mjs
 
       - name: Create consolidated GitHub Release
-        if: steps.changesets.outputs.published == 'true'
+        if: steps.release-guard.outputs.released == 'true'
         uses: actions/github-script@v8
+        env:
+          # Via env, not `${{ }}` interpolation: the value is JSON built from
+          # package metadata and must not be spliced into the script body.
+          RELEASE_PUBLISHED: ${{ steps.release-guard.outputs.published }}
         with:
           script: |
-            const published = JSON.parse('${{ steps.changesets.outputs.publishedPackages }}');
+            const published = JSON.parse(process.env.RELEASE_PUBLISHED);
             const today = new Date().toISOString().split('T')[0].replace(/-/g, '.');
             
             // Check for existing tags with same date to add a suffix
@@ -83,11 +98,32 @@ jobs:
             lines.push('\n---\n');
             lines.push(`Full changelog: https://github.com/${context.repo.owner}/${context.repo.repo}/compare/${tag}...main`);
 
-            await github.rest.repos.createRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              tag_name: tag,
-              name: `Quark ${tag}`,
-              body: lines.join('\n'),
-              target_commitish: context.sha,
-            });
+            // A re-run of the same commit would otherwise fail on an existing
+            // tag, turning a published release into a red workflow.
+            try {
+              await github.rest.repos.createRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag_name: tag,
+                name: `Quark ${tag}`,
+                body: lines.join('\n'),
+                target_commitish: context.sha,
+              });
+              core.info(`Created release ${tag}`);
+            } catch (error) {
+              if (error.status !== 422) throw error;
+              // GitHub's 422 does not carry the release id, so look it up.
+              const existing = await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag,
+              });
+              await github.rest.repos.updateRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: existing.data.id,
+                name: `Quark ${tag}`,
+                body: lines.join('\n'),
+              });
+              core.info(`Release ${tag} already existed - updated in place.`);
+            }
