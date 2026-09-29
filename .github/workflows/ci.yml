@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   checks:
-    name: Lint &amp; Standards
+    name: Lint & Standards
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
