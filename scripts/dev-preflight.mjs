@@ -7,7 +7,6 @@ import {
 import { maybeAutoClean } from "./clean-workspace.mjs";
 
 export async function runDevPreflight({ logger = console } = {}) {
-	// biome-ignore lint/suspicious/noUndeclaredEnvVars: local escape hatch for repo tooling, never set in CI, not a build input
 	if (process.env.QUARK_SKIP_DEV_PREFLIGHT === "1") {
 		logger.log("Skipping Quark dev preflight (QUARK_SKIP_DEV_PREFLIGHT=1)");
 		return { status: "skipped" };
