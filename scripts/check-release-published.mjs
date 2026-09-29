@@ -30,12 +30,13 @@
  *
  * npm itself is no good as the signal either: after a publish the registry took
  * this repo ~9 minutes to serve the new version, far longer than a workflow step
- * will wait. So the signal is taken from the repository instead: a release run
- * is one where a published package's version advanced between HEAD~1 and HEAD.
- * That is deterministic, needs no network, and cannot be fooled by an ordinary
- * commit that happens to land near a publish.
+ * will wait. So the signal is taken from the repository instead, and needs BOTH
+ * halves: a published package's version must have advanced between HEAD~1 and
+ * HEAD, *and* HEAD must be a merge of `changeset-release/main`. The first half
+ * alone fires on release PR regeneration, which is not a publish.
  *
- * Writes `released=true|false` to $GITHUB_OUTPUT when running in Actions.
+ * Writes `released=true|false` and `published=[...]` to $GITHUB_OUTPUT when
+ * running in Actions.
  *
  * Run with: node scripts/check-release-published.mjs
  */
@@ -127,17 +128,38 @@ if (!headMessage) {
 
 const packages = publishedPackages();
 
-// A release advanced a version between HEAD~1 and HEAD. Deterministic, offline,
-// and immune to the commit-message rewriting that causes the squash bug.
+// A published package's version advanced between HEAD~1 and HEAD.
 const advanced = packages.filter((pkg) => {
 	const previous = versionAt("HEAD~1", pkg.dir);
 	return previous !== null && previous !== pkg.version;
 });
 
-const released = advanced.length > 0;
+// A version bump on its own is NOT evidence of a publish. When the release PR
+// is merely *regenerated* - which happens on any ordinary commit that carries a
+// changeset - changesets/action commits the bump to `changeset-release/main` and
+// leaves the checkout sitting on that commit, so HEAD~1..HEAD looks exactly like
+// a release. On 2026-09-29 that made this script report a release for 1.23.7 and
+// publish a GitHub Release for a version npm had never received.
+//
+// The discriminator is the commit message. A publish only happens when the
+// release PR is *merged* into main, and that merge is titled
+//   Merge pull request #N from <owner>/changeset-release/main
+// A regeneration leaves HEAD on a bare "chore: version packages" commit, and a
+// squash-merged release is "chore: version packages (#N)" - neither matches.
+const isReleaseMerge = /changeset-release\/main/i.test(headMessage);
+
+const released = advanced.length > 0 && isReleaseMerge;
 if (released) {
 	console.log(
 		`Release run: ${advanced.map((p) => `${p.name}@${p.version}`).join(", ")}`,
+	);
+} else if (advanced.length > 0) {
+	console.log(
+		`Version advanced to ${advanced
+			.map((p) => `${p.name}@${p.version}`)
+			.join(
+				", ",
+			)} but this is a release PR regeneration, not a publish - skipping.`,
 	);
 }
 
@@ -145,7 +167,9 @@ if (released) {
 // <owner>/changeset-release/main" and never matches.
 const SQUASHED_RELEASE = /^chore: version packages \(#\d+\)$/i;
 if (!SQUASHED_RELEASE.test(headMessage)) {
-	reportRelease(released, advanced);
+	// Only ever publish a package list alongside released=true, so a stale list
+	// can never be consumed by a caller that ignores the flag.
+	reportRelease(released, released ? advanced : []);
 	process.exit(0);
 }
 
