@@ -1,3 +1,7 @@
+// biome-ignore-all lint/suspicious/noTemplateCurlyInString: this file exists to
+// exercise Railway's own `${{Service.VAR}}` template syntax and the escaper that
+// neutralises a literal `${}`. Both are plain strings by design, and the rule
+// cannot tell them apart from a missed template interpolation.
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import os from "node:os";
