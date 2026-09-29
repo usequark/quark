@@ -62,3 +62,4 @@ RUN rm -rf \
 COPY --from=builder /app/deploy/ ./
 
 CMD ["node", "src/index.js"]
+# TEMP: verifying the container-security pull_request trigger fires.
