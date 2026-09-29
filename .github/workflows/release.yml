@@ -15,8 +15,16 @@ jobs:
       pull-requests: write
       id-token: write
     steps:
+      # Full history, not the default depth of 1. The release guard compares the
+      # published version at HEAD~1 against HEAD to decide whether this run was a
+      # publish, and at depth 1 that parent object is simply absent - so the
+      # comparison silently found nothing and every real release skipped the
+      # GitHub Release step. The previous shallow-clone failure in this repo was
+      # the same shape, in check-changeset.mjs.
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4

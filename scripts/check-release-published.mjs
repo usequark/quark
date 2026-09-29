@@ -129,10 +129,34 @@ if (!headMessage) {
 const packages = publishedPackages();
 
 // A published package's version advanced between HEAD~1 and HEAD.
-const advanced = packages.filter((pkg) => {
+const advanced = [];
+const undeterminable = [];
+for (const pkg of packages) {
 	const previous = versionAt("HEAD~1", pkg.dir);
-	return previous !== null && previous !== pkg.version;
-});
+	if (previous === null) undeterminable.push(pkg);
+	else if (previous !== pkg.version) advanced.push(pkg);
+}
+
+// Silence here is how this went wrong twice already. A shallow checkout makes
+// `git show HEAD~1` fail, `advanced` comes out empty, and a genuine publish is
+// reported as "nothing happened" with no error anywhere. Say so out loud.
+if (undeterminable.length > 0) {
+	console.warn(
+		[
+			"",
+			`⚠️  Could not read the previous version of ${undeterminable
+				.map((p) => p.name)
+				.join(", ")} at HEAD~1.`,
+			"",
+			"   The release decision below is therefore UNRELIABLE, and a genuine",
+			"   publish may be skipped. This usually means the checkout is shallow:",
+			"   actions/checkout defaults to fetch-depth: 1, so the parent commit",
+			"   does not exist. The Release workflow sets fetch-depth: 0 for this",
+			"   reason. Do not remove it.",
+			"",
+		].join("\n"),
+	);
+}
 
 // A version bump on its own is NOT evidence of a publish. When the release PR
 // is merely *regenerated* - which happens on any ordinary commit that carries a
