@@ -49,11 +49,16 @@ jobs:
       #
       # This step exists because the failure is invisible when the secret is
       # missing. `secrets.RELEASE_PR_TOKEN` for an unset secret expands to an
-      # empty string, changesets falls back to GITHUB_TOKEN, the publish still
+      # empty string, the change below resolves to nothing, the publish still
       # succeeds, and the whole run reports green while reproducing the exact bug
       # it was meant to fix. Checking the token up front turns that false green
-      # into a red run, and the actor check below catches a token that is set but
-      # is the bot anyway.
+      # into a red run, and the actor check catches a token that is set but is
+      # the bot anyway.
+      #
+      # It also names the actor in the run log. That single line is the fact
+      # whose absence turned the previous two attempts into guesswork: whether
+      # the PR was authored by a person or by the bot is the whole diagnosis,
+      # and it used to be something to infer from a stalled check.
       #
       # Scope: `repo` (private repository) and `workflow`. Deliberately not
       # NPM_PUBLISH_TOKEN, so the publish credential stays isolated.
@@ -87,26 +92,31 @@ jobs:
         id: changesets
         uses: changesets/action@v1
         with:
+          # THE authoritative token. changesets/action reads its GitHub
+          # credential from this input, defaulting to `${{ github.token }}`, and
+          # uses it for every API call: the branch push, the commit, and the PR
+          # itself. This is the value that determines who the release PR is
+          # authored by.
+          #
+          # Setting `GITHUB_TOKEN` in `env:` below does NOT do this. The action
+          # ignores the ambient env var and reads only this input, so the token
+          # kept landing on the default and #185 came back authored by
+          # `github-actions[bot]` with an empty check rollup - the original
+          # stall, reproduced after the fix that was supposed to end it. The
+          # `GITHUB_TOKEN` entry in `env:` is kept only so the changesets CLI
+          # invoked by `publish` sees the same credential.
+          github-token: ${{ secrets.RELEASE_PR_TOKEN }}
           version: node scripts/release-version.mjs
           publish: pnpm changeset publish
           title: "chore: version packages"
           commit: "chore: version packages"
           createGithubReleases: false
         env:
-          # A dedicated token, NOT secrets.GITHUB_TOKEN.
+          # For the `changeset publish` child process only. The PR author is
+          # decided by the `github-token` input above, not by this.
           #
-          # Changesets opens the release PR with this token. If it is
-          # GITHUB_TOKEN, GitHub applies its anti-recursion guard: every
-          # workflow triggered by that PR is held at `action_required` until a
-          # human approves it, and the run reports no check result at all. The
-          # required status checks then can never be satisfied, so the release
-          # PR cannot be merged and the release never happens.
-          #
-          # A personal access token is a normal actor, so its PRs' checks run
-          # normally and the whole thing needs no human click.
-          #
-          # Scope: `repo` (private repository) and `workflow`. Do not reuse
-          # NPM_PUBLISH_TOKEN - keep the publish credential separate.
+          # Scope: `repo` (private repository) and `workflow`. Deliberately not
+          # NPM_PUBLISH_TOKEN, so the publish credential stays isolated.
           GITHUB_TOKEN: ${{ secrets.RELEASE_PR_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
