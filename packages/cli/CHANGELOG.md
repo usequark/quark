@@ -1,5 +1,65 @@
 # @techstream/quark-create-app
 
+## 1.23.10
+
+### Patch Changes
+
+- [#187](https://github.com/Bobnoddle/quark/pull/187) [`e385dfd`](https://github.com/Bobnoddle/quark/commit/e385dfd055511c2357bd04e620876142c2d09b50) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Point changesets at the token input it actually reads
+  
+  [#184](https://github.com/Bobnoddle/quark/issues/184) (and its release guard) set `GITHUB_TOKEN` in the step's `env:` and
+  declared the release PR would be opened by `RELEASE_PR_TOKEN`. It was not.
+  `changesets/action` takes its credential from the **`github-token` input**,
+  which defaults to `${{ github.token }}`, and ignores the ambient `GITHUB_TOKEN`
+  environment variable entirely. Every API call it makes - the branch push, the
+  commit, the PR - used the default.
+  
+  Observed on the run after the secret was added: the new `Verify the release PR
+  token` step passed and logged `Release PRs will be opened by Bobnoddle.`, and
+  the release PR was still authored by `github-actions[bot]`, still reported an
+  empty check rollup, and was still `BLOCKED`. A correct-looking guard over a
+  setting that had no effect - the same shape as the two attempts before it, and
+  worth recording so it is not tried a third time.
+  
+  The token now goes in `with: github-token`, which is the value that decides the
+  PR author. The `env:` entry stays so the `changeset publish` child process sees
+  the same credential.
+  
+  The guard added in [#186](https://github.com/Bobnoddle/quark/issues/186) is kept, and it is what makes this diagnosable: it names
+  the actor in the run log, so the next mismatch between that line and the PR
+  author is visible immediately instead of inferred from a stalled check.
+
+- [#184](https://github.com/Bobnoddle/quark/pull/184) [`a134533`](https://github.com/Bobnoddle/quark/commit/a1345335511b094c24d355ecdd39a7ad8895fb97) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Release PRs now open with a PAT, and a missing token fails the run
+  
+  Changesets opened the release PR with `GITHUB_TOKEN`. GitHub applies an
+  anti-recursion guard to anything triggered by a `GITHUB_TOKEN`-authored PR:
+  every workflow on it is held at `action_required` until a human approves it, and
+  the run reports **no check result at all**. The required status checks therefore
+  could never be satisfied, so the release PR sat unmergeable and every release
+  needed a manual click.
+  
+  The release PR is now opened with a dedicated `RELEASE_PR_TOKEN` — a personal
+  access token with the `repo` and `workflow` scopes — because a PAT is an
+  ordinary actor whose PRs' checks run normally. It is deliberately separate from
+  `NPM_PUBLISH_TOKEN` so the publish credential stays isolated.
+  
+  **Setup required once:** add `RELEASE_PR_TOKEN` to the repository secrets.
+  Until it exists, the Release workflow now fails on a missing token rather than
+  reporting green while falling back to `GITHUB_TOKEN`. The step also resolves the
+  token's login and refuses `github-actions[bot]`, and logs the actor it will use,
+  so the identity behind a release is visible in the run log instead of being
+  something to infer afterwards.
+  
+  Two approaches tried first, recorded so nobody repeats them:
+  
+  - `pull_request_target` on a separate approver workflow. It runs in the base
+    repository's context with a write-scoped token, which sounds exactly right,
+    but it is subject to the same guard. Verified: its only two runs were skipped.
+  - `workflow_run` on the workflows being approved. This one does fire — 18
+    successful runs — so the event itself is not blocked. Whether it can actually
+    clear `action_required` was never established, because it was abandoned in
+    favour of fixing the cause upstream. Do not read its earlier dismissal as
+    "this does not run".
+
 ## 1.23.9
 
 ### Patch Changes
