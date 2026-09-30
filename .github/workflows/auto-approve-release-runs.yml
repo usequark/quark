@@ -1,27 +1,31 @@
 name: Auto-approve release runs
 
-# Changesets opens the release PR with GITHUB_TOKEN. GitHub deliberately holds
-# runs triggered by GITHUB_TOKEN until a human approves them, as an
-# anti-recursion guard - otherwise a workflow's own commit could retrigger
-# itself forever.
+# Changesets opens the release PR with GITHUB_TOKEN, and GitHub holds any run
+# triggered by GITHUB_TOKEN until a human approves it. Every release PR
+# therefore sat at `action_required` and reported no check runs at all, so
+# branch protection's required checks could never be satisfied and the release
+# PR could not be merged. That is the silent-stall class this repo has spent
+# the last week closing.
 #
-# The effect here was that every release PR sat at `action_required` and
-# reported no check runs at all, so branch protection's required checks could
-# never be satisfied and the release PR could not be merged. It needed a manual
-# click on every single release, which is exactly the silent-stall class this
-# repo has been cleaning up.
+# `pull_request_target` is NOT the answer. It sounds right - it runs in the base
+# repository's context with a write-scoped token - but it is subject to the same
+# anti-recursion guard, so it never fires for a GITHUB_TOKEN-created PR either.
+# Verified: with it in place, the approve workflow produced zero runs while the
+# release PR's four workflows sat at `action_required`.
 #
-# Approving from a workflow needs two things this repository does not otherwise
-# have: `pull_request_target` (which runs in the base repo's context with a
-# write-scoped token) and `actions: write`.
+# `workflow_run` is what does fire. It triggers when another workflow finishes,
+# regardless of who triggered it, and it runs in the base repository's context
+# with a write-scoped `GITHUB_TOKEN`. So: run it on completion of any workflow
+# that could be the release PR's, look up the runs waiting on that commit, and
+# approve them.
 #
-# Scoped to the bot that opens release PRs, and only ever approves - it does
-# not merge. Approval is what lets the real checks run; merging stays a human
-# decision.
+# This only ever approves. It does not merge. Approval is what lets the real
+# checks execute; their results still gate the merge.
 
 on:
-  pull_request_target:
-    types: [opened, synchronize, reopened]
+  workflow_run:
+    workflows: ["CI", "Changeset Check", "Scaffold Smoke Test (Windows)", "Auto-merge Dependabot"]
+    types: [requested, in_progress]
 
 permissions:
   actions: write
@@ -29,43 +33,43 @@ permissions:
 
 jobs:
   approve:
-    name: Approve release PR runs
+    name: Approve pending release runs
     runs-on: ubuntu-latest
-    # Only the release bot's own PRs, never a human's.
-    if: github.actor == 'github-actions[bot]'
     steps:
-      - name: Approve pending runs on this commit
+      - name: Approve runs awaiting a human on this commit
         uses: actions/github-script@v8
         with:
           script: |
+            const sha = context.payload.workflow_run.head_sha;
+
             const { data: runs } = await github.rest.actions.listWorkflowRunsForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              head_sha: context.payload.pull_request.head.sha,
+              head_sha: sha,
               event: 'pull_request',
             });
 
-            let approved = 0;
-            for (const run of runs.workflow_runs) {
-              // A run awaiting human approval reports status "completed" with
-              // conclusion "action_required" - not "queued". Filtering on the
-              // status alone would silently approve nothing, and the release PR
-              // would stall exactly as before.
-              //
-              // Never touch a run that actually executed: a real failure is the
-              // gate working, and approving it would defeat the gate.
-              if (run.conclusion === 'action_required') {
-                await github.rest.actions.approveWorkflowRun({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  run_id: run.id,
-                });
-                approved++;
-              }
+            // A run awaiting approval reports status `completed` with conclusion
+            // `action_required` - not `queued`. Filtering on status would approve
+            // nothing and the stall would look unfixed.
+            //
+            // Never approve a run that actually executed: a real failure is the
+            // gate working, and approving it would defeat the gate.
+            const pending = runs.workflow_runs.filter(
+              (run) => run.conclusion === 'action_required',
+            );
+
+            for (const run of pending) {
+              await github.rest.actions.approveWorkflowRun({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: run.id,
+              });
+              core.info(`Approved ${run.name} (${run.id})`);
             }
 
             core.info(
-              approved === 0
-                ? 'No runs awaiting approval.'
-                : `Approved ${approved} run(s) awaiting approval.`,
+              pending.length === 0
+                ? `No runs awaiting approval on ${sha.slice(0, 7)}.`
+                : `Approved ${pending.length} run(s) on ${sha.slice(0, 7)}.`,
             );
