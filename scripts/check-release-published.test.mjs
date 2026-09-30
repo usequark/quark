@@ -42,11 +42,36 @@ const SCRIPT = path.join(
 const CORE = { name: "@quark-release-fixture/core", version: "1.0.0" };
 const CLI = { name: "@quark-release-fixture/cli", version: "1.0.0" };
 
+/**
+ * The environment with every `GIT_*` key removed.
+ *
+ * This is load-bearing, not defensive tidiness. Git sets `GIT_DIR` (and
+ * `GIT_EXEC_PATH`, `GIT_PREFIX`) for the commands it runs, which includes every
+ * hook - so `pnpm test` from the pre-push hook runs with `GIT_DIR` pointing at
+ * this repository's worktree gitdir. `cwd` alone does not override it: git
+ * resolves the repository from `GIT_DIR` and treats the cwd as the worktree.
+ * Every fixture `git add --all` then stages the fixture's files into the REAL
+ * index, which collapses it to a handful of entries, and the fixture's
+ * `git config user.*` lands in the real repository config.
+ *
+ * That is not hypothetical. It shipped once, and it broke `changeset status`,
+ * which made the pre-push hook unsatisfiable and left `git status` reporting
+ * every tracked file as modified. See the "hostile GIT_DIR" test at the bottom,
+ * which fails if this ever stops stripping.
+ */
+function cleanEnv(extra = {}) {
+	const env = {};
+	for (const [key, value] of Object.entries(process.env)) {
+		if (!key.startsWith("GIT_")) env[key] = value;
+	}
+	return { ...env, ...extra };
+}
+
 /** A git repo shaped like this one, with no history yet. */
 function makeFixture() {
 	const dir = mkdtempSync(path.join(tmpdir(), "release-guard-"));
 	const git = (...args) =>
-		execFileSync("git", args, { cwd: dir, stdio: "pipe" });
+		execFileSync("git", args, { cwd: dir, stdio: "pipe", env: cleanEnv() });
 
 	git("init", "--quiet", "--initial-branch", "main");
 	git("config", "user.email", "fixture@example.test");
@@ -84,7 +109,7 @@ function setVersion(dir, key, version) {
 
 function commit(dir, message) {
 	const git = (...args) =>
-		execFileSync("git", args, { cwd: dir, stdio: "pipe" });
+		execFileSync("git", args, { cwd: dir, stdio: "pipe", env: cleanEnv() });
 	git("add", "--all");
 	git("commit", "--quiet", "--allow-empty", "-m", message);
 }
@@ -98,14 +123,16 @@ function run(dir, { offline = true } = {}) {
 		{
 			cwd: dir,
 			encoding: "utf-8",
-			env: {
-				...process.env,
+			env: cleanEnv({
+				// Pin the repository explicitly rather than relying on cwd, so a
+				// leaked GIT_DIR cannot redirect the guard at another repo.
+				GIT_DIR: path.join(dir, ".git"),
 				GITHUB_OUTPUT: outputFile,
 				// The squash path shells out to `npm view`. These fixture package
 				// names do not exist, and offline makes that fail immediately
 				// instead of adding a network round trip to the test suite.
 				...(offline ? { npm_config_offline: "true" } : {}),
-			},
+			}),
 		},
 	);
 
@@ -293,7 +320,7 @@ test("outside a git repository the guard is a no-op, not a crash", () => {
 		{
 			cwd: dir,
 			encoding: "utf-8",
-			env: { ...process.env, GITHUB_OUTPUT: path.join(dir, "out") },
+			env: cleanEnv({ GITHUB_OUTPUT: path.join(dir, "out") }),
 		},
 	);
 
@@ -323,7 +350,10 @@ test("the release-merge discriminator is load-bearing", () => {
 	const result = spawnSync(process.execPath, ["scripts/no-discriminator.mjs"], {
 		cwd: dir,
 		encoding: "utf-8",
-		env: { ...process.env, GITHUB_OUTPUT: outputFile },
+		env: cleanEnv({
+			GIT_DIR: path.join(dir, ".git"),
+			GITHUB_OUTPUT: outputFile,
+		}),
 	});
 	const raw = readFileSync(outputFile, "utf-8");
 
@@ -334,4 +364,63 @@ test("the release-merge discriminator is load-bearing", () => {
 		"without the discriminator a regeneration is misreported as a publish",
 	);
 	assert.notEqual(run(dir).outputs.released, "true");
+});
+
+test("an ambient GIT_DIR cannot make a fixture write to another repository", () => {
+	// The bug this file shipped with. Git exports GIT_DIR for every command it
+	// runs, hooks included, so this suite is normally invoked with GIT_DIR
+	// pointing at the developer's real worktree. Because git resolves the
+	// repository from GIT_DIR and treats cwd as the worktree, an inherited
+	// GIT_DIR made every fixture `git add --all` stage the fixture's files into
+	// the real index - collapsing it to four entries and leaving `git status`
+	// reporting 878 modified files. It also wrote the fixture's
+	// `user.name = Fixture` into the real repository config, so any later commit
+	// from any workspace would be authored as "Fixture".
+	//
+	// Both effects are silent, neither is visible from the test's own assertions,
+	// and together they made `changeset status` report "no changesets found",
+	// which made the pre-push hook unsatisfiable. So assert on the damage
+	// directly: build a decoy repository, point GIT_DIR at it, run the whole
+	// fixture flow, and require the decoy to be untouched.
+	const decoy = makeFixture();
+	commit(decoy, "chore: decoy baseline");
+	// A decoy repository is never a linked worktree, so git needs no
+	// GIT_WORK_TREE - which is exactly the situation that caused the damage.
+	const decoyIndexBefore = execFileSync("git", ["ls-files"], {
+		cwd: decoy,
+		encoding: "utf-8",
+		env: cleanEnv(),
+	});
+	const decoyConfigBefore = readFileSync(
+		path.join(decoy, ".git", "config"),
+		"utf-8",
+	);
+
+	// A full fixture cycle with GIT_DIR aimed at the decoy.
+	const dir = makeFixture();
+	commit(dir, "chore: something");
+	setVersion(dir, "cli", "1.1.0");
+	commit(dir, "Merge pull request #42 from fixture/changeset-release/main");
+	const result = run(dir);
+
+	// The fixture still behaves correctly...
+	assert.equal(result.outputs.released, "true");
+	assert.deepEqual(result.published, [{ name: CLI.name, version: "1.1.0" }]);
+
+	// ...and the decoy is byte-for-byte unchanged.
+	const decoyIndexAfter = execFileSync("git", ["ls-files"], {
+		cwd: decoy,
+		encoding: "utf-8",
+		env: cleanEnv(),
+	});
+	assert.equal(
+		decoyIndexAfter,
+		decoyIndexBefore,
+		"the fixture wrote into the repository GIT_DIR pointed at",
+	);
+	assert.equal(
+		readFileSync(path.join(decoy, ".git", "config"), "utf-8"),
+		decoyConfigBefore,
+		"the fixture wrote user.* into the repository GIT_DIR pointed at",
+	);
 });
