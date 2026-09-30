@@ -42,6 +42,41 @@ jobs:
       - name: Disable git hooks
         run: git config core.hooksPath /dev/null
 
+      # The release PR has to be opened by an ordinary actor, not GITHUB_TOKEN.
+      # GitHub holds any workflow triggered by a GITHUB_TOKEN-authored PR at
+      # `action_required` and it reports NO check result at all, so the required
+      # status checks can never be satisfied and the release PR cannot be merged.
+      #
+      # This step exists because the failure is invisible when the secret is
+      # missing. `secrets.RELEASE_PR_TOKEN` for an unset secret expands to an
+      # empty string, changesets falls back to GITHUB_TOKEN, the publish still
+      # succeeds, and the whole run reports green while reproducing the exact bug
+      # it was meant to fix. Checking the token up front turns that false green
+      # into a red run, and the actor check below catches a token that is set but
+      # is the bot anyway.
+      #
+      # Scope: `repo` (private repository) and `workflow`. Deliberately not
+      # NPM_PUBLISH_TOKEN, so the publish credential stays isolated.
+      - name: Verify the release PR token
+        env:
+          RELEASE_PR_TOKEN: ${{ secrets.RELEASE_PR_TOKEN }}
+        run: |
+          if [ -z "${RELEASE_PR_TOKEN}" ]; then
+            echo "::error::RELEASE_PR_TOKEN is not set, so releases cannot open a mergeable PR."
+            echo "Add a personal access token with the 'repo' and 'workflow' scopes as the repository secret RELEASE_PR_TOKEN."
+            exit 1
+          fi
+          actor=$(curl -sS -H "Authorization: Bearer ${RELEASE_PR_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/user \
+            | sed -n 's/.*"login": *"\([^"]*\)".*/\1/p')
+          if [ -z "$actor" ] || [ "$actor" = "github-actions[bot]" ]; then
+            echo "::error::RELEASE_PR_TOKEN does not authenticate as an ordinary GitHub user (got '${actor:-no login}')."
+            echo "A GITHUB_TOKEN-authored PR has its workflows held at action_required, so it can never satisfy required checks."
+            exit 1
+          fi
+          echo "Release PRs will be opened by ${actor}."
+
       # IMPORTANT: merge release PRs with a MERGE COMMIT, not squash.
       # Changesets detects a release by the `changeset-release/main` branch name
       # in the commit message. A squash merge rewrites it to
