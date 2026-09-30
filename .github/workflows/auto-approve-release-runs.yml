@@ -1,0 +1,71 @@
+name: Auto-approve release runs
+
+# Changesets opens the release PR with GITHUB_TOKEN. GitHub deliberately holds
+# runs triggered by GITHUB_TOKEN until a human approves them, as an
+# anti-recursion guard - otherwise a workflow's own commit could retrigger
+# itself forever.
+#
+# The effect here was that every release PR sat at `action_required` and
+# reported no check runs at all, so branch protection's required checks could
+# never be satisfied and the release PR could not be merged. It needed a manual
+# click on every single release, which is exactly the silent-stall class this
+# repo has been cleaning up.
+#
+# Approving from a workflow needs two things this repository does not otherwise
+# have: `pull_request_target` (which runs in the base repo's context with a
+# write-scoped token) and `actions: write`.
+#
+# Scoped to the bot that opens release PRs, and only ever approves - it does
+# not merge. Approval is what lets the real checks run; merging stays a human
+# decision.
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  actions: write
+  pull-requests: read
+
+jobs:
+  approve:
+    name: Approve release PR runs
+    runs-on: ubuntu-latest
+    # Only the release bot's own PRs, never a human's.
+    if: github.actor == 'github-actions[bot]'
+    steps:
+      - name: Approve pending runs on this commit
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const { data: runs } = await github.rest.actions.listWorkflowRunsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head_sha: context.payload.pull_request.head.sha,
+              event: 'pull_request',
+            });
+
+            let approved = 0;
+            for (const run of runs.workflow_runs) {
+              // A run awaiting human approval reports status "completed" with
+              // conclusion "action_required" - not "queued". Filtering on the
+              // status alone would silently approve nothing, and the release PR
+              // would stall exactly as before.
+              //
+              // Never touch a run that actually executed: a real failure is the
+              // gate working, and approving it would defeat the gate.
+              if (run.conclusion === 'action_required') {
+                await github.rest.actions.approveWorkflowRun({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  run_id: run.id,
+                });
+                approved++;
+              }
+            }
+
+            core.info(
+              approved === 0
+                ? 'No runs awaiting approval.'
+                : `Approved ${approved} run(s) awaiting approval.`,
+            );
