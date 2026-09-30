@@ -58,7 +58,21 @@ jobs:
           commit: "chore: version packages"
           createGithubReleases: false
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # A dedicated token, NOT secrets.GITHUB_TOKEN.
+          #
+          # Changesets opens the release PR with this token. If it is
+          # GITHUB_TOKEN, GitHub applies its anti-recursion guard: every
+          # workflow triggered by that PR is held at `action_required` until a
+          # human approves it, and the run reports no check result at all. The
+          # required status checks then can never be satisfied, so the release
+          # PR cannot be merged and the release never happens.
+          #
+          # A personal access token is a normal actor, so its PRs' checks run
+          # normally and the whole thing needs no human click.
+          #
+          # Scope: `repo` (private repository) and `workflow`. Do not reuse
+          # NPM_PUBLISH_TOKEN - keep the publish credential separate.
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PR_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
 
