@@ -19,7 +19,7 @@
   &nbsp;
   <a href="https://www.prisma.io"><img src="https://img.shields.io/badge/Prisma-7-4B60E2?logo=prisma&logoColor=white" alt="Prisma 7" /></a>
   &nbsp;
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-ISC-blue.svg" alt="License" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License" /></a>
 </p>
 
 ---
@@ -116,7 +116,7 @@ Quark includes production-ready security features:
 - 🔐 **Bcrypt** - Password hashing with 12 rounds
 - ✅ **Zod** - Input validation on all endpoints
 
-📖 **Read more**: [Security Guide](./docs/SECURITY.md)
+📖 **Read more**: [Security Guide](./docs/SECURITY_FEATURES.md)
 
 ---
 
@@ -214,7 +214,32 @@ pnpm changeset --empty
 - **[Developer Guide](./copilot-instructions.md)** - Setup, conventions, and workflows
 - **[Architecture](./docs/ARCHITECTURE.md)** - Core design patterns and distribution model
 - **[API Reference](./docs/API.md)** - API documentation and endpoints
-- **[Security Guide](./docs/SECURITY.md)** - Security features, checklists, and incident response
+- **[Security Guide](./docs/SECURITY_FEATURES.md)** - Security features, checklists, and incident response
+- **[Security Policy](./SECURITY.md)** - How to report a vulnerability
 - **[Usage Guide](./docs/QUARK_USAGE.md)** - Full development and CLI workflow
 - **[Maintainability Guide](./docs/MAINTAINABILITY.md)** - Code style and best practices
 - **[Design Notes](./docs/DESIGN_NOTES.md)** - Accepted architectural direction and design decisions
+
+## Contributing
+
+Quark is open source and contributions are welcome.
+
+- **[Contributing Guide](./CONTRIBUTING.md)** - Setup, conventions, and the change workflow
+- **[Code of Conduct](./CODE_OF_CONDUCT.md)** - Expected behaviour in all project spaces
+- **[Security Policy](./SECURITY.md)** - Report vulnerabilities privately, not as a public issue
+- **[Support](./SUPPORT.md)** - Where to ask questions and how to report bugs
+
+A changeset is required for any change that affects a published package:
+
+```bash
+pnpm changeset
+```
+
+Run `pnpm lint` and `pnpm test` before opening a pull request. Note that
+`packages/cli/templates/` is **generated** from monorepo source — edit the source
+file, then run `pnpm --filter @techstream/quark-create-app sync-templates`. See
+[AGENTS.md](./AGENTS.md) for the full set of project rules.
+
+## License
+
+MIT — see [LICENSE](./LICENSE).

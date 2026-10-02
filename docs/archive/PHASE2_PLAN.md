@@ -6,9 +6,11 @@
 > 2. Phase 2 - user-facing `quark deploy` CLI + Railway
 > 3. Phase 3 - AWS
 > 4. Phase 4 - self-hosted/provider expansion
-> 5. Phase 5 - Quark Cloud
+> 5. Phase 5 - usequark.cloud
 >
-> Keep the admin package material below as historical exploration only. The current authoritative summaries are [../reference/PLAN_SUMMARY.md](../reference/PLAN_SUMMARY.md) and [../reference/PLAN.md](../reference/PLAN.md).
+> Keep the admin package material below as historical exploration only. For current
+> deployment documentation see [../DEPLOY_RAILWAY.md](../DEPLOY_RAILWAY.md) and the
+> onboarding path in [../START_HERE.md](../START_HERE.md).
 
 ## Overview
 

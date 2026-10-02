@@ -4,14 +4,14 @@
 	"description": "Core utilities for Quark apps: auth, BullMQ queues, Redis, email, storage, rate limiting, logging, and error handling",
 	"type": "module",
 	"main": "src/index.js",
-	"homepage": "https://github.com/Bobnoddle/quark#readme",
+	"homepage": "https://github.com/usequark/quark#readme",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/Bobnoddle/quark.git",
+		"url": "https://github.com/usequark/quark.git",
 		"directory": "packages/core"
 	},
 	"bugs": {
-		"url": "https://github.com/Bobnoddle/quark/issues"
+		"url": "https://github.com/usequark/quark/issues"
 	},
 	"author": "Quark Contributors",
 	"exports": {
@@ -76,5 +76,5 @@
 		"registry": "https://registry.npmjs.org",
 		"access": "public"
 	},
-	"license": "ISC"
+	"license": "MIT"
 }

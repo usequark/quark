@@ -20,7 +20,7 @@ This guide covers the complete Quark workflow-from development to scaffolding ne
 
 ```bash
 # Clone the Quark repository
-git clone https://github.com/Bobnoddle/quark
+git clone https://github.com/usequark/quark
 cd quark
 
 # Install dependencies
@@ -701,4 +701,4 @@ const nextConfig = {
 
 ---
 
-**Questions?** Open an issue at https://github.com/Bobnoddle/quark/issues
+**Questions?** Open an issue at https://github.com/usequark/quark/issues

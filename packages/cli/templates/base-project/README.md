@@ -1,6 +1,6 @@
 # __QUARK_PROJECT_NAME__
 
-Scaffolded with [Quark](https://github.com/Bobnoddle/quark) on __QUARK_SCAFFOLD_DATE__.
+Scaffolded with [Quark](https://github.com/usequark/quark) on __QUARK_SCAFFOLD_DATE__.
 
 ## Start Here
 

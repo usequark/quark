@@ -7,7 +7,7 @@ description: Specific technical context for the Quark Monorepo. Load this alongs
 
 ## Repository Overview
 
-Quark is a full-stack JS application framework distributed as a monorepo (`Bobnoddle/quark`).  
+Quark is a full-stack JS application framework distributed as a monorepo (`usequark/quark`).  
 Two packages are published to npm (with a third planned); everything else is scaffolded locally into user projects.
 
 | Published package | Purpose |

@@ -1,0 +1,17 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/usequark/quark/security/advisories/new
+    about: Report a vulnerability privately. Please do not open a public issue.
+  - name: Security policy
+    url: https://github.com/usequark/quark/blob/main/SECURITY.md
+    about: Read the security policy, including supported versions and response times.
+  - name: Question or discussion
+    url: https://github.com/usequark/quark/discussions
+    about: Ask a question or start a discussion about a feature or a pull request.
+  - name: Contributing guide
+    url: https://github.com/usequark/quark/blob/main/CONTRIBUTING.md
+    about: Conventions, change workflow, and how to run the checks.
+  - name: Code of Conduct
+    url: https://github.com/usequark/quark/blob/main/CODE_OF_CONDUCT.md
+    about: Expected behaviour in all project spaces, and how to report a violation.

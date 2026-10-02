@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { copyFile, mkdtemp, rm } from "node:fs/promises";
+import { copyFile, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Readable } from "node:stream";
@@ -413,6 +413,13 @@ test("Storage - imports and runs local storage without the AWS SDK installed", a
 		await copyFile(
 			new URL("./storage-s3.js", import.meta.url),
 			join(dir, "storage-s3.js"),
+		);
+		// The temp dir is outside any package with "type": "module", so Node
+		// would parse the copies as CommonJS and choke on `export`. Declare the
+		// module type explicitly rather than relying on syntax detection.
+		await writeFile(
+			join(dir, "package.json"),
+			JSON.stringify({ type: "module" }),
 		);
 
 		const isolated = await import(pathToFileURL(join(dir, "storage.js")).href);

@@ -15,7 +15,7 @@
  * releases shipped that way before anyone noticed.
  *
  * A correctly merged release produces a commit message like:
- *   Merge pull request #152 from Bobnoddle/changeset-release/main
+ *   Merge pull request #152 from <owner>/changeset-release/main
  *
  * ── Why it also reports `released` ────────────────────────────────────────────
  * The "Create consolidated GitHub Release" step used to gate on

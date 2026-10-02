@@ -1,0 +1,24 @@
+# Default owners for everything in the repo.
+# Format: @handle or @org/team. Must be a user or team with write access to this
+# repository, or GitHub silently ignores the rule.
+* @Bobnoddle
+
+# The published packages. Changes here affect what users get from npm, so they
+# warrant an explicit review.
+packages/core/   @Bobnoddle
+packages/cli/    @Bobnoddle
+
+# Generated scaffold templates. Never edit these directly -- change the
+# monorepo source and run `pnpm --filter @techstream/quark-create-app sync-templates`.
+# See AGENTS.md.
+/packages/cli/templates/ @Bobnoddle
+
+# CI/CD and release automation. Highest blast radius in the repo: a change here
+# runs with publish credentials.
+/.github/workflows/   @Bobnoddle
+/.github/dependabot.yml @Bobnoddle
+
+# Database schema. Every model needs createdAt and updatedAt, and a migration
+# must accompany any schema change.
+/packages/db/ @Bobnoddle
+/migrations/  @Bobnoddle

@@ -21,7 +21,7 @@
 	},
 	"keywords": [],
 	"author": "",
-	"license": "ISC",
+	"license": "MIT",
 	"packageManager": "pnpm@10.12.1",
 	"devDependencies": {
 		"@faker-js/faker": "^10.6.0",
