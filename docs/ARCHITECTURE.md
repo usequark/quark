@@ -726,7 +726,7 @@ Set `FORCED_THEME = null` to re-enable the full dynamic system with zero further
 
 ## Resources
 
-- [Core API Reference](./README.md)
-- [Core Source Code](./src/)
-- [Example Apps](../../apps/)
-- [Contributing to Core](../../CONTRIBUTING.md)
+- [Core API Reference](../README.md)
+- [Core Source Code](../packages/core/src/)
+- [Example Apps](../apps/)
+- [Contributing to Core](../CONTRIBUTING.md)

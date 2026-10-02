@@ -183,7 +183,7 @@ COPY . .
 RUN pnpm install
 ```
 
-Production note: the scaffolded deploy images use the generated [apps/web/Dockerfile](apps/web/Dockerfile) and [apps/worker/Dockerfile](apps/worker/Dockerfile), not this minimal example.
+Production note: the scaffolded deploy images use the generated [apps/web/Dockerfile](../apps/web/Dockerfile) and [apps/worker/Dockerfile](../apps/worker/Dockerfile), not this minimal example.
 
 Quark currently pins `node:22-alpine` for those Dockerfiles instead of using unversioned `cgr.dev/chainguard/node:latest`.
 
@@ -277,7 +277,7 @@ const newPost = await post.create({
 
 **Why it's local:** Every app has unique data models. Your Prisma schema in `packages/db/prisma/schema.prisma` is completely customized.
 
-See [packages/db/README.md](../packages/db/README.md) for full API reference.
+See [DATABASE.md](./DATABASE.md) for full API reference.
 
 #### `@yourscope/config` (Optional)
 

@@ -2,7 +2,7 @@
 
 > Status: Draft for review
 > Date: August 2026
-> Companion: [DESIGN_NOTES.md](./DESIGN_NOTES.md) — the design rationale this plan executes.
+> Companion: [DESIGN_NOTES.md](../DESIGN_NOTES.md) — the design rationale this plan executes.
 
 ## Execution Model
 

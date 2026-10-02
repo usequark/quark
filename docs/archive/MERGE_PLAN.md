@@ -2,7 +2,7 @@
 
 > Status: Draft for review
 > Date: August 2026
-> Companion: [DESIGN_NOTES.md](./DESIGN_NOTES.md), [FEATURE_PLAN.md](./FEATURE_PLAN.md)
+> Companion: [DESIGN_NOTES.md](../DESIGN_NOTES.md), [FEATURE_PLAN.md](./FEATURE_PLAN.md)
 
 ## 1. Current State
 

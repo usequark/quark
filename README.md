@@ -83,14 +83,13 @@ Scaffolded projects already include this in the generated web Dockerfile, `.rail
 ## Start Here
 
 - **[Start Here](./docs/START_HERE.md)** - the current onboarding path for creating, running, and learning a Quark project
-- **[First Feature Guide](./docs/FIRST_FEATURE.md)** - add your first domain model, query helper, and page without reverse-engineering the scaffold
+- **[First Feature Guide](./docs/archive/FIRST_FEATURE.md)** - add your first domain model, query helper, and page without reverse-engineering the scaffold
 - **[Documentation Index](./docs/INDEX.md)** - the full map of reference docs, feature guides, and planning docs
 
 ## UI References
 
-- **[Public example page](./apps/web/src/app/example-page/page.js)** - the production-style public route built from the shared UI package
 - **[UI package README](./packages/ui/README.md)** - the supported component surface and props
-- **[Playground route](./apps/web/src/app/playground/page.js)** - the full component reference page inside the reference app
+- **[Landing page](./apps/web/src/app/page.js)** - the production-style public route built from the shared UI package
 
 ---
 
@@ -209,7 +208,7 @@ pnpm changeset --empty
 ## Documentation
 
 - **[Start Here](./docs/START_HERE.md)** - Current onboarding path for new Quark projects
-- **[First Feature Guide](./docs/FIRST_FEATURE.md)** - End-to-end walkthrough for adding a real domain feature
+- **[First Feature Guide](./docs/archive/FIRST_FEATURE.md)** - End-to-end walkthrough for adding a real domain feature
 - **[Documentation Index](./docs/INDEX.md)** - Start here to navigate all documentation
 - **[Developer Guide](./copilot-instructions.md)** - Setup, conventions, and workflows
 - **[Architecture](./docs/ARCHITECTURE.md)** - Core design patterns and distribution model
