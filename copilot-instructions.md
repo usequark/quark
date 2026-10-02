@@ -1,7 +1,7 @@
 # Quark Monorepo - Contributor Guide
 
 > For app developers building with Quark: see `CLAUDE.md` in your scaffolded project.
-> For the full contributor reference: see `CLAUDE.md` at the monorepo root.
+> For the full contributor reference: see `AGENTS.md` at the monorepo root.
 
 ## Quick Setup
 
@@ -49,7 +49,7 @@ Import from `@techstream/quark-ui` in the monorepo or `@<scope>/ui` in scaffolde
 
 Available exports: `Button`, `Input`, `Label`, `Textarea`, `Select`, `Checkbox`, `Badge`, `Card`/`CardHeader`/`CardTitle`/`CardContent`/`CardFooter`, `Table`/`TableHeader`/`TableBody`/`TableRow`/`TableHead`/`TableCell`, `Skeleton`, `ErrorBanner`, `Footer`, `Navbar`/`MobileNavbar`, `RichText`, `QuarkLogo` *(server)*, `Dialog` *(client)*, `Toast`/`useToast` *(client)*, `ThemeProvider`/`useTheme` *(client)*.
 
-For public-page references, inspect `apps/web/src/app/example-page/page.js`, `apps/web/src/app/playground/page.js`, and `packages/ui/README.md` before creating bespoke layout primitives. Prefer extending the shared package with `className` or local package edits first.
+For public-page references, inspect `apps/web/src/app/page.js` and `packages/ui/README.md` before creating bespoke layout primitives. Prefer extending the shared package with `className` or local package edits first.
 
 ## Commands
 

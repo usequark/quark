@@ -130,6 +130,6 @@ Payment integration (Stripe checkout, webhooks, customer management) is built on
 
 ## For Quark Contributors
 
-The monorepo has its own `CLAUDE.md` at the repository root targeting contributors, not app developers. It covers the monorepo architecture, template sync workflow, changeset release process, and testing requirements.
+The monorepo has its own `AGENTS.md` at the repository root targeting contributors, not app developers. It covers the monorepo architecture, template sync workflow, changeset release process, and testing requirements. Scaffolded projects still receive a `CLAUDE.md`, which is what the in-app tooling reads.
 
 The scaffold template files (`packages/cli/templates/base-project/CLAUDE.md`, `.cursor/rules/quark.mdc`, `copilot-instructions.md`) contain `__QUARK_*__` placeholders and are listed in `TEMPLATE_ONLY` in `sync-templates.js` - they are never overwritten by the contributor tool that syncs source code into templates.

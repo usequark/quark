@@ -786,7 +786,7 @@ export function EmailCapture({
 
 ## 3. Landing Page Starter Templates
 
-Three composable reference pages (like the existing `example-page`). Each is a server component demonstrating component composition. Agents use these as starting points, not copy-paste targets.
+Three composable reference pages. Each is a server component demonstrating component composition. Agents use these as starting points, not copy-paste targets.
 
 All templates go in `apps/web/src/app/` as new route directories:
 - `apps/web/src/app/templates/saas/page.js`
@@ -869,7 +869,7 @@ All templates go in `apps/web/src/app/` as new route directories:
 - [ ] Create `apps/web/src/app/templates/saas/page.js`
 - [ ] Create `apps/web/src/app/templates/local-service/page.js`
 - [ ] Create `apps/web/src/app/templates/ecommerce/page.js`
-- [ ] Update `apps/web/src/app/example-page/page.js` to demonstrate new components
+- [ ] Update `apps/web/src/app/page.js` to demonstrate new components
 - [ ] Run `pnpm lint` and fix any issues
 - [ ] Run `pnpm test` and ensure all tests pass
 - [ ] Run `pnpm --filter @techstream/quark-create-app sync-templates`

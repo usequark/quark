@@ -6,7 +6,7 @@ alwaysApply: true
 # Quark Monorepo - Contributor Rules
 
 > For app developers building WITH Quark: see `CLAUDE.md` in your scaffolded project.
-> For the full contributor reference: see `CLAUDE.md` at the monorepo root.
+> For the full contributor reference: see `AGENTS.md` at the monorepo root.
 
 ---
 
