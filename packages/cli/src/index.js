@@ -1694,7 +1694,7 @@ STORAGE_PROVIDER=local
 
 			console.log(
 				chalk.dim(
-					`  📖 github.com/Bobnoddle/quark  •  Updates: npx @techstream/quark-create-app update\n`,
+					`  📖 github.com/usequark/quark  •  Updates: npx @techstream/quark-create-app update\n`,
 				),
 			);
 		} catch (error) {

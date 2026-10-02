@@ -206,5 +206,5 @@ QUARK_CLI_BUILD_TEST=1 pnpm test:build
 ## Support
 
 For issues, questions, and discussions:
-- [Issue Tracker](https://github.com/Bobnoddle/quark/issues)
-- [Discussions](https://github.com/Bobnoddle/quark/discussions)
+- [Issue Tracker](https://github.com/usequark/quark/issues)
+- [Discussions](https://github.com/usequark/quark/discussions)

@@ -16,7 +16,7 @@
 	},
 	"keywords": [],
 	"author": "",
-	"license": "ISC",
+	"license": "MIT",
 	"packageManager": "pnpm@10.12.1",
 	"dependencies": {
 		"lucide-react": "^1.48.0",

@@ -10,7 +10,7 @@ Use this guide if you are about to scaffold a project, have just scaffolded one,
 |---|---|
 | Build a new product with Quark | [README.md](../README.md) -> this guide -> [FIRST_FEATURE.md](./FIRST_FEATURE.md) |
 | Contribute to the Quark monorepo | [README.md](../README.md), `CLAUDE.md`, `copilot-instructions.md` |
-| Look up exact platform behavior | `DATABASE.md`, `API.md`, `SECURITY.md`, `QUARK_USAGE.md` |
+| Look up exact platform behavior | `DATABASE.md`, `API.md`, `SECURITY_FEATURES.md`, `QUARK_USAGE.md` |
 
 ## Scaffold a project
 
@@ -76,7 +76,7 @@ This is the docs contract for Quark:
 | `docs/START_HERE.md` | Current onboarding path |
 | `docs/FIRST_FEATURE.md` | Canonical first feature walkthrough |
 | `packages/*/README.md` | Optional feature guides and extension points |
-| `DATABASE.md`, `API.md`, `SECURITY.md` | Reference material |
+| `DATABASE.md`, `API.md`, `SECURITY_FEATURES.md` | Reference material |
 | `ROADMAP.md`, `IMPLEMENTATION_CHECKLIST.md`, `PLAN*.md` | Planning and status, not the onboarding path |
 
 If a detail appears in both onboarding and reference docs, treat the onboarding docs as the **shortest current path** and the reference docs as the **deeper explanation**.

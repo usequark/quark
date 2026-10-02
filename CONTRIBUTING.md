@@ -5,7 +5,7 @@ Thanks for your interest in contributing! This guide covers the essentials.
 ## Getting Started
 
 ```bash
-git clone https://github.com/Bobnoddle/quark.git
+git clone https://github.com/usequark/quark.git
 cd quark
 pnpm install
 docker compose up -d     # PostgreSQL, Redis, Mailpit
@@ -73,9 +73,9 @@ This creates a changeset file that describes your change. Include it in your com
 ## Reporting Issues
 
 - **Bugs**: Open a GitHub issue with steps to reproduce
-- **Security vulnerabilities**: See [SECURITY.md](docs/SECURITY.md) -- do not open a public issue
+- **Security vulnerabilities**: See [SECURITY.md](SECURITY.md) -- do not open a public issue
 - **Feature requests**: Open a GitHub issue describing the use case
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the [ISC License](LICENSE).
+By contributing, you agree that your contributions will be licensed under the [MIT License](LICENSE).

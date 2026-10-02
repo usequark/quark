@@ -215,15 +215,8 @@ All high-priority security tasks have been completed! ✅
 
 ### Reporting Security Issues
 
-If you discover a security vulnerability:
-
-1. **DO NOT** create a public GitHub issue
-2. Email security details to: [security@yourcompany.com]
-3. Include:
-   - Description of vulnerability
-   - Steps to reproduce
-   - Potential impact
-   - Suggested fix (if available)
+If you discover a security vulnerability, follow the disclosure process in the
+repository's [SECURITY.md](../SECURITY.md). Do not open a public issue.
 
 ---
 

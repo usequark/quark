@@ -40,7 +40,7 @@
 	},
 	"keywords": [],
 	"author": "",
-	"license": "ISC",
+	"license": "MIT",
 	"packageManager": "pnpm@10.12.1",
 	"engines": {
 		"node": ">=22.13.0"

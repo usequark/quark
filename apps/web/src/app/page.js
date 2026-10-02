@@ -226,7 +226,7 @@ export default function Home() {
 
 				<nav className="flex items-center gap-2">
 					<a
-						href="https://github.com/Bobnoddle/quark"
+						href="https://github.com/usequark/quark"
 						target="_blank"
 						rel="noopener noreferrer"
 						className="quark-home-link"

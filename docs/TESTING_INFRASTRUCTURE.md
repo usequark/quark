@@ -1045,7 +1045,7 @@ npx husky add .husky/pre-commit "pnpm test"
   - [ADR-005: BullMQ Job Queue](docs/adr/005-bullmq-job-queue.md) - job testing patterns
 - [Contributing Guidelines](CLAUDE.md) - coding conventions, linting, error handling
 - [Database Documentation](DATABASE.md) - Prisma schema, migrations, connection
-- [CI/CD Reference](https://github.com/Bobnoddle/quark/blob/main/.github/workflows/ci.yml) - Complete workflow definition
+- [CI/CD Reference](https://github.com/usequark/quark/blob/main/.github/workflows/ci.yml) - Complete workflow definition
 - [Troubleshooting](TROUBLESHOOTING.md) - Common test failures and fixes
 
 ---

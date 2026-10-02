@@ -19,7 +19,7 @@
 	},
 	"keywords": [],
 	"author": "",
-	"license": "ISC",
+	"license": "MIT",
 	"packageManager": "pnpm@10.12.1",
 	"dependencies": {
 		"@techstream/quark-config": "workspace:*",

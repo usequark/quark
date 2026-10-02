@@ -12,7 +12,7 @@
 	},
 	"keywords": [],
 	"author": "",
-	"license": "ISC",
+	"license": "MIT",
 	"packageManager": "pnpm@10.12.1",
 	"dependencies": {
 		"bullmq": "^6.3.8"

@@ -1,0 +1,63 @@
+name: Feature request
+description: Suggest a capability or change to Quark
+title: "[Feature] "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Features get discussed before they get built. If you only want to ask a
+        question, please use
+        [Discussions](https://github.com/usequark/quark/discussions) instead.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: Describe the problem, not the solution you have in mind.
+      placeholder: |
+        Every Quark app I write needs to ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like Quark to do?
+      description: A sketch is fine. An example of the API you would want to use is ideal.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you have considered
+      description: Including workarounds you are using today, and why they fall short.
+      value: |
+      - 
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of Quark does this touch?
+      multiple: true
+      options:
+        - "@techstream/quark-core (auth, queues, redis, email, storage, errors)"
+        - "@techstream/quark-create-app (CLI and scaffold templates)"
+        - "packages/ui (shared components)"
+        - "packages/jobs (BullMQ job types)"
+        - "Database / Prisma schema"
+        - "Deployment / Railway"
+        - "Documentation"
+        - "Not sure"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I would be willing to implement this and open a pull request
+        - label: This is mainly a documentation fix
+        - label: I have not contributed to Quark before

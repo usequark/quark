@@ -13,8 +13,8 @@ info:
     { "name": "ErrorName", "message": "…", "statusCode": 4xx, "code": "ERROR_CODE" }
     ```
   license:
-    name: ISC
-    url: https://opensource.org/licenses/ISC
+    name: MIT
+    url: https://opensource.org/licenses/MIT
 
 servers:
   - url: http://localhost:3000

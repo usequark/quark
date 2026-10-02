@@ -3,14 +3,14 @@
 	"version": "1.23.10",
 	"description": "CLI to scaffold new Quark projects with Next.js, Prisma, BullMQ, and Railway deployment",
 	"type": "module",
-	"homepage": "https://github.com/Bobnoddle/quark#readme",
+	"homepage": "https://github.com/usequark/quark#readme",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/Bobnoddle/quark.git",
+		"url": "https://github.com/usequark/quark.git",
 		"directory": "packages/cli"
 	},
 	"bugs": {
-		"url": "https://github.com/Bobnoddle/quark/issues"
+		"url": "https://github.com/usequark/quark/issues"
 	},
 	"author": "Quark Contributors",
 	"bin": {
@@ -52,5 +52,5 @@
 	"engines": {
 		"node": ">=22.13.0"
 	},
-	"license": "ISC"
+	"license": "MIT"
 }

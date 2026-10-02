@@ -28,7 +28,7 @@ Entry point: [../README.md](../README.md)
 | [DATABASE.md](./DATABASE.md) | Database schema, models, query helpers, and best practices |
 | [EXAMPLES.md](./EXAMPLES.md) | Domain model examples (blog posts, products, contacts, teams) |
 | [API.md](./API.md) | REST endpoint reference |
-| [SECURITY.md](./SECURITY.md) | Security features, checklists, and incident response |
+| [SECURITY_FEATURES.md](./SECURITY_FEATURES.md) | Security features, checklists, and incident response |
 | [MAINTAINABILITY.md](./MAINTAINABILITY.md) | Code style, testing, and dependency management |
 | [TESTING_INFRASTRUCTURE.md](./TESTING_INFRASTRUCTURE.md) | Testing organization, CI/CD, utilities, and patterns |
 | [copilot-instructions.md](../copilot-instructions.md) | Monorepo Copilot contributor context |
