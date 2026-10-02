@@ -98,7 +98,7 @@ return (
 
 ## Example references
 - Public-page example: `apps/web/src/app/page.js`
-- Full component surface: `packages/ui/README.md` props tables above
+- Component props and usage: the tables in this file
 
 ---
 
