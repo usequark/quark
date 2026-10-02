@@ -8,7 +8,7 @@ Entry point: [../README.md](../README.md)
 |----------|---------|
 | [../README.md](../README.md) | Product overview, quick start, and what ships today |
 | [START_HERE.md](./START_HERE.md) | Current onboarding path for new Quark projects |
-| [FIRST_FEATURE.md](./FIRST_FEATURE.md) | Canonical first feature walkthrough |
+| [FIRST_FEATURE.md](./archive/FIRST_FEATURE.md) | Canonical first feature walkthrough |
 | [QUARK_USAGE.md](./QUARK_USAGE.md) | Full development and CLI workflow |
 
 ## Feature Guides
@@ -32,7 +32,7 @@ Entry point: [../README.md](../README.md)
 | [MAINTAINABILITY.md](./MAINTAINABILITY.md) | Code style, testing, and dependency management |
 | [TESTING_INFRASTRUCTURE.md](./TESTING_INFRASTRUCTURE.md) | Testing organization, CI/CD, utilities, and patterns |
 | [copilot-instructions.md](../copilot-instructions.md) | Monorepo Copilot contributor context |
-| [CLAUDE.md](../CLAUDE.md) | Monorepo Claude Code contributor context |
+| [AGENTS.md](../AGENTS.md) | Monorepo agent contributor context |
 | [.cursor/rules/quark.mdc](../.cursor/rules/quark.mdc) | Monorepo Cursor contributor rules |
 
 ## Active Plans

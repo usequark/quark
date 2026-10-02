@@ -51,7 +51,7 @@ Quark uses a **lightweight, dependency-free testing approach** built on Node.js 
 - **Clear assertions** - `node:assert/strict` catches subtle bugs
 - **Familiar pattern** - `describe()`, `test()`, `beforeEach()`, `afterEach()`
 
-See [ADR-002: No TypeScript](docs/adr/002-no-typescript.md) for Quark's philosophy on simplicity.
+See [ADR-002: No TypeScript](./adr/002-no-typescript.md) for Quark's philosophy on simplicity.
 
 ### Test Organization Model
 
@@ -195,7 +195,7 @@ Components: Button, Input, Checkbox, Label, Table, Select, Badge, Card, Dialog, 
 
 **Module:** `node:test`  
 **Assertion:** `node:assert/strict`  
-**Version:** Available in Node 18+; Quark requires Node 22+ ([package.json engines](package.json))
+**Version:** Available in Node 18+; Quark requires Node 22+ ([package.json engines](../package.json))
 
 ```js
 import { describe, test, beforeEach, afterEach } from "node:test";
@@ -290,7 +290,7 @@ pnpm --filter @techstream/quark-create-app test:e2e:full
 pnpm --filter @techstream/quark-create-app test:all
 ```
 
-See [packages/cli/README.md](packages/cli/README.md) for details.
+See [packages/cli/README.md](../packages/cli/README.md) for details.
 
 ### Prerequisites
 
@@ -307,7 +307,7 @@ pnpm test
 docker compose down
 ```
 
-**Environment variables** for local testing are in [.env.example](.env.example):
+**Environment variables** for local testing are in [.env.example](../.env.example):
 ```
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
@@ -322,7 +322,7 @@ REDIS_PORT=6379
 
 ### Continuous Integration Pipeline
 
-Defined in [.github/workflows/ci.yml](.github/workflows/ci.yml):
+Defined in [.github/workflows/ci.yml](../.github/workflows/ci.yml):
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -376,7 +376,7 @@ Defined in [.github/workflows/ci.yml](.github/workflows/ci.yml):
 
 ### Test Environment Variables
 
-CI provides test-specific credentials ([.github/workflows/ci.yml](/.github/workflows/ci.yml#L100)):
+CI provides test-specific credentials ([.github/workflows/ci.yml](../.github/workflows/ci.yml#L100)):
 
 ```yaml
 env:
@@ -395,7 +395,7 @@ env:
 
 Separate CI job for full E2E testing of scaffold generation:
 
-**Workflow:** [.github/workflows/cli-e2e-full.yml](.github/workflows/cli-e2e-full.yml)
+**Workflow:** [.github/workflows/cli-e2e-full.yml](../.github/workflows/cli-e2e-full.yml)
 
 - **Trigger:** Changes to `packages/cli/` or manual dispatch
 - **Command:** `pnpm --filter @techstream/quark-create-app test:e2e:full`
@@ -408,7 +408,7 @@ Separate CI job for full E2E testing of scaffold generation:
 
 ### Overview
 
-Located in [packages/core/src/testing/](packages/core/src/testing/), exported from `@techstream/quark-core/testing`.
+Located in [packages/core/src/testing/](../packages/core/src/testing/), exported from `@techstream/quark-core/testing`.
 
 Utilities provide:
 - **Factories** - Generate test data with sensible defaults
@@ -1040,10 +1040,10 @@ npx husky add .husky/pre-commit "pnpm test"
 
 ## Related Documentation
 
-- [Architecture Decision Records](docs/adr/README.md)
-  - [ADR-002: No TypeScript](docs/adr/002-no-typescript.md) - philosophy on simplicity
-  - [ADR-005: BullMQ Job Queue](docs/adr/005-bullmq-job-queue.md) - job testing patterns
-- [Contributing Guidelines](CLAUDE.md) - coding conventions, linting, error handling
+- [Architecture Decision Records](./adr/README.md)
+  - [ADR-002: No TypeScript](./adr/002-no-typescript.md) - philosophy on simplicity
+  - [ADR-005: BullMQ Job Queue](./adr/005-bullmq-job-queue.md) - job testing patterns
+- [Contributing Guidelines](../AGENTS.md) - coding conventions, linting, error handling
 - [Database Documentation](DATABASE.md) - Prisma schema, migrations, connection
 - [CI/CD Reference](https://github.com/usequark/quark/blob/main/.github/workflows/ci.yml) - Complete workflow definition
 - [Troubleshooting](TROUBLESHOOTING.md) - Common test failures and fixes

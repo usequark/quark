@@ -684,7 +684,7 @@ A: 1. Define in `@techstream/quark-jobs`
 
 ## Further Reading
 
-- [QUARK_USAGE.md](../docs/QUARK_USAGE.md) - Framework guidelines
-- [ARCHITECTURE.md](../docs/ARCHITECTURE.md) - Core-only registry model
-- [DATABASE.md](../docs/DATABASE.md) - Prisma setup and patterns
+- [QUARK_USAGE.md](../../docs/QUARK_USAGE.md) - Framework guidelines
+- [ARCHITECTURE.md](../../docs/ARCHITECTURE.md) - Core-only registry model
+- [DATABASE.md](../../docs/DATABASE.md) - Prisma setup and patterns
 - [BullMQ Docs](https://docs.bullmq.io) - Job queue internals
