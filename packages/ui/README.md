@@ -97,8 +97,8 @@ return (
 - Accessible: ARIA attributes, focus management on interactive elements.
 
 ## Example references
-- Public-page example: `apps/web/src/app/example-page/page.js`
-- Full component reference: `apps/web/src/app/playground/page.js`
+- Public-page example: `apps/web/src/app/page.js`
+- Full component surface: `packages/ui/README.md` props tables above
 
 ---
 

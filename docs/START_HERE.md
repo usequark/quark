@@ -8,7 +8,7 @@ Use this guide if you are about to scaffold a project, have just scaffolded one,
 
 | I want to... | Start with |
 |---|---|
-| Build a new product with Quark | [README.md](../README.md) -> this guide -> [FIRST_FEATURE.md](./archive/FIRST_FEATURE.md) |
+| Build a new product with Quark | [README.md](../README.md) -> this guide -> [FIRST_FEATURE.md](./FIRST_FEATURE.md) |
 | Contribute to the Quark monorepo | [README.md](../README.md), `AGENTS.md`, `copilot-instructions.md` |
 | Look up exact platform behavior | `DATABASE.md`, `API.md`, `SECURITY_FEATURES.md`, `QUARK_USAGE.md` |
 
@@ -56,7 +56,7 @@ Start with these files:
 
 ## Build your first real feature
 
-Follow **[FIRST_FEATURE.md](./archive/FIRST_FEATURE.md)** next.
+Follow **[FIRST_FEATURE.md](./FIRST_FEATURE.md)** next.
 
 That guide covers the standard Quark flow:
 

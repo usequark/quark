@@ -34,4 +34,4 @@ These teach the AI to build a complete vertical on demand. No starter code is sc
 
 1. Match the user's request to a skill above; read its `SKILL.md` first.
 2. Skills assume the Quark conventions: Zod-validated actions/routes, query helpers in `packages/db/src/queries.js`, shared UI imports, `createLogger()` logging, models with `createdAt`/`updatedAt`.
-3. If no skill matches, follow `CLAUDE.md` / project context and the reference patterns in `apps/web/src/app/api/users/route.js` and `apps/web/src/app/example-page/page.js`.
+3. If no skill matches, follow `CLAUDE.md` / project context and the reference patterns in `apps/web/src/app/api/users/route.js` and `apps/web/src/app/page.js`.

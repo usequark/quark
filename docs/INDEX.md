@@ -8,7 +8,7 @@ Entry point: [../README.md](../README.md)
 |----------|---------|
 | [../README.md](../README.md) | Product overview, quick start, and what ships today |
 | [START_HERE.md](./START_HERE.md) | Current onboarding path for new Quark projects |
-| [FIRST_FEATURE.md](./archive/FIRST_FEATURE.md) | Canonical first feature walkthrough |
+| [FIRST_FEATURE.md](./FIRST_FEATURE.md) | Canonical first feature walkthrough |
 | [QUARK_USAGE.md](./QUARK_USAGE.md) | Full development and CLI workflow |
 
 ## Feature Guides

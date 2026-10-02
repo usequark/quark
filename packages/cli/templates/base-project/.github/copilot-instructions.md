@@ -47,7 +47,7 @@ Components from `@__QUARK_SCOPE__/ui` - Tailwind-only, Server Component safe:
 `ThemeProvider`/`useTheme` *(client)* - dark/light mode context.
 
 All accept `className`. Never import from `@/components/ui/*`.
-Inspect `apps/web/src/app/example-page/page.js`, `apps/web/src/app/playground/page.js`, and `packages/ui/README.md` before creating bespoke public-page layout primitives.
+Inspect `apps/web/src/app/page.js` and `packages/ui/README.md` before creating bespoke public-page layout primitives.
 
 ## Standard Patterns
 
