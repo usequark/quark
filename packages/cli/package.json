@@ -1,6 +1,6 @@
 {
 	"name": "@usequark/quark-create-app",
-	"version": "1.23.12",
+	"version": "1.23.13",
 	"description": "CLI to scaffold new Quark projects with Next.js, Prisma, BullMQ, and Railway deployment",
 	"keywords": [
 		"quark",
