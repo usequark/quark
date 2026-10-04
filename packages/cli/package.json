@@ -2,6 +2,17 @@
 	"name": "@usequark/quark-create-app",
 	"version": "1.23.12",
 	"description": "CLI to scaffold new Quark projects with Next.js, Prisma, BullMQ, and Railway deployment",
+	"keywords": [
+		"quark",
+		"scaffolding",
+		"scaffolder",
+		"cli",
+		"nextjs",
+		"prisma",
+		"bullmq",
+		"railway",
+		"self-hosted"
+	],
 	"type": "module",
 	"homepage": "https://github.com/usequark/quark#readme",
 	"repository": {
@@ -21,6 +32,7 @@
 	},
 	"files": [
 		"src",
+		"!src/**/*.test.js",
 		"templates",
 		"README.md"
 	],
