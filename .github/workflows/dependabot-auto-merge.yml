@@ -5,10 +5,6 @@ on: pull_request
 permissions:
   contents: write
   pull-requests: write
-  # Read-only. Required to see branch protection and rulesets at all - without
-  # it both endpoints answer 403 and the gate below can never say "protected",
-  # which would silently disable auto-merge even after the repo is public.
-  administration: read
 
 jobs:
   auto-merge:
@@ -20,60 +16,37 @@ jobs:
 
       # `gh pr merge --auto` is only permitted when the base branch has
       # protection with required status checks. A private repository on a Free
-      # plan can have neither, so the merge below would fail and turn every
-      # patch Dependabot PR red for a reason that has nothing to do with the
-      # dependency being upgraded. Gate on protection instead of failing, and
-      # let the gate turn itself off again once the repo is public.
-      - name: Detect protection on the base branch
-        id: gate
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BASE_REF: ${{ github.base_ref }}
-        run: |
-          set -uo pipefail
-          protected=false
-
-          if gh api "repos/$GITHUB_REPOSITORY/branches/$BASE_REF/protection" >/dev/null 2>&1; then
-            protected=true
-            echo "Classic branch protection is active on $BASE_REF."
-          fi
-
-          # Rulesets are invisible to the /protection endpoint, so a repo guarded
-          # by a ruleset alone still looks unprotected there. Without this second
-          # check, moving to rulesets would leave auto-merge switched off for
-          # good with no signal that anything was wrong.
-          #
-          # `gh api` reports HTTP errors as JSON on STDOUT, so piping stderr away
-          # is not enough to keep an error body out of the value - the body
-          # carries a numeric "status" that would read as a ruleset count. The
-          # exit status is the only reliable discriminator, so branch on that
-          # before parsing.
-          if [ "$protected" = false ]; then
-            if rulesets=$(gh api "repos/$GITHUB_REPOSITORY/rulesets?includes_parents=true" 2>/dev/null); then
-              active=$(printf '%s' "$rulesets" \
-                | jq "[.[] | select(.target == \"$BASE_REF\" and .enforcement != \"disabled\")] | length")
-              case "$active" in
-                '' | *[!0-9]*) active=0 ;;
-              esac
-              if [ "$active" -gt 0 ]; then
-                protected=true
-                echo "An active ruleset targets $BASE_REF."
-              fi
-            else
-              echo "Rulesets are not readable on this plan, which is expected for a private repo on Free."
-            fi
-          fi
-
-          if [ "$protected" = false ]; then
-            echo "::notice::$BASE_REF has no branch protection and no active ruleset, so --auto cannot be used. Skipping."
-            echo "::notice::This is expected while the repository is private on a Free plan. Auto-merge resumes on its own once it is public or the org has a paid plan."
-          fi
-
-          echo "protected=$protected" >> "$GITHUB_OUTPUT"
-
+      # plan can have neither, so every patch Dependabot PR would go red for a
+      # reason that has nothing to do with the dependency being upgraded.
+      #
+      # An earlier version tried to detect this in advance, via
+      # GET /repos/{repo}/branches/{branch}/protection plus /rulesets. That
+      # cannot be done from a workflow: both endpoints require the
+      # `administration` permission, which is a GitHub App permission and is NOT
+      # available on GITHUB_TOKEN. Declaring it here does not fail loudly - it
+      # makes the whole workflow invalid, so every run ends `failure` with zero
+      # jobs and no log to explain why.
+      #
+      # So the merge is attempted and the failure classified instead. Anything
+      # unrecognised still fails the run, so a genuine problem is not swallowed.
       - name: Auto-merge patch updates
-        if: steps.meta.outputs.update-type == 'version-update:semver-patch' && steps.gate.outputs.protected == 'true'
-        run: gh pr merge "$PR_URL" --auto --squash
+        if: steps.meta.outputs.update-type == 'version-update:semver-patch'
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -uo pipefail
+
+          if output=$(gh pr merge "$PR_URL" --auto --squash 2>&1); then
+            echo "$output"
+            exit 0
+          fi
+
+          if printf '%s' "$output" | grep -qiE "auto.?merge is not allowed|not protected|branch protection"; then
+            echo "::notice::Skipping auto-merge: the base branch has no protection, so --auto is unavailable."
+            echo "::notice::Expected while the repository is private on a Free plan. Auto-merge resumes on its own once it is public or the org is on a paid plan."
+            exit 0
+          fi
+
+          echo "$output"
+          exit 1
