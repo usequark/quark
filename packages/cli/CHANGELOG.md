@@ -1,5 +1,38 @@
 # @techstream/quark-create-app
 
+## 1.23.11
+
+### Patch Changes
+
+- [#190](https://github.com/usequark/quark/pull/190) [`7352bb4`](https://github.com/usequark/quark/commit/7352bb444f2e67c7841006664bf59334207a83e6) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Switch the project licence from ISC to MIT. MIT carries an explicit patent grant,
+  which ISC omits and which some corporate legal teams screen for when evaluating
+  a framework dependency.
+  
+  Scaffolded projects now default to MIT as well, so a generated app inherits the
+  same terms as the framework that produced it. Archived reference verticals under
+  `docs/archive/` keep their original ISC markers as historical snapshots.
+
+- [#192](https://github.com/usequark/quark/pull/192) [`6c1f436`](https://github.com/usequark/quark/commit/6c1f43682027267161878c0bc22cc62568a857e9) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Stop pointing scaffolded projects at reference routes that no longer exist.
+  
+  The `example-page` and `playground` routes were removed from the reference app,
+  but the shipped scaffold guidance still told agents to read them. The
+  `base-project` `README.md`, `.github/copilot-instructions.md`, and
+  `skills/quark-skills/SKILL.md` all referenced those two paths, so every newly
+  generated project inherited instructions pointing at files it never received.
+  `apps/web/src/app/page.js` is the only remaining public-page reference and is
+  what those three templates now cite.
+  
+  The dead `EXCLUDE_PATTERNS` entries for the removed route directories were also
+  dropped from `sync-templates.js`; they no longer matched anything.
+
+- [#190](https://github.com/usequark/quark/pull/190) [`7352bb4`](https://github.com/usequark/quark/commit/7352bb444f2e67c7841006664bf59334207a83e6) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Point repository metadata at the `usequark/quark` GitHub org. `homepage`,
+  `repository.url`, and `bugs.url` in both published packages, the changesets
+  changelog repo, the CLI's user-facing output, and the contributor and
+  documentation guides now reference `usequark/quark` instead of the previous
+  personal account.
+  
+  No runtime behaviour changes.
+
 ## 1.23.10
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
 	"name": "@techstream/quark-core",
-	"version": "2.5.3",
+	"version": "2.5.4",
 	"description": "Core utilities for Quark apps: auth, BullMQ queues, Redis, email, storage, rate limiting, logging, and error handling",
 	"type": "module",
 	"main": "src/index.js",
