@@ -1,27 +1,12 @@
-# These are supported for the two packages published to npm.
-# Any other request will be ignored.
-
-version: 2
-updates:
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    open-pull-requests-limit: 2
-    commit-message:
-      prefix: "deps"
-    groups:
-      production:
-        dependency-type: "production"
-      development:
-        dependency-type: "development"
-
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    open-pull-requests-limit: 2
-    commit-message:
-      prefix: "deps"
+# Funding platforms shown in the repository's Sponsor button.
+# Schema reference: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-for-your-repository
+#
+# Only `github`, `patreon`, `open_collective`, `ko_fi`, `custom`, `liberapay`
+# and `tidelift` are valid keys. Anything else is silently ignored and the
+# Sponsor button renders empty.
+#
+# This file previously held a copy of the Dependabot manifest (version 2 /
+# updates / package-ecosystem). That schema belongs to dependabot.yml, not
+# here, so the Sponsor button never rendered.
+github:
+  - Bobnoddle
