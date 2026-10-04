@@ -2,6 +2,18 @@
 	"name": "@usequark/quark-core",
 	"version": "2.5.5",
 	"description": "Core utilities for Quark apps: auth, BullMQ queues, Redis, email, storage, rate limiting, logging, and error handling",
+	"keywords": [
+		"quark",
+		"nextjs",
+		"auth",
+		"bullmq",
+		"redis",
+		"email",
+		"storage",
+		"rate-limiting",
+		"logging",
+		"zod"
+	],
 	"type": "module",
 	"main": "src/index.js",
 	"homepage": "https://github.com/usequark/quark#readme",
