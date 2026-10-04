@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { register } from "node:module";
 import { afterEach, beforeEach, mock, test } from "node:test";
 import { pathToFileURL } from "node:url";
-import { UnauthorizedError } from "@techstream/quark-core/errors";
+import { UnauthorizedError } from "@usequark/quark-core/errors";
 
 // Resolve @/ alias used by route files
 register(new URL("../../../../scripts/test-alias-loader.mjs", import.meta.url));

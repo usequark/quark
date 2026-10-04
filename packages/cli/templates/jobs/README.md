@@ -41,11 +41,11 @@ Treat them as examples, not a required domain model.
 1. Add a queue or job name in `src/definitions.js`
 2. Create a handler in `apps/worker/src/handlers/`
 3. Register that handler in `apps/worker/src/handlers/index.js`
-4. Dispatch the job from the web app using `createQueue()` and `addJob()` from `@techstream/quark-core`
+4. Dispatch the job from the web app using `createQueue()` and `addJob()` from `@usequark/quark-core`
 
 ## Relationship to Quark Core
 
-`@techstream/quark-core` provides the queue infrastructure.
+`@usequark/quark-core` provides the queue infrastructure.
 
 `@yourscope/jobs` defines **your** queue names and job names.
 

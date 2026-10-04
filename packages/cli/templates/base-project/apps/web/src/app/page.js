@@ -8,7 +8,7 @@ const PANELS = [
 		title: "Need a landing page?",
 		description:
 			"Build a high-converting landing page with a hero section, social proof, and lead capture",
-		prompt: `You are a senior full-stack engineer building a production-ready landing page for a local business using Quark (Next.js 16, App Router, Server Actions, Prisma, Tailwind via @techstream/quark-ui, Zod validation, Biome linting). The app runs on Railway with PostgreSQL and Redis. ESM only, no TypeScript, no console.log in app code — use createLogger from @techstream/quark-core. No throw new Error — use AppError/ValidationError. All Server Actions must validate with Zod. Every Prisma model needs createdAt and updatedAt. Import UI from @techstream/quark-ui, never deep-import.
+		prompt: `You are a senior full-stack engineer building a production-ready landing page for a local business using Quark (Next.js 16, App Router, Server Actions, Prisma, Tailwind via @usequark/quark-ui, Zod validation, Biome linting). The app runs on Railway with PostgreSQL and Redis. ESM only, no TypeScript, no console.log in app code — use createLogger from @usequark/quark-core. No throw new Error — use AppError/ValidationError. All Server Actions must validate with Zod. Every Prisma model needs createdAt and updatedAt. Import UI from @usequark/quark-ui, never deep-import.
 
 Goal: Build an SEO-optimised landing page for a local business (e.g., plumber, restaurant, salon).
 
@@ -16,13 +16,13 @@ Ask the user: What is the business name and type? What services do they offer? D
 
 Build: Hero section with business name and tagline, services list, testimonials carousel, contact form with server-side Zod validation, SEO metadata (title, description, OG tags), responsive layout. Add a ContactInquiry Prisma model for form submissions with status tracking.
 
-Patterns to follow: Use AppError/ValidationError for error handling, prisma from @techstream/quark-db, validateBody with Zod, withCsrfProtection on POST routes.`,
+Patterns to follow: Use AppError/ValidationError for error handling, prisma from @usequark/quark-db, validateBody with Zod, withCsrfProtection on POST routes.`,
 	},
 	{
 		title: "Want a dashboard?",
 		description:
 			"Create an interactive analytics portal with live charts, auth, and customizable metrics",
-		prompt: `You are a senior full-stack engineer building a management dashboard using Quark (Next.js 16, App Router, Server Actions, Prisma, Tailwind via @techstream/quark-ui, Zod, Biome). Stack: PostgreSQL, Redis, BullMQ for background jobs. ESM only, no TypeScript. Use createLogger from @techstream/quark-core for logging, AppError/ValidationError for errors. All Server Actions validate with Zod. Import UI from @techstream/quark-ui.
+		prompt: `You are a senior full-stack engineer building a management dashboard using Quark (Next.js 16, App Router, Server Actions, Prisma, Tailwind via @usequark/quark-ui, Zod, Biome). Stack: PostgreSQL, Redis, BullMQ for background jobs. ESM only, no TypeScript. Use createLogger from @usequark/quark-core for logging, AppError/ValidationError for errors. All Server Actions validate with Zod. Import UI from @usequark/quark-ui.
 
 Goal: Build an SEO performance dashboard where users can track site metrics, keyword rankings, and crawl health.
 
@@ -36,7 +36,7 @@ Patterns to follow: Use requireAuth() for protected routes, prisma queries with 
 		title: "Building a SaaS?",
 		description:
 			"Ship a multi-tenant SaaS foundation with subscription billing, team seats, and background jobs",
-		prompt: `You are a senior full-stack engineer building a multi-tenant SaaS application using Quark (Next.js 16, App Router, Server Actions, Prisma, Tailwind via @techstream/quark-ui, Zod, Biome). Stack: PostgreSQL, Redis, BullMQ. ESM only, no TypeScript. Use AppError/ValidationError from @techstream/quark-core/errors, createLogger for logging. Zod required on all Server Actions. Import UI from @techstream/quark-ui.
+		prompt: `You are a senior full-stack engineer building a multi-tenant SaaS application using Quark (Next.js 16, App Router, Server Actions, Prisma, Tailwind via @usequark/quark-ui, Zod, Biome). Stack: PostgreSQL, Redis, BullMQ. ESM only, no TypeScript. Use AppError/ValidationError from @usequark/quark-core/errors, createLogger for logging. Zod required on all Server Actions. Import UI from @usequark/quark-ui.
 
 Goal: Build a SaaS platform with user auth, team workspaces, Stripe subscription billing, and background job processing.
 
@@ -50,7 +50,7 @@ Patterns to follow: Use Workspace-scoped queries (filter by workspaceId), requir
 		title: "Running a store?",
 		description:
 			"Launch an e-commerce store with a searchable catalog, shopping cart, and Stripe checkout",
-		prompt: `You are a senior full-stack engineer building an e-commerce storefront using Quark (Next.js 16, App Router, Server Actions, Prisma, Tailwind via @techstream/quark-ui, Zod, Biome). Stack: PostgreSQL, Redis, BullMQ. ESM only, no TypeScript. Use AppError/ValidationError from @techstream/quark-core/errors, createLogger for logging. Zod on all Server Actions. Import UI from @techstream/quark-ui.
+		prompt: `You are a senior full-stack engineer building an e-commerce storefront using Quark (Next.js 16, App Router, Server Actions, Prisma, Tailwind via @usequark/quark-ui, Zod, Biome). Stack: PostgreSQL, Redis, BullMQ. ESM only, no TypeScript. Use AppError/ValidationError from @usequark/quark-core/errors, createLogger for logging. Zod on all Server Actions. Import UI from @usequark/quark-ui.
 
 Goal: Build a product catalog with shopping cart, Stripe checkout, and order management.
 
@@ -64,7 +64,7 @@ Patterns to follow: Use Decimal for prices, cascade deletes for owned relationsh
 		title: "Publishing content?",
 		description:
 			"Start a modern blog engine with MDX posts, category tags, instant search, and RSS",
-		prompt: `You are a senior full-stack engineer building a content platform using Quark (Next.js 16, App Router, Server Actions, Prisma, Tailwind via @techstream/quark-ui, Zod, Biome). Stack: PostgreSQL, Redis. ESM only, no TypeScript. Use AppError/ValidationError from @techstream/quark-core/errors, createLogger for logging. Zod on all Server Actions. Import UI from @techstream/quark-ui.
+		prompt: `You are a senior full-stack engineer building a content platform using Quark (Next.js 16, App Router, Server Actions, Prisma, Tailwind via @usequark/quark-ui, Zod, Biome). Stack: PostgreSQL, Redis. ESM only, no TypeScript. Use AppError/ValidationError from @usequark/quark-core/errors, createLogger for logging. Zod on all Server Actions. Import UI from @usequark/quark-ui.
 
 Goal: Build a blog with MDX support, tag filtering, syntax highlighting, and an RSS feed.
 
@@ -78,7 +78,7 @@ Patterns to follow: Use Post model with published Boolean, include author relati
 		title: "Need a booking system?",
 		description:
 			"Set up automated scheduling with calendar sync, client availability, and event reminders",
-		prompt: `You are a senior full-stack engineer building a booking system using Quark (Next.js 16, App Router, Server Actions, Prisma, Tailwind via @techstream/quark-ui, Zod, Biome). Stack: PostgreSQL, Redis, BullMQ for notifications. ESM only, no TypeScript. Use AppError/ValidationError from @techstream/quark-core/errors, createLogger for logging. Zod on all Server Actions. Import UI from @techstream/quark-ui.
+		prompt: `You are a senior full-stack engineer building a booking system using Quark (Next.js 16, App Router, Server Actions, Prisma, Tailwind via @usequark/quark-ui, Zod, Biome). Stack: PostgreSQL, Redis, BullMQ for notifications. ESM only, no TypeScript. Use AppError/ValidationError from @usequark/quark-core/errors, createLogger for logging. Zod on all Server Actions. Import UI from @usequark/quark-ui.
 
 Goal: Build an appointment booking system with service listings, calendar availability, and email notifications.
 
@@ -92,21 +92,21 @@ Patterns to follow: Use DateTime fields for scheduling, unique constraints to pr
 		title: "Building a portfolio?",
 		description:
 			"Showcase your work with a developer portfolio, project highlights, and a contact form",
-		prompt: `You are a senior full-stack engineer building a developer portfolio using Quark (Next.js 16, App Router, Server Actions, Prisma, Tailwind via @techstream/quark-ui, Zod, Biome). Stack: PostgreSQL. ESM only, no TypeScript. Use AppError/ValidationError from @techstream/quark-core/errors, createLogger for logging. Zod on all Server Actions. Import UI from @techstream/quark-ui.
+		prompt: `You are a senior full-stack engineer building a developer portfolio using Quark (Next.js 16, App Router, Server Actions, Prisma, Tailwind via @usequark/quark-ui, Zod, Biome). Stack: PostgreSQL. ESM only, no TypeScript. Use AppError/ValidationError from @usequark/quark-core/errors, createLogger for logging. Zod on all Server Actions. Import UI from @usequark/quark-ui.
 
 Goal: Build a personal developer portfolio with project showcase, case study pages, and a contact form.
 
 Ask the user: What is the developer's name and tagline? What projects should be featured (give 3-5 examples with descriptions, tech stacks, and links)? Do they need a blog section? What social links (GitHub, LinkedIn, Twitter)? Should the theme toggle between dark and light?
 
-Build: Project and Skill Prisma models, home page with hero + featured projects grid, individual project pages with description, tech stack badges, and live/repo links, about page with skills and experience, contact form with Zod validation, dark/light theme toggle (use ThemeProvider from @techstream/quark-ui), responsive design.
+Build: Project and Skill Prisma models, home page with hero + featured projects grid, individual project pages with description, tech stack badges, and live/repo links, about page with skills and experience, contact form with Zod validation, dark/light theme toggle (use ThemeProvider from @usequark/quark-ui), responsive design.
 
-Patterns to follow: Use Card components from @techstream/quark-ui, Badge for tech stack, contact form with ContactInquiry model, SEO metadata per page.`,
+Patterns to follow: Use Card components from @usequark/quark-ui, Badge for tech stack, contact form with ContactInquiry model, SEO metadata per page.`,
 	},
 	{
 		title: "Need an admin panel?",
 		description:
 			"Manage your app with an internal admin portal featuring CRUD workflows, roles, and audit logs",
-		prompt: `You are a senior full-stack engineer building an admin panel using Quark (Next.js 16, App Router, Server Actions, Prisma, Tailwind via @techstream/quark-ui, Zod, Biome). Stack: PostgreSQL, Redis. ESM only, no TypeScript. Use AppError/ValidationError from @techstream/quark-core/errors, createLogger for logging. Zod on all Server Actions. Import UI from @techstream/quark-ui.
+		prompt: `You are a senior full-stack engineer building an admin panel using Quark (Next.js 16, App Router, Server Actions, Prisma, Tailwind via @usequark/quark-ui, Zod, Biome). Stack: PostgreSQL, Redis. ESM only, no TypeScript. Use AppError/ValidationError from @usequark/quark-core/errors, createLogger for logging. Zod on all Server Actions. Import UI from @usequark/quark-ui.
 
 Goal: Build an internal admin dashboard with role-based access, data tables, and audit logging.
 
@@ -120,7 +120,7 @@ Patterns to follow: Use adminConfig.modelOverrides for model customization, repl
 		title: "Building a real-time app?",
 		description:
 			"Go live with real-time collaboration using WebSockets, presence indicators, and state sync",
-		prompt: `You are a senior full-stack engineer building a real-time collaborative app using Quark (Next.js 16, App Router, Server Actions, Prisma, Tailwind via @techstream/quark-ui, Zod, Biome). Stack: PostgreSQL, Redis (for pub/sub and presence), BullMQ for background processing. ESM only, no TypeScript. Use AppError/ValidationError from @techstream/quark-core/errors, createLogger for logging. Zod on all Server Actions. Import UI from @techstream/quark-ui.
+		prompt: `You are a senior full-stack engineer building a real-time collaborative app using Quark (Next.js 16, App Router, Server Actions, Prisma, Tailwind via @usequark/quark-ui, Zod, Biome). Stack: PostgreSQL, Redis (for pub/sub and presence), BullMQ for background processing. ESM only, no TypeScript. Use AppError/ValidationError from @usequark/quark-core/errors, createLogger for logging. Zod on all Server Actions. Import UI from @usequark/quark-ui.
 
 Goal: Build a real-time collaborative application with live updates, user presence, and persistent state.
 
@@ -134,7 +134,7 @@ Patterns to follow: Use Redis for real-time pub/sub, BullMQ for debounced persis
 		title: "Integrating AI features?",
 		description:
 			"Add AI capabilities with streaming responses, prompt templates, vector search, and token tracking",
-		prompt: `You are a senior full-stack engineer building AI-powered features using Quark (Next.js 16, App Router, Server Actions, Prisma, Tailwind via @techstream/quark-ui, Zod, Biome). Stack: PostgreSQL, Redis, BullMQ for background processing. ESM only, no TypeScript. Use AppError/ValidationError from @techstream/quark-core/errors, createLogger for logging. Zod on all Server Actions. Import UI from @techstream/quark-ui.
+		prompt: `You are a senior full-stack engineer building AI-powered features using Quark (Next.js 16, App Router, Server Actions, Prisma, Tailwind via @usequark/quark-ui, Zod, Biome). Stack: PostgreSQL, Redis, BullMQ for background processing. ESM only, no TypeScript. Use AppError/ValidationError from @usequark/quark-core/errors, createLogger for logging. Zod on all Server Actions. Import UI from @usequark/quark-ui.
 
 Goal: Add AI capabilities to an existing Quark application — streaming chat, prompt management, vector search, and usage tracking.
 
@@ -148,7 +148,7 @@ Patterns to follow: Use Server-Sent Events for streaming, Prisma for conversatio
 		title: "Building a community?",
 		description:
 			"Launch a discussion forum with user profiles, nested comments, upvoting, and moderation",
-		prompt: `You are a senior full-stack engineer building a community platform using Quark (Next.js 16, App Router, Server Actions, Prisma, Tailwind via @techstream/quark-ui, Zod, Biome). Stack: PostgreSQL, Redis, BullMQ for background jobs. ESM only, no TypeScript. Use AppError/ValidationError from @techstream/quark-core/errors, createLogger for logging. Zod on all Server Actions. Import UI from @techstream/quark-ui.
+		prompt: `You are a senior full-stack engineer building a community platform using Quark (Next.js 16, App Router, Server Actions, Prisma, Tailwind via @usequark/quark-ui, Zod, Biome). Stack: PostgreSQL, Redis, BullMQ for background jobs. ESM only, no TypeScript. Use AppError/ValidationError from @usequark/quark-core/errors, createLogger for logging. Zod on all Server Actions. Import UI from @usequark/quark-ui.
 
 Goal: Build a discussion forum with user-generated content, threading, voting, and moderation tools.
 
@@ -162,7 +162,7 @@ Patterns to follow: Use nested set or parent relation for comment threading, opt
 		title: "Creating an API?",
 		description:
 			"Build a scalable REST or GraphQL API with rate limiting, OpenAPI docs, and secure auth",
-		prompt: `You are a senior full-stack engineer building an API layer using Quark (Next.js 16, App Router, Route Handlers, Prisma, Zod, Biome). Stack: PostgreSQL, Redis for rate limiting and caching. ESM only, no TypeScript. Use AppError/ValidationError from @techstream/quark-core/errors, createLogger for logging. Zod on all API routes. Import UI from @techstream/quark-ui where needed.
+		prompt: `You are a senior full-stack engineer building an API layer using Quark (Next.js 16, App Router, Route Handlers, Prisma, Zod, Biome). Stack: PostgreSQL, Redis for rate limiting and caching. ESM only, no TypeScript. Use AppError/ValidationError from @usequark/quark-core/errors, createLogger for logging. Zod on all API routes. Import UI from @usequark/quark-ui where needed.
 
 Goal: Build a well-documented, secure API with authentication, rate limiting, and OpenAPI specification.
 
@@ -176,7 +176,7 @@ Patterns to follow: Use Next.js Route Handlers for REST endpoints, Redis INCR wi
 		title: "Need a marketplace?",
 		description:
 			"Connect buyers and sellers with vendor onboarding, split payments, and search filters",
-		prompt: `You are a senior full-stack engineer building a marketplace platform using Quark (Next.js 16, App Router, Server Actions, Prisma, Tailwind via @techstream/quark-ui, Zod, Biome). Stack: PostgreSQL, Redis, BullMQ for background jobs. ESM only, no TypeScript. Use AppError/ValidationError from @techstream/quark-core/errors, createLogger for logging. Zod on all Server Actions. Import UI from @techstream/quark-ui.
+		prompt: `You are a senior full-stack engineer building a marketplace platform using Quark (Next.js 16, App Router, Server Actions, Prisma, Tailwind via @usequark/quark-ui, Zod, Biome). Stack: PostgreSQL, Redis, BullMQ for background jobs. ESM only, no TypeScript. Use AppError/ValidationError from @usequark/quark-core/errors, createLogger for logging. Zod on all Server Actions. Import UI from @usequark/quark-ui.
 
 Goal: Build a two-sided marketplace connecting buyers and sellers with vendor management and payment splitting.
 
@@ -190,7 +190,7 @@ Patterns to follow: Use Stripe Connect for marketplace payments, full-text searc
 		title: "Building a mobile app?",
 		description:
 			"Kickstart a cross-platform mobile app with native navigation, offline storage, and push alerts",
-		prompt: `You are a senior full-stack engineer building a mobile app backend and web companion using Quark (Next.js 16, App Router, Server Actions, Prisma, Tailwind via @techstream/quark-ui, Zod, Biome). Stack: PostgreSQL, Redis, BullMQ for background jobs. ESM only, no TypeScript. Use AppError/ValidationError from @techstream/quark-core/errors, createLogger for logging. Zod on all Server Actions. Import UI from @techstream/quark-ui.
+		prompt: `You are a senior full-stack engineer building a mobile app backend and web companion using Quark (Next.js 16, App Router, Server Actions, Prisma, Tailwind via @usequark/quark-ui, Zod, Biome). Stack: PostgreSQL, Redis, BullMQ for background jobs. ESM only, no TypeScript. Use AppError/ValidationError from @usequark/quark-core/errors, createLogger for logging. Zod on all Server Actions. Import UI from @usequark/quark-ui.
 
 Goal: Build the backend API and data layer for a cross-platform mobile app, with a responsive web companion.
 
@@ -204,7 +204,7 @@ Patterns to follow: Use JWT for mobile auth (separate from NextAuth web session)
 		title: "Setting up docs?",
 		description:
 			"Publish developer documentation with full-text search, code blocks, and version switching",
-		prompt: `You are a senior full-stack engineer building a documentation site using Quark (Next.js 16, App Router, Server Actions, Prisma, Tailwind via @techstream/quark-ui, Zod, Biome). Stack: PostgreSQL for search indexing. ESM only, no TypeScript. Use AppError/ValidationError from @techstream/quark-core/errors, createLogger for logging. Zod on all Server Actions. Import UI from @techstream/quark-ui.
+		prompt: `You are a senior full-stack engineer building a documentation site using Quark (Next.js 16, App Router, Server Actions, Prisma, Tailwind via @usequark/quark-ui, Zod, Biome). Stack: PostgreSQL for search indexing. ESM only, no TypeScript. Use AppError/ValidationError from @usequark/quark-core/errors, createLogger for logging. Zod on all Server Actions. Import UI from @usequark/quark-ui.
 
 Goal: Build a developer documentation site with search, code examples, and version management.
 
@@ -235,7 +235,7 @@ export default function Home() {
 					</a>
 					<span className="quark-home-sep">·</span>
 					<a
-						href="https://www.npmjs.com/package/@techstream/quark-create-app"
+						href="https://www.npmjs.com/package/@usequark/quark-create-app"
 						target="_blank"
 						rel="noopener noreferrer"
 						className="quark-home-link"

@@ -1,12 +1,12 @@
 /**
- * @techstream/quark-core - Email Service
+ * @usequark/quark-core - Email Service
  *
  * Providers are defined using a Strategy Pattern - each implements the same
  * interface. Quark ships with three built-in providers (smtp, resend, zeptomail)
  * and exposes a registry so users can plug in any provider they need.
  *
  * @example Custom provider
- *   import { EmailProvider, registerEmailProvider } from "@techstream/quark-core";
+ *   import { EmailProvider, registerEmailProvider } from "@usequark/quark-core";
  *
  *   class SendGridProvider extends EmailProvider {
  *     async sendEmail(to, subject, html, text) { ... }

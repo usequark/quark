@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Comprehensive test suite for @techstream/quark-create-app CLI
+ * Comprehensive test suite for @usequark/quark-create-app CLI
  * Runs all test types: unit, e2e, and integration
  */
 
@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 console.log(`\n${"=".repeat(70)}`);
-console.log("🧪 @techstream/quark-create-app CLI - COMPREHENSIVE TEST SUITE");
+console.log("🧪 @usequark/quark-create-app CLI - COMPREHENSIVE TEST SUITE");
 console.log(`${"=".repeat(70)}\n`);
 
 const tests = [
@@ -86,8 +86,8 @@ console.log(`\n${"═".repeat(70)}`);
 
 if (allPassed) {
 	console.log("✅ ALL AUTOMATED TESTS PASSED - CLI IS READY FOR USE");
-	console.log(`\n📦 Usage: npx @techstream/quark-create-app <project-name>`);
-	console.log(`💡 Example: npx @techstream/quark-create-app my-awesome-app`);
+	console.log(`\n📦 Usage: npx @usequark/quark-create-app <project-name>`);
+	console.log(`💡 Example: npx @usequark/quark-create-app my-awesome-app`);
 	console.log(`\n🔧 Note: Integration test requires manual testing:`);
 	console.log(`   node packages/cli/test-integration.js\n`);
 } else {

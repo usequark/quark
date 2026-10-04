@@ -1,5 +1,5 @@
 /**
- * @techstream/quark-core — Admin Authorization Module
+ * @usequark/quark-core — Admin Authorization Module
  *
  * Lightweight, stateless admin-token authorization for drop-in internal
  * endpoints (health checks, metrics, admin APIs).
@@ -72,7 +72,7 @@ export function verifyAdminToken(providedToken) {
  *
  * Usage in an API route:
  *
- *   import { requireAdminToken } from "@techstream/quark-core";
+ *   import { requireAdminToken } from "@usequark/quark-core";
  *   import { NextResponse } from "next/server";
  *
  *   export async function GET(request) {

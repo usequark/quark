@@ -1,5 +1,5 @@
 /**
- * @techstream/quark-core - Multipart Parser
+ * @usequark/quark-core - Multipart Parser
  *
  * Stream-based multipart/form-data parsing with early limit enforcement.
  * Works with Next.js App Router Request objects.

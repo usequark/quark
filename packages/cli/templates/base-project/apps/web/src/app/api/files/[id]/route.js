@@ -9,8 +9,8 @@ import {
 	ForbiddenError,
 	NotFoundError,
 	withCsrfProtection,
-} from "@techstream/quark-core";
-import { file } from "@techstream/quark-db";
+} from "@usequark/quark-core";
+import { file } from "@usequark/quark-db";
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth-middleware";
 import { handleError } from "../../error-handler";

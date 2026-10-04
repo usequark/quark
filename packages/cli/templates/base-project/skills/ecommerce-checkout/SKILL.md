@@ -68,8 +68,8 @@ model OrderItem {
 "use server";
 import { z } from "zod";
 import { prisma } from "@__QUARK_SCOPE__/db";
-import { AppError, ValidationError } from "@techstream/quark-core/errors";
-import { createLogger } from "@techstream/quark-core";
+import { AppError, ValidationError } from "@usequark/quark-core/errors";
+import { createLogger } from "@usequark/quark-core";
 
 const log = createLogger("action:checkout");
 

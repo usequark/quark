@@ -9,8 +9,8 @@ import {
 	createStorage,
 	getRegisteredQueues,
 	pingRedis,
-} from "@techstream/quark-core";
-import { pingDatabase } from "@techstream/quark-db";
+} from "@usequark/quark-core";
+import { pingDatabase } from "@usequark/quark-db";
 import { NextResponse } from "next/server";
 
 const logger = createLogger("health");

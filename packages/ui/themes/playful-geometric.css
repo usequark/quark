@@ -1,4 +1,4 @@
-/* ─── @techstream/quark-ui — Theme: PLAYFUL GEOMETRIC ─────────
+/* ─── @usequark/quark-ui — Theme: PLAYFUL GEOMETRIC ─────────
  *
  * Vibrant Memphis-inspired with chunky borders, hard offset shadows,
  * and a warm cream base. Mix of 8px/16px/24px radii.
@@ -8,7 +8,7 @@
  *   - Plus Jakarta Sans (body): https://fonts.google.com/specimen/Plus+Jakarta+Sans
  *
  * Usage:
- *   @import "@techstream/quark-ui/themes/playful-geometric.css";
+ *   @import "@usequark/quark-ui/themes/playful-geometric.css";
  * ─────────────────────────────────────────────────────────────── */
 
 @layer theme {

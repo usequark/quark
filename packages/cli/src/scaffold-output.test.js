@@ -96,6 +96,56 @@ describe("scaffold output placeholders", () => {
 		);
 	});
 
+	// Guards the scope rewrite itself. replaceDepsScope and
+	// replaceImportsInSourceFiles map the framework scope onto the project's own
+	// scope for db/jobs/ui/config, and leave the published quark-core registry
+	// dependency alone on purpose.
+	//
+	// db, jobs, ui and config are local-only workspace packages and have never
+	// been published to any registry, so a framework-scoped reference surviving
+	// into generated output produces a project that cannot install. Nothing else
+	// catches that: the placeholder test above only looks for __QUARK_ and
+	// @myquark, so a rewrite rule that silently stopped matching - because a
+	// template and its rule drifted apart - left every test in this repo green
+	// while every scaffolded app was broken.
+	//
+	// Both scopes are asserted. @techstream is the pre-rename scope and must not
+	// appear at all; @usequark is the current one and must not appear for the
+	// local-only packages, though @usequark/quark-core is expected and correct.
+	//
+	// Scoped to files that participate in module resolution. Markdown and .mdc
+	// instruction files legitimately name the framework scope in order to tell an
+	// agent never to import it - .cursor/rules/quark.mdc ships exactly that
+	// prohibition, alongside deliberately-wrong import examples. Prose cannot
+	// break an install; an import or a dependency can.
+	it("never leaks a framework-scoped reference to a local-only package", () => {
+		const RESOLVABLE = /\.(js|jsx|mjs|cjs|ts|tsx)$/;
+		const localOnly = /@(techstream|usequark)\/quark-(db|jobs|ui|config)\b/;
+		const offenders = [];
+
+		for (const file of collectFiles(projectDir)) {
+			const rel = path.relative(projectDir, file);
+			const base = path.basename(file);
+			if (base !== "package.json" && !RESOLVABLE.test(base)) continue;
+
+			let content;
+			try {
+				content = fs.readFileSync(file, "utf-8");
+			} catch {
+				continue;
+			}
+			if (localOnly.test(content)) {
+				offenders.push(rel);
+			}
+		}
+
+		assert.deepStrictEqual(
+			offenders,
+			[],
+			`local-only packages must be rewritten to the project scope; leaked in: ${offenders.join(", ")}`,
+		);
+	});
+
 	it("rewrites the DB import in AI prompts to the project scope", () => {
 		const page = fs.readFileSync(
 			path.join(projectDir, "apps/web/src/app/page.js"),

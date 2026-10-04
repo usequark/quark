@@ -1,5 +1,5 @@
 /**
- * @techstream/quark-core - Rate Limiting Module
+ * @usequark/quark-core - Rate Limiting Module
  * Provides both in-memory and Redis-based rate limiting
  */
 

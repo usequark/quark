@@ -32,17 +32,17 @@ __QUARK_OPTIONAL_PACKAGES__├── docker-compose.yml
 - **ESM only** — `import`/`export`. Never `require()` or `module.exports`.
 - **No TypeScript** — `.js` and `.jsx` files only.
 - **Zod required** — all Server Actions and API routes must validate with Zod.
-- **No `throw new Error()`** — use `AppError` / `ValidationError` from `@techstream/quark-core/errors`.
-- **No `console.log`** — use `createLogger(name)` from `@techstream/quark-core`.
+- **No `throw new Error()`** — use `AppError` / `ValidationError` from `@usequark/quark-core/errors`.
+- **No `console.log`** — use `createLogger(name)` from `@usequark/quark-core`.
 - **DB models** — every Prisma model must include `createdAt DateTime @default(now())` and `updatedAt DateTime @updatedAt`.
 
 ## Package Imports
 
 ```javascript
-// Published (from npm) - @techstream/ prefix:
-import { AppError, ValidationError } from "@techstream/quark-core/errors";
-import { createLogger } from "@techstream/quark-core";
-import { getCurrentSession } from "@techstream/quark-core";
+// Published (from npm) - @usequark/ prefix:
+import { AppError, ValidationError } from "@usequark/quark-core/errors";
+import { createLogger } from "@usequark/quark-core";
+import { getCurrentSession } from "@usequark/quark-core";
 
 // Workspace packages - ALWAYS use @__QUARK_SCOPE__/:
 import { prisma } from "@__QUARK_SCOPE__/db";
@@ -68,9 +68,9 @@ Import from `@__QUARK_SCOPE__/ui` — never `@/components/ui/*`. Every component
 ```javascript
 "use server";
 import { z } from "zod";
-import { ValidationError, AppError } from "@techstream/quark-core/errors";
-import { getCurrentSession } from "@techstream/quark-core";
-import { createLogger } from "@techstream/quark-core";
+import { ValidationError, AppError } from "@usequark/quark-core/errors";
+import { getCurrentSession } from "@usequark/quark-core";
+import { createLogger } from "@usequark/quark-core";
 import { prisma } from "@__QUARK_SCOPE__/db";
 
 const log = createLogger("action:example");
@@ -91,7 +91,7 @@ export async function createExample(formData) {
 
 ```javascript
 import { NextResponse } from "next/server";
-import { AppError } from "@techstream/quark-core/errors";
+import { AppError } from "@usequark/quark-core/errors";
 
 export async function GET(request) {
   try {
@@ -114,7 +114,7 @@ export async function GET(request) {
 ## Auth
 
 ```javascript
-import { getCurrentSession } from "@techstream/quark-core";
+import { getCurrentSession } from "@usequark/quark-core";
 const session = await getCurrentSession();
 if (!session) redirect("/login");            // Server Component
 if (!session) throw new AppError("Unauthorized", 401);  // Server Action
@@ -124,7 +124,7 @@ if (!session) throw new AppError("Unauthorized", 401);  // Server Action
 
 ```javascript
 // Dispatch:
-import { createQueue, addJob } from "@techstream/quark-core";
+import { createQueue, addJob } from "@usequark/quark-core";
 import { JOB_NAMES } from "@__QUARK_SCOPE__/jobs";
 await addJob(createQueue("default"), JOB_NAMES.SEND_WELCOME_EMAIL, { userId });
 

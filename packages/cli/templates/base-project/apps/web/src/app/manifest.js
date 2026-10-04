@@ -1,4 +1,4 @@
-import { config, getAppUrl } from "@techstream/quark-config";
+import { config, getAppUrl } from "@usequark/quark-config";
 
 export default function manifest() {
 	return {

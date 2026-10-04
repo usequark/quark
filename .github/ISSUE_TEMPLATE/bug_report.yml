@@ -15,7 +15,7 @@ body:
       label: What happened?
       description: What did you observe, and what did you expect instead?
       placeholder: |
-        Running `npx @techstream/quark-create-app my-app` produced a project that
+        Running `npx @usequark/quark-create-app my-app` produced a project that
         fails to start with ...
     validations:
       required: true
@@ -37,7 +37,7 @@ body:
     attributes:
       label: Affected package
       description: Which package is involved?
-      placeholder: "@techstream/quark-core@2.4.3"
+      placeholder: "@usequark/quark-core@2.4.3"
     validations:
       required: true
 

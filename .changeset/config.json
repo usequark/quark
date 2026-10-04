@@ -8,11 +8,11 @@
 	"baseBranch": "main",
 	"updateInternalDependencies": "patch",
 	"ignore": [
-		"@techstream/quark-config",
-		"@techstream/quark-web",
-		"@techstream/quark-worker",
-		"@techstream/quark-db",
-		"@techstream/quark-jobs",
-		"@techstream/quark-ui"
+		"@usequark/quark-config",
+		"@usequark/quark-web",
+		"@usequark/quark-worker",
+		"@usequark/quark-db",
+		"@usequark/quark-jobs",
+		"@usequark/quark-ui"
 	]
 }

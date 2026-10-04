@@ -186,12 +186,12 @@ await queue.add("cleanup-orphaned-files", { retentionHours: 24 });
 
 ## Packages
 
-### @techstream/quark-db
+### @usequark/quark-db
 
 Database client and query helpers.
 
 ```js
-import { prisma, user, file } from "@techstream/quark-db";
+import { prisma, user, file } from "@usequark/quark-db";
 
 // Find user by ID
 const foundUser = await user.findById("cuid123");
@@ -208,7 +208,7 @@ const record = await file.findById("fileid");
 const orphaned = await file.findOlderThan(new Date("2026-01-01"));
 ```
 
-### @techstream/quark-core
+### @usequark/quark-core
 
 Core infrastructure utilities.
 
@@ -231,7 +231,7 @@ import {
   createWorker,
   AppError,
   ValidationError,
-} from "@techstream/quark-core";
+} from "@usequark/quark-core";
 
 // Storage - reads STORAGE_PROVIDER env var
 // For STORAGE_PROVIDER=s3, install @aws-sdk/client-s3 and
@@ -255,12 +255,12 @@ const result = validateFile({
 const { files, fields } = await parseMultipart(request);
 ```
 
-### @techstream/quark-ui
+### @usequark/quark-ui
 
 Shared UI components.
 
 ```tsx
-import { Button } from "@techstream/quark-ui";
+import { Button } from "@usequark/quark-ui";
 
 // Primary button (default)
 <Button>Click me</Button>
@@ -272,12 +272,12 @@ import { Button } from "@techstream/quark-ui";
 <Button disabled onClick={() => {}}>Submit</Button>
 ```
 
-### @techstream/quark-jobs
+### @usequark/quark-jobs
 
 Job queue definitions.
 
 ```js
-import { JOB_QUEUES, JOB_NAMES } from "@techstream/quark-jobs";
+import { JOB_QUEUES, JOB_NAMES } from "@usequark/quark-jobs";
 
 // Queue names
 JOB_QUEUES.EMAIL  // "email-queue"
@@ -289,12 +289,12 @@ JOB_NAMES.SEND_RESET_PASSWORD_EMAIL  // "send-reset-password-email"
 JOB_NAMES.CLEANUP_ORPHANED_FILES     // "cleanup-orphaned-files"
 ```
 
-### @techstream/quark-config
+### @usequark/quark-config
 
 Shared configuration.
 
 ```typescript
-import { config } from "@techstream/quark-config";
+import { config } from "@usequark/quark-config";
 
 config.appName // "Quark"
 ```

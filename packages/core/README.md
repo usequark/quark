@@ -1,4 +1,4 @@
-# @techstream/quark-core
+# @usequark/quark-core
 
 Shared infrastructure for the Quark platform - authentication, job queues, error handling, and utilities.
 
@@ -25,7 +25,7 @@ import {
   addJob,
   ValidationError,
   retryAsync,
-} from "@techstream/quark-core";
+} from "@usequark/quark-core";
 ```
 
 All modules are re-exported from the package root. See JSDoc comments on each function for options and usage details.
@@ -36,16 +36,16 @@ Prefer a subpath when you want a smaller import graph or the browser-safe logger
 
 | Subpath | Contents |
 |---|---|
-| `@techstream/quark-core/core` | errors, logger, validation, utils, pagination, csrf, rate limiter, file validation, db |
-| `@techstream/quark-core/db` | Prisma singleton, connection string, pool config, `pingDatabase()` |
-| `@techstream/quark-core/admin` | Prisma schema introspection helpers |
-| `@techstream/quark-core/auth` | auth config helpers + session guards |
-| `@techstream/quark-core/auth/middleware` | session guards only |
-| `@techstream/quark-core/storage` | local adapter, storage factory, key/URL helpers, `createS3Storage` |
-| `@techstream/quark-core/storage/s3` | S3 adapter only |
-| `@techstream/quark-core/logger` | browser-safe logger |
-| `@techstream/quark-core/locale` | locale helpers |
-| `@techstream/quark-core/stripe` | Stripe client + webhook helpers |
+| `@usequark/quark-core/core` | errors, logger, validation, utils, pagination, csrf, rate limiter, file validation, db |
+| `@usequark/quark-core/db` | Prisma singleton, connection string, pool config, `pingDatabase()` |
+| `@usequark/quark-core/admin` | Prisma schema introspection helpers |
+| `@usequark/quark-core/auth` | auth config helpers + session guards |
+| `@usequark/quark-core/auth/middleware` | session guards only |
+| `@usequark/quark-core/storage` | local adapter, storage factory, key/URL helpers, `createS3Storage` |
+| `@usequark/quark-core/storage/s3` | S3 adapter only |
+| `@usequark/quark-core/logger` | browser-safe logger |
+| `@usequark/quark-core/locale` | locale helpers |
+| `@usequark/quark-core/stripe` | Stripe client + webhook helpers |
 
 `@aws-sdk/client-s3`, `@aws-sdk/s3-request-presigner`, `pg`, and `stripe` are optional peer dependencies. They are only loaded when the matching feature is used, so apps that do not use S3, `pingDatabase()`, or payments do not need them installed.
 

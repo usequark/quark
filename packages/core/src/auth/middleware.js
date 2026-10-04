@@ -1,12 +1,12 @@
 /**
- * @techstream/quark-core - Auth Middleware
+ * @usequark/quark-core - Auth Middleware
  *
  * Lightweight, framework-agnostic authentication middleware for Server
  * Actions and API routes.  The caller supplies a `getSession` function
  * (e.g. NextAuth's `auth()`) — this module adds the guard logic.
  *
  * Usage:
- *   import { requireSession, requireSessionRole, createAuthMiddleware } from "@techstream/quark-core/auth/middleware";
+ *   import { requireSession, requireSessionRole, createAuthMiddleware } from "@usequark/quark-core/auth/middleware";
  *
  *   // In a Server Action:
  *   const session = await requireSession(() => auth());

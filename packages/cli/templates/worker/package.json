@@ -22,10 +22,10 @@
 	"license": "MIT",
 	"packageManager": "pnpm@10.12.1",
 	"dependencies": {
-		"@techstream/quark-config": "workspace:*",
-		"@techstream/quark-core": "^2.0.0",
-		"@techstream/quark-db": "workspace:*",
-		"@techstream/quark-jobs": "workspace:*",
+		"@usequark/quark-config": "workspace:*",
+		"@usequark/quark-core": "^2.0.0",
+		"@usequark/quark-db": "workspace:*",
+		"@usequark/quark-jobs": "workspace:*",
 		"bullmq": "^6.3.8",
 		"jose": "^6.2.12"
 	},

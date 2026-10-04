@@ -1,4 +1,4 @@
-# @techstream/quark-create-app CLI
+# @usequark/quark-create-app CLI
 
 Scaffold a new Quark project with sensible defaults for full-stack JavaScript development.
 
@@ -6,10 +6,10 @@ Scaffold a new Quark project with sensible defaults for full-stack JavaScript de
 
 ```bash
 # Interactive — prompts for project name, description, and options
-npx @techstream/quark-create-app@latest
+npx @usequark/quark-create-app@latest
 
 # Non-interactive — provide project name as argument
-npx @techstream/quark-create-app@latest my-awesome-app
+npx @usequark/quark-create-app@latest my-awesome-app
 ```
 
 The CLI scaffolds a complete project structure with:
@@ -41,26 +41,26 @@ The CLI detects this, prints a warning, and skips git initialisation so a nested
 
 ```bash
 # Create a new project (interactive or with name argument)
-npx @techstream/quark-create-app@latest
-npx @techstream/quark-create-app@latest my-app
+npx @usequark/quark-create-app@latest
+npx @usequark/quark-create-app@latest my-app
 
 # Add a package to an existing project
-npx @techstream/quark-create-app add jobs
+npx @usequark/quark-create-app add jobs
 
 # Print an embedded skill for a feature
-npx @techstream/quark-create-app skill bookings
+npx @usequark/quark-create-app skill bookings
 
 # Update Quark packages in an existing project
-npx @techstream/quark-create-app update
+npx @usequark/quark-create-app update
 
 # Check for available updates without applying them
-npx @techstream/quark-create-app update --check
+npx @usequark/quark-create-app update --check
 
 # Report drift in scaffold-managed files without overwriting anything
-npx @techstream/quark-create-app update --scaffold-check
+npx @usequark/quark-create-app update --scaffold-check
 
 # Fail CI when scaffold drift is detected
-npx @techstream/quark-create-app update --scaffold-check --fail-on-drift
+npx @usequark/quark-create-app update --scaffold-check --fail-on-drift
 ```
 
 Aliases:
@@ -78,7 +78,7 @@ When run without arguments, the CLI prompts for:
 4. **Public signup** — allow self-service user registration
 
 ```bash
-npx @techstream/quark-create-app@latest
+npx @usequark/quark-create-app@latest
 # ? Project name: my-app
 # ? Describe your app: A platform for booking salon appointments
 # ? Include background jobs (emails, webhooks, scheduled tasks)? Yes
@@ -90,7 +90,7 @@ npx @techstream/quark-create-app@latest
 Skip all prompts with flags:
 
 ```bash
-npx @techstream/quark-create-app@latest my-app --no-prompts
+npx @usequark/quark-create-app@latest my-app --no-prompts
 ```
 
 ### Packages
@@ -99,13 +99,13 @@ Specify which optional packages to include (default: `ui,jobs`; valid: `ui`, `jo
 
 ```bash
 # Only include UI package
-npx @techstream/quark-create-app@latest my-app --no-prompts --packages ui
+npx @usequark/quark-create-app@latest my-app --no-prompts --packages ui
 
 # Include both UI and Jobs
-npx @techstream/quark-create-app@latest my-app --no-prompts --packages ui,jobs
+npx @usequark/quark-create-app@latest my-app --no-prompts --packages ui,jobs
 
 # Minimal setup (no optional packages)
-npx @techstream/quark-create-app@latest my-app --no-prompts --packages ""
+npx @usequark/quark-create-app@latest my-app --no-prompts --packages ""
 ```
 
 `ui` is always included automatically as a required dependency.
@@ -115,7 +115,7 @@ npx @techstream/quark-create-app@latest my-app --no-prompts --packages ""
 Seed the `MAIN.md` brief from a flag:
 
 ```bash
-npx @techstream/quark-create-app@latest my-app --no-prompts --prompt "A booking platform for salons"
+npx @usequark/quark-create-app@latest my-app --no-prompts --prompt "A booking platform for salons"
 ```
 
 ### Signup
@@ -123,7 +123,7 @@ npx @techstream/quark-create-app@latest my-app --no-prompts --prompt "A booking 
 Control public self-service signup (default: `enabled`):
 
 ```bash
-npx @techstream/quark-create-app@latest my-app --no-prompts --signup disabled
+npx @usequark/quark-create-app@latest my-app --no-prompts --signup disabled
 ```
 
 ### skill command
@@ -132,12 +132,12 @@ Print an embedded skill for a feature:
 
 ```bash
 # Print the bookings skill
-npx @techstream/quark-create-app@latest skill bookings
+npx @usequark/quark-create-app@latest skill bookings
 
 # Print a core skill (model, endpoint, dashboard)
-npx @techstream/quark-create-app@latest skill model
-npx @techstream/quark-create-app@latest skill endpoint
-npx @techstream/quark-create-app@latest skill dashboard
+npx @usequark/quark-create-app@latest skill model
+npx @usequark/quark-create-app@latest skill endpoint
+npx @usequark/quark-create-app@latest skill dashboard
 ```
 
 Available skills: `model`, `endpoint`, `dashboard`, `bookings`, `crm`, `cms`, `ai`.
@@ -148,7 +148,7 @@ Create the project structure without running package installation:
 
 ```bash
 # Create project but skip pnpm install
-npx @techstream/quark-create-app@latest my-app --no-prompts --skip-install
+npx @usequark/quark-create-app@latest my-app --no-prompts --skip-install
 
 # Useful for CI/CD where you'll install dependencies separately
 ```
@@ -159,14 +159,14 @@ Control whether to remove Docker volumes from previous cleanup:
 
 ```bash
 # Keep Docker working directories (useful in CI/CD)
-npx @techstream/quark-create-app@latest my-app --no-prompts --skip-docker
+npx @usequark/quark-create-app@latest my-app --no-prompts --skip-docker
 ```
 
 ### Complete Example: Full Automation
 
 ```bash
 # Create, install, and setup everything automatically
-npx @techstream/quark-create-app@latest my-app \
+npx @usequark/quark-create-app@latest my-app \
   --no-prompts \
   --packages ui,jobs \
   && cd my-app \
@@ -177,7 +177,7 @@ npx @techstream/quark-create-app@latest my-app \
 
 ## Common Tasks
 
-- **Update Quark packages**: `quark-update` or `pnpm update @techstream/quark-*`
+- **Update Quark packages**: `quark-update` or `pnpm update @usequark/quark-*`
 - **Check for updates**: `quark-update --check`
 - **Review scaffold drift**: `quark-update --scaffold-check`
 - **Fail CI on scaffold drift**: `quark-update --scaffold-check --fail-on-drift`

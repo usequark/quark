@@ -4,7 +4,7 @@
  * Each handler receives (bullJob, logger) and returns a result object.
  */
 
-import { JOB_NAMES } from "@techstream/quark-jobs";
+import { JOB_NAMES } from "@usequark/quark-jobs";
 import {
 	handleSendResetPasswordEmail,
 	handleSendWelcomeEmail,

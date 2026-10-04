@@ -1,5 +1,5 @@
 /**
- * @techstream/quark-core - Error Reporter Module
+ * @usequark/quark-core - Error Reporter Module
  * Adapter/hook system for pluggable error reporting
  */
 
@@ -217,7 +217,7 @@ export class ErrorReporter {
  * @example
  * ```js
  * import * as Sentry from "@sentry/node";
- * import { errorReporter, createSentryAdapter } from "@techstream/quark-core";
+ * import { errorReporter, createSentryAdapter } from "@usequark/quark-core";
  *
  * Sentry.init({ dsn: "https://example@sentry.io/123" });
  * errorReporter.use(createSentryAdapter({ Sentry }));

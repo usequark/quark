@@ -15,7 +15,7 @@ Use this guide if you are about to scaffold a project, have just scaffolded one,
 ## Scaffold a project
 
 ```bash
-npx @techstream/quark-create-app@latest my-project
+npx @usequark/quark-create-app@latest my-project
 cd my-project
 docker compose up -d
 pnpm db:migrate
@@ -33,7 +33,7 @@ Quark always gives you:
 - `apps/web` - the Next.js app
 - `packages/db` - Prisma schema, client, and query helpers
 - `packages/config` - validated environment config
-- `@techstream/quark-core` - auth, queues, validation, logging, errors, storage, metrics
+- `@usequark/quark-core` - auth, queues, validation, logging, errors, storage, metrics
 
 Optional scaffolded features:
 

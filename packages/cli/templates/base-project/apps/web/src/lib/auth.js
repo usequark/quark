@@ -3,8 +3,8 @@ import {
 	createAuthConfig,
 	createLogger,
 	verifyPassword,
-} from "@techstream/quark-core";
-import { Prisma, prisma, user } from "@techstream/quark-db";
+} from "@usequark/quark-core";
+import { Prisma, prisma, user } from "@usequark/quark-db";
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GithubProvider from "next-auth/providers/github";

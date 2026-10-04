@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * End-to-end test for @techstream/quark-create-app CLI
+ * End-to-end test for @usequark/quark-create-app CLI
  * This manually walks through creating a project
  */
 
@@ -80,12 +80,12 @@ try {
 	if (await fs.pathExists(webPackageJsonPath)) {
 		const webPackageJson = await fs.readJSON(webPackageJsonPath);
 
-		// Replace @techstream/quark-* with @scope/* for local packages
+		// Replace @usequark/quark-* with @scope/* for local packages
 		const replaceScope = (deps) => {
 			if (!deps) return;
 			for (const [key, value] of Object.entries(deps)) {
-				if (key.startsWith("@techstream/quark-") && value === "workspace:*") {
-					const packageName = key.replace("@techstream/quark-", "");
+				if (key.startsWith("@usequark/quark-") && value === "workspace:*") {
+					const packageName = key.replace("@usequark/quark-", "");
 					delete deps[key];
 					deps[`@${scope}/${packageName}`] = value;
 				}
@@ -111,8 +111,8 @@ try {
 		const replaceScope = (deps) => {
 			if (!deps) return;
 			for (const [key, value] of Object.entries(deps)) {
-				if (key.startsWith("@techstream/quark-") && value === "workspace:*") {
-					const packageName = key.replace("@techstream/quark-", "");
+				if (key.startsWith("@usequark/quark-") && value === "workspace:*") {
+					const packageName = key.replace("@usequark/quark-", "");
 					delete deps[key];
 					deps[`@${scope}/${packageName}`] = value;
 				}
@@ -225,13 +225,13 @@ EMAIL_FROM=noreply@${scope}.com
 	const hasCorrectUiDep = webPkg.dependencies[`@${scope}/ui`] === "workspace:*";
 	const hasCorrectJobsDep =
 		webPkg.dependencies[`@${scope}/jobs`] === "workspace:*";
-	const hasCore = webPkg.dependencies["@techstream/quark-core"] === "^1.0.0";
+	const hasCore = webPkg.dependencies["@usequark/quark-core"] === "^1.0.0";
 
 	console.log(`  ${hasCorrectDbDep ? "✓" : "✗"} Web app has @${scope}/db`);
 	console.log(`  ${hasCorrectUiDep ? "✓" : "✗"} Web app has @${scope}/ui`);
 	console.log(`  ${hasCorrectJobsDep ? "✓" : "✗"} Web app has @${scope}/jobs`);
 	console.log(
-		`  ${hasCore ? "✓" : "✗"} Web app has @techstream/quark-core (from registry)`,
+		`  ${hasCore ? "✓" : "✗"} Web app has @usequark/quark-core (from registry)`,
 	);
 
 	// List the project structure

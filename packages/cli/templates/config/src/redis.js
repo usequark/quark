@@ -1,4 +1,4 @@
-import { resolveRedisConnection } from "@techstream/quark-core";
+import { resolveRedisConnection } from "@usequark/quark-core";
 
 let _redis = null;
 

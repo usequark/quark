@@ -1,5 +1,5 @@
-import { createLogger } from "@techstream/quark-core";
-import { ValidationError } from "@techstream/quark-core/errors";
+import { createLogger } from "@usequark/quark-core";
+import { ValidationError } from "@usequark/quark-core/errors";
 import { z } from "zod";
 import { syncNextAuthUrl } from "./app-url.js";
 

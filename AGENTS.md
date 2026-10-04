@@ -4,8 +4,8 @@
 
 - **ESM only** - `import`/`export` everywhere. Never `require()` or `module.exports`.
 - **No authored TypeScript** - `.js` and `.jsx` files only. Generated code may emit typed artifacts, but repo code should not add `.ts`, `.tsx`, type annotations, or `tsconfig`. Exceptions: scaffold templates (`packages/cli/templates/mobile/`) and the mobile app (`apps/mobile/`) may use `.ts`/`.tsx` when required by the target ecosystem (React Native / Expo).
-- **No `throw new Error()` in app/runtime code** - use `AppError` / `ValidationError` from `@techstream/quark-core/errors`. Native `Error` is reserved for library, bootstrap, CLI, and test code.
-- **No `console.log/error` in app/runtime code** - use `createLogger(name)` from `@techstream/quark-core`. Console output is reserved for bootstrap, CLI, and test code.
+- **No `throw new Error()` in app/runtime code** - use `AppError` / `ValidationError` from `@usequark/quark-core/errors`. Native `Error` is reserved for library, bootstrap, CLI, and test code.
+- **No `console.log/error` in app/runtime code** - use `createLogger(name)` from `@usequark/quark-core`. Console output is reserved for bootstrap, CLI, and test code.
 - **Zod required** - all Server Actions and API routes must validate with Zod. No exceptions.
 - **Biome only** - no ESLint, no Prettier. Run `pnpm lint` to check.
 - **DB models** - every Prisma model must include `createdAt DateTime @default(now())` and `updatedAt DateTime @updatedAt`.
@@ -16,7 +16,7 @@
 `packages/cli/templates/` is auto-generated from monorepo source. Editing files there directly will be overwritten.
 After changing source files in `apps/web/`, `apps/worker/`, `packages/db/`, `packages/config/`, `packages/ui/`, or `packages/jobs/`, run:
 ```bash
-pnpm --filter @techstream/quark-create-app sync-templates
+pnpm --filter @usequark/quark-create-app sync-templates
 ```
 
 ### Schema trimming
@@ -32,12 +32,12 @@ pnpm test
 ```
 
 ### UI imports - no deep imports
-Import from `@techstream/quark-ui` (monorepo) or `@<scope>/ui` (scaffolded projects).
+Import from `@usequark/quark-ui` (monorepo) or `@<scope>/ui` (scaffolded projects).
 Never use `@/components/ui/*` - that Shadcn convention is not used here.
 Shared exports also include `ErrorBanner`, `Footer`, `Navbar`/`MobileNavbar`, and `RichText`; extend them with `className` before inventing one-off replacements.
 
 ### Two packages are published; everything else is scaffolded
-- **Published:** `@techstream/quark-core`, `@techstream/quark-create-app`
+- **Published:** `@usequark/quark-core`, `@usequark/quark-create-app`
 - **Scaffolded (local-only):** `config`, `db`, `ui`, `jobs` - these are excluded from versioning and npm publish.
 
 ## Quick Setup
@@ -60,8 +60,8 @@ quark/
 │   ├── web/          # Next.js 16 reference app (App Router, Server Actions)
 │   └── worker/       # BullMQ background worker
 ├── packages/
-│   ├── cli/          # @techstream/quark-create-app (published to npm)
-│   ├── core/         # @techstream/quark-core (published to npm)
+│   ├── cli/          # @usequark/quark-create-app (published to npm)
+│   ├── core/         # @usequark/quark-core (published to npm)
 │   ├── db/           # Prisma schema + client + queries
 │   ├── config/       # Environment validation + config loading
 │   ├── ui/           # Shared UI components (Tailwind, scaffold template)
@@ -79,8 +79,8 @@ quark/
 | `pnpm db:generate` | Regenerate Prisma client |
 | `pnpm db:migrate` | Run Prisma migrations |
 | `pnpm changeset` | Create a changeset (interactive, before opening a PR) |
-| `pnpm --filter @techstream/quark-create-app sync-templates` | Sync scaffold templates from source |
-| `pnpm --filter @techstream/quark-create-app sync-templates:check` | Check for template drift |
+| `pnpm --filter @usequark/quark-create-app sync-templates` | Sync scaffold templates from source |
+| `pnpm --filter @usequark/quark-create-app sync-templates:check` | Check for template drift |
 
 ## Coding Conventions
 
@@ -88,8 +88,8 @@ quark/
 - **No TypeScript** - `.js` and `.jsx` files only.
 - **Linting** - Biome for all formatting and linting.
 - **Validation** - Zod for all Server Actions and API routes.
-- **Errors** - `AppError` / `ValidationError` from `@techstream/quark-core/errors` in app/runtime code.
-- **Logging** - `createLogger(name)` from `@techstream/quark-core` in app/runtime code.
+- **Errors** - `AppError` / `ValidationError` from `@usequark/quark-core/errors` in app/runtime code.
+- **Logging** - `createLogger(name)` from `@usequark/quark-core` in app/runtime code.
 - **DB models** - Always include `createdAt` and `updatedAt` on every Prisma model.
 
 ## UI & Design System
@@ -98,7 +98,7 @@ The `packages/ui` directory contains Tailwind-only, dependency-free Server Compo
 
 Available exports: `Button`, `Input`, `Label`, `Textarea`, `Select`, `Checkbox`, `Badge`, `Card`/`CardHeader`/`CardTitle`/`CardContent`/`CardFooter`, `Table`/`TableHeader`/`TableBody`/`TableRow`/`TableHead`/`TableCell`, `Skeleton`, `ErrorBanner`, `Footer`, `Navbar`/`MobileNavbar`, `RichText`, `Dialog` (client), `Toast`/`useToast` (client), `ThemeProvider`/`useTheme` (client).
 
-Import from `@techstream/quark-ui` (monorepo) or `@<scope>/ui` (scaffolded projects) - never deep-import.
+Import from `@usequark/quark-ui` (monorepo) or `@<scope>/ui` (scaffolded projects) - never deep-import.
 
 ## Template Sync
 
@@ -107,7 +107,7 @@ Import from `@techstream/quark-ui` (monorepo) or `@<scope>/ui` (scaffolded proje
 After changing any source file in `apps/web/`, `apps/worker/`, `packages/db/`, `packages/config/`, `packages/ui/`, or `packages/jobs/`:
 
 ```bash
-pnpm --filter @techstream/quark-create-app sync-templates
+pnpm --filter @usequark/quark-create-app sync-templates
 ```
 
 **`TEMPLATE_ONLY` files** are never overwritten by sync: `CLAUDE.md`, `.cursor/rules/quark.mdc`, `SKILL.md`, GitHub workflows, scaffold READMEs, root `package.json`, biome configs, migrations, and the `opencode` directory.
@@ -151,7 +151,7 @@ Tests are co-located: `feature.test.js` next to `feature.js`. Uses Node.js built
 
 ### Error Handling
 ```js
-import { AppError, ValidationError } from "@techstream/quark-core/errors";
+import { AppError, ValidationError } from "@usequark/quark-core/errors";
 throw new ValidationError("Email is required");
 throw new AppError("Not found", 404, "NOT_FOUND");
 ```
@@ -167,7 +167,7 @@ if (!session) redirect("/auth/signin");
 ```js
 "use server";
 import { z } from "zod";
-import { ValidationError, AppError } from "@techstream/quark-core/errors";
+import { ValidationError, AppError } from "@usequark/quark-core/errors";
 import { prisma } from "@__QUARK_SCOPE__/db";
 
 const schema = z.object({ title: z.string().min(1) });

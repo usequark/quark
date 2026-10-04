@@ -9,7 +9,7 @@ packages/core/   @Bobnoddle
 packages/cli/    @Bobnoddle
 
 # Generated scaffold templates. Never edit these directly -- change the
-# monorepo source and run `pnpm --filter @techstream/quark-create-app sync-templates`.
+# monorepo source and run `pnpm --filter @usequark/quark-create-app sync-templates`.
 # See AGENTS.md.
 /packages/cli/templates/ @Bobnoddle
 

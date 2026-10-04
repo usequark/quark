@@ -1,5 +1,5 @@
 /**
- * @techstream/quark-core - CSRF Protection Module
+ * @usequark/quark-core - CSRF Protection Module
  * Provides CSRF token generation and validation for API routes
  */
 

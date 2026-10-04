@@ -12,9 +12,9 @@ Two packages are published to npm (with a third planned); everything else is sca
 
 | Published package | Purpose |
 |---|---|
-| `@techstream/quark-create-app` | CLI - scaffolds new projects, provides `update` command |
-| `@techstream/quark-core` | Runtime library - auth, queues, errors, validation, email, storage, metrics, logging |
-| `@techstream/quark-ai` (planned) | AI provider abstraction - unified API for OpenAI, Anthropic, Google, Ollama |
+| `@usequark/quark-create-app` | CLI - scaffolds new projects, provides `update` command |
+| `@usequark/quark-core` | Runtime library - auth, queues, errors, validation, email, storage, metrics, logging |
+| `@usequark/quark-ai` (planned) | AI provider abstraction - unified API for OpenAI, Anthropic, Google, Ollama |
 
 Scaffolded (local-only) packages:
 
@@ -46,16 +46,16 @@ Scaffolded (local-only) packages:
 
 ## Coding Standards
 
-- **Imports:** Use `@techstream/` scope for published packages. Scaffolded packages use project scope (`@<app>/`).
+- **Imports:** Use `@usequark/` scope for published packages. Scaffolded packages use project scope (`@<app>/`).
 - **Database:** Prisma + Postgres. Always include `createdAt`/`updatedAt` on models.
 - **UI:** Tailwind CSS. Keep components atomic. When the `ui` package is selected, use components from `@<app>/ui`. Available exports: `Button`, `Input`, `Label`, `Textarea`, `Select`, `Checkbox`, `Badge`, `Card`/`CardHeader`/`CardTitle`/`CardContent`/`CardFooter`, `Table`/`TableHeader`/`TableBody`/`TableRow`/`TableHead`/`TableCell`, `Skeleton`, `ErrorBanner`, `Footer`, `Navbar`/`MobileNavbar`, `RichText`, `QuarkLogo` (server), `Dialog` (client), `Toast`/`useToast` (client), `ThemeProvider`/`useTheme` (client). All accept `className` for overrides. Do **not** import from `@/components/ui/*` - that Shadcn path convention is not used.
 - **UI workflow:** Before building Quark frontend pages, inspect `packages/ui/src/index.js`, `packages/ui/README.md`, and `apps/web/src/app/page.js`. Prefer shared `@<app>/ui` exports for public layouts, navigation, cards, forms, feedback, and rich content. Extend the scaffolded UI package before creating one-off replacements.
 - **Validation:** Zod is mandatory for all Server Actions and API routes.
-- **Errors:** Use `AppError` / `ValidationError` from `@techstream/quark-core/errors` in app/runtime code. Native `Error` is acceptable in library, bootstrap, CLI, and test code.
+- **Errors:** Use `AppError` / `ValidationError` from `@usequark/quark-core/errors` in app/runtime code. Native `Error` is acceptable in library, bootstrap, CLI, and test code.
 - **Environment:** All env vars validated via `validate-env.js` in the config package. Environment-specific defaults managed by `environment.js`. Centralized config loading via `loadConfig()` from `load-config.js`.
 - **Mail env vars:** Use `MAIL_HOST`, `MAIL_PORT`, `MAIL_FROM` (not MAILHOG_*).
-- **Metrics:** Use `metrics` singleton from `@techstream/quark-core` for counters, gauges, histograms. Pre-registered HTTP metrics: `httpRequestsTotal`, `httpRequestDuration`, `httpRequestsInFlight`, `appErrorsTotal`. Prometheus format exported at `/api/metrics`.
-- **Logging:** Use `createLogger(name)` from `@techstream/quark-core` in app/runtime code. Console output is acceptable in bootstrap, CLI, and test code.
+- **Metrics:** Use `metrics` singleton from `@usequark/quark-core` for counters, gauges, histograms. Pre-registered HTTP metrics: `httpRequestsTotal`, `httpRequestDuration`, `httpRequestsInFlight`, `appErrorsTotal`. Prometheus format exported at `/api/metrics`.
+- **Logging:** Use `createLogger(name)` from `@usequark/quark-core` in app/runtime code. Console output is acceptable in bootstrap, CLI, and test code.
 - **Config:** Use `loadConfig()` from `@<app>/config` for centralized configuration. Supports per-environment defaults (dev/test/staging/prod) with env-var overrides.
 - **Analytics:** Optional Umami support stays app-local in `apps/web/src/lib/analytics/*`. The scaffolded public contract is only `NEXT_PUBLIC_UMAMI_URL`, `NEXT_PUBLIC_UMAMI_WEBSITE_ID`, and `NEXT_PUBLIC_UMAMI_REPLAY_ENABLED`; replay uses a local rrweb recorder rather than hosted `recorder.js`, and dormant helpers exist for dashboard-generated Umami Links, Pixels, and marketing-email snippets without adding extra env vars.
 
@@ -111,14 +111,14 @@ After publish, a GitHub Release is created with a date-based tag (`v2026.02.16`,
 - **Changelog:** `@changesets/changelog-github` (links commits + PRs)
 - **Access:** `public`
 - **Base branch:** `main`
-- **Ignored packages:** All scaffolded/local packages (`@techstream/quark-web`, `quark-worker`, `quark-config`, `quark-db`, `quark-jobs`, `quark-ui`) - only `quark-core` and `quark-create-app` are versioned/published.
+- **Ignored packages:** All scaffolded/local packages (`@usequark/quark-web`, `quark-worker`, `quark-config`, `quark-db`, `quark-jobs`, `quark-ui`) - only `quark-core` and `quark-create-app` are versioned/published.
 
 ### Changeset File Format
 
 ```markdown
 ---
-"@techstream/quark-create-app": patch
-"@techstream/quark-core": minor
+"@usequark/quark-create-app": patch
+"@usequark/quark-core": minor
 ---
 
 Description of changes (supports markdown)
@@ -189,8 +189,8 @@ quark/
 │   ├── web/          # Next.js app (the Quark source/reference app)
 │   └── worker/       # BullMQ worker process
 ├── packages/
-│   ├── cli/          # @techstream/quark-create-app (published)
-│   ├── core/         # @techstream/quark-core (published)
+│   ├── cli/          # @usequark/quark-create-app (published)
+│   ├── core/         # @usequark/quark-core (published)
 │   │   └── src/
 │   │       ├── auth/            # NextAuth config + helpers
 │   │       ├── authorization.js # RBAC policy engine
@@ -236,8 +236,8 @@ Run via `pnpm db:seed`, configured in `prisma.config.js` as `tsx prisma/seed.js`
 | `dev` *(default)* | Admin + sample viewer + audit log + job | Staging, local, E2E |
 
 **Critical:** `SEED_PROFILE` must NOT be derived from `NODE_ENV`. Railway sets `NODE_ENV=production` on all deployed services (including staging) for performance reasons. Use `SEED_PROFILE` explicitly:
-- Production: `SEED_PROFILE=minimal pnpm --filter @techstream/quark-db db:seed`
-- Staging: `pnpm --filter @techstream/quark-db db:seed`
+- Production: `SEED_PROFILE=minimal pnpm --filter @usequark/quark-db db:seed`
+- Staging: `pnpm --filter @usequark/quark-db db:seed`
 
 Both profiles are idempotent (safe to re-run). Staging full wipe: `prisma migrate reset --force` (calls seed automatically).
 
@@ -255,8 +255,8 @@ Both profiles are idempotent (safe to re-run). Staging full wipe: `prisma migrat
 | `pnpm db:generate` | Generate Prisma client |
 | `pnpm db:studio` | Open Prisma Studio |
 | `pnpm changeset` | Create a new changeset (interactive) |
-| `pnpm --filter @techstream/quark-create-app sync-templates` | Sync CLI scaffold templates from monorepo source |
-| `pnpm --filter @techstream/quark-create-app sync-templates:check` | Check for template drift without modifying files |
+| `pnpm --filter @usequark/quark-create-app sync-templates` | Sync CLI scaffold templates from monorepo source |
+| `pnpm --filter @usequark/quark-create-app sync-templates:check` | Check for template drift without modifying files |
 
 ## Edge Proxy (`apps/web/src/proxy.js`)
 

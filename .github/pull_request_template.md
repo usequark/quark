@@ -29,7 +29,7 @@ Do not just say "tests pass". Say what you actually did:
 - [ ] New or changed code follows the standards in [CONTRIBUTING.md](../blob/main/CONTRIBUTING.md)
       (ESM only, Zod validation, `AppError`/`ValidationError`, `createLogger`, Biome)
 - [ ] Tests are co-located next to the code they cover
-- [ ] If I touched `apps/web`, `apps/worker`, `packages/db`, `packages/config`, `packages/ui`, or `packages/jobs`, I ran `pnpm --filter @techstream/quark-create-app sync-templates` and committed the result
+- [ ] If I touched `apps/web`, `apps/worker`, `packages/db`, `packages/config`, `packages/ui`, or `packages/jobs`, I ran `pnpm --filter @usequark/quark-create-app sync-templates` and committed the result
 - [ ] Documentation updated where behaviour changed
 
 ## Notes for reviewers

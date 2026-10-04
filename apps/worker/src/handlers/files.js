@@ -3,16 +3,16 @@
  * Processes file-related background jobs (cleanup, etc.)
  */
 
-import { createStorage } from "@techstream/quark-core";
-import { file } from "@techstream/quark-db";
-import { JOB_NAMES } from "@techstream/quark-jobs";
+import { createStorage } from "@usequark/quark-core";
+import { file } from "@usequark/quark-db";
+import { JOB_NAMES } from "@usequark/quark-jobs";
 
 /**
  * Job handler for CLEANUP_ORPHANED_FILES
  * Deletes files with no owner that are older than a retention period.
  *
  * @param {import("bullmq").Job} bullJob
- * @param {import("@techstream/quark-core").Logger} logger
+ * @param {import("@usequark/quark-core").Logger} logger
  */
 export async function handleCleanupOrphanedFiles(bullJob, logger) {
 	const retentionHours = bullJob.data?.retentionHours || 24;

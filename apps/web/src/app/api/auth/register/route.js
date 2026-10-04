@@ -3,9 +3,9 @@ import {
 	hashPassword,
 	validateBody,
 	withCsrfProtection,
-} from "@techstream/quark-core";
-import { user, userRegisterSchema } from "@techstream/quark-db";
-import { JOB_NAMES, JOB_QUEUES } from "@techstream/quark-jobs";
+} from "@usequark/quark-core";
+import { user, userRegisterSchema } from "@usequark/quark-db";
+import { JOB_NAMES, JOB_QUEUES } from "@usequark/quark-jobs";
 import { NextResponse } from "next/server";
 import { isSignupEnabled } from "@/lib/auth-signup";
 import { handleError } from "../../error-handler";

@@ -96,7 +96,7 @@ WORKER_SHUTDOWN_TIMEOUT_MS=30000      # Max time to drain in-flight jobs
 
 ### Job Queue Configuration
 
-Job defaults are defined in `@techstream/quark-jobs`:
+Job defaults are defined in `@usequark/quark-jobs`:
 
 ```javascript
 // Default retry strategy for all jobs
@@ -112,7 +112,7 @@ Job defaults are defined in `@techstream/quark-jobs`:
 
 ### Database Configuration
 
-Worker uses the local `@techstream/quark-db` package which requires:
+Worker uses the local `@usequark/quark-db` package which requires:
 
 ```env
 DATABASE_URL=postgresql://user:password@localhost:5432/quark_dev
@@ -509,7 +509,7 @@ pnpm dev
 
 # 4. Terminal 4 (optional): Queue jobs
 node -e "
-  import { createQueue } from '@techstream/quark-core';
+  import { createQueue } from '@usequark/quark-core';
   const q = createQueue('emails');
   const job = await q.add('send-welcome-email', { userId: 'test-1' });
   console.log('Job enqueued:', job.id);
@@ -575,8 +575,8 @@ Here's a full example combining all patterns:
 **Job Handler** (`src/handlers/email.js`):
 
 ```javascript
-import { emailService } from "@techstream/quark-core";
-import { prisma } from "@techstream/quark-db";
+import { emailService } from "@usequark/quark-core";
+import { prisma } from "@usequark/quark-db";
 
 export async function handleSendWelcomeEmail(bullJob, logger) {
   const { userId } = bullJob.data;
@@ -677,7 +677,7 @@ A: Yes! Increase `WORKER_CONCURRENCY`. Each worker can handle N jobs simultaneou
 A: BullMQ retries with exponential backoff (default: 3 attempts, starting at 2s delay). After final retry, the job moves to a "failed" state.
 
 **Q: How do I add a new job type?**
-A: 1. Define in `@techstream/quark-jobs`
+A: 1. Define in `@usequark/quark-jobs`
 2. Implement handler in `src/handlers/`
 3. Register in `src/handlers/index.js`
 4. Test with `src/handlers/*.test.js`

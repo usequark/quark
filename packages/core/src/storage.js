@@ -1,5 +1,5 @@
 /**
- * @techstream/quark-core - File Storage
+ * @usequark/quark-core - File Storage
  *
  * Adapter-based storage abstraction supporting local filesystem and
  * S3-compatible providers (AWS S3, Cloudflare R2, MinIO, etc.).
@@ -23,7 +23,7 @@ import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
 import { pipeline } from "node:stream/promises";
 
 // Import + re-export the S3 adapter so existing deep-imports continue
-// to work (`import { createS3Storage } from "@techstream/quark-core/storage"`).
+// to work (`import { createS3Storage } from "@usequark/quark-core/storage"`).
 // storage-s3.js has no top-level AWS SDK imports, so this stays safe for
 // local-only deployments that never installed the optional peer deps.
 import { createS3Storage } from "./storage-s3.js";

@@ -1,5 +1,5 @@
 /**
- * @techstream/quark-core - Query Builder
+ * @usequark/quark-core - Query Builder
  * Builds Prisma where/orderBy clauses from query parameters
  * with validation and sanitization.
  */

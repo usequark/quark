@@ -12,7 +12,7 @@
  * This script renders the diff, strips any leading non-SQL output, and writes
  * the result. `validate-template-migration.js` re-checks the file afterwards.
  *
- * Run with: pnpm --filter @techstream/quark-create-app regen-migration
+ * Run with: pnpm --filter @usequark/quark-create-app regen-migration
  */
 
 import { execSync } from "node:child_process";
@@ -33,7 +33,7 @@ const SQL_STATEMENT_START =
 
 function renderSchemaSql() {
 	return execSync(
-		"pnpm --filter @techstream/quark-db exec prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script",
+		"pnpm --filter @usequark/quark-db exec prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script",
 		{ cwd: ROOT, encoding: "utf8" },
 	);
 }
@@ -85,7 +85,7 @@ function main() {
 		`✅ Wrote ${path.relative(ROOT, TARGET)} (${sql.split("\n").length} lines)`,
 	);
 	console.log(
-		"   Run `pnpm --filter @techstream/quark-create-app sync-templates` to validate.",
+		"   Run `pnpm --filter @usequark/quark-create-app sync-templates` to validate.",
 	);
 }
 

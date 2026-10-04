@@ -20,8 +20,8 @@ quark/
 │   ├── web/          # Next.js 16 reference app (App Router, Server Actions)
 │   └── worker/       # BullMQ background worker
 ├── packages/
-│   ├── cli/          # @techstream/quark-create-app (published to npm)
-│   ├── core/         # @techstream/quark-core (published to npm)
+│   ├── cli/          # @usequark/quark-create-app (published to npm)
+│   ├── core/         # @usequark/quark-core (published to npm)
 │   ├── db/           # Prisma schema + client + queries
 │   ├── config/       # Environment validation + config loading
 │   ├── ui/           # Shared UI components (scaffold template)
@@ -29,7 +29,7 @@ quark/
 └── docs/             # Architecture, API, roadmap docs
 ```
 
-**Published:** `@techstream/quark-core`, `@techstream/quark-create-app`
+**Published:** `@usequark/quark-core`, `@usequark/quark-create-app`
 **Scaffolded (never published):** `config`, `db`, `ui`, `jobs`
 
 ## Non-Negotiable Rules
@@ -38,14 +38,14 @@ quark/
 - **No authored TypeScript** - `.js` and `.jsx` files only. Generated code may emit typed artifacts, but repo code should not add `.ts` or `.tsx` sources.
 - **Biome** - all formatting and linting. No ESLint, no Prettier.
 - **Zod** - all Server Actions and API routes. No exceptions.
-- **AppError / ValidationError** from `@techstream/quark-core/errors` in app/runtime code. Native `Error` is acceptable in library, bootstrap, CLI, and test code.
-- **createLogger(name)** from `@techstream/quark-core` in app/runtime code. Console output is acceptable in bootstrap, CLI, and test code.
+- **AppError / ValidationError** from `@usequark/quark-core/errors` in app/runtime code. Native `Error` is acceptable in library, bootstrap, CLI, and test code.
+- **createLogger(name)** from `@usequark/quark-core` in app/runtime code. Console output is acceptable in bootstrap, CLI, and test code.
 - **DB models** - always include `createdAt` and `updatedAt`.
 - **Tests** - co-located `*.test.js`, `node --test`. Postgres + Redis required.
 
 ## UI & Design System
 
-Import from `@techstream/quark-ui` in the monorepo or `@<scope>/ui` in scaffolded projects - never from `@/components/ui/*`.
+Import from `@usequark/quark-ui` in the monorepo or `@<scope>/ui` in scaffolded projects - never from `@/components/ui/*`.
 
 Available exports: `Button`, `Input`, `Label`, `Textarea`, `Select`, `Checkbox`, `Badge`, `Card`/`CardHeader`/`CardTitle`/`CardContent`/`CardFooter`, `Table`/`TableHeader`/`TableBody`/`TableRow`/`TableHead`/`TableCell`, `Skeleton`, `ErrorBanner`, `Footer`, `Navbar`/`MobileNavbar`, `RichText`, `QuarkLogo` *(server)*, `Dialog` *(client)*, `Toast`/`useToast` *(client)*, `ThemeProvider`/`useTheme` *(client)*.
 
@@ -62,8 +62,8 @@ pnpm db:generate                  # Regenerate Prisma client
 pnpm db:migrate                   # Apply migrations
 pnpm db:studio                    # Open Prisma Studio
 pnpm changeset                    # Create a changeset (interactive)
-pnpm --filter @techstream/quark-create-app sync-templates        # Sync scaffold templates
-pnpm --filter @techstream/quark-create-app sync-templates:check  # Check for drift
+pnpm --filter @usequark/quark-create-app sync-templates        # Sync scaffold templates
+pnpm --filter @usequark/quark-create-app sync-templates:check  # Check for drift
 ```
 
 ## Template Sync (CRITICAL)
@@ -71,7 +71,7 @@ pnpm --filter @techstream/quark-create-app sync-templates:check  # Check for dri
 `packages/cli/templates/` is generated from monorepo source - never edit manually (except `TEMPLATE_ONLY` files). After changing any source file in `apps/web/`, `apps/worker/`, `packages/db/`, `packages/config/`, `packages/ui/`, or `packages/jobs/`:
 
 ```bash
-pnpm --filter @techstream/quark-create-app sync-templates
+pnpm --filter @usequark/quark-create-app sync-templates
 ```
 
 ## Release Workflow
@@ -84,5 +84,5 @@ pnpm --filter @techstream/quark-create-app sync-templates
 
 **Never run `pnpm changeset version` locally.** CI does this automatically.
 
-**Published packages only:** `@techstream/quark-core` and `@techstream/quark-create-app`.
+**Published packages only:** `@usequark/quark-core` and `@usequark/quark-create-app`.
 

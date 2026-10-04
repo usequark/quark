@@ -9,9 +9,9 @@
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/@techstream/quark-core"><img src="https://img.shields.io/npm/v/@techstream/quark-core?label=Quark%20Core" alt="Quark Core version" /></a>
+  <a href="https://www.npmjs.com/package/@usequark/quark-core"><img src="https://img.shields.io/npm/v/@usequark/quark-core?label=Quark%20Core" alt="Quark Core version" /></a>
   &nbsp;
-  <a href="https://www.npmjs.com/package/@techstream/quark-create-app"><img src="https://img.shields.io/npm/v/@techstream/quark-create-app?label=Quark%20Create" alt="Quark Create version" /></a>
+  <a href="https://www.npmjs.com/package/@usequark/quark-create-app"><img src="https://img.shields.io/npm/v/@usequark/quark-create-app?label=Quark%20Create" alt="Quark Create version" /></a>
   &nbsp;
   <a href="https://nodejs.org"><img src="https://img.shields.io/badge/Node.js-22-brightgreen?logo=node.js&logoColor=white" alt="Node.js 22" /></a>
   &nbsp;
@@ -27,9 +27,9 @@
 ## Overview
 
 Quark is a **Core-Only Registry** framework that provides:
-- **Centralized infrastructure** via `@techstream/quark-core` (auth, queues, validation, errors)
+- **Centralized infrastructure** via `@usequark/quark-core` (auth, queues, validation, errors)
 - **Local business logic** (database schema, UI components, job handlers)
-- **Zero-config scaffolding** via `@techstream/quark-create-app`
+- **Zero-config scaffolding** via `@usequark/quark-create-app`
 - **Monorepo structure** with Turborepo, Next.js 16, Prisma 7, and BullMQ
 
 ---
@@ -41,7 +41,7 @@ All Quark packages are published on **npmjs.org** - no authentication required.
 ### 1. Create a project
 
 ```bash
-npx @techstream/quark-create-app@latest my-project
+npx @usequark/quark-create-app@latest my-project
 ```
 
 The CLI will:
@@ -123,7 +123,7 @@ Quark includes production-ready security features:
 
 Quark ships infrastructure through the registry and keeps business logic local:
 
-- **Registry:** `@techstream/quark-core` (auth, queues, validation, errors)
+- **Registry:** `@usequark/quark-core` (auth, queues, validation, errors)
 - **Local packages:** `packages/db`, `packages/ui`, `packages/jobs`, `packages/config`
 
 **Database:** Quark provides core models (User, Account, Session, VerificationToken, Job, File, AuditLog) but **does not include domain models**. You define your own: products (ecommerce), posts (CMS), contact forms (brochure sites), workspaces (SaaS), etc.
@@ -133,16 +133,16 @@ Quark ships infrastructure through the registry and keeps business logic local:
 Example usage in your app:
 
 ```javascript
-import { authOptions } from "@techstream/quark-core";
+import { authOptions } from "@usequark/quark-core";
 import { prisma } from "@yourapp/db";
 ```
 
 To update infrastructure in a project:
 
 ```bash
-pnpm update @techstream/quark-core
-npx @techstream/quark-create-app update --scaffold-check
-npx @techstream/quark-create-app update --scaffold-check --fail-on-drift
+pnpm update @usequark/quark-core
+npx @usequark/quark-create-app update --scaffold-check
+npx @usequark/quark-create-app update --scaffold-check --fail-on-drift
 ```
 
 ---
@@ -176,7 +176,7 @@ This project uses [Changesets](https://github.com/changesets/changesets) for aut
 
 #### Adding a changeset
 
-After making changes to publishable packages (`@techstream/quark-core`, `@techstream/quark-create-app`):
+After making changes to publishable packages (`@usequark/quark-core`, `@usequark/quark-create-app`):
 
 ```bash
 pnpm changeset
@@ -236,7 +236,7 @@ pnpm changeset
 
 Run `pnpm lint` and `pnpm test` before opening a pull request. Note that
 `packages/cli/templates/` is **generated** from monorepo source — edit the source
-file, then run `pnpm --filter @techstream/quark-create-app sync-templates`. See
+file, then run `pnpm --filter @usequark/quark-create-app sync-templates`. See
 [AGENTS.md](./AGENTS.md) for the full set of project rules.
 
 ## License

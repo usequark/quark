@@ -1,4 +1,4 @@
-import { getAppUrl } from "@techstream/quark-config";
+import { getAppUrl } from "@usequark/quark-config";
 import { isWebsiteIndexable } from "../lib/seo/indexing.js";
 import { buildSitemapEntries } from "../lib/sitemap-entries.js";
 

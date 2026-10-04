@@ -8,12 +8,12 @@
  * 3. Replace proxy.js with this file (or use the hybrid approach below)
  */
 
-import { getAllowedOrigins } from "@techstream/quark-config/app-url";
+import { getAllowedOrigins } from "@usequark/quark-config/app-url";
 import {
 	createLogger,
 	createRateLimiter,
 	RATE_LIMIT_PRESETS,
-} from "@techstream/quark-core";
+} from "@usequark/quark-core";
 import { NextResponse } from "next/server";
 
 import { buildContentSecurityPolicy } from "./lib/analytics/umami-csp.js";

@@ -16,7 +16,7 @@ Railway uses **Infrastructure as Code** (IaC) via `.railway/railway.ts` to defin
 
   railway login
   ```
-- **A Quark project** scaffolded via `@techstream/quark-create-app`
+- **A Quark project** scaffolded via `@usequark/quark-create-app`
 - **PostgreSQL and Redis** - the deploy command can provision these automatically, or you can add them manually from the Railway dashboard first and use `--no-provision` to skip.
 
 ---

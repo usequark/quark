@@ -244,7 +244,7 @@ const TEMPLATE_ONLY = new Set([
  *
  * These handle structural differences between monorepo packages (which use
  * workspace:* for everything) and scaffold templates (which install
- * @techstream/quark-core from npm and use specific naming conventions).
+ * @usequark/quark-core from npm and use specific naming conventions).
  */
 const TRANSFORMS = {
 	"base-project/.dockerignore": transformScaffoldDockerIgnore,
@@ -295,14 +295,14 @@ function transformWebPackageJson(content) {
 	delete pkg.scripts?.["test:integration"];
 
 	// Core is installed from npm (not workspace) in scaffolded projects
-	if (pkg.dependencies?.["@techstream/quark-core"]) {
-		pkg.dependencies["@techstream/quark-core"] = CORE_VERSION_PIN;
+	if (pkg.dependencies?.["@usequark/quark-core"]) {
+		pkg.dependencies["@usequark/quark-core"] = CORE_VERSION_PIN;
 	}
 	// Config moves from dependencies to devDependencies in template
-	if (pkg.dependencies?.["@techstream/quark-config"]) {
-		delete pkg.dependencies["@techstream/quark-config"];
+	if (pkg.dependencies?.["@usequark/quark-config"]) {
+		delete pkg.dependencies["@usequark/quark-config"];
 		pkg.devDependencies = pkg.devDependencies || {};
-		pkg.devDependencies["@techstream/quark-config"] = "workspace:*";
+		pkg.devDependencies["@usequark/quark-config"] = "workspace:*";
 	}
 
 	return `${JSON.stringify(pkg, null, "\t")}\n`;
@@ -331,8 +331,8 @@ function transformWorkerPackageJson(content) {
 	pkg.name = "@myquark/worker";
 
 	// Core is installed from npm (not workspace) in scaffolded projects
-	if (pkg.dependencies?.["@techstream/quark-core"]) {
-		pkg.dependencies["@techstream/quark-core"] = CORE_VERSION_PIN;
+	if (pkg.dependencies?.["@usequark/quark-core"]) {
+		pkg.dependencies["@usequark/quark-core"] = CORE_VERSION_PIN;
 	}
 
 	// Use run-tests.mjs (module-mocks flag + integration test exclusion),
@@ -355,8 +355,8 @@ function transformDbPackageJson(content) {
 	delete pkg.private;
 
 	// Core is installed from npm (not workspace) in scaffolded projects
-	if (pkg.dependencies?.["@techstream/quark-core"]) {
-		pkg.dependencies["@techstream/quark-core"] = CORE_VERSION_PIN;
+	if (pkg.dependencies?.["@usequark/quark-core"]) {
+		pkg.dependencies["@usequark/quark-core"] = CORE_VERSION_PIN;
 	}
 
 	// DB tests rely on the generated Prisma client (produced by the turbo
@@ -391,14 +391,14 @@ function transformOptionalPackageJson(content) {
 	delete pkg.scripts;
 
 	// Core is installed from npm (not workspace) in scaffolded projects.
-	if (pkg.dependencies?.["@techstream/quark-core"]) {
-		pkg.dependencies["@techstream/quark-core"] = CORE_VERSION_PIN;
+	if (pkg.dependencies?.["@usequark/quark-core"]) {
+		pkg.dependencies["@usequark/quark-core"] = CORE_VERSION_PIN;
 	}
 
 	// Remove devDependencies that are monorepo workspace refs
 	if (pkg.devDependencies) {
 		for (const dep of Object.keys(pkg.devDependencies)) {
-			if (dep.startsWith("@techstream/quark-")) {
+			if (dep.startsWith("@usequark/quark-")) {
 				delete pkg.devDependencies[dep];
 			}
 		}
@@ -411,7 +411,7 @@ function transformOptionalPackageJson(content) {
 }
 
 /**
- * Extract the short package name (e.g. "ui" from "@techstream/quark-ui")
+ * Extract the short package name (e.g. "ui" from "@usequark/quark-ui")
  */
 function extractShortName(fullName) {
 	const lastSegment = fullName.split("/").pop();
@@ -438,7 +438,7 @@ function transformMobilePackageJson(content) {
 	// Remove devDependencies that are monorepo workspace refs
 	if (pkg.devDependencies) {
 		for (const dep of Object.keys(pkg.devDependencies)) {
-			if (dep.startsWith("@techstream/quark-")) {
+			if (dep.startsWith("@usequark/quark-")) {
 				delete pkg.devDependencies[dep];
 			}
 		}

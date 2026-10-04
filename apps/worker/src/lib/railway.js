@@ -3,8 +3,8 @@
  * Fetches estimated usage and deployment data from Railway's GraphQL API.
  */
 
-import { createLogger } from "@techstream/quark-core";
-import { AppError } from "@techstream/quark-core/errors";
+import { createLogger } from "@usequark/quark-core";
+import { AppError } from "@usequark/quark-core/errors";
 
 const log = createLogger("lib:railway");
 

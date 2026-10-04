@@ -4,7 +4,7 @@
  * No API key needed — we connect to the same DB Umami uses.
  */
 
-import { createLogger } from "@techstream/quark-core";
+import { createLogger } from "@usequark/quark-core";
 
 const log = createLogger("lib:umami-db");
 

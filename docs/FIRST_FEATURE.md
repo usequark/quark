@@ -98,7 +98,7 @@ Once the first vertical slice works, add optional Quark features when they help:
 Add optional features later with:
 
 ```bash
-npx @techstream/quark-create-app add <feature>
+npx @usequark/quark-create-app add <feature>
 ```
 
 ## Checklist

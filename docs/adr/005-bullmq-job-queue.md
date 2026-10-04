@@ -18,7 +18,7 @@ Key requirements:
 
 ## Decision
 
-BullMQ is the job queue for Quark. Jobs are defined in `packages/jobs/src/`, enqueued from Next.js Server Actions or API routes using `@techstream/quark-core`'s job helpers, and processed by the `apps/worker` BullMQ worker process.
+BullMQ is the job queue for Quark. Jobs are defined in `packages/jobs/src/`, enqueued from Next.js Server Actions or API routes using `@usequark/quark-core`'s job helpers, and processed by the `apps/worker` BullMQ worker process.
 
 Redis (already required for session caching) serves as the BullMQ backend, so no additional infrastructure is needed.
 

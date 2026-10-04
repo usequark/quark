@@ -17,7 +17,7 @@ Key requirements:
 
 Prisma is the ORM for Quark. The schema lives in `packages/db/prisma/schema.prisma`, migrations run via `pnpm db:migrate`, and queries are encapsulated in `packages/db/src/queries.js`.
 
-The Prisma client is generated into `packages/db/node_modules/.prisma/` and imported via `@techstream/quark-db`.
+The Prisma client is generated into `packages/db/node_modules/.prisma/` and imported via `@usequark/quark-db`.
 
 ## Consequences
 
@@ -30,4 +30,4 @@ The Prisma client is generated into `packages/db/node_modules/.prisma/` and impo
 **Negative:**
 - Prisma adds a code-generation step (`pnpm db:generate`) that must run after schema changes
 - The generated client is heavy; not suitable for edge runtimes (Lambda@Edge, Cloudflare Workers)
-- Schema changes that affect published packages (`@techstream/quark-db`) require a versioned release
+- Schema changes that affect published packages (`@usequark/quark-db`) require a versioned release

@@ -6,7 +6,7 @@ Quark's recommended default is a dormant Umami baseline in every scaffolded Next
 
 - Load `script.js` from `NEXT_PUBLIC_UMAMI_URL` in the root layout head.
 - Enable Umami Performance on the main tracker by default when base analytics is already enabled.
-- Keep Umami helpers app-local in `apps/web/src/lib/analytics/*` and sync them into the scaffold templates. Do not move vendor-specific code into `@techstream/quark-core`.
+- Keep Umami helpers app-local in `apps/web/src/lib/analytics/*` and sync them into the scaffold templates. Do not move vendor-specific code into `@usequark/quark-core`.
 - Use a local `rrweb` client component for replay uploads instead of Umami's hosted `recorder.js`.
 - Gate replay separately behind `NEXT_PUBLIC_UMAMI_REPLAY_ENABLED`.
 - Include dormant helpers for dashboard-generated Umami Links, Pixels, and marketing-email surfaces without adding extra public env vars.
@@ -110,5 +110,5 @@ Those can be added later by projects that need them, but they should not widen t
 After changing the monorepo source, sync the scaffold templates:
 
 ```bash
-pnpm --filter @techstream/quark-create-app sync-templates
+pnpm --filter @usequark/quark-create-app sync-templates
 ```

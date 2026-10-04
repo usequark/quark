@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, mock, test } from "node:test";
-import { AppError, ValidationError } from "@techstream/quark-core/errors";
+import { AppError, ValidationError } from "@usequark/quark-core/errors";
 import {
 	requireResetPasswordEmailData,
 	requireUserEmailRecord,

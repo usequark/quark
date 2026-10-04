@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 
 /**
- * @techstream/quark-core - Utility Functions
+ * @usequark/quark-core - Utility Functions
  * Common utility functions used across the platform
  */
 
@@ -111,7 +111,7 @@ export const isObject = (item) => {
 };
 
 /**
- * @deprecated Use `getErrorMessage` from `@techstream/quark-core/errors` instead.
+ * @deprecated Use `getErrorMessage` from `@usequark/quark-core/errors` instead.
  * Normalizes error messages for consistency
  * @param {Error|string} error - Error to normalize
  * @returns {string} Normalized error message

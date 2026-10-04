@@ -24,11 +24,11 @@ Key concepts:
 
 ## Framework context
 
-- **Stripe client** — `createStripeClient()` from `@techstream/quark-core/stripe`. Reads `STRIPE_SECRET_KEY` from env.
-- **Webhook route** — `apps/web/src/app/api/stripe/webhook/route.js`. Use `getStripeWebhookEvent()` from `@techstream/quark-core/stripe` to verify signatures.
+- **Stripe client** — `createStripeClient()` from `@usequark/quark-core/stripe`. Reads `STRIPE_SECRET_KEY` from env.
+- **Webhook route** — `apps/web/src/app/api/stripe/webhook/route.js`. Use `getStripeWebhookEvent()` from `@usequark/quark-core/stripe` to verify signatures.
 - **Validation** — Zod for all incoming data. Webhook event data is already validated by Stripe's SDK.
-- **Errors** — `AppError` / `ValidationError` from `@techstream/quark-core/errors` for app errors. Never throw on webhook failures — return 200 to prevent Stripe retries for unfixable errors.
-- **Logging** — `createLogger("stripe:webhook")` from `@techstream/quark-core`.
+- **Errors** — `AppError` / `ValidationError` from `@usequark/quark-core/errors` for app errors. Never throw on webhook failures — return 200 to prevent Stripe retries for unfixable errors.
+- **Logging** — `createLogger("stripe:webhook")` from `@usequark/quark-core`.
 - **Models** — add `stripeCustomerId String?` to User, `stripeSessionId String?` / `stripeSubscriptionId String?` to relevant models. Every model needs `createdAt` / `updatedAt`.
 
 ## Checkout sessions
@@ -49,7 +49,7 @@ export const checkoutSchema = z.object({
 ### One-time payment
 
 ```js
-import { createStripeClient } from "@techstream/quark-core/stripe";
+import { createStripeClient } from "@usequark/quark-core/stripe";
 
 const stripe = await createStripeClient();
 const session = await stripe.checkout.sessions.create({
@@ -82,8 +82,8 @@ const session = await stripe.checkout.sessions.create({
 ```js
 // apps/web/src/app/api/stripe/webhook/route.js
 import { NextResponse } from "next/server";
-import { getStripeWebhookEvent } from "@techstream/quark-core/stripe";
-import { createLogger } from "@techstream/quark-core";
+import { getStripeWebhookEvent } from "@usequark/quark-core/stripe";
+import { createLogger } from "@usequark/quark-core";
 import { prisma } from "@__QUARK_SCOPE__/db";
 
 const log = createLogger("stripe:webhook");
@@ -180,7 +180,7 @@ model WebhookEvent {
 ### Create or retrieve Stripe customer
 
 ```js
-import { createStripeClient } from "@techstream/quark-core/stripe";
+import { createStripeClient } from "@usequark/quark-core/stripe";
 
 export async function getOrCreateStripeCustomer(user) {
   if (user.stripeCustomerId) return user.stripeCustomerId;

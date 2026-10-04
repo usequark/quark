@@ -40,15 +40,15 @@ afterEach(() => {
 
 describe("GET /api/health", () => {
 	test("returns 200 with expected health shape when checks pass", async () => {
-		const core = await import("@techstream/quark-core");
+		const core = await import("@usequark/quark-core");
 
-		mock.module("@techstream/quark-db", {
+		mock.module("@usequark/quark-db", {
 			namedExports: {
 				pingDatabase: async () => ({ status: "ok", latencyMs: 1 }),
 			},
 		});
 
-		mock.module("@techstream/quark-core", {
+		mock.module("@usequark/quark-core", {
 			namedExports: {
 				...core,
 				createLogger: () => ({

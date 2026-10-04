@@ -1,5 +1,5 @@
 /**
- * @techstream/quark-core — Database Instrumentation Module
+ * @usequark/quark-core — Database Instrumentation Module
  *
  * Schema-agnostic Prisma $extends middleware that monitors query execution
  * times and logs slow queries. All query arguments are automatically masked
@@ -10,7 +10,7 @@
  *
  * Usage in client.js:
  *
- *   import { createDbInstrumentation } from "@techstream/quark-core";
+ *   import { createDbInstrumentation } from "@usequark/quark-core";
  *   const base = new PrismaClient({ ... });
  *   const ext = createDbInstrumentation();
  *   if (ext) prisma = base.$extends(ext);

@@ -1,4 +1,4 @@
-import { createLogger, validateBody } from "@techstream/quark-core";
+import { createLogger, validateBody } from "@usequark/quark-core";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { issueTokenPair, verifyMobileToken } from "../../../../lib/jwt";

@@ -1,5 +1,5 @@
 {
-	"name": "@techstream/quark-config",
+	"name": "@usequark/quark-config",
 	"version": "1.0.0",
 	"private": true,
 	"type": "module",
@@ -19,7 +19,7 @@
 		"lint": "biome format --write && biome check --write"
 	},
 	"dependencies": {
-		"@techstream/quark-core": "workspace:*",
+		"@usequark/quark-core": "workspace:*",
 		"ioredis": "^6.0.0",
 		"zod": "^4.6.5"
 	},

@@ -1,12 +1,12 @@
 /**
- * @techstream/quark-core - Pagination Utilities
+ * @usequark/quark-core - Pagination Utilities
  *
  * Provides offset-based pagination helpers that integrate with Prisma's
  * skip/take API and the project's ValidationError convention.
  *
  * Usage in a route handler:
  *
- *   import { parsePaginationQuery } from "@techstream/quark-core";
+ *   import { parsePaginationQuery } from "@usequark/quark-core";
  *
  *   export async function GET(request) {
  *     const { searchParams } = new URL(request.url);

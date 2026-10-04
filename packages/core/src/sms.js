@@ -1,12 +1,12 @@
 /**
- * @techstream/quark-core - SMS Service
+ * @usequark/quark-core - SMS Service
  *
  * Providers are defined using a Strategy Pattern - each implements the same
  * interface. Quark ships with one built-in provider (twilio) and exposes a
  * registry so users can plug in any provider they need.
  *
  * @example Custom provider
- *   import { SmsProvider, registerSmsProvider } from "@techstream/quark-core";
+ *   import { SmsProvider, registerSmsProvider } from "@usequark/quark-core";
  *
  *   class AmazonSnsProvider extends SmsProvider {
  *     async sendSms(to, body) { ... }

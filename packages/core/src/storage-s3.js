@@ -1,5 +1,5 @@
 /**
- * @techstream/quark-core - S3 Storage Adapter
+ * @usequark/quark-core - S3 Storage Adapter
  *
  * Kept in its own module so `storage.js` (and the main barrel) never pull
  * the AWS SDK onto the import path: `@aws-sdk/client-s3` and
@@ -32,7 +32,7 @@ async function importS3ClientPackage() {
 	} catch (error) {
 		if (isMissingPackageError(error, S3_CLIENT_PACKAGE)) {
 			throw new Error(
-				'S3 storage support requires installing "@aws-sdk/client-s3" in the app that uses @techstream/quark-core/storage/s3.',
+				'S3 storage support requires installing "@aws-sdk/client-s3" in the app that uses @usequark/quark-core/storage/s3.',
 			);
 		}
 		throw error;
@@ -47,7 +47,7 @@ async function importS3PresignerPackage() {
 	} catch (error) {
 		if (isMissingPackageError(error, S3_PRESIGNER_PACKAGE)) {
 			throw new Error(
-				'Signed upload URLs require installing "@aws-sdk/s3-request-presigner" in the app that uses @techstream/quark-core/storage/s3.',
+				'Signed upload URLs require installing "@aws-sdk/s3-request-presigner" in the app that uses @usequark/quark-core/storage/s3.',
 			);
 		}
 		throw error;

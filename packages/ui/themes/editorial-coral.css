@@ -1,4 +1,4 @@
-/* ─── @techstream/quark-ui — Theme: EDITORIAL CORAL ───────────
+/* ─── @usequark/quark-ui — Theme: EDITORIAL CORAL ───────────
  *
  * Coral and ink editorial style with glassmorphism nav and
  * ambient blur backgrounds. Soft rounded corners, warm tones.
@@ -8,7 +8,7 @@
  *   - Manrope (body):              https://fonts.google.com/specimen/Manrope
  *
  * Usage:
- *   @import "@techstream/quark-ui/themes/editorial-coral.css";
+ *   @import "@usequark/quark-ui/themes/editorial-coral.css";
  * ─────────────────────────────────────────────────────────────── */
 
 @layer theme {

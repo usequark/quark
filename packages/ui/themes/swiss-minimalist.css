@@ -1,4 +1,4 @@
-/* ─── @techstream/quark-ui — Theme: SWISS MINIMALIST ──────────
+/* ─── @usequark/quark-ui — Theme: SWISS MINIMALIST ──────────
  *
  * Typography-first Swiss editorial with off-white background,
  * deep black text, grayscale palette, sharp radii, no shadows.
@@ -9,7 +9,7 @@
  *   - Satoshi (body):           https://www.fontshare.com/fonts/satoshi
  *
  * Usage:
- *   @import "@techstream/quark-ui/themes/swiss-minimalist.css";
+ *   @import "@usequark/quark-ui/themes/swiss-minimalist.css";
  * ─────────────────────────────────────────────────────────────── */
 
 @layer theme {

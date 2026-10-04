@@ -1,5 +1,5 @@
-import { validateBody } from "@techstream/quark-core";
-import { prisma } from "@techstream/quark-db";
+import { validateBody } from "@usequark/quark-core";
+import { prisma } from "@usequark/quark-db";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { extractBearerPayload } from "../../../../lib/jwt";

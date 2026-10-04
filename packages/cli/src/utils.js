@@ -3,7 +3,7 @@ import path from "node:path";
 import { execa } from "execa";
 
 /**
- * Shared utilities for @techstream/quark-create-app
+ * Shared utilities for @usequark/quark-create-app
  */
 
 export function sleep(ms) {

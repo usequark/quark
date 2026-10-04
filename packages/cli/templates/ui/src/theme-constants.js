@@ -1,5 +1,5 @@
 /**
- * Theme system constants for @techstream/quark-ui.
+ * Theme system constants for @usequark/quark-ui.
  *
  * These three values form the contract between ThemeProvider and any
  * out-of-tree component (e.g. HomeThemeToggle in apps/web) that interoperates

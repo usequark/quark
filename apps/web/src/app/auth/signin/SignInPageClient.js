@@ -7,7 +7,7 @@ import {
 	Label,
 	PasswordInput,
 	QuarkLogo,
-} from "@techstream/quark-ui";
+} from "@usequark/quark-ui";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";

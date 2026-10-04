@@ -1,5 +1,5 @@
 /**
- * @techstream/quark-config - Environment Configuration
+ * @usequark/quark-config - Environment Configuration
  * Provides environment-specific defaults for dev, test, staging, and production.
  * Each environment defines sensible defaults that can be overridden via env vars.
  */

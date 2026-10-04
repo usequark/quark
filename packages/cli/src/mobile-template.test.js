@@ -66,7 +66,7 @@ test("mobile package.json has no monorepo workspace refs in devDependencies", ()
 	if (pkg.devDependencies) {
 		for (const dep of Object.keys(pkg.devDependencies)) {
 			assert.ok(
-				!dep.startsWith("@techstream/quark-"),
+				!dep.startsWith("@usequark/quark-"),
 				`mobile devDependencies has monorepo ref: ${dep}`,
 			);
 		}

@@ -33,19 +33,19 @@ You will get a faster answer if you can answer these yourself:
 **Which version am I running?**
 
 ```bash
-npm ls @techstream/quark-core @techstream/quark-create-app
+npm ls @usequark/quark-core @usequark/quark-create-app
 ```
 
 **How do I get Quark updates in an existing project?**
 
 ```bash
-npx @techstream/quark-create-app update
+npx @usequark/quark-create-app update
 ```
 
 **How do I update the CLI itself?**
 
 ```bash
-npm install -g @techstream/quark-create-app@latest
+npm install -g @usequark/quark-create-app@latest
 ```
 
 **Something is broken after an update. What should I include in a report?**

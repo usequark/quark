@@ -11,7 +11,7 @@ This document captures the design direction for reducing Quark's overhead while 
 
 Quark's original goal was a scaffold with **low effort** (one command to a working app) and **low opinionation** (the user chooses their stack). Over time, overhead accumulated that works against both goals:
 
-- **Admin UI bloat.** A full themed admin panel (23 files, 8 themes, heavy `@techstream/quark-ui` imports) ships as an opt-in feature. It is a no-brainer for client work but friction for other projects.
+- **Admin UI bloat.** A full themed admin panel (23 files, 8 themes, heavy `@usequark/quark-ui` imports) ships as an opt-in feature. It is a no-brainer for client work but friction for other projects.
 - **Decision friction.** The interactive CLI asks a 6-option multiselect ("which packages?"). That is a *mechanics* question, not a *product* question, and it forces a decision the user may not want to make.
 - **Design-language leak.** The admin's themed UI + the `design-system` skill actively push AI agents to reproduce Quark's admin aesthetic in user-facing pages. The admin is a contamination carrier.
 - **Package sprawl.** Vertical packages (`bookings`, `crm`, `cms`, `ai`) are opt-in but over-built — full implementations where most users need a generic starting point.

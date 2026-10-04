@@ -24,14 +24,14 @@
 	"packageManager": "pnpm@10.12.1",
 	"devDependencies": {
 		"@faker-js/faker": "^10.6.0",
-		"@techstream/quark-config": "workspace:*",
+		"@usequark/quark-config": "workspace:*",
 		"bcryptjs": "^3.0.3",
 		"prisma": "^7.10.0"
 	},
 	"dependencies": {
 		"@prisma/adapter-pg": "^7.10.0",
 		"@prisma/client": "^7.10.0",
-		"@techstream/quark-core": "^2.0.0",
+		"@usequark/quark-core": "^2.0.0",
 		"pg": "^8.23.0",
 		"zod": "^4.6.5"
 	}

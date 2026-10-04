@@ -186,7 +186,7 @@ if (forgotPwContent && forgotPwContent.includes("quark-auth-layout")) {
 						"imports",
 						`Source files import "${importPattern}" but "${pkg}" is not installed`,
 						badFiles.map((f) => `  ${path.relative(ROOT, f)}`).join("\n"),
-						`Remove these imports or run: npx @techstream/quark-create-app add ${pkg}`,
+						`Remove these imports or run: npx @usequark/quark-create-app add ${pkg}`,
 					);
 				}
 			}

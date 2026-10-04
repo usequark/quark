@@ -41,4 +41,4 @@ jobs:
         run: docker --version && docker compose version
 
       - name: Build and scan generated images
-        run: pnpm --filter @techstream/quark-create-app test:build
+        run: pnpm --filter @usequark/quark-create-app test:build

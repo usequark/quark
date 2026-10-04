@@ -1,4 +1,4 @@
-import { config, getAppUrl } from "@techstream/quark-config";
+import { config, getAppUrl } from "@usequark/quark-config";
 import { getMetadataRobots } from "./indexing.js";
 
 export function getSiteMetadata() {
