@@ -8,7 +8,7 @@
  *   2. Rate limiting, CORS, security headers for all API routes.
  */
 
-import { getAllowedOrigins } from "@techstream/quark-config/app-url";
+import { getAllowedOrigins } from "@usequark/quark-config/app-url";
 import { NextResponse } from "next/server";
 
 import { buildContentSecurityPolicy } from "./lib/analytics/umami-csp.js";

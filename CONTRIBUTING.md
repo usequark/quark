@@ -28,8 +28,8 @@ pnpm dev                 # Start web + worker
 
 - **ESM only** -- `import`/`export` everywhere. Never `require()` or `module.exports`.
 - **No authored TypeScript** -- `.js` and `.jsx` files only. The `apps/mobile/` directory is the only exception (React Native / Expo requires it).
-- **No `throw new Error()`** in app/runtime code -- use `AppError` / `ValidationError` from `@techstream/quark-core/errors`. Native `Error` is reserved for library, bootstrap, CLI, and test code.
-- **No `console.log/error`** in app/runtime code -- use `createLogger(name)` from `@techstream/quark-core`. Console output is reserved for bootstrap, CLI, and test code.
+- **No `throw new Error()`** in app/runtime code -- use `AppError` / `ValidationError` from `@usequark/quark-core/errors`. Native `Error` is reserved for library, bootstrap, CLI, and test code.
+- **No `console.log/error`** in app/runtime code -- use `createLogger(name)` from `@usequark/quark-core`. Console output is reserved for bootstrap, CLI, and test code.
 - **Zod required** -- all Server Actions and API routes must validate with Zod. No exceptions.
 - **Biome only** -- no ESLint, no Prettier. Run `pnpm lint` to check.
 - **DB models** -- every Prisma model must include `createdAt DateTime @default(now())` and `updatedAt DateTime @updatedAt`.
@@ -44,8 +44,8 @@ quark/
 │   ├── worker/       # BullMQ background worker
 │   └── mobile/       # React Native / Expo (TypeScript required)
 ├── packages/
-│   ├── cli/          # @techstream/quark-create-app (published to npm)
-│   ├── core/         # @techstream/quark-core (published to npm)
+│   ├── cli/          # @usequark/quark-create-app (published to npm)
+│   ├── core/         # @usequark/quark-core (published to npm)
 │   ├── db/           # Prisma schema + client + queries
 │   ├── config/       # Environment validation + config loading
 │   ├── ui/           # Shared UI components (Tailwind)

@@ -43,7 +43,7 @@ jobs:
       # second full monorepo install on every run.
       - name: Sync templates
         if: github.actor != 'dependabot[bot]' || github.event_name == 'push'
-        run: pnpm --filter @techstream/quark-create-app sync-templates
+        run: pnpm --filter @usequark/quark-create-app sync-templates
 
       - name: Check for drift
         if: github.actor != 'dependabot[bot]' || github.event_name == 'push'
@@ -51,7 +51,7 @@ jobs:
           if ! git diff --quiet packages/cli/templates/; then
             echo ""
             echo "❌ Template drift detected!"
-            echo "Run 'pnpm --filter @techstream/quark-create-app sync-templates' locally and commit the changes."
+            echo "Run 'pnpm --filter @usequark/quark-create-app sync-templates' locally and commit the changes."
             git diff --stat packages/cli/templates/
             exit 1
           else
@@ -135,7 +135,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Lint
-        run: pnpm --filter @techstream/quark-mobile lint
+        run: pnpm --filter @usequark/quark-mobile lint
 
       - name: Typecheck
         run: npx tsc --noEmit

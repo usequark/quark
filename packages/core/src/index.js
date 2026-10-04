@@ -54,5 +54,5 @@ export * from "./storage.js";
 export * from "./utils.js";
 export * from "./validation.js";
 
-// Testing utilities (import from "@techstream/quark-core/testing" in test files)
+// Testing utilities (import from "@usequark/quark-core/testing" in test files)
 // Not re-exported from main to avoid polluting production imports

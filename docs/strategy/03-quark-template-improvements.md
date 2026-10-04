@@ -859,7 +859,7 @@ All templates go in `apps/web/src/app/` as new route directories:
 - [ ] Add all new exports to `packages/ui/src/index.js`
 - [ ] Run `pnpm lint` and fix any issues
 - [ ] Run `pnpm test` and ensure all tests pass
-- [ ] Run `pnpm --filter @techstream/quark-create-app sync-templates`
+- [ ] Run `pnpm --filter @usequark/quark-create-app sync-templates`
 
 ### Phase 2 - EmailCapture + Templates
 
@@ -872,14 +872,14 @@ All templates go in `apps/web/src/app/` as new route directories:
 - [ ] Update `apps/web/src/app/page.js` to demonstrate new components
 - [ ] Run `pnpm lint` and fix any issues
 - [ ] Run `pnpm test` and ensure all tests pass
-- [ ] Run `pnpm --filter @techstream/quark-create-app sync-templates`
+- [ ] Run `pnpm --filter @usequark/quark-create-app sync-templates`
 
 ### Phase 3 - Polish
 
 - [ ] Add spacing tokens to `globals.css`
 - [ ] Add spacing token bridge to `@theme inline`
 - [ ] Create additional page templates (product, case study, blog, about, contact)
-- [ ] Run `pnpm --filter @techstream/quark-create-app sync-templates`
+- [ ] Run `pnpm --filter @usequark/quark-create-app sync-templates`
 
 ---
 
@@ -892,7 +892,7 @@ All templates go in `apps/web/src/app/` as new route directories:
 - **No new dependencies** - no animation libraries, no carousel libraries, no third-party form libraries.
 - **Components go in `packages/ui/src/`** - each with a co-located `*.test.js` file.
 - **Exports go in `packages/ui/src/index.js`** - barrel export for each new component.
-- **After source changes, run:** `pnpm --filter @techstream/quark-create-app sync-templates`
+- **After source changes, run:** `pnpm --filter @usequark/quark-create-app sync-templates`
 - **Use `"use client"` only when needed** - components using hooks (`useState`, `useEffect`, `useRef`, `useActionState`, `IntersectionObserver`) need it. Presentational components do not.
 - **Follow existing Tailwind class patterns** - use the design token CSS vars (`text-text`, `bg-surface`, `border-border`, `rounded-[--radius-default]`, etc.).
 - **Respect `prefers-reduced-motion`** - disable animations when the user prefers reduced motion.

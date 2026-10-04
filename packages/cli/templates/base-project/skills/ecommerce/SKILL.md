@@ -22,9 +22,9 @@ An ecommerce system manages a product catalog, shopping cart, checkout flow, ord
 
 - **Models** live in `packages/db/prisma/schema.prisma`. Every model needs `id`, `createdAt DateTime @default(now())`, `updatedAt DateTime @updatedAt`. After changes: `pnpm db:generate && pnpm db:migrate`.
 - **Data access** goes through query helpers in `packages/db/src/queries.js` — never call `prisma.*` directly in pages/actions.
-- **Server Actions** (preferred for mutations) use `"use server"`, Zod validation, and `AppError`/`ValidationError` from `@techstream/quark-core/errors`.
+- **Server Actions** (preferred for mutations) use `"use server"`, Zod validation, and `AppError`/`ValidationError` from `@usequark/quark-core/errors`.
 - **Admin views** live under `apps/web/src/app/admin/` (see the admin-dashboard skill for product/order management).
-- **Auth** via `getCurrentSession` from `@techstream/quark-core`.
+- **Auth** via `getCurrentSession` from `@usequark/quark-core`.
 - **Payment** integration follows the payment skill for Stripe Checkout or similar processors.
 
 ## Workflow

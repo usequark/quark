@@ -67,7 +67,7 @@ function normalizeSqlStatements(sql) {
 
 function renderSchemaSql() {
 	return execSync(
-		"pnpm --filter @techstream/quark-db exec prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script",
+		"pnpm --filter @usequark/quark-db exec prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script",
 		{
 			cwd: ROOT,
 			encoding: "utf8",
@@ -106,7 +106,7 @@ function main() {
 		);
 		console.error("   with a plain `>`. Regenerate safely instead:");
 		console.error(
-			"     pnpm --filter @techstream/quark-create-app regen-migration",
+			"     pnpm --filter @usequark/quark-create-app regen-migration",
 		);
 		process.exit(1);
 	}
@@ -139,7 +139,7 @@ function main() {
 	console.error("");
 	console.error("   To fix, regenerate the migration SQL:");
 	console.error(
-		"     pnpm --filter @techstream/quark-create-app regen-migration",
+		"     pnpm --filter @usequark/quark-create-app regen-migration",
 	);
 	console.error("");
 	console.error(
@@ -153,9 +153,7 @@ function main() {
 	);
 	console.error("");
 	console.error("   Or run sync-templates to validate:");
-	console.error(
-		"     pnpm --filter @techstream/quark-create-app sync-templates",
-	);
+	console.error("     pnpm --filter @usequark/quark-create-app sync-templates");
 
 	if (missingStatements.length > 0) {
 		console.error("\nMissing statements:");

@@ -102,7 +102,7 @@ The session cookie is missing or expired. Check:
 
 ### CSRF errors on form submissions
 
-All mutating requests (POST, PUT, PATCH, DELETE) must include the CSRF token. Use `withCsrfProtection` on API routes and ensure your forms call `getCsrfToken()` from `@techstream/quark-core`.
+All mutating requests (POST, PUT, PATCH, DELETE) must include the CSRF token. Use `withCsrfProtection` on API routes and ensure your forms call `getCsrfToken()` from `@usequark/quark-core`.
 
 ---
 
@@ -146,7 +146,7 @@ All API routes that use `withCsrfProtection` handle `OPTIONS` automatically. If 
 
 ### `422 Unsupported Media Type` on file upload
 
-The file type or size exceeds configured limits. Check `validateFile` defaults in `@techstream/quark-core`. Common causes:
+The file type or size exceeds configured limits. Check `validateFile` defaults in `@usequark/quark-core`. Common causes:
 
 - File exceeds `MAX_FILE_SIZE` (default 10 MB)
 - MIME type not in the allowlist
@@ -187,7 +187,7 @@ Biome enforces import order. Run `pnpm lint` to auto-fix, or use the Biome VS Co
 The scaffold templates in `packages/cli/templates/` are out of date. After changing any source file in `apps/web/`, `apps/worker/`, `packages/db/`, `packages/config/`, `packages/ui/`, or `packages/jobs/`, run:
 
 ```bash
-pnpm --filter @techstream/quark-create-app sync-templates
+pnpm --filter @usequark/quark-create-app sync-templates
 ```
 
 Then commit the updated templates along with your source changes.
@@ -201,8 +201,8 @@ Files listed as `TEMPLATE_ONLY` in `packages/cli/scripts/sync-templates.js` are 
 The CLI packages templates at publish time. To get updated templates, upgrade the CLI:
 
 ```bash
-npm install -g @techstream/quark-create-app@latest
-npx @techstream/quark-create-app my-app
+npm install -g @usequark/quark-create-app@latest
+npx @usequark/quark-create-app my-app
 ```
 
 ---

@@ -19,8 +19,8 @@ The cart is a temporary collection of items a user intends to purchase. Key conc
 
 - **Models** live in `packages/db/prisma/schema.prisma`. Every model needs `id`, `createdAt DateTime @default(now())`, `updatedAt DateTime @updatedAt`. After changes: `pnpm db:generate && pnpm db:migrate`.
 - **Data access** goes through query helpers in `packages/db/src/queries.js` — never call `prisma.*` directly in pages/actions.
-- **Server Actions** use `"use server"`, Zod validation, and `AppError`/`ValidationError` from `@techstream/quark-core/errors`.
-- **Auth** via `getCurrentSession` from `@techstream/quark-core`.
+- **Server Actions** use `"use server"`, Zod validation, and `AppError`/`ValidationError` from `@usequark/quark-core/errors`.
+- **Auth** via `getCurrentSession` from `@usequark/quark-core`.
 
 ## Models
 
@@ -88,7 +88,7 @@ Use a Prisma transaction to prevent race conditions. Check stock availability be
 
 ```js
 import { prisma } from "@__QUARK_SCOPE__/db";
-import { AppError } from "@techstream/quark-core/errors";
+import { AppError } from "@usequark/quark-core/errors";
 
 export async function addToCart(cartId, variantId, quantity = 1) {
   return prisma.$transaction(async (tx) => {

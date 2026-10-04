@@ -4,7 +4,7 @@ import {
 	THEME_ATTR,
 	THEME_CHANGE_EVENT,
 	THEME_STORAGE_KEY,
-} from "@techstream/quark-ui/theme-constants";
+} from "@usequark/quark-ui/theme-constants";
 import { useLayoutEffect, useState } from "react";
 
 /**

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Enhanced End-to-end test for @techstream/quark-create-app CLI
+ * Enhanced End-to-end test for @usequark/quark-create-app CLI
  *
  * Full lifecycle test:
  * 1. Create project with CLI (--no-prompts flag)

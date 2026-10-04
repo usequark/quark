@@ -42,8 +42,8 @@ body:
       label: Which part of Quark does this touch?
       multiple: true
       options:
-        - "@techstream/quark-core (auth, queues, redis, email, storage, errors)"
-        - "@techstream/quark-create-app (CLI and scaffold templates)"
+        - "@usequark/quark-core (auth, queues, redis, email, storage, errors)"
+        - "@usequark/quark-create-app (CLI and scaffold templates)"
         - "packages/ui (shared components)"
         - "packages/jobs (BullMQ job types)"
         - "Database / Prisma schema"

@@ -1,12 +1,12 @@
 /**
- * @techstream/quark-core - Database Utilities
+ * @usequark/quark-core - Database Utilities
  *
  * Shared Prisma client singleton, connection-string builder, pool config,
  * and a lightweight health-check ping.  These replace the per-project
  * re-implementations in Regina / Pawdora / Trenchmate.
  *
  * Usage:
- *   import { createPrismaClient, getConnectionString, pingDatabase } from "@techstream/quark-core/db";
+ *   import { createPrismaClient, getConnectionString, pingDatabase } from "@usequark/quark-core/db";
  */
 
 // ---------------------------------------------------------------------------

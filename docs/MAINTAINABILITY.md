@@ -41,21 +41,21 @@ packages/example/
 
 | Package | Responsibility | Should NOT Contain |
 |---------|---------------|-------------------|
-| `@techstream/quark-config` | App configuration, environment variables | Business logic, UI code |
-| `@techstream/quark-db` | Database client, queries, Prisma schema | HTTP handlers, UI code |
-| `@techstream/quark-jobs` | Job queue definitions, worker logic | Database queries, UI code |
-| `@techstream/quark-ui` | Reusable UI components | Business logic, API calls |
+| `@usequark/quark-config` | App configuration, environment variables | Business logic, UI code |
+| `@usequark/quark-db` | Database client, queries, Prisma schema | HTTP handlers, UI code |
+| `@usequark/quark-jobs` | Job queue definitions, worker logic | Database queries, UI code |
+| `@usequark/quark-ui` | Reusable UI components | Business logic, API calls |
 
 ### Import Guidelines
 
 ```javascript
 // ✅ Good - Import from package public API
-import { Button } from "@techstream/quark-ui";
-import { prisma, user } from "@techstream/quark-db";
+import { Button } from "@usequark/quark-ui";
+import { prisma, user } from "@usequark/quark-db";
 
 // ❌ Bad - Deep imports bypass the public API
-import { Button } from "@techstream/quark-ui/src/button";
-import { prisma } from "@techstream/quark-db/src/client";
+import { Button } from "@usequark/quark-ui/src/button";
+import { prisma } from "@usequark/quark-db/src/client";
 ```
 
 ### Barrel Exports
@@ -82,8 +82,8 @@ Use workspace protocol for internal packages:
 ```json
 {
   "dependencies": {
-    "@techstream/quark-ui": "workspace:*",
-    "@techstream/quark-db": "workspace:*"
+    "@usequark/quark-ui": "workspace:*",
+    "@usequark/quark-db": "workspace:*"
   }
 }
 ```
@@ -191,7 +191,7 @@ pnpm test:coverage
 pnpm test:watch
 
 # Run tests for specific package
-pnpm test --filter @techstream/quark-ui
+pnpm test --filter @usequark/quark-ui
 ```
 
 ### Test Naming Conventions
@@ -409,7 +409,7 @@ chore(deps): update prisma to v6.2.0
 
 ```javascript
 // Use structured logging
-import { logger } from "@techstream/quark-config";
+import { logger } from "@usequark/quark-config";
 
 // ✅ Good - Structured with context
 logger.info("User created", { 
@@ -526,7 +526,7 @@ async function getUserPosts(userId) {
   return posts;
 }
 
-// After: Centralized in @techstream/quark-db
+// After: Centralized in @usequark/quark-db
 // packages/db/src/queries.js
 export const post = {
   /** @param {string} authorId */
@@ -588,7 +588,7 @@ Maintain a list of known technical debt:
 git checkout -b chore/upgrade-next-16
 
 # 2. Update package versions
-pnpm update next@latest --filter @techstream/quark-web
+pnpm update next@latest --filter @usequark/quark-web
 
 # 3. Run tests
 pnpm test
@@ -710,7 +710,7 @@ turbo run build --dry-run
 
 ```bash
 # Analyze web bundle
-pnpm --filter @techstream/quark-web analyze
+pnpm --filter @usequark/quark-web analyze
 
 # Check for duplicate dependencies
 pnpm dedupe

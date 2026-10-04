@@ -1,12 +1,12 @@
 /**
- * @techstream/quark-core - Stripe Integration
+ * @usequark/quark-core - Stripe Integration
  *
  * Thin wrappers around the Stripe SDK for client creation and webhook
  * verification. Stripe is an optional peer dependency — install it in the
  * app that uses payment features.
  *
  * Usage:
- *   import { createStripeClient, getStripeWebhookEvent } from "@techstream/quark-core/stripe";
+ *   import { createStripeClient, getStripeWebhookEvent } from "@usequark/quark-core/stripe";
  *
  *   const stripe = await createStripeClient();
  *   const session = await stripe.checkout.sessions.create({ ... });
@@ -30,7 +30,7 @@ async function importStripePackage() {
 	} catch (error) {
 		if (isMissingPackageError(error, "stripe")) {
 			throw new Error(
-				'Stripe support requires installing "stripe" in the app that uses @techstream/quark-core/stripe.',
+				'Stripe support requires installing "stripe" in the app that uses @usequark/quark-core/stripe.',
 			);
 		}
 		throw error;

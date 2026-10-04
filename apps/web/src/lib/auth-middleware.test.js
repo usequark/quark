@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { ForbiddenError, UnauthorizedError } from "@techstream/quark-core";
+import { ForbiddenError, UnauthorizedError } from "@usequark/quark-core";
 
 import { requireAuth, requireRole } from "./auth-middleware.js";
 

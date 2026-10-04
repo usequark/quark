@@ -1,4 +1,4 @@
-import { AppError, ValidationError } from "@techstream/quark-core/errors";
+import { AppError, ValidationError } from "@usequark/quark-core/errors";
 
 export function requireWelcomeEmailUserId(data) {
 	const userId = data?.userId;

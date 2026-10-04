@@ -1,5 +1,5 @@
 /**
- * @techstream/quark-core — Database Metrics Registry
+ * @usequark/quark-core — Database Metrics Registry
  *
  * Pre-registered Prometheus metrics for database query instrumentation.
  * Imported lazily by db-instrumentation.js to avoid circular dependencies.

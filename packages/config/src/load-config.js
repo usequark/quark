@@ -1,10 +1,10 @@
 /**
- * @techstream/quark-config - Configuration Loader
+ * @usequark/quark-config - Configuration Loader
  * Centralised configuration management that combines environment validation,
  * environment-specific defaults, and user overrides into a single config object.
  *
  * Usage:
- *   import { loadConfig } from "@techstream/quark-config";
+ *   import { loadConfig } from "@usequark/quark-config";
  *   const config = loadConfig();          // validates env + returns typed config
  *   const config = loadConfig({ cache: { defaultTtl: 120 } }); // with overrides
  */

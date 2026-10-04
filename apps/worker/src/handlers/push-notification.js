@@ -4,8 +4,8 @@
  * No Firebase SDK — uses HTTP APIs with service account credentials from env.
  */
 
-import { AppError, ValidationError } from "@techstream/quark-core/errors";
-import { prisma } from "@techstream/quark-db";
+import { AppError, ValidationError } from "@usequark/quark-core/errors";
+import { prisma } from "@usequark/quark-db";
 import { importPKCS8, SignJWT } from "jose";
 
 const APNS_KEY = process.env.APNS_KEY;
@@ -19,7 +19,7 @@ const GCP_SERVICE_ACCOUNT = process.env.GCP_SERVICE_ACCOUNT;
 /**
  * Job handler for SEND_PUSH_NOTIFICATION
  * @param {import("bullmq").Job} bullJob
- * @param {import("@techstream/quark-core").Logger} logger
+ * @param {import("@usequark/quark-core").Logger} logger
  */
 export async function handleSendPushNotification(bullJob, logger) {
 	const { userId, title, body: notificationBody, data } = bullJob.data;

@@ -1,5 +1,5 @@
 /**
- * Mobile equivalent of @techstream/quark-core's AppError.
+ * Mobile equivalent of @usequark/quark-core's AppError.
  *
  * React Native cannot import Node.js packages, so this module defines a
  * client-side error class whose shape mirrors AppError.toJSON() — same

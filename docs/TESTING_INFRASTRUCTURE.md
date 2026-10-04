@@ -33,7 +33,7 @@ Quark uses a **lightweight, dependency-free testing approach** built on Node.js 
 | **Framework** | Node.js native `node:test` |
 | **Total Test Files** | ~70 across monorepo |
 | **Assertion Library** | `node:assert/strict` |
-| **Most Tested Package** | `@techstream/quark-core` (21 test files) |
+| **Most Tested Package** | `@usequark/quark-core` (21 test files) |
 | **CI Services** | PostgreSQL 16, Redis 7 (health checks) |
 | **Root Command** | `pnpm test` → `turbo run test` |
 | **Coverage** | Optional/ad-hoc (not enforced) |
@@ -237,13 +237,13 @@ Runs `turbo run test` - executes test scripts across all packages sequentially, 
 
 ```bash
 # Test core library
-pnpm --filter @techstream/quark-core test
+pnpm --filter @usequark/quark-core test
 
 # Test web app
-pnpm --filter @techstream/quark-web test
+pnpm --filter @usequark/quark-web test
 
 # Test worker
-pnpm --filter @techstream/quark-worker test
+pnpm --filter @usequark/quark-worker test
 ```
 
 #### Run Tests in Watch Mode
@@ -251,7 +251,7 @@ pnpm --filter @techstream/quark-worker test
 Watch mode is not built into `node:test`, but can be done with `nodemon`:
 
 ```bash
-npx nodemon --watch packages/core/src --ext js --exec "pnpm --filter @techstream/quark-core test"
+npx nodemon --watch packages/core/src --ext js --exec "pnpm --filter @usequark/quark-core test"
 ```
 
 Or use file system watchers in your IDE.
@@ -275,19 +275,19 @@ The CLI package has custom test commands adapted to its multi-template structure
 
 ```bash
 # Unit tests only
-pnpm --filter @techstream/quark-create-app test
+pnpm --filter @usequark/quark-create-app test
 
 # CLI generation test
-pnpm --filter @techstream/quark-create-app test:cli
+pnpm --filter @usequark/quark-create-app test:cli
 
 # Lightweight E2E (generation + build check)
-pnpm --filter @techstream/quark-create-app test:e2e
+pnpm --filter @usequark/quark-create-app test:e2e
 
 # Full E2E with Docker services
-pnpm --filter @techstream/quark-create-app test:e2e:full
+pnpm --filter @usequark/quark-create-app test:e2e:full
 
 # Run all CLI tests
-pnpm --filter @techstream/quark-create-app test:all
+pnpm --filter @usequark/quark-create-app test:all
 ```
 
 See [packages/cli/README.md](../packages/cli/README.md) for details.
@@ -398,7 +398,7 @@ Separate CI job for full E2E testing of scaffold generation:
 **Workflow:** [.github/workflows/cli-e2e-full.yml](../.github/workflows/cli-e2e-full.yml)
 
 - **Trigger:** Changes to `packages/cli/` or manual dispatch
-- **Command:** `pnpm --filter @techstream/quark-create-app test:e2e:full`
+- **Command:** `pnpm --filter @usequark/quark-create-app test:e2e:full`
 - **Artifacts:** E2E results + debug logs on failure
 - **Timeout:** 20 minutes
 
@@ -408,7 +408,7 @@ Separate CI job for full E2E testing of scaffold generation:
 
 ### Overview
 
-Located in [packages/core/src/testing/](../packages/core/src/testing/), exported from `@techstream/quark-core/testing`.
+Located in [packages/core/src/testing/](../packages/core/src/testing/), exported from `@usequark/quark-core/testing`.
 
 Utilities provide:
 - **Factories** - Generate test data with sensible defaults
@@ -423,7 +423,7 @@ import {
   createMockPrisma,
   captureConsole,
   waitFor,
-} from "@techstream/quark-core/testing";
+} from "@usequark/quark-core/testing";
 ```
 
 ### Factories
@@ -666,7 +666,7 @@ Tests connect via environment variables (priority order):
 
 ```js
 import { describe, test, afterEach } from "node:test";
-import { prisma } from "@techstream/quark-db";
+import { prisma } from "@usequark/quark-db";
 
 describe("User model", () => {
   afterEach(async () => {

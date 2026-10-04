@@ -1,4 +1,4 @@
-import { QuarkLogo } from "@techstream/quark-ui";
+import { QuarkLogo } from "@usequark/quark-ui";
 import Link from "next/link";
 
 export const metadata = {

@@ -7,9 +7,9 @@ import {
 	createEmailService,
 	passwordResetEmail,
 	welcomeEmail,
-} from "@techstream/quark-core";
-import { prisma } from "@techstream/quark-db";
-import { JOB_NAMES } from "@techstream/quark-jobs";
+} from "@usequark/quark-core";
+import { prisma } from "@usequark/quark-db";
+import { JOB_NAMES } from "@usequark/quark-jobs";
 import {
 	requireResetPasswordEmailData,
 	requireUserEmailRecord,
@@ -21,7 +21,7 @@ const emailService = createEmailService();
 /**
  * Job handler for SEND_WELCOME_EMAIL
  * @param {import("bullmq").Job} bullJob
- * @param {import("@techstream/quark-core").Logger} logger
+ * @param {import("@usequark/quark-core").Logger} logger
  */
 export async function handleSendWelcomeEmail(bullJob, logger) {
 	const userId = requireWelcomeEmailUserId(bullJob.data);
@@ -60,7 +60,7 @@ export async function handleSendWelcomeEmail(bullJob, logger) {
 /**
  * Job handler for SEND_RESET_PASSWORD_EMAIL
  * @param {import("bullmq").Job} bullJob
- * @param {import("@techstream/quark-core").Logger} logger
+ * @param {import("@usequark/quark-core").Logger} logger
  */
 export async function handleSendResetPasswordEmail(bullJob, logger) {
 	const { userId, resetUrl } = requireResetPasswordEmailData(bullJob.data);

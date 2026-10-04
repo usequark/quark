@@ -11,7 +11,7 @@ Add a REST CRUD endpoint for an existing model: list/create on the collection ro
 
 - **API routes** live in `apps/web/src/app/api/<resource>/`.
 - **Data access** goes through query helpers in `packages/db/src/queries.js` — never call `prisma.*` directly.
-- **Auth** via `requireRole` from `@/lib/auth-middleware`; **validation** via Zod `validateBody`; **CSRF** via `withCsrfProtection` from `@techstream/quark-core`.
+- **Auth** via `requireRole` from `@/lib/auth-middleware`; **validation** via Zod `validateBody`; **CSRF** via `withCsrfProtection` from `@usequark/quark-core`.
 
 ## Workflow
 

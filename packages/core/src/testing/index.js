@@ -1,7 +1,7 @@
 /**
  * Quark test utilities - zero-dependency helpers for testing Quark applications.
  *
- * Import from `@techstream/quark-core/testing` in your test files:
+ * Import from `@usequark/quark-core/testing` in your test files:
  *
  * ```js
  * import {
@@ -17,7 +17,7 @@
  *   createTestContext,
  *   assertThrows,
  *   assertApiResponse,
- * } from "@techstream/quark-core/testing";
+ * } from "@usequark/quark-core/testing";
  * ```
  *
  * @module testing

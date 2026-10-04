@@ -2,8 +2,8 @@ import {
 	parsePaginationQuery,
 	validateBody,
 	withCsrfProtection,
-} from "@techstream/quark-core";
-import { user, userCreateSchema } from "@techstream/quark-db";
+} from "@usequark/quark-core";
+import { user, userCreateSchema } from "@usequark/quark-db";
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth-middleware";
 import { handleError } from "../error-handler";

@@ -11,10 +11,10 @@ import {
 	createWorker,
 	getRedisUrl,
 	updateQueueDepths,
-} from "@techstream/quark-core";
-import { AppError } from "@techstream/quark-core/errors";
-import { job, prisma } from "@techstream/quark-db";
-import { JOB_NAMES, JOB_QUEUES } from "@techstream/quark-jobs";
+} from "@usequark/quark-core";
+import { AppError } from "@usequark/quark-core/errors";
+import { job, prisma } from "@usequark/quark-db";
+import { JOB_NAMES, JOB_QUEUES } from "@usequark/quark-jobs";
 import { jobHandlers } from "./handlers/index.js";
 
 const logger = createLogger("worker");
@@ -242,7 +242,7 @@ export async function waitForDatabase(
  */
 async function preflight() {
 	// Load and validate environment variables
-	const { loadEnv } = await import("@techstream/quark-config");
+	const { loadEnv } = await import("@usequark/quark-config");
 	loadEnv("worker");
 
 	logger.info("Running preflight health checks");
@@ -362,7 +362,7 @@ async function createQueueWorker(queueName) {
  */
 async function startWorker() {
 	// Load and validate environment variables
-	const { loadEnv } = await import("@techstream/quark-config");
+	const { loadEnv } = await import("@usequark/quark-config");
 	loadEnv("worker");
 
 	logger.info("Starting Quark Worker Service");

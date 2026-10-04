@@ -1,5 +1,5 @@
 /**
- * @techstream/quark-core - Job Queue Module
+ * @usequark/quark-core - Job Queue Module
  * Provides BullMQ queue initialization and management
  */
 

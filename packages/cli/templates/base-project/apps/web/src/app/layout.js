@@ -2,7 +2,7 @@ import "./globals.css";
 import {
 	THEME_ATTR,
 	THEME_STORAGE_KEY,
-} from "@techstream/quark-ui/theme-constants";
+} from "@usequark/quark-ui/theme-constants";
 import { buildUmamiBeforeSendScript } from "../lib/analytics/umami-before-send.js";
 import { getUmamiConfig } from "../lib/analytics/umami-config.js";
 import { getSiteMetadata } from "../lib/seo/site-metadata.js";

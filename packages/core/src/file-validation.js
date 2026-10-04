@@ -1,5 +1,5 @@
 /**
- * @techstream/quark-core - File Validation
+ * @usequark/quark-core - File Validation
  *
  * Validates uploaded files: size limits, MIME type allow-lists,
  * and magic-byte verification to prevent MIME spoofing.

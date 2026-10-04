@@ -34,8 +34,8 @@ A localized app must handle locale detection, routing, content translation, and 
 - **Request config:** `getRequestConfig` from `next-intl/server` resolves the locale per request and loads message files.
 - **Models:** CMS models get a `locale String` field. Queries filter by locale with fallback chain.
 - **Validation** — Zod for all Server Actions and API routes. Use a locale enum for localized content submissions.
-- **Auth** via `getCurrentSession` from `@techstream/quark-core`.
-- **Locale utilities** from `@techstream/quark-core/locale`: `getDefaultLocale()`, `getSupportedLocales()`, `isLocaleSupported()`.
+- **Auth** via `getCurrentSession` from `@usequark/quark-core`.
+- **Locale utilities** from `@usequark/quark-core/locale`: `getDefaultLocale()`, `getSupportedLocales()`, `isLocaleSupported()`.
 
 ## Workflow
 
@@ -52,7 +52,7 @@ A localized app must handle locale detection, routing, content translation, and 
 ```js
 // src/i18n/routing.js
 import { defineRouting } from "next-intl/routing";
-import { getDefaultLocale, getSupportedLocales } from "@techstream/quark-core/locale";
+import { getDefaultLocale, getSupportedLocales } from "@usequark/quark-core/locale";
 
 const supportedLocales = getSupportedLocales();
 
@@ -104,7 +104,7 @@ export const config = {
 "use client";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter, usePathname } from "next/navigation";
-import { getSupportedLocales } from "@techstream/quark-core/locale";
+import { getSupportedLocales } from "@usequark/quark-core/locale";
 
 export function LocaleSwitcher() {
   const locale = useLocale();
@@ -152,7 +152,7 @@ model Page {
 ## Example: locale-aware query
 
 ```js
-import { getDefaultLocale, isLocaleSupported } from "@techstream/quark-core/locale";
+import { getDefaultLocale, isLocaleSupported } from "@usequark/quark-core/locale";
 
 export async function getPageBySlug(slug, locale) {
   const validLocale = isLocaleSupported(locale) ? locale : getDefaultLocale();
@@ -185,7 +185,7 @@ export async function generateMetadata({ params }) {
 
 ```js
 import { z } from "zod";
-import { isLocaleSupported } from "@techstream/quark-core/locale";
+import { isLocaleSupported } from "@usequark/quark-core/locale";
 
 export const localizedPageSchema = z.object({
   title: z.string().min(1).max(255),

@@ -15,10 +15,10 @@ Scaffolded: __QUARK_SCAFFOLD_DATE__
 1. **ESM only.** Always `import`/`export`. Never `require()` or `module.exports`.
 2. **No authored TypeScript.** Plain `.js` and `.jsx` files only - no repo-authored `.ts`, `.tsx`, or type annotations. Generated code is the only exception.
 3. **Validate everything at boundaries.** Server Actions and API routes must use Zod. No raw `req.body` access without parsing.
-4. **Use AppError at runtime boundaries.** Throw `AppError` / `ValidationError` / `NotFoundError` from `@techstream/quark-core/errors` in application/runtime code. Native `Error` is reserved for library, bootstrap, CLI, and test code.
-5. **Log with createLogger in runtime code.** Use `createLogger(name)` from `@techstream/quark-core` for application/runtime code. Console output is reserved for bootstrap, CLI, and test code.
+4. **Use AppError at runtime boundaries.** Throw `AppError` / `ValidationError` / `NotFoundError` from `@usequark/quark-core/errors` in application/runtime code. Native `Error` is reserved for library, bootstrap, CLI, and test code.
+5. **Log with createLogger in runtime code.** Use `createLogger(name)` from `@usequark/quark-core` for application/runtime code. Console output is reserved for bootstrap, CLI, and test code.
 6. **DB models always have timestamps.** Every Prisma model: `createdAt DateTime @default(now())` + `updatedAt DateTime @updatedAt`.
-7. **Workspace import scope.** Use `@__QUARK_SCOPE__/*` for local packages. Never `@techstream/quark-db`, `@techstream/quark-config`, etc.
+7. **Workspace import scope.** Use `@__QUARK_SCOPE__/*` for local packages. Never `@usequark/quark-db`, `@usequark/quark-config`, etc.
 8. **Co-located tests.** `feature.test.js` lives next to `feature.js`. Tests use `node --test` - no Jest, no Vitest.
 
 ---
@@ -32,16 +32,16 @@ import { loadConfig }            from "@__QUARK_SCOPE__/config";
 import { Button, Card, Input }   from "@__QUARK_SCOPE__/ui";
 import { JOB_TYPES }             from "@__QUARK_SCOPE__/jobs";
 
-// ✅ Published runtime - @techstream/quark-core:
-import { AppError, ValidationError, NotFoundError } from "@techstream/quark-core/errors";
-import { createLogger, getCurrentSession }          from "@techstream/quark-core";
-import { createQueue, addJob }                      from "@techstream/quark-core";
-import { metrics, cache, storage }                  from "@techstream/quark-core";
+// ✅ Published runtime - @usequark/quark-core:
+import { AppError, ValidationError, NotFoundError } from "@usequark/quark-core/errors";
+import { createLogger, getCurrentSession }          from "@usequark/quark-core";
+import { createQueue, addJob }                      from "@usequark/quark-core";
+import { metrics, cache, storage }                  from "@usequark/quark-core";
 
 // ❌ Never:
 import { Button } from "@/components/ui/button";     // wrong path convention
-import { prisma } from "@techstream/quark-db";        // wrong scope for workspace pkg
-import something  from "@techstream/quark-config";    // wrong scope for workspace pkg
+import { prisma } from "@usequark/quark-db";        // wrong scope for workspace pkg
+import something  from "@usequark/quark-config";    // wrong scope for workspace pkg
 ```
 
 ---
@@ -63,8 +63,8 @@ import something  from "@techstream/quark-config";    // wrong scope for workspa
 ```javascript
 "use server";
 import { z } from "zod";
-import { ValidationError, AppError } from "@techstream/quark-core/errors";
-import { getCurrentSession, createLogger } from "@techstream/quark-core";
+import { ValidationError, AppError } from "@usequark/quark-core/errors";
+import { getCurrentSession, createLogger } from "@usequark/quark-core";
 import { prisma } from "@__QUARK_SCOPE__/db";
 
 const log = createLogger("action:example");
@@ -89,8 +89,8 @@ export async function createExample(formData) {
 
 ```javascript
 import { NextResponse } from "next/server";
-import { AppError } from "@techstream/quark-core/errors";
-import { createLogger } from "@techstream/quark-core";
+import { AppError } from "@usequark/quark-core/errors";
+import { createLogger } from "@usequark/quark-core";
 
 const log = createLogger("api:example");
 
@@ -119,7 +119,7 @@ export async function GET(request) {
 ## Auth
 
 ```javascript
-import { getCurrentSession } from "@techstream/quark-core";
+import { getCurrentSession } from "@usequark/quark-core";
 
 const session = await getCurrentSession();       // null if unauthenticated
 if (!session) redirect("/login");                // Server Component
@@ -133,13 +133,13 @@ if (session.user.role !== "ADMIN") throw new AppError("Forbidden", 403);
 
 ```javascript
 // Dispatch (from Server Action or API route):
-import { createQueue, addJob } from "@techstream/quark-core";
+import { createQueue, addJob } from "@usequark/quark-core";
 import { JOB_TYPES } from "@__QUARK_SCOPE__/jobs";
 const queue = createQueue("default");
 await addJob(queue, JOB_TYPES.MY_JOB, { userId });
 
 // Handle (apps/worker/src/handlers/):
-import { createLogger } from "@techstream/quark-core";
+import { createLogger } from "@usequark/quark-core";
 const log = createLogger("job:my-job");
 export async function handleMyJob({ data }) { log.info("processing", data); }
 ```

@@ -1,4 +1,4 @@
-/* ─── @techstream/quark-ui — Theme: HYPER SATURATED ───────────
+/* ─── @usequark/quark-ui — Theme: HYPER SATURATED ───────────
  *
  * Bold fintech with glassmorphism, liquid section dividers,
  * frosted glass overlays, and cyber yellow on deep onyx.
@@ -7,7 +7,7 @@
  *   - Inter: https://fonts.google.com/specimen/Inter
  *
  * Usage:
- *   @import "@techstream/quark-ui/themes/hyper-saturated.css";
+ *   @import "@usequark/quark-ui/themes/hyper-saturated.css";
  * ─────────────────────────────────────────────────────────────── */
 
 @layer theme {

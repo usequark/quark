@@ -16,7 +16,7 @@ pnpm dev                 # Starts worker with file watching
 2. Create a handler in `apps/worker/src/handlers/<job-name>.js`:
 
 ```javascript
-import { createLogger } from "@techstream/quark-core";
+import { createLogger } from "@usequark/quark-core";
 
 const log = createLogger("job:my-task");
 
@@ -39,7 +39,7 @@ const jobHandlers = {
 ## Dispatching Jobs
 
 ```javascript
-import { createQueue, addJob } from "@techstream/quark-core";
+import { createQueue, addJob } from "@usequark/quark-core";
 import { JOB_NAMES } from "@yourscope/jobs";
 
 const queue = createQueue("default");

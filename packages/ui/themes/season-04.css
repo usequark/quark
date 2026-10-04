@@ -1,4 +1,4 @@
-/* ─── @techstream/quark-ui — Theme: SEASON 04 ─────────────────
+/* ─── @usequark/quark-ui — Theme: SEASON 04 ─────────────────
  *
  * High-fashion brutalist with SVG noise texture overlay,
  * neon green micro-interactions, and a beige/burnt red palette.
@@ -9,7 +9,7 @@
  *   - General Sans (body):      https://www.fontshare.com/fonts/general-sans
  *
  * Usage:
- *   @import "@techstream/quark-ui/themes/season-04.css";
+ *   @import "@usequark/quark-ui/themes/season-04.css";
  * ─────────────────────────────────────────────────────────────── */
 
 @layer theme {

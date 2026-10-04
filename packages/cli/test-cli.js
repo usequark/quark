@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Test script for @techstream/quark-create-app CLI
+ * Test script for @usequark/quark-create-app CLI
  * Run with: node packages/cli/test-cli.js
  */
 
@@ -17,7 +17,7 @@ const projectPath = path.join(testDir, projectName);
 const cliEntry = path.join(__dirname, "src/index.js");
 const cliPackageJson = await fs.readJSON(path.join(__dirname, "package.json"));
 
-console.log("🧪 Testing @techstream/quark-create-app CLI\n");
+console.log("🧪 Testing @usequark/quark-create-app CLI\n");
 
 try {
 	// Cleanup

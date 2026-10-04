@@ -1,5 +1,5 @@
 {
-	"name": "@techstream/quark-create-app",
+	"name": "@usequark/quark-create-app",
 	"version": "1.23.11",
 	"description": "CLI to scaffold new Quark projects with Next.js, Prisma, BullMQ, and Railway deployment",
 	"type": "module",

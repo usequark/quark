@@ -1,4 +1,4 @@
-import { getAuthSecret } from "@techstream/quark-core/auth";
+import { getAuthSecret } from "@usequark/quark-core/auth";
 import { getToken } from "next-auth/jwt";
 
 const STRICT_AUTH_RATE_LIMIT_ROUTES = new Set([

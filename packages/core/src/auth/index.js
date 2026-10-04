@@ -1,5 +1,5 @@
 /**
- * @techstream/quark-core - Authentication Module
+ * @usequark/quark-core - Authentication Module
  * Provides next-auth initialization and session management helpers
  */
 

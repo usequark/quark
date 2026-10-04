@@ -2,7 +2,7 @@
  * Test data factories for creating realistic test objects with sensible defaults.
  *
  * Usage:
- *   import { createTestUser, createTestSession } from "@techstream/quark-core/testing";
+ *   import { createTestUser, createTestSession } from "@usequark/quark-core/testing";
  *   const user = createTestUser({ name: "Custom Name" });
  *   const session = createTestSession({ user: { role: "admin" } });
  *

@@ -1,4 +1,4 @@
-/* ─── @techstream/quark-ui — Theme: SOFT WELLNESS ─────────────
+/* ─── @usequark/quark-ui — Theme: SOFT WELLNESS ─────────────
  *
  * Warm pastel wellness aesthetic with very rounded corners,
  * soft minimal shadows, grain texture, and floating animations.
@@ -8,7 +8,7 @@
  *   - Reenie Beanie (accent): https://fonts.google.com/specimen/Reenie+Beanie
  *
  * Usage:
- *   @import "@techstream/quark-ui/themes/soft-wellness.css";
+ *   @import "@usequark/quark-ui/themes/soft-wellness.css";
  * ─────────────────────────────────────────────────────────────── */
 
 @layer theme {

@@ -352,7 +352,7 @@ function buildFeatureRows(features) {
 		.map((feature) => rows[feature]);
 
 	if (selectedRows.length === 0) {
-		return "| Optional scaffolded features | None selected yet | Add one later with `npx @techstream/quark-create-app add <feature>` |";
+		return "| Optional scaffolded features | None selected yet | Add one later with `npx @usequark/quark-create-app add <feature>` |";
 	}
 
 	return selectedRows.join("\n");
@@ -411,7 +411,7 @@ function formatFeatureSummary(features) {
 }
 
 /**
- * Registry pin for @techstream/quark-core in scaffolded apps.
+ * Registry pin for @usequark/quark-core in scaffolded apps.
  * Mirrors sync-templates.js CORE_VERSION_PIN (major.0.0 from baked templates).
  */
 function getCoreVersionPin() {
@@ -419,7 +419,7 @@ function getCoreVersionPin() {
 		const webPkg = fs.readJSONSync(
 			path.join(templatesDir, "base-project/apps/web/package.json"),
 		);
-		const pin = webPkg?.dependencies?.["@techstream/quark-core"];
+		const pin = webPkg?.dependencies?.["@usequark/quark-core"];
 		if (typeof pin === "string" && pin !== "workspace:*") {
 			return pin;
 		}
@@ -430,21 +430,21 @@ function getCoreVersionPin() {
 }
 
 /**
- * Replace @techstream/quark-* workspace deps with @scope/* for local packages.
+ * Replace @usequark/quark-* workspace deps with @scope/* for local packages.
  * Also removes deps for packages that were not selected.
- * @techstream/quark-core is a published registry package — rewrite workspace:*
+ * @usequark/quark-core is a published registry package — rewrite workspace:*
  * to the registry pin instead of deleting or rescoping it.
  */
 function replaceDepsScope(deps, scope, selectedPackages) {
 	if (!deps) return;
 	for (const [key, value] of Object.entries(deps)) {
-		if (key.startsWith("@techstream/quark-") && value === "workspace:*") {
+		if (key.startsWith("@usequark/quark-") && value === "workspace:*") {
 			// Published registry package — keep name, pin to registry version.
-			if (key === "@techstream/quark-core") {
+			if (key === "@usequark/quark-core") {
 				deps[key] = getCoreVersionPin();
 				continue;
 			}
-			const packageName = key.replace("@techstream/quark-", "");
+			const packageName = key.replace("@usequark/quark-", "");
 			delete deps[key];
 			// Only keep the dep if the package was selected (or is always required)
 			if (
@@ -490,9 +490,9 @@ async function patchNextConfig(webDir, scope, selectedPackages) {
 }
 
 /**
- * Replace @techstream/quark-* import paths in all .js source files
+ * Replace @usequark/quark-* import paths in all .js source files
  * for workspace packages (db, jobs, ui, config) with @scope/* equivalents.
- * Registry packages (@techstream/quark-core) are left untouched.
+ * Registry packages (@usequark/quark-core) are left untouched.
  */
 async function replaceImportsInSourceFiles(dir, scope) {
 	const workspacePackages = ["db", "jobs", "ui", "config"];
@@ -512,7 +512,7 @@ async function replaceImportsInSourceFiles(dir, scope) {
 			let changed = false;
 
 			for (const pkg of workspacePackages) {
-				const pattern = new RegExp(`@techstream/quark-${pkg}`, "g");
+				const pattern = new RegExp(`@usequark/quark-${pkg}`, "g");
 				if (pattern.test(content)) {
 					content = content.replace(pattern, `@${scope}/${pkg}`);
 					changed = true;
@@ -1694,7 +1694,7 @@ STORAGE_PROVIDER=local
 
 			console.log(
 				chalk.dim(
-					`  📖 github.com/usequark/quark  •  Updates: npx @techstream/quark-create-app update\n`,
+					`  📖 github.com/usequark/quark  •  Updates: npx @usequark/quark-create-app update\n`,
 				),
 			);
 		} catch (error) {
@@ -2635,7 +2635,7 @@ program
  * Read the installed version of a package from node_modules.
  * Returns null if the package is not installed.
  * @param {string} cwd - Project root
- * @param {string} packageName - e.g. "@techstream/quark-core"
+ * @param {string} packageName - e.g. "@usequark/quark-core"
  * @returns {Promise<string|null>}
  */
 async function getInstalledVersion(cwd, packageName) {
@@ -2713,8 +2713,8 @@ program
 
 		// The packages this command manages
 		const MANAGED_PACKAGES = [
-			"@techstream/quark-core",
-			"@techstream/quark-create-app",
+			"@usequark/quark-core",
+			"@usequark/quark-create-app",
 		];
 
 		// Snapshot installed versions before any update
@@ -2726,7 +2726,7 @@ program
 		console.log(chalk.cyan(`Scaffolded:      ${quarkLink.scaffoldedDate}`));
 		console.log(
 			chalk.cyan(
-				`Installed core:  ${before["@techstream/quark-core"] ?? quarkLink.quarkVersion ?? "unknown"}\n`,
+				`Installed core:  ${before["@usequark/quark-core"] ?? quarkLink.quarkVersion ?? "unknown"}\n`,
 			),
 		);
 
@@ -2818,7 +2818,7 @@ program
 
 			// Persist the new core version - keep previous on failure, never write garbage
 			const newCoreVersion =
-				after["@techstream/quark-core"] ?? quarkLink.quarkVersion;
+				after["@usequark/quark-core"] ?? quarkLink.quarkVersion;
 			quarkLink.quarkVersion = newCoreVersion;
 			quarkLink.updatedDate = new Date().toISOString();
 			await fs.writeFile(quarkLinkPath, JSON.stringify(quarkLink, null, "	"));

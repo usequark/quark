@@ -13,7 +13,7 @@ Quark's core value proposition is a low-friction starting point for production a
 
 All Quark packages and the reference app use plain `.js` and `.jsx` files with no TypeScript compilation. Type safety at system boundaries is enforced via Zod schemas at runtime.
 
-JSDoc comments are used where IDE type hints are valuable (e.g. function signatures in `@techstream/quark-core`).
+JSDoc comments are used where IDE type hints are valuable (e.g. function signatures in `@usequark/quark-core`).
 
 ## Consequences
 

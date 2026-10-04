@@ -1,4 +1,4 @@
-import { createLogger } from "@techstream/quark-core/logger";
+import { createLogger } from "@usequark/quark-core/logger";
 import { getUmamiConfig, normalizeUmamiUrl } from "./umami-config.js";
 
 const log = createLogger("umami-replay");

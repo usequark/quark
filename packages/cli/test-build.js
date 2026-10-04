@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Build verification test for @techstream/quark-create-app CLI
+ * Build verification test for @usequark/quark-create-app CLI
  * Runs: scaffold -> install -> build for non-interactive default and CMS scenarios
  *
  * Enable with: QUARK_CLI_BUILD_TEST=1 node test-build.js

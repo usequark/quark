@@ -1,5 +1,5 @@
 /**
- * @techstream/quark-core - Email Templates
+ * @usequark/quark-core - Email Templates
  *
  * Reusable HTML email templates with plain-text fallbacks.
  * Each template function returns { subject, html, text }.

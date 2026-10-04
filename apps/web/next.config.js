@@ -53,13 +53,13 @@ const nextConfig = {
 	// Node built-ins (child_process, net, worker_threads, dns, fs).
 	serverExternalPackages: ["bullmq"],
 
-	// Support workspace package resolution (including @techstream/quark-db which uses
+	// Support workspace package resolution (including @usequark/quark-db which uses
 	// the Prisma driver-adapter pattern - pure JS, no native engine binary)
 	transpilePackages: [
-		"@techstream/quark-core",
-		"@techstream/quark-db",
-		"@techstream/quark-ui",
-		"@techstream/quark-jobs",
+		"@usequark/quark-core",
+		"@usequark/quark-db",
+		"@usequark/quark-ui",
+		"@usequark/quark-jobs",
 	],
 
 	// Security headers

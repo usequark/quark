@@ -82,7 +82,7 @@ pnpm new my-awesome-app
 
 ```bash
 # Install the CLI globally
-pnpm add -g @techstream/quark-create-app
+pnpm add -g @usequark/quark-create-app
 
 # Scaffold from anywhere
 quark-create-app my-awesome-app
@@ -135,11 +135,11 @@ pnpm dev
 
 ### How It Works
 
-All Quark packages (`@techstream/quark-core`, `@techstream/quark-create-app`) are published to **npmjs.org** as public packages. No authentication is required to install or update them.
+All Quark packages (`@usequark/quark-core`, `@usequark/quark-create-app`) are published to **npmjs.org** as public packages. No authentication is required to install or update them.
 
 ```bash
 # Install/update Quark core
-pnpm update @techstream/quark-core
+pnpm update @usequark/quark-core
 
 # Or use the built-in update command
 quark-update
@@ -214,7 +214,7 @@ pnpm install
 
 Quark uses a **Core-Only Registry** architecture:
 
-- **`@techstream/quark-core`** is published to npmjs.org (you consume it like any npm package)
+- **`@usequark/quark-core`** is published to npmjs.org (you consume it like any npm package)
 - **All other packages** (`db`, `ui`, `jobs`, `config`) are scaffolded locally in your project
 
 This gives you:
@@ -223,7 +223,7 @@ This gives you:
 
 ### Core Infrastructure Package
 
-#### `@techstream/quark-core`
+#### `@usequark/quark-core`
 
 Infrastructure provided via npmjs.org. Includes authentication, password hashing, validation, error handling, and job queue infrastructure.
 
@@ -237,7 +237,7 @@ import {
   createWorker,
   validateBody,
   AppError,
-} from "@techstream/quark-core";
+} from "@usequark/quark-core";
 
 // Example: Set up authentication
 const authConfig = createAuthConfig({
@@ -389,7 +389,7 @@ Use Tailwind's `dark:` utilities anywhere - they react to the `data-theme` attri
 ---
 
 **Key Distinction:**
-- **Core infrastructure** (`@techstream/quark-core`) → You receive updates via `pnpm update`
+- **Core infrastructure** (`@usequark/quark-core`) → You receive updates via `pnpm update`
 - **Business logic** (`@yourscope/db`, `@yourscope/ui`, etc.) → You own and evolve these
 
 ---
@@ -401,7 +401,7 @@ Quark's email service uses a **Strategy Pattern** - swap providers without chang
 ### Sending Email
 
 ```javascript
-import { createEmailService } from "@techstream/quark-core";
+import { createEmailService } from "@usequark/quark-core";
 
 const email = createEmailService({
   from: process.env.EMAIL_FROM,
@@ -433,7 +433,7 @@ Provider config is validated at **service-creation time** - misconfigured provid
 ### Registering a Custom Provider
 
 ```javascript
-import { EmailProvider, registerEmailProvider, createEmailService } from "@techstream/quark-core";
+import { EmailProvider, registerEmailProvider, createEmailService } from "@usequark/quark-core";
 
 class MyProvider extends EmailProvider {
   validateConfig() {
@@ -483,7 +483,7 @@ quark-update --check
 
 The CLI will:
 - Check for uncommitted changes (warn you if found)
-- Run `pnpm update @techstream/quark-core`
+- Run `pnpm update @usequark/quark-core`
 - Update `.quark-link.json`
 - Provide next steps
 
@@ -493,7 +493,7 @@ The CLI will:
 
 ```bash
 # Update core infrastructure
-pnpm update @techstream/quark-core
+pnpm update @usequark/quark-core
 
 # Test your app still works
 pnpm lint
@@ -518,7 +518,7 @@ Example breaking change workflow:
 
 ```bash
 # Update fails or tests fail
-pnpm update @techstream/quark-core
+pnpm update @usequark/quark-core
 pnpm test  # ❌ Tests fail
 
 # Read the error and migration guide
@@ -623,7 +623,7 @@ REDIS_URL=redis://localhost:6379
 
 ## Troubleshooting
 
-### `Error: Cannot find module '@techstream/quark-core'`
+### `Error: Cannot find module '@usequark/quark-core'`
 
 **Problem:** Dependencies not installed.
 
@@ -666,10 +666,10 @@ Make sure `next.config.js` includes Quark packages in `transpilePackages`:
 // apps/web/next.config.js
 const nextConfig = {
   transpilePackages: [
-    "@techstream/quark-core",
-    "@techstream/quark-db",
-    "@techstream/quark-ui",
-    "@techstream/quark-jobs",
+    "@usequark/quark-core",
+    "@usequark/quark-db",
+    "@usequark/quark-ui",
+    "@usequark/quark-jobs",
   ],
 };
 ```
@@ -682,7 +682,7 @@ const nextConfig = {
 |------|---------|
 | Create new project | `pnpm new my-app` (from Quark root) or `quark-create-app my-app` |
 | Install dependencies | `pnpm install` |
-| Update Quark packages | `quark-update` or `pnpm update @techstream/quark-*` |
+| Update Quark packages | `quark-update` or `pnpm update @usequark/quark-*` |
 | Check for updates | `quark-update --check` |
 | Start development | `pnpm dev` |
 | Run tests | `pnpm test` |

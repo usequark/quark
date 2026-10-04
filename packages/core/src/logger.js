@@ -1,5 +1,5 @@
 /**
- * @techstream/quark-core - Logger Module
+ * @usequark/quark-core - Logger Module
  * Lightweight structured logger with zero external dependencies
  */
 

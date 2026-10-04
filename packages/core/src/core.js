@@ -1,12 +1,12 @@
 /**
- * @techstream/quark-core - Core Barrel (Lightweight Utilities)
+ * @usequark/quark-core - Core Barrel (Lightweight Utilities)
  *
  * A smaller entry-point that exposes only the modules with zero or
  * minimal transitive dependencies: errors, logger, validation, utils,
  * pagination, csrf, rate-limiter, file-validation, and db.
  *
  * Downstream projects that only need these utilities can import from
- * "@techstream/quark-core/core" to avoid pulling in heavier modules
+ * "@usequark/quark-core/core" to avoid pulling in heavier modules
  * like email, storage, queue, or metrics.
  */
 

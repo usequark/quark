@@ -38,7 +38,7 @@ __QUARK_FEATURE_ROWS__
 Optional features can be added later with:
 
 ```bash
-npx @techstream/quark-create-app add <feature>
+npx @usequark/quark-create-app add <feature>
 ```
 
 ### PWA (Optional)
@@ -84,8 +84,8 @@ pnpm clean:check  # Review reclaimable build artifacts
 pnpm clean        # Remove local build artifacts
 pnpm clean:deep   # Also remove repo-local temp workspaces
 QUARK_SKIP_AUTO_CLEAN=1 pnpm dev  # Disable dev auto-clean for this run
-npx @techstream/quark-create-app update --scaffold-check                 # Review scaffold-managed drift
-npx @techstream/quark-create-app update --scaffold-check --fail-on-drift # CI-friendly drift check
+npx @usequark/quark-create-app update --scaffold-check                 # Review scaffold-managed drift
+npx @usequark/quark-create-app update --scaffold-check --fail-on-drift # CI-friendly drift check
 ```
 
 ## Launch

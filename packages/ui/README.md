@@ -112,7 +112,7 @@ All visual styling in this package is driven by **CSS custom properties** (varia
 ┌──────────────────────────────────────────────────────────────┐
 │  globals.css                                                 │
 │                                                              │
-│  @import "@techstream/quark-ui/themes/brutalist-yellow.css"  │
+│  @import "@usequark/quark-ui/themes/brutalist-yellow.css"  │
 │                                                              │
 │  :root {                                                     │
 │    --color-primary: #377dff;                                 │
@@ -124,7 +124,7 @@ All visual styling in this package is driven by **CSS custom properties** (varia
                                        │
                                        ▼
 ┌──────────────────────────────────────────────────────────────┐
-│  @techstream/quark-ui components                             │
+│  @usequark/quark-ui components                             │
 │                                                              │
 │  <button class="bg-[--btn-bg] border-[--btn-border]          │
 │                text-[--btn-text] rounded-[--btn-radius] ...">│
@@ -152,7 +152,7 @@ Import a theme in your app's `globals.css`:
 @source "../../../../packages/ui/src/**/*.{js,jsx}";
 
 /* Load a preset theme */
-@import "@techstream/quark-ui/themes/editorial-coral.css";
+@import "@usequark/quark-ui/themes/editorial-coral.css";
 
 @custom-variant dark (&:is([data-theme="dark"] *));
 
@@ -164,9 +164,9 @@ Import a theme in your app's `globals.css`:
 
 Themes are importable via the package export pattern:
 ```css
-@import "@techstream/quark-ui/themes/brutalist-yellow.css";
-@import "@techstream/quark-ui/themes/red-noir.css";
-@import "@techstream/quark-ui/themes/swiss-minimalist.css";
+@import "@usequark/quark-ui/themes/brutalist-yellow.css";
+@import "@usequark/quark-ui/themes/red-noir.css";
+@import "@usequark/quark-ui/themes/swiss-minimalist.css";
 ```
 
 In a monorepo context you can also use a relative path:

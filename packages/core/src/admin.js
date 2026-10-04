@@ -1,5 +1,5 @@
 /**
- * @techstream/quark-core - Prisma Schema Introspection
+ * @usequark/quark-core - Prisma Schema Introspection
  *
  * Hand-rolled Prisma schema parser that reads `.prisma` files and
  * extracts model and enum definitions.  Used by the admin CRUD layer
@@ -10,7 +10,7 @@
  * where those packages are unavailable.
  *
  * Usage:
- *   import { parseSchema, getModelByName, detectIdField, coerceId } from "@techstream/quark-core/admin";
+ *   import { parseSchema, getModelByName, detectIdField, coerceId } from "@usequark/quark-core/admin";
  */
 
 import { existsSync, readFileSync } from "node:fs";

@@ -14,7 +14,7 @@ For development, CI/CD pipelines, or testing, you can create projects without in
 
 ```bash
 # Create project with defaults (includes ui, jobs packages)
-npx @techstream/quark-create-app my-app --no-prompts
+npx @usequark/quark-create-app my-app --no-prompts
 
 # Navigate and set up
 cd my-app
@@ -27,7 +27,7 @@ pnpm dev
 
 ```bash
 # Create, install, and start everything
-npx @techstream/quark-create-app my-app --no-prompts && \
+npx @usequark/quark-create-app my-app --no-prompts && \
 cd my-app && \
 docker compose up -d && \
 pnpm db:migrate && \
@@ -38,13 +38,13 @@ pnpm dev
 
 ```bash
 # Create with only UI package (no jobs)
-npx @techstream/quark-create-app my-app --no-prompts --packages ui
+npx @usequark/quark-create-app my-app --no-prompts --packages ui
 
 # Create with only Jobs package (no UI)
-npx @techstream/quark-create-app my-app --no-prompts --packages jobs
+npx @usequark/quark-create-app my-app --no-prompts --packages jobs
 
 # Minimal setup (no optional packages)
-npx @techstream/quark-create-app my-app --no-prompts --packages ""
+npx @usequark/quark-create-app my-app --no-prompts --packages ""
 ```
 
 ### CI/CD Pipeline Example
@@ -52,7 +52,7 @@ npx @techstream/quark-create-app my-app --no-prompts --packages ""
 ```bash
 #!/bin/bash
 # Create project without installation (install separately in CI)
-npx @techstream/quark-create-app my-app \
+npx @usequark/quark-create-app my-app \
   --no-prompts \
   --packages ui,jobs \
   --skip-install
@@ -72,7 +72,7 @@ If features don't install correctly:
 
 ```bash
 # Verify feature names - valid options: ui, jobs
-npx @techstream/quark-create-app my-app --no-prompts --packages ui,jobs
+npx @usequark/quark-create-app my-app --no-prompts --packages ui,jobs
 
 # Check that paths are created
 ls -la my-app/packages/
@@ -85,7 +85,7 @@ pnpm install
 For interactive mode with prompts, simply omit the `--no-prompts` flag:
 
 ```bash
-npx @techstream/quark-create-app my-app
+npx @usequark/quark-create-app my-app
 ```
 
 ---
@@ -201,8 +201,8 @@ export const postUpdateSchema = z.object({
 ```javascript
 // apps/web/src/app/api/posts/route.js
 
-import { post, postCreateSchema } from "@techstream/quark-db";
-import { validateBody, withCsrfProtection } from "@techstream/quark-core";
+import { post, postCreateSchema } from "@usequark/quark-db";
+import { validateBody, withCsrfProtection } from "@usequark/quark-core";
 import { NextResponse } from "next/server";
 
 export const GET = async (request) => {
@@ -384,8 +384,8 @@ export const contactInquiry = {
 ```javascript
 // apps/web/src/app/api/contact/route.js
 
-import { contactInquiry } from "@techstream/quark-db";
-import { validateBody, withCsrfProtection } from "@techstream/quark-core";
+import { contactInquiry } from "@usequark/quark-db";
+import { validateBody, withCsrfProtection } from "@usequark/quark-core";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -600,8 +600,8 @@ export const blogCommentCreateSchema = z.object({
 ```javascript
 // apps/web/src/app/api/posts/[id]/comments/route.js
 
-import { blogComment, blogCommentCreateSchema } from "@techstream/quark-db";
-import { validateBody, withCsrfProtection } from "@techstream/quark-core";
+import { blogComment, blogCommentCreateSchema } from "@usequark/quark-db";
+import { validateBody, withCsrfProtection } from "@usequark/quark-core";
 import { requireAuth } from "@/lib/auth-middleware";
 import { handleError } from "../error-handler";
 import { NextResponse } from "next/server";
@@ -790,7 +790,7 @@ export default async function OrderDetailPage({ params }) {
 "use server";
 import { prisma } from "@yourapp/db";
 import { revalidatePath } from "next/cache";
-import { requireRole } from "@techstream/quark-core/auth";
+import { requireRole } from "@usequark/quark-core/auth";
 
 export async function updateOrderStatus(formData) {
   await requireRole("admin");

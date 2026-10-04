@@ -2,7 +2,7 @@
 
 This document explains Quark's distribution architecture and the philosophy behind what gets published to the registry versus what gets scaffolded locally.
 
-> **Note:** The `admin` role in the RBAC system is an auth concept (highest privilege level). It is unrelated to the removed `@techstream/quark-admin` package, which was a scaffolded CRUD UI.
+> **Note:** The `admin` role in the RBAC system is an auth concept (highest privilege level). It is unrelated to the removed `@usequark/quark-admin` package, which was a scaffolded CRUD UI.
 
 ## The Problem We're Solving
 
@@ -21,10 +21,10 @@ Quark takes a hybrid approach:
 ```
 ┌─────────────────────────────────────────────────────┐
 │  Your Application (@yourapp/web, @yourapp/worker)   │
-│  ├─ imports @techstream/quark-core (from registry)   │
+│  ├─ imports @usequark/quark-core (from registry)   │
 │  └─ imports @yourapp/db, @yourapp/jobs (local)      │
 ├─────────────────────────────────────────────────────┤
-│  @techstream/quark-core (npmjs.org)                  │
+│  @usequark/quark-core (npmjs.org)                  │
 │  - createAuthConfig()                               │
 │  - createQueue(), createWorker()                    │
 │  - AppError, ValidationError                        │
@@ -129,8 +129,8 @@ Quark takes a hybrid approach:
 
 **In Core (Registry):**
 ```javascript
-// @techstream/quark-core - Provides defaults
-import { createAuthConfig } from "@techstream/quark-core";
+// @usequark/quark-core - Provides defaults
+import { createAuthConfig } from "@usequark/quark-core";
 
 export const createAuthConfig = (options = {}) => {
   return {
@@ -145,7 +145,7 @@ export const createAuthConfig = (options = {}) => {
 **In Your App (Local):**
 ```javascript
 // apps/web/lib/auth.js - Your customizations
-import { createAuthConfig } from "@techstream/quark-core";
+import { createAuthConfig } from "@usequark/quark-core";
 import GitHubProvider from "next-auth/providers/github";
 
 export const authConfig = createAuthConfig({
@@ -177,9 +177,9 @@ export const authConfig = createAuthConfig({
 **Before (Old Architecture - Circular Dependency):**
 ```javascript
 // ❌ REMOVED: Core had database client
-// @techstream/quark-core/src/db/index.js
+// @usequark/quark-core/src/db/index.js
 export const createDbClient = () => {
-  // Problem: Core depended on @techstream/quark-db
+  // Problem: Core depended on @usequark/quark-db
   // But db depended on core → circular!
 };
 ```
@@ -187,7 +187,7 @@ export const createDbClient = () => {
 **Now (Core-Only Registry - Clean):**
 ```javascript
 // ✅ Core has NO database code
-// @techstream/quark-core exports: auth, queues, validation, errors ONLY
+// @usequark/quark-core exports: auth, queues, validation, errors ONLY
 ```
 
 **In Your Local DB Package:**
@@ -213,7 +213,7 @@ export const prisma = new PrismaClient({
 
 **In Core (Registry):**
 ```javascript
-// @techstream/quark-core/src/queue/index.js
+// @usequark/quark-core/src/queue/index.js
 export const createQueue = (name, options = {}) => {
   return new Queue(name, {
     connection: {
@@ -285,7 +285,7 @@ export const jobHandlers = {
 **Core has NO database client — this is by design:**
 ```javascript
 // ✅ Core has NO database code
-// @techstream/quark-core exports: auth, queues, validation, errors ONLY
+// @usequark/quark-core exports: auth, queues, validation, errors ONLY
 ```
 
 **In Your Local DB Package:**
@@ -320,10 +320,10 @@ Reference implementations are archived at `reference/verticals/` — study them 
 
 ```bash
 # 1. Create new app
-npx @techstream/quark-create-app my-app
+npx @usequark/quark-create-app my-app
 
 # 2. Core provides auth, queues, validation, errors
-import { auth } from "@techstream/quark-core";
+import { auth } from "@usequark/quark-core";
 import { prisma } from "@yourapp/db";
 
 # 3. Build domain features using skills
@@ -351,7 +351,7 @@ Domain logic is built on demand via skills, not scaffolded as packages:
 
 ```javascript
 // ✅ Good: Extend core
-import { createAuthConfig } from "@techstream/quark-core";
+import { createAuthConfig } from "@usequark/quark-core";
 
 export const authConfig = createAuthConfig({
   providers: [CustomProvider()],
@@ -370,7 +370,7 @@ Core should work standalone:
 
 ```javascript
 // ✅ Good: Core works in any app
-import { createQueue } from "@techstream/quark-core";
+import { createQueue } from "@usequark/quark-core";
 const q = createQueue("jobs");
 
 // ❌ Bad: Core depends on app setup
@@ -483,7 +483,7 @@ This enables:
 
 For manual testing with prompts, simply run without the flags:
 ```bash
-npx @techstream/quark-create-app my-test-app
+npx @usequark/quark-create-app my-test-app
 ```
 
 ## The Future
@@ -559,7 +559,7 @@ Quark uses **data-attribute dark mode**, not Tailwind's `dark:` class prefix:
 @custom-variant dark (&:is([data-theme="dark"] *));
 ```
 
-The `ThemeProvider` component (from `@techstream/quark-ui`) sets `data-theme="dark"` on the `<html>` element. This means:
+The `ThemeProvider` component (from `@usequark/quark-ui`) sets `data-theme="dark"` on the `<html>` element. This means:
 
 - ✅ `dark:bg-surface` works in component files
 - ✅ CSS variables automatically switch via `[data-theme="dark"]` overrides
@@ -570,7 +570,7 @@ The `ThemeProvider` component (from `@techstream/quark-ui`) sets `data-theme="da
 The scaffold templates in `packages/cli/templates/` are generated from monorepo source. After editing `globals.css` or any UI file, run:
 
 ```bash
-pnpm --filter @techstream/quark-create-app sync-templates
+pnpm --filter @usequark/quark-create-app sync-templates
 ```
 
 CI checks for drift on every push and fails if templates are stale.

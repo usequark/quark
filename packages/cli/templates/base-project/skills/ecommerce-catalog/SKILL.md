@@ -20,7 +20,7 @@ The catalog is the foundation of an ecommerce system. It defines what you sell, 
 - **Models** live in `packages/db/prisma/schema.prisma`. Every model needs `id`, `createdAt DateTime @default(now())`, `updatedAt DateTime @updatedAt`. After changes: `pnpm db:generate && pnpm db:migrate`.
 - **Data access** goes through query helpers in `packages/db/src/queries.js` — never call `prisma.*` directly in pages/actions.
 - **API routes** live in `apps/web/src/app/api/<resource>/`. Guard with `requireRole`, validate with Zod via `validateBody`, wrap mutations in `withCsrfProtection`. Follow `apps/web/src/app/api/users/route.js` as the reference shape.
-- **Server Actions** use `"use server"`, Zod validation, and `AppError`/`ValidationError` from `@techstream/quark-core/errors`.
+- **Server Actions** use `"use server"`, Zod validation, and `AppError`/`ValidationError` from `@usequark/quark-core/errors`.
 - **Admin views** live under `apps/web/src/app/admin/products/` and `apps/web/src/app/admin/categories/`.
 
 ## Models
@@ -127,8 +127,8 @@ export async function getCategoryTree() {
 "use server";
 import { z } from "zod";
 import { prisma } from "@__QUARK_SCOPE__/db";
-import { ValidationError, AppError } from "@techstream/quark-core/errors";
-import { createLogger } from "@techstream/quark-core";
+import { ValidationError, AppError } from "@usequark/quark-core/errors";
+import { createLogger } from "@usequark/quark-core";
 
 const log = createLogger("action:product");
 

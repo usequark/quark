@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Extended CLI flag tests for @techstream/quark-create-app
+ * Extended CLI flag tests for @usequark/quark-create-app
  * Tests the --no-prompts, --packages, --skip-install, and --skip-docker flags.
  * Run with: node packages/cli/test-flags.js
  */

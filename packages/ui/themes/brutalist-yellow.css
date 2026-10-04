@@ -1,4 +1,4 @@
-/* ─── @techstream/quark-ui — Theme: BRUTALIST YELLOW ──────────
+/* ─── @usequark/quark-ui — Theme: BRUTALIST YELLOW ──────────
  *
  * High-contrast editorial with golden yellow and charcoal.
  * Sharp geometry, no shadows, grid background pattern.
@@ -8,7 +8,7 @@
  *   - Satoshi (body):   https://www.fontshare.com/fonts/satoshi
  *
  * Usage:
- *   @import "@techstream/quark-ui/themes/brutalist-yellow.css";
+ *   @import "@usequark/quark-ui/themes/brutalist-yellow.css";
  * ─────────────────────────────────────────────────────────────── */
 
 @layer theme {

@@ -1,4 +1,4 @@
-/* ─── @techstream/quark-ui — Theme: RED NOIR ──────────────────
+/* ─── @usequark/quark-ui — Theme: RED NOIR ──────────────────
  *
  * Dark cinematic with red accents and starfield aesthetic.
  * Pill-shaped buttons, glow effects on red elements, conic gradient borders.
@@ -7,7 +7,7 @@
  *   - Manrope: https://fonts.google.com/specimen/Manrope
  *
  * Usage:
- *   @import "@techstream/quark-ui/themes/red-noir.css";
+ *   @import "@usequark/quark-ui/themes/red-noir.css";
  * ─────────────────────────────────────────────────────────────── */
 
 @layer theme {

@@ -20,7 +20,7 @@
  *                      listed in ALLOWED_ORIGINS (comma-separated).
  */
 
-import { ValidationError } from "@techstream/quark-core/errors";
+import { ValidationError } from "@usequark/quark-core/errors";
 
 /**
  * Resolves the canonical application URL.

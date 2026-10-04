@@ -1,5 +1,5 @@
-import { validateBody, withCsrfProtection } from "@techstream/quark-core";
-import { user, userUpdateSchema } from "@techstream/quark-db";
+import { validateBody, withCsrfProtection } from "@usequark/quark-core";
+import { user, userUpdateSchema } from "@usequark/quark-db";
 import { NextResponse } from "next/server";
 import { extractBearerPayload } from "../../../../lib/jwt";
 import { handleError } from "../../error-handler";

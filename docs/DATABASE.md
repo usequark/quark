@@ -21,13 +21,13 @@ Both profiles are **idempotent** - re-running when data already exists is safe a
 
 ```bash
 # Production (first deploy only)
-SEED_PROFILE=minimal pnpm --filter @techstream/quark-db db:seed
+SEED_PROFILE=minimal pnpm --filter @usequark/quark-db db:seed
 
 # Staging / local dev
-pnpm --filter @techstream/quark-db db:seed
+pnpm --filter @usequark/quark-db db:seed
 
 # Wipe staging + reseed from scratch
-pnpm --filter @techstream/quark-db exec prisma migrate reset --force
+pnpm --filter @usequark/quark-db exec prisma migrate reset --force
 # migrate reset automatically calls db:seed at the end
 ```
 
@@ -80,7 +80,7 @@ The central identity model. Used by NextAuth for authentication and by the appli
 | `name` | `String?` | - | Display name |
 | `password` | `String?` | - | Bcrypt hash (12 rounds). Null for OAuth-only users |
 | `image` | `String?` | - | Avatar URL |
-| `role` | `String` | Default: `"viewer"` | RBAC role (`admin`, `editor`, `viewer`). The `admin` role is an auth concept (highest privilege level) — unrelated to the removed `@techstream/quark-admin` package. |
+| `role` | `String` | Default: `"viewer"` | RBAC role (`admin`, `editor`, `viewer`). The `admin` role is an auth concept (highest privilege level) — unrelated to the removed `@usequark/quark-admin` package. |
 | `createdAt` | `DateTime` | Default: `now()` | - |
 | `updatedAt` | `DateTime` | `@updatedAt` | - |
 
@@ -258,7 +258,7 @@ Immutable audit trail for user actions. Append-only - no update or delete querie
 3. Add query helpers in `packages/db/src/queries.js`
 4. Always include `createdAt`/`updatedAt` on new models
 5. Add appropriate indexes for query patterns
-6. Run `pnpm --filter @techstream/quark-create-app sync-templates` to update scaffold templates
+6. Run `pnpm --filter @usequark/quark-create-app sync-templates` to update scaffold templates
 7. If the schema changed, regenerate the template's initial migration
 
 ### Query Patterns

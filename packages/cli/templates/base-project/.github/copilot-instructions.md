@@ -16,10 +16,10 @@
 - **ESM only** - `import`/`export` everywhere. Never `require()`.
 - **No authored TypeScript** - `.js` and `.jsx` only. Generated code may emit typed artifacts, but project code should not add `.ts` or `.tsx` sources.
 - **Validate at every boundary** - Zod schemas on all Server Actions and API routes.
-- **Errors** - `AppError` / `ValidationError` from `@techstream/quark-core/errors` in app/runtime code. Native `Error` is acceptable in library, bootstrap, CLI, and test code.
-- **Logging** - `createLogger(name)` from `@techstream/quark-core` in app/runtime code. Console output is acceptable in bootstrap, CLI, and test code.
+- **Errors** - `AppError` / `ValidationError` from `@usequark/quark-core/errors` in app/runtime code. Native `Error` is acceptable in library, bootstrap, CLI, and test code.
+- **Logging** - `createLogger(name)` from `@usequark/quark-core` in app/runtime code. Console output is acceptable in bootstrap, CLI, and test code.
 - **DB models** - Always add `createdAt` and `updatedAt` to every Prisma model.
-- **Workspace imports** - Use `@__QUARK_SCOPE__/*` for local packages (`db`, `config`, `ui`, `jobs`). Never `@techstream/quark-db` etc.
+- **Workspace imports** - Use `@__QUARK_SCOPE__/*` for local packages (`db`, `config`, `ui`, `jobs`). Never `@usequark/quark-db` etc.
 - **Tests** - Co-located `*.test.js`, run with `node --test`.
 
 ## Import Patterns
@@ -32,8 +32,8 @@ import { Button, Card, Input }   from "@__QUARK_SCOPE__/ui";
 import { JOB_TYPES }             from "@__QUARK_SCOPE__/jobs";
 
 // Published runtime:
-import { AppError, ValidationError } from "@techstream/quark-core/errors";
-import { createLogger, getCurrentSession, createQueue, addJob } from "@techstream/quark-core";
+import { AppError, ValidationError } from "@usequark/quark-core/errors";
+import { createLogger, getCurrentSession, createQueue, addJob } from "@usequark/quark-core";
 ```
 
 ## UI & Design System

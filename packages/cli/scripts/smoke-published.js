@@ -38,8 +38,8 @@ const cliSpec = values["cli-spec"];
 const coreVersion = values["core-version"];
 const coreSpec = values["core-spec"];
 const keepTemp = values["keep-temp"];
-const cliPackageSpec = cliSpec ?? `@techstream/quark-create-app@${cliVersion}`;
-const corePackageSpec = coreSpec ?? `@techstream/quark-core@${coreVersion}`;
+const cliPackageSpec = cliSpec ?? `@usequark/quark-create-app@${cliVersion}`;
+const corePackageSpec = coreSpec ?? `@usequark/quark-core@${coreVersion}`;
 const cliLabel = cliSpec ? path.basename(cliSpec) : cliVersion;
 const coreLabel = coreSpec ? path.basename(coreSpec) : coreVersion;
 
@@ -54,11 +54,11 @@ const coreProjectDir = path.join(workspaceRoot, "published-core");
 
 const CORE_IMPORT_SMOKE = `
 import assert from "node:assert/strict";
-import * as core from "@techstream/quark-core";
-import * as auth from "@techstream/quark-core/auth";
-import * as errors from "@techstream/quark-core/errors";
-import * as storage from "@techstream/quark-core/storage";
-import * as testing from "@techstream/quark-core/testing";
+import * as core from "@usequark/quark-core";
+import * as auth from "@usequark/quark-core/auth";
+import * as errors from "@usequark/quark-core/errors";
+import * as storage from "@usequark/quark-core/storage";
+import * as testing from "@usequark/quark-core/testing";
 
 assert.equal(typeof core.createAuthConfig, "function");
 assert.equal(typeof auth.createAuthConfig, "function");

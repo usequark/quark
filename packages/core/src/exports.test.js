@@ -2,34 +2,34 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-import * as core from "@techstream/quark-core";
-import * as admin from "@techstream/quark-core/admin";
-import * as auth from "@techstream/quark-core/auth";
-import * as authMiddleware from "@techstream/quark-core/auth/middleware";
-import * as coreLight from "@techstream/quark-core/core";
-import * as db from "@techstream/quark-core/db";
-import * as email from "@techstream/quark-core/email";
-import * as errors from "@techstream/quark-core/errors";
-import * as locale from "@techstream/quark-core/locale";
-import * as logger from "@techstream/quark-core/logger";
-import * as metrics from "@techstream/quark-core/metrics";
-import * as queue from "@techstream/quark-core/queue";
-import * as sms from "@techstream/quark-core/sms";
-import * as storage from "@techstream/quark-core/storage";
-import * as storageS3 from "@techstream/quark-core/storage/s3";
-import * as stripe from "@techstream/quark-core/stripe";
-import * as testing from "@techstream/quark-core/testing";
+import * as core from "@usequark/quark-core";
+import * as admin from "@usequark/quark-core/admin";
+import * as auth from "@usequark/quark-core/auth";
+import * as authMiddleware from "@usequark/quark-core/auth/middleware";
+import * as coreLight from "@usequark/quark-core/core";
+import * as db from "@usequark/quark-core/db";
+import * as email from "@usequark/quark-core/email";
+import * as errors from "@usequark/quark-core/errors";
+import * as locale from "@usequark/quark-core/locale";
+import * as logger from "@usequark/quark-core/logger";
+import * as metrics from "@usequark/quark-core/metrics";
+import * as queue from "@usequark/quark-core/queue";
+import * as sms from "@usequark/quark-core/sms";
+import * as storage from "@usequark/quark-core/storage";
+import * as storageS3 from "@usequark/quark-core/storage/s3";
+import * as stripe from "@usequark/quark-core/stripe";
+import * as testing from "@usequark/quark-core/testing";
 
 const packageJson = JSON.parse(
 	readFileSync(new URL("../package.json", import.meta.url), "utf-8"),
 );
 
 // Guard against accidental subpath removals: every entry in the exports map
-// must resolve. apps/web imports `@techstream/quark-core/logger`, and the
+// must resolve. apps/web imports `@usequark/quark-core/logger`, and the
 // scaffolded i18n/payment skills document `./locale` and `./stripe`.
 test("every subpath in package.json exports resolves", async () => {
 	for (const subpath of Object.keys(packageJson.exports)) {
-		const specifier = `@techstream/quark-core${
+		const specifier = `@usequark/quark-core${
 			subpath === "." ? "" : subpath.slice(1)
 		}`;
 		await assert.doesNotReject(

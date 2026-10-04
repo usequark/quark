@@ -1,4 +1,4 @@
-import { ForbiddenError, UnauthorizedError } from "@techstream/quark-core";
+import { ForbiddenError, UnauthorizedError } from "@usequark/quark-core";
 import { auth } from "./auth";
 
 const UNAUTHENTICATED = "You must be logged in to access this resource";

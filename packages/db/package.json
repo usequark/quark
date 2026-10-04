@@ -1,5 +1,5 @@
 {
-	"name": "@techstream/quark-db",
+	"name": "@usequark/quark-db",
 	"version": "1.0.0",
 	"private": true,
 	"type": "module",
@@ -25,14 +25,14 @@
 	"packageManager": "pnpm@10.12.1",
 	"devDependencies": {
 		"@faker-js/faker": "^10.6.0",
-		"@techstream/quark-config": "workspace:*",
+		"@usequark/quark-config": "workspace:*",
 		"bcryptjs": "^3.0.3",
 		"prisma": "^7.10.0"
 	},
 	"dependencies": {
 		"@prisma/adapter-pg": "^7.10.0",
 		"@prisma/client": "^7.10.0",
-		"@techstream/quark-core": "workspace:*",
+		"@usequark/quark-core": "workspace:*",
 		"pg": "^8.23.0",
 		"zod": "^4.6.5"
 	}

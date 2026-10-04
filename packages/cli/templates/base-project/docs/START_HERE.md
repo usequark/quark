@@ -48,13 +48,13 @@ That is the fastest way to move from "starter" to "product code."
 Before taking Quark infrastructure updates, review scaffold-managed drift from the project root:
 
 ```bash
-npx @techstream/quark-create-app update --scaffold-check
+npx @usequark/quark-create-app update --scaffold-check
 ```
 
 If you want CI to fail when scaffold-managed files drift, use:
 
 ```bash
-npx @techstream/quark-create-app update --scaffold-check --fail-on-drift
+npx @usequark/quark-create-app update --scaffold-check --fail-on-drift
 ```
 
 ## Recover disk space

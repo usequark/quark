@@ -115,7 +115,7 @@ describe("check-loading.mjs", () => {
 		writeFile(
 			dir,
 			"apps/web/src/app/metrics/page.js",
-			'import { prisma } from "@techstream/quark-db";\n\nexport default function Page() {\n\treturn null;\n}\n',
+			'import { prisma } from "@usequark/quark-db";\n\nexport default function Page() {\n\treturn null;\n}\n',
 		);
 
 		const result = runScript(dir, "scripts/check-loading.mjs");

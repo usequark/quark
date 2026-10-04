@@ -70,7 +70,7 @@ function sanitizeObject(obj, fields = SENSITIVE_FIELDS) {
  * @returns {Function} Middleware function
  *
  * @example
- * import { createRequestLogger } from "@techstream/quark-core";
+ * import { createRequestLogger } from "@usequark/quark-core";
  *
  * const logRequest = createRequestLogger({
  *   logRequestBody: true,

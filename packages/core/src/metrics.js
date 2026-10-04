@@ -1,5 +1,5 @@
 /**
- * @techstream/quark-core - Metrics Module
+ * @usequark/quark-core - Metrics Module
  * Lightweight application metrics with zero external dependencies.
  * Supports counters, gauges, and histograms with optional labels.
  * Exports Prometheus-compatible text format.
