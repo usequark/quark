@@ -9,6 +9,7 @@ import { Command } from "commander";
 import { execa } from "execa";
 import fs from "fs-extra";
 import prompts from "prompts";
+import { SCAFFOLD_GITIGNORE } from "./scaffold-gitignore.js";
 import { findEnclosingGitRepo, formatProjectDisplayName } from "./utils.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -116,6 +117,17 @@ async function copyTemplate(templateName, targetDir, variables = {}) {
 
 	// Copy the template
 	await fs.copy(templatePath, targetDir);
+
+	// npm strips every .gitignore from published tarballs, so a CLI installed
+	// from npm never has this file in its templates - only a git checkout does.
+	// Written from the shared module so both paths produce the same result, and
+	// skipped when the copy already provided one so a real template file always
+	// wins. Without this, a scaffolded project gets `git init` and no ignore
+	// rules, so the first `git add .` stages node_modules, .next and .env.
+	const gitignorePath = path.join(targetDir, ".gitignore");
+	if (!(await fs.pathExists(gitignorePath))) {
+		await fs.writeFile(gitignorePath, SCAFFOLD_GITIGNORE);
+	}
 
 	// Replace variables in package.json files
 	if (Object.keys(variables).length > 0) {

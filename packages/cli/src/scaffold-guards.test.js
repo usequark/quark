@@ -52,6 +52,17 @@ before(() => {
 	fs.mkdirSync(fixtureRepo, { recursive: true });
 
 	git(["init", "-q"], fixtureRepo);
+	// git auto-gc runs in the background after a commit and prunes loose object
+	// directories. copyFixture() then walks .git/objects while that prune is
+	// still in flight, which surfaces as a C++ filesystem_error from cpSync:
+	// "No such file or directory [.../fixture/.git/objects/3b]". The failure is
+	// a race in the harness, not an assertion, and it lands on whichever test
+	// happens to copy while the prune runs.
+	//
+	// It became common rather than rare once the scaffolder started writing a
+	// .gitignore: fewer files reach `git add`, so the object layout and the
+	// timing of the prune both shift. 3/10 failures before, 8/10 after.
+	git(["config", "gc.auto", "0"], fixtureRepo);
 	git(["config", "user.email", "test@quark.local"], fixtureRepo);
 	git(["config", "user.name", "Quark Test"], fixtureRepo);
 	fs.writeFileSync(path.join(fixtureRepo, "sibling.txt"), "sibling\n");
