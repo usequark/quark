@@ -27,24 +27,24 @@ import { Input } from "./input.js";
  */
 
 const wrapperCls =
-	"rounded-[--radius-default] border border-[--richtext-border] bg-[--richtext-bg] text-sm text-[--richtext-text] transition-colors duration-200 focus-within:border-[--richtext-border-focus] focus-within:ring-2 focus-within:ring-[var(--richtext-ring)] overflow-hidden";
+	"rounded-(--radius-default) border border-(--richtext-border) bg-(--richtext-bg) text-sm text-(--richtext-text) transition-colors duration-200 focus-within:border-(--richtext-border-focus) focus-within:ring-2 focus-within:ring-[var(--richtext-ring)] overflow-hidden";
 
 const toolbarCls =
-	"flex flex-wrap items-center border-b border-[--richtext-border] bg-[--richtext-toolbar-bg]";
+	"flex flex-wrap items-center border-b border-(--richtext-border) bg-(--richtext-toolbar-bg)";
 
 const btnBase =
-	"inline-flex items-center justify-center rounded-[--radius-default] text-[--richtext-btn-text] transition-colors cursor-pointer hover:bg-[--richtext-btn-hover-bg] hover:text-[--richtext-btn-hover-text] disabled:opacity-30 disabled:cursor-not-allowed";
+	"inline-flex items-center justify-center rounded-(--radius-default) text-(--richtext-btn-text) transition-colors cursor-pointer hover:bg-(--richtext-btn-hover-bg) hover:text-(--richtext-btn-hover-text) disabled:opacity-30 disabled:cursor-not-allowed";
 
 const btnActive =
-	"bg-[--richtext-btn-active-bg] text-[--richtext-btn-active-text]";
+	"bg-(--richtext-btn-active-bg) text-(--richtext-btn-active-text)";
 
-const separatorCls = "bg-[--richtext-separator]";
+const separatorCls = "bg-(--richtext-separator)";
 
 const editorCls =
-	"outline-none px-3 py-2 overflow-y-auto prose-sm [&_h1]:text-xl [&_h1]:font-bold [&_h1]:mt-4 [&_h1]:mb-2 [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:mt-3 [&_h2]:mb-1.5 [&_h3]:text-base [&_h3]:font-semibold [&_h3]:mt-2 [&_h3]:mb-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-2 [&_li]:my-0.5 [&_a]:text-[--richtext-link] [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:border-[--richtext-blockquote-border] [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-[--richtext-blockquote-text] [&_blockquote]:my-2 [&_code]:bg-[--richtext-code-bg] [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_code]:font-mono";
+	"outline-none px-3 py-2 overflow-y-auto prose-sm [&_h1]:text-xl [&_h1]:font-bold [&_h1]:mt-4 [&_h1]:mb-2 [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:mt-3 [&_h2]:mb-1.5 [&_h3]:text-base [&_h3]:font-semibold [&_h3]:mt-2 [&_h3]:mb-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-2 [&_li]:my-0.5 [&_a]:text-(--richtext-link) [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:border-(--richtext-blockquote-border) [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-(--richtext-blockquote-text) [&_blockquote]:my-2 [&_code]:bg-(--richtext-code-bg) [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_code]:font-mono";
 
 const placeholderCls =
-	"before:content-[attr(data-placeholder)] before:text-[--richtext-placeholder] before:pointer-events-none before:absolute before:left-3 before:top-2";
+	"before:content-[attr(data-placeholder)] before:text-(--richtext-placeholder) before:pointer-events-none before:absolute before:left-3 before:top-2";
 
 const TOOLBAR_ITEMS = [
 	{ command: "bold", icon: "B", title: "Bold", style: "font-bold" },
@@ -433,7 +433,7 @@ export function RichText({
 					linkError
 						? React.createElement(
 								"p",
-								{ className: "mt-1.5 text-xs text-[--color-danger]" },
+								{ className: "mt-1.5 text-xs text-(--color-danger)" },
 								linkError,
 							)
 						: null,

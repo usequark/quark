@@ -15,6 +15,49 @@ const tsExtensions = new Set([".ts", ".tsx"]);
 const throwNewErrorPattern = /\bthrow new Error\s*\(/;
 const consolePattern = /\bconsole\.(?:log|warn|error|info)\s*\(/;
 
+/**
+ * Tailwind v4 removed the bare `[--var]` shorthand that v3 accepted. Under v4 a
+ * class such as `text-[--navbar-text-muted]` is still a *valid* utility name, so
+ * Tailwind emits a rule for it - but the declaration body is the bare token
+ * `color: --navbar-text-muted`, which is not a valid CSS value. The browser
+ * discards the declaration and the element silently inherits instead.
+ *
+ * Nothing warns: the build exits 0 and the rule is present in the stylesheet, so
+ * the breakage is only visible by rendering both themes and reading computed
+ * styles. In light mode `body` sets no colour and the inherited default happens
+ * to be black, which reads as "working".
+ *
+ * The v4 forms are `text-(--navbar-text-muted)` or, when the utility namespace
+ * would be ambiguous (e.g. `text-` shared between colour and font-size),
+ * `text-[color:var(--navbar-text-muted)]`.
+ *
+ * The pattern is anchored to an explicit list of value-typed Tailwind
+ * utilities rather than "any identifier before `[--x]`", because the latter
+ * also matches ordinary JavaScript such as `rows[--i]` in a decrement loop.
+ */
+const tailwindVarUtilities = [
+	"accent",
+	"bg",
+	"border",
+	"caret",
+	"decoration",
+	"divide",
+	"fill",
+	"from",
+	"opacity",
+	"outline",
+	"ring",
+	"rounded",
+	"shadow",
+	"stroke",
+	"text",
+	"to",
+	"via",
+];
+const tailwindV3VarPattern = new RegExp(
+	`(?:[a-z][a-z0-9-]*:)*(?:${tailwindVarUtilities.join("|")})(?:-[a-z]+)*-\\[--[a-zA-Z]`,
+);
+
 const consoleAllowlist = [
 	/^packages\/config\/src\/validate-env\.js$/,
 	/^packages\/core\/src\/testing\//,
@@ -155,6 +198,17 @@ async function main() {
 			)) {
 				violations.push(
 					`${relativePath}:${lineNumber}: Use AppError/ValidationError in app runtime code instead of throw new Error().`,
+				);
+			}
+		}
+
+		if (isSourceFile(relativePath)) {
+			for (const lineNumber of findMatchingLines(
+				content,
+				tailwindV3VarPattern,
+			)) {
+				violations.push(
+					`${relativePath}:${lineNumber}: Tailwind v4 ignores the v3 \`[--var]\` shorthand - the utility is emitted with an invalid value and silently does nothing. Use \`utility-(--var)\`, or \`utility-[color:var(--var)]\` when the namespace is ambiguous.`,
 				);
 			}
 		}

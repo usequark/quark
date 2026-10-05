@@ -6,7 +6,7 @@ const base =
 	"inline-flex items-center justify-center font-medium tracking-wide transition-all duration-200 linear cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed active:opacity-80";
 
 const variantCls =
-	"bg-[--btn-bg] border border-[--btn-border] text-[--btn-text] rounded-[--btn-radius] hover:brightness-[var(--btn-hover-brightness)] hover:shadow-[var(--btn-hover-shadow)] hover:bg-[var(--btn-hover-bg)] hover:text-[var(--btn-hover-text)] hover:opacity-[var(--btn-hover-opacity)] focus-visible:ring-[var(--btn-ring)]";
+	"bg-(--btn-bg) border border-(--btn-border) text-(--btn-text) rounded-(--btn-radius) hover:brightness-[var(--btn-hover-brightness)] hover:shadow-[var(--btn-hover-shadow)] hover:bg-[var(--btn-hover-bg)] hover:text-[var(--btn-hover-text)] hover:opacity-[var(--btn-hover-opacity)] focus-visible:ring-[var(--btn-ring)]";
 
 const sizes = {
 	sm: "h-8 px-3 text-sm",

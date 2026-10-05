@@ -10,19 +10,19 @@ import React, {
 } from "react";
 
 const triggerCls =
-	"flex h-10 w-full items-center justify-between rounded-[--radius-default] border border-[--select-border] bg-[--select-bg] px-3 text-sm text-[--select-text] shadow-sm transition-all duration-200 cursor-pointer hover:border-[--select-border-hover] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--select-ring)] disabled:cursor-not-allowed disabled:opacity-50";
+	"flex h-10 w-full items-center justify-between rounded-(--radius-default) border border-(--select-border) bg-(--select-bg) px-3 text-sm text-(--select-text) shadow-sm transition-all duration-200 cursor-pointer hover:border-(--select-border-hover) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--select-ring)] disabled:cursor-not-allowed disabled:opacity-50";
 
 const panelCls =
-	"absolute z-30 max-h-60 w-full overflow-auto rounded-[--radius-default] border border-[--select-border] bg-[--select-panel-bg] shadow-xl origin-top transition-all duration-200 ease-out";
+	"absolute z-30 max-h-60 w-full overflow-auto rounded-(--radius-default) border border-(--select-border) bg-(--select-panel-bg) shadow-xl origin-top transition-all duration-200 ease-out";
 
 const optionBaseCls =
-	"flex w-full items-center justify-between rounded-[--radius-default] px-2.5 py-2 text-left text-sm transition-colors duration-150";
+	"flex w-full items-center justify-between rounded-(--radius-default) px-2.5 py-2 text-left text-sm transition-colors duration-150";
 
 const optionIdleCls =
-	"cursor-pointer text-[--select-text] hover:bg-[--select-option-hover-bg] hover:text-[--select-option-hover-text]";
+	"cursor-pointer text-(--select-text) hover:bg-(--select-option-hover-bg) hover:text-(--select-option-hover-text)";
 
 const optionActiveCls =
-	"bg-[--select-option-active-bg] text-[--select-option-active-text]";
+	"bg-(--select-option-active-bg) text-(--select-option-active-text)";
 
 function normalizeValue(value) {
 	if (value === undefined || value === null) return "";
@@ -249,8 +249,8 @@ export function Select({
 				"span",
 				{
 					className: selectedOption
-						? "text-[--select-text]"
-						: "text-[--select-text-faint]",
+						? "text-(--select-text)"
+						: "text-(--select-text-faint)",
 				},
 				selectedOption?.label ??
 					(options.length === 0 ? "No options" : placeholder),
@@ -260,7 +260,7 @@ export function Select({
 				{
 					"aria-hidden": "true",
 					className:
-						`ml-2 text-[--select-text-faint] transition-transform duration-200 ease-in-out ${open ? "rotate-180" : "rotate-0"}`.trim(),
+						`ml-2 text-(--select-text-faint) transition-transform duration-200 ease-in-out ${open ? "rotate-180" : "rotate-0"}`.trim(),
 				},
 				React.createElement(ChevronDown, { size: 16 }),
 			),
@@ -276,7 +276,7 @@ export function Select({
 			options.length === 0
 				? React.createElement(
 						"p",
-						{ className: "px-2.5 py-2 text-sm text-[--select-text-faint]" },
+						{ className: "px-2.5 py-2 text-sm text-(--select-text-faint)" },
 						"No options",
 					)
 				: options.map((option) => {
@@ -305,7 +305,7 @@ export function Select({
 										"span",
 										{
 											"aria-hidden": "true",
-											className: "text-[--select-option-active-text]",
+											className: "text-(--select-option-active-text)",
 										},
 										React.createElement(Check, { size: 16 }),
 									)

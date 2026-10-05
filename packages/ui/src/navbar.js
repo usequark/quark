@@ -2,47 +2,47 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
 const shellCls =
-	"relative w-full border-b border-[--navbar-border] bg-[--navbar-bg] shadow-[var(--navbar-inset-shadow)] backdrop-blur";
+	"relative w-full border-b border-(--navbar-border) bg-(--navbar-bg) shadow-[var(--navbar-inset-shadow)] backdrop-blur";
 const mobileShellCls =
-	"relative w-full border-b border-[--navbar-border] bg-[--navbar-mobile-bg] shadow-[var(--navbar-inset-shadow)]";
+	"relative w-full border-b border-(--navbar-border) bg-(--navbar-mobile-bg) shadow-[var(--navbar-inset-shadow)]";
 const mobileShellOpenCls =
-	"relative w-full border-b border-transparent bg-[--navbar-mobile-bg] shadow-[var(--navbar-inset-shadow)]";
+	"relative w-full border-b border-transparent bg-(--navbar-mobile-bg) shadow-[var(--navbar-inset-shadow)]";
 const containerCls = "mx-auto w-full px-4 sm:px-6 lg:px-8";
 const desktopInnerCls = "flex h-[4.5rem] items-center justify-center gap-6";
 const leftZoneCls = "flex items-center mr-auto";
 const rightZoneCls = "flex items-center justify-end ml-auto";
 const logoCls =
-	"inline-flex items-center gap-2.5 rounded-[--radius-default] px-1.5 py-1 font-semibold tracking-wide text-[--navbar-text] transition-colors hover:text-[--navbar-logo-hover]";
+	"inline-flex items-center gap-2.5 rounded-(--radius-default) px-1.5 py-1 font-semibold tracking-wide text-(--navbar-text) transition-colors hover:text-(--navbar-logo-hover)";
 const markCls =
-	"inline-flex h-8 w-8 items-center justify-center rounded-[--radius-default] border border-[--navbar-mark-border] bg-[--navbar-mark-bg] font-bold text-[--navbar-mark-text]";
+	"inline-flex h-8 w-8 items-center justify-center rounded-(--radius-default) border border-(--navbar-mark-border) bg-(--navbar-mark-bg) font-bold text-(--navbar-mark-text)";
 const centerNavCls = "flex min-w-0 justify-center";
 const desktopListCls = "flex items-center gap-3";
 const desktopLinkCls =
-	"inline-flex h-10 items-center rounded-[--radius-default] px-3.5 font-medium text-[--navbar-text-muted] transition-colors hover:bg-[--navbar-hover-bg] hover:text-[--navbar-hover-text]";
+	"inline-flex h-10 items-center rounded-(--radius-default) px-3.5 font-medium text-(--navbar-text-muted) transition-colors hover:bg-(--navbar-hover-bg) hover:text-(--navbar-hover-text)";
 
 const desktopDropdownWrapCls =
-	"group inline-flex cursor-pointer items-center rounded-[--radius-default] transition-colors hover:bg-[--navbar-hover-bg]";
+	"group inline-flex cursor-pointer items-center rounded-(--radius-default) transition-colors hover:bg-(--navbar-hover-bg)";
 const desktopDropdownLinkCls =
-	"flex items-center font-medium text-[--navbar-text-muted] transition-colors group-hover:text-[--navbar-hover-text]";
+	"flex items-center font-medium text-(--navbar-text-muted) transition-colors group-hover:text-(--navbar-hover-text)";
 const desktopDropdownChevronCls =
-	"flex items-center px-2 pt-1 text-[--navbar-text-muted] transition-colors group-hover:text-[--navbar-hover-text] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--navbar-ring)] rounded-r-[--radius-default]";
+	"flex items-center px-2 pt-1 text-(--navbar-text-muted) transition-colors group-hover:text-(--navbar-hover-text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--navbar-ring)] rounded-r-(--radius-default)";
 const actionCls =
-	"inline-flex h-11 items-center justify-center whitespace-nowrap rounded-[--radius-default] border border-[--navbar-action-border] bg-[--navbar-action-bg] px-5 font-semibold text-[--navbar-action-text] transition-colors hover:border-[--navbar-action-hover-border] hover:bg-[--navbar-action-hover-bg] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--navbar-ring)]";
+	"inline-flex h-11 items-center justify-center whitespace-nowrap rounded-(--radius-default) border border-(--navbar-action-border) bg-(--navbar-action-bg) px-5 font-semibold text-(--navbar-action-text) transition-colors hover:border-(--navbar-action-hover-border) hover:bg-(--navbar-action-hover-bg) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--navbar-ring)]";
 
 const mobileInnerCls = "flex h-14 items-center justify-between gap-4";
 const mobileToggleCls =
-	"inline-flex h-10 w-10 items-center justify-center rounded-[--radius-default] text-[--navbar-text-muted] transition-colors hover:text-[--navbar-hover-text] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--navbar-ring)]";
+	"inline-flex h-10 w-10 items-center justify-center rounded-(--radius-default) text-(--navbar-text-muted) transition-colors hover:text-(--navbar-hover-text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--navbar-ring)]";
 const mobilePanelWrapCls =
 	"absolute inset-x-0 top-full z-[80] overflow-y-auto overscroll-contain [touch-action:pan-y] [-webkit-overflow-scrolling:touch] origin-top";
 const mobilePanelCls =
-	"border-y border-[--navbar-border] bg-[--navbar-mobile-panel-bg] will-change-transform transition-all duration-300 ease-out";
+	"border-y border-(--navbar-border) bg-(--navbar-mobile-panel-bg) will-change-transform transition-all duration-300 ease-out";
 const mobileLinkCls =
-	"flex min-h-12 w-full items-center justify-between px-4 text-left font-medium text-[--navbar-text-muted] transition-colors hover:bg-[--navbar-hover-bg] hover:text-[--navbar-hover-text]";
+	"flex min-h-12 w-full items-center justify-between px-4 text-left font-medium text-(--navbar-text-muted) transition-colors hover:bg-(--navbar-hover-bg) hover:text-(--navbar-hover-text)";
 const mobileSubLinkCls =
-	"block px-6 py-2 text-[--navbar-text-muted] transition-colors hover:bg-[--navbar-hover-bg] hover:text-[--navbar-hover-text]";
+	"block px-6 py-2 text-(--navbar-text-muted) transition-colors hover:bg-(--navbar-hover-bg) hover:text-(--navbar-hover-text)";
 const mobileActionWrapCls = "px-3 pb-3 pt-2";
 const mobileActionCls =
-	"inline-flex h-10 w-full items-center justify-center rounded-[--radius-default] border border-[--navbar-action-border] bg-[--navbar-action-bg] px-4 font-semibold text-[--navbar-action-text] transition-colors hover:border-[--navbar-action-hover-border] hover:bg-[--navbar-action-hover-bg] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--navbar-ring)]";
+	"inline-flex h-10 w-full items-center justify-center rounded-(--radius-default) border border-(--navbar-action-border) bg-(--navbar-action-bg) px-4 font-semibold text-(--navbar-action-text) transition-colors hover:border-(--navbar-action-hover-border) hover:bg-(--navbar-action-hover-bg) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--navbar-ring)]";
 
 const DEFAULT_LINKS = [
 	{ label: "Home", href: "#" },
@@ -239,7 +239,7 @@ export function Navbar({
 										"a",
 										{
 											href: link.href ?? "#",
-											className: `${desktopDropdownLinkCls} rounded-l-[--radius-default] px-3.5 py-2`,
+											className: `${desktopDropdownLinkCls} rounded-l-(--radius-default) px-3.5 py-2`,
 										},
 										link.label,
 									),
@@ -262,7 +262,7 @@ export function Navbar({
 											{
 												role: "menu",
 												className:
-													"absolute left-0 top-[calc(100%+0.6rem)] z-40 w-48 rounded-[--radius-default] border border-[--navbar-border] bg-[--navbar-dropdown-bg] shadow-[var(--navbar-dropdown-shadow)]",
+													"absolute left-0 top-[calc(100%+0.6rem)] z-40 w-48 rounded-(--radius-default) border border-(--navbar-border) bg-(--navbar-dropdown-bg) shadow-[var(--navbar-dropdown-shadow)]",
 											},
 											...(link.items ?? []).map((item, itemIndex) =>
 												React.createElement(
@@ -272,7 +272,7 @@ export function Navbar({
 														href: item.href ?? "#",
 														role: "menuitem",
 														className:
-															"block rounded-[--radius-default] px-3.5 py-2.5 text-base text-[--navbar-text-muted] transition-colors hover:bg-[--navbar-hover-bg] hover:text-[--navbar-hover-text]",
+															"block rounded-(--radius-default) px-3.5 py-2.5 text-base text-(--navbar-text-muted) transition-colors hover:bg-(--navbar-hover-bg) hover:text-(--navbar-hover-text)",
 														onClick: () => setOpenIndex(null),
 													},
 													item.label,
@@ -476,7 +476,7 @@ export function MobileNavbar({
 								},
 								React.createElement(
 									"ul",
-									{ className: "divide-y divide-[--navbar-divide-border]" },
+									{ className: "divide-y divide-(--navbar-divide-border)" },
 									...navLinks.map((link, index) => {
 										if (!hasSubItems(link)) {
 											return React.createElement(

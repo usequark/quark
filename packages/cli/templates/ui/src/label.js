@@ -1,6 +1,6 @@
 import React from "react";
 
-const base = "block text-xs font-medium text-[--label-text]";
+const base = "block text-xs font-medium text-(--label-text)";
 
 export function Label({ className = "", ...props }) {
 	return React.createElement("label", {

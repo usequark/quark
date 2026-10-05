@@ -3,16 +3,16 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 
 const BACKDROP_CLS =
-	"absolute inset-0 z-0 bg-[--lightbox-backdrop] px-3 py-4 transition-opacity duration-200 ease-out sm:px-6 sm:py-8 cursor-pointer";
+	"absolute inset-0 z-0 bg-(--lightbox-backdrop) px-3 py-4 transition-opacity duration-200 ease-out sm:px-6 sm:py-8 cursor-pointer";
 const DIALOG_CLS =
 	"relative z-10 mx-auto flex h-full w-full max-w-6xl flex-col p-3 transition-all duration-200 ease-out sm:p-5";
 const NAV_BTN_CLS =
-	"inline-flex items-center gap-1.5 rounded-[--radius-default] border border-[--lightbox-btn-border] px-3 py-1.5 text-sm font-medium text-[--lightbox-btn-text] transition-colors duration-200 hover:bg-[--lightbox-btn-hover-bg] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lightbox-btn-ring)] cursor-pointer";
+	"inline-flex items-center gap-1.5 rounded-(--radius-default) border border-(--lightbox-btn-border) px-3 py-1.5 text-sm font-medium text-(--lightbox-btn-text) transition-colors duration-200 hover:bg-(--lightbox-btn-hover-bg) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lightbox-btn-ring)] cursor-pointer";
 const CLOSE_BTN_CLS =
-	"rounded-[--radius-default] border border-[--lightbox-btn-border] font-medium text-[--lightbox-btn-text] transition-colors duration-200 hover:bg-[--lightbox-btn-hover-bg] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lightbox-btn-ring)] flex items-center cursor-pointer";
+	"rounded-(--radius-default) border border-(--lightbox-btn-border) font-medium text-(--lightbox-btn-text) transition-colors duration-200 hover:bg-(--lightbox-btn-hover-bg) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lightbox-btn-ring)] flex items-center cursor-pointer";
 
 const IMG_CLS =
-	"max-h-[72vh] w-auto max-w-full rounded-[--radius-default] object-contain transition-all duration-200 ease-out";
+	"max-h-[72vh] w-auto max-w-full rounded-(--radius-default) object-contain transition-all duration-200 ease-out";
 
 export function Lightbox({
 	src,
@@ -129,7 +129,7 @@ export function Lightbox({
 				"p",
 				{
 					key: "caption",
-					className: "mt-3 text-sm leading-6 text-[--lightbox-caption-text]",
+					className: "mt-3 text-sm leading-6 text-(--lightbox-caption-text)",
 				},
 				caption,
 			),
@@ -169,7 +169,7 @@ export function Lightbox({
 					"p",
 					{
 						key: "counter",
-						className: "text-center text-[--lightbox-counter-text]",
+						className: "text-center text-(--lightbox-counter-text)",
 						style: {
 							minWidth: "var(--lightbox-counter-min-width)",
 							fontSize: "var(--lightbox-counter-font-size)",
