@@ -1,4 +1,4 @@
-# @techstream/quark-create-app
+# @usequark/quark-create-app
 
 ## 1.24.1
 

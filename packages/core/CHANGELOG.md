@@ -1,4 +1,4 @@
-# @techstream/quark-core
+# @usequark/quark-core
 
 ## 2.5.6
 
