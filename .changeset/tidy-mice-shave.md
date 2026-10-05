@@ -35,6 +35,8 @@ package are colour tokens.
 
 `scripts/check-standards.mjs` gains a check that rejects the v3 shorthand, so
 this cannot silently return. It ships inside the CLI and already runs in
-scaffolded projects. The pattern is anchored to an explicit list of value-typed
-utilities rather than "any identifier before `[--x]`", which would also match
-ordinary JavaScript such as `rows[--i]`.
+scaffolded projects. The pattern matches the *shape* of the shorthand rather than
+enumerating utility families, so sizing, spacing and typography variants such as
+`w-[--panel-width]` and `leading-[--line-height]` are caught too. The `-`
+immediately before `[` is what distinguishes it from ordinary JavaScript:
+`rows[--i]` and `obj["key--1"]` do not match.

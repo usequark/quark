@@ -31,32 +31,21 @@ const consolePattern = /\bconsole\.(?:log|warn|error|info)\s*\(/;
  * would be ambiguous (e.g. `text-` shared between colour and font-size),
  * `text-[color:var(--navbar-text-muted)]`.
  *
- * The pattern is anchored to an explicit list of value-typed Tailwind
- * utilities rather than "any identifier before `[--x]`", because the latter
- * also matches ordinary JavaScript such as `rows[--i]` in a decrement loop.
+ * The pattern matches the *shape* of the v3 shorthand rather than an
+ * enumerated list of utilities. An earlier version listed the colour, border and
+ * radius families explicitly, which was a false economy: the same mistake is
+ * equally reachable through `w-[--panel-width]`, `leading-[--line-height]` or
+ * `p-[--gutter]`, and any list has to be extended every time someone reaches
+ * for a family it omits.
+ *
+ * The `-` immediately before `[` is what separates this from ordinary
+ * JavaScript. `rows[--i]` (decrement-then-index) and `obj[key--1]` have no
+ * hyphen there and do not match. The one shape that is indistinguishable from a
+ * real class is `<ident>-[--ident]`, which would require JavaScript that
+ * subtracts from a decrement expression - it does not occur in this codebase.
  */
-const tailwindVarUtilities = [
-	"accent",
-	"bg",
-	"border",
-	"caret",
-	"decoration",
-	"divide",
-	"fill",
-	"from",
-	"opacity",
-	"outline",
-	"ring",
-	"rounded",
-	"shadow",
-	"stroke",
-	"text",
-	"to",
-	"via",
-];
-const tailwindV3VarPattern = new RegExp(
-	`(?:[a-z][a-z0-9-]*:)*(?:${tailwindVarUtilities.join("|")})(?:-[a-z]+)*-\\[--[a-zA-Z]`,
-);
+const tailwindV3VarPattern =
+	/(?:^|[\s"'`(])(?:[a-z][a-z0-9-]*:)*[a-z][a-z0-9-]*-\[--[a-zA-Z][a-zA-Z0-9-]*\]/;
 
 const consoleAllowlist = [
 	/^packages\/config\/src\/validate-env\.js$/,
