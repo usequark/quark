@@ -13,7 +13,11 @@ import {
 	THEME_STORAGE_KEY,
 } from "./theme-constants.js";
 
-const ThemeCtx = createContext({ theme: "dark", setTheme: () => {} });
+// `undefined` means "no ThemeProvider above this consumer". It must not be a
+// usable default: a plausible-looking default ({ theme, setTheme: noop }) turns a
+// missing provider into a silently broken toggle that still renders and still
+// reports a theme. See useTheme().
+const ThemeCtx = createContext(undefined);
 
 /**
  * Wraps a subtree with a shared theme value.
@@ -90,18 +94,29 @@ export function ThemeProvider({ defaultTheme, children }) {
 
 /**
  * Returns the current theme and a setter from the nearest ThemeProvider.
- * Falls back to `{ theme: 'dark' }` when used outside a provider.
+ *
+ * Throws when there is no ThemeProvider above the caller. A missing provider is
+ * a wiring bug, not a state to default: `ThemeToggle` renders a labelled,
+ * focusable button either way, so a silent fallback yields a control that looks
+ * real, reports the wrong theme, and does nothing when clicked.
  *
  * @returns {{ theme: 'light' | 'dark', setTheme: (t: string) => void }}
+ * @throws {Error} if called outside a ThemeProvider
  */
 export function useTheme() {
-	return useContext(ThemeCtx);
+	const ctx = useContext(ThemeCtx);
+	if (ctx === undefined) {
+		throw new Error(
+			"useTheme() must be used within a ThemeProvider. Wrap your app in <ThemeProvider> (import it from @scope/ui) around the tree containing this component.",
+		);
+	}
+	return ctx;
 }
 
 /**
  * Labeled pill button that shows the current theme and switches on click.
  * Displays "🌙 Dark Mode" when dark, "☀ Light Mode" when light.
- * Must be rendered inside a ThemeProvider.
+ * Must be rendered inside a ThemeProvider — outside one, `useTheme()` throws.
  */
 export function ThemeToggle({ className = "" }) {
 	const { theme, setTheme } = useTheme();
