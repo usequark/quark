@@ -18,6 +18,8 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { after, before, describe, it } from "node:test";
 
+import { SCAFFOLD_GITIGNORE_ENTRIES } from "./scaffold-gitignore.js";
+
 const CLI = path.join(import.meta.dirname, "index.js");
 const PROJECT_NAME = "placeholder-app";
 
@@ -144,6 +146,36 @@ describe("scaffold output placeholders", () => {
 			[],
 			`local-only packages must be rewritten to the project scope; leaked in: ${offenders.join(", ")}`,
 		);
+	});
+
+	// npm strips every .gitignore from published tarballs, so the template copy
+	// never reaches a CLI installed from npm. The scaffolder writes one from
+	// src/scaffold-gitignore.js instead - this asserts it actually arrives, and
+	// that it covers the paths that would otherwise be committed.
+	it("ships a .gitignore covering dependencies, build output and secrets", () => {
+		const gitignorePath = path.join(projectDir, ".gitignore");
+		assert.ok(
+			fs.existsSync(gitignorePath),
+			"scaffolded project has no .gitignore - npm strips it from tarballs, so the CLI must write it",
+		);
+
+		const content = fs.readFileSync(gitignorePath, "utf-8");
+		for (const entry of SCAFFOLD_GITIGNORE_ENTRIES) {
+			if (entry === "" || entry.startsWith("#")) continue;
+			assert.ok(
+				content.split("\n").includes(entry),
+				`.gitignore is missing "${entry}"`,
+			);
+		}
+
+		// The whole point: the scaffolder runs `git init`, so an unignored .env
+		// means the first `git add .` stages real credentials.
+		for (const critical of ["node_modules/", ".env", ".next/"]) {
+			assert.ok(
+				content.split("\n").includes(critical),
+				`.gitignore must ignore ${critical} or a generated project commits secrets`,
+			);
+		}
 	});
 
 	it("rewrites the DB import in AI prompts to the project scope", () => {

@@ -18,6 +18,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { SCAFFOLD_GITIGNORE } from "../src/scaffold-gitignore.js";
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "../../..");
 const TEMPLATES = path.join(ROOT, "packages/cli/templates");
@@ -63,50 +65,15 @@ function generateRootPackageJson() {
 }
 
 /**
- * Generate base-project/.gitignore from monorepo .gitignore.
+ * Generate base-project/.gitignore.
  *
- * Derived from the monorepo's .gitignore but simplified for scaffolded projects:
- * - Removes monorepo-only entries (conductor, tmp-test-project, tmp-npm-smoke)
- * - Keeps essential entries (node_modules, .env, .next, .turbo, coverage)
- * - Adds scaffold-specific entries (.quark-auto-clean.json)
+ * The content lives in src/scaffold-gitignore.js, not here. npm strips every
+ * .gitignore from published tarballs, so the CLI cannot read this file when
+ * installed from npm and has to carry the content itself. Writing this copy from
+ * the same export keeps the two identical.
  */
 function generateGitignore() {
-	const scaffoldEntries = [
-		"# dependencies",
-		"node_modules/",
-		"",
-		"# environment",
-		".env",
-		".env.local",
-		".env.*.local",
-		"",
-		"# next.js",
-		".next/",
-		"out/",
-		"",
-		"# build artifacts",
-		"dist/",
-		"build/",
-		"",
-		"# testing",
-		"coverage/",
-		"",
-		"# misc",
-		".DS_Store",
-		"*.log",
-		".quark-auto-clean.json",
-		"",
-		"# turbo",
-		".turbo/",
-		"",
-		"# prisma",
-		"packages/db/src/generated/",
-		"",
-		"# uploads",
-		"**/uploads/",
-	];
-
-	return `${scaffoldEntries.join("\n")}\n`;
+	return SCAFFOLD_GITIGNORE;
 }
 
 /**
