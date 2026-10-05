@@ -1,10 +1,10 @@
 import React from "react";
 
 const base =
-	"inline-flex items-center justify-center border font-medium bg-[--badge-bg] border-[--badge-border] text-[--badge-text]";
+	"inline-flex items-center justify-center border font-medium bg-(--badge-bg) border-(--badge-border) text-(--badge-text)";
 
 export function Badge({ variant = "default", className = "", ...props }) {
-	const cls = `${base} rounded-[--radius-default] ${className}`.trim();
+	const cls = `${base} rounded-(--radius-default) ${className}`.trim();
 	return React.createElement("span", {
 		"data-badge-variant": variant,
 		className: cls,

@@ -15,6 +15,38 @@ const tsExtensions = new Set([".ts", ".tsx"]);
 const throwNewErrorPattern = /\bthrow new Error\s*\(/;
 const consolePattern = /\bconsole\.(?:log|warn|error|info)\s*\(/;
 
+/**
+ * Tailwind v4 removed the bare `[--var]` shorthand that v3 accepted. Under v4 a
+ * class such as `text-[--navbar-text-muted]` is still a *valid* utility name, so
+ * Tailwind emits a rule for it - but the declaration body is the bare token
+ * `color: --navbar-text-muted`, which is not a valid CSS value. The browser
+ * discards the declaration and the element silently inherits instead.
+ *
+ * Nothing warns: the build exits 0 and the rule is present in the stylesheet, so
+ * the breakage is only visible by rendering both themes and reading computed
+ * styles. In light mode `body` sets no colour and the inherited default happens
+ * to be black, which reads as "working".
+ *
+ * The v4 forms are `text-(--navbar-text-muted)` or, when the utility namespace
+ * would be ambiguous (e.g. `text-` shared between colour and font-size),
+ * `text-[color:var(--navbar-text-muted)]`.
+ *
+ * The pattern matches the *shape* of the v3 shorthand rather than an
+ * enumerated list of utilities. An earlier version listed the colour, border and
+ * radius families explicitly, which was a false economy: the same mistake is
+ * equally reachable through `w-[--panel-width]`, `leading-[--line-height]` or
+ * `p-[--gutter]`, and any list has to be extended every time someone reaches
+ * for a family it omits.
+ *
+ * The `-` immediately before `[` is what separates this from ordinary
+ * JavaScript. `rows[--i]` (decrement-then-index) and `obj[key--1]` have no
+ * hyphen there and do not match. The one shape that is indistinguishable from a
+ * real class is `<ident>-[--ident]`, which would require JavaScript that
+ * subtracts from a decrement expression - it does not occur in this codebase.
+ */
+const tailwindV3VarPattern =
+	/(?:^|[\s"'`(])(?:[a-z][a-z0-9-]*:)*[a-z][a-z0-9-]*-\[--[a-zA-Z][a-zA-Z0-9-]*\]/;
+
 const consoleAllowlist = [
 	/^packages\/config\/src\/validate-env\.js$/,
 	/^packages\/core\/src\/testing\//,
@@ -155,6 +187,17 @@ async function main() {
 			)) {
 				violations.push(
 					`${relativePath}:${lineNumber}: Use AppError/ValidationError in app runtime code instead of throw new Error().`,
+				);
+			}
+		}
+
+		if (isSourceFile(relativePath)) {
+			for (const lineNumber of findMatchingLines(
+				content,
+				tailwindV3VarPattern,
+			)) {
+				violations.push(
+					`${relativePath}:${lineNumber}: Tailwind v4 ignores the v3 \`[--var]\` shorthand - the utility is emitted with an invalid value and silently does nothing. Use \`utility-(--var)\`, or \`utility-[color:var(--var)]\` when the namespace is ambiguous.`,
 				);
 			}
 		}

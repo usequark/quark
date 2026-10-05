@@ -23,7 +23,7 @@ export function PasswordInput({ className = "", ...props }) {
 				onClick: () => setVisible((v) => !v),
 				"aria-label": visible ? "Hide password" : "Show password",
 				className:
-					"absolute right-2.5 top-1/2 -translate-y-1/2 text-[--input-icon] hover:text-[--input-icon-hover] transition-colors",
+					"absolute right-2.5 top-1/2 -translate-y-1/2 text-(--input-icon) hover:text-(--input-icon-hover) transition-colors",
 			},
 			React.createElement(Icon, { size: 16, "aria-hidden": true }),
 		),

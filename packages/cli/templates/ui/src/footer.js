@@ -1,24 +1,24 @@
 import React from "react";
 
-const footerCls = "border-t border-[--footer-border] bg-[--footer-bg]";
+const footerCls = "border-t border-(--footer-border) bg-(--footer-bg)";
 const containerCls = "mx-auto";
 const topGridCls =
 	"grid gap-8 sm:gap-10 md:grid-cols-2 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]";
 const brandRowCls = "flex items-center gap-3";
 const markCls =
-	"flex shrink-0 items-center justify-center rounded-2xl bg-[--footer-mark-bg] font-bold text-[--footer-mark-text]";
+	"flex shrink-0 items-center justify-center rounded-2xl bg-(--footer-mark-bg) font-bold text-(--footer-mark-text)";
 const brandNameCls =
-	"text-2xl font-bold tracking-tight text-[--footer-text] sm:text-3xl";
-const brandTextCls = "max-w-md text-sm leading-7 text-[--footer-text-muted]";
+	"text-2xl font-bold tracking-tight text-(--footer-text) sm:text-3xl";
+const brandTextCls = "max-w-md text-sm leading-7 text-(--footer-text-muted)";
 const ctaCls =
-	"inline-flex w-full items-center justify-center rounded-full border border-[--footer-cta-border] font-semibold text-[--footer-mark-text] transition-colors hover:bg-[--footer-cta-hover-bg] sm:w-auto";
-const columnTitleCls = "mb-4 font-semibold text-[--footer-text-faint]";
+	"inline-flex w-full items-center justify-center rounded-full border border-(--footer-cta-border) font-semibold text-(--footer-mark-text) transition-colors hover:bg-(--footer-cta-hover-bg) sm:w-auto";
+const columnTitleCls = "mb-4 font-semibold text-(--footer-text-faint)";
 const columnListCls = "space-y-2.5";
 const linkCls =
-	"break-words text-[--footer-text-muted] transition-colors hover:text-[--footer-link-hover]";
-const textItemCls = "break-words text-[--footer-text-muted]";
+	"break-words text-(--footer-text-muted) transition-colors hover:text-(--footer-link-hover)";
+const textItemCls = "break-words text-(--footer-text-muted)";
 const bottomBarCls =
-	"mt-8 border-t border-[--footer-border] pt-5 flex flex-col gap-3 text-sm text-[--footer-text-faint] sm:mt-10 sm:pt-6 lg:flex-row lg:items-center lg:justify-between";
+	"mt-8 border-t border-(--footer-border) pt-5 flex flex-col gap-3 text-sm text-(--footer-text-faint) sm:mt-10 sm:pt-6 lg:flex-row lg:items-center lg:justify-between";
 const legalCls = "flex flex-wrap items-center gap-2 sm:gap-3";
 const sepCls = "text-[var(--footer-sep)]";
 

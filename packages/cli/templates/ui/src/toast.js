@@ -21,7 +21,7 @@ export function Toast({
 	const [shouldRender, setShouldRender] = useState(visible);
 
 	const variantCls =
-		"bg-[--toast-bg] border-[--toast-border] text-[--toast-text] shadow-[var(--toast-shadow)]";
+		"bg-(--toast-bg) border-(--toast-border) text-(--toast-text) shadow-[var(--toast-shadow)]";
 
 	const remainingRef = useRef(duration);
 	const startRef = useRef(null);
@@ -98,7 +98,7 @@ export function Toast({
 			"data-toast-variant": variant,
 			onMouseEnter: () => setHovered(true),
 			onMouseLeave: () => setHovered(false),
-			className: `fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-[--radius-default] px-4 py-3 text-sm transition-colors duration-200 ${variantCls}`,
+			className: `fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-(--radius-default) px-4 py-3 text-sm transition-colors duration-200 ${variantCls}`,
 			style: animStyle,
 		},
 		React.createElement("span", null, message),
@@ -116,7 +116,7 @@ export function Toast({
 							"aria-label": "Dismiss notification",
 							onClick: onClose,
 							className:
-								"flex h-6 w-6 cursor-pointer items-center justify-center rounded-[--radius-default] text-base leading-none opacity-80 transition-all hover:bg-black/10 dark:hover:bg-white/10 hover:opacity-100 active:bg-black/20 dark:active:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
+								"flex h-6 w-6 cursor-pointer items-center justify-center rounded-(--radius-default) text-base leading-none opacity-80 transition-all hover:bg-black/10 dark:hover:bg-white/10 hover:opacity-100 active:bg-black/20 dark:active:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
 						},
 						React.createElement(
 							"svg",
