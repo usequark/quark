@@ -50,8 +50,11 @@ function collectTests(targetPath) {
 const files = roots.flatMap((rootPath) => collectTests(path.resolve(rootPath)));
 
 if (files.length === 0) {
-	console.error(`No test files found in: ${roots.join(", ")}`);
-	process.exit(1);
+	// An empty suite is not a failure. `node --test` exits 0 when it matches no
+	// files, so exiting 1 here made a freshly scaffolded project fail its own
+	// `pnpm test` and therefore its pre-push hook.
+	console.log(`No test files found in: ${roots.join(", ")} - nothing to run.`);
+	process.exit(0);
 }
 
 const result = spawnSync(
