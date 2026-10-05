@@ -16,7 +16,7 @@ import fs from "fs-extra";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const testDir = path.join(tmpdir(), "quark-cli-build-test");
 const PINNED_NODE_BASE_IMAGE =
-	"node:22-alpine@sha256:9385cd9f3001dfc3431e8ead12c43e9e1f87cc1b9b5c6cfd0f73865d405b27c4";
+	"node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1";
 const BUILD_SCENARIOS = [
 	{
 		name: "default",

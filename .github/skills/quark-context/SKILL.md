@@ -30,7 +30,7 @@ Scaffolded (local-only) packages:
 
 | Layer | Technology |
 |---|---|
-| Runtime | Node.js 22, ES Modules (`"type": "module"`) |
+| Runtime | Node.js 24, ES Modules (`"type": "module"`) |
 | Package manager | pnpm (workspaces) |
 | Monorepo orchestrator | Turborepo (`turbo.json`) |
 | Web framework | Next.js 16 (App Router, Server Actions) |
