@@ -29,3 +29,23 @@ updates:
         update-types: ["patch"]
 
     open-pull-requests-limit: 10
+
+  # Keep workflow actions current. Without this block nothing tracks the `uses:`
+  # pins, and an action that drops to a deprecated runtime only ever shows up as
+  # a log annotation — never as a failing check — so scaffolded projects
+  # silently accumulate stale pins. Majors get their own PR because action
+  # majors can change runtime or drop inputs.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions-majors:
+        update-types: ["major"]
+      actions-minor:
+        update-types: ["minor"]
+      actions-patch:
+        update-types: ["patch"]
+    commit-message:
+      prefix: "deps(actions)"
+    open-pull-requests-limit: 4

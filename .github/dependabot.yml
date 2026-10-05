@@ -35,3 +35,29 @@ updates:
     commit-message:
       prefix: "deps"
     open-pull-requests-limit: 6
+
+  # Action pins drift for a different reason than npm pins: nothing here fails
+  # when an action ages out, so `pnpm/action-setup@v4` sat on a Node 20 runtime
+  # while the rest of the workflow had already moved to Node 24. GitHub only
+  # surfaces that as an annotation in the run log, not as a red check, so
+  # nothing in CI ever pushed us to bump it.
+  #
+  # This block is the actual fix for that class of drift. Majors get their own
+  # PR for the same reason the npm block splits them: action majors are the ones
+  # that can change runtime (Node 20 -> 24) or drop inputs, and that review
+  # should not arrive buried in a patch bundle.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions-majors:
+        update-types: ["major"]
+      actions-minor:
+        update-types: ["minor"]
+      actions-patch:
+        update-types: ["patch"]
+    commit-message:
+      prefix: "deps(actions)"
+    open-pull-requests-limit: 4
