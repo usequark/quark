@@ -1,4 +1,5 @@
 import assert from "node:assert";
+import { readFileSync } from "node:fs";
 import { describe, mock, test } from "node:test";
 import { AppError, ValidationError } from "@usequark/quark-core/errors";
 import {
@@ -579,6 +580,17 @@ describe("waitForRedis", () => {
 			process.env.WORKER_HEALTH_INTERVAL_MS = originalInterval;
 		}
 	});
+
+	test("rejects a config object passed in the healthCheck slot", async () => {
+		await assert.rejects(
+			() => waitForRedis({ maxRetries: 3, intervalMs: 500 }),
+			(error) => {
+				assert.ok(error instanceof AppError);
+				assert.strictEqual(error.code, "REDIS_HEALTH_CHECK_INVALID");
+				return true;
+			},
+		);
+	});
 });
 
 // ---------------------------------------------------------------------------
@@ -688,6 +700,78 @@ describe("waitForDatabase", () => {
 
 		assert.strictEqual(result, true);
 		assert.strictEqual(healthCheck.mock.callCount(), 3);
+	});
+
+	test("startWorker passes a config object, never one in the healthCheck slot", () => {
+		// Exercises the real call site rather than a hand-built call. Calling
+		// waitForDatabase directly cannot catch this: the bug lived in
+		// startWorker(), which the unit tests never invoked.
+		const source = readFileSync(
+			new URL(import.meta.url).pathname.replace(/index\.test\.js$/, "index.js"),
+			"utf-8",
+		);
+		const startWorker = source.slice(
+			source.indexOf("async function startWorker()"),
+		);
+
+		const calls = [
+			...startWorker.matchAll(/await waitFor(?:Database|Redis)\(([^;]*?)\);/gs),
+		]
+			.map((m) => m[1])
+			.filter((args) => args.trim().length > 0);
+
+		assert.ok(
+			calls.length >= 2,
+			"expected both startup health checks to be called",
+		);
+
+		for (const args of calls) {
+			const first = args.trimStart();
+			assert.ok(
+				first.startsWith("undefined,") || first.startsWith("checkQueueHealth,"),
+				`health check call must pass a function or undefined first, got: ${first}`,
+			);
+			// The config object must appear as the second argument.
+			assert.match(args, /\{[^}]*maxRetries/);
+		}
+	});
+
+	test("accepts undefined as the health check and runs the default one", async () => {
+		// startWorker() calls waitForDatabase(undefined, config) so the default
+		// health check applies. Passing the config object as the first argument
+		// instead is the bug this guards against: it put an object in the
+		// healthCheck slot, so every call threw "healthCheck is not a function"
+		// and the retry config never applied.
+		//
+		// The default check queries Prisma, so the outcome depends on whether a
+		// database is reachable. Every outcome other than the argument error
+		// proves the default health check actually ran.
+		let outcome;
+		try {
+			outcome = await waitForDatabase(undefined, {
+				maxRetries: 1,
+				intervalMs: 1,
+			});
+		} catch (error) {
+			outcome = error;
+		}
+
+		if (outcome !== true) {
+			assert.ok(outcome instanceof AppError, `unexpected error: ${outcome}`);
+			assert.notStrictEqual(outcome.code, "DATABASE_HEALTH_CHECK_INVALID");
+			assert.doesNotMatch(outcome.message, /health check function/);
+		}
+	});
+
+	test("rejects a config object passed in the healthCheck slot", async () => {
+		await assert.rejects(
+			() => waitForDatabase({ maxRetries: 5, intervalMs: 1000 }),
+			(error) => {
+				assert.ok(error instanceof AppError);
+				assert.strictEqual(error.code, "DATABASE_HEALTH_CHECK_INVALID");
+				return true;
+			},
+		);
 	});
 });
 

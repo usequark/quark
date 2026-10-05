@@ -81,10 +81,20 @@ function generateGitignore() {
  *
  * Derived from the monorepo's biome.json but adjusted for scaffold context:
  * - Removes monorepo-specific includes (!packages/cli/templates)
- * - Marks the config as non-root so it stays composable when the project is
- *   nested inside a larger repository (monorepo, Conductor workspace), where
- *   Biome would otherwise reject it as a nested root configuration
  * - Keeps all other formatting/linting rules identical
+ *
+ * The config must NOT set `root: false`. With `root: false` Biome looks for a
+ * root configuration in ancestor directories; when the scaffold is standalone
+ * there is none, so Biome falls back to its built-in defaults and applies none
+ * of this file. Observed consequences in a scaffold: `files.includes` negations
+ * stop excluding anything (so `packages/db/src/generated` gets linted),
+ * `.gitignore` is not consulted, and `css.parser.tailwindDirectives` is unset so
+ * every Tailwind at-rule in globals.css reports a parse error. `pnpm lint` fails
+ * on a freshly scaffolded project.
+ *
+ * Biome resolves the nearest configuration when the key is absent, so nesting a
+ * project inside a larger repository works without it — verified against Biome
+ * 2.5.14, which does not reject a nested root configuration.
  */
 function generateRootBiomeJson() {
 	const root = readJson("biome.json");
@@ -96,12 +106,15 @@ function generateRootBiomeJson() {
 
 	const result = {
 		...root,
-		root: false,
 		files: {
 			...root.files,
 			includes,
 		},
 	};
+
+	// Drop the key entirely rather than setting it to true, so the template
+	// cannot drift back to root: false.
+	if ("root" in result) delete result.root;
 
 	return `${JSON.stringify(result, null, "\t")}\n`;
 }

@@ -131,6 +131,16 @@ export async function waitForRedis(
 		intervalMs = parseInt(process.env.WORKER_HEALTH_INTERVAL_MS || "1000", 10),
 	} = config;
 
+	// See waitForDatabase: reject a config object in the healthCheck slot
+	// rather than failing with an opaque TypeError.
+	if (typeof healthCheck !== "function") {
+		throw new AppError(
+			"waitForRedis expects a health check function as its first argument.",
+			500,
+			"REDIS_HEALTH_CHECK_INVALID",
+		);
+	}
+
 	const reportThrottledError = throttledError(logger, 3000);
 
 	for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -189,6 +199,18 @@ export async function waitForDatabase(
 		maxRetries = parseInt(process.env.WORKER_DB_RETRIES || "30", 10),
 		intervalMs = parseInt(process.env.WORKER_DB_INTERVAL_MS || "2000", 10),
 	} = config;
+
+	// Guard against the config object being passed in the healthCheck slot:
+	// that surfaces as an opaque "healthCheck is not a function" TypeError and,
+	// because a TypeError is neither a schema nor a connection error, it
+	// rethrows on the first attempt so the retry config never applies.
+	if (typeof healthCheck !== "function") {
+		throw new AppError(
+			"waitForDatabase expects a health check function as its first argument.",
+			500,
+			"DATABASE_HEALTH_CHECK_INVALID",
+		);
+	}
 
 	const reportThrottledError = throttledError(logger, 5000);
 
@@ -379,7 +401,12 @@ async function startWorker() {
 
 		// Wait for database schema to be ready (migrations may still be running)
 		logger.info("Checking database schema readiness...");
-		await waitForDatabase(isDevMode ? { maxRetries: 5, intervalMs: 1000 } : {});
+		// healthCheck takes the first argument; the config object must not be
+		// passed in its slot or the call throws "healthCheck is not a function".
+		await waitForDatabase(
+			undefined,
+			isDevMode ? { maxRetries: 5, intervalMs: 1000 } : {},
+		);
 		logger.info("Database schema ready");
 
 		// Register a worker for each queue
