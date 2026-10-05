@@ -1,5 +1,57 @@
 # @usequark/quark-create-app
 
+## 1.24.2
+
+### Patch Changes
+
+- [#208](https://github.com/usequark/quark/pull/208) [`3b4f033`](https://github.com/usequark/quark/commit/3b4f0330acdfd2c4128612bdad7d93473118e50e) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Fix a crash on worker startup in every fresh scaffold.
+  
+  `startWorker()` called `waitForDatabase(config)` when the signature is
+  `(healthCheck, config)`, so the config object landed in the `healthCheck` slot
+  and every call threw `TypeError: healthCheck is not a function`.
+  
+  Worse than a crash loop: a `TypeError` is classified as neither a schema nor a
+  connection error, so it rethrew on attempt 1 as
+  `DATABASE_HEALTH_CHECK_FAILED` and the dev retry config never applied. The
+  sibling call to `waitForRedis` was already correct.
+  
+  The call now passes `undefined` first so the default health check applies, and
+  both `waitForDatabase` and `waitForRedis` reject a non-function health check up
+  front with a named `AppError` instead of an opaque `TypeError`.
+  
+  The unit tests missed this because they call `waitForDatabase` directly with a
+  function — `startWorker()` was never exercised. Added a test that asserts the
+  shape of the real call sites in `startWorker()`, verified to fail when the
+  original call is restored.
+
+- [#208](https://github.com/usequark/quark/pull/208) [`3b4f033`](https://github.com/usequark/quark/commit/3b4f0330acdfd2c4128612bdad7d93473118e50e) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Fix `pnpm lint` failing on a freshly scaffolded project.
+  
+  The scaffolded `biome.json` shipped `"root": false`. With that key Biome looks
+  for a root configuration in ancestor directories; a standalone scaffold has
+  none, so Biome falls back to its built-in defaults and **applies none of the
+  project's own config**. Three consequences, all observed on a real scaffold:
+  
+  - `files.includes` negations stop excluding anything, so the Prisma client under
+    `packages/db/src/generated` gets linted
+  - `vcs.useIgnoreFile` is not honoured, so gitignored files are checked
+  - `css.parser.tailwindDirectives` is unset, so every Tailwind at-rule in
+    `globals.css` reports `Tailwind-specific syntax is disabled` and formatting
+    aborts with it
+  
+  Measured with the scaffold's real per-package lint script: 1 of 7 packages failed
+  before the change, 0 of 7 after. At the project root the fix drops the checked
+  file count from 157 to 137 on a tree with a planted `src/generated`.
+  
+  The key is now absent rather than falsy, and the generator deletes it if the
+  monorepo config ever grows one, so the template cannot drift back.
+  `packages/cli/src/template-config.test.js` asserts no `root` key,
+  `tailwindDirectives: true`, `useIgnoreFile: true` and the generated-client
+  exclusion.
+  
+  `apps/web/biome.json` **keeps** `root: false`. It `extends` the project config,
+  and with both keys absent Biome rejects the setup as a nested root
+  configuration — verified, it exits before checking a single file.
+
 ## 1.24.1
 
 ### Patch Changes
