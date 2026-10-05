@@ -330,7 +330,7 @@ Defined in [.github/workflows/ci.yml](../.github/workflows/ci.yml):
 └─────────────────────────────────────────────────────────────┘
                           ↓
 ┌──────────────────────────────────────────────────────────────┐
-│ Job 1: LINT (all platforms, Node 22)                        │
+│ Job 1: LINT (all platforms, Node 24)                        │
 │ - Biome format check                                        │
 │ - Biome lint                                                │
 │ Run time: ~1-2 min                                          │
@@ -344,7 +344,7 @@ Defined in [.github/workflows/ci.yml](../.github/workflows/ci.yml):
 └──────────────────────────────────────────────────────────────┘
                           ↓
 ┌──────────────────────────────────────────────────────────────┐
-│ Job 3: TEST + SERVICES (ubuntu-latest, Node 22)            │
+│ Job 3: TEST + SERVICES (ubuntu-latest, Node 24)            │
 │ Services:                                                   │
 │   - PostgreSQL 16 (quark_test DB)                          │
 │   - Redis 7                                                │

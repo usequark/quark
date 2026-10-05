@@ -1,4 +1,4 @@
-FROM node:22-alpine@sha256:9385cd9f3001dfc3431e8ead12c43e9e1f87cc1b9b5c6cfd0f73865d405b27c4 AS builder
+FROM node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1 AS builder
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
@@ -12,7 +12,7 @@ RUN pnpm install --frozen-lockfile \
 	&& pnpm db:generate \
 	&& pnpm --dir apps/web build:deploy
 
-FROM node:22-alpine@sha256:9385cd9f3001dfc3431e8ead12c43e9e1f87cc1b9b5c6cfd0f73865d405b27c4 AS runtime
+FROM node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1 AS runtime
 
 RUN apk upgrade --no-cache
 

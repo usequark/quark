@@ -13,7 +13,7 @@
   &nbsp;
   <a href="https://www.npmjs.com/package/@usequark/quark-create-app"><img src="https://img.shields.io/npm/v/@usequark/quark-create-app?label=Quark%20Create" alt="Quark Create version" /></a>
   &nbsp;
-  <a href="https://nodejs.org"><img src="https://img.shields.io/badge/Node.js-22-brightgreen?logo=node.js&logoColor=white" alt="Node.js 22" /></a>
+  <a href="https://nodejs.org"><img src="https://img.shields.io/badge/Node.js-24-brightgreen?logo=node.js&logoColor=white" alt="Node.js 24" /></a>
   &nbsp;
   <a href="https://nextjs.org"><img src="https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white" alt="Next.js 16" /></a>
   &nbsp;
