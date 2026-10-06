@@ -34,8 +34,14 @@ mock.module(authMiddlewareUrl, {
 
 // Storage mock. `storageCalls` records the order of every storage operation so
 // the tests can assert that the row is deleted *before* the blob is removed.
+// `storageKeysRead` records what GET asked the adapter for.
 let storageCalls = [];
 let storageDeleteImpl = async () => {};
+let storageKeysRead = [];
+let storageGetImpl = async () => ({
+	body: Buffer.from("file-bytes"),
+	contentType: null,
+});
 
 const core = await import("@usequark/quark-core");
 
@@ -51,6 +57,10 @@ mock.module("@usequark/quark-core", {
 		createStorage: () => ({
 			provider: "local",
 			put: async () => {},
+			get: async (key) => {
+				storageKeysRead.push(key);
+				return storageGetImpl(key);
+			},
 			delete: async (key) => {
 				storageCalls.push(`storage.delete:${key}`);
 				return storageDeleteImpl(key);
@@ -66,17 +76,34 @@ mock.module("@usequark/quark-core", {
 
 let originalPrisma;
 
-/** The File row `findById` returns. */
-let fileRecord;
+/** The File row returned by `findById`, or null. */
+let fileById;
+/** The File row returned by `findByStorageKey`, or null. */
+let fileByStorageKey;
 /** The row count `deleteMany` reports — 0 simulates a concurrent delete. */
 let deleteCount;
 /** When set, `deleteMany` rejects with this error instead. */
 let deleteError;
+/** Every `findUnique` the route issued, as `column:value`. */
+let dbLookups = [];
 
 function setPrismaMock() {
 	globalThis.__prisma = {
 		file: {
-			findUnique: mock.fn(async () => fileRecord ?? null),
+			// `findById` queries `where: { id }`; `findByStorageKey` queries
+			// `where: { storageKey }`. Distinguishing on the field keeps the mock
+			// faithful, so a test cannot pass by accident when the route queries the
+			// wrong column.
+			findUnique: mock.fn(async ({ where }) => {
+				if (where.storageKey !== undefined) {
+					dbLookups.push(`findByStorageKey:${where.storageKey}`);
+					return where.storageKey === UPLOAD.storageKey
+						? (fileByStorageKey ?? null)
+						: null;
+				}
+				dbLookups.push(`findById:${where.id}`);
+				return fileById ?? null;
+			}),
 			deleteMany: mock.fn(async () => {
 				if (deleteError) throw deleteError;
 				storageCalls.push("db.delete");
@@ -100,12 +127,26 @@ const UPLOAD = {
 function resetFixtures() {
 	storageCalls = [];
 	storageDeleteImpl = async () => {};
-	fileRecord = { ...UPLOAD };
+	storageKeysRead = [];
+	storageGetImpl = async () => ({
+		body: Buffer.from("file-bytes"),
+		contentType: null,
+	});
+	fileById = { ...UPLOAD };
+	fileByStorageKey = null;
 	deleteCount = 1;
 	deleteError = null;
+	dbLookups = [];
 }
 
-const { DELETE } = await import("./route.js");
+const { GET, DELETE } = await import("./route.js");
+
+/** A GET for a file, addressed by the given path segment. */
+function getRequest(segment = "file-1") {
+	return new Request(
+		`http://localhost/api/files/${encodeURIComponent(segment)}`,
+	);
+}
 
 /** A CSRF-bearing DELETE request, as `withCsrfProtection` requires. */
 function deleteRequest(id = "file-1") {
@@ -134,6 +175,80 @@ afterEach(() => {
 });
 
 // ── Tests ────────────────────────────────────────────────────────────────────
+
+test("GET /api/files/[id] serves a file addressed by database id", async () => {
+	const response = await GET(getRequest("file-1"), {
+		params: { id: "file-1" },
+	});
+
+	assert.strictEqual(response.status, 200);
+	assert.strictEqual(response.headers.get("Content-Type"), "application/pdf");
+	assert.strictEqual(await response.text(), "file-bytes");
+	// The object is read by the key held in the database, never by the URL.
+	assert.deepStrictEqual(storageKeysRead, ["uploads/2026/02/abc-report.pdf"]);
+});
+
+test("GET /api/files/[id] serves a file addressed by storage key", async () => {
+	// `getAssetUrl()` builds `/api/files/<key>` from a storage key. Before this,
+	// the route looked the segment up by database id only, so every URL that
+	// function produces was a 404.
+	fileById = null;
+	fileByStorageKey = { ...UPLOAD };
+
+	const key = "uploads/2026/02/abc-report.pdf";
+	const response = await GET(getRequest(key), { params: { id: key } });
+
+	assert.strictEqual(response.status, 200);
+	assert.strictEqual(await response.text(), "file-bytes");
+	assert.deepStrictEqual(storageKeysRead, [key]);
+
+	// The route must actually reach for the storageKey column. Asserting only on
+	// the 200 would pass even if the lookup hit `id` and matched by coincidence.
+	assert.deepStrictEqual(dbLookups, [
+		`findById:${key}`,
+		`findByStorageKey:${key}`,
+	]);
+});
+
+test("GET by database id does not also query the storage key", async () => {
+	// The id path costs one query, not two.
+	await GET(getRequest("file-1"), { params: { id: "file-1" } });
+
+	assert.deepStrictEqual(dbLookups, ["findById:file-1"]);
+});
+
+test("GET returns 404 for an unknown id", async () => {
+	fileById = null;
+
+	const response = await GET(getRequest("nope"), { params: { id: "nope" } });
+
+	assert.strictEqual(response.status, 404);
+	assert.deepStrictEqual(storageKeysRead, []);
+});
+
+test("GET does not promise immutability on a non-versioned URL", async () => {
+	// `immutable` tells caches never to revalidate for a year. The URL carries no
+	// version segment and nothing in the path is content-addressed, so any path
+	// that reuses an identifier would leave every browser and CDN on the old bytes
+	// indefinitely. A bounded max-age bounds that window instead.
+	const response = await GET(getRequest("file-1"), {
+		params: { id: "file-1" },
+	});
+	const cacheControl = response.headers.get("Cache-Control");
+
+	assert.ok(cacheControl, "no Cache-Control header");
+	assert.ok(
+		!cacheControl.includes("immutable"),
+		`URL is not versioned, so immutable is a promise this route cannot keep: ${cacheControl}`,
+	);
+
+	const maxAge = Number(/max-age=(\d+)/.exec(cacheControl)?.[1]);
+	assert.ok(Number.isFinite(maxAge), `no parseable max-age: ${cacheControl}`);
+	assert.ok(
+		maxAge < 31536000,
+		`max-age of ${maxAge} is long enough to outlive a replaced file`,
+	);
+});
 
 test("DELETE /api/files/[id] deletes the row then the storage object", async () => {
 	const response = await DELETE(deleteRequest(), { params: { id: "file-1" } });
@@ -196,7 +311,7 @@ test("DELETE returns 404 and leaves storage alone when a concurrent delete won",
 });
 
 test("DELETE returns 404 when the file does not exist", async () => {
-	fileRecord = null;
+	fileById = null;
 
 	const response = await DELETE(deleteRequest(), { params: { id: "nope" } });
 
@@ -205,7 +320,7 @@ test("DELETE returns 404 when the file does not exist", async () => {
 });
 
 test("DELETE returns 403 for a user who is neither uploader nor admin", async () => {
-	fileRecord = { ...UPLOAD, uploadedById: "someone-else" };
+	fileById = { ...UPLOAD, uploadedById: "someone-else" };
 
 	const response = await DELETE(deleteRequest(), { params: { id: "file-1" } });
 
@@ -218,7 +333,7 @@ test("DELETE allows an admin to delete another user's file", async () => {
 	requireAuthImpl = async () => ({
 		user: { id: "admin-1", role: "admin", email: "admin@example.com" },
 	});
-	fileRecord = { ...UPLOAD, uploadedById: "someone-else" };
+	fileById = { ...UPLOAD, uploadedById: "someone-else" };
 
 	const response = await DELETE(deleteRequest(), { params: { id: "file-1" } });
 

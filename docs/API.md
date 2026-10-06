@@ -133,7 +133,7 @@ List files uploaded by the current user. Requires authentication.
 
 ### `GET /api/files/[id]`
 
-Download/serve a file by ID. No authentication required (access by knowledge of ID). Images are served inline; other types as attachment downloads. Responses include `Cache-Control: immutable`.
+Download/serve a file by database ID or storage key. No authentication required (access by knowledge of the identifier). Images are served inline; other types as attachment downloads. Responses include a bounded `Cache-Control: public, max-age=3600` — the URL carries no version segment, so `immutable` would be a promise the route cannot keep.
 
 ### `DELETE /api/files/[id]`
 

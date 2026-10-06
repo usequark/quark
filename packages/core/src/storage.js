@@ -187,11 +187,16 @@ export function generateStorageKey(originalFilename, options = {}) {
  *
  * Checks `ASSET_CDN_URL` first - if set, prepends it to the key.
  * This is provider-agnostic: works with any CDN (CloudFront, Cloudflare,
- * Bunny, Fastly, etc.) as long as the CDN is pointed at the same bucket.
+ * Bunny, Fastly, etc.) provided the CDN is rooted at the bucket, so that a
+ * request for `<cdn>/<key>` maps to the object stored at `<key>`. That is the
+ * standard arrangement for a CDN in front of a bucket and needs no rewrite
+ * rules. If your CDN is not bucket-rooted, set `S3_PUBLIC_URL` instead and use
+ * the S3 adapter's `getPublicUrl()`.
  *
  * Falls back to the local API route (`/api/files/<key>`) when no CDN is
  * configured - covers local development and any environment where
- * `STORAGE_PROVIDER=local` is used.
+ * `STORAGE_PROVIDER=local` is used. The scaffolded `/api/files/[id]` route
+ * accepts a storage key as well as a database id, so this resolves.
  *
  * @param {string} key - Storage key (e.g. "uploads/2026/02/abc-photo.jpg")
  * @returns {string} Full CDN URL or local API route
