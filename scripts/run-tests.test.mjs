@@ -198,6 +198,110 @@ test("collects test files from nested directories", () => {
 	assert.ok(existsSync(marker), "nested test files must be collected");
 });
 
+test("collects test files from a Next.js [id] directory", () => {
+	// `node --test` matches its file arguments as globs. A dynamic route segment
+	// like `[id]` is a character class matching a single `i` or `d`, so the
+	// unescaped path matched nothing - and the failure was silent, reporting
+	// zero tests and exiting 0. Every test co-located in a dynamic segment was
+	// therefore never collected: `api/files/[id]/route.test.js` in the scaffold,
+	// plus `users/[id]` and `[...nextauth]`, which have no tests for the same
+	// reason.
+	const marker = path.join(
+		mkdtempSync(path.join(tmpdir(), "run-tests-marker-")),
+		"ran",
+	);
+	const dir = makeFixture({
+		"src/app/api/files/[id]/route.test.js": sentinelTest(marker),
+	});
+
+	const result = run([dir]);
+
+	assert.ok(
+		existsSync(marker),
+		"a test file in a [id] directory must be collected and executed",
+	);
+	assert.equal(result.code, 0);
+});
+
+test("collects test files from a [...slug] catch-all directory", () => {
+	const marker = path.join(
+		mkdtempSync(path.join(tmpdir(), "run-tests-marker-")),
+		"ran",
+	);
+	const dir = makeFixture({
+		"src/app/api/files/[...slug]/route.test.js": sentinelTest(marker),
+	});
+
+	run([dir]);
+
+	assert.ok(
+		existsSync(marker),
+		"a test file in a [...slug] directory must be collected and executed",
+	);
+});
+
+test("collects bracketed and unbracketed test files in the same run", () => {
+	// Escaping must not disturb the paths around it. A blanket escape that broke
+	// ordinary filenames would still pass the two tests above.
+	const bracketMarker = path.join(
+		mkdtempSync(path.join(tmpdir(), "run-tests-marker-")),
+		"ran",
+	);
+	const plainMarker = path.join(
+		mkdtempSync(path.join(tmpdir(), "run-tests-marker-")),
+		"ran",
+	);
+	const dir = makeFixture({
+		"src/app/api/files/[id]/route.test.js": sentinelTest(bracketMarker),
+		"src/app/api/files/route.test.js": sentinelTest(plainMarker),
+		"src/lib/thing.test.js": sentinelTest(plainMarker),
+	});
+
+	run([dir]);
+
+	assert.ok(existsSync(bracketMarker), "bracketed test must run");
+	assert.ok(existsSync(plainMarker), "unbracketed tests must still run");
+});
+
+test("the glob-escaping rule is load-bearing, not incidental", () => {
+	// The same reasoning as the mutation test below: prove that dropping the
+	// escape regresses a real collection rather than trusting that it does.
+	const original = readFileSync(SCRIPT, "utf-8");
+	const mutatedSource = original.replace(
+		"...files.map(escapeGlobChars),",
+		"...files,",
+	);
+	assert.notEqual(
+		mutatedSource,
+		original,
+		"mutation applied - the escape call is no longer where this test expects it",
+	);
+
+	const dir = makeFixture({
+		"src/app/api/files/[id]/route.test.js":
+			'import test from "node:test";\ntest("x", () => {});\n',
+	});
+	const mutated = path.join(dir, "run-tests-mutated.mjs");
+	writeFileSync(mutated, mutatedSource);
+
+	const result = run([dir], { script: mutated });
+
+	// `collectTests` walks the filesystem with readdirSync, so it does find the
+	// file and `files.length` is 1 - the empty-suite message is never printed.
+	// The drop happens one step later, at `node --test`, which reports zero
+	// tests. That is what makes the bug silent: the suite looks like it ran.
+	assert.match(
+		result.stdout,
+		/^ℹ tests 0$/m,
+		"without the escape, node --test reports zero tests for the bracketed path",
+	);
+	assert.equal(
+		result.code,
+		0,
+		"and it exits 0 all the same, which is why nothing flagged the drop",
+	);
+});
+
 test("the empty-suite rule is what makes the runner exit 0, not the absence of tests", () => {
 	// Guards against the guard. Restoring the old `process.exit(1)` looks like
 	// a harmless one-character revert and reintroduces the unpushable scaffold
