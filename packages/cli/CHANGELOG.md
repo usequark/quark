@@ -1,5 +1,70 @@
 # @usequark/quark-create-app
 
+## 1.25.0
+
+### Minor Changes
+
+- [#219](https://github.com/usequark/quark/pull/219) [`265e7fd`](https://github.com/usequark/quark/commit/265e7fd16dda9a0f2ccbe344db4aba7e8cad4eab) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Stop the healthcheck from being the thing that kills the service, and stop it
+  publishing credentials.
+  
+  `/api/health` is the platform healthcheck, and it had three independent ways to
+  make an orchestrator restart a container that was otherwise fine.
+  
+  **Probes ran one after another, under a deadline the first two probes could
+  exhaust.** Database, Redis, storage, and queues were awaited in sequence. Each of
+  the first two carries its own 3s timeout, so a database that was slow to refuse
+  plus a Redis that was slow to refuse spent the whole 5s budget before storage was
+  even attempted. The outer timer then fired, the route returned **500**, and the
+  container restarted — dropping every warm connection and producing a fresh
+  connection storm on the dependency that was already struggling. The same held
+  when a probe never settled at all. All probes now run concurrently, each under
+  its own deadline capped by the overall budget, so the aggregate completes inside
+  the budget no matter which dependency is slow.
+  
+  **The route returned 500 when it ran out of time.** It now always answers **200**
+  and reports the verdict in the body's `status` field (`ok` / `degraded`), plus a
+  `durationMs` and a `Cache-Control: no-store`. Callers that need a hard verdict
+  should read `status`, not the status code. Note this makes a fully degraded
+  instance still report healthy to the orchestrator; splitting liveness from
+  readiness is the real fix and is deliberately out of scope here.
+  
+  **The healthcheck was rate limited.** `/api/health` fell into the 100-request
+  `api` bucket, so a probe arriving in a full bucket got a **429** — which the
+  orchestrator also reads as unhealthy. `/api/health` is now exempt from rate
+  limiting entirely: no counter, no `X-RateLimit-*` headers.
+  
+  Separately, on the credential path: error messages are now redacted in
+  production before they leave the route. A probe can report failure by rejecting
+  *or* by resolving with `{ status: "error", message }`, and the old
+  `pingRedis` took the second route — so normalising only rejections would still
+  have published the Redis password. `pingRedis` no longer includes it in the
+  first place (see the `@usequark/quark-core` changelog), and the route is the
+  second layer.
+
+### Patch Changes
+
+- [#220](https://github.com/usequark/quark/pull/220) [`064f70e`](https://github.com/usequark/quark/commit/064f70e5e580d60a27fc42704a6cac9d0ed587ff) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Initialise scaffolded repositories on `main` instead of inheriting the machine's default branch
+  
+  `initializeGit` ran a bare `git init`, which inherits `init.defaultBranch` from
+  the machine's global git config. That setting is unset almost everywhere, and git
+  then falls back to `master` and prints a hint nobody reads — so the same published
+  CLI produced a scaffold on `master` in one terminal and on `main` in another. The
+  scaffold was not reproducible, and neither were the README's
+  `git push -u origin main` instructions.
+  
+  `git init -b main` pins the branch name, matching the name GitHub defaults a new
+  repository to. Falls back to a bare `init` on git older than 2.28, which still
+  produces a working repository using git's own default.
+
+- [#219](https://github.com/usequark/quark/pull/219) [`265e7fd`](https://github.com/usequark/quark/commit/265e7fd16dda9a0f2ccbe344db4aba7e8cad4eab) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Stop writing the Redis password into worker logs.
+  
+  `waitForRedis` threw `Redis unavailable at ${getRedisUrl()}` when its retries ran
+  out, and `startWorker` logged `Redis connected` with the same value as the
+  address. `getRedisUrl()` returns `REDIS_URL` verbatim, so a Railway or managed
+  Redis URL put the password into the container log and from there into whatever
+  aggregates it. Both sites now use `getRedisEndpoint()`, which returns
+  `host:port` with the credentials removed.
+
 ## 1.24.3
 
 ### Patch Changes
