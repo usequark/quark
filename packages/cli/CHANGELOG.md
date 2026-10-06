@@ -1,5 +1,152 @@
 # @usequark/quark-create-app
 
+## 1.25.1
+
+### Patch Changes
+
+- [#224](https://github.com/usequark/quark/pull/224) [`0fc3c65`](https://github.com/usequark/quark/commit/0fc3c65bae51e1e6777589a6242047df2cdcd5c1) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Make `GET /api/files/[id]` resolve a storage key, and stop promising the bytes
+  under a URL never change.
+  
+  The route looked its path segment up by database id, so every URL produced by
+  `getAssetUrl()` — which builds `/api/files/<storage key>` — was a 404. It now
+  accepts either form. They are disjoint: a cuid never contains `/`, a generated
+  storage key always does, so the id path costs no extra query. The bytes are read
+  by the key held in the database, never by whatever arrived in the URL.
+  
+  `Cache-Control` drops `immutable`. The URL has no version segment and nothing
+  in it is content-addressed, so `immutable` (never revalidate for a year) was a
+  promise this route cannot keep: a reused identifier would leave every browser
+  and CDN on the old bytes indefinitely. Now a bounded `public, max-age=3600`,
+  which bounds that window instead.
+
+- [#217](https://github.com/usequark/quark/pull/217) [`26b0c58`](https://github.com/usequark/quark/commit/26b0c58aed7c9b695765fa2affda3b96ce4e5696) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Route `FormField`'s `className` to the control and put error ARIA where a
+  screen reader can reach it.
+  
+  Two independent bugs in `packages/ui/src/form-field.js`, both measured by
+  rendering the component under jsdom and dumping the resulting DOM.
+  
+  `className` was interpolated onto the layout `<div>`, so a caller could not
+  style the input. Every sibling component in the package (`Input`, `Textarea`,
+  `Select`, `Card`, …) appends `className` to its own root element, which is what
+  the prop means everywhere else. Measured before: `className` present on the
+  wrapper, absent from the `<input>`. The prop was effectively useless for its
+  documented purpose.
+  
+  `aria-invalid` and `aria-describedby` were placed on a plain wrapper `<div>`
+  around caller-supplied children. Those attributes have no effect on a
+  non-interactive element, so when `FormField` was given a `<Textarea>` or
+  `Select` child the error was never associated with the control a screen reader
+  is actually sitting on. Measured before: both attributes on the wrapper
+  `<div>`, and `null` on the `<textarea>`. The default `<Input>` path was already
+  correct, which is why the existing test passed — it asserted against the wrapper
+  rather than the control.
+  
+  `className` now applies to the control, matching the rest of the package, and a
+  new `wrapperClassName` prop styles the layout container for anyone who was
+  relying on the old behaviour. The error association is cloned onto a custom
+  child so explicit props on that child still win.
+  
+  Six tests added to `form-field.integration-test.js`, including a guard that no
+  `div[aria-invalid]` survives in the DOM. Verified to fail 2 of 10 when the old
+  wrapper behaviour is restored.
+
+- [#217](https://github.com/usequark/quark/pull/217) [`26b0c58`](https://github.com/usequark/quark/commit/26b0c58aed7c9b695765fa2affda3b96ce4e5696) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Collect `*.integration-test.js` in the test runner, so component render tests
+  actually run in CI.
+  
+  `scripts/run-tests.mjs` collected only files ending in `.test.js`. The
+  integration suites are named `*.integration-test.js` — a hyphen, not a dot —
+  so none of them were picked up. Two suites in `packages/ui` were affected
+  (`form-field.integration-test.js`, 10 tests; `lightbox.integration-test.js`,
+  5 tests). Every one passed when run by hand and none had ever run in CI, so a
+  green pipeline was reporting on a subset of the tests in the repo.
+  
+  The filename split is now deliberate and documented in the collector.
+  `--exclude=integration.test.js` keeps its meaning: it matches
+  `apps/web/src/app/api/integration.test.js` and not the hyphenated files, which
+  is why widening the glob does not drag the API integration suite back in.
+  
+  Both suites also needed a teardown fix to survive being collected. Each test
+  called `root.unmount()` outside `act()`, so React flushed the unmount after the
+  `after()` hook had already deleted the `window`/`document` globals — surfacing
+  as `ReferenceError: window is not defined` once the file was run without
+  `--test-force-exit`. The 15 tests all passed while the file itself still exited
+  non-zero. Unmounts are now wrapped in `act()` and detach their container.
+  
+  `packages/ui` counts go from 110 to 125 tests. The runner is also synced into
+  scaffolded projects, where the same gap existed against their own
+  `*.integration-test.js` files.
+
+- [#223](https://github.com/usequark/quark/pull/223) [`a819c6d`](https://github.com/usequark/quark/commit/a819c6df626d65f86111705b320c9e1ef65f5e77) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Delete the database row before the stored bytes, so a failed delete cannot
+  destroy a file.
+  
+  `DELETE /api/files/[id]` removed the storage object first and the row second:
+  
+  ```js
+  await storage.delete(record.storageKey);
+  await file.delete(record.id);
+  ```
+  
+  `File` has no incoming relations today, so the row delete cannot currently fail
+  on a foreign key — but the moment one is added, `prisma.file.delete` throws and
+  the bytes are already gone. The row survives pointing at an object that no
+  longer exists, and there is no way back: the blob was the only copy. The same
+  inverted order was in the worker's orphaned-file cleanup job.
+  
+  Both now delete the row first and the storage object second, which inverts the
+  failure mode. A refused row delete leaves an orphaned blob — junk that the
+  existing cleanup job sweeps up — instead of a row pointing at deleted bytes. A
+  `P2003` foreign-key error is now reported as a `409`, with the stored bytes
+  intact.
+  
+  The row delete also uses a new `file.deleteIfPresent()` (`deleteMany`, returning
+  a count) instead of `file.delete()`, which throws `P2025` when the row is
+  already gone. Two overlapping DELETEs both pass the ownership check; the loser
+  now gets a `404` and skips the storage delete rather than racing the winner's.
+  Previously it would throw `P2025` and surface as a `500`.
+  
+  A failed storage delete still returns `200`: the row is already gone, so the
+  delete succeeded as far as the caller is concerned, and an error the client
+  cannot act on would be misleading. The failure is logged rather than swallowed.
+
+- [#217](https://github.com/usequark/quark/pull/217) [`26b0c58`](https://github.com/usequark/quark/commit/26b0c58aed7c9b695765fa2affda3b96ce4e5696) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Mount `ThemeProvider` in the scaffolded root layout and make a missing provider
+  fail loudly.
+  
+  `packages/ui/src/theme.js` exports `ThemeProvider`, `useTheme` and
+  `ThemeToggle`, and they are documented as public API in `CLAUDE.md`,
+  `docs/ARCHITECTURE.md` and `docs/QUARK_USAGE.md` — but `layout.js` never
+  mounted the provider. Nothing raised, so nothing looked wrong.
+  
+  The failure mode was worse than a missing feature. `ThemeCtx` defaulted to
+  `{ theme: "dark", setTheme: () => {} }` and `useTheme()` returned that default
+  instead of complaining, so `ThemeToggle` — documented as "Must be rendered
+  inside a ThemeProvider" — rendered a real, focusable, correctly-labelled button
+  that did nothing on click and always read "Dark Mode" regardless of the actual
+  theme. The home page was unaffected because it uses a separate
+  `HomeThemeToggle` that drives `localStorage` and dispatches `THEME_CHANGE_EVENT`
+  directly; that component is kept, and the provider already listened for the
+  event.
+  
+  Measured on `main` before the change by rendering a bare `ThemeToggle` under
+  jsdom and clicking it: `data-theme` stayed `dark`, `localStorage` was never
+  written, and not one error was logged. The identical component inside a
+  provider flipped `dark` → `light`.
+  
+  `RootLayout` now wraps `{children}` in `<ThemeProvider>`. The provider emits no
+  markup, so it cannot affect layout, and its `useLayoutEffect` runs after
+  hydration — the blocking pre-paint script in `<head>` and `suppressHydrationWarning`
+  are unchanged. `useTheme()` now throws when no provider is above it, so the same
+  mistake surfaces on the first render instead of shipping a dead button.
+  
+  `packages/ui/src/theme.test.js` is the first test in that package to render the
+  theme system at all — every previous theme-adjacent test asserted only the
+  export contract, which is why [#6](https://github.com/usequark/quark/issues/6) was invisible. It proves a toggle click moves
+  `data-theme`, that the choice persists, that an out-of-tree
+  `THEME_CHANGE_EVENT` still syncs React state, and that rendering without a
+  provider throws. Verified to fail 2 of 9 when the old no-op default is
+  restored. `apps/web/src/app/layout-theme.test.js` pins the wiring and fails when
+  the wrapper is removed. Two harness facts are documented in that file: jsdom
+  implements no `matchMedia`, and Node has no `localStorage` global.
+
 ## 1.25.0
 
 ### Minor Changes
