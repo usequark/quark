@@ -156,6 +156,67 @@ test("generateIacFile creates .railway/railway.ts with preserve() for secrets", 
 	);
 });
 
+// The generated IaC file is only evaluated by the Railway CLI, at
+// `railway config apply`, in the user's own account — never in this repo. So a
+// helper that is called but never imported produced a file that passed every
+// assertion above and still died with `ReferenceError: preserve is not defined`
+// on the first real deploy, for every scaffolded project.
+//
+// Asserting on the import list directly catches that class of bug without
+// needing the Railway SDK installed. The scope check is deliberately
+// conservative: it fails on any helper call whose name is absent from the
+// import statement, so adding a helper to a template without importing it
+// fails here rather than in production.
+test("generated IaC imports every helper it calls", async () => {
+	const { generateIacFile } = await import("./iac.js");
+	const tmpDir = await makeTempDir();
+	const iacPath = path.join(tmpDir, ".railway", "railway.ts");
+
+	await generateIacFile({
+		iacPath,
+		services: [
+			{ name: "web", kind: "web", relativeRootDir: "apps/web" },
+			{ name: "worker", kind: "worker", relativeRootDir: "apps/worker" },
+		],
+		secrets: { AUTH_SECRET: "preserve()" },
+		variableRefs: { DATABASE_URL: "${{Postgres.DATABASE_URL}}" },
+		projectName: "import-scope-test",
+	});
+
+	const content = await fs.readFile(iacPath, "utf8");
+	const importLine = content.split("\n").find((l) => l.startsWith("import "));
+	assert.ok(importLine, "generated file must have an import line");
+
+	const imported = new Set(
+		importLine
+			.replace(/^import\s*\{/, "")
+			.replace(/\}\s*from.*$/, "")
+			.split(",")
+			.map((n) => n.trim())
+			.filter(Boolean),
+	);
+
+	// Everything the body calls, ignoring member access like `ctx.shared.X`.
+	const body = content.slice(content.indexOf("export default"));
+	const called = new Set(
+		[...body.matchAll(/(?<![.\w$])([A-Za-z_$][\w$]*)\s*\(/g)].map((m) => m[1]),
+	);
+
+	const local = new Set(["defineRailway"]);
+	for (const name of called) {
+		if (local.has(name)) continue;
+		assert.ok(
+			imported.has(name),
+			`generated IaC calls ${name}() but does not import it — this throws "ReferenceError: ${name} is not defined" at railway config apply`,
+		);
+	}
+
+	// And the specific regression, pinned by name so the intent survives.
+	assert.ok(imported.has("preserve"), "preserve must be imported");
+	assert.ok(imported.has("project"), "project must be imported");
+	assert.ok(imported.has("service"), "service must be imported");
+});
+
 test("escapeTsString escapes dangerous characters", async () => {
 	const { escapeTsString } = await import("./iac.js");
 
