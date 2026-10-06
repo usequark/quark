@@ -19,7 +19,7 @@ pnpm db:seed           # Seed the database (admin user + sample data)
 pnpm dev               # Start the app (and worker, if included)
 ```
 
-Open [http://localhost:3000](http://localhost:3000)
+Open [http://localhost:__QUARK_WEB_PORT__](http://localhost:__QUARK_WEB_PORT__)
 
 ## UI References
 

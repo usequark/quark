@@ -6,8 +6,7 @@
 
 1. `CLAUDE.md` - project rules and conventions (keep this updated)
 2. `docs/` - guides and walkthroughs
-3. `openapi.yaml` - API contract
-4. `.opencode/skills/` - embedded skills (how to build bookings, CRM, CMS, AI, and more on this project)
+3. `.opencode/skills/` - embedded skills (how to build bookings, CRM, CMS, AI, and more on this project)
 
 ## Quick start
 
@@ -18,4 +17,4 @@ pnpm db:migrate        # Apply migrations
 pnpm dev               # Start the app (and worker, if included)
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:__QUARK_WEB_PORT__](http://localhost:__QUARK_WEB_PORT__).
