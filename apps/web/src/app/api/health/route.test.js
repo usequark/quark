@@ -19,6 +19,17 @@ let originalNodeEnv;
 /** Probe behaviour for the current test. Mutated by each test. */
 let probes;
 
+/**
+ * Names of the probe functions the route actually invoked.
+ *
+ * `probes` holds the *fixtures* each probe would use; this records that the
+ * probe ran at all. They are not the same thing — a probe whose fixture is never
+ * consulted is still a probe that ran, and only this set proves the route wired
+ * it in. The `pingRedis` / `pingDatabase` fixtures below record their own name,
+ * so every probe is observable here.
+ */
+let probesRan;
+
 /** Resets every probe to a passing baseline. */
 function resetProbes() {
 	probes = {
@@ -35,14 +46,25 @@ function resetProbes() {
 
 resetProbes();
 
+probesRan = new Set();
+
 const core = await import("@usequark/quark-core");
 
 mock.module("@usequark/quark-db", {
 	namedExports: {
-		pingDatabase: () => probes.database(),
+		pingDatabase: () => {
+			probesRan.add("database");
+			return probes.database();
+		},
 	},
 });
 
+// `checkStorage` / `checkQueues` are overridden rather than `createStorage` /
+// `getRegisteredQueues`. The route now passes these two straight into
+// `runHealthChecks`, and the real implementations reach for the adapter and the
+// queue registry through health.js's *own* imports — which a barrel mock does
+// not intercept. Mocking the probe functions themselves is what keeps this test
+// about the route's wiring; their internals are covered by health.test.js.
 mock.module("@usequark/quark-core", {
 	namedExports: {
 		...core,
@@ -52,8 +74,23 @@ mock.module("@usequark/quark-core", {
 			warn() {},
 			debug() {},
 		}),
-		pingRedis: () => probes.redis(),
-		createStorage: () => probes.storage(),
+		pingRedis: () => {
+			probesRan.add("redis");
+			return probes.redis();
+		},
+		checkStorage: async () => {
+			probesRan.add("storage");
+			const storage = probes.storage();
+			await storage.put(".health-check-sentinel", Buffer.from("ok"), {
+				contentType: "text/plain",
+			});
+			await storage.delete(".health-check-sentinel");
+			return { status: "ok", provider: storage.provider };
+		},
+		checkQueues: async () => {
+			probesRan.add("queues");
+			return core.checkQueues(() => probes.queues());
+		},
 		getRegisteredQueues: () => probes.queues(),
 	},
 });
@@ -75,6 +112,7 @@ beforeEach(() => {
 	globalThis.fetch = mock.fn(async () => new Response("ok", { status: 200 }));
 
 	resetProbes();
+	probesRan.clear();
 });
 
 afterEach(() => {
@@ -301,6 +339,36 @@ describe("GET /api/health", () => {
 			body.checks.redis.message,
 			"Redis unreachable at cache.internal:6379",
 		);
+	});
+
+	test("probes every dependency the route wires in", async () => {
+		// The route's remaining job is wiring: which probes run, and that all four
+		// reach the aggregate. The concurrency and deadline behaviour those probes
+		// need now lives in core and is covered by health.test.js.
+		probes.queues = () =>
+			new Map([
+				[
+					"emails",
+					{
+						getWaitingCount: async () => {
+							probesRan.add("queues:depth");
+							return 0;
+						},
+						getActiveCount: async () => 0,
+						getFailedCount: async () => 0,
+					},
+				],
+			]);
+
+		const body = await (await GET()).json();
+
+		assert.strictEqual(body.status, "ok");
+		for (const probe of ["database", "redis", "storage", "queues"]) {
+			assert.ok(probesRan.has(probe), `route never ran the ${probe} probe`);
+		}
+		// The queue probe is reached through getRegisteredQueues, so the registry
+		// itself has to be consulted.
+		assert.ok(probesRan.has("queues:depth"), "queue depths were never read");
 	});
 
 	test("sets Cache-Control: no-store so a probe result is never cached", async () => {

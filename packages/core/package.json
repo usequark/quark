@@ -35,6 +35,7 @@
 		"./db": "./src/db.js",
 		"./email": "./src/email.js",
 		"./errors": "./src/errors.js",
+		"./health": "./src/health.js",
 		"./locale": "./src/locale.js",
 		"./logger": "./src/logger.js",
 		"./metrics": "./src/metrics.js",

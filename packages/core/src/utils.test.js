@@ -226,10 +226,42 @@ test("redactUrl", async (t) => {
 		assert(!result.includes("hunter2"), `password leaked: ${result}`);
 	});
 
+	await t.test("strips credentials from a URL embedded mid-message", () => {
+		// The shape drivers actually produce. The old regex was anchored to the
+		// start of the string, so a credential appearing after any prefix survived
+		// intact — which is exactly the form a failed connection reports.
+		const result = redactUrl(
+			"connect ECONNREFUSED redis://default:hunter2@cache.internal:6379",
+		);
+
+		assert(!result.includes("hunter2"), `password leaked: ${result}`);
+		assert(!result.includes("default"), `username leaked: ${result}`);
+		// The diagnostic value of the message survives.
+		assert(result.includes("connect ECONNREFUSED"));
+		assert(result.includes("cache.internal"));
+	});
+
+	await t.test("strips every embedded URL in a multi-URL message", () => {
+		const result = redactUrl(
+			"failed on redis://u1:p1@a:6379 and postgres://u2:p2@b:5432/db",
+		);
+
+		assert(!result.includes("p1"), `first password leaked: ${result}`);
+		assert(!result.includes("p2"), `second password leaked: ${result}`);
+		assert(result.includes("a:6379"));
+		assert(result.includes("b:5432"));
+	});
+
 	await t.test("leaves a credential-free URL untouched", () => {
 		const url = "redis://cache.internal:6379";
 
 		assert(redactUrl(url) === url);
+	});
+
+	await t.test("leaves an embedded credential-free URL untouched", () => {
+		const message = "connected to redis://cache.internal:6379 in 3ms";
+
+		assert(redactUrl(message) === message);
 	});
 
 	await t.test("passes through non-URL and empty values", () => {

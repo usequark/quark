@@ -232,13 +232,20 @@ const REDACTED_CREDENTIAL = "REDACTED";
  * of those is a credential disclosure, so nothing that embeds a URL in a
  * message should skip this.
  *
- * Parseable URLs are rewritten field by field. Anything else is run through a
- * regex that strips the userinfo segment of a URL-shaped string. A string that
- * matches neither has no recognisable credential segment and is returned
- * unchanged.
+ * Handles both shapes a connection string arrives in:
+ *
+ * - A bare, parseable URL — rewritten field by field.
+ * - A URL *embedded in a larger message*, which is what drivers actually
+ *   produce: `connect ECONNREFUSED redis://default:hunter2@cache:6379`. The
+ *   whole string does not parse, so every URL-shaped substring is scanned and
+ *   its userinfo segment replaced. This case was previously missed: the regex
+ *   was anchored to the start of the string, so a credential appearing after
+ *   any prefix survived redaction intact.
+ *
+ * A string with no recognisable credential segment is returned unchanged.
  *
  * @param {string} url
- * @returns {string} The URL with any username/password replaced
+ * @returns {string} The value with any username/password replaced
  */
 export const redactUrl = (url) => {
 	if (typeof url !== "string" || url.length === 0) return url;
@@ -252,8 +259,10 @@ export const redactUrl = (url) => {
 		parsed.password = parsed.password ? REDACTED_CREDENTIAL : "";
 		return parsed.toString();
 	} catch {
+		// Not a bare URL. Redact every URL-shaped substring, wherever it sits:
+		// the scheme, then the userinfo segment, terminated by `@`.
 		return url.replace(
-			/^([a-z][a-z0-9+.-]*:\/\/)[^/?#@]*@/i,
+			/([a-z][a-z0-9+.-]*:\/\/)[^/?#@\s]*@/gi,
 			`$1${REDACTED_CREDENTIAL}@`,
 		);
 	}
