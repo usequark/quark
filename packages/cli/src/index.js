@@ -1530,6 +1530,10 @@ STORAGE_PROVIDER=local
 				__QUARK_SCOPE__: scope,
 				__QUARK_PROJECT_NAME__: projectName,
 				__QUARK_SCAFFOLD_DATE__: scaffoldDate,
+				// The web port is resolved in Step 9 (findAvailablePort), so the
+				// docs can point at the port the app will actually bind rather
+				// than always claiming 3000.
+				__QUARK_WEB_PORT__: String(webPort),
 				__QUARK_OPTIONAL_APPS__: optionalAppLines,
 				__QUARK_OPTIONAL_PACKAGES__: optionalBlock,
 				__QUARK_FEATURE_ROWS__: featureRows,

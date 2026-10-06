@@ -307,4 +307,70 @@ describe("scaffold output placeholders", () => {
 			"APP_URL is not derived from PORT - do not claim it is",
 		);
 	});
+
+	// Regression guards for the two doc bugs found reviewing the port/placeholder
+	// work. Both were pure documentation lies: the port logic was already correct,
+	// so nothing failed and nothing warned - the docs simply sent the user to the
+	// wrong URL or a file that is never scaffolded.
+	it("never hardcodes the web port in doc templates", () => {
+		// Checked on the template, not the scaffolded output. In the output,
+		// localhost:3000 is the *correct* link whenever 3000 happens to be free, so
+		// asserting on rendered output would be both environment-dependent and
+		// self-contradictory. The invariant that actually matters is that the port
+		// can only ever reach these docs through the placeholder.
+		const templateDir = path.join(
+			import.meta.dirname,
+			"../templates/base-project",
+		);
+
+		for (const relPath of ["MAIN.md", "README.md"]) {
+			const content = fs.readFileSync(path.join(templateDir, relPath), "utf-8");
+			assert.ok(
+				!content.includes("localhost:3000"),
+				`${relPath} hardcodes localhost:3000 - the CLI resolves a free port via findAvailablePort, so use __QUARK_WEB_PORT__`,
+			);
+			assert.ok(
+				content.includes("__QUARK_WEB_PORT__"),
+				`${relPath} must link to the generated web port via __QUARK_WEB_PORT__`,
+			);
+		}
+	});
+
+	it("points scaffolded docs at the web port it actually generated in .env", () => {
+		const env = fs.readFileSync(path.join(projectDir, ".env"), "utf-8");
+		const portLine = env.split("\n").find((line) => line.startsWith("PORT="));
+		assert.ok(portLine, ".env must define PORT");
+		const port = portLine.slice("PORT=".length).trim();
+		assert.match(port, /^\d+$/, `PORT must be numeric, got ${port}`);
+
+		for (const relPath of ["MAIN.md", "README.md"]) {
+			const content = fs.readFileSync(path.join(projectDir, relPath), "utf-8");
+			assert.ok(
+				content.includes(`http://localhost:${port}`),
+				`${relPath} must link to the port the CLI generated (${port}), proving __QUARK_WEB_PORT__ was substituted`,
+			);
+		}
+	});
+
+	it("does not point MAIN.md at files the scaffold never creates", () => {
+		const mainMd = fs.readFileSync(path.join(projectDir, "MAIN.md"), "utf-8");
+		const readFirst = mainMd.split("## Read this first")[1]?.split("##")[0];
+		assert.ok(readFirst, "MAIN.md must keep a 'Read this first' section");
+
+		const dangling = [];
+		for (const match of readFirst.matchAll(/`([^`]+)`/g)) {
+			const ref = match[1];
+			// Strip a trailing slash and any description the sentence appended.
+			const target = ref.replace(/\/$/, "").split(/\s+/)[0];
+			if (!fs.existsSync(path.join(projectDir, target))) {
+				dangling.push(ref);
+			}
+		}
+
+		assert.deepEqual(
+			dangling,
+			[],
+			`MAIN.md "Read this first" references ${dangling.length} path(s) the scaffold does not create - an agent follows these first and finds nothing`,
+		);
+	});
 });
