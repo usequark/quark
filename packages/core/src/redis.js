@@ -1,3 +1,5 @@
+import { redactUrl } from "./utils.js";
+
 /**
  * Builds REDIS_URL from individual environment variables if not explicitly provided.
  * Allows configuration via individual REDIS_* vars instead of a single REDIS_URL.
@@ -38,6 +40,9 @@ export const createRedisClient = createRedisConfig;
  * Pings Redis to verify connectivity.
  * Dynamically imports ioredis so it doesn't fail at load time if the package is not installed.
  * Creates a temporary connection, sends PING, expects PONG, then disconnects.
+ *
+ * The `message` on the error path is safe to return from an unauthenticated
+ * endpoint: it never contains a password (see `getRedisEndpoint`).
  *
  * @param {object} [options]
  * @param {number} [options.timeout=3000] - Connection/ping timeout in milliseconds.
@@ -107,7 +112,7 @@ export async function pingRedis({ timeout = 3000 } = {}) {
 			error?.code === "ECONNREFUSED" ||
 			/connection is closed|ECONNREFUSED/i.test(error?.message ?? "")
 		) {
-			message = `Redis unreachable at ${getRedisUrl()}`;
+			message = `Redis unreachable at ${getRedisEndpoint()}`;
 		} else {
 			message = error?.message ?? String(error);
 		}
@@ -118,6 +123,31 @@ export async function pingRedis({ timeout = 3000 } = {}) {
 		} catch {
 			// ignore disconnect errors
 		}
+	}
+}
+
+/**
+ * Returns the Redis endpoint as `host:port`, with every credential removed.
+ *
+ * The message from `pingRedis` is returned verbatim by the unauthenticated
+ * `/api/health` route, so it must never carry a password. `getRedisUrl()` is
+ * deliberately not used for this: callers need the working connection string,
+ * and it embeds `REDIS_URL` credentials as-is.
+ *
+ * @returns {string} e.g. `redis.railway.internal:6379`
+ */
+export function getRedisEndpoint() {
+	const url = getRedisUrl();
+
+	try {
+		const parsed = new URL(url);
+		const port =
+			parsed.port || (parsed.protocol === "rediss:" ? "6380" : "6379");
+		return `${parsed.hostname}:${port}`;
+	} catch {
+		// Malformed REDIS_URL — fall back to whatever credentials-safe form the
+		// redaction pass can produce rather than echoing the raw value.
+		return redactUrl(url);
 	}
 }
 

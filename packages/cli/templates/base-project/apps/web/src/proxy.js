@@ -5,14 +5,15 @@
  * Guards (in order):
  *   1. Metrics guard        - optionally protects /api/metrics with a bearer
  *                             token. Set METRICS_TOKEN in env to enable.
- *   2. Rate limiting, CORS, security headers for all API routes.
+ *   2. Rate limiting, CORS, security headers for all API routes, except the
+ *      rate-limit-exempt healthcheck (see lib/proxy-auth.js).
  */
 
 import { getAllowedOrigins } from "@usequark/quark-config/app-url";
 import { NextResponse } from "next/server";
 
 import { buildContentSecurityPolicy } from "./lib/analytics/umami-csp.js";
-import { getRateLimitBucket } from "./lib/proxy-auth";
+import { getRateLimitBucket, isRateLimitExempt } from "./lib/proxy-auth";
 
 // ─── 1. Metrics guard ────────────────────────────────────────────────────────
 
@@ -218,8 +219,9 @@ export async function proxy(request) {
 		}
 	}
 
-	// Apply rate limiting to API routes only
-	if (pathname.startsWith("/api/")) {
+	// Apply rate limiting to API routes only. Exempt routes (the healthcheck)
+	// skip the bucket entirely — no counter, no headers.
+	if (pathname.startsWith("/api/") && !isRateLimitExempt(pathname)) {
 		const ip = getClientIp(request);
 		const rateLimitBucket = getRateLimitBucket(pathname, request.method);
 		const maxRequests = RATE_LIMIT_CONFIG.maxRequests[rateLimitBucket];

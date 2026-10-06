@@ -8,6 +8,7 @@ import {
 	memoize,
 	normalizeErrorMessage,
 	randomString,
+	redactUrl,
 	retryAsync,
 	sanitizeId,
 	sleep,
@@ -189,5 +190,52 @@ test("Utils Module", async (t) => {
 			assert(callCount === 2); // Cache expired, new call
 			done();
 		}, 50);
+	});
+});
+
+test("redactUrl", async (t) => {
+	await t.test("strips username and password from a parseable URL", () => {
+		const result = redactUrl("redis://default:hunter2@cache.internal:6379");
+
+		assert(!result.includes("hunter2"), `password leaked: ${result}`);
+		assert(!result.includes("default"), `username leaked: ${result}`);
+		assert(result.includes("cache.internal"));
+		assert(result.includes("6379"));
+	});
+
+	await t.test("strips a password-only credential", () => {
+		const result = redactUrl("redis://:hunter2@cache.internal:6379");
+
+		assert(!result.includes("hunter2"), `password leaked: ${result}`);
+		assert(result.includes("cache.internal"));
+	});
+
+	await t.test("strips credentials from a postgres URL", () => {
+		const result = redactUrl(
+			"postgresql://app:s3cret@db.internal:5432/app?schema=public",
+		);
+
+		assert(!result.includes("s3cret"), `password leaked: ${result}`);
+		assert(result.includes("db.internal"));
+		assert(result.includes("schema=public"));
+	});
+
+	await t.test("redacts the userinfo of a URL it cannot parse", () => {
+		const result = redactUrl("redis://user:hunter2@cache internal:6379");
+
+		assert(!result.includes("hunter2"), `password leaked: ${result}`);
+	});
+
+	await t.test("leaves a credential-free URL untouched", () => {
+		const url = "redis://cache.internal:6379";
+
+		assert(redactUrl(url) === url);
+	});
+
+	await t.test("passes through non-URL and empty values", () => {
+		assert(redactUrl("not-a-url") === "not-a-url");
+		assert(redactUrl("") === "");
+		assert(redactUrl(undefined) === undefined);
+		assert(redactUrl(null) === null);
 	});
 });

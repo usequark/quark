@@ -9,7 +9,7 @@ import {
 	createLogger,
 	createQueue,
 	createWorker,
-	getRedisUrl,
+	getRedisEndpoint,
 	updateQueueDepths,
 } from "@usequark/quark-core";
 import { AppError } from "@usequark/quark-core/errors";
@@ -170,7 +170,7 @@ export async function waitForRedis(
 
 	// All retries exhausted
 	throw new AppError(
-		`Redis unavailable at ${getRedisUrl()} after ${maxRetries} attempts. Start Redis or check REDIS_URL/REDIS_HOST/REDIS_PORT.`,
+		`Redis unavailable at ${getRedisEndpoint()} after ${maxRetries} attempts. Start Redis or check REDIS_URL/REDIS_HOST/REDIS_PORT.`,
 		503,
 		"REDIS_UNAVAILABLE",
 	);
@@ -397,7 +397,7 @@ async function startWorker() {
 			isDevMode ? { maxRetries: 3, intervalMs: 500 } : {},
 		);
 
-		logger.info("Redis connected", { address: getRedisUrl() });
+		logger.info("Redis connected", { address: getRedisEndpoint() });
 
 		// Wait for database schema to be ready (migrations may still be running)
 		logger.info("Checking database schema readiness...");

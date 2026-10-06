@@ -217,3 +217,44 @@ export const memoize = (fn, ttl = 0) => {
 		return value;
 	};
 };
+
+/** Placeholder written over a credential segment. No brackets — the URL
+ * serializer would percent-encode them into `%5BREDACTED%5D`. */
+const REDACTED_CREDENTIAL = "REDACTED";
+
+/**
+ * Strips credentials from a URL so it is safe to log or return from an
+ * unauthenticated endpoint.
+ *
+ * Connection strings reach places the process cannot control: `/api/health`
+ * has no auth and echoes the message from a failed probe, and startup logs end
+ * up in a log aggregator. `redis://default:hunter2@cache.internal:6379` in any
+ * of those is a credential disclosure, so nothing that embeds a URL in a
+ * message should skip this.
+ *
+ * Parseable URLs are rewritten field by field. Anything else is run through a
+ * regex that strips the userinfo segment of a URL-shaped string. A string that
+ * matches neither has no recognisable credential segment and is returned
+ * unchanged.
+ *
+ * @param {string} url
+ * @returns {string} The URL with any username/password replaced
+ */
+export const redactUrl = (url) => {
+	if (typeof url !== "string" || url.length === 0) return url;
+
+	try {
+		const parsed = new URL(url);
+
+		if (!parsed.username && !parsed.password) return url;
+
+		parsed.username = parsed.username ? REDACTED_CREDENTIAL : "";
+		parsed.password = parsed.password ? REDACTED_CREDENTIAL : "";
+		return parsed.toString();
+	} catch {
+		return url.replace(
+			/^([a-z][a-z0-9+.-]*:\/\/)[^/?#@]*@/i,
+			`$1${REDACTED_CREDENTIAL}@`,
+		);
+	}
+};
