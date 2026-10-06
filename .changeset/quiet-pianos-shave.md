@@ -32,12 +32,24 @@ returns the quoted form; the argument path is unchanged.
 
 Also in this change:
 
-- **`APP_NAME` / `APP_DESCRIPTION` came from the local directory name.** A
-  project deployed as `quark-site` from a directory called `minnetonka`
-  advertised itself as `minnetonka`, in both the generated IaC and the
-  Railway variables. Both now come from the name Railway actually resolved, via
-  a new `readLinkedProject()` that also fills in the project name for the
-  already-linked path, which previously returned `null`.
+- **Every existing link was invisible, so a second deploy created a duplicate
+  project.** `isProjectLinked()` looked for `.railway/*.json` in the project
+  directory, which is the Railway CLI 3.x layout. CLI 5.x (verified against
+  5.62.1) keeps links in `~/.railway/config.json` under a `projects` map keyed by
+  absolute directory, and a linked project directory contains
+  `.railway/railway.ts` and nothing else — so the check returned `false` for
+  genuinely linked projects. The deploy then fell through to naming a new
+  project after the checkout directory and ran `railway init`, creating a
+  second project instead of reusing the linked one. `readLinkedProject()` now
+  reads both layouts, and `APP_NAME` / `APP_DESCRIPTION` come from the name
+  Railway resolved rather than from `basename(cwd)`. That was the `minnetonka`
+  in the original report: a project called `quark-site`, deployed from a
+  directory called `minnetonka`, advertised itself as `minnetonka` in both the
+  generated IaC and the Railway variables.
+- **The stale-link cleanup deleted the IaC file instead of the link.** It
+  removed `<cwd>/.railway` wholesale, which on CLI 5.x destroys
+  `railway.ts` while leaving the actual stale link in `~/.railway`. It now runs
+  `railway unlink`.
 - **The SDK install no longer rewrites `package.json` on every deploy.**
   `installRailwaySdk()` skips the `pnpm add` when `railway` already resolves
   (`hasRailwaySdk()`), and passes `-w` explicitly rather than relying on the
@@ -60,3 +72,9 @@ were verified failing against the previous generator.
 This repo's own `.railway/railway.ts` also called `preserve()` four times
 without importing it — the exact fault fixed in the scaffold template by #229,
 which did not reach this copy. Fixed, and covered by the same test.
+
+The link-reading fix is verified against the real CLI 5.62.1 layout and against
+`HEAD`: on a directory carrying a genuine link, the old code reported
+`isProjectLinked() === false` and an empty project record. The `~/.railway`
+config also holds the user's OAuth tokens; only the `projects` map is read, and
+a test asserts the token cannot come back out.

@@ -25,6 +25,7 @@ export {
 	RailwayError,
 	readLinkedProject,
 	removeServiceDomain,
+	resolveProjectName,
 	setProjectVariables,
 	tryLinkProject,
 } from "./railway.js";

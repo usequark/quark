@@ -66,6 +66,7 @@ test("isProjectLinked returns false when .railway directory does not exist", asy
 	assert.equal(result, false);
 });
 
+// The CLI 3.x layout: `.railway/config.json` inside the project directory.
 test("isProjectLinked returns true when .railway directory contains config", async () => {
 	const { isProjectLinked } = await import("./railway.js");
 	const tmpDir = await makeTempDir();
@@ -77,6 +78,160 @@ test("isProjectLinked returns true when .railway directory contains config", asy
 	);
 	const result = await isProjectLinked(tmpDir);
 	assert.equal(result, true);
+});
+
+test("isProjectLinked is false when .railway holds only an IaC file", async () => {
+	const { isProjectLinked } = await import("./railway.js");
+	const tmpDir = await makeTempDir();
+	const railwayDir = path.join(tmpDir, ".railway");
+	await fs.mkdir(railwayDir, { recursive: true });
+	await fs.writeFile(path.join(railwayDir, "railway.ts"), "export default {};");
+	assert.equal(await isProjectLinked(tmpDir), false);
+});
+
+// --- Link reading ---
+//
+// Railway CLI 5.x keeps every link in ~/.railway/config.json under a `projects`
+// map keyed by absolute directory, and a linked project directory holds only
+// `.railway/railway.ts`. Reading only the project directory therefore reported
+// every real link as absent, which is what sent the deploy down the "create a
+// new project named after this directory" path.
+//
+// HOME is redirected per test so the developer's own links are never read.
+
+/** Runs `fn` with HOME pointed at a scratch dir containing `userConfig`. */
+async function withUserRailwayConfig(userConfig, fn) {
+	const home = await makeTempDir();
+	if (userConfig !== null) {
+		await fs.mkdir(path.join(home, ".railway"), { recursive: true });
+		await fs.writeFile(
+			path.join(home, ".railway", "config.json"),
+			JSON.stringify(userConfig),
+			"utf8",
+		);
+	}
+	const origHome = process.env.HOME;
+	process.env.HOME = home;
+	try {
+		return await fn(home);
+	} finally {
+		process.env.HOME = origHome;
+	}
+}
+
+test("readLinkedProject reads the CLI 5.x user config by absolute path", async () => {
+	const { readLinkedProject } = await import("./railway.js");
+	const tmpDir = await makeTempDir();
+
+	await withUserRailwayConfig(
+		{
+			// A token that must never be read out or logged.
+			user: { accessToken: "secret-token" },
+			projects: {
+				"/somewhere/else": {
+					name: "other-project",
+					project: "other-id",
+					projectPath: "/somewhere/else",
+				},
+				[tmpDir]: {
+					name: "quark-site",
+					project: "04421905-bd79-4628-bc8f-74c91138096f",
+					projectPath: tmpDir,
+				},
+			},
+		},
+		async () => {
+			const linked = await readLinkedProject({ cwd: tmpDir });
+			assert.equal(linked.projectId, "04421905-bd79-4628-bc8f-74c91138096f");
+			assert.equal(linked.projectName, "quark-site");
+			// The token lives in the same file and must not come back out.
+			assert.equal(JSON.stringify(linked).includes("secret-token"), false);
+		},
+	);
+});
+
+test("readLinkedProject matches on projectPath when the key differs", async () => {
+	const { readLinkedProject } = await import("./railway.js");
+	const tmpDir = await makeTempDir();
+
+	await withUserRailwayConfig(
+		{
+			projects: {
+				"/stale/path": {
+					name: "quark-site",
+					project: "abc-123",
+					projectPath: tmpDir,
+				},
+			},
+		},
+		async () => {
+			const linked = await readLinkedProject({ cwd: tmpDir });
+			assert.equal(linked.projectId, "abc-123");
+			assert.equal(linked.projectName, "quark-site");
+		},
+	);
+});
+
+test("readLinkedProject returns nulls for an unlinked directory", async () => {
+	const { readLinkedProject } = await import("./railway.js");
+	const tmpDir = await makeTempDir();
+
+	await withUserRailwayConfig(
+		{ projects: { "/other": { name: "x", project: "y" } } },
+		async () => {
+			assert.deepEqual(await readLinkedProject({ cwd: tmpDir }), {
+				projectId: null,
+				projectName: null,
+			});
+		},
+	);
+});
+
+test("readLinkedProject survives a missing or unparseable user config", async () => {
+	const { readLinkedProject } = await import("./railway.js");
+	const tmpDir = await makeTempDir();
+
+	await withUserRailwayConfig(null, async () => {
+		assert.deepEqual(await readLinkedProject({ cwd: tmpDir }), {
+			projectId: null,
+			projectName: null,
+		});
+	});
+
+	const home = await makeTempDir();
+	await fs.mkdir(path.join(home, ".railway"), { recursive: true });
+	await fs.writeFile(
+		path.join(home, ".railway", "config.json"),
+		"{ not json",
+		"utf8",
+	);
+	const origHome = process.env.HOME;
+	process.env.HOME = home;
+	try {
+		assert.deepEqual(await readLinkedProject({ cwd: tmpDir }), {
+			projectId: null,
+			projectName: null,
+		});
+	} finally {
+		process.env.HOME = origHome;
+	}
+});
+
+test("resolveProjectName looks a project id up by name", async () => {
+	await withMockRailway(
+		async (tmpDir) => {
+			const { resolveProjectName } = await import("./railway.js");
+			const found = await resolveProjectName("id-1", { cwd: tmpDir });
+			assert.equal(found, "quark-site");
+
+			const missing = await resolveProjectName("nope", { cwd: tmpDir });
+			assert.equal(missing, null);
+
+			const empty = await resolveProjectName(null, { cwd: tmpDir });
+			assert.equal(empty, null);
+		},
+		{ projects: [{ id: "id-1", name: "quark-site", deletedAt: null }] },
+	);
 });
 
 test("isProjectLinked returns false when .railway directory is empty", async () => {
@@ -259,7 +414,7 @@ test("generateIacFile escapes service names with special chars", async () => {
 // These use a mock railway CLI on PATH to verify --environment is
 // forwarded to execa for each function that supports it.
 
-async function withMockRailway(fn) {
+async function withMockRailway(fn, { projects = [] } = {}) {
 	const tmpDir = await makeTempDir();
 	const railwayPath = path.join(tmpDir, "railway");
 	const argsLog = path.join(tmpDir, "args.log");
@@ -273,7 +428,7 @@ case "$*" in
     echo '[{"id":"dep_mock_123","status":"SUCCESS"}]'
     ;;
   *"list"*)
-    echo '[]'
+    echo '${JSON.stringify(projects)}'
     ;;
   *)
     echo '{"deploymentId":"dep_mock_123"}'

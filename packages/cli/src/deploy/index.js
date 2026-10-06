@@ -22,6 +22,7 @@ export {
 	RailwayError,
 	readLinkedProject,
 	removeServiceDomain,
+	resolveProjectName,
 	setProjectVariables,
 	tryLinkProject,
 } from "./adapters/index.js";

@@ -62,6 +62,7 @@ test("adapters index exports all expected functions", async () => {
 		"escapeTsString",
 		"getDeploymentStatus",
 		"readLinkedProject",
+		"resolveProjectName",
 	];
 	for (const name of expectedExports) {
 		assert.ok(name in mod, `Expected export "${name}" to exist`);
@@ -104,6 +105,7 @@ test("deploy index exports all expected functions", async () => {
 		"escapeTsString",
 		"getDeploymentStatus",
 		"readLinkedProject",
+		"resolveProjectName",
 	];
 	for (const name of expectedExports) {
 		assert.ok(name in mod, `Expected export "${name}" to exist`);
