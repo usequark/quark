@@ -125,6 +125,12 @@ const UPLOAD = {
 };
 
 function resetFixtures() {
+	// The session is reset here, not just at declaration. A test that swaps in an
+	// admin session would otherwise leak it into every test that runs after it,
+	// silently converting an ownership check into an admin bypass.
+	requireAuthImpl = async () => ({
+		user: { id: "user-1", role: "user", email: "user@example.com" },
+	});
 	storageCalls = [];
 	storageDeleteImpl = async () => {};
 	storageKeysRead = [];
@@ -217,6 +223,26 @@ test("GET by database id does not also query the storage key", async () => {
 	assert.deepStrictEqual(dbLookups, ["findById:file-1"]);
 });
 
+test("a miss on a slashless segment does not fall through to the storage key", async () => {
+	// The `id.includes("/")` guard is what makes the two identifier forms disjoint:
+	// a cuid never contains a slash and a generated storage key always does. Without
+	// it every unknown id costs a second pointless query — and the sibling test
+	// above cannot catch that, because there the first lookup *succeeds* and the
+	// fallthrough is never reached.
+	fileById = null;
+
+	const response = await GET(getRequest("no-such-id"), {
+		params: { id: "no-such-id" },
+	});
+
+	assert.strictEqual(response.status, 404);
+	assert.deepStrictEqual(
+		dbLookups,
+		["findById:no-such-id"],
+		"a slashless segment should never reach the storageKey column",
+	);
+});
+
 test("GET returns 404 for an unknown id", async () => {
 	fileById = null;
 
@@ -292,9 +318,28 @@ test("DELETE returns 409 and keeps the bytes when a foreign key refuses the row"
 	const response = await DELETE(deleteRequest(), { params: { id: "file-1" } });
 
 	assert.strictEqual(response.status, 409);
+	// The row delete must actually have been attempted. Asserting only on the
+	// status and the absence of a storage delete would pass against a route that
+	// returned 409 unconditionally without ever reaching the database.
+	assert.deepStrictEqual(
+		storageCalls,
+		[],
+		"the row delete was never attempted, so the 409 did not come from a foreign key",
+	);
+});
+
+test("DELETE returns 409 only for a foreign key error, not for any database failure", async () => {
+	// P2003 is the one code the route maps to a conflict. A connection failure is
+	// not a conflict and must not be dressed as one — the client would read 409 as
+	// "retry after resolving the reference", which is not actionable here.
+	deleteError = new Error("connection terminated unexpectedly");
+
+	const response = await DELETE(deleteRequest(), { params: { id: "file-1" } });
+
+	assert.strictEqual(response.status, 500);
 	assert.ok(
 		!storageCalls.some((c) => c.startsWith("storage.delete:")),
-		`blob was destroyed despite the refused row delete: ${storageCalls.join(", ")}`,
+		`blob was destroyed despite the failed row delete: ${storageCalls.join(", ")}`,
 	);
 });
 
@@ -342,6 +387,23 @@ test("DELETE allows an admin to delete another user's file", async () => {
 		"db.delete",
 		"storage.delete:uploads/2026/02/abc-report.pdf",
 	]);
+});
+
+test("the admin session above does not leak into later tests", async () => {
+	// Deliberately order-dependent: it only means anything because it runs after
+	// the test that installs an admin session. `requireAuthImpl` is module state, so
+	// unless `resetFixtures()` restores it, every later test is silently authorized
+	// as an admin and any ownership assertion after this point is worthless.
+	fileById = { ...UPLOAD, uploadedById: "someone-else" };
+
+	const response = await DELETE(deleteRequest(), { params: { id: "file-1" } });
+
+	assert.strictEqual(
+		response.status,
+		403,
+		"an admin session leaked from an earlier test into this one",
+	);
+	assert.deepStrictEqual(storageCalls, []);
 });
 
 test("DELETE still reports success when the storage cleanup fails", async () => {
