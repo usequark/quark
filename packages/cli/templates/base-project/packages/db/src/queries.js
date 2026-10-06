@@ -283,6 +283,23 @@ export const file = {
 	delete: (id) => {
 		return prisma.file.delete({ where: { id } });
 	},
+	/**
+	 * Deletes a File row and reports whether this call was the one that removed
+	 * it.
+	 *
+	 * `delete()` throws P2025 when the row is already gone, which is the normal
+	 * outcome of two concurrent DELETEs of the same file and is not an error
+	 * worth surfacing. This returns `{ count }` instead so the caller can tell
+	 * "I deleted it" from "someone beat me to it" and skip the destructive
+	 * follow-up (removing the storage object) in the second case.
+	 *
+	 * A count of 1 means the caller owns the cleanup. Any incoming relation
+	 * added later still surfaces here as a P2003 foreign-key error, before the
+	 * storage object has been touched.
+	 */
+	deleteIfPresent: (id) => {
+		return prisma.file.deleteMany({ where: { id } });
+	},
 	deleteMany: (ids) => {
 		return prisma.file.deleteMany({ where: { id: { in: ids } } });
 	},

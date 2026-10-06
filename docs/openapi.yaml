@@ -500,7 +500,13 @@ paths:
       summary: Delete a file (owner or admin)
       security:
         - session: []
-      description: Requires authentication. Only the uploader or an admin can delete. Requires CSRF token.
+      description: |
+        Requires authentication. Only the uploader or an admin can delete. Requires CSRF token.
+
+        The database row is removed first and the storage object second. A failed
+        storage delete is reported as a success, because the row is already gone;
+        the leftover blob is swept up by the orphaned-file cleanup job. A refused
+        row delete (foreign key) returns `409` and leaves the stored bytes intact.
       parameters:
         - $ref: '#/components/parameters/CsrfToken'
       responses:
@@ -520,6 +526,8 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '409':
+          description: File is still referenced and cannot be deleted
 
   # ── Health & Metrics ───────────────────────────────────
 
