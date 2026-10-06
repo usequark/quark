@@ -56,7 +56,8 @@ test("Lightbox - renders nothing when closed", async () => {
 	const root = createRoot(container);
 	await act(() => root.render(createElement(Lightbox, { open: false })));
 	assert.strictEqual(container.innerHTML, "");
-	root.unmount();
+	await act(() => root.unmount());
+	container.remove();
 });
 
 test("Lightbox - renders overlay when open", async () => {
@@ -76,7 +77,8 @@ test("Lightbox - renders overlay when open", async () => {
 	assert.ok(img, "should render an img element");
 	assert.strictEqual(img.getAttribute("src"), "/test.jpg");
 	assert.strictEqual(img.getAttribute("alt"), "Test image");
-	root.unmount();
+	await act(() => root.unmount());
+	container.remove();
 });
 
 test("Lightbox - calls onClose when close button clicked", async () => {
@@ -100,7 +102,8 @@ test("Lightbox - calls onClose when close button clicked", async () => {
 	assert.ok(closeBtn, "should have a close button");
 	await act(() => closeBtn.click());
 	assert.ok(closed, "onClose should be called");
-	root.unmount();
+	await act(() => root.unmount());
+	container.remove();
 });
 
 test("Lightbox - shows prev/next buttons and counter", async () => {
@@ -127,7 +130,8 @@ test("Lightbox - shows prev/next buttons and counter", async () => {
 	);
 	assert.ok(container.textContent.includes("Next"), "should show Next button");
 	assert.ok(container.textContent.includes("2 / 5"), "should show counter");
-	root.unmount();
+	await act(() => root.unmount());
+	container.remove();
 });
 
 test("Lightbox - calls onPrevious and onNext on button clicks", async () => {
@@ -163,5 +167,6 @@ test("Lightbox - calls onPrevious and onNext on button clicks", async () => {
 	assert.ok(prev, "onPrevious should be called");
 	await act(() => nextBtn.click());
 	assert.ok(next, "onNext should be called");
-	root.unmount();
+	await act(() => root.unmount());
+	container.remove();
 });
