@@ -252,6 +252,33 @@ test("redactUrl", async (t) => {
 		assert(result.includes("b:5432"));
 	});
 
+	await t.test(
+		"strips credentials when the message itself parses as a URL",
+		() => {
+			// `new URL()` accepts any string with a `<scheme>:` prefix, so both of
+			// these "parse" — as protocol `error:` / `connect:`, with no credentials
+			// of their own. Rewriting field-by-field therefore found nothing to strip
+			// and returned the message whole, embedded password intact. This is the
+			// shape a driver error takes once something has prefixed it with a
+			// label, and it reached the unauthenticated /api/health body.
+			for (const message of [
+				"Error: getaddrinfo ENOTFOUND postgres://u:p@db.example.com:5432/x",
+				"connect: ECONNREFUSED redis://default:hunter2@cache.internal:6379",
+			]) {
+				const result = redactUrl(message);
+
+				assert(!result.includes(":p@"), `password leaked: ${result}`);
+				assert(!result.includes("hunter2"), `password leaked: ${result}`);
+				// The diagnostic value survives redaction.
+				assert(result.includes("ENOTFOUND") || result.includes("ECONNREFUSED"));
+				assert(
+					result.includes("db.example.com") ||
+						result.includes("cache.internal"),
+				);
+			}
+		},
+	);
+
 	await t.test("leaves a credential-free URL untouched", () => {
 		const url = "redis://cache.internal:6379";
 

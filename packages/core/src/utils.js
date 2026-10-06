@@ -236,11 +236,17 @@ const REDACTED_CREDENTIAL = "REDACTED";
  *
  * - A bare, parseable URL — rewritten field by field.
  * - A URL *embedded in a larger message*, which is what drivers actually
- *   produce: `connect ECONNREFUSED redis://default:hunter2@cache:6379`. The
- *   whole string does not parse, so every URL-shaped substring is scanned and
- *   its userinfo segment replaced. This case was previously missed: the regex
- *   was anchored to the start of the string, so a credential appearing after
- *   any prefix survived redaction intact.
+ *   produce: `connect ECONNREFUSED redis://default:hunter2@cache:6379`. Every
+ *   URL-shaped substring is scanned and its userinfo segment replaced.
+ *
+ * Deciding between the two is not "did it parse" — `new URL()` accepts any
+ * string with a `<scheme>:` prefix, so a message like
+ * `Error: getaddrinfo ENOTFOUND postgres://u:p@db:5432/x` parses as a URL with
+ * protocol `error:` and *no* credentials of its own. Field-by-field rewriting
+ * then finds nothing to strip and returns the whole message untouched, with
+ * the embedded password intact. The field-by-field path is therefore gated on
+ * the string actually being a bare URL; everything else goes to the substring
+ * scan, which handles both embedded cases identically.
  *
  * A string with no recognisable credential segment is returned unchanged.
  *
@@ -250,20 +256,29 @@ const REDACTED_CREDENTIAL = "REDACTED";
 export const redactUrl = (url) => {
 	if (typeof url !== "string" || url.length === 0) return url;
 
-	try {
-		const parsed = new URL(url);
+	// A bare URL is exactly `scheme://...` with no leading text and no
+	// surrounding whitespace. Anything else is treated as a message.
+	const isBareUrl = url === url.trim() && /^[a-z][a-z0-9+.-]*:\/\//i.test(url);
 
-		if (!parsed.username && !parsed.password) return url;
+	if (isBareUrl) {
+		try {
+			const parsed = new URL(url);
 
-		parsed.username = parsed.username ? REDACTED_CREDENTIAL : "";
-		parsed.password = parsed.password ? REDACTED_CREDENTIAL : "";
-		return parsed.toString();
-	} catch {
-		// Not a bare URL. Redact every URL-shaped substring, wherever it sits:
-		// the scheme, then the userinfo segment, terminated by `@`.
-		return url.replace(
-			/([a-z][a-z0-9+.-]*:\/\/)[^/?#@\s]*@/gi,
-			`$1${REDACTED_CREDENTIAL}@`,
-		);
+			if (!parsed.username && !parsed.password) return url;
+
+			parsed.username = parsed.username ? REDACTED_CREDENTIAL : "";
+			parsed.password = parsed.password ? REDACTED_CREDENTIAL : "";
+			return parsed.toString();
+		} catch {
+			// Malformed enough that the serializer rejected it. Fall through to
+			// the substring scan, which still finds the credential segment.
+		}
 	}
+
+	// Redact every URL-shaped substring, wherever it sits: the scheme, then the
+	// userinfo segment, terminated by `@`.
+	return url.replace(
+		/([a-z][a-z0-9+.-]*:\/\/)[^/?#@\s]*@/gi,
+		`$1${REDACTED_CREDENTIAL}@`,
+	);
 };

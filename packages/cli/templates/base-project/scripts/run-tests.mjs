@@ -60,6 +60,35 @@ function collectTests(targetPath) {
 
 const files = roots.flatMap((rootPath) => collectTests(path.resolve(rootPath)));
 
+/**
+ * Escapes glob metacharacters so `node --test` treats the path as a literal
+ * path rather than a pattern.
+ *
+ * Next.js dynamic route segments are directories of the form `[id]` and
+ * `[...slug]`, and `node --test` matches its file arguments as globs. An
+ * unescaped `[id]` is read as a character class matching a single `i` or `d`,
+ * so the path matches nothing. The failure is silent — the runner reports
+ * zero tests and exits 0 — which meant every test co-located in a dynamic
+ * segment (`api/files/[id]/route.test.js`, and `users/[id]` and
+ * `[...nextauth]` which have none) was collected here and then silently
+ * dropped at the `node --test` boundary.
+ *
+ * Only `[` and `]` need escaping: a literal `*`, `?`, `{`, `}`, `+`, `@` or
+ * `!` in a directory name is resolved as itself once no glob metacharacter
+ * remains to give it meaning. `[[]` and `[]]` are the character-class escapes
+ * for the literal characters; a backslash is *not* honoured here, so it
+ * silently fails to escape anything.
+ *
+ * @param {string} filePath
+ * @returns {string}
+ */
+function escapeGlobChars(filePath) {
+	// Single pass. Two `replaceAll` calls in sequence do not work: the `[` of
+	// `[[]` introduces a `]` that the second call then escapes again, yielding
+	// `[[[]]` for one literal `[`.
+	return filePath.replace(/[[\]]/g, (char) => (char === "[" ? "[[]" : "[]]"));
+}
+
 if (files.length === 0) {
 	// An empty suite is not a failure. `node --test` exits 0 when it matches no
 	// files, so exiting 1 here made a freshly scaffolded project fail its own
@@ -75,7 +104,7 @@ const result = spawnSync(
 		"tsx/esm",
 		"--experimental-test-module-mocks",
 		"--test",
-		...files,
+		...files.map(escapeGlobChars),
 	],
 	{
 		stdio: "inherit",
