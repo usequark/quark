@@ -64,8 +64,10 @@ function setPrismaMock() {
 	globalThis.__prisma = {
 		user: {
 			// `findById` selects USER_SAFE_SELECT, so `where.id` is the only key.
+			// Keyed on whatever `userById` holds rather than a fixed id, so a test
+			// can point the route at a different target without rebuilding the mock.
 			findUnique: mock.fn(async ({ where }) =>
-				where.id === KNOWN.id ? (userById ?? null) : null,
+				userById && where.id === userById.id ? userById : null,
 			),
 			update: mock.fn(async ({ where, data }) => {
 				if (updateError) throw updateError;
@@ -284,27 +286,22 @@ test("PATCH authorizes before checking whether the user exists", async () => {
 	);
 });
 
-test("PATCH rejects a request with no CSRF token before reading or writing", async () => {
-	// The throw escapes rather than becoming a Response. `withCsrfProtection` calls
-	// `requireCsrfToken` in its own wrapper, outside the handler's try/catch, so
-	// `handleError` never sees it. That is the behaviour today — reported in the
-	// audit for this PR as a gap, not fixed here — and it is why the assertion is
-	// on the rejection rather than on a status code.
-	await assert.rejects(
-		PATCH(
-			new Request(`http://localhost/api/users/${KNOWN.id}`, {
-				method: "PATCH",
-				headers: { "content-type": "application/json" },
-				body: JSON.stringify({ name: "Renamed" }),
-			}),
-			context(),
-		),
-		(error) => {
-			assert.strictEqual(error.code, "UNAUTHORIZED");
-			return true;
-		},
+test("PATCH returns 401 for a request with no CSRF token, without reading or writing", async () => {
+	// The check runs in `withCsrfProtection`'s wrapper, outside this handler's
+	// try/catch, so it produces the Response itself. `handleError` never sees it,
+	// which is why the body comes from the wrapper rather than from this route.
+	const response = await PATCH(
+		new Request(`http://localhost/api/users/${KNOWN.id}`, {
+			method: "PATCH",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({ name: "Renamed" }),
+		}),
+		context(),
 	);
+	const body = await response.json();
 
+	assert.strictEqual(response.status, 401);
+	assert.strictEqual(body.code, "UNAUTHORIZED");
 	assert.deepStrictEqual(dbWrites, []);
 	assert.strictEqual(
 		globalThis.__prisma.user.findUnique.mock.callCount(),
@@ -403,21 +400,18 @@ test("DELETE authorizes before checking whether the user exists", async () => {
 	);
 });
 
-test("DELETE rejects a request with no CSRF token before reading or deleting", async () => {
-	// Same shape as the PATCH case: the rejection escapes `handleError`.
-	await assert.rejects(
-		DELETE(
-			new Request(`http://localhost/api/users/${KNOWN.id}`, {
-				method: "DELETE",
-			}),
-			context(),
-		),
-		(error) => {
-			assert.strictEqual(error.code, "UNAUTHORIZED");
-			return true;
-		},
+test("DELETE returns 401 for a request with no CSRF token, without reading or deleting", async () => {
+	// Same shape as the PATCH case: the wrapper answers, not `handleError`.
+	const response = await DELETE(
+		new Request(`http://localhost/api/users/${KNOWN.id}`, {
+			method: "DELETE",
+		}),
+		context(),
 	);
+	const body = await response.json();
 
+	assert.strictEqual(response.status, 401);
+	assert.strictEqual(body.code, "UNAUTHORIZED");
 	assert.deepStrictEqual(dbWrites, []);
 	assert.strictEqual(
 		globalThis.__prisma.user.findUnique.mock.callCount(),
@@ -434,21 +428,60 @@ test("DELETE surfaces a database failure as 500", async () => {
 	assert.strictEqual(response.status, 500);
 });
 
-test("DELETE is gated on admin, so an admin may delete any user including themselves", async () => {
-	// There is no self-deletion guard. The route resolves the target purely from
-	// the path segment and only checks the caller's role, so the last admin is
-	// deletable. Pinned because it is load-bearing behaviour, not an accident to
-	// be quietly changed.
-	const lastAdmin = { id: "admin-1", role: "admin" };
-	requireRoleImpl = async () => ({ user: lastAdmin });
-	userById = { ...KNOWN, id: lastAdmin.id, role: "admin" };
-	globalThis.__prisma.user.findUnique = mock.fn(async () => userById);
+test("DELETE refuses to delete the account the caller is signed in as", async () => {
+	// Without this guard an admin can delete their own row, and if they are the
+	// last admin the deployment is left with nobody who can administer it. The
+	// caller identity comes from `requireRole`'s return value, not the path.
+	const self = { id: "admin-1", role: "admin", email: "admin@example.com" };
+	requireRoleImpl = async () => ({ user: self });
+	userById = { ...KNOWN, id: self.id, role: "admin" };
 
 	const response = await DELETE(
-		mutatingRequest("DELETE", lastAdmin.id),
-		context(lastAdmin.id),
+		mutatingRequest("DELETE", self.id),
+		context(self.id),
+	);
+	const body = await response.json();
+
+	assert.strictEqual(response.status, 409);
+	assert.strictEqual(body.code, "CONFLICT");
+	// Nothing may be destroyed on the refused path.
+	assert.deepStrictEqual(dbWrites, []);
+});
+
+test("DELETE refuses self-deletion before the existence check", async () => {
+	// The guard must not read the database first, or a session whose `user.id`
+	// happens to match the segment would learn whether the row exists.
+	const self = { id: "admin-1", role: "admin" };
+	requireRoleImpl = async () => ({ user: self });
+	userById = null;
+
+	const response = await DELETE(
+		mutatingRequest("DELETE", self.id),
+		context(self.id),
+	);
+
+	assert.strictEqual(response.status, 409);
+	assert.strictEqual(
+		globalThis.__prisma.user.findUnique.mock.callCount(),
+		0,
+		"the existence check ran before the self-deletion guard",
+	);
+});
+
+test("DELETE still lets an admin delete a different user", async () => {
+	// The guard compares the session identity against the path segment, so it must
+	// not fire for two distinct admins. Both are admins here, so only the identity
+	// comparison distinguishes them.
+	const caller = { id: "admin-1", role: "admin" };
+	const target = { id: "admin-2", role: "admin" };
+	requireRoleImpl = async () => ({ user: caller });
+	userById = { ...KNOWN, id: target.id, role: "admin" };
+
+	const response = await DELETE(
+		mutatingRequest("DELETE", target.id),
+		context(target.id),
 	);
 
 	assert.strictEqual(response.status, 200);
-	assert.deepStrictEqual(dbWrites, [`delete:${lastAdmin.id}`]);
+	assert.deepStrictEqual(dbWrites, [`delete:${target.id}`]);
 });
