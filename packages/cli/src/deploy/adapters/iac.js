@@ -3,6 +3,29 @@ import { execa } from "execa";
 const RAILWAY = "railway";
 
 /**
+ * Every helper `railway/iac` exports that can appear in a generated body.
+ *
+ * The import list is derived from the helpers the body actually calls, rather
+ * than hardcoded. A helper that is called but not imported is a ReferenceError
+ * when the CLI evaluates the file, and that evaluation only happens later, in
+ * the user's `railway config apply` — so nothing in this repo ever surfaced it.
+ * Deriving the list makes the two impossible to drift apart.
+ */
+const IAC_HELPERS = [
+	"bucket",
+	"database",
+	"defineRailway",
+	"group",
+	"image",
+	"postgres",
+	"preserve",
+	"project",
+	"redis",
+	"service",
+	"volume",
+];
+
+/**
  * Escapes a string for safe embedding in a TypeScript string literal.
  * Handles backslashes, quotes, newlines, and template literal interpolation.
  *
@@ -65,9 +88,6 @@ export async function generateIacFile({
 	const { default: fs } = await import("fs-extra");
 	const { dirname } = await import("node:path");
 
-	const imports = new Set();
-	imports.add(`import { defineRailway, project, service } from "railway/iac";`);
-
 	const resourceLines = [];
 
 	for (const svc of services) {
@@ -116,16 +136,24 @@ export async function generateIacFile({
 
 	const resources = services.map((s) => toIdentifier(s.name)).join(", ");
 
-	const content = `${Array.from(imports).join("\n")}
-
-export default defineRailway(() => {
+	const body = `export default defineRailway(() => {
 ${resourceLines.join("\n\n")}
 
-\treturn project("${escapeTsString(projectName)}", {
-\t\tresources: [${resources}],
-\t});
+	return project("${escapeTsString(projectName)}", {
+		resources: [${resources}],
+	});
 });
 `;
+
+	// Derive the import list from the body so a helper can never be called
+	// without being in scope. See IAC_HELPERS.
+	const used = IAC_HELPERS.filter((helper) =>
+		new RegExp(`\\b${helper}\\s*\\(`).test(body),
+	).sort();
+
+	const content = `import { ${used.join(", ")} } from "railway/iac";
+
+${body}`;
 
 	await fs.ensureDir(dirname(iacPath));
 	await fs.writeFile(iacPath, content, "utf8");
