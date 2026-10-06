@@ -1,7 +1,7 @@
 // biome-ignore-all lint/suspicious/noTemplateCurlyInString: `${{Service.VAR}}` is
 // Railway IaC's own reference syntax. These are literal strings the Railway
 // toolchain interpolates at deploy time, not missed template expressions.
-import { defineRailway, project, service } from "railway/iac";
+import { defineRailway, preserve, project, service } from "railway/iac";
 
 export default defineRailway(() => {
 	const web = service("web", {

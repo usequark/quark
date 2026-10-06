@@ -3,6 +3,8 @@ export {
 	escapeTsString,
 	generateIacFile,
 	getDeploymentStatus,
+	hasRailwaySdk,
+	iacRef,
 	installRailwaySdk,
 } from "./iac.js";
 export {
@@ -21,7 +23,9 @@ export {
 	listProjects,
 	RAILWAY,
 	RailwayError,
+	readLinkedProject,
 	removeServiceDomain,
+	resolveProjectName,
 	setProjectVariables,
 	tryLinkProject,
 } from "./railway.js";

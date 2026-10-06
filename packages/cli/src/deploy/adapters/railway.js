@@ -42,13 +42,8 @@ export async function checkRailwayLogin() {
 }
 
 export async function isProjectLinked(cwd) {
-	const railwayDir = path.join(cwd, ".railway");
-	try {
-		const entries = await fs.readdir(railwayDir);
-		return entries.some((e) => e.endsWith(".json"));
-	} catch {
-		return false;
-	}
+	const { projectId } = await readLinkedProject({ cwd });
+	return projectId !== null;
 }
 
 export async function tryLinkProject(projectId, { cwd } = {}) {
@@ -76,6 +71,124 @@ export async function listProjects({ cwd } = {}) {
 	}
 }
 
+/**
+ * Reads the Railway project this directory is linked to.
+ *
+ * Two layouts are in play, because the CLI moved:
+ *
+ * - Railway CLI 3.x wrote `.railway/config.json` inside the project directory,
+ *   holding only `projectId` — no name to be found in it.
+ * - Railway CLI 5.x (verified against 5.62.1) keeps every link in
+ *   `~/.railway/config.json`, in a `projects` map keyed by absolute directory,
+ *   with `project` (the id) and `name` alongside it. A linked project
+ *   directory contains `.railway/railway.ts` and nothing else.
+ *
+ * Both are read, per-project first. The `~/.railway` file also holds the user's
+ * OAuth tokens; only the `projects` map is read and nothing else from it is
+ * ever returned or logged.
+ *
+ * @param {object} options
+ * @param {string} options.cwd - Project root directory
+ * @returns {Promise<{projectId: string|null, projectName: string|null}>}
+ */
+export async function readLinkedProject({ cwd } = {}) {
+	const fromProjectDir = await readProjectDirLink(cwd);
+	if (fromProjectDir.projectId) return fromProjectDir;
+
+	return readUserConfigLink(cwd);
+}
+
+/** Railway CLI 3.x layout: `.railway/config.json` in the project directory. */
+async function readProjectDirLink(cwd) {
+	const railwayDir = path.join(cwd, ".railway");
+	try {
+		const entries = await fs.readdir(railwayDir);
+		for (const entry of entries.filter((e) => e.endsWith(".json"))) {
+			try {
+				const parsed = JSON.parse(
+					await fs.readFile(path.join(railwayDir, entry), "utf8"),
+				);
+				const projectId = parsed?.projectId ?? null;
+				const projectName = parsed?.projectName ?? parsed?.name ?? null;
+				if (projectId || projectName) return { projectId, projectName };
+			} catch {
+				// Not the file we were after, or unparseable — try the next.
+			}
+		}
+	} catch {
+		// No .railway directory, or not readable.
+	}
+	return { projectId: null, projectName: null };
+}
+
+/**
+ * Railway CLI 5.x layout: `~/.railway/config.json`, `projects` keyed by
+ * absolute directory path.
+ */
+async function readUserConfigLink(cwd) {
+	const empty = { projectId: null, projectName: null };
+
+	const home = process.env.HOME ?? process.env.USERPROFILE;
+	if (!home) return empty;
+
+	try {
+		const parsed = JSON.parse(
+			await fs.readFile(path.join(home, ".railway", "config.json"), "utf8"),
+		);
+		const projects = parsed?.projects;
+		if (!projects || typeof projects !== "object") return empty;
+
+		const target = path.resolve(cwd);
+		const entry =
+			projects[target] ??
+			Object.values(projects).find(
+				(v) =>
+					typeof v?.projectPath === "string" &&
+					path.resolve(v.projectPath) === target,
+			);
+		if (!entry) return empty;
+
+		return {
+			projectId: entry.project ?? null,
+			projectName: entry.name ?? null,
+		};
+	} catch {
+		// No user config, unparseable, or unreadable — treat as unlinked.
+		return empty;
+	}
+}
+
+/**
+ * Resolves a project id to its name via the API, for when the link record
+ * carries only an id.
+ *
+ * @param {string} projectId
+ * @param {object} options
+ * @param {string} options.cwd - Project root directory
+ * @returns {Promise<string|null>}
+ */
+export async function resolveProjectName(projectId, { cwd } = {}) {
+	if (!projectId) return null;
+	const match = (await listProjects({ cwd })).find((p) => p.id === projectId);
+	return match?.name ?? null;
+}
+
+/**
+ * Best-effort name for a linked project: the link record when it carries one,
+ * otherwise resolved from its id.
+ *
+ * @param {object} options
+ * @param {string} options.cwd - Project root directory
+ * @returns {Promise<{projectId: string|null, projectName: string|null}>}
+ */
+async function linkedProjectWithName({ cwd }) {
+	const linked = await readLinkedProject({ cwd });
+	if (linked.projectName || !linked.projectId) return linked;
+
+	const projectName = await resolveProjectName(linked.projectId, { cwd });
+	return { projectId: linked.projectId, projectName };
+}
+
 export async function ensureRailwayProject({
 	projectName,
 	projectId,
@@ -86,11 +199,26 @@ export async function ensureRailwayProject({
 	if (alreadyLinked) {
 		try {
 			await execa(RAILWAY, ["status"], { cwd, timeout: 15_000 });
-			return { created: false, linked: true, projectName: null };
+			// Report the linked name rather than null: callers label generated
+			// IaC and app metadata from it, and falling back to the local
+			// directory name is how a project called `quark-site` ended up
+			// advertising itself as whatever directory it was deployed from.
+			const linked = await linkedProjectWithName({ cwd });
+			return {
+				created: false,
+				linked: true,
+				projectName: linked.projectName,
+			};
 		} catch {
-			// Stale link - clean up so we don't create an orphan project
-			const railwayDir = path.join(cwd, ".railway");
-			await fs.rm(railwayDir, { recursive: true, force: true });
+			// Stale link - clear it so we don't create an orphan project.
+			// `railway unlink` is what actually removes the link; it lives in
+			// ~/.railway on CLI 5.x, so deleting .railway/ here would only
+			// destroy the IaC file while leaving the stale link in place.
+			try {
+				await execa(RAILWAY, ["unlink"], { cwd, timeout: 15_000 });
+			} catch {
+				// Nothing to unlink, or it failed — fall through either way.
+			}
 		}
 	}
 
@@ -99,7 +227,8 @@ export async function ensureRailwayProject({
 			cwd,
 			timeout: 30_000,
 		});
-		return { created: false, linked: true, projectName: null };
+		const projectName = await resolveProjectName(projectId, { cwd });
+		return { created: false, linked: true, projectName };
 	}
 
 	if (!projectName) {

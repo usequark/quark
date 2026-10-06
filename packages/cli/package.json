@@ -36,6 +36,9 @@
 		"templates",
 		"README.md"
 	],
+	"devDependencies": {
+		"esbuild": "^0.28.2"
+	},
 	"scripts": {
 		"sync-templates": "node scripts/sync-templates.js",
 		"sync-templates:check": "node scripts/sync-templates.js --check",

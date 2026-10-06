@@ -26,6 +26,25 @@ const IAC_HELPERS = [
 ];
 
 /**
+ * Builds a Railway variable reference as a TypeScript *string literal*.
+ *
+ * Railway's `${{Service.VAR}}` syntax is only reference syntax inside a quoted
+ * string. Emitted bare it is not a valid expression — `${{` parses as an object
+ * literal that opens and never closes — so the file fails to parse before
+ * Railway ever sees it. The value must therefore carry its own quotes.
+ *
+ * Only for values embedded in generated TypeScript. A value passed to
+ * `railway variable set` on a command line wants the bare, unquoted form.
+ *
+ * @param {string} serviceName - Railway service the variable lives on
+ * @param {string} variableName - Variable name on that service
+ * @returns {string} A quoted reference, e.g. `"${{Postgres.DATABASE_URL}}"`
+ */
+export function iacRef(serviceName, variableName) {
+	return `"$\{{${serviceName}.${variableName}}}"`;
+}
+
+/**
  * Escapes a string for safe embedding in a TypeScript string literal.
  * Handles backslashes, quotes, newlines, and template literal interpolation.
  *
@@ -76,6 +95,9 @@ function toIdentifier(value) {
  * @param {object} options.variableRefs - Map of variable key → Railway reference string
  * @param {object} options.serviceVars - Map of service name → extra env vars
  * @param {string} [options.projectName] - Railway project name (defaults to "quark-app")
+ * @returns {Promise<{content: string, changed: boolean, previous: string|null}>}
+ *   `changed` is false when the file on disk already matched, in which case no
+ *   write happened. `previous` is the content that was replaced, or null.
  */
 export async function generateIacFile({
 	iacPath,
@@ -108,13 +130,24 @@ export async function generateIacFile({
 
 		const preDeploy = "pnpm db:migrate:deploy";
 
-		// Healthcheck (web only)
-		const healthcheck =
-			svc.kind === "web"
-				? `\n\t\thealthcheck: "/api/health",\n\t\thealthcheckTimeout: 120,`
-				: "";
+		// Each entry is one complete `key: value` field, and the object body is
+		// rendered by joining them. Concatenating pre-rendered blocks instead
+		// means each block has to guess whether it owns the separator between it
+		// and its neighbour — and when two blocks both assume they do, the file
+		// ships with `healthcheckTimeout: 120,,`, which does not parse. A field
+		// list makes that unrepresentable: there is exactly one join.
+		const fields = [
+			`build: "${escapeTsString(buildCmd)}"`,
+			`start: "${escapeTsString(startCmd)}"`,
+			`preDeploy: "${escapeTsString(preDeploy)}"`,
+		];
 
-		// Build env vars — escape all string values
+		// Healthcheck (web only)
+		if (svc.kind === "web") {
+			fields.push('healthcheck: "/api/health"', "healthcheckTimeout: 120");
+		}
+
+		// Env vars — escape all string values
 		const extraVars = serviceVars[svc.name] || {};
 		const envEntries = [
 			...Object.entries(variableRefs),
@@ -122,16 +155,16 @@ export async function generateIacFile({
 			...Object.entries(extraVars),
 		];
 
-		const envBlock =
-			envEntries.length > 0
-				? `,\n\t\tenv: {\n${envEntries.map(([k, v]) => `\t\t\t${escapeTsString(k)}: ${v},`).join("\n")}\n\t\t}`
-				: "";
+		if (envEntries.length > 0) {
+			const envLines = envEntries
+				.map(([k, v]) => `\t\t\t${escapeTsString(k)}: ${v},`)
+				.join("\n");
+			fields.push(`env: {\n${envLines}\n\t\t}`);
+		}
 
-		resourceLines.push(`\tconst ${svcIdentifier} = service("${svcLabel}", {
-\t\tbuild: "${escapeTsString(buildCmd)}",
-\t\tstart: "${escapeTsString(startCmd)}",
-\t\tpreDeploy: "${escapeTsString(preDeploy)}",${healthcheck}${envBlock}
-\t});`);
+		resourceLines.push(
+			`\tconst ${svcIdentifier} = service("${svcLabel}", {\n\t\t${fields.join(",\n\t\t")},\n\t});`,
+		);
 	}
 
 	const resources = services.map((s) => toIdentifier(s.name)).join(", ");
@@ -156,7 +189,27 @@ ${resourceLines.join("\n\n")}
 ${body}`;
 
 	await fs.ensureDir(dirname(iacPath));
-	await fs.writeFile(iacPath, content, "utf8");
+
+	// `.railway/railway.ts` is a tracked file that every scaffold ships with a
+	// hand-written copy of. Overwriting it silently is how a deploy once
+	// replaced a committed file with generated output and the user only found
+	// out from `git status` afterwards. So: skip the write when nothing changed,
+	// and hand the previous content back when something did, so the caller can
+	// show the diff. The file is tracked, so `git checkout` remains the escape
+	// hatch — this only makes the change visible at the moment it happens.
+	let previous = null;
+	try {
+		previous = await fs.readFile(iacPath, "utf8");
+	} catch {
+		previous = null;
+	}
+
+	const changed = previous !== content;
+	if (changed) {
+		await fs.writeFile(iacPath, content, "utf8");
+	}
+
+	return { content, changed, previous };
 }
 
 /**
@@ -182,17 +235,67 @@ export async function applyIacConfig({ cwd, timeout = 120_000 } = {}) {
 }
 
 /**
+ * Checks whether the `railway` package already resolves from `cwd`.
+ *
+ * Walks up from `cwd` the way Node's resolver does, so a hoisted install in a
+ * pnpm workspace root is found from a package directory too.
+ *
+ * @param {object} options
+ * @param {string} options.cwd - Project root directory
+ * @returns {Promise<boolean>}
+ */
+export async function hasRailwaySdk({ cwd } = {}) {
+	const { default: fs } = await import("fs-extra");
+	const { dirname, join, parse, resolve } = await import("node:path");
+
+	const root = parse(resolve(cwd)).root;
+	let dir = resolve(cwd);
+
+	while (dir !== root) {
+		if (
+			await fs.pathExists(join(dir, "node_modules", "railway", "package.json"))
+		) {
+			return true;
+		}
+		dir = dirname(dir);
+	}
+
+	return false;
+}
+
+/**
  * Installs the Railway SDK (required for TypeScript IaC evaluation).
+ *
+ * No-op when the package already resolves, so a repeat deploy does not touch
+ * package.json or the lockfile again.
+ *
+ * `-w` is passed explicitly because every scaffolded project is a pnpm
+ * workspace and the SDK is added at the root. Current pnpm versions accept the
+ * bare form, but older ones reject it with `ERR_PNPM_ADDING_TO_ROOT` and name
+ * the same command as the remedy, so being explicit is the only version this
+ * has to reason about.
  *
  * @param {object} options
  * @param {string} options.cwd - Project root directory
  * @param {string} [options.packageManager="pnpm"] - Package manager to use
+ * @returns {Promise<{installed: boolean, alreadyPresent: boolean}>}
  */
 export async function installRailwaySdk({ cwd, packageManager = "pnpm" } = {}) {
-	await execa(packageManager, ["add", "-D", "railway"], {
+	if (await hasRailwaySdk({ cwd })) {
+		return { installed: false, alreadyPresent: true };
+	}
+
+	const args = ["add", "-D"];
+	if (packageManager === "pnpm") {
+		args.push("-w");
+	}
+	args.push("railway");
+
+	await execa(packageManager, args, {
 		cwd,
 		timeout: 60_000,
 	});
+	return { installed: true, alreadyPresent: false };
 }
 
 /**

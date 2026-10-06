@@ -228,6 +228,10 @@ importers:
       prompts:
         specifier: ^2.4.2
         version: 2.4.2
+    devDependencies:
+      esbuild:
+        specifier: ^0.28.2
+        version: 0.28.2
 
   packages/config:
     dependencies:
