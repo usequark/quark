@@ -1,6 +1,6 @@
 {
 	"name": "@usequark/quark-core",
-	"version": "2.5.8",
+	"version": "2.6.0",
 	"description": "Core utilities for Quark apps: auth, BullMQ queues, Redis, email, storage, rate limiting, logging, and error handling",
 	"keywords": [
 		"quark",
