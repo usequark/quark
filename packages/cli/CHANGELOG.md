@@ -1,5 +1,77 @@
 # @usequark/quark-create-app
 
+## 1.25.2
+
+### Patch Changes
+
+- [#228](https://github.com/usequark/quark/pull/228) [`861ff6a`](https://github.com/usequark/quark/commit/861ff6afdad54e43975d30a615013d0f145457a8) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Fix `pnpm test` silently skipping every test file in a dynamic route directory.
+  
+  Next.js dynamic route segments are directories named `[id]` or `[...slug]`.
+  `run-tests.mjs` collects test files with `readdirSync` — so it found them — then
+  handed the paths to `node --test`, which matches its file arguments as globs. A
+  literal `[id]` is read as a character class matching a single `i` or `d`, so the
+  path matched nothing.
+  
+  The failure was silent in the worst way: `node --test` reported zero tests and
+  exited `0`. The empty-suite guard in the runner never fired, because collection
+  had already succeeded and the drop happened one step later. A suite that had
+  never run looked exactly like a suite that had.
+  
+  Affected: any test co-located in a dynamic segment. In this repo that was
+  `apps/web/src/app/api/files/[id]/route.test.js` — 14 tests — plus `users/[id]`
+  and `[...nextauth]`, which have no tests for the same reason.
+  
+  The runner now escapes `[` and `]` before passing paths on, and four tests pin
+  the behaviour, including a mutation test proving the escape is load-bearing.
+
+- [#226](https://github.com/usequark/quark/pull/226) [`8a35466`](https://github.com/usequark/quark/commit/8a3546697a2a9187dff7209a7ccacee4c3845a09) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - `/api/health` now delegates its probing to `@usequark/quark-core/health`.
+  
+  The route was ~260 lines of orchestration — concurrency, per-probe deadlines,
+  error normalisation, credential redaction — that every Quark app had ended up
+  reimplementing or hand-rolling. It is now the thin HTTP shell: it wires the
+  app's probes into `runHealthChecks()` and renders the report.
+  
+  The route's existing guarantees are unchanged: every dependency probed
+  concurrently under its own deadline, always `200` with the verdict in `status`,
+  generic error messages in production, and `Cache-Control: no-store`. Those
+  invariants moved into core and are covered by `health.test.js`; the route tests
+  now cover the wiring, which is what the route is still responsible for.
+  
+  `checkStorage()` keeps the sentinel write/delete round-trip rather than a
+  `stat`: `stat` only proves a path exists and cannot distinguish a read-only
+  mount from a writable one, which is the only failure the probe exists to catch.
+  The round-trip also works unchanged for S3/R2, where a filesystem permission
+  check means nothing.
+
+- [#225](https://github.com/usequark/quark/pull/225) [`940d9fa`](https://github.com/usequark/quark/commit/940d9fabf12b2025985256790c92d2cd31033a9e) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Fix two documentation lies in the scaffolded project entry points, and pin them
+  with tests.
+  
+  `MAIN.md` and `README.md` hardcoded `http://localhost:3000` as the "start here"
+  link, but the CLI resolves a free port with `findAvailablePort(3000)` and writes
+  the result to `PORT` in the generated `.env`. Whenever 3000 was already taken the
+  docs sent the user to a server that was never started. The port logic itself was
+  correct; only the docs disagreed with it. Both files now render the port from a
+  new `__QUARK_WEB_PORT__` placeholder, so the link always matches the `.env` that
+  was actually generated.
+  
+  `MAIN.md`'s "Read this first" list pointed at `openapi.yaml`. Nothing in the
+  scaffold creates that file — the only one in this repository is `docs/openapi.yaml`
+  in the Quark monorepo, which is never shipped. An agent that follows `MAIN.md`
+  before anything else is told to read a file that does not exist. Removed.
+  
+  Neither bug was reachable by a test, which is how both survived: the CLI already
+  had a suite that scaffolds a real project and checks the output
+  (`scaffold-output.test.js`), but it asserted on placeholders and package scopes,
+  never on whether a documented path resolves or a documented port matches `.env`.
+  Three assertions added there — the doc templates may not contain a literal
+  `localhost:3000`, the scaffolded docs must link to the port in the generated
+  `.env`, and every path in MAIN.md's "Read this first" section must exist in the
+  scaffold output. The port check is made against the template rather than the
+  rendered output on purpose: in a rendered project `localhost:3000` is the correct
+  link whenever 3000 happens to be free, so an output-only assertion would be
+  environment-dependent and would not have caught the original bug. Verified to
+  fail 2 of 12 when both bugs are restored.
+
 ## 1.25.1
 
 ### Patch Changes

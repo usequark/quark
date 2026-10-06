@@ -1,5 +1,78 @@
 # @usequark/quark-core
 
+## 2.6.0
+
+### Minor Changes
+
+- [#226](https://github.com/usequark/quark/pull/226) [`8a35466`](https://github.com/usequark/quark/commit/8a3546697a2a9187dff7209a7ccacee4c3845a09) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add a reusable health-check module, and fix a credential leak in `redactUrl()`.
+  
+  **New: `@usequark/quark-core/health`**
+  
+  `runHealthChecks()` holds two invariants that every Quark app was
+  reimplementing:
+  
+  - *The aggregate completes inside one overall deadline.* Probes run
+    concurrently, each under its own deadline clamped to the overall budget.
+    Sequentially, three 3s probes exhaust a 5s budget before the last one starts —
+    and an exhausted budget reads as a dead service.
+  - *No message leaves carrying a credential.* Both failure shapes are normalised
+    in one place: a probe can report failure by rejecting **or** by resolving with
+    `{ status: "error", message }`. Handling only rejections is what let
+    `pingRedis` publish the Redis password from an unauthenticated endpoint once.
+  
+  Also exports `checkStorage()`, `checkQueues()`, `isFailing()` and
+  `createDefaultProbes()`. `pingDatabase` is passed in rather than imported,
+  because `@usequark/quark-db` depends on this package and importing it back
+  would be circular.
+  
+  **Fix: `redactUrl()` missed credentials in a URL embedded mid-message.**
+  
+  This is the more important half. The old fallback regex was anchored to the
+  start of the string, so it only redacted a *bare* URL. Drivers do not report
+  bare URLs — they report the connection string inside a longer message:
+  
+  ```
+  connect ECONNREFUSED redis://default:hunter2@cache.internal:6379
+  ```
+  
+  That string does not parse as a URL, so it fell to the regex, which did not
+  match, and **the password was returned intact**. The docstring already claimed
+  the function was for "nothing that embeds a URL in a message should skip this",
+  which is exactly the case it did not handle.
+  
+  Now every URL-shaped substring is scanned wherever it sits. Added tests for the
+  embedded, multi-URL, and embedded-but-credential-free cases.
+
+### Patch Changes
+
+- [#228](https://github.com/usequark/quark/pull/228) [`861ff6a`](https://github.com/usequark/quark/commit/861ff6afdad54e43975d30a615013d0f145457a8) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Fix `redactUrl()` leaking credentials from a message that itself parses as a URL.
+  
+  The fallback added for embedded URLs was unreachable for a common class of
+  input. `redactUrl()` tried `new URL()` first and rewrote the parsed result field
+  by field — but `new URL()` accepts *any* string with a `<scheme>:` prefix, so a
+  driver error that begins with a label parses as a URL carrying no credentials of
+  its own. The function then found nothing to strip and returned the message whole,
+  with the embedded password intact:
+  
+  ```
+  Error: getaddrinfo ENOTFOUND postgres://u:p@db.example.com:5432/x
+    before: unchanged, password returned
+    after:  Error: getaddrinfo ENOTFOUND postgres://REDACTED@db.example.com:5432/x
+  ```
+  
+  The same held for any `label:` prefix — `connect:`, `error:`, `failure:`. This
+  reached `/api/health`, which returns probe messages from an unauthenticated
+  endpoint: `runHealthChecks()` routes both rejection and resolved-error shapes
+  through `redactUrl()`, and a probe failing with `connect: ECONNREFUSED
+  redis://user:pass@host:6379` returned the password verbatim outside production.
+  
+  The field-by-field path is now gated on the string actually being a bare URL
+  (`scheme://…` with no surrounding text). Everything else goes to the substring
+  scan, which handles bare and embedded inputs identically. This completes the fix
+  in [#226](https://github.com/usequark/quark/issues/226), which closed the start-anchored regex but left this branch ahead of it.
+  
+  Credential-free input is still returned unchanged.
+
 ## 2.5.8
 
 ### Patch Changes
