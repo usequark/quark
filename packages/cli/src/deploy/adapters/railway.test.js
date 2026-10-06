@@ -7,6 +7,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { after, test } from "node:test";
+import { iacRef } from "./iac.js";
 
 const temporaryDirectories = [];
 
@@ -125,8 +126,8 @@ test("generateIacFile creates .railway/railway.ts with preserve() for secrets", 
 			NEXTAUTH_SECRET: "preserve()",
 		},
 		variableRefs: {
-			DATABASE_URL: "${{Postgres.DATABASE_URL}}",
-			REDIS_URL: "${{Redis.REDIS_URL}}",
+			DATABASE_URL: iacRef("Postgres", "DATABASE_URL"),
+			REDIS_URL: iacRef("Redis", "REDIS_URL"),
 		},
 		serviceVars: {
 			worker: { WORKER_CONCURRENCY: '"5"' },
@@ -139,8 +140,12 @@ test("generateIacFile creates .railway/railway.ts with preserve() for secrets", 
 	assert.ok(content.includes('service("web"'));
 	assert.ok(content.includes('service("worker"'));
 	assert.ok(content.includes("preserve()"));
-	assert.ok(content.includes("${{Postgres.DATABASE_URL}}"));
-	assert.ok(content.includes("${{Redis.REDIS_URL}}"));
+	// Quoted, because the reference syntax only resolves inside a string. The
+	// bare form parses as an object literal that never closes, so an assertion
+	// of `includes("${{Postgres.DATABASE_URL}}")` passed on the broken file and
+	// pinned the bug. See iac.test.js for the parse check that catches it.
+	assert.ok(content.includes('"${{Postgres.DATABASE_URL}}"'));
+	assert.ok(content.includes('"${{Redis.REDIS_URL}}"'));
 	assert.ok(content.includes("pnpm db:migrate:deploy"));
 	assert.ok(content.includes("/api/health"));
 	assert.ok(content.includes("WORKER_CONCURRENCY"));

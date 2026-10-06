@@ -12,6 +12,8 @@ import {
 	getDeploymentStatus,
 	getExistingVariable,
 	getServiceUrl,
+	hasRailwaySdk,
+	iacRef,
 	installRailwaySdk,
 	removeServiceDomain,
 	setProjectVariables,
@@ -99,13 +101,17 @@ export async function deployToRailway(options = {}) {
 
 	// --- Step 4: Ensure Railway project ---
 	console.log(chalk.cyan("  Ensuring Railway project..."));
+	let resolvedProjectName = projectName || null;
 	try {
 		const project = await ensureRailwayProject({ projectName, projectId, cwd });
+		// Prefer the name Railway actually resolved. The local directory name is
+		// only a fallback for naming a brand new project — it must not become the
+		// project's identity just because the deploy ran from a differently-named
+		// checkout.
+		resolvedProjectName = project.projectName || resolvedProjectName;
 		if (project.created) {
 			console.log(
-				chalk.green(
-					`  ✔ Created Railway project "${project.projectName || projectName || ""}"`,
-				),
+				chalk.green(`  ✔ Created Railway project "${resolvedProjectName}"`),
 			);
 		} else {
 			console.log(chalk.green("  ✔ Railway project linked"));
@@ -141,7 +147,7 @@ export async function deployToRailway(options = {}) {
 	}
 
 	// --- Step 6: Preserve existing secrets across deploys ---
-	const projectLabel = path.basename(cwd);
+	const projectLabel = resolvedProjectName || path.basename(cwd);
 	let authSecret;
 	let nextAuthSecret;
 
@@ -170,14 +176,18 @@ export async function deployToRailway(options = {}) {
 	console.log(chalk.cyan("  Generating IaC configuration..."));
 	const iacPath = `${cwd}/.railway/railway.ts`;
 
-	await generateIacFile({
+	const iacResult = await generateIacFile({
 		iacPath,
 		services: discovery.services,
 		// Pass raw name — generateIacFile handles escaping internally
-		projectName: projectName || projectLabel,
+		projectName: projectLabel,
 		variableRefs: {
-			DATABASE_URL: `\${{${pgServiceName}.DATABASE_URL}}`,
-			REDIS_URL: `\${{${redisServiceName}.REDIS_URL}}`,
+			// Quoted: these land inside generated TypeScript as object values,
+			// where `${{...}}` must be a string literal to parse at all. The
+			// equivalent bare form is still used in step 9, where the value is a
+			// command-line argument rather than an expression.
+			DATABASE_URL: iacRef(pgServiceName, "DATABASE_URL"),
+			REDIS_URL: iacRef(redisServiceName, "REDIS_URL"),
 			NODE_ENV: '"production"',
 			APP_NAME: `"${escapeTsString(projectLabel)}"`,
 			APP_DESCRIPTION: `"${escapeTsString(`${projectLabel} - Quark application`)}"`,
@@ -197,23 +207,34 @@ export async function deployToRailway(options = {}) {
 			},
 		},
 	});
+	if (iacResult.changed) {
+		console.log(
+			chalk.yellow(
+				"  · .railway/railway.ts rewritten — review with `git diff .railway/railway.ts`",
+			),
+		);
+	}
 	console.log(chalk.green(`  ✔ IaC file generated at .railway/railway.ts`));
 
 	// --- Step 8: Install Railway SDK (required for IaC evaluation) ---
-	console.log(chalk.cyan("  Installing Railway SDK..."));
-	try {
-		await installRailwaySdk({ cwd });
-		console.log(chalk.green("  ✔ Railway SDK installed"));
-	} catch (error) {
-		// SDK is mandatory — railway config apply cannot evaluate .railway/railway.ts without it
-		console.error(
-			chalk.red(`  ✖ Failed to install Railway SDK: ${error.message}`),
-		);
-		throw new Error(
-			`Railway SDK installation failed. The generated IaC file requires the "railway" package.\n` +
-				`Install it manually: pnpm add -D railway\n` +
-				`Original error: ${error.message}`,
-		);
+	if (await hasRailwaySdk({ cwd })) {
+		console.log(chalk.dim("  · Railway SDK already installed"));
+	} else {
+		console.log(chalk.cyan("  Installing Railway SDK..."));
+		try {
+			await installRailwaySdk({ cwd });
+			console.log(chalk.green("  ✔ Railway SDK installed"));
+		} catch (error) {
+			// SDK is mandatory — railway config apply cannot evaluate .railway/railway.ts without it
+			console.error(
+				chalk.red(`  ✖ Failed to install Railway SDK: ${error.message}`),
+			);
+			throw new Error(
+				`Railway SDK installation failed. The generated IaC file requires the "railway" package.\n` +
+					`Install it manually: pnpm add -D -w railway\n` +
+					`Original error: ${error.message}`,
+			);
+		}
 	}
 
 	// --- Step 9: Set dynamic variable references (infrastructure wiring) ---

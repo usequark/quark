@@ -76,6 +76,39 @@ export async function listProjects({ cwd } = {}) {
 	}
 }
 
+/**
+ * Reads the name of the Railway project this directory is linked to.
+ *
+ * `railway link` writes `.railway/config.json`; the name is not guaranteed to
+ * be in it across CLI versions, so anything unreadable falls through and the
+ * caller decides what to do with a null.
+ *
+ * @param {object} options
+ * @param {string} options.cwd - Project root directory
+ * @returns {Promise<{projectId: string|null, projectName: string|null}>}
+ */
+export async function readLinkedProject({ cwd } = {}) {
+	const railwayDir = path.join(cwd, ".railway");
+	try {
+		const entries = await fs.readdir(railwayDir);
+		for (const entry of entries.filter((e) => e.endsWith(".json"))) {
+			try {
+				const parsed = JSON.parse(
+					await fs.readFile(path.join(railwayDir, entry), "utf8"),
+				);
+				const projectId = parsed?.projectId ?? null;
+				const projectName = parsed?.projectName ?? parsed?.name ?? null;
+				if (projectId || projectName) return { projectId, projectName };
+			} catch {
+				// Not the file we were looking for, or unreadable - try the next.
+			}
+		}
+	} catch {
+		// No .railway directory at all.
+	}
+	return { projectId: null, projectName: null };
+}
+
 export async function ensureRailwayProject({
 	projectName,
 	projectId,
@@ -86,7 +119,16 @@ export async function ensureRailwayProject({
 	if (alreadyLinked) {
 		try {
 			await execa(RAILWAY, ["status"], { cwd, timeout: 15_000 });
-			return { created: false, linked: true, projectName: null };
+			// Report the linked name rather than null: callers label generated
+			// IaC and app metadata from it, and falling back to the local
+			// directory name is how a project called `quark-site` ended up
+			// advertising itself as whatever directory it was deployed from.
+			const linked = await readLinkedProject({ cwd });
+			return {
+				created: false,
+				linked: true,
+				projectName: linked.projectName,
+			};
 		} catch {
 			// Stale link - clean up so we don't create an orphan project
 			const railwayDir = path.join(cwd, ".railway");
@@ -99,7 +141,8 @@ export async function ensureRailwayProject({
 			cwd,
 			timeout: 30_000,
 		});
-		return { created: false, linked: true, projectName: null };
+		const match = (await listProjects({ cwd })).find((p) => p.id === projectId);
+		return { created: false, linked: true, projectName: match?.name ?? null };
 	}
 
 	if (!projectName) {
