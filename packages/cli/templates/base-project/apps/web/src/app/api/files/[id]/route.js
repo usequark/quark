@@ -21,14 +21,26 @@ const logger = createLogger("files");
 
 /**
  * GET /api/files/[id]
- * Serve / download a file by its database ID.
- * Public endpoint (no auth required) - access control is by knowledge of ID.
+ * Serve / download a file by its database ID or its storage key.
+ * Public endpoint (no auth required) - access control is by knowledge of the
+ * identifier.
+ *
+ * Both identifier forms are accepted because `getAssetUrl()` in
+ * `@usequark/quark-core` builds `/api/files/<key>` from a storage key, and
+ * nothing in this app ever called it with anything else. Serving only by id
+ * made every URL that function produces a 404.
  */
 export async function GET(_request, { params }) {
 	try {
 		const { id } = await params;
 
-		const record = await file.findById(id);
+		// The two forms are disjoint: a cuid never contains "/", and a storage key
+		// always does (`<prefix>/<year>/<month>/<id>-<name>`). An id lookup that
+		// misses is followed by a key lookup, so the id path costs no extra query.
+		let record = await file.findById(id);
+		if (!record && id.includes("/")) {
+			record = await file.findByStorageKey(id);
+		}
 		if (!record) {
 			throw new NotFoundError("File not found");
 		}
@@ -39,7 +51,13 @@ export async function GET(_request, { params }) {
 		const headers = new Headers();
 		headers.set("Content-Type", contentType || record.mimeType);
 		headers.set("Content-Length", String(body.length));
-		headers.set("Cache-Control", "public, max-age=31536000, immutable");
+		// Bounded, not `immutable`. The URL carries no version segment and nothing
+		// in the path is content-addressed, so `immutable` (never revalidate for a
+		// year) was a promise this route cannot keep: any code path that reuses an
+		// identifier — admin tooling, a seed, a restore from backup — would leave
+		// every browser and CDN holding the old bytes indefinitely. A bounded
+		// max-age bounds that window instead.
+		headers.set("Cache-Control", "public, max-age=3600");
 
 		// Inline display for images; attachment download for everything else
 		const isImage = record.mimeType.startsWith("image/");

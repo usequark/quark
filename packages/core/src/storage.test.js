@@ -351,6 +351,55 @@ test("getAssetUrl - percent-encodes key in fallback URL", () => {
 	assert.strictEqual(url, "/api/files/uploads%2Ffile%20with%20spaces.jpg");
 });
 
+// ─── getAssetUrl / route contract ────────────────────────────────────────────
+//
+// The scaffolded GET /api/files/[id] route used to look up by database id only,
+// so every URL this function produced resolved to a 404. It now also resolves a
+// storage key. These tests pin the two halves of that contract from each side:
+// the shape produced here, and the lookup performed by the route (in
+// apps/web/src/app/api/files/[id]/route.test.js).
+test("getAssetUrl - fallback URL carries the key in a single path segment", () => {
+	delete process.env.ASSET_CDN_URL;
+	const url = getAssetUrl("uploads/2026/02/abc-photo.jpg");
+
+	// A key with slashes must stay inside ONE path segment, or the request never
+	// reaches the [id] route at all — it 404s as an unrouted path. `URL` keeps the
+	// percent-encoding in `pathname`, so it is the encoded slashes that hold the
+	// segment together.
+	const segments = new URL(url, "http://localhost").pathname.split("/");
+	assert.strictEqual(
+		segments.length,
+		4,
+		`key leaked into extra segments: ${url}`,
+	);
+	assert.strictEqual(segments[3], "uploads%2F2026%2F02%2Fabc-photo.jpg");
+	// And it must decode back to exactly the key, which is what the route looks up.
+	assert.strictEqual(
+		decodeURIComponent(segments[3]),
+		"uploads/2026/02/abc-photo.jpg",
+	);
+});
+
+test("getAssetUrl - CDN URL leaves the key path unencoded", () => {
+	// The CDN branch is a real URL space, not a path segment: encoding the slashes
+	// would ask the CDN for a single object literally named "uploads/2026/02/...".
+	// A bucket-rooted CDN maps the path straight onto the key.
+	process.env.ASSET_CDN_URL = "https://assets.example.com";
+	try {
+		const url = getAssetUrl("uploads/2026/02/abc-photo.jpg");
+		assert.strictEqual(
+			url,
+			"https://assets.example.com/uploads/2026/02/abc-photo.jpg",
+		);
+		assert.ok(
+			!url.includes("%2F"),
+			"CDN URL must not percent-encode the key path",
+		);
+	} finally {
+		delete process.env.ASSET_CDN_URL;
+	}
+});
+
 // ---------------------------------------------------------------------------
 // getSignedUploadUrl
 // ---------------------------------------------------------------------------

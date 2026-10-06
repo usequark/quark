@@ -472,8 +472,16 @@ paths:
       tags: [Files]
       summary: Download a file
       description: |
-        Public endpoint (access by knowledge of file ID).
+        Public endpoint (access by knowledge of the identifier).
         Returns the raw binary with appropriate Content-Type and Content-Disposition headers.
+
+        `{id}` accepts either the database id or the storage key. `getAssetUrl()`
+        in `@usequark/quark-core` builds `/api/files/<storage key>`, so both forms
+        resolve.
+
+        `Cache-Control` is a bounded `max-age`, not `immutable`: the URL carries
+        no version segment, so the route cannot promise the bytes never change
+        under a reused identifier.
       responses:
         '200':
           description: File binary
@@ -490,7 +498,7 @@ paths:
             Cache-Control:
               schema:
                 type: string
-                example: 'public, max-age=31536000, immutable'
+                example: 'public, max-age=3600'
         '404':
           $ref: '#/components/responses/NotFound'
 
