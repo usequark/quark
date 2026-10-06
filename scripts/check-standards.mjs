@@ -16,6 +16,31 @@ const throwNewErrorPattern = /\bthrow new Error\s*\(/;
 const consolePattern = /\bconsole\.(?:log|warn|error|info)\s*\(/;
 
 /**
+ * `next-auth` and `@auth/core` declare nodemailer as an *optional* peer pinned to
+ * `^7.0.7 || ^8.0.5`. No version in that range is free of an advisory, so
+ * pnpm-workspace.yaml removes the peer edge entirely instead:
+ *
+ *   "next-auth>nodemailer": "-"
+ *   "@auth/core>nodemailer": "-"
+ *
+ * That is what clears 13 of the 21 advisories, and it is safe only while nothing
+ * imports Auth.js's Nodemailer provider. The failure mode if that changes is bad:
+ * `providers/nodemailer.js` does `import { createTransport } from "nodemailer"` at
+ * module scope, so the import throws ERR_MODULE_NOT_FOUND on the next server start -
+ * not at build time, and not with any hint that an override caused it.
+ *
+ * This check turns that into a build failure with the fix attached. It fires on the
+ * import specifier rather than on the override, so it stays correct if the override
+ * is ever reworded, and it covers both the monorepo and the scaffold template.
+ *
+ * If you genuinely want the provider: delete the two overrides above, then add
+ * `nodemailer` (>=10.0.6, past every advisory) to the app's own dependencies and
+ * allowlist this check for that file.
+ */
+const authNodemailerProviderPattern =
+	/(?:from|import|require\s*\()\s*["']next-auth\/providers\/nodemailer["']/;
+
+/**
  * Tailwind v4 removed the bare `[--var]` shorthand that v3 accepted. Under v4 a
  * class such as `text-[--navbar-text-muted]` is still a *valid* utility name, so
  * Tailwind emits a rule for it - but the declaration body is the bare token
@@ -210,6 +235,17 @@ async function main() {
 			for (const lineNumber of findMatchingLines(content, consolePattern)) {
 				violations.push(
 					`${relativePath}:${lineNumber}: Use createLogger() instead of console.* outside CLI/bootstrap allowlists.`,
+				);
+			}
+		}
+
+		if (isSourceFile(relativePath)) {
+			for (const lineNumber of findMatchingLines(
+				content,
+				authNodemailerProviderPattern,
+			)) {
+				violations.push(
+					`${relativePath}:${lineNumber}: next-auth/providers/nodemailer cannot resolve - pnpm-workspace.yaml removes that peer edge to clear 13 nodemailer advisories, and the peer range (^7.0.7 || ^8.0.5) has no patched version. Delete the two nodemailer overrides and add nodemailer >=10.0.6 as a direct dependency to use this provider.`,
 				);
 			}
 		}

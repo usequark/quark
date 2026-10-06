@@ -65,11 +65,18 @@ This is safe because the provider is never used:
 - Outgoing mail goes through `@usequark/quark-core` (`src/email.js`), which depends on
   nodemailer `^10.0.10` directly.
 
-**If you ever add `next-auth/providers/nodemailer`, delete those two override lines first.**
-Otherwise the import will not resolve.
+### The override is guarded, not just documented
 
-`pnpm.ignoredOptionalDependencies` would be the tidier mechanism but is not honoured by the
-pinned pnpm 10.12.1 for peer edges, so it was tested and rejected.
+Deleting the peer edge means `next-auth/providers/nodemailer` stops resolving. Left alone,
+that failure is late and opaque: the provider does
+`import { createTransport } from "nodemailer"` at module scope, so it surfaces as
+`ERR_MODULE_NOT_FOUND` on the next server start, with nothing pointing at the override.
+
+`scripts/check-standards.mjs` now fails the build if any source file imports that provider,
+and names the fix in the error. It runs in CI via `pnpm standards`, and covers the monorepo
+and the scaffold template. `scripts/check-standards.test.mjs` has 8 cases for it, including
+the negative ones that keep it from becoming noise: other `next-auth/providers/*` imports and
+a comment merely mentioning the path both still pass.
 
 ### qs - the one production-path fix that was safe
 
@@ -94,11 +101,23 @@ editor-launcher on a developer machine, not in anything deployed.
 `xcode@3.0.1` declares `uuid: ^7.0.3`; the advisory needs `>=11.1.1`. This is the one override
 that leaves a declared range, so it was checked rather than assumed:
 
-- `xcode` only calls `uuid.v4()` (`lib/pbxProject.js:90`).
-- `uuid@11.1.1` was installed standalone and confirmed to still support CommonJS
-  `require('uuid')` returning a working `v4()`.
+- `xcode` only calls `uuid.v4()`. That is the sole call site, at
+  `lib/pbxProject.js:90`, inside `generateUuid()`.
+- Verified against the **real** call site, not just the API shape. After
+  `expo prebuild --platform ios` produced `apps/mobile/ios/Quark.xcodeproj/project.pbxproj`,
+  the audited chain was driven directly:
+
+  ```
+  pbxProject = require('.../xcode/lib/pbxProject.js')   # requires uuid at module scope
+  proj = new pbxProject('ios/Quark.xcodeproj/project.pbxproj')
+  proj.parseSync()                                      # 32 UUIDs parsed
+  proj.generateUuid()  ->  '95C8FFC7A2D447F4B866B875'   # 24-hex uppercase: true
+  ```
+
+  `generateUuid()` is the function that would break if the override were wrong, and it
+  returns a correctly formatted 24-character uppercase hex ID with uuid 14.0.2 resolved.
 - The path is build-time only, reached through `@expo/config-plugins` when generating native
-  projects.
+  projects. Nothing about it ships in a JS bundle.
 
 ## Not fixed - documented accepts
 
@@ -153,6 +172,38 @@ Run `pnpm audit`. If any of the three remaining advisories disappears, it moved 
 this document should be updated. Note that `pnpm audit` reads the lockfile, so a stale
 `.pnpm` directory can make a resolved tree look unfixed - `rm -rf node_modules && pnpm install`
 if a count looks stale.
+
+## Known unrelated breakage: the mobile bundle does not build
+
+Found while verifying the `uuid` override above. **Not caused by any override in this
+document** - it reproduces on `origin/main` with a clean lockfile.
+
+`expo export` fails:
+
+```
+iOS Bundling failed
+Error: Cannot find module '.../react-native/rn-get-polyfills'
+```
+
+Cause: `@expo/metro-config@57.x` calls
+`require(<react-native>/rn-get-polyfills)()` in its Metro `getPolyfills` hook.
+react-native shipped that file through 0.86 and **dropped it in 0.87** - the published
+`react-native@0.87.1` tarball contains zero occurrences of it. `apps/mobile` pins
+`react-native: 0.87.1`, but Expo SDK 57 pins `0.86.3`, which is what
+`npx expo install --check` reports as expected.
+
+Narrower than it looks: `expo prebuild` works fine on 0.87.1, because it never reaches the
+Metro polyfill hook. Only the bundler path breaks.
+
+Downgrading to `0.86.3` was tested and does fix it - `expo export` produced a complete iOS
+bundle (`entry-8badf830eadac4e04fbda158e097aeea.hbc`, 2.9MB). It was left undone here because
+it is a dependency decision outside the scope of an advisory audit: 0.86.3 is what Expo asks
+for, but taking it means reverting a Dependabot bump and re-testing the mobile app on an
+older RN. `expo install --check` lists 11 further packages that want the same treatment.
+
+Related: `pnpm build:mobile` invokes a script the mobile package does not have
+(`pnpm --filter @usequark/quark-mobile export` -> "None of the selected packages has an
+'export' script"), so it has never worked. Also pre-existing.
 
 ## Deliberately not done
 
