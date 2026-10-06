@@ -37,8 +37,16 @@ export async function handleCleanupOrphanedFiles(bullJob, logger) {
 
 	for (const record of orphaned) {
 		try {
+			// Row first, storage second — same ordering as DELETE /api/files/[id].
+			// Storage-first means a failed row delete leaves a row pointing at bytes
+			// that are already gone, which cannot be recovered: the blob was the only
+			// copy. A failed storage delete here leaves an orphaned blob instead, and
+			// this very job is what sweeps those up on a later pass.
+			const { count } = await file.deleteIfPresent(record.id);
+			// A concurrent request (or an earlier pass of this job) already took it.
+			if (count === 0) continue;
+
 			await storage.delete(record.storageKey);
-			await file.delete(record.id);
 			deleted++;
 		} catch (err) {
 			errors.push({ id: record.id, error: err.message });

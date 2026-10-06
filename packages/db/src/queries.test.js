@@ -177,3 +177,33 @@ test("file.findOlderThan scopes to orphaned files before a cutoff", async () => 
 	});
 	assert.strictEqual(prismaMock.file.findMany.mock.callCount(), 1);
 });
+
+test("file.deleteIfPresent reports the row count instead of throwing", async () => {
+	const prismaMock = setPrismaMock({
+		file: {
+			deleteMany: mock.fn(async () => ({ count: 1 })),
+		},
+	});
+
+	const result = await file.deleteIfPresent("file-1");
+
+	// A count of 1 means the caller removed the row and owns the storage cleanup.
+	assert.deepStrictEqual(result, { count: 1 });
+	assert.deepStrictEqual(prismaMock.file.deleteMany.mock.calls[0].arguments, [
+		{ where: { id: "file-1" } },
+	]);
+});
+
+test("file.deleteIfPresent returns count 0 when the row is already gone", async () => {
+	// The concurrent-delete loser. `file.delete()` throws P2025 here, which the
+	// route would surface as a 500; a count lets it return 404 instead.
+	setPrismaMock({
+		file: {
+			deleteMany: mock.fn(async () => ({ count: 0 })),
+		},
+	});
+
+	const result = await file.deleteIfPresent("file-1");
+
+	assert.deepStrictEqual(result, { count: 0 });
+});
