@@ -1,4 +1,5 @@
 import "./globals.css";
+import { ThemeProvider } from "@usequark/quark-ui";
 import {
 	THEME_ATTR,
 	THEME_STORAGE_KEY,
@@ -48,7 +49,11 @@ export default function RootLayout({ children }) {
 				) : null}
 			</head>
 			<body>
-				{children}
+				{/* ThemeProvider renders no markup. It publishes theme state to
+				    React consumers (useTheme/ThemeToggle) and syncs data-theme
+				    after hydration via useLayoutEffect, which is why it must
+				    coexist with the blocking script above rather than replace it. */}
+				<ThemeProvider>{children}</ThemeProvider>
 				{umamiConfig.enabled ? <UmamiWebVitals /> : null}
 				{umamiConfig.replayEnabled ? <UmamiReplayRecorder /> : null}
 			</body>

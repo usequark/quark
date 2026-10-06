@@ -57,7 +57,8 @@ test("FormField - renders label and input", async () => {
 	assert.ok(input, "should render an input");
 	assert.strictEqual(label.textContent, "Name");
 	assert.strictEqual(input.getAttribute("name"), "name");
-	root.unmount();
+	await act(() => root.unmount());
+	container.remove();
 });
 
 test("FormField - connects label to input via htmlFor/id", async () => {
@@ -76,7 +77,8 @@ test("FormField - connects label to input via htmlFor/id", async () => {
 	const input = container.querySelector("input");
 	assert.strictEqual(label.getAttribute("for"), "custom-id");
 	assert.strictEqual(input.getAttribute("id"), "custom-id");
-	root.unmount();
+	await act(() => root.unmount());
+	container.remove();
 });
 
 test("FormField - renders error message with role alert", async () => {
@@ -94,7 +96,8 @@ test("FormField - renders error message with role alert", async () => {
 	const errorEl = container.querySelector("[role='alert']");
 	assert.ok(errorEl, "should render an error element with role alert");
 	assert.strictEqual(errorEl.textContent, "Required");
-	root.unmount();
+	await act(() => root.unmount());
+	container.remove();
 });
 
 test("FormField - sets aria-invalid and aria-describedby when error present", async () => {
@@ -110,13 +113,127 @@ test("FormField - sets aria-invalid and aria-describedby when error present", as
 			}),
 		),
 	);
-	const wrapper = container.querySelector('[aria-invalid="true"]');
-	assert.ok(wrapper, "should set aria-invalid on wrapper");
-	const errorId = wrapper.getAttribute("aria-describedby");
-	assert.ok(errorId, "should set aria-describedby");
+	const input = container.querySelector("input");
+	assert.ok(input, "should render an input");
+	assert.strictEqual(
+		input.getAttribute("aria-invalid"),
+		"true",
+		"aria-invalid must be on the focusable control",
+	);
+	assert.ok(
+		!container.querySelector("div[aria-invalid]"),
+		"aria-invalid on a non-interactive wrapper has no effect",
+	);
+	const errorId = input.getAttribute("aria-describedby");
+	assert.ok(errorId, "should set aria-describedby on the input");
+	assert.strictEqual(errorId, "email-field-error");
 	const errorEl = container.querySelector(`#${errorId}`);
 	assert.ok(errorEl, "aria-describedby should point to existing error element");
-	root.unmount();
+	await act(() => root.unmount());
+	container.remove();
+});
+
+test("FormField - applies className to the control, not the wrapper", async () => {
+	const container = setupContainer();
+	const root = createRoot(container);
+	await act(() =>
+		root.render(
+			createElement(FormField, {
+				label: "Name",
+				name: "name",
+				className: "w-72",
+			}),
+		),
+	);
+	const input = container.querySelector("input");
+	assert.match(input.getAttribute("class"), /\bw-72\b/);
+	assert.doesNotMatch(
+		container.firstElementChild.getAttribute("class"),
+		/\bw-72\b/,
+		"className targets the control; the wrapper is layout-only",
+	);
+	await act(() => root.unmount());
+	container.remove();
+});
+
+test("FormField - wrapperClassName styles the layout container", async () => {
+	const container = setupContainer();
+	const root = createRoot(container);
+	await act(() =>
+		root.render(
+			createElement(FormField, {
+				label: "Name",
+				name: "name",
+				wrapperClassName: "sm:col-span-2",
+			}),
+		),
+	);
+	assert.match(
+		container.firstElementChild.getAttribute("class"),
+		/\bsm:col-span-2\b/,
+	);
+	await act(() => root.unmount());
+	container.remove();
+});
+
+test("FormField - forwards error ARIA to a custom child control", async () => {
+	const container = setupContainer();
+	const root = createRoot(container);
+	await act(() =>
+		root.render(
+			createElement(
+				FormField,
+				{ label: "Bio", name: "bio", error: "Too short", id: "bio" },
+				createElement("textarea", { id: "bio", "data-testid": "custom" }),
+			),
+		),
+	);
+	const textarea = container.querySelector("textarea");
+	assert.strictEqual(textarea.getAttribute("aria-invalid"), "true");
+	assert.strictEqual(textarea.getAttribute("aria-describedby"), "bio-error");
+	assert.ok(
+		container.querySelector("#bio-error"),
+		"describedby target must exist",
+	);
+	assert.strictEqual(
+		textarea.getAttribute("name"),
+		"bio",
+		"name should be forwarded to the custom control",
+	);
+	await act(() => root.unmount());
+	container.remove();
+});
+
+test("FormField - preserves a custom child's own className", async () => {
+	const container = setupContainer();
+	const root = createRoot(container);
+	await act(() =>
+		root.render(
+			createElement(
+				FormField,
+				{ label: "Bio", name: "bio", className: "h-40" },
+				createElement("textarea", { className: "resize-y" }),
+			),
+		),
+	);
+	const cls = container.querySelector("textarea").getAttribute("class");
+	assert.match(cls, /\bresize-y\b/);
+	assert.match(cls, /\bh-40\b/);
+	await act(() => root.unmount());
+	container.remove();
+});
+
+test("FormField - leaves aria-invalid off when there is no error", async () => {
+	const container = setupContainer();
+	const root = createRoot(container);
+	await act(() =>
+		root.render(createElement(FormField, { label: "Name", name: "name" })),
+	);
+	const input = container.querySelector("input");
+	assert.strictEqual(input.getAttribute("aria-invalid"), null);
+	assert.strictEqual(input.getAttribute("aria-describedby"), null);
+	await act(() => root.unmount());
+	container.remove();
 });
 
 test("FormField - renders children instead of default input", async () => {
@@ -138,5 +255,6 @@ test("FormField - renders children instead of default input", async () => {
 		null,
 		"should not render default input",
 	);
-	root.unmount();
+	await act(() => root.unmount());
+	container.remove();
 });

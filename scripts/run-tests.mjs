@@ -31,7 +31,18 @@ function collectTests(targetPath) {
 				continue;
 			}
 
-			if (!entry.isFile() || !entry.name.endsWith(".test.js")) {
+			// `*.integration-test.js` renders components through jsdom + react-dom,
+			// so it must be collected too. It was previously skipped, which meant
+			// those suites never ran in CI - a real gap, not a naming preference:
+			// every one of them passed locally but was invisible to the pipeline.
+			// Note the file suffix is `-integration-test.js`, so
+			// `*.integration.test.js` (a different, separately-excluded name) is
+			// still only picked up by the plain `.test.js` rule below.
+			if (
+				!entry.isFile() ||
+				(!entry.name.endsWith(".test.js") &&
+					!entry.name.endsWith(".integration-test.js"))
+			) {
 				continue;
 			}
 
