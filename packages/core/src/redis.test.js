@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, describe, it } from "node:test";
-import { getRedisUrl, resolveRedisConnection } from "./redis.js";
+import {
+	getRedisEndpoint,
+	getRedisUrl,
+	resolveRedisConnection,
+} from "./redis.js";
 
 describe("getRedisUrl", () => {
 	let originalEnv;
@@ -146,5 +150,63 @@ describe("resolveRedisConnection", () => {
 		const result = resolveRedisConnection();
 		assert.equal(result.host, "fallback-host");
 		assert.equal(result.port, 6382);
+	});
+});
+
+describe("getRedisEndpoint", () => {
+	let originalEnv;
+
+	beforeEach(() => {
+		originalEnv = { ...process.env };
+	});
+
+	afterEach(() => {
+		process.env = originalEnv;
+	});
+
+	it("never returns the password from REDIS_URL", () => {
+		process.env.REDIS_URL = "redis://default:hunter2@cache.internal:6379";
+
+		const endpoint = getRedisEndpoint();
+
+		assert.equal(endpoint, "cache.internal:6379");
+		assert.ok(!endpoint.includes("hunter2"), "endpoint leaked the password");
+		assert.ok(!endpoint.includes("default"), "endpoint leaked the username");
+	});
+
+	it("never returns a password-only credential", () => {
+		process.env.REDIS_URL = "redis://:hunter2@cache.internal:6379";
+
+		const endpoint = getRedisEndpoint();
+
+		assert.equal(endpoint, "cache.internal:6379");
+		assert.ok(!endpoint.includes("hunter2"), "endpoint leaked the password");
+	});
+
+	it("defaults the port to 6379, or 6380 for rediss://", () => {
+		process.env.REDIS_URL = "redis://user:pw@cache.internal";
+		assert.equal(getRedisEndpoint(), "cache.internal:6379");
+
+		process.env.REDIS_URL = "rediss://user:pw@secure.internal";
+		assert.equal(getRedisEndpoint(), "secure.internal:6380");
+	});
+
+	it("reads host and port from REDIS_HOST/REDIS_PORT when REDIS_URL is unset", () => {
+		delete process.env.REDIS_URL;
+		process.env.REDIS_HOST = "cache.internal";
+		process.env.REDIS_PORT = "6390";
+
+		assert.equal(getRedisEndpoint(), "cache.internal:6390");
+	});
+
+	it("does not leak a password out of a URL it cannot parse", () => {
+		process.env.REDIS_URL = "redis://user:hunter2@cache internal:6379";
+
+		const endpoint = getRedisEndpoint();
+
+		assert.ok(
+			!endpoint.includes("hunter2"),
+			`unparseable REDIS_URL leaked its password: ${endpoint}`,
+		);
 	});
 });

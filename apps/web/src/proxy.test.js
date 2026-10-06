@@ -74,3 +74,58 @@ test("falls back to x-real-ip when x-forwarded-for is absent", async () => {
 	);
 	assert.equal(limited.status, 429, `${realIp} should be rate limited`);
 });
+
+test("never rate limits /api/health", async () => {
+	const healthIp = "198.51.100.30";
+	const healthRequest = () =>
+		new NextRequest("http://localhost:3005/api/health", {
+			headers: { "x-forwarded-for": healthIp },
+		});
+
+	// The `api` bucket allows 100 per window. Burning through it and then some
+	// must not stop the healthcheck: a probe that gets a 429 reads as unhealthy
+	// and makes the orchestrator restart the container.
+	for (let i = 0; i < 250; i++) {
+		const response = await proxy(healthRequest());
+		assert.notEqual(response.status, 429, `probe ${i + 1} was rate limited`);
+	}
+});
+
+test("a rate-limited client can still be probed for health", async () => {
+	const ip = "198.51.100.31";
+	const apiRequest = (path) =>
+		new NextRequest(`http://localhost:3005${path}`, {
+			method: "POST",
+			headers: { "x-forwarded-for": ip, "content-length": "0" },
+		});
+
+	// Exhaust the `api` bucket from this client (limit is 100 per window).
+	for (let i = 0; i < 100; i++) {
+		await proxy(apiRequest("/api/upload"));
+	}
+
+	const limited = await proxy(apiRequest("/api/upload"));
+	assert.equal(limited.status, 429, "api bucket should be exhausted");
+
+	const health = await proxy(
+		new NextRequest("http://localhost:3005/api/health", {
+			headers: { "x-forwarded-for": ip },
+		}),
+	);
+	assert.notEqual(
+		health.status,
+		429,
+		"an exhausted api bucket must not take the healthcheck down with it",
+	);
+});
+
+test("omits rate limit headers on exempt routes", async () => {
+	const response = await proxy(
+		new NextRequest("http://localhost:3005/api/health", {
+			headers: { "x-forwarded-for": "198.51.100.32" },
+		}),
+	);
+
+	assert.equal(response.headers.get("X-RateLimit-Limit"), null);
+	assert.equal(response.headers.get("X-RateLimit-Remaining"), null);
+});

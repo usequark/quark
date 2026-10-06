@@ -7,6 +7,7 @@ import { encode, getToken } from "next-auth/jwt";
 import {
 	getProxyToken,
 	getRateLimitBucket,
+	isRateLimitExempt,
 	shouldUseSecureAuthCookie,
 } from "./proxy-auth.js";
 
@@ -144,4 +145,14 @@ test("getRateLimitBucket only applies strict auth limits to credential writes", 
 	);
 	assert.equal(getRateLimitBucket("/api/auth/register", "POST"), "auth");
 	assert.equal(getRateLimitBucket("/api/auth/signout", "POST"), "api");
+});
+
+test("isRateLimitExempt covers the healthcheck and nothing else", () => {
+	assert.equal(isRateLimitExempt("/api/health"), true);
+	assert.equal(isRateLimitExempt("/api/health/"), false);
+	assert.equal(isRateLimitExempt("/api/health/deep"), false);
+	assert.equal(isRateLimitExempt("/api/healthcheck"), false);
+	assert.equal(isRateLimitExempt("/api/metrics"), false);
+	assert.equal(isRateLimitExempt("/api/auth/signin/credentials"), false);
+	assert.equal(isRateLimitExempt("/dashboard"), false);
 });

@@ -529,37 +529,28 @@ paths:
       tags: [Health]
       summary: Service health check
       description: |
-        Public endpoint. Verifies database and Redis connectivity.
-        Times out after 5 seconds. Returns 503 if any dependency is down.
+        Public endpoint. Probes database, Redis, storage, and queues
+        concurrently, each under its own deadline capped by an overall 5 second
+        budget.
+
+        Always returns `200`. The verdict is in the body's `status` field
+        (`ok` / `degraded`), not in the status code: this endpoint is the
+        platform healthcheck, and a non-200 makes the orchestrator restart the
+        container, which drops every warm connection and produces a fresh
+        connection storm on the dependency that was already struggling.
+
+        Exempt from rate limiting, so a probe can never be answered with a 429.
+
+        Error messages are generic in production; outside production they carry
+        the underlying driver error. No response contains a credential.
       responses:
         '200':
-          description: All services healthy
+          description: |
+            Check completed. Inspect `status` for the verdict.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
-        '503':
-          description: One or more services degraded
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthResponse'
-        '500':
-          description: Health check timed out or failed
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: error
-                  timestamp:
-                    type: string
-                    format: date-time
-                  message:
-                    type: string
-                    example: Service health check failed
 
   /api/metrics:
     get:
@@ -830,6 +821,10 @@ components:
         timestamp:
           type: string
           format: date-time
+        durationMs:
+          type: integer
+          description: Wall-clock time the whole check took.
+          example: 12
         checks:
           type: object
           properties:
@@ -839,12 +834,16 @@ components:
                 status:
                   type: string
                   enum: [ok, error]
+                message:
+                  type: string
             redis:
               type: object
               properties:
                 status:
                   type: string
                   enum: [ok, error]
+                message:
+                  type: string
                 latencyMs:
                   type: number
                   example: 1.23
