@@ -214,8 +214,23 @@ async function initializeGit(projectDir) {
 	}
 
 	try {
-		// Initialize git repo
-		await execa("git", ["init"], { cwd: projectDir });
+		// Initialize git repo.
+		//
+		// `-b main` pins the branch name rather than inheriting whatever the
+		// machine has in `init.defaultBranch`. Without it the scaffold is not
+		// reproducible: `git init` falls back to `master` wherever that setting
+		// is unset (the common case, and GitHub's own default until the hint
+		// is followed), so the same CLI produced `master` on one machine and
+		// `main` on another. `main` is the name GitHub defaults a new repository
+		// to, so it is also what the README's push instructions assume.
+		//
+		// `-b` needs git 2.28 (2020). If it is unavailable the bare `init` still
+		// produces a working repository, just with git's own default branch.
+		try {
+			await execa("git", ["init", "-b", "main"], { cwd: projectDir });
+		} catch {
+			await execa("git", ["init"], { cwd: projectDir });
+		}
 
 		// Add all files
 		await execa("git", ["add", "."], { cwd: projectDir });
