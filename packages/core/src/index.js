@@ -25,6 +25,8 @@ export * from "./error-reporter.js";
 export * from "./errors.js";
 // File validation exports
 export * from "./file-validation.js";
+// Health check exports
+export * from "./health.js";
 // Logger exports
 export * from "./logger.js";
 // Mail exports

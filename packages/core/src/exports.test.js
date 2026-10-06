@@ -10,6 +10,7 @@ import * as coreLight from "@usequark/quark-core/core";
 import * as db from "@usequark/quark-core/db";
 import * as email from "@usequark/quark-core/email";
 import * as errors from "@usequark/quark-core/errors";
+import * as health from "@usequark/quark-core/health";
 import * as locale from "@usequark/quark-core/locale";
 import * as logger from "@usequark/quark-core/logger";
 import * as metrics from "@usequark/quark-core/metrics";
@@ -88,6 +89,22 @@ test("subpath './errors' exports error classes", () => {
 	assert.equal(typeof errors.ValidationError, "function");
 	assert.equal(typeof errors.UnauthorizedError, "function");
 	assert.equal(typeof errors.ForbiddenError, "function");
+});
+
+test("subpath './health' exports the health-check API", () => {
+	assert.equal(typeof health.runHealthChecks, "function");
+	assert.equal(typeof health.checkStorage, "function");
+	assert.equal(typeof health.checkQueues, "function");
+	assert.equal(typeof health.createDefaultProbes, "function");
+	assert.equal(typeof health.isFailing, "function");
+});
+
+test("subpath '.' (full barrel) re-exports the health-check API", () => {
+	// The scaffolded route imports these from the barrel, so a subpath-only export
+	// would leave it broken.
+	assert.equal(typeof core.runHealthChecks, "function");
+	assert.equal(typeof core.checkStorage, "function");
+	assert.equal(typeof core.checkQueues, "function");
 });
 
 test("subpath './logger' exports the browser-safe logger", () => {
