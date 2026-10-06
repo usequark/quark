@@ -11,6 +11,31 @@ onlyBuiltDependencies:
   - simple-git-hooks
 
 overrides:
+  # next-auth@5.0.0-beta.32 and @auth/core@0.41.3 declare nodemailer as an
+  # OPTIONAL peer with the range `^7.0.7 || ^8.0.5`. Every advisory against
+  # nodemailer needs >=10.0.6, so no version inside that peer range is
+  # patched, and neither package has shipped a newer release that widens it.
+  #
+  # Nothing in this repo uses Auth.js's Nodemailer email provider: auth.js
+  # configures Credentials, Github and Google only, and @auth/core's index
+  # never imports nodemailer statically (only providers/nodemailer.js does).
+  # Outgoing mail goes through @usequark/quark-core, which depends on
+  # nodemailer ^10.0.10 directly. Removing the unused peer edge deletes the
+  # vulnerable 7.0.13 copy from the tree instead of forcing it two majors past
+  # a range its author chose. Delete these two lines if you ever add
+  # next-auth/providers/nodemailer.
+  "next-auth>nodemailer": "-"
+  "@auth/core>nodemailer": "-"
+  # stripe@17.7.0 declares `qs: ^6.11.0`, so 6.16.0 is inside its own range and
+  # `pnpm update` cannot move it (qs is not a direct dependency of any workspace
+  # package). GHSA-g4mx-9h6g-cwc7 / GHSA-hrpp-f998-fjpq both need >=6.16.0.
+  qs@>=6.14.2 <=6.15.3: ">=6.16.0"
+  # xcode@3.0.1 declares `uuid: ^7.0.3`; GHSA-w5hq-g745-h8pq needs >=11.1.1,
+  # four majors ahead. Safe here because xcode only calls uuid.v4() (lib/
+  # pbxProject.js), which is unchanged in 11.x, and 11.1.1 still supports
+  # CommonJS require(). This is build-time only - xcode is reached through
+  # @expo/config-plugins while generating native projects.
+  uuid@<11.1.1: ">=11.1.1"
   fast-xml-builder@<1.1.7: ">=1.1.7"
   fast-xml-parser@<5.10.1: ">=5.10.1"
   lodash@>=4.0.0 <=4.17.22: ">=4.17.23"

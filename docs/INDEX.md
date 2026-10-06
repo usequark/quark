@@ -29,6 +29,7 @@ Entry point: [../README.md](../README.md)
 | [EXAMPLES.md](./EXAMPLES.md) | Domain model examples (blog posts, products, contacts, teams) |
 | [API.md](./API.md) | REST endpoint reference |
 | [SECURITY_FEATURES.md](./SECURITY_FEATURES.md) | Security features, checklists, and incident response |
+| [dependency-audit.md](./dependency-audit.md) | Dependency vulnerability triage, accepted risks, and overrides |
 | [MAINTAINABILITY.md](./MAINTAINABILITY.md) | Code style, testing, and dependency management |
 | [TESTING_INFRASTRUCTURE.md](./TESTING_INFRASTRUCTURE.md) | Testing organization, CI/CD, utilities, and patterns |
 | [copilot-instructions.md](../copilot-instructions.md) | Monorepo Copilot contributor context |
