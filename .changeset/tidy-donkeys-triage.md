@@ -13,8 +13,9 @@ Triage dependency vulnerabilities: 21 advisories down to 3.
 - Refresh `shell-quote` and `source-map-js` in the lockfile; no override needed.
 - `pnpm standards` now fails the build if anything imports
   `next-auth/providers/nodemailer`, since removing that peer edge is what makes it
-  unresolvable. The message names the fix, and 8 tests in
-  `scripts/check-standards.test.mjs` keep it from firing on unrelated code.
+  unresolvable. It matches static, dynamic and re-export forms, and the message names
+  the fix. 20 tests in `scripts/check-standards.test.mjs` cover both the forms it must
+  catch and the near-misses it must ignore.
 
 Three advisories remain in the Expo mobile build toolchain and are documented as
 accepted risks in `docs/dependency-audit.md`: `node-forge` and `braces`, which have no

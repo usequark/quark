@@ -74,9 +74,15 @@ that failure is late and opaque: the provider does
 
 `scripts/check-standards.mjs` now fails the build if any source file imports that provider,
 and names the fix in the error. It runs in CI via `pnpm standards`, and covers the monorepo
-and the scaffold template. `scripts/check-standards.test.mjs` has 8 cases for it, including
-the negative ones that keep it from becoming noise: other `next-auth/providers/*` imports and
-a comment merely mentioning the path both still pass.
+and the scaffold template.
+
+The guard matches every spelling that resolves the module - static default, bare
+side-effect, re-export, `await import(...)`, `import(...).then(...)` and `require(...)`,
+including single quotes, template literals and a specifier wrapped onto its own line. It
+deliberately does *not* fire on other `next-auth/providers/*` imports, on a bare `nodemailer`
+import, on an identifier that merely contains `import` or `require`, or on a comment that
+mentions the path. `scripts/check-standards.test.mjs` has 20 cases covering both directions,
+because a guard that misses a form reads as protection while letting the breakage through.
 
 ### qs - the one production-path fix that was safe
 

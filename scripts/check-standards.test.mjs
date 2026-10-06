@@ -143,6 +143,91 @@ describe("next-auth Nodemailer guard", () => {
 		);
 	});
 
+	// Regression: the first version of the pattern was `from|import|require\s*\(`,
+	// which matched the static forms and missed every dynamic import because `import(`
+	// puts a paren between the keyword and the quote. A guard that silently misses a
+	// spelling reads as protection while letting the breakage through, so each
+	// reachable form gets its own case.
+	for (const [label, source] of [
+		[
+			"await import()",
+			'const N = (await import("next-auth/providers/nodemailer")).default;\nexport default N;\n',
+		],
+		[
+			"import() without await",
+			'const p = import("next-auth/providers/nodemailer");\nexport default p;\n',
+		],
+		[
+			"import().then()",
+			'import("next-auth/providers/nodemailer").then((m) => m.default);\n',
+		],
+		["bare side-effect import", 'import "next-auth/providers/nodemailer";\n'],
+		[
+			"re-export",
+			'export { default } from "next-auth/providers/nodemailer";\n',
+		],
+		[
+			"require with spaces",
+			'const N = require ( "next-auth/providers/nodemailer" );\nexport default N;\n',
+		],
+		[
+			"single quotes",
+			"const N = await import('next-auth/providers/nodemailer');\nexport default N;\n",
+		],
+		[
+			"template literal",
+			"const p = import(`next-auth/providers/nodemailer`);\nexport default p;\n",
+		],
+		[
+			"specifier on its own line",
+			'import Nodemailer from\n  "next-auth/providers/nodemailer";\nexport default Nodemailer;\n',
+		],
+	]) {
+		it(`catches a dynamic or re-export form: ${label}`, () => {
+			const dir = scaffoldTracked({
+				"apps/web/src/lib/email.js": source,
+			});
+
+			const result = runStandards(dir);
+
+			assert.equal(result.status, 1, `guard missed: ${label}`);
+			assert.match(
+				result.stderr,
+				/next-auth\/providers\/nodemailer cannot resolve/,
+			);
+		});
+	}
+
+	// The flip side: a guard that fires on ordinary code trains people to bypass it.
+	for (const [label, source] of [
+		[
+			"an identifier merely containing 'import'",
+			"const important = 1;\nexport default important;\n",
+		],
+		[
+			"an identifier merely containing 'require'",
+			"const myrequire = 1;\nexport default myrequire;\n",
+		],
+		[
+			"a longer module path that starts with the provider",
+			'import x from "next-auth/providers/nodemailer-extra";\nexport default x;\n',
+		],
+	]) {
+		it(`does not false-positive on ${label}`, () => {
+			const dir = scaffoldTracked({
+				"apps/web/src/lib/email.js": source,
+			});
+
+			const result = runStandards(dir);
+
+			assert.equal(
+				result.status,
+				0,
+				`false positive on ${label}:\n${result.stdout}${result.stderr}`,
+			);
+		});
+	}
+
 	it("covers the scaffold template as well as the monorepo", () => {
 		const dir = scaffoldTracked({
 			"packages/cli/templates/base-project/apps/web/src/lib/auth.js":

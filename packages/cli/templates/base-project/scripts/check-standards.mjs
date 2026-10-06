@@ -33,12 +33,32 @@ const consolePattern = /\bconsole\.(?:log|warn|error|info)\s*\(/;
  * import specifier rather than on the override, so it stays correct if the override
  * is ever reworded, and it covers both the monorepo and the scaffold template.
  *
+ * The pattern has to accept every way a module specifier can be reached, because a
+ * guard that misses one spelling is worse than none: it reads as protection while
+ * letting the breakage through. All of these resolve the provider and so must fail:
+ *
+ *   import N from "next-auth/providers/nodemailer"        // static default
+ *   import "next-auth/providers/nodemailer"               // bare side-effect
+ *   export { default } from "next-auth/providers/nodemailer"
+ *   await import("next-auth/providers/nodemailer")        // dynamic
+ *   import("next-auth/providers/nodemailer").then(m => m.default)
+ *   require("next-auth/providers/nodemailer")             // CommonJS
+ *
+ * The optional `\(` is what the first version got wrong: dynamic `import(` puts a
+ * paren between the keyword and the quote, so an alternation of
+ * `from|import|require\s*\(` matched the static forms and silently missed every
+ * dynamic one.
+ *
+ * Each keyword carries a leading `\b` so an identifier that merely contains one -
+ * `important`, `myrequire` - cannot trigger it, and the specifier is anchored so
+ * only this exact module matches.
+ *
  * If you genuinely want the provider: delete the two overrides above, then add
  * `nodemailer` (>=10.0.6, past every advisory) to the app's own dependencies and
  * allowlist this check for that file.
  */
 const authNodemailerProviderPattern =
-	/(?:from|import|require\s*\()\s*["']next-auth\/providers\/nodemailer["']/;
+	/\b(?:from|import|require)\s*\(?\s*["'`]next-auth\/providers\/nodemailer["'`]/;
 
 /**
  * Tailwind v4 removed the bare `[--var]` shorthand that v3 accepted. Under v4 a
@@ -150,6 +170,36 @@ function findMatchingLines(content, pattern) {
 	return matches;
 }
 
+/**
+ * Same job as findMatchingLines, but matches against the whole file rather than one
+ * line at a time, and reports the line each match starts on.
+ *
+ * Needed for the nodemailer guard, whose pattern legitimately spans a line break:
+ * `import Nodemailer from\n  "next-auth/providers/nodemailer";` is valid JavaScript
+ * that the line-at-a-time version cannot see, because the keyword and the specifier
+ * land on different lines. Line-at-a-time is the right default for the other checks -
+ * they only ever match within one line - so this is opt-in.
+ *
+ * The match is retried with a lastIndex-aware scan because a pattern carrying the `g`
+ * flag would otherwise return only the first hit; `d` additionally keeps the index
+ * pointing at the start of the match rather than at a capture group.
+ */
+function findMatchingLinesMultiline(content, pattern) {
+	const scanner = new RegExp(
+		pattern.source,
+		pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`,
+	);
+	const matches = [];
+	let match = scanner.exec(content);
+	while (match !== null) {
+		matches.push(content.slice(0, match.index).split("\n").length);
+		// A zero-width match would otherwise loop forever.
+		scanner.lastIndex = match.index + (match[0].length || 1);
+		match = scanner.exec(content);
+	}
+	return matches;
+}
+
 async function collectFiles(directoryPath) {
 	const entries = await readdir(directoryPath, { withFileTypes: true });
 	const files = [];
@@ -240,7 +290,7 @@ async function main() {
 		}
 
 		if (isSourceFile(relativePath)) {
-			for (const lineNumber of findMatchingLines(
+			for (const lineNumber of findMatchingLinesMultiline(
 				content,
 				authNodemailerProviderPattern,
 			)) {
