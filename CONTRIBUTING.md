@@ -15,6 +15,11 @@ pnpm dev                 # Start web + worker
 
 ## Development Workflow
 
+If you do not have write access, **fork the repository** first and push your
+branch to your fork. Open the pull request from your fork's branch -- the
+"Open a PR" flow below works identically either way, and you do not need to be
+invited.
+
 1. **Create a branch** from `main` for your change
 2. **Make your changes** following the coding standards below
 3. **Run checks** before pushing:
@@ -23,6 +28,23 @@ pnpm dev                 # Start web + worker
    pnpm test              # All tests (requires Docker)
    ```
 4. **Open a PR** against `main`. CI will run lint, test, build, and security scans.
+
+### What happens next
+
+- `main` is protected. A merge requires **Lint & Standards**, **Changeset
+  Status**, **Test**, **Mobile**, and **Build** to pass. If any check fails, the
+  PR cannot be merged.
+- A **changeset is required** for any change to `packages/core` or
+  `packages/cli`, because those are the two packages published to npm. Run
+  `pnpm changeset` and commit the file it writes. CI fails without one. A
+  change that does not warrant a release can use
+  `pnpm changeset add --empty`.
+- Changes touching `packages/core/`, `packages/cli/`, `packages/cli/templates/`,
+  `packages/db/`, `migrations/`, or `.github/workflows/` require maintainer
+  review via `.github/CODEOWNERS`.
+- Expect a review comment before merge. Small, focused PRs get reviewed
+  fastest; a diff that touches a published package and its template in one
+  commit will be asked to split.
 
 ## Coding Standards
 
