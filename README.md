@@ -80,6 +80,30 @@ Scaffolded projects already include this in the generated web Dockerfile, `.rail
 
 ---
 
+## This site runs on Quark
+
+**Live: <https://usequark.dev>**
+
+`usequark.dev` is not a hand-written site. It is a Quark project, scaffolded from
+the published CLI and deployed on Railway — the same `web` + `worker` pair, the
+same Prisma schema, the same auth, that you get:
+
+```bash
+npx @usequark/quark-create-app quark-site
+```
+
+What that proves, and what it does not:
+
+- **It runs the published tarball**, not this monorepo. `apps/web` here depends on
+  `@usequark/quark-core` via `workspace:*`, so deploying this repo would test the
+  source tree instead of what you install.
+- **Postgres and Redis are real**, provisioned by `railway add --database`, with
+  migrations running as a `preDeploy` step before traffic switches.
+- **A cold clone is the whole pitch.** `rm -rf && npx @usequark/quark-create-app@latest`
+  is the proof the CLI works; the site is that proof, running.
+
+---
+
 ## Start Here
 
 - **[Start Here](./docs/START_HERE.md)** - the current onboarding path for creating, running, and learning a Quark project

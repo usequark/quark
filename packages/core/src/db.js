@@ -3,7 +3,7 @@
  *
  * Shared Prisma client singleton, connection-string builder, pool config,
  * and a lightweight health-check ping.  These replace the per-project
- * re-implementations in Regina / Pawdora / Trenchmate.
+ * re-implementations that every app ends up writing by hand.
  *
  * Usage:
  *   import { createPrismaClient, getConnectionString, pingDatabase } from "@usequark/quark-core/db";
