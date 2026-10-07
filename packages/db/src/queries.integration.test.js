@@ -278,4 +278,64 @@ describe("queries integration", () => {
 			[`${id}/old.txt`],
 		);
 	});
+
+	test("deleting a user preserves their audit records and keeps the actor named", async () => {
+		// The referential action is enforced by Postgres, not by the query layer, so
+		// this has to run against a real database. With `onDelete: Cascade` this
+		// delete destroyed every record of what the user did — including the records
+		// of the deletion itself.
+		const id = uniqueId("audit-preserve");
+		const actor = await prisma.user.create({
+			data: { email: `${id}@example.com`, name: "Actor", role: "admin" },
+		});
+
+		const record = await auditLog.create({
+			userId: actor.id,
+			action: "DELETE",
+			entity: "User",
+			entityId: `${id}-target`,
+		});
+
+		// What DELETE /api/users/[id] does.
+		await user.delete(actor.id);
+
+		const surviving = await prisma.auditLog.findUnique({
+			where: { id: record.id },
+		});
+		assert.ok(surviving, "the audit record was destroyed with its actor");
+		assert.equal(
+			surviving.userId,
+			null,
+			"userId should be nulled, not cascaded",
+		);
+		// Without the snapshot the record would name nobody.
+		assert.equal(surviving.actorEmail, `${id}@example.com`);
+
+		// Reads must tolerate the nulled relation rather than throwing.
+		const listed = await auditLog.findAll({ take: 50 });
+		const found = listed.find((entry) => entry.id === record.id);
+		assert.ok(found);
+		assert.equal(found.user, null);
+		assert.equal(found.actorEmail, `${id}@example.com`);
+	});
+
+	test("the audit foreign key still rejects an actor that does not exist", async () => {
+		// SetNull only relaxes the delete side. A write naming a user that is not
+		// there must still be refused, or the snapshot helper would be resolving
+		// emails for ids that never existed.
+		const id = uniqueId("audit-fk");
+
+		await assert.rejects(
+			() =>
+				prisma.auditLog.create({
+					data: {
+						userId: `${id}-no-such-user`,
+						action: "CREATE",
+						entity: "User",
+						entityId: `${id}-target`,
+					},
+				}),
+			/ForeignKey|Foreign key|violates/,
+		);
+	});
 });

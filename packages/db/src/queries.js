@@ -15,6 +15,22 @@ const USER_SAFE_SELECT = {
 	updatedAt: true,
 };
 
+/**
+ * Look up an actor's email for the AuditLog snapshot.
+ *
+ * The lookup cannot miss: the foreign key rejects a `userId` that names no user,
+ * so `onDelete: SetNull` is the only way `userId` becomes null, and it happens after
+ * the snapshot was written. A null `userId` here means the caller supplied none.
+ */
+async function resolveActorEmail(userId) {
+	if (!userId) return null;
+	const actor = await prisma.user.findUnique({
+		where: { id: userId },
+		select: { email: true },
+	});
+	return actor?.email ?? null;
+}
+
 export { USER_SAFE_SELECT };
 
 // User queries
@@ -188,13 +204,21 @@ export const verificationToken = {
 };
 
 // AuditLog queries
+//
+// `user` is optional: a deleted user leaves `userId` null but the row survives
+// (see the AuditLog model). Every read therefore returns `actorEmail` alongside,
+// so a caller can name the actor without dereferencing `user`. Render `actorEmail`
+// — `user` is for callers that need the live row, e.g. to follow through to the
+// user's current role.
+const AUDIT_ACTOR_SELECT = { id: true, email: true, name: true };
+
 export const auditLog = {
 	findAll: (options = {}) => {
 		const { skip = 0, take = 50 } = options;
 		return prisma.auditLog.findMany({
 			skip,
 			take,
-			include: { user: { select: { id: true, email: true, name: true } } },
+			include: { user: { select: AUDIT_ACTOR_SELECT } },
 			orderBy: { createdAt: "desc" },
 		});
 	},
@@ -204,7 +228,7 @@ export const auditLog = {
 			where: { userId },
 			skip,
 			take,
-			include: { user: { select: { id: true, email: true, name: true } } },
+			include: { user: { select: AUDIT_ACTOR_SELECT } },
 			orderBy: { createdAt: "desc" },
 		});
 	},
@@ -214,7 +238,7 @@ export const auditLog = {
 			where: { entity },
 			skip,
 			take,
-			include: { user: { select: { id: true, email: true, name: true } } },
+			include: { user: { select: AUDIT_ACTOR_SELECT } },
 			orderBy: { createdAt: "desc" },
 		});
 	},
@@ -224,14 +248,25 @@ export const auditLog = {
 			where: { action },
 			skip,
 			take,
-			include: { user: { select: { id: true, email: true, name: true } } },
+			include: { user: { select: AUDIT_ACTOR_SELECT } },
 			orderBy: { createdAt: "desc" },
 		});
 	},
-	create: (data) => {
+	/**
+	 * Create an audit record, snapshotting the actor's email.
+	 *
+	 * The snapshot is written here rather than left to the caller because it is the
+	 * only thing that keeps the record attributable once the user row is gone:
+	 * `onDelete: SetNull` preserves the row but clears `userId`. A caller that
+	 * forgets the field gets a permanent record naming nobody, so this derives it
+	 * from `userId` when not supplied.
+	 */
+	create: async (data) => {
+		const actorEmail =
+			data.actorEmail ?? (await resolveActorEmail(data.userId));
 		return prisma.auditLog.create({
-			data,
-			include: { user: { select: { id: true, email: true, name: true } } },
+			data: { ...data, actorEmail },
+			include: { user: { select: AUDIT_ACTOR_SELECT } },
 		});
 	},
 };
