@@ -10,6 +10,7 @@ import { execa } from "execa";
 import fs from "fs-extra";
 import prompts from "prompts";
 import { SCAFFOLD_GITIGNORE } from "./scaffold-gitignore.js";
+import { warnIfJobsOmitted } from "./scaffold-warning.js";
 import { findEnclosingGitRepo, formatProjectDisplayName } from "./utils.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -952,6 +953,8 @@ program
 						`  Selected packages: ${features.join(", ") || "none"} (non-interactive mode)`,
 					),
 				);
+
+				warnIfJobsOmitted(features);
 			} else if (!options.prompts) {
 				// Use defaults when --no-prompts is set without --packages
 				console.log(chalk.cyan("\n  🎯 Configuring optional packages..."));
@@ -1013,6 +1016,8 @@ program
 				}
 
 				features = resolveFeatureSelection(selectedFeatures);
+
+				warnIfJobsOmitted(features);
 
 				const requestedFeatures = [...selectedFeatures];
 				const autoIncluded = features.filter(
