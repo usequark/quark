@@ -174,10 +174,27 @@ in `apps/mobile`'s Expo build toolchain. **None of them is shipped application c
 
 ## Re-checking after an upgrade
 
-Run `pnpm audit`. If any of the three remaining advisories disappears, it moved upstream and
-this document should be updated. Note that `pnpm audit` reads the lockfile, so a stale
-`.pnpm` directory can make a resolved tree look unfixed - `rm -rf node_modules && pnpm install`
-if a count looks stale.
+Run `pnpm audit:check`. If any of the three remaining advisories disappears, it moved upstream and
+this document should be updated - the check prints a notice naming the entry to retire. Note that
+`pnpm audit` reads the lockfile, so a stale `.pnpm` directory can make a resolved tree look
+unfixed - `rm -rf node_modules && pnpm install` if a count looks stale.
+
+## Enforced in CI
+
+`pnpm audit:check` runs `scripts/check-audit.mjs`, which CI invokes on every push and pull
+request. The three accepted advisory IDs are an allowlist in that script, so it passes today and
+turns red when a fourth appears.
+
+A bare `pnpm audit` step could not do this: it exits non-zero for *any* advisory, so it would
+fail forever on the three above and get ignored. The allowlist is keyed on the GitHub advisory ID
+because that is stable across advisory metadata edits in a way the npm advisory ID is not.
+
+The script treats "the audit did not run" as a failure rather than as a clean tree. `pnpm audit`
+reports its own failures as JSON on stdout with exit 1 - for example
+`{"error":{"code":"ERR_PNPM_AUDIT_NO_LOCKFILE"}}` - which has no `advisories` key at all. Reading
+that as zero advisories turns a missing lockfile or an unreachable registry into a green build
+that verified nothing, which is the one failure mode a security gate must not have.
+`scripts/check-audit.test.mjs` covers both directions, including that case.
 
 ## Known unrelated breakage: the mobile bundle does not build
 
@@ -214,6 +231,11 @@ Related: `pnpm build:mobile` invokes a script the mobile package does not have
 ## Deliberately not done
 
 - No `auditConfig.ignoreCves` or `audit.level` change. The three remaining advisories are
-  reported honestly rather than silenced.
+  reported honestly rather than silenced. Those pnpm settings mute the audit database, which
+  would hide the accepted three *and* anything new; the allowlist in
+  `scripts/check-audit.mjs` is code, reviewable in a diff, instead.
 - No Dependabot alert dismissal.
 - No application-level mitigation code for any advisory.
+- No Socket integration. Socket reports a broad set of behavioural heuristics (shell access,
+  network access, eval, unmaintained, copyleft) that are largely expected for a CLI and build
+  toolchain. Its CVE counts matched `pnpm audit`, and `pnpm audit` is already enforced in CI.
