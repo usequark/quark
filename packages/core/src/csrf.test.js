@@ -166,4 +166,80 @@ test("CSRF Module", async (t) => {
 		assert.strictEqual(result.body, "success");
 		assert.strictEqual(result.request, request);
 	});
+
+	await t.test(
+		"withCsrfProtection returns 401 instead of throwing",
+		async () => {
+			// The check runs in the wrapper, outside the route handler's own
+			// try/catch, so a throw here escapes `handleError` and reaches the client
+			// as an unhandled rejection. The status code is what fetch handling expects.
+			const request = mockRequest({
+				method: "POST",
+				url: "http://localhost/api/posts",
+				headers: { "x-csrf-token": generateCsrfToken() },
+			});
+
+			let handlerCalled = false;
+			const protectedHandler = withCsrfProtection(async () => {
+				handlerCalled = true;
+				return { unreachable: true };
+			});
+
+			const response = await protectedHandler(request);
+
+			assert(response instanceof Response);
+			assert.strictEqual(response.status, 401);
+			assert.strictEqual(response.headers.get("Cache-Control"), "no-store");
+
+			const body = await response.json();
+			assert.strictEqual(body.code, "UNAUTHORIZED");
+			assert.strictEqual(body.statusCode, 401);
+			// The handler must not run on a rejected token.
+			assert.strictEqual(handlerCalled, false);
+		},
+	);
+
+	await t.test(
+		"withCsrfProtection returns 401 for a mismatched token",
+		async () => {
+			const token = generateCsrfToken();
+			const request = mockRequest({
+				method: "POST",
+				url: "http://localhost/api/posts",
+				headers: {
+					"x-csrf-token": "wrong-token-of-same-len",
+					cookie: `csrf_token=${encodeURIComponent(token)}`,
+				},
+			});
+
+			const protectedHandler = withCsrfProtection(async () => ({
+				unreachable: true,
+			}));
+			const response = await protectedHandler(request);
+
+			assert.strictEqual(response.status, 401);
+		},
+	);
+
+	await t.test(
+		"withCsrfProtection still rejects for a non-CSRF error",
+		async () => {
+			// Only UnauthorizedError is converted. Anything else from the check is a
+			// genuine fault and must keep propagating rather than being reported to the
+			// client as an authentication problem.
+			const request = mockRequest({ method: "POST" });
+			request.headers.get = () => {
+				throw new TypeError("headers.get exploded");
+			};
+
+			const protectedHandler = withCsrfProtection(async () => ({
+				unreachable: true,
+			}));
+
+			await assert.rejects(
+				() => protectedHandler(request),
+				/headers.get exploded/,
+			);
+		},
+	);
 });

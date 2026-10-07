@@ -96,12 +96,29 @@ export function requireCsrfToken(request) {
 /**
  * Creates a CSRF-protected API route handler.
  * Wraps your handler and automatically validates CSRF tokens.
+ *
+ * A failed check produces a `401` Response rather than a thrown error. The check
+ * runs in this wrapper, outside the route handler's own try/catch, so a throw here
+ * escapes `handleError` entirely: the client got an unhandled rejection instead of
+ * the status code its fetch handling expects. Returning the Response here keeps the
+ * rejection path reserved for genuine faults.
+ *
  * @param {Function} handler - Your API route handler
  * @returns {Function} Wrapped handler with CSRF protection
  */
 export function withCsrfProtection(handler) {
 	return async (request, ...args) => {
-		requireCsrfToken(request);
+		try {
+			requireCsrfToken(request);
+		} catch (error) {
+			if (error instanceof UnauthorizedError) {
+				return Response.json(error.toJSON(), {
+					status: error.statusCode,
+					headers: { "Cache-Control": "no-store" },
+				});
+			}
+			throw error;
+		}
 		return handler(request, ...args);
 	};
 }
