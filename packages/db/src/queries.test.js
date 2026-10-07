@@ -157,6 +157,92 @@ test("auditLog.findByEntity keeps include and ordering defaults", async () => {
 	assert.strictEqual(prismaMock.auditLog.findMany.mock.callCount(), 1);
 });
 
+test("auditLog.create snapshots the actor's email", async () => {
+	// The snapshot is the only thing that keeps a record attributable once the
+	// actor is deleted: SetNull clears userId but leaves actorEmail behind.
+	const prismaMock = setPrismaMock({
+		user: {
+			findUnique: mock.fn(async () => ({ email: "actor@example.com" })),
+		},
+		auditLog: {
+			create: mock.fn(async (args) => args),
+		},
+	});
+
+	const result = await auditLog.create({
+		userId: "user-1",
+		action: "DELETE",
+		entity: "User",
+		entityId: "user-2",
+	});
+
+	assert.deepStrictEqual(result.data, {
+		userId: "user-1",
+		actorEmail: "actor@example.com",
+		action: "DELETE",
+		entity: "User",
+		entityId: "user-2",
+	});
+	// One lookup for the snapshot, then the insert.
+	assert.strictEqual(prismaMock.user.findUnique.mock.callCount(), 1);
+	assert.deepStrictEqual(
+		prismaMock.user.findUnique.mock.calls[0].arguments[0],
+		{
+			where: { id: "user-1" },
+			select: { email: true },
+		},
+	);
+});
+
+test("auditLog.create keeps an explicitly supplied actorEmail", async () => {
+	// A caller replaying a historical event can state who acted, and must not have
+	// it silently overwritten by the current email on the user row.
+	const prismaMock = setPrismaMock({
+		user: {
+			findUnique: mock.fn(async () => ({ email: "current@example.com" })),
+		},
+		auditLog: {
+			create: mock.fn(async (args) => args),
+		},
+	});
+
+	const result = await auditLog.create({
+		userId: "user-1",
+		actorEmail: "at-the-time@example.com",
+		action: "UPDATE",
+		entity: "User",
+		entityId: "user-2",
+	});
+
+	assert.strictEqual(result.data.actorEmail, "at-the-time@example.com");
+	// No lookup needed when the caller supplied the value.
+	assert.strictEqual(prismaMock.user.findUnique.mock.callCount(), 0);
+});
+
+test("auditLog.create writes a null actorEmail when there is no actor", async () => {
+	// A system action has no user. The FK allows a null userId, so the record must
+	// still be writable rather than failing the insert. No user lookup is needed
+	// either, so the mock only has to satisfy the insert.
+	setPrismaMock({
+		auditLog: {
+			create: mock.fn(async (args) => args),
+		},
+	});
+
+	const result = await auditLog.create({
+		action: "CREATE",
+		entity: "User",
+		entityId: "user-2",
+	});
+
+	assert.deepStrictEqual(result.data, {
+		actorEmail: null,
+		action: "CREATE",
+		entity: "User",
+		entityId: "user-2",
+	});
+});
+
 test("file.findOlderThan scopes to orphaned files before a cutoff", async () => {
 	const cutoff = new Date("2026-01-01T00:00:00.000Z");
 	const prismaMock = setPrismaMock({
