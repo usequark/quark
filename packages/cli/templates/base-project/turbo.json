@@ -7,7 +7,8 @@
 		"npm_lifecycle_event",
 		"QUARK_SKIP_AUTO_CLEAN",
 		"QUARK_SKIP_DEV_PREFLIGHT",
-		"QUARK_SKIP_GIT_INIT"
+		"QUARK_SKIP_GIT_INIT",
+		"CHECK_AUDIT_FIXTURE"
 	],
 	"tasks": {
 		"clean": {

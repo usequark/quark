@@ -39,6 +39,13 @@ jobs:
       - name: Run standards
         run: pnpm standards
 
+      # Fails on any advisory the repo has not explicitly accepted. The three in
+      # docs/dependency-audit.md are allowlisted in scripts/check-audit.mjs, so
+      # this passes today and turns red when a fourth appears - including when
+      # the audit itself cannot run, which must not read as a clean tree.
+      - name: Audit dependencies
+        run: pnpm audit:check
+
       # Template drift shares this job's install rather than paying for a
       # second full monorepo install on every run.
       - name: Sync templates
