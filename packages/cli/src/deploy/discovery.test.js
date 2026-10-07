@@ -107,6 +107,50 @@ test("resolveQuarkDeployProject accepts a Quark monorepo without a worker servic
 	assert.equal(discovery.services[0].required, true);
 });
 
+test("a worker-less project warns that orphaned files are never swept", async () => {
+	// `File.uploadedBy` is onDelete: SetNull, so deleting a user orphans their file
+	// rows and blobs. CLEANUP_ORPHANED_FILES is the only thing that removes them and
+	// it runs in the worker. Without one they accumulate silently, so discovery says
+	// so. It is a warning and not a diagnostic: `jobs` is optional, and failing the
+	// deploy would punish a legitimate choice.
+	const projectDir = await createFixture({ hasWeb: true, hasWorker: false });
+	const discovery = await discoverQuarkDeployProject(projectDir);
+
+	assert.deepEqual(discovery.diagnostics, []);
+	assert.equal(discovery.warnings.length, 1);
+	assert.equal(discovery.warnings[0].code, "missing_worker_service");
+	assert.equal(discovery.warnings[0].required, false);
+	assert.match(discovery.warnings[0].message, /CLEANUP_ORPHANED_FILES/);
+	assert.match(discovery.warnings[0].message, /accumulate indefinitely/);
+});
+
+test("a worker-less project still resolves, because the warning does not block", async () => {
+	const projectDir = await createFixture({ hasWeb: true, hasWorker: false });
+
+	// resolveQuarkDeployProject throws on diagnostics, so a warning that threw here
+	// would make worker-less projects undeployable.
+	const discovery = await resolveQuarkDeployProject(projectDir);
+
+	assert.equal(discovery.services.length, 1);
+	assert.equal(discovery.warnings.length, 1);
+});
+
+test("a project with a worker produces no warning", async () => {
+	const projectDir = await createFixture({ hasWeb: true, hasWorker: true });
+	const discovery = await discoverQuarkDeployProject(projectDir);
+
+	assert.deepEqual(discovery.warnings, []);
+});
+
+test("a worker-only project does not warn about its own missing worker", async () => {
+	// There is no web service, so the deployment is already unresolvable. Warning
+	// about the missing worker as well would be noise on top of a blocking error.
+	const projectDir = await createFixture({ hasWeb: false, hasWorker: true });
+	const discovery = await discoverQuarkDeployProject(projectDir);
+
+	assert.deepEqual(discovery.warnings, []);
+});
+
 test("discoverQuarkDeployProject reports diagnostics and resolveQuarkDeployProject rejects when web is missing", async () => {
 	const projectDir = await createFixture({ hasWeb: false, hasWorker: true });
 	const discovery = await discoverQuarkDeployProject(projectDir);

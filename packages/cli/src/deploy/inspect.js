@@ -45,9 +45,19 @@ export async function inspectProject(options = {}) {
 
 	// --- Diagnostics ---
 	if (discovery.diagnostics.length > 0) {
-		output(chalk.yellow("  Diagnostics\n"));
+		output(chalk.yellow("  Diagnostics"));
 		for (const diagnostic of discovery.diagnostics) {
 			output(`  ${chalk.yellow("⚠")} ${diagnostic.message}`);
+		}
+		output();
+	}
+
+	// --- Warnings ---
+	// Non-blocking, so printed after diagnostics and separately from them.
+	if (discovery.warnings.length > 0) {
+		output(chalk.yellow("  Warnings"));
+		for (const warning of discovery.warnings) {
+			output(`  ${chalk.yellow("⚠")} ${warning.message}`);
 		}
 		output();
 	}
