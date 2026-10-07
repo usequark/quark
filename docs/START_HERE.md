@@ -39,10 +39,37 @@ Optional scaffolded features:
 
 | Feature | What it adds | Best starting point |
 |---|---|---|
-| `ui` | Local Tailwind UI primitives | `packages/ui/README.md` |
 | `jobs` | Local job definitions + `apps/worker` | `packages/jobs/README.md` |
+| `pwa` | Progressive web app manifest and service worker setup | scaffolded project docs |
 
-Domain systems (bookings, CRM, CMS, AI) are not scaffolded features - every scaffold ships the embedded skills that teach your AI tool to build them on demand. See the skill index in `<harness>/skills/` (default `.opencode/skills/`).
+`mobile` (an Expo app) is **not** available at create time. Add it afterwards with `npx quark add mobile`.
+
+`ui` is always scaffolded, so you do not need to select it. Add any of the above later with `npx quark add <feature>`.
+
+Domain systems are not scaffolded features. Every scaffold ships embedded skills that teach your AI tool to build them on demand:
+
+| Skill | Builds |
+|---|---|
+| `payment` | Stripe payments, checkout, webhooks, fulfillment |
+| `ecommerce` | Catalog, cart, checkout, orders, inventory (with `ecommerce-catalog`, `ecommerce-cart`, `ecommerce-checkout`) |
+| `i18n` | Locale routing, translated content, hreflang SEO |
+| `add-model` | Prisma model + query helpers + tests |
+| `add-endpoint` | API route or Server Action with Zod, CSRF, role guards |
+| `add-dashboard` | Metrics overview page |
+
+Read the skill index in `<harness>/skills/` (default `.opencode/skills/`) before asking your AI tool to build one of these.
+
+---
+
+## Deploy
+
+```bash
+npx quark deploy railway
+```
+
+This generates `.railway/railway.ts`, provisions PostgreSQL and Redis, and deploys `web` and `worker` with migrations running before traffic switches. Railway is the only supported deploy target today.
+
+📖 **Full guide: [DEPLOY_RAILWAY.md](./DEPLOY_RAILWAY.md)**
 
 ## Learn the project layout fast
 
@@ -76,7 +103,9 @@ This is the docs contract for Quark:
 | `docs/START_HERE.md` | Current onboarding path |
 | `docs/FIRST_FEATURE.md` | Canonical first feature walkthrough |
 | `packages/*/README.md` | Optional feature guides and extension points |
+| `DEPLOY_RAILWAY.md` | Deployment, environment variables, and troubleshooting |
 | `DATABASE.md`, `API.md`, `SECURITY_FEATURES.md` | Reference material |
-| `ROADMAP.md`, `IMPLEMENTATION_CHECKLIST.md`, `PLAN*.md` | Planning and status, not the onboarding path |
+| `DESIGN_NOTES.md` | Current architecture direction |
+| `docs/archive/` | Historical planning material, not current guidance |
 
 If a detail appears in both onboarding and reference docs, treat the onboarding docs as the **shortest current path** and the reference docs as the **deeper explanation**.

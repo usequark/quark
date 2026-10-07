@@ -11,12 +11,14 @@ Shadcn/ui is popular but copies component source into the project (no package bo
 
 Quark's UI components must be:
 - Server Component-safe (no client-side JS by default)
-- Zero external dependencies beyond Tailwind
+- No component library, no headless library, no styling library
 - Safe to use in scaffolded projects that own their own UI layer
 
 ## Decision
 
-`packages/ui` provides Tailwind-only, dependency-free UI primitives. No Radix, no Shadcn, no component libraries. Components that require client interactivity (`Dialog`, `Toast`, `ThemeProvider`) are explicitly marked `"use client"` and kept minimal.
+`packages/ui` provides Tailwind-only UI primitives. No Radix, no Shadcn, no component library. Components that require client interactivity (`Dialog`, `Toast`, `ThemeProvider`, `Lightbox`, `FormField`, `Select`, `RichText`, `Navbar`, `MobileNavbar`, `PasswordInput`) are explicitly marked `"use client"` and kept minimal.
+
+The package declares two dependencies: `next` (for `next/link` and the App Router client boundary) and `lucide-react` (icons only). Everything else is React and Tailwind. The decision being recorded is the absence of a *component* dependency, not the absence of all dependencies.
 
 ## Consequences
 

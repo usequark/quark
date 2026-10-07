@@ -1,3 +1,5 @@
+> **Archived.** Unimplemented spec. Every item in the implementation checklist is unchecked, and none of the proposed components (`hero`, `testimonial-card`, `testimonial-carousel`, `logo-cloud`, `stats`, `email-capture`) or design tokens exist in `packages/ui/src/` or `globals.css`. Kept as a design reference for future work. Start in `docs/DESIGN_NOTES.md` for the current design direction.
+
 # Quark Template & Component Improvements
 
 > Implementation-ready spec. Philosophy: better defaults, not more complexity.

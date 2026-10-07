@@ -14,18 +14,13 @@ Every skill below ships with this project and is always available. Skills are ab
 | add-model | `add-model/SKILL.md` | Add a new Prisma model, query helpers, and tests to the db package. |
 | add-endpoint | `add-endpoint/SKILL.md` | Add an API route (or Server Action) with Zod validation, CSRF, and role guards. |
 | add-dashboard | `add-dashboard/SKILL.md` | Add a metrics/overview dashboard page with metric cards and loading states. |
-| admin-dashboard | `admin-dashboard/SKILL.md` | Build a full admin/back-office area: guarded routes, CRUD screens, audit logging. |
 
 ## Domain starters
 
-These teach the AI to build a complete vertical on demand. No starter code is scaffolded - the AI generates it from the skill.
+These teach the AI to build a complete vertical on demand. No starter code is scaffolded; the AI generates it from the skill.
 
 | Skill | Path | Purpose |
 |---|---|---|
-| bookings | `bookings/SKILL.md` | Booking/reservation/appointment/scheduling systems. |
-| crm | `crm/SKILL.md` | Contact/pipeline/customer relationship systems. |
-| cms | `cms/SKILL.md` | Content modeling, authoring, and publishing systems. |
-| ai | `ai/SKILL.md` | AI assistant features (chat, completions) on app data. |
 | payment | `payment/SKILL.md` | Stripe payment integration, checkout, webhooks, fulfillment. |
 | ecommerce | `ecommerce/SKILL.md` | Product catalog, cart, checkout, orders, inventory. Sub-skills: `ecommerce-catalog`, `ecommerce-cart`, `ecommerce-checkout`. |
 | i18n | `i18n/SKILL.md` | Internationalization, locale routing, localized CMS content, hreflang SEO. |

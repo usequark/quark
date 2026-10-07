@@ -5,12 +5,17 @@ info:
   description: |
     Full-stack JavaScript framework API. All endpoints are served under `/api/`.
 
-    **Authentication:** Most endpoints require a valid NextAuth session.
-    State-changing endpoints also require a CSRF token obtained from `GET /api/csrf`.
+    **Authentication:** Two independent schemes. Web clients use a NextAuth
+    session cookie (`session`). Mobile clients use a Bearer JWT (`bearerAuth`),
+    obtained from `POST /api/auth/token`, `/api/auth/apple`, or
+    `/api/auth/google`.
+
+    **CSRF:** State-changing endpoints require a token from `GET /api/csrf` in
+    the `x-csrf-token` header. That route itself needs a session.
 
     **Error format:** All errors return:
     ```json
-    { "name": "ErrorName", "message": "…", "statusCode": 4xx, "code": "ERROR_CODE" }
+    { "name": "ErrorName", "message": "...", "statusCode": 400, "code": "ERROR_CODE" }
     ```
   license:
     name: MIT
@@ -22,11 +27,11 @@ servers:
 
 tags:
   - name: Auth
-    description: Registration & CSRF tokens
+    description: Registration, NextAuth handlers, JWT exchange, and CSRF tokens
   - name: Users
-    description: User management (admin only)
-  - name: Posts
-    description: Blog posts (public read, authenticated write)
+    description: User management
+  - name: Devices
+    description: Mobile device registration for push notifications
   - name: Files
     description: File uploads & downloads
   - name: Health
@@ -42,7 +47,17 @@ paths:
       operationId: registerUser
       tags: [Auth]
       summary: Register a new user
-      description: Public endpoint. Creates a user with hashed password and enqueues a welcome email.
+      description: |
+        Public endpoint, but returns `403` when self-service signup is disabled
+        via `AUTH_ALLOW_SIGNUP=false`. Requires a CSRF token.
+
+        Creates a user with a hashed password and enqueues a welcome email. The
+        enqueue is fire-and-forget: if it fails the user is still created.
+
+        Password policy: at least 8 characters with an uppercase letter, a
+        lowercase letter, and a digit.
+      parameters:
+        - $ref: '#/components/parameters/CsrfToken'
       requestBody:
         required: true
         content:
@@ -51,11 +66,17 @@ paths:
               $ref: '#/components/schemas/UserRegisterInput'
       responses:
         '201':
-          description: User created
+          description: User created, password omitted
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
+        '403':
+          description: Self-service signup is disabled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '409':
           description: Email already exists
           content:
@@ -68,6 +89,218 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+
+  /api/auth/token:
+    post:
+      operationId: issueTokenPair
+      tags: [Auth]
+      summary: Exchange email and password for a JWT pair
+      description: |
+        Public endpoint. Used by the mobile app for Bearer-token auth.
+
+        Accounts created through OAuth have no `password` and cannot sign in
+        here; they get a token from `/api/auth/apple` or `/api/auth/google`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 1
+      responses:
+        '200':
+          description: Token pair issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/auth/refresh:
+    post:
+      operationId: refreshToken
+      tags: [Auth]
+      summary: Exchange a refresh token for a new access token
+      description: |
+        Public endpoint. Only the access token is rotated; the refresh token
+        stays usable until it expires.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
+                  minLength: 1
+      responses:
+        '200':
+          description: New access token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIs...
+        '401':
+          description: Invalid or expired refresh token, or a token that is not of type `refresh`
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/auth/apple:
+    post:
+      operationId: signInWithApple
+      tags: [Auth]
+      summary: Verify an Apple identity token and issue a JWT pair
+      description: |
+        Public endpoint.
+
+        The `kid` in the token header selects Apple's public key, fetched live
+        from `https://appleid.apple.com/auth/keys` and verified against issuer
+        `https://appleid.apple.com`. A user matching the token's email is
+        created on first sign-in.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [identityToken]
+              properties:
+                identityToken:
+                  type: string
+                  minLength: 1
+                nonce:
+                  type: string
+      responses:
+        '200':
+          description: Token pair issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+        '400':
+          description: Verified token carries no email address
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Invalid Apple token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/auth/google:
+    post:
+      operationId: signInWithGoogle
+      tags: [Auth]
+      summary: Verify a Google ID token and issue a JWT pair
+      description: |
+        Public endpoint.
+
+        The ID token is verified against Google's `tokeninfo` endpoint. A user
+        matching the token's email is created on first sign-in.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [idToken]
+              properties:
+                idToken:
+                  type: string
+                  minLength: 1
+      responses:
+        '200':
+          description: Token pair issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+        '400':
+          description: Verified token carries no email address
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Invalid Google token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/device/register:
+    post:
+      operationId: registerDevice
+      tags: [Devices]
+      summary: Register a mobile device for push notifications
+      description: |
+        Requires a Bearer JWT. The record is upserted on `(userId, deviceId)`,
+        so re-registering after a token rotation updates in place.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [platform, pushToken, deviceId]
+              properties:
+                platform:
+                  type: string
+                  enum: [ios, android]
+                pushToken:
+                  type: string
+                  minLength: 1
+                deviceId:
+                  type: string
+                  minLength: 1
+      responses:
+        '200':
+          description: Device registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          description: Missing or invalid Bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          $ref: '#/components/responses/ValidationError'
 
   /api/csrf:
     get:
@@ -90,7 +323,7 @@ paths:
                 properties:
                   csrfToken:
                     type: string
-                    example: 'a1b2c3d4e5f6…'
+                    example: 'a1b2c3d4e5f6...'
           headers:
             Set-Cookie:
               schema:
@@ -112,20 +345,45 @@ paths:
       summary: List all users
       security:
         - session: []
-      description: Admin-only. Returns all users without password fields.
+      description: |
+        Admin-only. Returns a pagination envelope, not a bare array. The
+        `password` column is never selected.
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Items per page
       responses:
         '200':
-          description: User list
+          description: Paginated user list
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/User'
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationMeta'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
 
     post:
       operationId: createUser
@@ -239,93 +497,43 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
 
-  # ── Posts ───────────────────────────────────────────────
-
-  /api/posts:
+  /api/users/me:
     get:
-      operationId: listPosts
-      tags: [Posts]
-      summary: List posts (paginated)
-      description: Public endpoint. Returns paginated posts.
-      parameters:
-        - name: page
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-          description: Page number
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 10
-          description: Items per page
-      responses:
-        '200':
-          description: Paginated post list
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Post'
-
-    post:
-      operationId: createPost
-      tags: [Posts]
-      summary: Create a post
+      operationId: getCurrentUser
+      tags: [Users]
+      summary: Get the authenticated user's profile
       security:
-        - session: []
-      description: Requires authentication. Author is set from session. Requires CSRF token.
-      parameters:
-        - $ref: '#/components/parameters/CsrfToken'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PostCreateInput'
-      responses:
-        '201':
-          description: Post created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Post'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '422':
-          $ref: '#/components/responses/ValidationError'
-
-  /api/posts/{id}:
-    parameters:
-      - $ref: '#/components/parameters/ResourceId'
-
-    get:
-      operationId: getPost
-      tags: [Posts]
-      summary: Get a post by ID
-      description: Public endpoint.
+        - bearerAuth: []
+      description: |
+        Authenticated by Bearer JWT, not by a session cookie. Intended for the
+        mobile app. The `password` column is never selected.
       responses:
         '200':
-          description: Post object
+          description: User object
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Post'
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Missing or invalid Bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
-          $ref: '#/components/responses/NotFound'
+          description: The token's subject no longer resolves to a user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
     patch:
-      operationId: updatePost
-      tags: [Posts]
-      summary: Update a post (owner only)
+      operationId: updateCurrentUser
+      tags: [Users]
+      summary: Update the authenticated user's profile
       security:
-        - session: []
-      description: Requires authentication + ownership. Requires CSRF token.
+        - bearerAuth: []
+      description: Requires a Bearer JWT and a CSRF token.
       parameters:
         - $ref: '#/components/parameters/CsrfToken'
       requestBody:
@@ -333,41 +541,28 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PostUpdateInput'
+              $ref: '#/components/schemas/UserUpdateInput'
       responses:
         '200':
-          description: Updated post
+          description: Updated user
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Post'
+                $ref: '#/components/schemas/User'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: Missing or invalid Bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
-          $ref: '#/components/responses/NotFound'
+          description: The token's subject no longer resolves to a user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '422':
           $ref: '#/components/responses/ValidationError'
-
-    delete:
-      operationId: deletePost
-      tags: [Posts]
-      summary: Delete a post (owner only)
-      security:
-        - session: []
-      description: Requires authentication + ownership. Requires CSRF token.
-      parameters:
-        - $ref: '#/components/parameters/CsrfToken'
-      responses:
-        '200':
-          description: Deletion confirmed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SuccessResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
 
   # ── Files ──────────────────────────────────────────────
 
@@ -392,7 +587,7 @@ paths:
             type: integer
             minimum: 1
             maximum: 100
-            default: 50
+            default: 20
       responses:
         '200':
           description: File list
@@ -603,6 +798,14 @@ components:
       in: cookie
       name: next-auth.session-token
       description: NextAuth session cookie (set automatically after login)
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Mobile app access token from `POST /api/auth/token`,
+        `POST /api/auth/apple`, or `POST /api/auth/google`. Refresh with
+        `POST /api/auth/refresh`.
 
   parameters:
     ResourceId:
@@ -677,10 +880,52 @@ components:
           type: boolean
           example: true
 
+    # ── Auth ───────────────────────
+
+    TokenPair:
+      type: object
+      properties:
+        token:
+          type: string
+          description: 'Access token, sent as `Authorization: Bearer <token>`'
+          example: 'eyJhbGciOiJIUzI1NiIs...'
+        refreshToken:
+          type: string
+          description: 'Exchange for a new access token at `POST /api/auth/refresh`'
+          example: 'eyJhbGciOiJIUzI1NiIs...'
+        expiresAt:
+          type: string
+          format: date-time
+          description: Access token expiry
+
+    PaginationMeta:
+      type: object
+      properties:
+        total:
+          type: integer
+          example: 42
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 20
+        totalPages:
+          type: integer
+          example: 3
+        hasNext:
+          type: boolean
+          example: true
+        hasPrev:
+          type: boolean
+          example: false
+
     # ── User ──────────────────────
 
     User:
       type: object
+      description: |
+        The safe select. `password` is never returned by any route.
       properties:
         id:
           type: string
@@ -704,6 +949,7 @@ components:
           nullable: true
         role:
           type: string
+          enum: [admin, lead_dev, client_admin, editor, viewer]
           default: viewer
           example: viewer
         createdAt:
@@ -752,55 +998,6 @@ components:
         image:
           type: string
           format: uri
-
-    # ── Post ──────────────────────
-
-    Post:
-      type: object
-      properties:
-        id:
-          type: string
-          example: clx1234567890abcdef
-        title:
-          type: string
-          example: My First Post
-        content:
-          type: string
-          nullable: true
-        published:
-          type: boolean
-          default: false
-        authorId:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-
-    PostCreateInput:
-      type: object
-      required: [title]
-      properties:
-        title:
-          type: string
-          minLength: 1
-        content:
-          type: string
-        published:
-          type: boolean
-
-    PostUpdateInput:
-      type: object
-      properties:
-        title:
-          type: string
-          minLength: 1
-        content:
-          type: string
-        published:
-          type: boolean
 
     # ── File ──────────────────────
 

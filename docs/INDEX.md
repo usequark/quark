@@ -25,10 +25,10 @@ Entry point: [../README.md](../README.md)
 | Document | Purpose |
 |----------|---------|
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Core-Only Registry model and distribution philosophy |
+| [openapi.yaml](./openapi.yaml) | REST contract for the scaffolded app |
 | [DATABASE.md](./DATABASE.md) | Database schema, models, query helpers, and best practices |
 | [EXAMPLES.md](./EXAMPLES.md) | Domain model examples (blog posts, products, contacts, teams) |
 | [API.md](./API.md) | REST endpoint reference |
-| [SECURITY_FEATURES.md](./SECURITY_FEATURES.md) | Security features, checklists, and incident response |
 | [dependency-audit.md](./dependency-audit.md) | Dependency vulnerability triage, accepted risks, and overrides |
 | [MAINTAINABILITY.md](./MAINTAINABILITY.md) | Code style, testing, and dependency management |
 | [TESTING_INFRASTRUCTURE.md](./TESTING_INFRASTRUCTURE.md) | Testing organization, CI/CD, utilities, and patterns |
@@ -36,11 +36,14 @@ Entry point: [../README.md](../README.md)
 | [AGENTS.md](../AGENTS.md) | Monorepo agent contributor context |
 | [.cursor/rules/quark.mdc](../.cursor/rules/quark.mdc) | Monorepo Cursor contributor rules |
 
-## Active Plans
+## Operations
 
 | Document | Purpose |
 |----------|---------|
-| [DESIGN_NOTES.md](./DESIGN_NOTES.md) | Accepted design direction — the source of truth for architecture decisions |
+| [DEPLOY_RAILWAY.md](./DEPLOY_RAILWAY.md) | Railway deployment, env vars, and troubleshooting |
+| [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) | Common failures and their fixes |
+| [SECURITY_FEATURES.md](./SECURITY_FEATURES.md) | Security features, checklists, and incident response |
+| [DESIGN_NOTES.md](./DESIGN_NOTES.md) | Design direction, partly superseded. Read the status banner first |
 
 ## Historical Archive
 
@@ -50,4 +53,6 @@ Entry point: [../README.md](../README.md)
 | [ROADMAP.md](./archive/ROADMAP.md) | Original expansion roadmap (predates skill-based architecture) |
 | [IMPLEMENTATION_CHECKLIST.md](./archive/IMPLEMENTATION_CHECKLIST.md) | Task tracker with progress percentages |
 | [FEATURE_PLAN.md](./archive/FEATURE_PLAN.md) | Isolated, agent-executable feature plan (F1–F8) |
+| [PHASE2_PLAN.md](./archive/PHASE2_PLAN.md) | Admin-package exploration. Historical only; the admin package was removed |
 | [MERGE_PLAN.md](./archive/MERGE_PLAN.md) | Sequence to merge the scaffold opinionation work into `main` |
+| [strategy/](./archive/strategy/) | Archived strategy specs: unimplemented template improvements, i18n reference |

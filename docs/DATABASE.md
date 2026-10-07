@@ -50,9 +50,9 @@ This project does support `NODE_ENV=staging` via `resolveEnvironment()` in `pack
 
 ## Overview
 
-| Models | Enums | Relations | Indexes |
-|--------|-------|-----------|---------|
-| 7 | 1 | 4 | 20 |
+| Models | Enums | Relations | `@@index` blocks | Unique constraints |
+|--------|-------|-----------|-----------------|-------------------|
+| 7 | 2 | 4 | 19 | 6 |
 
 ```
 User ─┬── Account    (1:many, cascade delete)
@@ -80,7 +80,7 @@ The central identity model. Used by NextAuth for authentication and by the appli
 | `name` | `String?` | - | Display name |
 | `password` | `String?` | - | Bcrypt hash (12 rounds). Null for OAuth-only users |
 | `image` | `String?` | - | Avatar URL |
-| `role` | `String` | Default: `"viewer"` | RBAC role (`admin`, `editor`, `viewer`). The `admin` role is an auth concept (highest privilege level) — unrelated to the removed `@usequark/quark-admin` package. |
+| `role` | `UserRole` | Default: `viewer` | RBAC role from the `UserRole` enum: `admin`, `lead_dev`, `client_admin`, `editor`, `viewer`. The `admin` role is an auth concept (highest privilege level) and is unrelated to the removed admin package. |
 | `createdAt` | `DateTime` | Default: `now()` | - |
 | `updatedAt` | `DateTime` | `@updatedAt` | - |
 
@@ -208,7 +208,7 @@ Uploaded file metadata. Actual file data lives in storage (local filesystem or S
 
 **Indexes:** `uploadedById`, `mimeType`, `createdAt`
 
-**Cascade:** Deleting a user sets `uploadedById` to null (file is preserved but orphaned). A background job (`FILE_CLEANUP`) runs every 24h to remove orphaned files from both storage and database.
+**Cascade:** Deleting a user sets `uploadedById` to null (file is preserved but orphaned). The worker enqueues `JOB_NAMES.CLEANUP_ORPHANED_FILES` (`cleanup-orphaned-files`) on a 24h repeat with `retentionHours: 24`, removing orphaned files from both storage and database.
 
 **Query helpers:** `file.create()`, `file.findById()`, `file.findByStorageKey()`, `file.findByUploader()`, `file.findOrphaned()`, `file.findOlderThan()`, `file.delete()`, `file.deleteMany()`, `file.count()`
 
@@ -237,15 +237,21 @@ Immutable audit trail for user actions. Append-only - no update or delete querie
 
 ## Migration History
 
-| Migration | Date | Description |
-|-----------|------|-------------|
-| `0_init` | Initial | Base schema: User, Account, Session, VerificationToken |
-| `20260214_add_jobs_*` | 2026-02-14 | Add Job model with JobStatus enum |
-| `20260214_add_files_*` | 2026-02-14 | Add File model |
-| `20260214_add_audit_log_*` | 2026-02-14 | Add AuditLog model |
-| `20260215_add_account_timestamps` | 2026-02-15 | Add createdAt/updatedAt to Account |
-| `20260215_add_indexes` | 2026-02-15 | Add expires index on Session/VerificationToken, compound index on Job |
-| `20260218_remove_post` | 2026-02-18 | Remove Post model - use domain-specific models per project |
+The monorepo carries domain-vertical migrations that were removed again in later migrations. Scaffolded projects get a single squashed initial migration (see `packages/cli/templates/base-project/packages/db/prisma/migrations`), so this history describes the monorepo only. Notable entries:
+
+| Migration | Description |
+|-----------|-------------|
+| `20260202061128_initial` | Base schema: User, Account, Session, VerificationToken |
+| `20260213183602_add_password_and_role` | Add password hashing and role |
+| `20260215_add_account_timestamps` | Add createdAt/updatedAt to Account |
+| `20260215_add_indexes` | Add expires index on Session/VerificationToken, compound index on Job |
+| `20260321144652_add_file_model` | Add File model |
+| `20260329182343_add_user_role_enum` | Replace the String role with the `UserRole` enum |
+| `20260428124214_drop_post_model` | Remove Post model, use domain-specific models per project |
+| `20260611000000_add_client_admin_role` | Add `client_admin` to `UserRole` |
+| `20260615000000_add_missing_ai_and_crm_models` through `20260730000003_add_app_config` | Domain vertical experiments (AI, CRM, bookings, page builder, app config), all removed in the deletions above |
+
+Verify the live list with `ls packages/db/prisma/migrations/` rather than trusting this table.
 
 ---
 
@@ -309,9 +315,9 @@ export const widgetCreateSchema = z.object({
 
 | Pattern | Index Type | Purpose |
 |---------|-----------|---------|
-| FK lookups | Single column | `authorId`, `userId`, `uploadedById` |
+| FK lookups | Single column | `userId` on Account, Session, AuditLog; `uploadedById` on File |
 | Unique constraints | Unique | `email`, `sessionToken`, `storageKey` |
-| Filtering | Single column | `published`, `status`, `mimeType`, `action`, `entity` |
+| Filtering | Single column | `status` on Job, `mimeType` on File, `action` and `entity` on AuditLog |
 | Sorting/pagination | Single column | `createdAt` on all models |
 | Expiry cleanup | Single column | `expires` on Session, VerificationToken |
 | Composite query | Compound | `(status, runAt)` on Job for queue polling |

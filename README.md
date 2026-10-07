@@ -53,13 +53,14 @@ The CLI will:
 
 | Flag | Description |
 |------|-------------|
-| `--packages ui,jobs` | Include optional packages (ui, jobs) |
-| `--preset <name>` | Use a preset bundle (client-work, internal-tool, product, minimal) |
+| `--packages ui,jobs,pwa` | Optional packages to include at create time. `db`, `config`, and `ui` are always scaffolded. Mobile is post-creation: `npx quark add mobile` |
 | `--signup enabled\|disabled` | Control public self-service signup |
-| `--skip-install` | Skip pnpm install and Prisma generate |
 | `--prompt "brief"` | Set the product brief for MAIN.md |
+| `--harness <harness>` | Where embedded skills land: `opencode` (default), `claude`, or `copilot` |
+| `--skip-install` | Skip pnpm install and Prisma generate |
+| `--skip-docker` | Skip Docker orphan-volume cleanup |
 
-Providing any config option automatically skips interactive prompts.
+Providing any config option automatically skips interactive prompts. `--no-prompts` is deprecated: options now skip prompts on their own.
 
 ### 2. Run development
 
@@ -121,9 +122,28 @@ What that proves, and what it does not:
 
 **Always scaffolded:** `db` (Prisma), `config` (env validation), `ui` (Tailwind primitives)
 
-**Optional:** `jobs` (+ `worker` for background processing)
+**Optional packages:** `jobs` (pulls in `apps/worker`), `pwa`, `mobile`
 
-**Built on demand:** Domain systems (bookings, CRM, CMS, ecommerce, AI) are not scaffolded packages. Every project ships embedded skills that teach your AI tool to build them. See `.opencode/skills/` in your scaffolded project.
+**Built on demand:** Domain systems are not scaffolded packages. Every project ships embedded skills that teach your AI tool to build them. Bundled skills cover `payment`, `ecommerce` (catalog, cart, checkout), and `i18n`, plus the `add-model`, `add-endpoint`, and `add-dashboard` workflow skills.
+
+Skills land in the harness directory you chose with `--harness`: `.opencode/skills/`, `.claude/skills/`, or `.github/skills/`.
+
+---
+
+## Deploy
+
+```bash
+npx quark deploy railway
+```
+
+Generates a Railway IaC file at `.railway/railway.ts`, provisions PostgreSQL and Redis, applies the config, and deploys the `web` and `worker` services with migrations running before traffic switches.
+
+```bash
+npx quark deploy status     # current service state
+npx quark deploy inspect    # applied config per service
+```
+
+📖 **See [Deploying to Railway](./docs/DEPLOY_RAILWAY.md)** for the full guide.
 
 ---
 
