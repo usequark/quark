@@ -123,16 +123,52 @@ function parseAuditReport(raw) {
 		process.exit(1);
 	}
 
-	// Belt and braces: require the shape we expect before trusting a count.
-	if (!report || typeof report !== "object" || !("advisories" in report)) {
+	// Belt and braces: require the shape we expect before trusting a count. An
+	// `advisories` key that is present but null, or any non-object, means we are
+	// not looking at an audit report - `?? {}` would quietly substitute an empty
+	// set and pass, so it has to be rejected rather than defaulted.
+	if (
+		!report ||
+		typeof report !== "object" ||
+		!("advisories" in report) ||
+		!report.advisories ||
+		typeof report.advisories !== "object" ||
+		Array.isArray(report.advisories)
+	) {
 		process.stderr.write(
-			"❌ pnpm audit returned JSON without an `advisories` field. Refusing to pass a tree we cannot read.\n",
+			"❌ pnpm audit returned JSON without a usable `advisories` object. Refusing to pass a tree we cannot read.\n",
 		);
 		process.exit(1);
 	}
 
-	const advisories = Object.values(report.advisories ?? {});
-	return advisories.filter((advisory) => advisory?.github_advisory_id);
+	// A present-but-unusable `advisories` key and a missing one are the same
+	// situation for our purposes: no advisories were enumerated.
+	const advisories = Object.values(report.advisories);
+
+	// Every advisory must carry a GitHub advisory ID, because that ID is the
+	// allowlist key. Dropping entries that lack one would be fail-open in the
+	// worst direction: a legacy or CVE-only record with `github_advisory_id: null`
+	// is a real vulnerability that can never be matched against acceptedAdvisories,
+	// so filtering it out reports a clean tree while a known advisory is present.
+	// An entry we cannot identify is one we cannot clear.
+	const unidentified = advisories.filter(
+		(advisory) =>
+			!advisory ||
+			typeof advisory !== "object" ||
+			typeof advisory.github_advisory_id !== "string" ||
+			advisory.github_advisory_id === "",
+	);
+
+	if (unidentified.length > 0) {
+		process.stderr.write(
+			`\n❌ ${unidentified.length} ${unidentified.length === 1 ? "advisory carries" : "advisories carry"} no GitHub advisory ID, so ${unidentified.length === 1 ? "it" : "they"} cannot be matched against the allowlist.\n\n` +
+				`Dropping ${unidentified.length === 1 ? "it" : "them"} would report a clean tree while a vulnerability is\n` +
+				"present. Failing closed instead.\n\n",
+		);
+		process.exit(1);
+	}
+
+	return advisories;
 }
 
 const advisories = parseAuditReport(await readAuditReport());
@@ -170,7 +206,7 @@ process.stderr.write(
 
 for (const advisory of unexpected) {
 	process.stderr.write(
-		`   ${advisory.severity.toUpperCase()}  ${advisory.module_name}  ${advisory.github_advisory_id}\n` +
+		`   ${String(advisory.severity ?? "unknown").toUpperCase()}  ${advisory.module_name ?? "unknown"}  ${advisory.github_advisory_id}\n` +
 			`          ${advisory.title}\n` +
 			`          patched: ${advisory.patched_versions || "none published"}\n` +
 			`          ${advisory.recommendation || advisory.url || ""}\n`,

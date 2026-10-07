@@ -139,6 +139,91 @@ test("fails on JSON that is not an audit report", () => {
 	assert.match(result.stderr, /advisories/i);
 });
 
+test("fails when advisories is null rather than treating it as empty", () => {
+	// `?? {}` would substitute an empty set here and report a clean tree.
+	const result = runWith({ advisories: null, metadata: {} });
+	assert.equal(result.status, 1, "a null advisories key must not read as zero");
+	assert.match(result.stderr, /advisories/i);
+});
+
+test("fails when advisories is not an object", () => {
+	for (const value of ["none", 0, 42, true]) {
+		const result = runWith({ advisories: value, metadata: {} });
+		assert.equal(
+			result.status,
+			1,
+			`advisories: ${JSON.stringify(value)} must fail`,
+		);
+		assert.match(result.stderr, /advisories/i);
+	}
+});
+
+test("fails when advisories is an array", () => {
+	// An array has a plausible length and would pass a truthiness check.
+	const result = runWith({ advisories: [], metadata: {} });
+	assert.equal(result.status, 1);
+	assert.match(result.stderr, /advisories/i);
+});
+
+test("fails on an advisory with no GitHub advisory ID", () => {
+	// A legacy or CVE-only record with `github_advisory_id: null` can never match
+	// the allowlist. Filtering it out reports a clean tree while a real
+	// vulnerability is present, which is the worst direction to fail.
+	const result = runWith({
+		advisories: {
+			...ACCEPTED,
+			1: advisory("ignored", { github_advisory_id: null }),
+		},
+		metadata: {},
+	});
+
+	assert.equal(
+		result.status,
+		1,
+		"an unidentifiable advisory must not be dropped",
+	);
+	assert.match(result.stderr, /no GitHub advisory ID/i);
+	assert.match(result.stderr, /fail(?:ing|s) closed/i);
+});
+
+test("fails on an advisory whose ID is an empty string", () => {
+	const result = runWith({
+		advisories: { ...ACCEPTED, 1: advisory("x", { github_advisory_id: "" }) },
+		metadata: {},
+	});
+	assert.equal(result.status, 1);
+	assert.match(result.stderr, /no GitHub advisory ID/i);
+});
+
+test("fails on a null advisory entry rather than skipping it", () => {
+	const result = runWith({
+		advisories: { ...ACCEPTED, 1: null },
+		metadata: {},
+	});
+	assert.equal(result.status, 1);
+	assert.match(result.stderr, /no GitHub advisory ID/i);
+});
+
+test("still reports the advisory fields when severity or module are absent", () => {
+	// The failure path must not itself crash: a TypeError on `.toUpperCase()`
+	// would still exit non-zero, but it would print a stack trace instead of
+	// naming the advisory, which is the information the reader needs.
+	const result = runWith({
+		advisories: {
+			1: {
+				github_advisory_id: "GHSA-bare-0001",
+				title: "minimal record",
+			},
+		},
+		metadata: {},
+	});
+
+	assert.equal(result.status, 1);
+	assert.match(result.stderr, /GHSA-bare-0001/);
+	assert.match(result.stderr, /UNKNOWN/);
+	assert.doesNotMatch(result.stderr, /TypeError/);
+});
+
 test("fails on output that is not JSON", () => {
 	const result = runWith("<html>502 Bad Gateway</html>");
 	assert.equal(result.status, 1);

@@ -194,7 +194,13 @@ reports its own failures as JSON on stdout with exit 1 - for example
 `{"error":{"code":"ERR_PNPM_AUDIT_NO_LOCKFILE"}}` - which has no `advisories` key at all. Reading
 that as zero advisories turns a missing lockfile or an unreachable registry into a green build
 that verified nothing, which is the one failure mode a security gate must not have.
-`scripts/check-audit.test.mjs` covers both directions, including that case.
+
+It fails closed on unrecognised report shapes for the same reason: an `advisories` key that is
+present but null, or any non-object, is rejected rather than defaulted to an empty set. So is an
+advisory with no usable `github_advisory_id` - a legacy or CVE-only record with a null ID can
+never match the allowlist, so dropping it would report a clean tree while a vulnerability is
+present. An advisory the check cannot identify is one it cannot clear.
+`scripts/check-audit.test.mjs` (17 tests) covers both directions, including these cases.
 
 ## Known unrelated breakage: the mobile bundle does not build
 
