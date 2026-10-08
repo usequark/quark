@@ -27,7 +27,7 @@
 		"@usequark/quark-ui": "workspace:*",
 		"ioredis": "^6.0.0",
 		"jose": "^6.2.12",
-		"next": "16.3.6",
+		"next": "16.3.8",
 		"next-auth": "5.0.0-beta.32",
 		"pg": "^8.23.0",
 		"react": "19.3.0",
