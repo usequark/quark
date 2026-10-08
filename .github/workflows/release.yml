@@ -82,6 +82,55 @@ jobs:
           fi
           echo "Release PRs will be opened by ${actor}."
 
+      # The commit author, not the PR author, is what GitHub looks at when it
+      # decides whether a pull_request run may start. The two are set by
+      # different credentials: changesets/action opens the PR with
+      # `github-token` (RELEASE_PR_TOKEN), but it pushes the branch with git,
+      # authenticated by the checkout's persisted GITHUB_TOKEN. So the PR
+      # showed `Bobnoddle` as author while the head commit was authored by
+      # `github-actions[bot]` - and the run came back `action_required` with no
+      # check result, leaving the release PR unmergeable.
+      #
+      # The token check above cannot catch that, because it inspects the secret
+      # rather than the resulting commit. It reported "Release PRs will be
+      # opened by Bobnoddle" in the very run that pushed the bot-authored
+      # commit: a green run reproducing the exact bug the step exists to
+      # prevent.
+      #
+      # changesets/action's `ensureGitUser()` sets user.name/user.email to
+      # `github-actions[bot]`, but only when a COMPLETE author *and* committer
+      # identity is not already resolvable (src/github.ts, `git -c
+      # user.useConfigOnly=true var GIT_AUTHOR_IDENT`). A partial identity does
+      # not satisfy it. So all four variables are set here, exported to the
+      # `Create Release PR or Publish` step below.
+      - name: Set the release commit author
+        env:
+          RELEASE_PR_TOKEN: ${{ secrets.RELEASE_PR_TOKEN }}
+        run: |
+          actor=$(curl -sS -H "Authorization: Bearer ${RELEASE_PR_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/user \
+            | sed -n 's/.*"login": *"\([^"]*\)".*/\1/p')
+          echo "GIT_AUTHOR_NAME=${actor}" >> "$GITHUB_ENV"
+          echo "GIT_AUTHOR_EMAIL=${actor}@users.noreply.github.com" >> "$GITHUB_ENV"
+          echo "GIT_COMMITTER_NAME=${actor}" >> "$GITHUB_ENV"
+          echo "GIT_COMMITTER_EMAIL=${actor}@users.noreply.github.com" >> "$GITHUB_ENV"
+          # Probe through the exact lens ensureGitUser() uses. If either
+          # identity is still unresolvable the action overrides it with
+          # github-actions[bot], which is what held the release PR at
+          # action_required, so failing here beats shipping that commit.
+          export GIT_AUTHOR_NAME="${actor}"
+          export GIT_AUTHOR_EMAIL="${actor}@users.noreply.github.com"
+          export GIT_COMMITTER_NAME="${actor}"
+          export GIT_COMMITTER_EMAIL="${actor}@users.noreply.github.com"
+          for ident in GIT_AUTHOR_IDENT GIT_COMMITTER_IDENT; do
+            if ! git -c user.useConfigOnly=true var "${ident}" >/dev/null 2>&1; then
+              echo "::error::${ident} is still unresolvable, so changesets/action would author the release commit as github-actions[bot] and the PR would stall at action_required."
+              exit 1
+            fi
+          done
+          echo "Release commits will be authored by ${actor}."
+
       # IMPORTANT: merge release PRs with a MERGE COMMIT, not squash.
       # Changesets detects a release by the `changeset-release/main` branch name
       # in the commit message. A squash merge rewrites it to
