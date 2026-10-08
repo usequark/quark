@@ -1,7 +1,10 @@
 # Dependency vulnerability triage
 
-Status as of this change: **21 advisories -> 3.** This document explains what was fixed,
+Status as of the original triage: **21 advisories -> 3.** This document explains what was fixed,
 what was deliberately left, and why.
+
+Since then: **6 Next.js advisories -> 0**, fixed by upgrading `16.3.6` to `16.3.8`. See
+[Next.js](#nextjs-6-advisories-fixed-by-upgrade) below. The standing accepted count is still 3.
 
 Severity labels come from the advisory database. **Exposure** is a separate question and is
 recorded per finding below, because most of the original count was toolchain code that never
@@ -26,6 +29,26 @@ source of truth.
 | `shell-quote` 1.10.0 | 1 | critical | lockfile refresh | dev only |
 | `source-map-js` 1.2.1 | 1 | high | lockfile refresh | build only |
 | `uuid` 7.0.3 | 1 | moderate | `overrides`, justified below | build only |
+
+### Next.js - 6 advisories, fixed by upgrade
+
+Six advisories landed against `next@16.3.6` after the triage above. All six are patched in
+`16.3.8`, so the fix is a version bump rather than an allowlist entry:
+
+| Advisory | Severity | Issue |
+|---|---|---|
+| `GHSA-cjq9-62q9-8jv4` | high | SSRF in Image Optimization |
+| `GHSA-mcj8-r9mp-w47p` | moderate | SSG/ISR cache poisoning, cross-user content substitution and DoS |
+| `GHSA-4jqv-mc3x-m676` | moderate | SSG/ISR cache poisoning in self-hosted apps |
+| `GHSA-3w37-wq28-93x7` | moderate | Pending `use cache` fill can leak Draft Mode content |
+| `GHSA-f87g-xv8r-7p7x` | moderate | Metadata image route disclosure via `dynamicParams` bypass |
+| `GHSA-39w2-rjm5-chcv` | low | Dev server MCP endpoint disclosure |
+
+These are not the accepted three. Two are production-reachable (SSRF in image optimization,
+ISR cache poisoning), so suppressing them would have been the wrong call regardless of the
+gate's rules. `apps/web` and `packages/ui` both move to `16.3.8`, and
+`sync-templates` propagates the bump to scaffolded projects so new apps do not ship the
+vulnerable pin.
 
 ### nodemailer - 13 advisories, zero real exposure
 

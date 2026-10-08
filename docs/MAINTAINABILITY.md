@@ -178,7 +178,7 @@ Key versions as of this document's last verification:
 | Tool | Version | Source |
 |------|---------|--------|
 | Prisma / `@prisma/client` | `^7.10.0` | `packages/db`, `apps/web` |
-| Next.js | `16.3.6` | `apps/web` |
+| Next.js | `16.3.8` | `apps/web` |
 | React / React DOM | `19.3.0` | `apps/web` |
 | BullMQ | `^6.3.8` | `packages/core`, `packages/jobs`, `apps/worker` |
 | Zod | `^4.6.5` | `packages/db`, `apps/web` |
