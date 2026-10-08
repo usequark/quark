@@ -225,7 +225,7 @@
 
 ### Patch Changes
 
-- [#153](https://github.com/Bobnoddle/quark/pull/153) [`bdd0470`](https://github.com/Bobnoddle/quark/commit/bdd0470b3ce8100992e5a0a2bb08c37b2ec2ebb7) Thanks [@dependabot](https://github.com/apps/dependabot)! - Bump nodemailer 9→10
+- [#153](https://github.com/usequark/quark/pull/153) [`bdd0470`](https://github.com/usequark/quark/commit/bdd0470b3ce8100992e5a0a2bb08c37b2ec2ebb7) Thanks [@dependabot](https://github.com/apps/dependabot)! - Bump nodemailer 9→10
   
   The only breaking change in nodemailer 10 is "Node.js 20 or newer is required"
   (this repo requires ≥22). `createTransport` and the SMTP transport options
@@ -236,14 +236,14 @@
 
 ### Patch Changes
 
-- [#149](https://github.com/Bobnoddle/quark/pull/149) [`0b147d8`](https://github.com/Bobnoddle/quark/commit/0b147d8fbf51436c461c56cebad37cc479a816a4) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Bump bullmq to v6
+- [#149](https://github.com/usequark/quark/pull/149) [`0b147d8`](https://github.com/usequark/quark/commit/0b147d8fbf51436c461c56cebad37cc479a816a4) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Bump bullmq to v6
   
   The queue module no longer reaches for BullMQ's removed public `queue.client`
   getter; deduplication uses BullMQ's native `deduplication` option and
   `checkQueueHealth` uses `waitUntilReady()`. See 740707b for the behavioural
-  detail. Split out of dependabot [#137](https://github.com/Bobnoddle/quark/issues/137) for individual review.
+  detail. Split out of dependabot [#137](https://github.com/usequark/quark/issues/137) for individual review.
 
-- [`740707b`](https://github.com/Bobnoddle/quark/commit/740707b93545b58e20655899919e7b08f421f337) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Use BullMQ's public APIs for job deduplication and health checks
+- [`740707b`](https://github.com/usequark/quark/commit/740707b93545b58e20655899919e7b08f421f337) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Use BullMQ's public APIs for job deduplication and health checks
   
   `addJob`'s deduplication was hand-rolled with a raw `SET NX` against
   `queue.client`, a BullMQ internal that v6 removed. The `SET NX` then threw, a
@@ -266,7 +266,7 @@
 
 ### Patch Changes
 
-- [#147](https://github.com/Bobnoddle/quark/pull/147) [`fae41f2`](https://github.com/Bobnoddle/quark/commit/fae41f280b90f1695d877b825ae79d31c874a75d) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Make `createQueue()` close-safe and drop dead queue churn from worker preflight.
+- [#147](https://github.com/usequark/quark/pull/147) [`fae41f2`](https://github.com/usequark/quark/commit/fae41f280b90f1695d877b825ae79d31c874a75d) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Make `createQueue()` close-safe and drop dead queue churn from worker preflight.
   
   - `createQueue(name)` now evicts a queue from the singleton registry when it is closed, so the next `createQueue(name)` returns a fresh, usable instance instead of the poisoned, already-closed one. Queues closed through another path are also detected and replaced, and `closeAllQueues()` iterates a snapshot of the registry while close evicts entries.
   - The worker `preflight()` health check no longer creates and immediately closes a queue per job queue — that code never used the queue and taught an unsafe pattern by example. Handler registration is now counted directly from the handler registry.
@@ -275,37 +275,37 @@
 
 ### Minor Changes
 
-- [#143](https://github.com/Bobnoddle/quark/pull/143) [`67cfc3b`](https://github.com/Bobnoddle/quark/commit/67cfc3bb636e5d76cafd603833b5bf1d6e54bce5) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add `admin`, `auth/middleware`, `core`, `db`, `email`, `metrics`, `queue`, `sms`, and `storage/s3` subpath exports. The S3 adapter now lives in its own module and loads the optional `@aws-sdk/*` peer dependencies lazily, so `@techstream/quark-core/storage` and the main barrel no longer require them at import time. `pingDatabase()` imports its optional `pg` peer lazily for the same reason, and `createPrismaClient()` namespaces its singleton per client instead of sharing one global slot. Existing `./locale`, `./logger`, and `./stripe` subpaths are unchanged.
+- [#143](https://github.com/usequark/quark/pull/143) [`67cfc3b`](https://github.com/usequark/quark/commit/67cfc3bb636e5d76cafd603833b5bf1d6e54bce5) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add `admin`, `auth/middleware`, `core`, `db`, `email`, `metrics`, `queue`, `sms`, and `storage/s3` subpath exports. The S3 adapter now lives in its own module and loads the optional `@aws-sdk/*` peer dependencies lazily, so `@techstream/quark-core/storage` and the main barrel no longer require them at import time. `pingDatabase()` imports its optional `pg` peer lazily for the same reason, and `createPrismaClient()` namespaces its singleton per client instead of sharing one global slot. Existing `./locale`, `./logger`, and `./stripe` subpaths are unchanged.
 
 ## 2.4.3
 
 ### Patch Changes
 
-- [#130](https://github.com/Bobnoddle/quark/pull/130) [`b3d07b4`](https://github.com/Bobnoddle/quark/commit/b3d07b4133bea19da7693b43fab2cced1cfb85cb) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Apply optional chaining refactors and sync templates after Biome 2.5 upgrade
+- [#130](https://github.com/usequark/quark/pull/130) [`b3d07b4`](https://github.com/usequark/quark/commit/b3d07b4133bea19da7693b43fab2cced1cfb85cb) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Apply optional chaining refactors and sync templates after Biome 2.5 upgrade
 
 ## 2.4.2
 
 ### Patch Changes
 
-- [#99](https://github.com/Bobnoddle/quark/pull/99) [`877a16e`](https://github.com/Bobnoddle/quark/commit/877a16e1a492b1366ddabb1672383318905b4710) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add Stripe integration utility (createStripeClient, getStripeWebhookEvent) as optional peer dependency.
+- [#99](https://github.com/usequark/quark/pull/99) [`877a16e`](https://github.com/usequark/quark/commit/877a16e1a492b1366ddabb1672383318905b4710) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add Stripe integration utility (createStripeClient, getStripeWebhookEvent) as optional peer dependency.
 
-- [#119](https://github.com/Bobnoddle/quark/pull/119) [`f2ff17b`](https://github.com/Bobnoddle/quark/commit/f2ff17be10b869aa117decaa5b3bd80b6748c508) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Exempt Bearer-authenticated requests from CSRF protection — mobile app push registration no longer fails with 401
+- [#119](https://github.com/usequark/quark/pull/119) [`f2ff17b`](https://github.com/usequark/quark/commit/f2ff17be10b869aa117decaa5b3bd80b6748c508) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Exempt Bearer-authenticated requests from CSRF protection — mobile app push registration no longer fails with 401
 
-- [#127](https://github.com/Bobnoddle/quark/pull/127) [`bc56633`](https://github.com/Bobnoddle/quark/commit/bc56633a06d90d173f81cc8933b3f1651a5dac7e) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Keep S3 storage imports available in standalone deployments.
+- [#127](https://github.com/usequark/quark/pull/127) [`bc56633`](https://github.com/usequark/quark/commit/bc56633a06d90d173f81cc8933b3f1651a5dac7e) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Keep S3 storage imports available in standalone deployments.
 
 ## 2.4.1
 
 ### Patch Changes
 
-- [`4b8c677`](https://github.com/Bobnoddle/quark/commit/4b8c67786939bdc9ca7239ecf8fd3162431714b8) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add a browser-safe `./logger` subpath export. The main barrel re-exports node-only modules (redis, queue, email) that Turbopack cannot bundle into client components; `@techstream/quark-core/logger` exposes only the zero-dependency logger so client-side code can use `createLogger()` without pulling the server-only graph.
+- [`4b8c677`](https://github.com/usequark/quark/commit/4b8c67786939bdc9ca7239ecf8fd3162431714b8) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add a browser-safe `./logger` subpath export. The main barrel re-exports node-only modules (redis, queue, email) that Turbopack cannot bundle into client components; `@techstream/quark-core/logger` exposes only the zero-dependency logger so client-side code can use `createLogger()` without pulling the server-only graph.
 
-- [`d3dd09e`](https://github.com/Bobnoddle/quark/commit/d3dd09e89e28498c6080a76d7ec267b20b229e5c) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Auth: `isDeployed()` now honors `AUTH_TRUST_HOST` only when set to the literal string `"true"` — previously any truthy value (including `"false"`) enabled `trustHost`
+- [`d3dd09e`](https://github.com/usequark/quark/commit/d3dd09e89e28498c6080a76d7ec267b20b229e5c) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Auth: `isDeployed()` now honors `AUTH_TRUST_HOST` only when set to the literal string `"true"` — previously any truthy value (including `"false"`) enabled `trustHost`
 
 ## 2.4.0
 
 ### Minor Changes
 
-- [`c20e541`](https://github.com/Bobnoddle/quark/commit/c20e541b3c6690fda859b1c2b997b81ddea280bf) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - AI chat system, UI theming engine, SMS service, CRM package, and expanded deployment tooling
+- [`c20e541`](https://github.com/usequark/quark/commit/c20e541b3c6690fda859b1c2b997b81ddea280bf) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - AI chat system, UI theming engine, SMS service, CRM package, and expanded deployment tooling
 
   **@techstream/quark-core**
 
@@ -333,25 +333,25 @@
 
 ### Patch Changes
 
-- [#58](https://github.com/Bobnoddle/quark/pull/58) [`1b38b14`](https://github.com/Bobnoddle/quark/commit/1b38b140456470b4add3e9c2bde2f7bf3d16891b) Thanks [@Mattyfegan](https://github.com/Mattyfegan)! - Enhanced media management UI with inline image editing, drag-and-drop page builder improvements, and admin navigation updates
+- [#58](https://github.com/usequark/quark/pull/58) [`1b38b14`](https://github.com/usequark/quark/commit/1b38b140456470b4add3e9c2bde2f7bf3d16891b) Thanks [@Mattyfegan](https://github.com/Mattyfegan)! - Enhanced media management UI with inline image editing, drag-and-drop page builder improvements, and admin navigation updates
 
 ## 2.3.3
 
 ### Patch Changes
 
-- [#47](https://github.com/Bobnoddle/quark/pull/47) [`8be648c`](https://github.com/Bobnoddle/quark/commit/8be648cd739c843c905ec2fce541875d8e00b094) Thanks [@Mattyfegan](https://github.com/Mattyfegan)! - Add the expanded playground and scaffolded UI component updates to `quark-create-app`, harden scaffold parity with runtime standards checks, JavaScript Prisma config support, and worker/auth validation improvements, and ship the related auth-secret fallback and storage path handling fixes in `quark-core`.
+- [#47](https://github.com/usequark/quark/pull/47) [`8be648c`](https://github.com/usequark/quark/commit/8be648cd739c843c905ec2fce541875d8e00b094) Thanks [@Mattyfegan](https://github.com/Mattyfegan)! - Add the expanded playground and scaffolded UI component updates to `quark-create-app`, harden scaffold parity with runtime standards checks, JavaScript Prisma config support, and worker/auth validation improvements, and ship the related auth-secret fallback and storage path handling fixes in `quark-core`.
 
 ## 2.3.2
 
 ### Patch Changes
 
-- [`274bf3d`](https://github.com/Bobnoddle/quark/commit/274bf3dabacc7c517561512c7ddf0e8379d0b09a) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Export the documented `auth`, `errors`, and `storage` subpaths from `@techstream/quark-core`, and update scaffolded app manifests so installs set up git hooks without module-type or ignored-build-script warnings.
+- [`274bf3d`](https://github.com/usequark/quark/commit/274bf3dabacc7c517561512c7ddf0e8379d0b09a) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Export the documented `auth`, `errors`, and `storage` subpaths from `@techstream/quark-core`, and update scaffolded app manifests so installs set up git hooks without module-type or ignored-build-script warnings.
 
 ## 2.3.1
 
 ### Patch Changes
 
-- [`a12ccd7`](https://github.com/Bobnoddle/quark/commit/a12ccd7d8dc21a778e98bb9826b5b9a80c55c291) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Fix `pingRedis` to use `resolveRedisConnection()` instead of a raw `getRedisUrl()` string.
+- [`a12ccd7`](https://github.com/usequark/quark/commit/a12ccd7d8dc21a778e98bb9826b5b9a80c55c291) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Fix `pingRedis` to use `resolveRedisConnection()` instead of a raw `getRedisUrl()` string.
 
   Previously, `pingRedis` called `new Redis(url, options)` with the URL string from `getRedisUrl()`, which bypassed the structured `resolveRedisConnection()` path that correctly handles `REDIS_HOST`/`REDIS_PORT`, password decoding, and TLS (`rediss://`). The fix uses the same options-object form as the rest of the queue module.
 
@@ -359,11 +359,11 @@
 
 ### Minor Changes
 
-- [`ae1a152`](https://github.com/Bobnoddle/quark/commit/ae1a152758df1616959f38586f13b31a94919293) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add pagination utilities: `parsePagination`, `paginationToSkip`, `paginationMeta`, and `parsePaginationQuery`. These offset-based helpers integrate with Prisma's skip/take API and throw `ValidationError` on invalid input so existing route error handlers catch them automatically.
+- [`ae1a152`](https://github.com/usequark/quark/commit/ae1a152758df1616959f38586f13b31a94919293) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add pagination utilities: `parsePagination`, `paginationToSkip`, `paginationMeta`, and `parsePaginationQuery`. These offset-based helpers integrate with Prisma's skip/take API and throw `ValidationError` on invalid input so existing route error handlers catch them automatically.
 
 ### Patch Changes
 
-- [`b07c53a`](https://github.com/Bobnoddle/quark/commit/b07c53af1ef756e0dfb89a03ee011f7a91406438) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - **CLI:** Add `--admin-routes` scaffold flag that generates a full admin panel - CRUD route handlers, field renderer, model table/form components, sidebar, sign-out button, and a dashboard data helper. Admin template now ships with `field-map`, `introspect`, and `query` utilities.
+- [`b07c53a`](https://github.com/usequark/quark/commit/b07c53af1ef756e0dfb89a03ee011f7a91406438) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - **CLI:** Add `--admin-routes` scaffold flag that generates a full admin panel - CRUD route handlers, field renderer, model table/form components, sidebar, sign-out button, and a dashboard data helper. Admin template now ships with `field-map`, `introspect`, and `query` utilities.
 
   **CLI:** Update `ui` template with `ErrorBanner`, `RichText`, and updated `ThemeProvider`/theme toggle components. Update `base-project` template with registration, forgot-password, and sign-out auth pages, a floating theme toggle, and revised seed/query helpers. Update `worker` template with default email and file job handlers.
 
@@ -373,7 +373,7 @@
 
 ### Patch Changes
 
-- [`9c7ea5f`](https://github.com/Bobnoddle/quark/commit/9c7ea5fbf92037fca1a3193de27e2139d8edba30) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - ## @techstream/quark-create-app
+- [`9c7ea5f`](https://github.com/usequark/quark/commit/9c7ea5fbf92037fca1a3193de27e2139d8edba30) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - ## @techstream/quark-create-app
 
   ### UI Component Library - scaffolded projects now include a full component set
 
@@ -416,7 +416,7 @@
 
 ### Minor Changes
 
-- [`fb110e7`](https://github.com/Bobnoddle/quark/commit/fb110e755664ac70ccea7d768a35bd87f72c1492) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - ## @techstream/quark-core
+- [`fb110e7`](https://github.com/usequark/quark/commit/fb110e755664ac70ccea7d768a35bd87f72c1492) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - ## @techstream/quark-core
 
   ### Email - pluggable provider system
 
@@ -471,7 +471,7 @@
 
 ### Patch Changes
 
-- [`68c1aa1`](https://github.com/Bobnoddle/quark/commit/68c1aa12253d66779620b18654a8dc8b6baa8d81) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add worker service resilience utilities and preflight health checks:
+- [`68c1aa1`](https://github.com/usequark/quark/commit/68c1aa12253d66779620b18654a8dc8b6baa8d81) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add worker service resilience utilities and preflight health checks:
 
   - **New Utilities:**
 
@@ -500,7 +500,7 @@
 
 ### Patch Changes
 
-- [`e41d79e`](https://github.com/Bobnoddle/quark/commit/e41d79e8a44b2a4d1a0799ca1fecc282b58b4524) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Refactor database connection string logic and enhance environment validation:
+- [`e41d79e`](https://github.com/usequark/quark/commit/e41d79e8a44b2a4d1a0799ca1fecc282b58b4524) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Refactor database connection string logic and enhance environment validation:
 
   - **feat:** Add Railway deployment configuration for web and worker services with health checks and restart policies
   - **feat:** Enhance environment validation with service-scoped checks (web/worker) and cross-field validation
@@ -515,7 +515,7 @@
 
 ### Patch Changes
 
-- [`1fd64b1`](https://github.com/Bobnoddle/quark/commit/1fd64b14d9bce32ca8f3246127e1134d0fb1a3aa) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - ## Production-Readiness Update
+- [`1fd64b1`](https://github.com/usequark/quark/commit/1fd64b14d9bce32ca8f3246127e1134d0fb1a3aa) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - ## Production-Readiness Update
 
   ### @techstream/quark-create-app (minor)
 
@@ -552,13 +552,13 @@
 
 ### Minor Changes
 
-- [`5069069`](https://github.com/Bobnoddle/quark/commit/50690698d4fe1daeaa7f5b49bfb20a97074a2744) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add query builder utilities with search/sort support and introduce request/response logging middleware. Improve CLI docs and add optional build verification test, plus checklist updates.
+- [`5069069`](https://github.com/usequark/quark/commit/50690698d4fe1daeaa7f5b49bfb20a97074a2744) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add query builder utilities with search/sort support and introduce request/response logging middleware. Improve CLI docs and add optional build verification test, plus checklist updates.
 
 ## 2.0.0
 
 ### Major Changes
 
-- [`0817b68`](https://github.com/Bobnoddle/quark/commit/0817b6841f29e5b3144a9475a592b7fc93b6c4e1) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - refactor: replace Mailhog-specific configuration with generic mail service support
+- [`0817b68`](https://github.com/usequark/quark/commit/0817b6841f29e5b3144a9475a592b7fc93b6c4e1) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - refactor: replace Mailhog-specific configuration with generic mail service support
 
   **BREAKING CHANGES:**
 
@@ -579,7 +579,7 @@
 
 ### Minor Changes
 
-- [`590592d`](https://github.com/Bobnoddle/quark/commit/590592d87c8dc796fc8025643997b0b0d31cceef) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - feat: add file upload, validation, and storage system
+- [`590592d`](https://github.com/usequark/quark/commit/590592d87c8dc796fc8025643997b0b0d31cceef) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - feat: add file upload, validation, and storage system
 
   - Add file validation module with MIME type checking, size limits, and malicious content detection
   - Add multipart form data parsing utilities
@@ -594,4 +594,4 @@
 
 ### Minor Changes
 
-- [`17656c6`](https://github.com/Bobnoddle/quark/commit/17656c684cd826d8026573b44ae271c197a9110b) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add automated release pipeline with Changesets
+- [`17656c6`](https://github.com/usequark/quark/commit/17656c684cd826d8026573b44ae271c197a9110b) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add automated release pipeline with Changesets

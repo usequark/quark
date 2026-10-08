@@ -763,9 +763,9 @@
 
 ### Patch Changes
 
-- [#187](https://github.com/Bobnoddle/quark/pull/187) [`e385dfd`](https://github.com/Bobnoddle/quark/commit/e385dfd055511c2357bd04e620876142c2d09b50) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Point changesets at the token input it actually reads
+- [#187](https://github.com/usequark/quark/pull/187) [`e385dfd`](https://github.com/usequark/quark/commit/e385dfd055511c2357bd04e620876142c2d09b50) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Point changesets at the token input it actually reads
   
-  [#184](https://github.com/Bobnoddle/quark/issues/184) (and its release guard) set `GITHUB_TOKEN` in the step's `env:` and
+  [#184](https://github.com/usequark/quark/issues/184) (and its release guard) set `GITHUB_TOKEN` in the step's `env:` and
   declared the release PR would be opened by `RELEASE_PR_TOKEN`. It was not.
   `changesets/action` takes its credential from the **`github-token` input**,
   which defaults to `${{ github.token }}`, and ignores the ambient `GITHUB_TOKEN`
@@ -783,11 +783,11 @@
   PR author. The `env:` entry stays so the `changeset publish` child process sees
   the same credential.
   
-  The guard added in [#186](https://github.com/Bobnoddle/quark/issues/186) is kept, and it is what makes this diagnosable: it names
+  The guard added in [#186](https://github.com/usequark/quark/issues/186) is kept, and it is what makes this diagnosable: it names
   the actor in the run log, so the next mismatch between that line and the PR
   author is visible immediately instead of inferred from a stalled check.
 
-- [#184](https://github.com/Bobnoddle/quark/pull/184) [`a134533`](https://github.com/Bobnoddle/quark/commit/a1345335511b094c24d355ecdd39a7ad8895fb97) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Release PRs now open with a PAT, and a missing token fails the run
+- [#184](https://github.com/usequark/quark/pull/184) [`a134533`](https://github.com/usequark/quark/commit/a1345335511b094c24d355ecdd39a7ad8895fb97) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Release PRs now open with a PAT, and a missing token fails the run
   
   Changesets opened the release PR with `GITHUB_TOKEN`. GitHub applies an
   anti-recursion guard to anything triggered by a `GITHUB_TOKEN`-authored PR:
@@ -823,9 +823,9 @@
 
 ### Patch Changes
 
-- [#176](https://github.com/Bobnoddle/quark/pull/176) [`9c2c67c`](https://github.com/Bobnoddle/quark/commit/9c2c67cc856f9f762fec6b81089d4b0c69bb8306) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - TEMP: retest whether a release PR can be merged without manual re-runs.
+- [#176](https://github.com/usequark/quark/pull/176) [`9c2c67c`](https://github.com/usequark/quark/commit/9c2c67cc856f9f762fec6b81089d4b0c69bb8306) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - TEMP: retest whether a release PR can be merged without manual re-runs.
 
-- [#171](https://github.com/Bobnoddle/quark/pull/171) [`040d380`](https://github.com/Bobnoddle/quark/commit/040d380c3fcd8a19b2314560e87ef44633573945) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Guard the dependabot auto-merge gate, not just the group split
+- [#171](https://github.com/usequark/quark/pull/171) [`040d380`](https://github.com/usequark/quark/commit/040d380c3fcd8a19b2314560e87ef44633573945) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Guard the dependabot auto-merge gate, not just the group split
   
   The per-severity dependabot groups are already in place, and there is a test
   asserting both configs keep them. That test only covers what a human *sees*.
@@ -848,7 +848,7 @@
 
 ### Patch Changes
 
-- [#169](https://github.com/Bobnoddle/quark/pull/169) [`037ecb1`](https://github.com/Bobnoddle/quark/commit/037ecb172b765b5931dc3578a51af41d868ae8ea) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Validate the session's shape in `requireAuth`, not just its truthiness
+- [#169](https://github.com/usequark/quark/pull/169) [`037ecb1`](https://github.com/usequark/quark/commit/037ecb172b765b5931dc3578a51af41d868ae8ea) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Validate the session's shape in `requireAuth`, not just its truthiness
   
   `requireAuth()` gated on `if (!session)`. That is not sufficient: a truthy
   object is not the same as an authenticated user, and next-auth 5.0.0-beta.31
@@ -880,7 +880,7 @@
 
 ### Patch Changes
 
-- [#163](https://github.com/Bobnoddle/quark/pull/163) [`c3cf740`](https://github.com/Bobnoddle/quark/commit/c3cf740237a020e2716cc486c9f6a62109532515) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Declare the repo's tooling env vars in `turbo.json` instead of silencing them
+- [#163](https://github.com/usequark/quark/pull/163) [`c3cf740`](https://github.com/usequark/quark/commit/c3cf740237a020e2716cc486c9f6a62109532515) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Declare the repo's tooling env vars in `turbo.json` instead of silencing them
   
   `noUndeclaredEnvVars` was firing on six environment variables that have no
   business being file-scoped suppressions: `npm_execpath` and
@@ -901,7 +901,7 @@
 
 ### Patch Changes
 
-- [#161](https://github.com/Bobnoddle/quark/pull/161) [`5783d7b`](https://github.com/Bobnoddle/quark/commit/5783d7b59312571aa16416cd1af8fb99359164d6) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Stop paying for scaffolded projects' CI on changes that cannot break it
+- [#161](https://github.com/usequark/quark/pull/161) [`5783d7b`](https://github.com/usequark/quark/commit/5783d7b59312571aa16416cd1af8fb99359164d6) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Stop paying for scaffolded projects' CI on changes that cannot break it
   
   Every scaffolded project inherited three CI costs that bought nothing on most
   commits, and one of them quietly removed a safety net.
@@ -918,7 +918,7 @@
   `install-windows.yml` is added to the `TEMPLATE_ONLY` list so template sync
   never overwrites it, matching the sibling workflow entries.
 
-- [`6bd092a`](https://github.com/Bobnoddle/quark/commit/6bd092aff3a3a073da0c2e4e4a92af47e0957d0d) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Clear all 13 Biome lint warnings, each with a stated reason
+- [`6bd092a`](https://github.com/usequark/quark/commit/6bd092aff3a3a073da0c2e4e4a92af47e0957d0d) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Clear all 13 Biome lint warnings, each with a stated reason
   
   `noTemplateCurlyInString` (10) was firing on Railway's own `${{Service.VAR}}`
   reference syntax in `.railway/railway.ts` and in the adapter test fixtures that
@@ -943,7 +943,7 @@
 
 ### Patch Changes
 
-- [`42d588f`](https://github.com/Bobnoddle/quark/commit/42d588f5af37186a6b14de9d2ea6fd41622bc370) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Stop pinning rrweb's version in test-build, and correct the declared Node floor
+- [`42d588f`](https://github.com/usequark/quark/commit/42d588f5af37186a6b14de9d2ea6fd41622bc370) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Stop pinning rrweb's version in test-build, and correct the declared Node floor
   
   `test-build.js` asserted `dependencies.rrweb === "2.1.6"` while its own error
   message said the dependency was "missing". The intent is presence, so any rrweb
@@ -957,7 +957,7 @@
   `>=22.13.0`. CI (`node-version: 22`) and the Dockerfiles (`node:22`) both
   resolve to a current 22.x, so nothing needed pinning.
 
-- [`a3b3657`](https://github.com/Bobnoddle/quark/commit/a3b36572a9119b9883775267801438246266e74b) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Retry the lifecycle E2E once before failing the job
+- [`a3b3657`](https://github.com/usequark/quark/commit/a3b36572a9119b9883775267801438246266e74b) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Retry the lifecycle E2E once before failing the job
   
   A healthy run measures ~40s, but a shared runner with a cold module cache
   measured 123s and tripped the 120s hard limit even though every phase passed
@@ -975,7 +975,7 @@
 
 ### Patch Changes
 
-- [`cf9b36e`](https://github.com/Bobnoddle/quark/commit/cf9b36e4cb816f418851fea173c58220c995a44e) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Split scaffolded projects' dependabot PRs by semver update type
+- [`cf9b36e`](https://github.com/usequark/quark/commit/cf9b36e4cb816f418851fea173c58220c995a44e) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Split scaffolded projects' dependabot PRs by semver update type
   
   The scaffold template grouped by `dependency-type` alone, so a project created
   by the CLI got one PR bundling patch, minor and major bumps. That is how
@@ -994,7 +994,7 @@
 
 ### Patch Changes
 
-- [#153](https://github.com/Bobnoddle/quark/pull/153) [`bdd0470`](https://github.com/Bobnoddle/quark/commit/bdd0470b3ce8100992e5a0a2bb08c37b2ec2ebb7) Thanks [@dependabot](https://github.com/apps/dependabot)! - Bump chalk 5→6, commander 14→15, execa 9→10 and @expo/vector-icons 14→15
+- [#153](https://github.com/usequark/quark/pull/153) [`bdd0470`](https://github.com/usequark/quark/commit/bdd0470b3ce8100992e5a0a2bb08c37b2ec2ebb7) Thanks [@dependabot](https://github.com/apps/dependabot)! - Bump chalk 5→6, commander 14→15, execa 9→10 and @expo/vector-icons 14→15
   
   Split out of the 35-package dependabot PR by the semver-aware group config so
   each major gets reviewed on its own.
@@ -1014,7 +1014,7 @@
     Note the mobile app has no test or typecheck job in CI, so this one is not
     covered by automation.
 
-- [#154](https://github.com/Bobnoddle/quark/pull/154) [`307d05d`](https://github.com/Bobnoddle/quark/commit/307d05d613966d2fcfb99be7b48b634b84fdd8cd) Thanks [@dependabot](https://github.com/apps/dependabot)! - Bump 16 minor dependencies, including next 16.3.6, react 19.3.0 and rrweb 2.1.6
+- [#154](https://github.com/usequark/quark/pull/154) [`307d05d`](https://github.com/usequark/quark/commit/307d05d613966d2fcfb99be7b48b634b84fdd8cd) Thanks [@dependabot](https://github.com/apps/dependabot)! - Bump 16 minor dependencies, including next 16.3.6, react 19.3.0 and rrweb 2.1.6
   
   From dependabot's semver-aware `production-minor` group. Notable:
   
@@ -1033,7 +1033,7 @@
   (scaffold, install, migrate, Docker build) with the synced templates;
   `pnpm test` 9/9; lint and template drift clean.
 
-- [`6d5faf2`](https://github.com/Bobnoddle/quark/commit/6d5faf247f659a7dedd87425edb481343f885cea) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Stop the lifecycle E2E from hanging after it passes
+- [`6d5faf2`](https://github.com/usequark/quark/commit/6d5faf247f659a7dedd87425edb481343f885cea) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Stop the lifecycle E2E from hanging after it passes
   
   `test-e2e-full` launches the scaffolded app with `spawn("pnpm", ["dev"])`,
   which starts a process tree (pnpm -> turbo -> next dev). Cleanup only sent
@@ -1051,7 +1051,7 @@
 
 ### Patch Changes
 
-- [#149](https://github.com/Bobnoddle/quark/pull/149) [`0b147d8`](https://github.com/Bobnoddle/quark/commit/0b147d8fbf51436c461c56cebad37cc479a816a4) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Bump bullmq to v6 and ioredis to v6
+- [#149](https://github.com/usequark/quark/pull/149) [`0b147d8`](https://github.com/usequark/quark/commit/0b147d8fbf51436c461c56cebad37cc479a816a4) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Bump bullmq to v6 and ioredis to v6
   
   Both majors were split out of dependabot's 35-package PR for individual review.
   
@@ -1071,14 +1071,14 @@
 
 ### Patch Changes
 
-- [#144](https://github.com/Bobnoddle/quark/pull/144) [`0e8e1bf`](https://github.com/Bobnoddle/quark/commit/0e8e1bf9fd4400a1c85be688739da2d7498284ad) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Detect when a project would be scaffolded inside an existing git repository: warn that the project folder will sit one level below the repository root, and skip git initialisation so a nested repository is never created. Prevents broken pnpm workspaces, turbo and CI workflows caused by a nested project folder.
+- [#144](https://github.com/usequark/quark/pull/144) [`0e8e1bf`](https://github.com/usequark/quark/commit/0e8e1bf9fd4400a1c85be688739da2d7498284ad) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Detect when a project would be scaffolded inside an existing git repository: warn that the project folder will sit one level below the repository root, and skip git initialisation so a nested repository is never created. Prevents broken pnpm workspaces, turbo and CI workflows caused by a nested project folder.
 
-- [#147](https://github.com/Bobnoddle/quark/pull/147) [`fae41f2`](https://github.com/Bobnoddle/quark/commit/fae41f280b90f1695d877b825ae79d31c874a75d) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Make `createQueue()` close-safe and drop dead queue churn from worker preflight.
+- [#147](https://github.com/usequark/quark/pull/147) [`fae41f2`](https://github.com/usequark/quark/commit/fae41f280b90f1695d877b825ae79d31c874a75d) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Make `createQueue()` close-safe and drop dead queue churn from worker preflight.
   
   - `createQueue(name)` now evicts a queue from the singleton registry when it is closed, so the next `createQueue(name)` returns a fresh, usable instance instead of the poisoned, already-closed one. Queues closed through another path are also detected and replaced, and `closeAllQueues()` iterates a snapshot of the registry while close evicts entries.
   - The worker `preflight()` health check no longer creates and immediately closes a queue per job queue — that code never used the queue and taught an unsafe pattern by example. Handler registration is now counted directly from the handler registry.
 
-- [`a4f89e9`](https://github.com/Bobnoddle/quark/commit/a4f89e901a467cf302a0b613b77bb8afb77ceb37) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Fix 5 env/auth bugs in scaffolded and monorepo apps
+- [`a4f89e9`](https://github.com/usequark/quark/commit/a4f89e901a467cf302a0b613b77bb8afb77ceb37) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Fix 5 env/auth bugs in scaffolded and monorepo apps
   
   - `next.config.js` now falls back to `http://localhost:${PORT}` for `NEXTAUTH_URL`, so the client-side Auth.js base URL matches the dev port instead of hardcoded `localhost:3000`
   - Rate-limit keying uses a new `getClientIp()` helper (`x-forwarded-for` → `x-real-ip` → `unknown`) instead of the removed `NextRequest.ip`, which had collapsed every client into one shared bucket
@@ -1086,13 +1086,13 @@
   - `validateEnv()` now warns when `APP_URL` is missing in production/staging, where Auth.js and CORS silently fall back to `http://localhost`
   - Scaffolded `.env.example` gets an accurate APP_URL comment, a ≥32-character `NEXTAUTH_SECRET` placeholder (the old one failed startup validation), and a path-free `NEXTAUTH_URL` comment
 
-- [`a79bda4`](https://github.com/Bobnoddle/quark/commit/a79bda48fc04a33fb865d7ad8f8239c6147ffd12) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Fix three scaffold-breaking bugs that made `test:build` (and the nightly Scaffold Container Security job) fail
+- [`a79bda4`](https://github.com/usequark/quark/commit/a79bda48fc04a33fb865d7ad8f8239c6147ffd12) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Fix three scaffold-breaking bugs that made `test:build` (and the nightly Scaffold Container Security job) fail
   
   - **Corrupted initial migration.** `packages/db/prisma/migrations/20260202061128_initial/migration.sql` in the scaffold template began with Prisma's `Loaded Prisma config from prisma.config.js.` log line, captured because Prisma writes it to stdout and the diff was piped with `>`. Postgres rejected the migration with `42601 syntax error at or near "Loaded"`, so **every newly scaffolded project failed its first `db:migrate:deploy`**. `validate-template-migration.js` had been filtering that exact line out of its comparison, so it reported "matches the current schema" while shipping broken SQL — it now hard-fails on any non-SQL preamble, and a new `pnpm --filter @techstream/quark-create-app regen-migration` regenerates the file safely.
   - **Invalid second build scenario.** `test-build.js` scaffolded with `--packages cms`, which the CLI rejects (`Invalid packages: cms`), so the scenario always aborted before testing anything. It now covers `pwa` instead.
   - **PWA manifest conflict.** The `pwa` feature wrote `app/manifest.json` next to the base project's `app/manifest.js`, and Next.js failed the build with `Cannot find module for page: /manifest.webmanifest`. The feature now replaces `manifest.js` with the PWA variant.
 
-- [`bd76583`](https://github.com/Bobnoddle/quark/commit/bd765830f782fdcb5778850f3d313b145ce015c5) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Strip dev-only native binaries from the worker runtime image
+- [`bd76583`](https://github.com/usequark/quark/commit/bd765830f782fdcb5778850f3d313b145ce015c5) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Strip dev-only native binaries from the worker runtime image
   
   `pnpm deploy --prod` correctly drops `prisma` (a devDependency of `packages/db`),
   but it keeps the peer subtrees pnpm auto-installed *for* that devDependency.
@@ -1109,14 +1109,14 @@
   output is copied into the runtime stage, and fails the build if a dev-only binary
   reappears. Applied to the monorepo Dockerfile and the scaffold template.
 
-- [`2c93c88`](https://github.com/Bobnoddle/quark/commit/2c93c888ccb13b6df4ff5441ef19b536b9cd1709) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Sync generated templates after the development dependency bump
+- [`2c93c88`](https://github.com/usequark/quark/commit/2c93c888ccb13b6df4ff5441ef19b536b9cd1709) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Sync generated templates after the development dependency bump
   
   `sync-templates:check` (Template Drift Check) failed on `main` after the
   dependabot dev-dependency update, because the scaffold templates pin the same
   version ranges. Re-synced `apps/web`, `db`, `ui`, `worker`, and `mobile`
   template manifests so newly scaffolded projects install the current versions.
 
-- [#145](https://github.com/Bobnoddle/quark/pull/145) [`3b429ab`](https://github.com/Bobnoddle/quark/commit/3b429ab982c8c6696d6852435ca6b3ac7090993d) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Fix git hooks when a Quark project is scaffolded inside an existing git repository (monorepo, Conductor workspace).
+- [#145](https://github.com/usequark/quark/pull/145) [`3b429ab`](https://github.com/usequark/quark/commit/3b429ab982c8c6696d6852435ca6b3ac7090993d) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Fix git hooks when a Quark project is scaffolded inside an existing git repository (monorepo, Conductor workspace).
   
   - `quark create` no longer creates a nested git repository when the target directory is already inside a git work tree; the enclosing repository tracks the project instead. Set `QUARK_FORCE_GIT_INIT=true` to opt into a separate nested repository.
   - The scaffolded `scripts/prepare.js` now registers nested projects in a shared dispatcher: git runs hooks from the repository root, so each project's commands are executed from its own directory. Multiple nested Quark projects compose instead of overwriting each other, hooks owned by other tools are never overwritten or deleted, and hooks are no-ops in checkouts that do not contain the project.
@@ -1131,45 +1131,45 @@
 
 ### Minor Changes
 
-- [#139](https://github.com/Bobnoddle/quark/pull/139) [`540d075`](https://github.com/Bobnoddle/quark/commit/540d07554d23ef9318346074dac5c756e4501123) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Migrate deploy CLI from deprecated railway.json Config as Code to Railway Infrastructure as Code (.railway/railway.ts). Adds railway config apply flow, IaC string escaping, deployment status verification, worker DB readiness checks, and public readiness files (LICENSE, CONTRIBUTING, CODE_OF_CONDUCT).
+- [#139](https://github.com/usequark/quark/pull/139) [`540d075`](https://github.com/usequark/quark/commit/540d07554d23ef9318346074dac5c756e4501123) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Migrate deploy CLI from deprecated railway.json Config as Code to Railway Infrastructure as Code (.railway/railway.ts). Adds railway config apply flow, IaC string escaping, deployment status verification, worker DB readiness checks, and public readiness files (LICENSE, CONTRIBUTING, CODE_OF_CONDUCT).
 
 ## 1.22.0
 
 ### Minor Changes
 
-- [#131](https://github.com/Bobnoddle/quark/pull/131) [`10cf35d`](https://github.com/Bobnoddle/quark/commit/10cf35d87ea02c22210aee85b41b32df79cc549c) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Remove domain vertical models (CRM, CMS, AI, Booking, Admin) from default scaffold. Domain features are now taught via embedded skills and added on demand, keeping the initial scaffold lean. The Prisma schema trimming logic (`trimPrismaSchema`) and domain-specific template directories (`admin/`, `admin-routes/`, `skills/admin-dashboard/`, `skills/ai/`, `skills/bookings/`, `skills/cms/`, `skills/crm/`) are removed.
+- [#131](https://github.com/usequark/quark/pull/131) [`10cf35d`](https://github.com/usequark/quark/commit/10cf35d87ea02c22210aee85b41b32df79cc549c) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Remove domain vertical models (CRM, CMS, AI, Booking, Admin) from default scaffold. Domain features are now taught via embedded skills and added on demand, keeping the initial scaffold lean. The Prisma schema trimming logic (`trimPrismaSchema`) and domain-specific template directories (`admin/`, `admin-routes/`, `skills/admin-dashboard/`, `skills/ai/`, `skills/bookings/`, `skills/cms/`, `skills/crm/`) are removed.
 
 ### Patch Changes
 
-- [#130](https://github.com/Bobnoddle/quark/pull/130) [`b3d07b4`](https://github.com/Bobnoddle/quark/commit/b3d07b4133bea19da7693b43fab2cced1cfb85cb) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Apply optional chaining refactors and sync templates after Biome 2.5 upgrade
+- [#130](https://github.com/usequark/quark/pull/130) [`b3d07b4`](https://github.com/usequark/quark/commit/b3d07b4133bea19da7693b43fab2cced1cfb85cb) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Apply optional chaining refactors and sync templates after Biome 2.5 upgrade
 
 ## 1.21.0
 
 ### Minor Changes
 
-- [#105](https://github.com/Bobnoddle/quark/pull/105) [`8fd6870`](https://github.com/Bobnoddle/quark/commit/8fd6870dcf504d7b5090c9ceac9f5cadb4600292) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add optional PWA support as a scaffolded package. When selected via `--packages pwa`, the scaffold generates a Next.js native manifest (`app/manifest.json`), a vanilla service worker (`public/sw.js`) with cache-first static assets and network-first navigation, and a client component for SW registration. Zero external dependencies — no Workbox, no next-pwa, no config file modifications.
+- [#105](https://github.com/usequark/quark/pull/105) [`8fd6870`](https://github.com/usequark/quark/commit/8fd6870dcf504d7b5090c9ceac9f5cadb4600292) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add optional PWA support as a scaffolded package. When selected via `--packages pwa`, the scaffold generates a Next.js native manifest (`app/manifest.json`), a vanilla service worker (`public/sw.js`) with cache-first static assets and network-first navigation, and a client component for SW registration. Zero external dependencies — no Workbox, no next-pwa, no config file modifications.
 
 ### Patch Changes
 
-- [#116](https://github.com/Bobnoddle/quark/pull/116) [`7d1f5b7`](https://github.com/Bobnoddle/quark/commit/7d1f5b750b1502984a07f16e650afd71ffc7adad) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Fix incorrect relative import paths for jwt in auth API route templates
+- [#116](https://github.com/usequark/quark/pull/116) [`7d1f5b7`](https://github.com/usequark/quark/commit/7d1f5b750b1502984a07f16e650afd71ffc7adad) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Fix incorrect relative import paths for jwt in auth API route templates
 
-- [#119](https://github.com/Bobnoddle/quark/pull/119) [`f2ff17b`](https://github.com/Bobnoddle/quark/commit/f2ff17be10b869aa117decaa5b3bd80b6748c508) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Sync mobile template from monorepo source, add OTA runtimeVersion, reject mobile in create flow with guidance to use `quark add mobile`
+- [#119](https://github.com/usequark/quark/pull/119) [`f2ff17b`](https://github.com/usequark/quark/commit/f2ff17be10b869aa117decaa5b3bd80b6748c508) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Sync mobile template from monorepo source, add OTA runtimeVersion, reject mobile in create flow with guidance to use `quark add mobile`
 
-- [#122](https://github.com/Bobnoddle/quark/pull/122) [`f719e69`](https://github.com/Bobnoddle/quark/commit/f719e694d0fb6fabb9a7a9537bce34ea88b8cd9e) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add template drift prevention: generate-templates.js produces template-only files from source data, sync-watch.js provides real-time auto-sync during development.
+- [#122](https://github.com/usequark/quark/pull/122) [`f719e69`](https://github.com/usequark/quark/commit/f719e694d0fb6fabb9a7a9537bce34ea88b8cd9e) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add template drift prevention: generate-templates.js produces template-only files from source data, sync-watch.js provides real-time auto-sync during development.
 
 ## 1.20.1
 
 ### Patch Changes
 
-- [#93](https://github.com/Bobnoddle/quark/pull/93) [`146915a`](https://github.com/Bobnoddle/quark/commit/146915af1082ec0f53f4a8cb803af716d9fb01de) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Auto-generate ADMIN_PASSWORD during scaffolding so `pnpm db:seed` works out of the box on fresh projects.
+- [#93](https://github.com/usequark/quark/pull/93) [`146915a`](https://github.com/usequark/quark/commit/146915af1082ec0f53f4a8cb803af716d9fb01de) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Auto-generate ADMIN_PASSWORD during scaffolding so `pnpm db:seed` works out of the box on fresh projects.
 
 ## 1.20.0
 
 ### Minor Changes
 
-- [#87](https://github.com/Bobnoddle/quark/pull/87) [`3ed5109`](https://github.com/Bobnoddle/quark/commit/3ed510924b99e7efdbf09c197cba445806ee61f6) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Bundle all embedded skills with every scaffold and remove the admin dashboard UI. The CLI no longer asks which skills to include — features are now `ui` and `jobs` only, and all skills (including a new `admin-dashboard` skill preserving the CRUD-generation patterns and a `quark-skills` index) ship with every build. The `admin`, `bookings`, `crm`, `cms`, and `ai` feature flags are removed; the dev seed no longer inserts domain-specific demo data; the scaffolded README now includes the `pnpm db:seed` step.
+- [#87](https://github.com/usequark/quark/pull/87) [`3ed5109`](https://github.com/usequark/quark/commit/3ed510924b99e7efdbf09c197cba445806ee61f6) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Bundle all embedded skills with every scaffold and remove the admin dashboard UI. The CLI no longer asks which skills to include — features are now `ui` and `jobs` only, and all skills (including a new `admin-dashboard` skill preserving the CRUD-generation patterns and a `quark-skills` index) ship with every build. The `admin`, `bookings`, `crm`, `cms`, and `ai` feature flags are removed; the dev seed no longer inserts domain-specific demo data; the scaffolded README now includes the `pnpm db:seed` step.
 
-- [#83](https://github.com/Bobnoddle/quark/pull/83) [`2af89ff`](https://github.com/Bobnoddle/quark/commit/2af89ff6409fe6fa8904c52cccefaeeee4d68cbb) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - feat: make embedded skills harness-generic via --harness flag
+- [#83](https://github.com/usequark/quark/pull/83) [`2af89ff`](https://github.com/usequark/quark/commit/2af89ff6409fe6fa8904c52cccefaeeee4d68cbb) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - feat: make embedded skills harness-generic via --harness flag
 
   The embedded skills are no longer opencode-specific. The CLI now accepts a
   `--harness <opencode|claude|copilot>` flag (default `opencode`) and places the
@@ -1177,11 +1177,11 @@
   `.claude/skills/`, or `.github/skills/`). The scaffolded docs and feature rows
   reference the selected harness's skill directory.
 
-- [#85](https://github.com/Bobnoddle/quark/pull/85) [`c732267`](https://github.com/Bobnoddle/quark/commit/c73226748f76b554a35345b005fbe9a95eaf8a3b) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Standardize scaffolded page-title convention: add getPageMetadata() helper to the web SEO lib, switch the title template separator from "·" to "|", and document page-title formulas in the seo skill and project context files.
+- [#85](https://github.com/usequark/quark/pull/85) [`c732267`](https://github.com/usequark/quark/commit/c73226748f76b554a35345b005fbe9a95eaf8a3b) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Standardize scaffolded page-title convention: add getPageMetadata() helper to the web SEO lib, switch the title template separator from "·" to "|", and document page-title formulas in the seo skill and project context files.
 
 ### Patch Changes
 
-- [#83](https://github.com/Bobnoddle/quark/pull/83) [`2af89ff`](https://github.com/Bobnoddle/quark/commit/2af89ff6409fe6fa8904c52cccefaeeee4d68cbb) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - docs: enrich booking/CMS skills; remove stale vertical + agency docs
+- [#83](https://github.com/usequark/quark/pull/83) [`2af89ff`](https://github.com/usequark/quark/commit/2af89ff6409fe6fa8904c52cccefaeeee4d68cbb) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - docs: enrich booking/CMS skills; remove stale vertical + agency docs
 
   - **Enriched the bookings skill** with the full booking schema (Staff, ServiceType, AvailabilitySlot, Booking), the booking status state machine, and scheduling rules.
   - **Enriched the CMS skill** with the content status lifecycle and media library model.
@@ -1189,17 +1189,17 @@
   - **Removed agency docs** (Techstream pricing/marketing/strategy) and the stale business pitch — they belong in a separate repo.
   - **Removed leftover artifacts** (`technical-task.html`, `PLAN.md`, `PLAN_SUMMARY.md` archived to `reference/`).
 
-- [#88](https://github.com/Bobnoddle/quark/pull/88) [`36c9ced`](https://github.com/Bobnoddle/quark/commit/36c9ced83208254190e9295db17af7b3077a9fa9) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - docs: replace remaining recipe terminology with skills across docs, CLI comments, and the reference archive README
+- [#88](https://github.com/usequark/quark/pull/88) [`36c9ced`](https://github.com/usequark/quark/commit/36c9ced83208254190e9295db17af7b3077a9fa9) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - docs: replace remaining recipe terminology with skills across docs, CLI comments, and the reference archive README
 
-- [#89](https://github.com/Bobnoddle/quark/pull/89) [`e14a134`](https://github.com/Bobnoddle/quark/commit/e14a1349843fec1ea24af02efe5a3841646b9aee) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Slim template footprint by excluding test files from scaffolded projects, reducing globals.css to essential design tokens, and trimming the example page. The sync-templates engine now removes locally-excluded files from templates (not just skips syncing them). Stale planning docs archived.
+- [#89](https://github.com/usequark/quark/pull/89) [`e14a134`](https://github.com/usequark/quark/commit/e14a1349843fec1ea24af02efe5a3841646b9aee) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Slim template footprint by excluding test files from scaffolded projects, reducing globals.css to essential design tokens, and trimming the example page. The sync-templates engine now removes locally-excluded files from templates (not just skips syncing them). Stale planning docs archived.
 
-- [#86](https://github.com/Bobnoddle/quark/pull/86) [`ec97a10`](https://github.com/Bobnoddle/quark/commit/ec97a10d11ad6003daa31585b72952beafc5cccb) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Sync pnpm.overrides from the monorepo root into the scaffold root template so scaffolded projects pick up security overrides (deepmerge-ts, fast-uri) and stop failing Trivy image scans.
+- [#86](https://github.com/usequark/quark/pull/86) [`ec97a10`](https://github.com/usequark/quark/commit/ec97a10d11ad6003daa31585b72952beafc5cccb) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Sync pnpm.overrides from the monorepo root into the scaffold root template so scaffolded projects pick up security overrides (deepmerge-ts, fast-uri) and stop failing Trivy image scans.
 
 ## 1.19.1
 
 ### Patch Changes
 
-- [#81](https://github.com/Bobnoddle/quark/pull/81) [`3834d86`](https://github.com/Bobnoddle/quark/commit/3834d869df94d1edc1b5d0a389ca3ae01fbfc002) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - fix(smoke): approve msgpackr-extract build in standalone core check
+- [#81](https://github.com/usequark/quark/pull/81) [`3834d86`](https://github.com/usequark/quark/commit/3834d869df94d1edc1b5d0a389ca3ae01fbfc002) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - fix(smoke): approve msgpackr-extract build in standalone core check
 
   pnpm 10+ ignores build scripts not explicitly allowed, so the standalone core
   smoke check (`pnpm add @techstream/quark-core next react react-dom`) failed with
@@ -1210,13 +1210,13 @@
 
 ### Minor Changes
 
-- [#79](https://github.com/Bobnoddle/quark/pull/79) [`900c3b7`](https://github.com/Bobnoddle/quark/commit/900c3b75425b8e29c209b5f463f8802e0617ecca) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - feat: archive vertical packages and remove vertical code from the monorepo
+- [#79](https://github.com/usequark/quark/pull/79) [`900c3b7`](https://github.com/usequark/quark/commit/900c3b75425b8e29c209b5f463f8802e0617ecca) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - feat: archive vertical packages and remove vertical code from the monorepo
 
   - **Archived the vertical packages** (`@techstream/quark-ai`, `@techstream/quark-cms`, `@techstream/quark-crm`, `@techstream/quark-bookings`) to `reference/verticals/packages/`. They are now reference implementations only — the skills point to them.
   - **Removed the vertical code from the monorepo's apps**: the AI/CRM/bookings API routes, the CMS content subsystem, and the worker AI handlers are gone from `apps/web` and `apps/worker`. The monorepo now reflects the minimal scaffold (infrastructure + skills).
   - The scaffold was already clean; this removes the vertical code from the monorepo's own reference apps.
 
-- [#79](https://github.com/Bobnoddle/quark/pull/79) [`900c3b7`](https://github.com/Bobnoddle/quark/commit/900c3b75425b8e29c209b5f463f8802e0617ecca) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - feat: make verticals skill-only; embed skills in .opencode/skills; rename recipe → skill
+- [#79](https://github.com/usequark/quark/pull/79) [`900c3b7`](https://github.com/usequark/quark/commit/900c3b75425b8e29c209b5f463f8802e0617ecca) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - feat: make verticals skill-only; embed skills in .opencode/skills; rename recipe → skill
 
   - **Verticals are now skill-only**: `bookings`, `crm`, `cms`, and `ai` no longer scaffold starter code. Selecting one just recognizes the feature — the embedded skill (always present) teaches the AI to build it. The starter templates are archived to `reference/verticals/`.
   - **Skills embedded for auto-loading**: the skills moved from `skills/` to `.opencode/skills/`, the location opencode auto-loads on context match (no need to point the AI at them).
@@ -1226,7 +1226,7 @@
 
 ### Patch Changes
 
-- [#79](https://github.com/Bobnoddle/quark/pull/79) [`900c3b7`](https://github.com/Bobnoddle/quark/commit/900c3b75425b8e29c209b5f463f8802e0617ecca) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - fix(cli): make ui a required package so minimal scaffolds work
+- [#79](https://github.com/usequark/quark/pull/79) [`900c3b7`](https://github.com/usequark/quark/commit/900c3b75425b8e29c209b5f463f8802e0617ecca) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - fix(cli): make ui a required package so minimal scaffolds work
 
   The base web app (layout, auth, example-page) imports the `ui` package, but a
   minimal scaffold (`--features ""` or `--preset minimal`) did not include it,
@@ -1238,7 +1238,7 @@
 
 ### Minor Changes
 
-- [#78](https://github.com/Bobnoddle/quark/pull/78) [`234359a`](https://github.com/Bobnoddle/quark/commit/234359a2e13bc61a6d107397a0cdfeaafc7880c6) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - feat: replace recipes with embedded skills; archive bookings; remove worker AI subsystem
+- [#78](https://github.com/usequark/quark/pull/78) [`234359a`](https://github.com/usequark/quark/commit/234359a2e13bc61a6d107397a0cdfeaafc7880c6) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - feat: replace recipes with embedded skills; archive bookings; remove worker AI subsystem
 
   - **Embedded skills**: replaced the `recipes/` prompt library with a `skills/` directory in the base scaffold. Ships skills for building bookings, CRM, CMS, and AI systems, plus generic skills (add-model, add-endpoint, add-dashboard). Each skill carries the domain context, Quark framework patterns, workflow, end-result shape, and a pointer to the archived reference implementation.
   - **CLI**: the `recipe` command now reads from `skills/`; feature rows/guides reference `skills/`; starter detection checks the API route instead of a recipe file.
@@ -1248,7 +1248,7 @@
 
 ### Patch Changes
 
-- [#76](https://github.com/Bobnoddle/quark/pull/76) [`6d037b3`](https://github.com/Bobnoddle/quark/commit/6d037b360b0959dd58b62903c01604650913af4f) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - fix(scaffold): remove demoted vertical refs from base template; fix starter paths; add --skip-install to add
+- [#76](https://github.com/usequark/quark/pull/76) [`6d037b3`](https://github.com/usequark/quark/commit/6d037b360b0959dd58b62903c01604650913af4f) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - fix(scaffold): remove demoted vertical refs from base template; fix starter paths; add --skip-install to add
 
   - Removed orphaned references to the demoted vertical packages (`quark-ai`, `quark-cms`, `quark-crm`) from the base scaffold (web/worker `package.json`, `next.config` transpilePackages, `api/ai` + `api/admin/crm` routes, worker `ai.js`/`ai.test.js`). These are now AI skills, not scaffolded packages.
   - Fixed a wrong relative import in all four domain starters (`bookings`, `crm`, `cms`, `ai`): `route.js` used `../../error-handler` (resolved to `app/error-handler`, wrong) instead of `../error-handler`. This broke `pnpm build`.
@@ -1258,7 +1258,7 @@
 
 ### Patch Changes
 
-- [#74](https://github.com/Bobnoddle/quark/pull/74) [`7e4c315`](https://github.com/Bobnoddle/quark/commit/7e4c31586e942034ca78ed1a1675b27226a41b81) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - fix(scaffold): scaffolded web tests fail out of the box
+- [#74](https://github.com/usequark/quark/pull/74) [`7e4c315`](https://github.com/usequark/quark/commit/7e4c31586e942034ca78ed1a1675b27226a41b81) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - fix(scaffold): scaffolded web tests fail out of the box
 
   A freshly scaffolded project's `pnpm test` failed because the web test script
   (`node --test 'src/**/*.test.js'`) was missing the `--experimental-test-module-mocks`
@@ -1271,7 +1271,7 @@
 
 ### Minor Changes
 
-- [#71](https://github.com/Bobnoddle/quark/pull/71) [`592e0ea`](https://github.com/Bobnoddle/quark/commit/592e0ea81a41cc61b49b1834f0985e319a47998a) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - feat: scaffold opinionation reduction — API-first, two-view CLI, minified admin + verticals
+- [#71](https://github.com/usequark/quark/pull/71) [`592e0ea`](https://github.com/usequark/quark/commit/592e0ea81a41cc61b49b1834f0985e319a47998a) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - feat: scaffold opinionation reduction — API-first, two-view CLI, minified admin + verticals
 
   Quark becomes API-first with AI-assisted scaffolding:
 
@@ -1285,7 +1285,7 @@
 
 ### Patch Changes
 
-- [#64](https://github.com/Bobnoddle/quark/pull/64) [`66b8cb6`](https://github.com/Bobnoddle/quark/commit/66b8cb6819bbf884e02c0cc0c3b55d07b9adb599) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - fix(ci): auto-sync scaffold templates during release to prevent drift
+- [#64](https://github.com/usequark/quark/pull/64) [`66b8cb6`](https://github.com/usequark/quark/commit/66b8cb6819bbf884e02c0cc0c3b55d07b9adb599) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - fix(ci): auto-sync scaffold templates during release to prevent drift
 
   The release workflow bumps package versions via changesets but never
   re-synced scaffold templates, so every release created template drift
@@ -1297,7 +1297,7 @@
 
 ### Minor Changes
 
-- [`c20e541`](https://github.com/Bobnoddle/quark/commit/c20e541b3c6690fda859b1c2b997b81ddea280bf) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - AI chat system, UI theming engine, SMS service, CRM package, and expanded deployment tooling
+- [`c20e541`](https://github.com/usequark/quark/commit/c20e541b3c6690fda859b1c2b997b81ddea280bf) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - AI chat system, UI theming engine, SMS service, CRM package, and expanded deployment tooling
 
   **@techstream/quark-core**
 
@@ -1323,11 +1323,11 @@
   - Railway deployment: service validation before deploy, .env.railway.example template, check-loading script, deploy integration test fixes
   - Security: Docker base image bump for CVE-2026-45447, Dockerfile `apk upgrade` stage, nodemailer bump
 
-- [#58](https://github.com/Bobnoddle/quark/pull/58) [`1b38b14`](https://github.com/Bobnoddle/quark/commit/1b38b140456470b4add3e9c2bde2f7bf3d16891b) Thanks [@Mattyfegan](https://github.com/Mattyfegan)! - Enhanced media management UI with inline image editing, drag-and-drop page builder improvements, and admin navigation updates
+- [#58](https://github.com/usequark/quark/pull/58) [`1b38b14`](https://github.com/usequark/quark/commit/1b38b140456470b4add3e9c2bde2f7bf3d16891b) Thanks [@Mattyfegan](https://github.com/Mattyfegan)! - Enhanced media management UI with inline image editing, drag-and-drop page builder improvements, and admin navigation updates
 
 ### Patch Changes
 
-- [`1191466`](https://github.com/Bobnoddle/quark/commit/119146639f0e53028ebe0a999ecc3008dd23ce67) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Fix OpenRouter error classification and max-rounds behavior in AI worker
+- [`1191466`](https://github.com/usequark/quark/commit/119146639f0e53028ebe0a999ecc3008dd23ce67) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Fix OpenRouter error classification and max-rounds behavior in AI worker
 
   - **Error classification**: Change remaining `AppError` throws in the streaming code path to `ServiceError("OpenRouter", ...)` for proper external-service error handling (OpenRouter API errors, missing response body, retry exhaustion)
   - **Graceful max-rounds**: Replace `throw new AppError` when the tool-calling loop exceeds 20 rounds with a graceful return that includes `truncated: true` and an assistant hint message, preventing conversation crashes
@@ -1336,51 +1336,51 @@
 
 ### Minor Changes
 
-- [`9e85dba`](https://github.com/Bobnoddle/quark/commit/9e85dba8de2031c91eb129c459110cb105d87fce) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Refactor CMS page builder by removing background animation support in favor of a simpler color-only background model, add HTML sanitization utilities, and replace the `section`/`photo-gallery`/`form` UI components with more focused `container`/`lightbox`/`form-field` alternatives across scaffolded projects.
+- [`9e85dba`](https://github.com/usequark/quark/commit/9e85dba8de2031c91eb129c459110cb105d87fce) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Refactor CMS page builder by removing background animation support in favor of a simpler color-only background model, add HTML sanitization utilities, and replace the `section`/`photo-gallery`/`form` UI components with more focused `container`/`lightbox`/`form-field` alternatives across scaffolded projects.
 
-- [`ad311a8`](https://github.com/Bobnoddle/quark/commit/ad311a8967c32b13c5f5d16303f6cc57dc2abd3a) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Improve the scaffold DX in `quark-create-app` with clearer onboarding docs, feature-specific scaffold guidance, and a read-only scaffold drift checker with CI-friendly failure mode.
+- [`ad311a8`](https://github.com/usequark/quark/commit/ad311a8967c32b13c5f5d16303f6cc57dc2abd3a) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Improve the scaffold DX in `quark-create-app` with clearer onboarding docs, feature-specific scaffold guidance, and a read-only scaffold drift checker with CI-friendly failure mode.
 
 ### Patch Changes
 
-- [#54](https://github.com/Bobnoddle/quark/pull/54) [`799f9ba`](https://github.com/Bobnoddle/quark/commit/799f9ba87f8797d75ce3526ac5379975417cd7c1) Thanks [@Mattyfegan](https://github.com/Mattyfegan)! - Fix scaffolded route generation and tests for page-content migration behavior, and align build-time slug prerendering with CI environments that do not provide database variables.
+- [#54](https://github.com/usequark/quark/pull/54) [`799f9ba`](https://github.com/usequark/quark/commit/799f9ba87f8797d75ce3526ac5379975417cd7c1) Thanks [@Mattyfegan](https://github.com/Mattyfegan)! - Fix scaffolded route generation and tests for page-content migration behavior, and align build-time slug prerendering with CI environments that do not provide database variables.
 
 ## 1.14.0
 
 ### Minor Changes
 
-- [#47](https://github.com/Bobnoddle/quark/pull/47) [`8be648c`](https://github.com/Bobnoddle/quark/commit/8be648cd739c843c905ec2fce541875d8e00b094) Thanks [@Mattyfegan](https://github.com/Mattyfegan)! - Add the expanded playground and scaffolded UI component updates to `quark-create-app`, harden scaffold parity with runtime standards checks, JavaScript Prisma config support, and worker/auth validation improvements, and ship the related auth-secret fallback and storage path handling fixes in `quark-core`.
+- [#47](https://github.com/usequark/quark/pull/47) [`8be648c`](https://github.com/usequark/quark/commit/8be648cd739c843c905ec2fce541875d8e00b094) Thanks [@Mattyfegan](https://github.com/Mattyfegan)! - Add the expanded playground and scaffolded UI component updates to `quark-create-app`, harden scaffold parity with runtime standards checks, JavaScript Prisma config support, and worker/auth validation improvements, and ship the related auth-secret fallback and storage path handling fixes in `quark-core`.
 
 ## 1.13.4
 
 ### Patch Changes
 
-- [`e9411f9`](https://github.com/Bobnoddle/quark/commit/e9411f9e1d91ad13cb496e4645d15ba2aff6080d) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Split CMS into an explicit scaffold feature instead of bundling it into `admin`, automatically include its current dependencies, and make generated admin routes work cleanly when CMS is not installed.
+- [`e9411f9`](https://github.com/usequark/quark/commit/e9411f9e1d91ad13cb496e4645d15ba2aff6080d) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Split CMS into an explicit scaffold feature instead of bundling it into `admin`, automatically include its current dependencies, and make generated admin routes work cleanly when CMS is not installed.
 
 ## 1.13.3
 
 ### Patch Changes
 
-- [`3cecbed`](https://github.com/Bobnoddle/quark/commit/3cecbeddf1a5764c72688ed0d36c52c95a16eae5) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Update scaffolded Railway web deployment guidance to use the correct Next.js standalone server path and preserve static/public assets during the build so production CSS and JS load correctly.
+- [`3cecbed`](https://github.com/usequark/quark/commit/3cecbeddf1a5764c72688ed0d36c52c95a16eae5) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Update scaffolded Railway web deployment guidance to use the correct Next.js standalone server path and preserve static/public assets during the build so production CSS and JS load correctly.
 
 ## 1.13.2
 
 ### Patch Changes
 
-- [`d49c064`](https://github.com/Bobnoddle/quark/commit/d49c0649e6e8759eb1a8abd37887dabe8aaaffdf) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Preserve NextRequest semantics when normalizing forwarded development auth requests in scaffolded apps.
+- [`d49c064`](https://github.com/usequark/quark/commit/d49c0649e6e8759eb1a8abd37887dabe8aaaffdf) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Preserve NextRequest semantics when normalizing forwarded development auth requests in scaffolded apps.
 
-- [`274bf3d`](https://github.com/Bobnoddle/quark/commit/274bf3dabacc7c517561512c7ddf0e8379d0b09a) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Export the documented `auth`, `errors`, and `storage` subpaths from `@techstream/quark-core`, and update scaffolded app manifests so installs set up git hooks without module-type or ignored-build-script warnings.
+- [`274bf3d`](https://github.com/usequark/quark/commit/274bf3dabacc7c517561512c7ddf0e8379d0b09a) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Export the documented `auth`, `errors`, and `storage` subpaths from `@techstream/quark-core`, and update scaffolded app manifests so installs set up git hooks without module-type or ignored-build-script warnings.
 
 ## 1.13.1
 
 ### Patch Changes
 
-- [`5a360a9`](https://github.com/Bobnoddle/quark/commit/5a360a979d1a021969680386b4f9adfbc3335308) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Fix admin scaffolding so Quark create and add also include the CMS package and routes, rewrite generated workspace package names consistently, and keep optional package dependencies installable in generated apps.
+- [`5a360a9`](https://github.com/usequark/quark/commit/5a360a979d1a021969680386b4f9adfbc3335308) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Fix admin scaffolding so Quark create and add also include the CMS package and routes, rewrite generated workspace package names consistently, and keep optional package dependencies installable in generated apps.
 
 ## 1.13.0
 
 ### Minor Changes
 
-- [`cd830d9`](https://github.com/Bobnoddle/quark/commit/cd830d95a3ef66d37b2a0f28d21c910a75d84d1e) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add CMS scaffolding, media management flows, security contact metadata, and release-tooling improvements to the Quark CLI templates.
+- [`cd830d9`](https://github.com/usequark/quark/commit/cd830d95a3ef66d37b2a0f28d21c910a75d84d1e) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add CMS scaffolding, media management flows, security contact metadata, and release-tooling improvements to the Quark CLI templates.
 
   This release also hardens template sync by excluding local uploads from generated scaffolds.
 
@@ -1388,7 +1388,7 @@
 
 ### Minor Changes
 
-- [`b07c53a`](https://github.com/Bobnoddle/quark/commit/b07c53af1ef756e0dfb89a03ee011f7a91406438) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - **CLI:** Add `--admin-routes` scaffold flag that generates a full admin panel - CRUD route handlers, field renderer, model table/form components, sidebar, sign-out button, and a dashboard data helper. Admin template now ships with `field-map`, `introspect`, and `query` utilities.
+- [`b07c53a`](https://github.com/usequark/quark/commit/b07c53af1ef756e0dfb89a03ee011f7a91406438) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - **CLI:** Add `--admin-routes` scaffold flag that generates a full admin panel - CRUD route handlers, field renderer, model table/form components, sidebar, sign-out button, and a dashboard data helper. Admin template now ships with `field-map`, `introspect`, and `query` utilities.
 
   **CLI:** Update `ui` template with `ErrorBanner`, `RichText`, and updated `ThemeProvider`/theme toggle components. Update `base-project` template with registration, forgot-password, and sign-out auth pages, a floating theme toggle, and revised seed/query helpers. Update `worker` template with default email and file job handlers.
 
@@ -1398,7 +1398,7 @@
 
 ### Minor Changes
 
-- [`9c7ea5f`](https://github.com/Bobnoddle/quark/commit/9c7ea5fbf92037fca1a3193de27e2139d8edba30) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - ## @techstream/quark-create-app
+- [`9c7ea5f`](https://github.com/usequark/quark/commit/9c7ea5fbf92037fca1a3193de27e2139d8edba30) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - ## @techstream/quark-create-app
 
   ### UI Component Library - scaffolded projects now include a full component set
 
@@ -1441,7 +1441,7 @@
 
 ### Minor Changes
 
-- [`fb110e7`](https://github.com/Bobnoddle/quark/commit/fb110e755664ac70ccea7d768a35bd87f72c1492) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - ## @techstream/quark-core
+- [`fb110e7`](https://github.com/usequark/quark/commit/fb110e755664ac70ccea7d768a35bd87f72c1492) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - ## @techstream/quark-core
 
   ### Email - pluggable provider system
 
@@ -1496,7 +1496,7 @@
 
 ### Minor Changes
 
-- [`68c1aa1`](https://github.com/Bobnoddle/quark/commit/68c1aa12253d66779620b18654a8dc8b6baa8d81) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add flexible CLI options and comprehensive test coverage for project scaffolding:
+- [`68c1aa1`](https://github.com/usequark/quark/commit/68c1aa12253d66779620b18654a8dc8b6baa8d81) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add flexible CLI options and comprehensive test coverage for project scaffolding:
 
   - **New CLI Flags:**
 
@@ -1554,7 +1554,7 @@
 
 ### Minor Changes
 
-- [`e41d79e`](https://github.com/Bobnoddle/quark/commit/e41d79e8a44b2a4d1a0799ca1fecc282b58b4524) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Refactor database connection string logic and enhance environment validation:
+- [`e41d79e`](https://github.com/usequark/quark/commit/e41d79e8a44b2a4d1a0799ca1fecc282b58b4524) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Refactor database connection string logic and enhance environment validation:
 
   - **feat:** Add Railway deployment configuration for web and worker services with health checks and restart policies
   - **feat:** Enhance environment validation with service-scoped checks (web/worker) and cross-field validation
@@ -1592,7 +1592,7 @@
 
 ### Minor Changes
 
-- [`1fd64b1`](https://github.com/Bobnoddle/quark/commit/1fd64b14d9bce32ca8f3246127e1134d0fb1a3aa) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - ## Production-Readiness Update
+- [`1fd64b1`](https://github.com/usequark/quark/commit/1fd64b14d9bce32ca8f3246127e1134d0fb1a3aa) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - ## Production-Readiness Update
 
   ### @techstream/quark-create-app (minor)
 
@@ -1629,9 +1629,9 @@
 
 ### Patch Changes
 
-- [`5069069`](https://github.com/Bobnoddle/quark/commit/50690698d4fe1daeaa7f5b49bfb20a97074a2744) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add query builder utilities with search/sort support and introduce request/response logging middleware. Improve CLI docs and add optional build verification test, plus checklist updates.
+- [`5069069`](https://github.com/usequark/quark/commit/50690698d4fe1daeaa7f5b49bfb20a97074a2744) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add query builder utilities with search/sort support and introduce request/response logging middleware. Improve CLI docs and add optional build verification test, plus checklist updates.
 
-- [`f142e9c`](https://github.com/Bobnoddle/quark/commit/f142e9c57dcac93bfe90bae757ed4126f989a888) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - fix: complete file upload template, fix migration drift, and clean up orphaned Docker volumes
+- [`f142e9c`](https://github.com/usequark/quark/commit/f142e9c57dcac93bfe90bae757ed4126f989a888) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - fix: complete file upload template, fix migration drift, and clean up orphaned Docker volumes
 
   - **Docker volume cleanup:** Automatically remove orphaned Docker volumes from previous projects with the same name, preventing `P1000: Authentication failed` errors when re-scaffolding
   - Add missing `File` model to template `schema.prisma` with `User` relation
@@ -1646,7 +1646,7 @@
 
 ### Patch Changes
 
-- [`399e7da`](https://github.com/Bobnoddle/quark/commit/399e7da083f26cb1d0196a467e78500129eba4ce) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - fix: update CLI output and add `quark-update` bin alias
+- [`399e7da`](https://github.com/usequark/quark/commit/399e7da083f26cb1d0196a467e78500129eba4ce) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - fix: update CLI output and add `quark-update` bin alias
 
   - Register `quark-update` as a bin alias so `npx quark-update` works
   - Fix post-scaffolding output to show `npx @techstream/quark-create-app update`
@@ -1655,7 +1655,7 @@
 
 ### Patch Changes
 
-- [`39a99c2`](https://github.com/Bobnoddle/quark/commit/39a99c2c2723cc533126531ced2d610ea10353a8) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - chore: normalize package scopes to @techstream in CLI templates
+- [`39a99c2`](https://github.com/usequark/quark/commit/39a99c2c2723cc533126531ced2d610ea10353a8) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - chore: normalize package scopes to @techstream in CLI templates
 
   - Rename `@quark/web` → `@techstream/quark-web` in scaffolded projects
   - Rename `@quark/worker` → `@techstream/quark-worker` in scaffolded projects
@@ -1665,7 +1665,7 @@
 
 ### Minor Changes
 
-- [`590592d`](https://github.com/Bobnoddle/quark/commit/590592d87c8dc796fc8025643997b0b0d31cceef) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - feat: add file upload, validation, and storage system
+- [`590592d`](https://github.com/usequark/quark/commit/590592d87c8dc796fc8025643997b0b0d31cceef) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - feat: add file upload, validation, and storage system
 
   - Add file validation module with MIME type checking, size limits, and malicious content detection
   - Add multipart form data parsing utilities
@@ -1680,4 +1680,4 @@
 
 ### Minor Changes
 
-- [`17656c6`](https://github.com/Bobnoddle/quark/commit/17656c684cd826d8026573b44ae271c197a9110b) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add automated release pipeline with Changesets
+- [`17656c6`](https://github.com/usequark/quark/commit/17656c684cd826d8026573b44ae271c197a9110b) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add automated release pipeline with Changesets
