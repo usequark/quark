@@ -90,16 +90,19 @@ Once the first vertical slice works, add optional Quark features when they help:
 
 | Feature | When to add it |
 |---|---|
-| `ui` | You want local reusable components for forms, tables, and layouts |
 | `jobs` | The feature needs async work like email, imports, or cleanup |
-| `admin` | Internal users need CRUD over the new Prisma model |
-| `cms` | The feature is content-heavy and belongs in editorial workflows |
+| `pwa` | You want installability and offline caching |
+| `mobile` | You want a native Expo app alongside the web app (post-creation only) |
+
+`ui` is already scaffolded, so you do not need to add it.
 
 Add optional features later with:
 
 ```bash
-npx @usequark/quark-create-app add <feature>
+npx quark add <feature>
 ```
+
+For admin dashboards, CMS, CRM, bookings, or AI features, there is no package to install. Load the relevant skill and let your AI tool build it: see the skill index in `<harness>/skills/` (default `.opencode/skills/`).
 
 ## Checklist
 

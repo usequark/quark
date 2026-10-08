@@ -134,7 +134,7 @@ Ensure `REDIS_URL` is set in your production environment. Rate limiting silently
 
 ### Cross-origin requests blocked in development
 
-CORS is configured in `apps/web/next.config.js`. For local development, ensure your frontend origin (e.g. `http://localhost:3001`) is in the allowed origins list. Allowed origins are read from `CORS_ALLOWED_ORIGINS` in your `.env` (comma-separated).
+CORS is enforced in `apps/web/src/proxy.js`, and the origin list is resolved in `packages/config/src/app-url.js`. The canonical origin comes from `APP_URL`; add extras with `ALLOWED_ORIGINS` (comma-separated, production) or `NEXT_DEV_ALLOWED_ORIGINS` / `ALLOWED_DEV_ORIGINS` (development hosts). For a local frontend on another port, add its origin rather than replacing the default.
 
 ### Preflight `OPTIONS` requests returning 405
 
@@ -148,7 +148,7 @@ All API routes that use `withCsrfProtection` handle `OPTIONS` automatically. If 
 
 The file type or size exceeds configured limits. Check `validateFile` defaults in `@usequark/quark-core`. Common causes:
 
-- File exceeds `MAX_FILE_SIZE` (default 10 MB)
+- File exceeds `UPLOAD_MAX_SIZE` (default 10 MB, read by `packages/core/src/file-validation.js`). The request-body cap is a separate `UPLOAD_SIZE_LIMIT` in `apps/web/src/proxy.js`
 - MIME type not in the allowlist
 
 ### Files not persisting between dev server restarts
@@ -159,7 +159,7 @@ The default local storage provider writes to `.quark-storage/` in the project ro
 
 Verify the following in your `.env`:
 - `STORAGE_PROVIDER=s3`
-- `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_REGION` are correct
+- `STORAGE_PROVIDER` is `s3` (not `r2`) and `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET`, `S3_REGION` are correct. For R2 or MinIO also set `S3_ENDPOINT`. The credential variable names are always the `S3_*` pair; there is no `AWS_*` variant
 - The IAM user has `s3:PutObject` and `s3:GetObject` permissions on the target bucket
 
 ---
@@ -227,4 +227,4 @@ You may have a missing or misspelled package import. Run `pnpm install` and `pnp
 
 ### Test coverage is lower than expected
 
-Co-locate test files (`*.test.js`) next to the source file and ensure they're picked up by the test runner. The `pnpm test` script uses `--recursive` with `node --test` to find all `*.test.js` files.
+Co-locate test files (`*.test.js`) next to the source file. Root `pnpm test` runs `node --test 'scripts/*.test.mjs' && turbo run test`; each workspace's own `test` script delegates to `scripts/run-tests.mjs <dir>`, which discovers the co-located files. A directly-run workspace suite therefore needs `pnpm db:generate` first when it touches Prisma, because `turbo run test` normally handles that dependency.

@@ -1,6 +1,6 @@
 # Domain Model Examples
 
-Quark provides core infrastructure models (User, Auth, Files, Jobs, Audit Logs) but **does not enforce domain models**. Your project should define models specific to your business logic.
+Quark ships seven core models (`User`, `Account`, `Session`, `VerificationToken`, `Job`, `File`, `AuditLog`) and does **not** enforce domain models. Your project defines the models specific to your business logic, and they live in your own `db` package alongside the core ones.
 
 This document provides reference patterns for common Quark use cases.
 
@@ -8,13 +8,13 @@ This document provides reference patterns for common Quark use cases.
 
 ## Getting Started: Non-Interactive Project Creation
 
-For development, CI/CD pipelines, or testing, you can create projects without interactive prompts:
+For development, CI/CD pipelines, or testing, you can create projects without interactive prompts. Passing any configuration option (`--packages`, `--signup`, `--prompt`, `--harness`) skips the prompts implicitly, so no `--no-prompts` flag is needed.
 
-### Basic Non-Interactive Setup
+### Basic Setup
 
 ```bash
-# Create project with defaults (includes ui, jobs packages)
-npx @usequark/quark-create-app my-app --no-prompts
+# Create project with defaults (jobs is the only optional feature on by default)
+npx @usequark/quark-create-app my-app --packages jobs
 
 # Navigate and set up
 cd my-app
@@ -27,7 +27,7 @@ pnpm dev
 
 ```bash
 # Create, install, and start everything
-npx @usequark/quark-create-app my-app --no-prompts && \
+npx @usequark/quark-create-app my-app --packages jobs && \
 cd my-app && \
 docker compose up -d && \
 pnpm db:migrate && \
@@ -36,15 +36,17 @@ pnpm dev
 
 ### Custom Feature Selection
 
+`db`, `config`, and `ui` are always scaffolded, so `--packages` only selects the optional pieces: `jobs` and `pwa`. `mobile` is rejected at creation time and has to be added afterwards.
+
 ```bash
-# Create with only UI package (no jobs)
-npx @usequark/quark-create-app my-app --no-prompts --packages ui
+# Defaults: jobs (which pulls in the worker app), no PWA
+npx @usequark/quark-create-app my-app --packages jobs
 
-# Create with only Jobs package (no UI)
-npx @usequark/quark-create-app my-app --no-prompts --packages jobs
+# Jobs plus an installable PWA
+npx @usequark/quark-create-app my-app --packages jobs,pwa
 
-# Minimal setup (no optional packages)
-npx @usequark/quark-create-app my-app --no-prompts --packages ""
+# Minimal setup: no worker, no PWA
+npx @usequark/quark-create-app my-app --packages ""
 ```
 
 ### CI/CD Pipeline Example
@@ -53,8 +55,7 @@ npx @usequark/quark-create-app my-app --no-prompts --packages ""
 #!/bin/bash
 # Create project without installation (install separately in CI)
 npx @usequark/quark-create-app my-app \
-  --no-prompts \
-  --packages ui,jobs \
+  --packages jobs \
   --skip-install
 
 cd my-app
@@ -66,15 +67,25 @@ pnpm db:migrate       # Apply migrations
 pnpm db:seed          # Optional: seed database
 ```
 
+### Adding Features Later
+
+Optional features can be added to an existing project through the `add` subcommand, which accepts `ui`, `jobs`, `pwa`, or `mobile`. This is the only way to get the mobile app, since creation rejects it:
+
+```bash
+cd my-app
+npx @usequark/quark-create-app add jobs
+npx @usequark/quark-create-app add mobile
+```
+
 ### Troubleshooting Non-Interactive Mode
 
 If features don't install correctly:
 
 ```bash
-# Verify feature names - valid options: ui, jobs
-npx @usequark/quark-create-app my-app --no-prompts --packages ui,jobs
+# Verify feature names - valid options at creation time: jobs, pwa
+npx @usequark/quark-create-app my-app --packages jobs
 
-# Check that paths are created
+# db, config, and ui are always scaffolded; jobs and pwa are the optional picks
 ls -la my-app/packages/
 
 # Manually install if needed
@@ -82,7 +93,7 @@ cd my-app
 pnpm install
 ```
 
-For interactive mode with prompts, simply omit the `--no-prompts` flag:
+For interactive mode with prompts, pass no options at all:
 
 ```bash
 npx @usequark/quark-create-app my-app
@@ -93,6 +104,8 @@ npx @usequark/quark-create-app my-app
 ## Pattern: Generic User-Generated Content
 
 **Best for:** Blogs, CMS platforms, review sites, Q&A forums
+
+A `Post` model is yours to define here. Quark's own schema has no `Post`; it was removed, along with the admin dashboard and auto-CRUD that once generated screens for it. Build the screens yourself.
 
 ### Model Definition
 
@@ -113,11 +126,21 @@ model Post {
 }
 ```
 
+Adding the relation means extending `User` too:
+
+```prisma
+model User {
+  // ... existing fields ...
+
+  posts Post[]
+}
+```
+
 ### Query Helpers
 
-```javascript
-// packages/db/src/queries.js
+Add these to your scaffolded `db` package, next to the existing helpers in `packages/db/src/queries.js`. `prisma` and `USER_SAFE_SELECT` are already imported at the top of that file.
 
+```javascript
 const AUTHOR_SAFE_INCLUDE = { author: { select: USER_SAFE_SELECT } };
 
 export const post = {
@@ -180,9 +203,9 @@ export const post = {
 
 ### Validation Schema
 
-```javascript
-// packages/db/src/schemas.js
+Validation schemas live in `packages/db/src/schemas.js`, which already imports Zod.
 
+```javascript
 export const postCreateSchema = z.object({
   title: z.string().min(1, "Title is required"),
   content: z.string().optional(),
@@ -198,32 +221,44 @@ export const postUpdateSchema = z.object({
 
 ### API Routes
 
+Routes go under `apps/web/src/app/api/`. `requireAuth` comes from `@/lib/auth-middleware`, `handleError` from the sibling `apps/web/src/app/api/error-handler.js`, and `requireAuth()` with no argument reads the session itself.
+
 ```javascript
 // apps/web/src/app/api/posts/route.js
 
-import { post, postCreateSchema } from "@usequark/quark-db";
 import { validateBody, withCsrfProtection } from "@usequark/quark-core";
+import { post, postCreateSchema } from "@<scope>/db";
+import { requireAuth } from "@/lib/auth-middleware";
 import { NextResponse } from "next/server";
+import { handleError } from "../error-handler";
 
-export const GET = async (request) => {
-  const { searchParams } = new URL(request.url);
-  const skip = parseInt(searchParams.get("skip") ?? "0");
-  const take = parseInt(searchParams.get("take") ?? "10");
+export async function GET(request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const skip = parseInt(searchParams.get("skip") ?? "0");
+    const take = parseInt(searchParams.get("take") ?? "10");
 
-  const posts = await post.findPublished({ skip, take });
-  return NextResponse.json(posts);
-};
+    const posts = await post.findPublished({ skip, take });
+    return NextResponse.json(posts);
+  } catch (error) {
+    return handleError(error);
+  }
+}
 
 export const POST = withCsrfProtection(async (request) => {
-  const session = await requireAuth();
-  const data = await validateBody(request, postCreateSchema);
+  try {
+    const session = await requireAuth();
+    const data = await validateBody(request, postCreateSchema);
 
-  const newPost = await post.create({
-    ...data,
-    authorId: session.user.id,
-  });
+    const newPost = await post.create({
+      ...data,
+      authorId: session.user.id,
+    });
 
-  return NextResponse.json(newPost, { status: 201 });
+    return NextResponse.json(newPost, { status: 201 });
+  } catch (error) {
+    return handleError(error);
+  }
 });
 ```
 
@@ -344,6 +379,8 @@ enum ContactInquiryStatus {
 
 ### Query Helpers
 
+Add these to your scaffolded `db` package, next to the existing helpers in `packages/db/src/queries.js`. `prisma` is already imported at the top of that file.
+
 ```javascript
 export const contactInquiry = {
   findAll: (options = {}) => {
@@ -384,10 +421,11 @@ export const contactInquiry = {
 ```javascript
 // apps/web/src/app/api/contact/route.js
 
-import { contactInquiry } from "@usequark/quark-db";
 import { validateBody, withCsrfProtection } from "@usequark/quark-core";
+import { contactInquiry } from "@<scope>/db";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { handleError } from "../error-handler";
 
 const contactSchema = z.object({
   name: z.string().min(1),
@@ -396,20 +434,23 @@ const contactSchema = z.object({
 });
 
 export const POST = withCsrfProtection(async (request) => {
-  const data = await validateBody(request, contactSchema);
+  try {
+    const data = await validateBody(request, contactSchema);
 
-  const inquiry = await contactInquiry.create({
-    ...data,
-    ipAddress: request.headers.get("x-forwarded-for"),
-    userAgent: request.headers.get("user-agent"),
-  });
+    const inquiry = await contactInquiry.create({
+      ...data,
+      ipAddress: request.headers.get("x-forwarded-for"),
+      userAgent: request.headers.get("user-agent"),
+    });
 
-  // Send email notification to admins
-  await queue.add("send-contact-notification", { inquiryId: inquiry.id });
-
-  return NextResponse.json({ success: true }, { status: 201 });
+    return NextResponse.json({ success: true }, { status: 201 });
+  } catch (error) {
+    return handleError(error);
+  }
 });
 ```
+
+To notify your team by email, add a handler of your own rather than reusing a core job name. Register it in `apps/worker/src/handlers/index.js`, then enqueue it through `createQueue(JOB_QUEUES.EMAIL)` from `@<scope>/jobs`.
 
 ---
 
@@ -470,7 +511,7 @@ model User {
 - Always include `createdAt` and `updatedAt` on every model
 - Use CUID for primary keys: `@id @default(cuid())`
 - Add indexes for: foreign keys, frequently filtered fields, sort fields
-- Use cascading deletes for owned relationships (e.g., User → Posts)
+- Use cascading deletes for owned relationships (e.g., `User` to `Post`)
 - Use `SetNull` for optional relationships or preserve orphaned records
 
 ### 2. Create Query Helpers
@@ -500,16 +541,24 @@ export const myModelCreateSchema = z.object({
 
 ### 4. Use Safe Selects for Client Data
 
+`USER_SAFE_SELECT` is already exported from `packages/db/src/queries.js`. Use it rather than spreading every field, so a sensitive column added later cannot leak by default.
+
 ```javascript
 // Exclude sensitive fields when returning user data
-const USER_SAFE_SELECT = {
+export const USER_SAFE_SELECT = {
   id: true,
   email: true,
+  emailVerified: true,
   name: true,
   image: true,
+  role: true,
+  createdAt: true,
+  updatedAt: true,
   // Never include: password
 };
 ```
+
+`user.findByEmail` is the deliberate exception: it returns every field, password included, because credential verification needs the hash. It is for internal auth only.
 
 ### 5. Add Migrations
 
@@ -526,7 +575,11 @@ git commit -m "chore: add my_model migration"
 
 ## Reference: Adding a Complete Feature
 
+Five steps: model, query helper, validation schema, API route, migration.
+
 ### Step 1: Define the Model
+
+`BlogComment` hangs off the domain `Post` model from the first chapter, so define that first.
 
 ```prisma
 // packages/db/prisma/schema.prisma
@@ -552,9 +605,9 @@ model BlogComment {
 
 ### Step 2: Create Query Helpers
 
-```javascript
-// packages/db/src/queries.js
+Append to `packages/db/src/queries.js`, which already imports `prisma` and `USER_SAFE_SELECT`.
 
+```javascript
 export const blogComment = {
   findByPost: (postId, options = {}) => {
     const { skip = 0, take = 20 } = options;
@@ -586,30 +639,36 @@ export const blogComment = {
 
 ### Step 3: Create Validation Schema
 
-```javascript
-// packages/db/src/schemas.js
+Append to `packages/db/src/schemas.js`, which already imports Zod.
 
+```javascript
 export const blogCommentCreateSchema = z.object({
-  postId: z.string().cuid(),
+  postId: z.string().min(1),
   content: z.string().min(1).max(5000),
 });
 ```
 
 ### Step 4: Create API Route
 
+The route sits two levels below `/api`, so `handleError` comes from `apps/web/src/app/api/error-handler.js` via `../../../error-handler`.
+
 ```javascript
 // apps/web/src/app/api/posts/[id]/comments/route.js
 
-import { blogComment, blogCommentCreateSchema } from "@usequark/quark-db";
 import { validateBody, withCsrfProtection } from "@usequark/quark-core";
+import { blogComment, blogCommentCreateSchema } from "@<scope>/db";
 import { requireAuth } from "@/lib/auth-middleware";
-import { handleError } from "../error-handler";
 import { NextResponse } from "next/server";
+import { handleError } from "../../../error-handler";
 
 export async function GET(_request, { params }) {
-  const { id } = await params;
-  const comments = await blogComment.findByPost(id);
-  return NextResponse.json(comments);
+  try {
+    const { id } = await params;
+    const comments = await blogComment.findByPost(id);
+    return NextResponse.json(comments);
+  } catch (error) {
+    return handleError(error);
+  }
 }
 
 export const POST = withCsrfProtection(async (request, { params }) => {
@@ -638,322 +697,3 @@ pnpm db:migrate --name add_blog_comments
 ```
 
 Done! Your feature is now fully integrated with Quark's patterns.
-
----
-
-## Extending Admin for Domain Models
-
-When you add domain models to your Prisma schema, the admin auto-generates full CRUD (list, create, edit, delete) with search, pagination, and status badges. Most models work out of the box. For complex models that need domain-specific UI, you replace individual pages.
-
-### Tier 1: Configuration (No Code)
-
-Use `adminConfig.modelOverrides` for simple per-model customization:
-
-```javascript
-// packages/admin/src/config.js
-export const adminConfig = {
-  title: "Store Admin",
-  pageSize: 25,
-  modelOverrides: {
-    // NextAuth internals (default)
-    Account: { readOnly: true },
-    Session: { readOnly: true },
-    VerificationToken: { readOnly: true },
-    AuditLog: { readOnly: true },
-    // Domain models
-    Product: { label: "Products" },
-    Order: { label: "Orders" },
-    OrderItem: { readOnly: true, label: "Line Items" },
-    Payment: { readOnly: true },
-    User: { hiddenFields: ["hashedPassword"] },
-  },
-};
-```
-
-**What this controls:**
-- `readOnly` - disables create/edit/delete, groups model under "System" in sidebar
-- `label` - display name in sidebar and headings
-- `hiddenFields` - fields excluded from forms and tables
-
-### Tier 2: Replace Model Pages (Custom Detail/Form)
-
-When the generic form or list isn't enough for a specific model, replace that model's page file. The admin route structure uses Next.js catch-all patterns:
-
-```
-apps/web/src/app/admin/
-  [model]/page.js          ← list view (auto-generated)
-  [model]/[id]/page.js     ← detail/edit form (auto-generated)
-  [model]/new/page.js      ← create form (auto-generated)
-```
-
-To customize a specific model, create a named route that takes priority over the dynamic `[model]` route:
-
-```
-apps/web/src/app/admin/
-  order/page.js            ← custom order list (overrides [model] for orders)
-  order/[id]/page.js       ← custom order detail (overrides [model]/[id])
-  [model]/page.js          ← generic list for everything else
-```
-
-#### Example: Custom Order Detail Page
-
-The generic edit form shows flat fields. An order needs line items, customer info, and status workflow buttons:
-
-```javascript
-// apps/web/src/app/admin/order/[id]/page.js
-import { prisma } from "@yourapp/db";
-import { Badge, Button, Card, CardContent, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@yourapp/ui";
-import { notFound } from "next/navigation";
-import { updateOrderStatus } from "./_actions";
-
-export default async function OrderDetailPage({ params }) {
-  const { id } = await params;
-  const order = await prisma.order.findUnique({
-    where: { id },
-    include: {
-      items: { include: { product: true } },
-      customer: { select: { id: true, name: true, email: true } },
-    },
-  });
-  if (!order) notFound();
-
-  const STATUS_VARIANTS = {
-    PENDING: "warning", CONFIRMED: "info", SHIPPED: "info",
-    DELIVERED: "success", CANCELLED: "default", REFUNDED: "danger",
-  };
-  const NEXT_STATUS = {
-    PENDING: "CONFIRMED", CONFIRMED: "SHIPPED",
-    SHIPPED: "DELIVERED",
-  };
-  const next = NEXT_STATUS[order.status];
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-text">Order {order.id.slice(-8)}</h1>
-          <p className="text-sm text-text-faint mt-1">
-            {order.customer.name} · {order.customer.email}
-          </p>
-        </div>
-        <Badge variant={STATUS_VARIANTS[order.status]}>{order.status}</Badge>
-      </div>
-
-      {/* Line items */}
-      <Card>
-        <CardContent className="pt-6">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Product</TableHead>
-                <TableHead className="text-right">Qty</TableHead>
-                <TableHead className="text-right">Unit Price</TableHead>
-                <TableHead className="text-right">Subtotal</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {order.items.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>{item.product.name}</TableCell>
-                  <TableCell className="text-right tabular-nums">{item.quantity}</TableCell>
-                  <TableCell className="text-right tabular-nums">${Number(item.price).toFixed(2)}</TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    ${(Number(item.price) * item.quantity).toFixed(2)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <div className="flex justify-end pt-4 border-t border-border mt-4">
-            <p className="text-lg font-bold tabular-nums text-text">
-              Total: ${Number(order.total).toFixed(2)}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Status actions */}
-      {next && (
-        <form action={updateOrderStatus}>
-          <input type="hidden" name="id" value={order.id} />
-          <input type="hidden" name="status" value={next} />
-          <Button type="submit">Mark as {next}</Button>
-        </form>
-      )}
-    </div>
-  );
-}
-```
-
-```javascript
-// apps/web/src/app/admin/order/[id]/_actions.js
-"use server";
-import { prisma } from "@yourapp/db";
-import { revalidatePath } from "next/cache";
-import { requireRole } from "@usequark/quark-core/auth";
-
-export async function updateOrderStatus(formData) {
-  await requireRole("admin");
-  const id = formData.get("id");
-  const status = formData.get("status");
-  await prisma.order.update({ where: { id }, data: { status } });
-  revalidatePath(`/admin/order/${id}`);
-}
-```
-
-#### Example: Custom Form with Relation Dropdowns
-
-The generic form can't render relation fields as dropdowns. Build a custom create page when a model has required relations:
-
-```javascript
-// apps/web/src/app/admin/booking/new/page.js
-import { prisma } from "@yourapp/db";
-import { Button, Input, Label, Select } from "@yourapp/ui";
-import { createBooking } from "./_actions";
-
-export default async function NewBookingPage() {
-  const [services, staff, customers] = await Promise.all([
-    prisma.service.findMany({ where: { status: "ACTIVE" }, orderBy: { name: "asc" } }),
-    prisma.staff.findMany({ include: { user: { select: { name: true } } } }),
-    prisma.user.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, email: true } }),
-  ]);
-
-  return (
-    <div>
-      <h1 className="text-2xl font-bold text-text mb-6">New Booking</h1>
-      <form action={createBooking} className="space-y-4 max-w-lg">
-        <div>
-          <Label htmlFor="serviceId">Service</Label>
-          <Select name="serviceId" required>
-            <option value="">Select a service…</option>
-            {services.map((s) => (
-              <option key={s.id} value={s.id}>{s.name} - ${Number(s.price).toFixed(2)}</option>
-            ))}
-          </Select>
-        </div>
-        <div>
-          <Label htmlFor="staffId">Staff</Label>
-          <Select name="staffId">
-            <option value="">Any available</option>
-            {staff.map((s) => (
-              <option key={s.id} value={s.id}>{s.user.name}</option>
-            ))}
-          </Select>
-        </div>
-        <div>
-          <Label htmlFor="customerId">Customer</Label>
-          <Select name="customerId" required>
-            <option value="">Select customer…</option>
-            {customers.map((c) => (
-              <option key={c.id} value={c.id}>{c.name} ({c.email})</option>
-            ))}
-          </Select>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="startTime">Start</Label>
-            <Input type="datetime-local" name="startTime" required />
-          </div>
-          <div>
-            <Label htmlFor="endTime">End</Label>
-            <Input type="datetime-local" name="endTime" required />
-          </div>
-        </div>
-        <Button type="submit">Create Booking</Button>
-      </form>
-    </div>
-  );
-}
-```
-
-### Tier 3: Add Custom Pages and Dashboard Sections
-
-For views that don't map to a single model (analytics, calendars, overviews), add new routes under `/admin` and link them from the sidebar.
-
-#### Example: Low Stock Dashboard Section
-
-Edit the existing dashboard to add domain-specific metrics:
-
-```javascript
-// apps/web/src/app/admin/page.js - add to the existing dashboard
-
-// In the data fetching section, add:
-const lowStock = await prisma.product.findMany({
-  where: { stock: { lt: 10 }, status: "ACTIVE" },
-  orderBy: { stock: "asc" },
-  take: 10,
-  select: { id: true, name: true, sku: true, stock: true },
-});
-
-// In the JSX, add a section:
-<section>
-  <h2 className="text-xs font-semibold uppercase tracking-widest text-text-faint mb-3">
-    Low Stock Alerts
-  </h2>
-  <Card>
-    <CardContent className="pt-6">
-      {lowStock.length === 0 ? (
-        <p className="text-sm text-text-faint text-center py-4">All products well stocked</p>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Product</TableHead>
-              <TableHead>SKU</TableHead>
-              <TableHead className="text-right">Stock</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {lowStock.map((p) => (
-              <TableRow key={p.id}>
-                <TableCell>{p.name}</TableCell>
-                <TableCell className="font-mono text-xs">{p.sku}</TableCell>
-                <TableCell className="text-right">
-                  <Badge variant={p.stock === 0 ? "danger" : "warning"}>{p.stock}</Badge>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
-    </CardContent>
-  </Card>
-</section>
-```
-
-#### Example: Custom Sidebar Links
-
-To add non-model pages to the sidebar, pass a `customLinks` array to the `<Sidebar>` component. Links appear between the Dashboard and the model sections:
-
-```javascript
-// apps/web/src/app/admin/layout.js
-
-<Sidebar
-  title="Admin"
-  models={models}
-  customLinks={[
-    { href: "/admin/calendar", label: "Calendar", icon: /* your SVG icon */ null },
-    { href: "/admin/analytics", label: "Analytics", icon: /* your SVG icon */ null },
-  ]}
-/>
-```
-
-Then create the corresponding route file:
-
-```javascript
-// apps/web/src/app/admin/calendar/page.js
-export default async function CalendarPage() {
-  // Query bookings, render calendar grid
-}
-```
-
-### Admin Extension Summary
-
-| Level | When to use | What you change | Examples |
-|-------|------------|-----------------|---------|
-| **Config** | Simple model customization | `adminConfig.modelOverrides` | Labels, hidden fields, read-only |
-| **Replace** | Model needs domain-specific UI | Named route overrides `[model]` | Order detail, booking form |
-| **Add** | Non-model views, custom metrics | New routes + sidebar links | Calendar, analytics, stock alerts |
-
-The generic CRUD handles 80% of models. Custom pages handle the rest. You never build an admin framework - you build Next.js pages that happen to live under `/admin`.
-

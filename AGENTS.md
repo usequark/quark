@@ -19,8 +19,8 @@ After changing source files in `apps/web/`, `apps/worker/`, `packages/db/`, `pac
 pnpm --filter @usequark/quark-create-app sync-templates
 ```
 
-### Schema trimming
-The CLI trims domain models (CRM, CMS, AI, Booking) from the scaffolded Prisma schema by default, keeping only 7 core models. Use `--full-schema` to keep all models. The source schema always contains all models — trimming happens at scaffold time via `trimPrismaSchema()` in `packages/cli/src/index.js`.
+### The Prisma schema is 7 models and that is all there is
+The schema in `packages/db/prisma/schema.prisma` contains exactly the 7 core models: `User`, `Account`, `Session`, `VerificationToken`, `Job`, `File`, `AuditLog` (plus the `UserRole` and `JobStatus` enums). Domain verticals were removed from the source schema outright. There is no trimming step and there is no `--full-schema` flag: older CLI builds trimmed a larger schema at scaffold time, but `trimPrismaSchema()` and the domain model directories were deleted. Add domain models through the `add-model` skill, not by editing the schema directly.
 
 ### Never run `pnpm changeset version` locally
 CI runs this automatically via the release workflow. Running it locally breaks the automated PR process.
@@ -34,7 +34,11 @@ pnpm test
 ### UI imports - no deep imports
 Import from `@usequark/quark-ui` (monorepo) or `@<scope>/ui` (scaffolded projects).
 Never use `@/components/ui/*` - that Shadcn convention is not used here.
-Shared exports also include `ErrorBanner`, `Footer`, `Navbar`/`MobileNavbar`, and `RichText`; extend them with `className` before inventing one-off replacements.
+
+`packages/ui/src/index.js` is the authoritative export list. It currently re-exports 24 modules:
+`badge`, `button`, `card`, `checkbox`, `container`, `dialog`, `error-banner`, `footer`, `form-field`, `input`, `label`, `lightbox`, `logo`, `navbar`, `password-input`, `rich-text`, `select`, `skeleton`, `spinner`, `table`, `textarea`, `theme`, `theme-constants`, `toast`.
+
+`Navbar`/`MobileNavbar`, `ErrorBanner`, `Footer`, and `RichText` are shared layout primitives: extend them with `className` before inventing a one-off replacement.
 
 ### Two packages are published; everything else is scaffolded
 - **Published:** `@usequark/quark-core`, `@usequark/quark-create-app`
@@ -58,7 +62,8 @@ pnpm dev                 # Start all apps (web + worker)
 quark/
 ├── apps/
 │   ├── web/          # Next.js 16 reference app (App Router, Server Actions)
-│   └── worker/       # BullMQ background worker
+│   ├── worker/       # BullMQ background worker
+│   └── mobile/       # Expo / React Native app (.ts/.tsx allowed here)
 ├── packages/
 │   ├── cli/          # @usequark/quark-create-app (published to npm)
 │   ├── core/         # @usequark/quark-core (published to npm)
@@ -94,9 +99,11 @@ quark/
 
 ## UI & Design System
 
-The `packages/ui` directory contains Tailwind-only, dependency-free Server Component-safe primitives.
+The `packages/ui` directory contains Tailwind-only Server Component-safe primitives.
 
-Available exports: `Button`, `Input`, `Label`, `Textarea`, `Select`, `Checkbox`, `Badge`, `Card`/`CardHeader`/`CardTitle`/`CardContent`/`CardFooter`, `Table`/`TableHeader`/`TableBody`/`TableRow`/`TableHead`/`TableCell`, `Skeleton`, `ErrorBanner`, `Footer`, `Navbar`/`MobileNavbar`, `RichText`, `Dialog` (client), `Toast`/`useToast` (client), `ThemeProvider`/`useTheme` (client).
+Available exports: `Button`, `Input`, `Label`, `Textarea`, `Select`, `Checkbox`, `Badge`, `Card`/`CardHeader`/`CardTitle`/`CardContent`/`CardFooter`, `Table`/`TableHeader`/`TableBody`/`TableRow`/`TableHead`/`TableCell`, `Skeleton`, `Spinner`, `Container`, `FormField`, `PasswordInput`, `ErrorBanner`, `Footer`, `Navbar`/`MobileNavbar`, `RichText`, `QuarkLogo`, `Lightbox` (client), `Dialog` (client), `Toast`/`useToast` (client), `ThemeProvider`/`useTheme`/`ThemeToggle` (client).
+
+`packages/ui/src/index.js` is the authoritative list; read it before adding an import.
 
 Import from `@usequark/quark-ui` (monorepo) or `@<scope>/ui` (scaffolded projects) - never deep-import.
 

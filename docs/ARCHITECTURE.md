@@ -67,11 +67,25 @@ Quark takes a hybrid approach:
 - Job queue abstractions
 - Storage adapter abstraction (swap local ↔ S3 via env var)
 
-✅ **Type Definitions**
+✅ **More Infrastructure**
+- CSRF tokens, rate limiting (in-memory, Redis-backed when `REDIS_URL` is set)
+- Metrics registry and default instruments; health-check runners
+- Cache, query builder, pagination helpers
+- Stripe client and webhook helpers; SMS provider
+- Test factories and mocks under `@usequark/quark-core/testing`
+
+Core ships 18 subpath exports. `packages/core/package.json` is the authoritative list; see `packages/core/README.md` for what each one contains.
+
+✅ **Documentation**
 - JSDoc for IDE support
 - Common interfaces
 
-❌ **Database Client** (lives in local `@yourapp/db`)
+⚠️ **Prisma Helpers, Not a Client**
+- `createPrismaClient(ClientClass)` is a factory that takes your generated client class, so core never imports your generated output
+- `pingDatabase()` and pool config helpers
+- Schema introspection (`parseSchema`, `getModels`, `getEnums`, `coerceId`)
+
+❌ **A Database Client Instance** (lives in your local `@yourapp/db`)
 - Prisma schema is always customized per app
 - Client instantiation requires app-specific connection config
 
@@ -280,17 +294,12 @@ export const jobHandlers = {
 - Add a new job: create a handler function, register it, add the queue/name to definitions
 - No need to rewrite queue setup
 
-### Example 4: Database Client
+### Example 4: Database Client Without a Global Cache
 
-**Core has NO database client — this is by design:**
-```javascript
-// ✅ Core has NO database code
-// @usequark/quark-core exports: auth, queues, validation, errors ONLY
-```
+`packages/db/src/client.js` can also skip the adapter and reuse a `globalThis` cache in development. Same rule: the client lives in your db package, never in core.
 
-**In Your Local DB Package:**
 ```javascript
-// packages/db/src/client.js - YOU own this
+// packages/db/src/client.js
 import { PrismaClient } from "./generated/prisma/client.js";
 
 const globalForPrisma = globalThis;
@@ -301,18 +310,13 @@ if (process.env.NODE_ENV !== "production") {
 }
 ```
 
-**Key Points:**
-- Core has NO database client (no Prisma dependency)
-- Each app creates client based on its own schema
-- Your schema.prisma is completely custom
-
 ## Domain Logic: Skills, Not Ejection
 
 Domain-specific logic (bookings, CRM, CMS, ecommerce, AI) is no longer scaffolded as packages. Instead, embedded skills teach AI tools to build these systems on demand. See `docs/DESIGN_NOTES.md` for the design rationale.
 
 Skills live in `<harness>/skills/` (default `.opencode/skills/`). Each skill contains domain context, Quark framework patterns, example models, and a workflow. The AI reads the skill and generates code that fits the user's exact requirements.
 
-Reference implementations are archived at `reference/verticals/` — study them for the complete model set, validation, and business logic, then adapt to the user's requirements.
+Reference implementations are archived at `docs/archive/reference/verticals/`. Study them for the complete model set, validation, and business logic, then adapt to the user's requirements.
 
 ## Migration Guide
 
@@ -342,7 +346,7 @@ Domain logic is built on demand via skills, not scaffolded as packages:
 # - E-commerce (products, orders, checkout)
 # - AI features (assistants, RAG, embeddings)
 
-# Reference implementations archived at reference/verticals/
+# Reference implementations archived at docs/archive/reference/verticals/
 ```
 
 ## Best Practices
@@ -396,21 +400,23 @@ Quark includes a comprehensive E2E testing approach to validate the entire proje
 
 ### CLI Testing Levels
 
+All of these are `packages/cli` scripts. Run them through the filter, or `cd packages/cli` first. None of them exist at the repo root.
+
 **1. Unit Tests** - Template and scaffold validation
 ```bash
-pnpm test
+pnpm --filter @usequark/quark-create-app test
 ```
-Fast validation (~5 seconds) that templates are valid and dependencies are correct.
+Fast validation that templates are valid and dependencies are correct.
 
 **2. E2E Scaffolding Test** - Full project creation
 ```bash
-pnpm test:e2e
+pnpm --filter @usequark/quark-create-app test:e2e
 ```
 Validates project scaffolding process (file creation, replacements, structure).
 
 **3. Full Lifecycle Test** - Create → Install → Deploy → Startup (Optional)
 ```bash
-pnpm test:e2e:full
+pnpm --filter @usequark/quark-create-app test:e2e:full
 ```
 Runs the complete workflow:
 - Phase 1: Create project with `--no-prompts` flag
@@ -427,19 +433,19 @@ Takes ~40 seconds, requires Docker and available system resources.
 
 ```bash
 # Quick validation
-pnpm test
+pnpm --filter @usequark/quark-create-app test
 
 # Scaffolding only
-pnpm test:e2e
+pnpm --filter @usequark/quark-create-app test:e2e
 
 # Full lifecycle (requires Docker)
-pnpm test:e2e:full
+pnpm --filter @usequark/quark-create-app test:e2e:full
 
 # With build verification
-QUARK_CLI_BUILD_TEST=1 pnpm test:build
+pnpm --filter @usequark/quark-create-app test:build
 
 # With generated image security scanning
-QUARK_CLI_BUILD_TEST=1 QUARK_CLI_SCAN_IMAGES=1 pnpm test:build
+QUARK_CLI_SCAN_IMAGES=1 pnpm --filter @usequark/quark-create-app test:build
 ```
 
 Container runtime selection follows two rules:
@@ -548,7 +554,7 @@ Dark mode overrides follow immediately under `[data-theme="dark"]`. To retheme a
 | `0.5rem` | Modern/rounded |
 | `9999px` | Full pill |
 
-Components reference this via Tailwind's `rounded-[--radius-default]` utility.
+Components reference these via Tailwind v4 paren syntax, for example `rounded-(--btn-radius)`.
 
 ### Dark Mode
 
@@ -559,11 +565,13 @@ Quark uses **data-attribute dark mode**, not Tailwind's `dark:` class prefix:
 @custom-variant dark (&:is([data-theme="dark"] *));
 ```
 
-The `ThemeProvider` component (from `@usequark/quark-ui`) sets `data-theme="dark"` on the `<html>` element. This means:
+The `ThemeProvider` component (from `@usequark/quark-ui` in the monorepo, `@scope/ui` in a scaffolded project) sets `data-theme="dark"` on the `<html>` element. This means:
 
 - ✅ `dark:bg-surface` works in component files
 - ✅ CSS variables automatically switch via `[data-theme="dark"]` overrides
-- ❌ The system `prefers-color-scheme` media query is **not** used - theme is always explicit
+- ✅ `prefers-color-scheme` is used by the FOUC script and by the `:root` light overrides, so an unpinned first visit follows the OS
+
+Because the attribute is the source of truth, an explicit user choice always wins over the OS setting.
 
 ### Template Sync
 

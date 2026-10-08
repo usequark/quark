@@ -1,7 +1,8 @@
 # Quark Design Notes
 
-> **Status: Accepted** (August 2026)
-> This is the source of truth for Quark's architectural direction.
+> **Status: Accepted, partially superseded** (August 2026)
+> Sections 1, 2.1, 2.4, and decisions D1, D2, D5, D6 describe the shipped architecture. Sections 2.2, 2.3, 2.5, D3, D8, D9, and all of section 4 describe an **admin shell and skill-only verticals that were later removed entirely**. They are kept here as the record of why the current shape exists. Do not treat them as a roadmap.
+> See `AGENTS.md` and `docs/ARCHITECTURE.md` for what actually ships.
 
 This document captures the design direction for reducing Quark's overhead while keeping it a low-effort, low-opinionation scaffold.
 
@@ -31,30 +32,36 @@ The CLI exposes two views over the same engine:
 - **Human View (default, no params).** Interactive, product-shaped questions ("Describe your app in a sentence or two") with an **advanced** expander for full package/custom configuration. Progressive disclosure: simple by default.
 - **AI View (params).** A documented, deterministic flag surface (`--packages`, `--preset`, `--prompt`, `--no-prompts`) that an agent calls reliably. Same params → same scaffold, every time.
 
-### 2.2 Admin = operations shell, not CRUD
+### 2.2 Admin shell: proposed, then removed
 
-The admin is reframed from a data-management tool to a **business operations surface**: decision-relevant values plus tools to add/update/remove/customize the project and deployment. It ships **patterns, not pages**:
+> **Not shipped.** The design below reframed the admin from a data-management tool to a **business operations surface**: decision-relevant values plus tools to add/update/remove the project and deployment, shipping patterns rather than pages. In the end the whole admin package was deleted rather than reframed. `packages/admin` does not exist and `quark add admin` is not a valid feature.
+>
+> What survived: the `add-dashboard` skill, which teaches the AI to build a metrics overview page, and the `add-endpoint` skill's role guards. `AGENTS.md` no longer promotes a design-system skill, which removed the design-language leak this section was written to prevent.
+
+For reference, the original proposal was:
 
 - A neutral shell (sidebar + main).
 - Dashboard / metric-card patterns (decision values).
 - Action-form patterns (add/update/remove).
 - Auto-CRUD as a **fallback** for models with no custom view yet.
 
-It is deliberately neutral (plain Tailwind, no themed UI) so it never leaks a design language into user pages.
-
 ### 2.3 Verticals = domain starters, not packages
 
-Vertical features (`bookings`, `crm`, `cms`, `ai`) become **skill-only verticals**: no scaffolded code - the embedded skill carries the domain knowledge and the AI builds the system on demand.
+Vertical features become **skill-only**: no scaffolded code, the skill carries the domain knowledge and the AI builds the system on demand.
+
+> **Partially shipped.** The vertical packages were deleted, and the per-vertical skills (`bookings`, `crm`, `cms`, `ai`) were never written. What ships is a smaller set: `payment`, `ecommerce` (with catalog, cart, checkout sub-skills), and `i18n`, alongside the workflow skills `add-model`, `add-endpoint`, and `add-dashboard`. `skills/quark-skills/SKILL.md` indexes exactly these. Any new vertical still follows the pattern below, but each one has to be authored.
+
+The pattern the skills are expected to encode:
 
 ```
-# what the bookings skill teaches the AI to build:
+# what a bookings skill would teach the AI to build:
 <harness>/skills/bookings/SKILL.md         # domain context + Quark patterns
-packages/db/prisma/booking.prisma          # generic Booking model (AI-generated)
+packages/db/prisma/schema.prisma           # Booking model (AI-generated)
 apps/web/src/app/api/bookings/route.js     # CRUD: create/read/update/delete
 apps/web/src/app/api/bookings/[id]/route.js
 ```
 
-The original full packages are **demoted/hidden** (archived to `reference/`), not deleted, so the domain logic is preserved as reference source and validation oracle.
+The original full vertical packages were archived to `docs/archive/reference/`, so the old domain logic is preserved as reference source.
 
 ### 2.4 MAIN.md + Embedded Skills
 
@@ -71,59 +78,53 @@ Reduce the scaffolded package surface from 12 to ~8, and convert the 4 verticals
 |----|----------|--------|-----------|
 | D1 | API-first: Quark = backend contract + agent context | ✅ Accepted | Matches the vibe-coder market; AI is the UI layer |
 | D2 | Two-view CLI (Human + AI) | ✅ Accepted | Human gets simple questions; AI gets a deterministic contract |
-| D3 | Admin = neutral operations shell (patterns + CRUD fallback) | ✅ Accepted | Serves decision-making, not data management; no design leak |
+| D3 | Admin = neutral operations shell (patterns + CRUD fallback) | ❌ Removed | The admin package was deleted outright; the design leak it addressed is gone with it |
 | D4 | Verticals = skill-only (AI builds on demand) | ✅ Accepted | Lean, honest 80/20; user/AI builds the 20% |
 | D5 | Skills carry the domain knowledge | ✅ Accepted | Replaces the value that used to live in full packages |
 | D6 | MAIN.md single entry point | ✅ Accepted | Token-efficient agent bootstrap (create-vibe-app pattern) |
 | D7 | Quark logo embedded in scaffolded page | ✅ Present | Brand anchor; already ~80% present |
-| D8 | Demote/hide originals (archive to `reference/`), don't delete | ✅ Accepted | Preserve tested logic as reference source + validation oracle |
-| D9 | Decouple admin from themed UI + design-system skill | ✅ Accepted | Kills the design-language contamination vector |
+| D8 | Demote/hide originals (archive), don't delete | ✅ Applied | Archive lives at `docs/archive/reference/` |
+| D9 | Decouple admin from themed UI + design-system skill | ✅ Moot | The admin was removed; `AGENTS.md` no longer promotes a design-system skill |
 
 ## 4. Target Architecture
 
 ### 4.1 Package scope
 
-| Package | Current | Target | Notes |
-|---------|---------|--------|-------|
-| `core` | published | keep | Runtime lib — the moat |
-| `create-app` (CLI) | published | keep | Launcher |
-| `config` | scaffolded | keep | Env config |
-| `db` | scaffolded | keep | Prisma |
-| `web` (base) | scaffolded | keep | Next.js base + logo |
-| `worker` | scaffolded | keep (opt-in) | Queues |
-| `ui` | scaffolded | keep (opt-in) | Public-page theming only |
-| `admin` | scaffolded | keep (opt-in, operations shell) | Decision layer |
-| `bookings` | scaffolded | **skill-only** | Vertical |
-| `crm` | scaffolded | **skill-only** | Vertical |
-| `cms` | scaffolded | **skill-only** | Vertical |
-| `ai` | scaffolded | **skill-only** | Vertical |
+| Package | Status | Notes |
+|---------|--------|-------|
+| `core` | published | Runtime library |
+| `create-app` (CLI) | published | Launcher, also bins `quark`, `create-quark-app`, `quark-update` |
+| `config` | scaffolded, always | Env config. In `REQUIRED_PACKAGES` |
+| `db` | scaffolded, always | Prisma. In `REQUIRED_PACKAGES` |
+| `ui` | scaffolded, always | Tailwind primitives. In `REQUIRED_PACKAGES` (was opt-in) |
+| `web` (base) | scaffolded, always | Next.js base + logo |
+| `worker` | scaffolded, opt-in | Pulled in by `quark add jobs` |
+| `mobile` | scaffolded, opt-in | Expo app, via `quark add mobile` |
+| `pwa` | scaffolded, opt-in | PWA manifest and service worker, via `quark add pwa` |
+| `admin` | **removed** | No package, no `quark add admin` |
+| `bookings` / `crm` / `cms` / `ai` | **removed** | No package, no skill. See 2.3 |
+
+`REQUIRED_PACKAGES = ["db", "config", "ui"]` in `packages/cli/src/index.js` is the source of truth.
 
 ### 4.2 CLI map
 
-**Current:**
+**Shipped:**
 ```
-create <name>
-  └─ multiselect: [ui] [jobs] [admin] [cms] [crm] [ai]
-add <feature>
-update | update --check | update --scaffold-check
-flags: --no-prompts --packages --skip-install --skip-docker
-```
-
-**Target:**
-```
-create <name>                          # Human View: product-shaped questions + advanced
-  └─ "Describe your app in a sentence or two."  → brief → MAIN.md
-  └─ [advanced] full package/custom config
-create <name> --packages crm,ai        # AI View: deterministic params
-create <name> --preset client-work     # AI View: preset bundle
-create <name> --prompt "..."           # AI View: brief from prompt
-add <feature>                          # add a domain starter / package later
-skill <feature>                        # print an embedded skill
-update | update --check | update --scaffold-check
-flags: --no-prompts --preset --packages --prompt --skip-install --skip-docker
+quark <name>                            # default action, no `create` subcommand
+  └─ interactive multiselect: [ui] [jobs] [pwa] [mobile]
+  └─ any provided option auto-skips prompts
+add <feature>                           # ui | jobs | pwa | mobile
+skill <feature>                         # print an embedded skill
+update [--check] [--scaffold-check] [--fail-on-drift] [--force]
+deploy railway | deploy inspect | deploy status
+flags: --packages --prompt --signup --harness --skip-install --skip-docker
 ```
 
-### 4.3 Admin structure (target)
+**Proposed and never built:** a `--preset <bundle>` flag (client-work / internal-tool / product / minimal) and a `create` subcommand. Neither exists. `--no-prompts` shipped but is now deprecated, since providing any option already skips prompts.
+
+### 4.3 Admin structure (proposed, then removed)
+
+Never shipped. Kept for the record; there is no `admin-routes/` directory to look for.
 
 ```
 admin-routes/
@@ -141,6 +142,6 @@ admin-routes/
 
 - **No scaffold-time LLM dependency.** The CLI stays fast and offline; the agent scopes during development, not at scaffold time.
 - **Skill quality is the risk.** The skill-only verticals ship no code; the skills must carry the domain knowledge or functionality is lost.
-- **Open:** exact `--preset` bundles (client-work / internal-tool / product / minimal) and their feature mappings.
+- **Resolved, dropped:** `--preset` bundles were never implemented. Use `--packages` for deterministic selection.
 - **Open:** whether `worker` stays opt-in or moves to a starter.
-- **Locked:** the archived originals live in `reference/` at the monorepo root (keeps the archive with the code; F4 creates it).
+- **Resolved:** the archived originals live in `docs/archive/reference/`.

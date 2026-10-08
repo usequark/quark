@@ -7,13 +7,20 @@
 | Document | Why it is archived |
 |---|---|
 | [ROADMAP.md](./ROADMAP.md) | Early expansion planning for playgrounds, schema structure, and package growth before the skill-based architecture. |
-| [PHASE2_PLAN.md](./PHASE2_PLAN.md) | Detailed admin-package exploration that is still useful reference material but is not the current approach. |
+| [PHASE2_PLAN.md](./PHASE2_PLAN.md) | Detailed admin-package exploration that is still useful reference material but is not the current approach. The admin package itself was later removed. |
 | [FEATURE_PLAN.md](./FEATURE_PLAN.md) | Isolated feature plan (F1–F8) from the scaffold opinionation work. |
 | [IMPLEMENTATION_CHECKLIST.md](./IMPLEMENTATION_CHECKLIST.md) | Task tracker from the earlier planning phase. |
 | [MERGE_PLAN.md](./MERGE_PLAN.md) | Merge sequence for the scaffold opinionation work. |
 
+## Archived Strategy Specs
+
+| Document | Why it is archived |
+|---|---|
+| [strategy/03-quark-template-improvements.md](./strategy/03-quark-template-improvements.md) | Unimplemented design-token and component spec. None of the proposed components exist. |
+| [strategy/07-quark-i18n-integration.md](./strategy/07-quark-i18n-integration.md) | Predates the skill-based architecture. The i18n skill has since shipped, so this is reference material on the library choice (next-intl). |
+
 ## How To Use This Material
 
 - Use [ROADMAP.md](./ROADMAP.md) for implementation ideas, not for sequencing or status.
-- Use [PHASE2_PLAN.md](./PHASE2_PLAN.md) when revisiting admin architecture or scaffold patterns.
+- Use [PHASE2_PLAN.md](./PHASE2_PLAN.md) only as historical reference. There is no admin package to extend.
 - Start in `docs/DESIGN_NOTES.md` for the current architecture and design decisions.

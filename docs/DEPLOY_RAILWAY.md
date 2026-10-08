@@ -269,7 +269,7 @@ These are set via `railway variable set` after IaC apply:
 |---|---|---|
 | `APP_NAME` | Directory name | e.g. `my-project` |
 | `APP_DESCRIPTION` | Generated | e.g. `"my-project - Quark application"` |
-| `STORAGE_PROVIDER` | `local` | Change to `s3`, `r2`, etc. for production |
+| `STORAGE_PROVIDER` | `local` | Change to `s3` for production. There is no `r2` value: point `S3_ENDPOINT` at R2 or MinIO and keep `STORAGE_PROVIDER=s3` |
 | `AUTH_ALLOW_SIGNUP` | `false` | Web service only. Set to `true` to allow registration |
 | `HOSTNAME` | `0.0.0.0` | Web service only. Required for container platforms |
 | `WORKER_CONCURRENCY` | `5` | Worker service only |
@@ -281,7 +281,7 @@ These are not set by the deploy command and must be configured in the Railway da
 | Variable | Reason |
 |---|---|
 | `APP_URL` | Your custom domain (e.g. `https://app.example.com`). Required for auth callbacks, email links, etc. |
-| Email provider vars | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM` - if using email auth or notifications |
+| Email provider vars | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_SECURE`, `EMAIL_FROM` - if using email auth or notifications |
 | Storage provider creds | `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET`, `S3_REGION` - if using S3-compatible storage |
 | Any `NEXT_PUBLIC_*` vars | Public-facing variables your frontend needs at runtime |
 
@@ -447,7 +447,7 @@ Run `railway config plan` to preview what would change. Common causes: conflicti
 Check that `HOSTNAME=0.0.0.0` is set and that Railway provides the `PORT` environment variable. The startup command already binds to `0.0.0.0` in the IaC configuration.
 
 **Health check times out**
-The deploy waits 60 seconds after deployment for `/api/health` to respond with HTTP 200. If it times out, check the web service logs in the Railway dashboard. The health check endpoint is defined at `apps/web/src/app/api/health/route.js`.
+Two separate timeouts are in play. The generated Railway service config declares `healthcheckTimeout: 120` (seconds) for the platform's own container start check. On top of that, the deploy CLI polls `/api/health` for up to 60 seconds after the deployment reports success before declaring the deploy verified. If either times out, check the web service logs in the Railway dashboard. The health endpoint is `apps/web/src/app/api/health/route.js`.
 
 **"Variables could not be set" warning**
 The deploy continues even if variable setting partially fails. Run `railway variable set KEY=VALUE --service <name>` manually to fix missing variables.

@@ -54,7 +54,20 @@ All files contain your project's actual `@scope`, selected packages, and scaffol
 
 ## Embedded Skills
 
-Every scaffold also ships domain skills (bookings, CRM, CMS, AI assistant, plus `add-model`, `add-endpoint`, `add-dashboard`) that teach your AI tool how to extend the project using Quark's exact patterns. Use the `--harness` flag to choose where they are placed for auto-loading:
+Every scaffold also ships embedded skills that teach your AI tool how to extend the project using Quark's exact patterns:
+
+| Skill | Builds |
+|---|---|
+| `add-model` | A Prisma model, query helpers, and tests |
+| `add-endpoint` | An API route or Server Action with Zod, CSRF, and role guards |
+| `add-dashboard` | A metrics overview dashboard page |
+| `payment` | Stripe payments, checkout, webhooks, fulfillment |
+| `ecommerce` | Catalog, cart, checkout, orders, inventory |
+| `i18n` | Locale routing, translated content, hreflang SEO |
+
+There is no admin, CMS, CRM, bookings, or AI skill. Those verticals are built on demand from the patterns above rather than shipped as packages. `skills/quark-skills/SKILL.md` is the index to read first.
+
+Use the `--harness` flag to choose where skills are placed for auto-loading:
 
 ```bash
 npx @usequark/quark-create-app my-app --harness claude    # .claude/skills/

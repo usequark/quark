@@ -612,7 +612,7 @@ program
 	)
 	.option(
 		"--packages <packages>",
-		"Comma-separated list of optional packages to include (ui,jobs,pwa)",
+		"Comma-separated optional packages to include (ui,jobs,pwa). db, config, ui always scaffolded. Mobile is post-creation: quark add mobile",
 	)
 	.option(
 		"--prompt <prompt>",

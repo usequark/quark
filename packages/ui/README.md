@@ -1,13 +1,13 @@
-# @yourscope/ui
+# @usequark/quark-ui
 
-Scaffolded UI primitives for your Quark project. These components are **yours** - modify, extend, or replace them freely.
+Tailwind-only UI primitives, the reference implementation that `quark-create-app` copies into your project.
 
-> This package is scaffolded via `quark-create-app`. There is no version sync back to Quark after scaffolding.
+> Monorepo package. In a scaffolded project this same directory is `@<scope>/ui`, there owned by you with no version sync back to Quark. `quark-create-app` copies the component source but not the theme CSS: themes stay optional.
 
 ## Import
 
 ```javascript
-import { Button, Card, Badge } from '@yourscope/ui';
+import { Button, Card, Badge } from '@usequark/quark-ui';
 ```
 
 ## Components
@@ -53,6 +53,19 @@ Composable table. `Table` wraps in a scrollable container. All parts accept `cla
 ### Skeleton
 Props: `className` (use to set width/height for the placeholder shape).
 
+### Spinner
+Props: `className` (default `h-4 w-4`), `label` (default `"Loading"`). Accessible loading indicator.
+
+### PasswordInput
+`"use client"` - Password field with a show/hide toggle button.
+Props: all native input attributes plus `className`.
+
+### QuarkLogo
+Props: `size` (default 40), `className`, plus SVG passthrough props. Brand anchor for scaffolded pages.
+
+### ThemeProvider / useTheme / ThemeToggle
+`"use client"` - `ThemeProvider` takes `defaultTheme` and wraps children. `useTheme()` returns the current theme plus a setter. `ThemeToggle` takes `className`. Persisted under `THEME_STORAGE_KEY` on `document.documentElement` via `THEME_ATTR`.
+
 ### ErrorBanner
 Props: `message`, `className`. Returns `null` when `message` is empty.
 
@@ -91,9 +104,11 @@ return (
 ```
 
 ## Design notes
-- Tailwind CSS only. No CSS-in-JS, no external dependencies.
+- Tailwind CSS only. No CSS-in-JS and no styling library.
+- Dependencies are `next` and `lucide-react` (icons). No component library.
 - All components accept `className` for overrides.
-- Client-only components: `Dialog`, `Toast`, `useToast`, `Select`, `Lightbox`, `FormField`, `RichText`, `Navbar`, `MobileNavbar`, `ThemeProvider`, `useTheme`.
+- Client components (carry `"use client"`): `Card`, `Dialog`, `FormField`, `Lightbox`, `Navbar`, `MobileNavbar`, `PasswordInput`, `RichText`, `Select`, `ThemeProvider`, `useTheme`, `ThemeToggle`, `Toast`, `useToast`.
+- Everything else renders on the server and is Server Component-safe.
 - Accessible: ARIA attributes, focus management on interactive elements.
 
 ## Example references
@@ -151,28 +166,27 @@ Import a theme in your app's `globals.css`:
 @import "tailwindcss";
 @source "../../../../packages/ui/src/**/*.{js,jsx}";
 
-/* Load a preset theme */
-@import "@usequark/quark-ui/themes/editorial-coral.css";
-
 @custom-variant dark (&:is([data-theme="dark"] *));
 
 :root {
-  /* Your app-specific overrides go here */
+  /* Your theme values go here */
   --quark-page-bg: var(--color-bg);
 }
 ```
 
-Themes are importable via the package export pattern:
-```css
-@import "@usequark/quark-ui/themes/brutalist-yellow.css";
-@import "@usequark/quark-ui/themes/red-noir.css";
-@import "@usequark/quark-ui/themes/swiss-minimalist.css";
-```
+This is the real `apps/web/src/app/globals.css`: it imports Tailwind and the component sources, then defines variables. No theme file is imported, because `globals.css` sets its own values.
 
-In a monorepo context you can also use a relative path:
+### Themes are a reference, not a dependency
+
+`packages/ui/themes/` holds 8 finished variable sets. They are **excluded from the scaffold template** (`sync-templates` skips `packages/ui/themes/`), so a scaffolded project ships components only and you write your own variables.
+
+In the monorepo, reference a theme by relative path:
+
 ```css
 @import "../../../../packages/ui/themes/editorial-coral.css";
 ```
+
+There is no `./themes/*` package export, so `@import "@usequark/quark-ui/themes/..."` will not resolve. If you want themes in a scaffolded project, add a `./themes/*` entry to your `packages/ui/package.json` exports and copy the files you want.
 
 ### 3. Available Themes
 
@@ -188,6 +202,8 @@ The package ships with 8 curated themes in `packages/ui/themes/`:
 | **Hyper Saturated** | `hyper-saturated.css` | Cyber yellow on deep onyx with glassmorphism, frosted glass overlays, and liquid section dividers. Inter. |
 | **Season 04** | `season-04.css` | High-fashion brutalist with beige/burnt red palette, SVG noise texture, and neon green micro-interactions. Clash Grotesk. |
 | **Swiss Minimalist** | `swiss-minimalist.css` | Typography-first Swiss editorial with off-white background, deep black text, grayscale palette, and echo text layering. Clash Display + Satoshi. |
+
+These 8 files exist in the monorepo only. They are not copied into scaffolded projects (see "Themes are a reference, not a dependency" above).
 
 ### 4. Custom Themes
 
@@ -623,18 +639,9 @@ The `Toast` component accepts `variant` prop: `'default' | 'success' | 'error'`.
 
 ### 7. AI Agent Integration
 
-A dedicated design system skill is available at `~/.config/opencode/skills/design-system/SKILL.md` for AI-assisted theming. Load it when building user-facing UI:
+The variable reference in section 6 is the contract. Point your agent at this file and the components themselves: `packages/ui/src/theme-constants.js` exports `THEME_STORAGE_KEY`, `THEME_ATTR`, and `THEME_CHANGE_EVENT`, so an agent can wire theme switching without guessing at names.
 
-```
-skill("design-system")
-```
-
-The skill provides:
-- The complete CSS variable reference (all components)
-- A prompt library with 8 curated design directions (full `:root` blocks)
-- A theme creation guide for building custom themes from design briefs
-- Usage examples for import, override, and scoped styling
-- Anti-latching warning: the default raw styling is a blank canvas — always pick a theme or create one
+There is no bundled `design-system` skill. In a scaffolded project, the skills that ship are the workflow and domain ones listed in `skills/quark-skills/SKILL.md`; a private skill may exist on an individual maintainer's machine but is not part of the package.
 
 ### 8. Dark / Light Mode
 

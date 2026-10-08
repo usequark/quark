@@ -17,7 +17,7 @@ Quark includes several security features out of the box:
   - General API endpoints: 100 requests per 15 minutes
   - Auth endpoints: 5 requests per 15 minutes
 - **Headers**: Returns `X-RateLimit-*` headers for client feedback
-- **Production Note**: Current implementation uses in-memory storage. For production deployments with multiple instances, migrate to Redis-based rate limiting.
+- **Storage**: in-memory by default, Redis-backed when `REDIS_URL` is set. For multi-instance deployments `REDIS_URL` is required, otherwise each instance counts independently. See [Redis-based Rate Limiting](#3-redis-based-rate-limiting-) below.
 
 #### 2. **Security Headers**
 - **Location**: [apps/web/src/proxy.js](../apps/web/src/proxy.js), [apps/web/next.config.js](../apps/web/next.config.js)
@@ -32,7 +32,7 @@ Quark includes several security features out of the box:
 
 #### 3. **CORS Configuration**
 - **Location**: [apps/web/src/proxy.js](../apps/web/src/proxy.js)
-- **Environment-based**: CORS origins are derived from `APP_URL`; use `ALLOWED_ORIGINS` to add extra origins
+- **Environment-based**: origins derive from `APP_URL`; `ALLOWED_ORIGINS` (comma-separated, production) and `NEXT_DEV_ALLOWED_ORIGINS` / `ALLOWED_DEV_ORIGINS` (development hosts) add extras. Resolved in `packages/config/src/app-url.js`
 - **Default**: `APP_URL` + `http://localhost:3000,http://localhost:3001` in development
 - **Credentials**: Enabled by default for authenticated requests
 - **Preflight**: Handles OPTIONS requests automatically
@@ -151,7 +151,8 @@ All high-priority security tasks have been completed! ✅
    - Status: ✅ Configured
    - Location: [proxy.js](../apps/web/src/proxy.js), [next.config.js](../apps/web/next.config.js)
    - Default API: 2MB (env: `API_BODY_SIZE_LIMIT`)
-   - Upload: 10MB (env: `UPLOAD_SIZE_LIMIT`)
+   - Upload request body: 10MB (env: `UPLOAD_SIZE_LIMIT`, read by `apps/web/src/proxy.js`)
+   - Per-file cap: 10MB (env: `UPLOAD_MAX_SIZE`, read by `packages/core/src/file-validation.js`). Separate knob from the request-body limit; both default to 10MB
    - Response: 413 Payload Too Large when exceeded
 
 3. **Redis-based Rate Limiting** ✅
@@ -170,10 +171,10 @@ All high-priority security tasks have been completed! ✅
    - Complexity: HIGH (requires testing with all assets)
 
 5. **Dependency Scanning**
-   - Status: ❌ Not configured
-   - Risk: LOW (manual review needed)
-   - Recommendation: Enable Dependabot or Snyk
-   - Frequency: Weekly vulnerability scans
+   - Status: ✅ Configured via Dependabot
+   - Config: `.github/dependabot.yml` for this monorepo. Scaffolded projects get their own copy at `.github/dependabot.yml` plus `.github/dependabot-auto-merge.yml`
+   - Triage record: [`docs/dependency-audit.md`](./dependency-audit.md)
+   - Note: the `pnpm-lock.yaml` overrides in `pnpm-workspace.yaml` are audited there and must stay in sync
 
 6. **Secrets Scanning**
    - Status: ❌ Not configured

@@ -1,6 +1,8 @@
 # Quark: Complete Usage Guide
 
-This guide covers the complete Quark workflow-from development to scaffolding new projects to keeping them updated.
+This guide covers the complete Quark workflow, from development to scaffolding new projects to keeping them updated.
+
+Every version, script name, flag, and file path below is checked against the repo. Where something does not exist, this guide says so.
 
 ---
 
@@ -68,14 +70,11 @@ Then open a PR. Once merged to `main`, CI automatically opens a **"chore: versio
 ### Option 1: From Quark Repository (Recommended for Teams)
 
 ```bash
-# Navigate to your projects directory
-cd ~/projects
-
-# From Quark repo root, scaffold a new project
-cd quark
+# From the Quark repo root
 pnpm new my-awesome-app
 
-# This scaffolds the project in ../my-awesome-app
+# `pnpm new` is a thin wrapper: `node packages/cli/src/index.js`
+# This scaffolds the project into ./my-awesome-app
 ```
 
 ### Option 2: Global CLI Install (For External Use)
@@ -86,48 +85,183 @@ pnpm add -g @usequark/quark-create-app
 
 # Scaffold from anywhere
 quark-create-app my-awesome-app
+
+# Or without installing anything
+npx @usequark/quark-create-app@latest my-awesome-app
+```
+
+### Bin Names
+
+All four bins point at the same entrypoint (`packages/cli/src/index.js`):
+
+| Bin | Use it for |
+|-----|-----------|
+| `quark` | Default, shortest name |
+| `quark-create-app` | Explicit, self-documenting |
+| `create-quark-app` | `create-react-app` style alias |
+| `quark-update` | Reads as an update command |
+
+### Creating a Project Is the Default Action
+
+There is **no `create` subcommand**. Passing a project name (or nothing, to be prompted) runs the scaffolder:
+
+```bash
+quark my-app                      # scaffold with this name
+quark                             # interactive, prompts for the name
+```
+
+The `sync-templates` and `sync-templates:check` names are **npm scripts** in `packages/cli`, not CLI subcommands:
+
+```bash
+pnpm --filter @usequark/quark-create-app sync-templates
+pnpm --filter @usequark/quark-create-app sync-templates:check
+```
+
+### Subcommands
+
+The complete list, from `grep -n '.command(' packages/cli/src/index.js`:
+
+| Subcommand | Purpose |
+|------------|---------|
+| `add <feature>` | Add an optional package to an existing project |
+| `skill <name>` | Print an embedded skill for a feature |
+| `update` | Update Quark packages in an existing project |
+| `deploy railway` | Deploy web + worker + Postgres + Redis to Railway |
+| `deploy inspect` | Inspect project deployment readiness |
+| `deploy status` | Check deployed service status |
+
+```bash
+quark add jobs
+quark skill bookings
+quark update
+quark deploy railway --dry-run
+```
+
+### Root Options
+
+```bash
+quark my-app --packages ui,jobs,pwa,mobile
+quark my-app --signup disabled
+quark my-app --prompt "A booking platform for salons"
+quark my-app --harness claude
+quark my-app --skip-install
+quark my-app --skip-docker
+```
+
+| Option | Effect |
+|--------|--------|
+| `--no-prompts` | **Deprecated.** Emits `⚠ --no-prompts is deprecated. Options now auto-skip prompts.` Supplying options already implies non-interactive mode. |
+| `--signup <mode>` | Public self-service signup for the scaffolded project: `enabled` or `disabled` |
+| `--packages <list>` | Optional packages to include. Valid values: `ui`, `jobs`, `pwa`, `mobile` |
+| `--prompt <text>` | Product brief used to populate `MAIN.md` |
+| `--harness <name>` | Where embedded skills land: `opencode` (default), `claude`, `copilot` |
+| `--skip-install` | Skip `pnpm install` and Prisma generate steps |
+| `--skip-docker` | Skip Docker orphan-volume cleanup |
+
+There is **no `--preset` flag** and no named presets. `db`, `config`, and `ui` are always scaffolded (`REQUIRED_PACKAGES` in `packages/cli/src/index.js`); `--packages` selects only the optional set.
+
+With `--no-prompts` and no `--packages`, the default optional set is `ui,jobs`.
+
+### Subcommand Flags
+
+`update`:
+
+```bash
+quark update --check              # report available updates, apply nothing
+quark update --scaffold-check     # report scaffold drift, overwrite nothing
+quark update --scaffold-check --fail-on-drift   # exit 1 on drift, for CI
+quark update --force              # skip uncommitted-changes safety check
+```
+
+`add`:
+
+```bash
+quark add jobs --force            # skip uncommitted-changes safety check
+quark add jobs --skip-install     # skip pnpm install after adding
+```
+
+`deploy railway`:
+
+```bash
+quark deploy railway --project-name my-app      # create a new Railway project
+quark deploy railway --project-id <id>          # link to an existing project
+quark deploy railway --environment staging      # default: production
+quark deploy railway --no-provision             # skip Postgres and Redis plugins
+quark deploy railway --dry-run                  # validate config, deploy nothing
+```
+
+### Non-Interactive Example
+
+```bash
+quark my-app \
+  --packages ui,jobs \
+  --signup disabled \
+  --skip-install \
+  && cd my-app \
+  && pnpm install \
+  && docker compose up -d \
+  && pnpm db:migrate \
+  && pnpm dev
 ```
 
 ### What Gets Scaffolded?
 
-The CLI creates a complete project structure with:
-
 ```
 my-awesome-app/
+├── .env                      ← Auto-generated, with fresh secrets
 ├── .env.example              ← Environment variables template
-├── .env                      ← Auto-generated secure secrets
+├── .env.railway.example      ← Railway variable template
 ├── .quark-link.json          ← Tracks Quark version & packages
+├── .nvmrc                    ← Node 24
 ├── .gitignore
-├── MAIN.md                     ← "Read this first" project brief & entry point
-├── CLAUDE.md                   ← AI context: stack, patterns, key files
-├── .opencode/skills/           ← Embedded domain skills (harness-selectable)
+├── .dockerignore
+├── MAIN.md                   ← "Read this first" project brief and entry point
+├── CLAUDE.md                 ← AI context: stack, patterns, key files
+├── .cursor/rules/            ← Cursor rule file
+├── skills/                   ← Embedded domain skills
+├── .opencode/skills/         ← Where skills land with --harness opencode (default)
 ├── package.json
 ├── pnpm-workspace.yaml
 ├── turbo.json
-├── docker-compose.yml        ← PostgreSQL, Redis, Mailpit
+├── biome.json
+├── docker-compose.yml        ← PostgreSQL, Redis
+├── docker-compose.override.yml ← Mailpit (dev only, auto-merged)
+├── .railway/                 ← Railway config
+├── .github/                  ← GitHub Actions workflows
+├── docs/
+├── scripts/
 ├── README.md
 ├── apps/
-│   └── web/                  ← Next.js application
+│   └── web/                  ← Next.js 16 application
 ├── packages/
-│   ├── ui/                   ← (Ejected) React UI components
-│   ├── jobs/                 ← (Ejected) Job definitions & handlers
-│   └── config/               ← (Optional eject) Configuration
+│   ├── db/                   ← <scope>/db, always scaffolded
+│   ├── config/               ← <scope>/config, always scaffolded
+│   └── ui/                   ← <scope>/ui, always scaffolded
 └── .git/                     ← Git repo initialized with first commit
 ```
 
+Always scaffolded: `db`, `config`, `ui`. Optionally scaffolded via `--packages`: `jobs`, `pwa`, `mobile`.
+
+The CLI scaffolds a **new project folder** and initializes a git repository inside it. If you run it from inside an existing repository, the project lands one level below that repository's root, where pnpm workspaces, turbo, and GitHub Actions cannot see `package.json`. The CLI detects this, prints a warning, and skips git init. Scaffold outside the repository, or scaffold to a temp folder and move the files to the repository root before the first commit.
+
 ### Post-Scaffolding Setup
 
-The CLI automatically generates secure secrets and runs `pnpm install`. After scaffolding:
+The CLI generates secrets into `.env`, initializes git with a first commit, and runs `pnpm install`. After scaffolding:
 
 ```bash
 cd my-awesome-app
 
-# 1. Start services
+# 1. Start services (Postgres, Redis, Mailpit)
 docker compose up -d
 
-# 2. Run development server
+# 2. Create the database
+pnpm db:migrate
+
+# 3. Start development (web + worker)
 pnpm dev
 ```
+
+`docker compose up -d` reads `docker-compose.yml` (Postgres, Redis) and auto-merges `docker-compose.override.yml` (Mailpit, dev only).
 
 ---
 
@@ -135,7 +269,14 @@ pnpm dev
 
 ### How It Works
 
-All Quark packages (`@usequark/quark-core`, `@usequark/quark-create-app`) are published to **npmjs.org** as public packages. No authentication is required to install or update them.
+Exactly **two** packages are published to **npmjs.org** as public packages:
+
+| Package | Version |
+|---------|---------|
+| `@usequark/quark-core` | 2.6.0 |
+| `@usequark/quark-create-app` | 1.25.4 |
+
+No authentication is required to install or update them. There are no published database, UI, jobs, or config packages, and no admin package.
 
 ```bash
 # Install/update Quark core
@@ -156,7 +297,7 @@ pnpm dev
 
 #### CI/CD (GitHub Actions)
 
-No authentication tokens needed - all packages are public:
+No authentication tokens needed, both packages are public:
 
 ```yaml
 # .github/workflows/ci.yml
@@ -185,7 +326,7 @@ RUN pnpm install
 
 Production note: the scaffolded deploy images use the generated [apps/web/Dockerfile](../apps/web/Dockerfile) and [apps/worker/Dockerfile](../apps/worker/Dockerfile), not this minimal example.
 
-Quark currently pins `node:24-alpine` for those Dockerfiles instead of using unversioned `cgr.dev/chainguard/node:latest`.
+Quark pins `node:24-alpine` for those Dockerfiles, by digest, instead of using unversioned `cgr.dev/chainguard/node:latest`.
 
 - The deploy contract is currently Node 24, and `latest` can silently move that contract.
 - During evaluation, `cgr.dev/chainguard/node:latest` resolved to Node 26, which would have changed the runtime major without an explicit Quark release decision.
@@ -214,8 +355,11 @@ pnpm install
 
 Quark uses a **Core-Only Registry** architecture:
 
-- **`@usequark/quark-core`** is published to npmjs.org (you consume it like any npm package)
-- **All other packages** (`db`, `ui`, `jobs`, `config`) are scaffolded locally in your project
+- **`@usequark/quark-core`** (2.6.0) is published to npmjs.org. You consume it like any npm package.
+- **`@usequark/quark-create-app`** (1.25.4) is published to npmjs.org. It is the scaffolder.
+- **Four packages are scaffolded into your project** and scoped to your npm scope: `db`, `config`, `ui`, `jobs`. Three of those (`db`, `config`, `ui`) are always present. `jobs` is optional.
+
+Nothing else is published. There is no published database, UI, jobs, or config package, and no admin package.
 
 This gives you:
 - Centralized infrastructure updates (core utilities)
@@ -225,19 +369,15 @@ This gives you:
 
 #### `@usequark/quark-core`
 
-Infrastructure provided via npmjs.org. Includes authentication, password hashing, validation, error handling, and job queue infrastructure.
+Infrastructure provided via npmjs.org. Includes authentication, password hashing, validation, error handling, logging, storage, and job queue infrastructure.
 
 ```javascript
 // In your application
-import {
-  createAuthConfig,
-  hashPassword,
-  verifyPassword,
-  createQueue,
-  createWorker,
-  validateBody,
-  AppError,
-} from "@usequark/quark-core";
+import { createAuthConfig, hashPassword, verifyPassword } from "@usequark/quark-core";
+import { createQueue, createWorker } from "@usequark/quark-core";
+import { validateBody } from "@usequark/quark-core";
+import { AppError, ValidationError } from "@usequark/quark-core/errors";
+import { createLogger } from "@usequark/quark-core";
 
 // Example: Set up authentication
 const authConfig = createAuthConfig({
@@ -249,82 +389,158 @@ const authConfig = createAuthConfig({
 // Example: Hash and verify passwords
 const hashed = await hashPassword("user-password");
 const isValid = await verifyPassword("user-password", hashed);
+
+// Example: Throw typed errors, never a bare Error
+throw new AppError("Something broke", 500, "INTERNAL_ERROR");
+
+// Example: Log through the logger, never the console
+const logger = createLogger({ name: "auth" });
+logger.info("Password verified", { isValid });
 ```
 
-See [packages/core/README.md](../packages/core/README.md) for full API reference.
+Note the subpath imports. `@usequark/quark-core/errors` and `@usequark/quark-core/testing` are separate entry points. Testing utilities in particular are deliberately **not** re-exported from the root barrel, so they stay out of production import graphs.
+
+The complete subpath list from the package's `exports` map:
+
+```
+@usequark/quark-core                 → src/index.js
+@usequark/quark-core/core            → src/core.js
+@usequark/quark-core/errors          → src/errors.js
+@usequark/quark-core/testing         → src/testing/index.js
+@usequark/quark-core/auth            → src/auth/index.js
+@usequark/quark-core/auth/middleware → src/auth/middleware.js
+@usequark/quark-core/admin           → src/admin.js
+@usequark/quark-core/db              → src/db.js
+@usequark/quark-core/email           → src/email.js
+@usequark/quark-core/health          → src/health.js
+@usequark/quark-core/locale          → src/locale.js
+@usequark/quark-core/logger          → src/logger.js
+@usequark/quark-core/metrics         → src/metrics.js
+@usequark/quark-core/queue           → src/queue/index.js
+@usequark/quark-core/sms             → src/sms.js
+@usequark/quark-core/storage         → src/storage.js
+@usequark/quark-core/storage/s3      → src/storage-s3.js
+@usequark/quark-core/stripe          → src/stripe.js
+```
+
+`/core` here is a **subpath inside** `@usequark/quark-core`. It is not a package of its own, and there is no admin, database, UI, jobs, or config package published to npm.
+
+See [packages/core/README.md](../packages/core/README.md) for the full API reference.
 
 ### Local Business Logic Packages
 
-These are scaffolded into your project and customized for your specific needs:
+These four are scaffolded into your project and customized for your needs. `@<scope>` below stands for your npm scope, chosen at scaffold time.
 
-#### `@yourscope/db` (Always Included)
+#### `<scope>/db` (Always Included)
 
-Database layer with Prisma client and query builders. You customize the schema for your domain.
+Database layer: Prisma client, query helpers, Zod schemas. You customize the schema for your domain.
 
 ```javascript
 // In your application
-import { prisma, user, post } from "@yourscope/db";
+import { prisma, user } from "@myscope/db";
 
-// Query users
+// The user helper: findById, findByEmail, findAll, create, update, delete, count
 const users = await user.findAll({ skip: 0, take: 10 });
-
-// Create a post
-const newPost = await post.create({
-  title: "Hello World",
-  content: "..."
-});
+const created = await user.create({ email: "hello@example.com", name: "Hello" });
 ```
 
-**Why it's local:** Every app has unique data models. Your Prisma schema in `packages/db/prisma/schema.prisma` is completely customized.
+`user.findById`, `user.findAll`, `user.create`, and `user.update` all apply `USER_SAFE_SELECT`, which excludes `password`. `user.findByEmail` returns **all** fields including `password`, so it is for internal auth only. Never send its result to a client.
 
-See [DATABASE.md](./DATABASE.md) for full API reference.
+`packages/db/src/queries.js` exports helpers for exactly seven models:
 
-#### `@yourscope/config` (Optional)
-
-Configuration and environment variable validation specific to your application.
-
-```javascript
-import { validateEnv, loadEnv } from "@yourscope/config";
-
-// Validate on app startup
-const env = loadEnv();
+```
+user, job, account, session, verificationToken, auditLog, file
 ```
 
-**Why it's optional:** Not all apps need custom config validation beyond what's in `.env`.
+There is no `Post` model and no `post` helper. The base schema is `User`, `Account`, `Session`, `VerificationToken`, `Job`, `File`, `AuditLog`. Add domain models through the `add-model` skill and add matching helpers to `queries.js` yourself.
 
-#### `@yourscope/jobs` (Optional)
-#### `@yourscope/jobs` (Optional)
+The generated Prisma client lives at `packages/db/src/generated/prisma`, the generator's declared `output`. Run `pnpm db:generate` after changing the schema.
 
-Job queue definitions and handlers specific to your business logic.
+See [DATABASE.md](./DATABASE.md) for the full reference.
+
+#### `<scope>/config` (Always Included)
+
+Configuration and environment variable validation specific to your application. Always scaffolded alongside `db`.
 
 ```javascript
-import { JOB_QUEUES, JOB_NAMES } from "@yourscope/jobs";
+import { config, loadEnv, getAppUrl, getAllowedOrigins } from "@myscope/config";
 
-// Job queue names
-console.log(JOB_QUEUES.EMAIL); // "email-queue"
+// Validate and load the environment
+loadEnv();
+
+// Static app identity, defaults from APP_NAME / APP_DESCRIPTION
+config.appName;
+config.appDescription;
+
+// URL helpers
+getAppUrl();
+getAllowedOrigins();
+```
+
+`packages/config/src/index.js` is the authoritative export list:
+
+```
+config
+getAllowedOrigins, getAppUrl, syncNextAuthUrl
+ENVIRONMENTS, getEnvironmentConfig, mergeConfig, resolveEnvironment
+getConfig, loadConfig, resetConfig
+applyRateLimit, rateLimit
+closeSharedRedisClient, getSharedRedisClient
+loadEnv
+```
+
+`loadEnv` is the exported entry point. There is an internal `validate-env.js` module, but `validateEnv` is **not** exported from the barrel. Do not import it.
+
+#### `<scope>/jobs` (Optional)
+
+Job queue definitions and handlers specific to your business logic. Include it with `--packages jobs` or add it later with `quark add jobs`.
+
+```javascript
+import { JOB_QUEUES, JOB_NAMES } from "@myscope/jobs";
+
+// Queue names
+JOB_QUEUES.EMAIL; // "email-queue"
+JOB_QUEUES.FILES; // "files-queue"
+JOB_QUEUES.PUSH; // "push-queue"
+JOB_QUEUES.DEFAULT; // "default-queue"
 
 // Job type names
-console.log(JOB_NAMES.SEND_WELCOME_EMAIL);
+JOB_NAMES.SEND_WELCOME_EMAIL; // "send-welcome-email"
+JOB_NAMES.SEND_RESET_PASSWORD_EMAIL; // "send-reset-password-email"
+JOB_NAMES.CLEANUP_ORPHANED_FILES; // "cleanup-orphaned-files"
+JOB_NAMES.SEND_PUSH_NOTIFICATION; // "send-push-notification"
 ```
 
-**Why it's optional:** Not all apps use background jobs. If you do, you'll customize job types and handlers for your domain.
+The queue machinery itself (`createQueue`, `createWorker`, `addJob`, `getJobStatus`, `closeAllQueues`, `checkQueueHealth`) comes from `@usequark/quark-core` and runs on BullMQ `^6.3.8`.
 
-#### `@yourscope/ui` (Optional)
+**Why it's optional:** Not all apps use background jobs. If you do, you customize the job types and handlers for your domain.
 
-React components and UI primitives for your application. The full component library with dark mode support built in.
+#### `<scope>/ui` (Always Included)
 
-**Available components:**
-- `Button`, `Input`, `Label`, `Textarea`, `Select`, `Checkbox` - form primitives
-- `Badge` - status labels
-- `Card` / `CardHeader` / `CardTitle` / `CardContent` / `CardFooter` - content containers
-- `Table` / `TableHeader` / `TableBody` / `TableRow` / `TableHead` / `TableCell` - data tables
-- `Skeleton` - loading placeholders
-- `Dialog` *(client)* - modal dialogs
-- `Toast` / `useToast` *(client)* - notifications
-- `ThemeProvider` / `useTheme` *(client)* - dark/light mode context
-- `QuarkLogo` *(server)* - inline SVG logo, theme-aware
+React components and UI primitives with dark mode support built in. Always scaffolded.
 
-**Why it's optional:** Not all apps need a shared component library. If scaffolded, you customize components to match your design system.
+`packages/ui/src/index.js` is the authoritative list, and it has 24 modules:
+
+```
+badge, button, card, checkbox, container, dialog, error-banner, footer,
+form-field, input, label, lightbox, logo, navbar, password-input, rich-text,
+select, skeleton, spinner, table, textarea, theme, theme-constants, toast
+```
+
+Grouped by what they are for:
+
+- **Form primitives**: `Button`, `Input`, `Label`, `Textarea`, `Select`, `Checkbox`, `PasswordInput`, `FormField`
+- **Status and content**: `Badge`, `Card` / `CardHeader` / `CardTitle` / `CardContent` / `CardFooter`, `Container`
+- **Data**: `Table` / `TableHeader` / `TableBody` / `TableRow` / `TableHead` / `TableCell`
+- **Loading**: `Skeleton`, `Spinner`
+- **Client-side**: `Dialog`, `Lightbox`, `Toast` / `useToast`, `ThemeProvider` / `useTheme`
+- **Layout**: `Navbar` / `MobileNavbar`, `Footer`, `ErrorBanner`
+- **Content**: `RichText`
+- **Brand and theme tokens**: `QuarkLogo`, `theme-constants`
+
+Always import from `<scope>/ui`, never deep-import `<scope>/ui/src/button`.
+
+Shared layout primitives (`Navbar`, `MobileNavbar`, `ErrorBanner`, `Footer`, `RichText`) take a `className` for one-off overrides. Extend those before writing a new component.
 
 ---
 
@@ -343,7 +559,7 @@ A blocking inline `<script>` in `layout.js` reads `localStorage` and `prefers-co
 Wrap your app (or a subtree) in `ThemeProvider` to enable programmatic theme control:
 
 ```jsx
-import { ThemeProvider } from "@yourscope/ui";
+import { ThemeProvider } from "@myscope/ui";
 
 export default function RootLayout({ children }) {
   return (
@@ -362,7 +578,7 @@ export default function RootLayout({ children }) {
 
 ```jsx
 "use client";
-import { useTheme } from "@yourscope/ui";
+import { useTheme } from "@myscope/ui";
 
 export function MyToggle() {
   const { theme, setTheme } = useTheme();
@@ -390,7 +606,7 @@ Use Tailwind's `dark:` utilities anywhere - they react to the `data-theme` attri
 
 **Key Distinction:**
 - **Core infrastructure** (`@usequark/quark-core`) → You receive updates via `pnpm update`
-- **Business logic** (`@yourscope/db`, `@yourscope/ui`, etc.) → You own and evolve these
+- **Business logic** (`@myscope/db`, `@myscope/ui`, etc.) → You own and evolve these
 
 ---
 
@@ -434,11 +650,13 @@ Provider config is validated at **service-creation time** - misconfigured provid
 
 ```javascript
 import { EmailProvider, registerEmailProvider, createEmailService } from "@usequark/quark-core";
+import { AppError } from "@usequark/quark-core/errors";
 
 class MyProvider extends EmailProvider {
+  // Throw AppError, never a bare Error, even in a provider subclass
   validateConfig() {
     if (!process.env.MY_API_KEY) {
-      throw new Error("MY_API_KEY is required for MyProvider");
+      throw new AppError("MY_API_KEY is required for MyProvider", 500, "EMAIL_CONFIG");
     }
   }
 
@@ -465,7 +683,9 @@ const email = createEmailService({
 
 ### Local Development (Mailpit)
 
-Mailpit is included in `docker-compose.yml` as a local SMTP sink. All outbound email is captured and viewable at `http://localhost:8025`. No `.env` changes needed for the default `smtp` provider in dev.
+Mailpit is a local SMTP sink defined in `docker-compose.override.yml`, not `docker-compose.yml`. Compose auto-merges the override on `docker compose up`, so `docker compose up -d` starts it alongside Postgres and Redis. All outbound email is captured and viewable at `http://localhost:8025` (or whatever `MAIL_UI_PORT` is set to). No `.env` changes are needed for the default `smtp` provider in dev.
+
+Related env vars: `MAIL_HOST`, `MAIL_SMTP_PORT` (default 1025), `MAIL_UI_PORT` (default 8025). For production SMTP relay, use `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD` instead of the `MAIL_*` set.
 
 ---
 
@@ -477,17 +697,26 @@ Mailpit is included in `docker-compose.yml` as a local SMTP sink. All outbound e
 # In your scaffolded project
 quark-update
 
-# Or check for updates without applying
+# Report available updates, apply nothing
 quark-update --check
+
+# Report drift in scaffold-managed files, overwrite nothing
+quark-update --scaffold-check
+
+# Fail CI when drift is detected (exit 1)
+quark-update --scaffold-check --fail-on-drift
+
+# Skip the uncommitted-changes safety check
+quark-update --force
 ```
 
 The CLI will:
 - Check for uncommitted changes (warn you if found)
 - Run `pnpm update @usequark/quark-core`
-- Update `.quark-link.json`
+- Update `.quark-link.json` with the new core version
 - Provide next steps
 
-**Note:** This only updates core infrastructure. Your local packages (`db`, `ui`, `jobs`) are not affected.
+**Note:** This only updates core infrastructure. Your scaffolded packages (`db`, `config`, `ui`, `jobs`) are not affected. The `--scaffold-check` flag is separate and read-only: it reports drift between scaffold-managed files and the current CLI, which is useful in CI.
 
 ### Method 2: Manual Update
 
@@ -540,17 +769,21 @@ Tracks version and metadata:
 
 ```json
 {
-  "quarkVersion": "1.2.0",
+  "quarkVersion": "2.6.0",
   "quarkSourcePath": "../../quark",
   "scaffoldedDate": "2026-02-11T10:30:00Z",
-  "packages": ["ui", "jobs"],
+  "packages": ["db", "config", "ui", "jobs"],
   "updatedDate": "2026-02-12T15:45:00Z"
 }
 ```
 
-Updated when you run `quark-update`. Useful for:
-- Tracking which Quark version your project uses
-- Auditing when packages were ejected
+`quarkVersion` tracks the **`@usequark/quark-core` version your project is on** (currently 2.6.0). It is what `quark-update` reads and writes. The scaffolded CLI is 1.25.4 and is not a runtime dependency of your project, so it does not appear here.
+
+The `packages` list records the scaffolded set. `db`, `config`, and `ui` are always present. `jobs` appears only if you asked for it. `pwa` and `mobile` are recorded as feature selections without scaffolding code.
+
+Created by the scaffolder, updated by `quark-update`, and excluded from scaffold drift checks (along with `.env`). Useful for:
+- Tracking which core version your project uses
+- Auditing when packages were added with `quark add`
 - Debugging compatibility issues
 
 ---
@@ -580,15 +813,20 @@ quark/
 ```
 my-app/
 ├── apps/
-│   └── web/              # Your Next.js application
+│   ├── web/              # Your Next.js 16 application
+│   └── worker/           # Your BullMQ worker (if you took --packages jobs)
 ├── packages/
-│   ├── ui/               # Your UI components (ejected)
-│   ├── jobs/             # Your job handlers (ejected)
-│   └── config/           # Your config (if ejected)
-├── .quark-link.json      # Version tracking (auto-generated)
-├── docker-compose.yml    # Local development services
+│   ├── db/               # <scope>/db, always present
+│   ├── config/           # <scope>/config, always present
+│   ├── ui/               # <scope>/ui, always present
+│   └── jobs/             # <scope>/jobs, only if requested
+├── .quark-link.json      # Core version tracking (auto-generated)
+├── docker-compose.yml    # PostgreSQL, Redis
+├── docker-compose.override.yml  # Mailpit, dev only
 └── package.json
 ```
+
+There are no `admin`, `cms`, `crm`, or `ai` packages in a scaffolded project. The scaffolding templates ship exactly: `base-project`, `config`, `jobs`, `mobile`, `pwa`, `ui`, `worker`.
 
 ---
 
@@ -598,26 +836,47 @@ my-app/
 
 Create `.env` from `.env.example`:
 
+The scaffolder writes a working `.env` for you, with generated secrets and with ports chosen to avoid collisions with whatever else is running. Copy `.env.example` to `.env` only if you are starting from a checkout that has no `.env`. The shape:
+
 ```bash
 # Database
-POSTGRES_USER=quark
-POSTGRES_PASSWORD=development
-POSTGRES_DB=my_app_dev
+POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
+POSTGRES_USER=quark_user
+POSTGRES_PASSWORD=<generated>
+POSTGRES_DB=quark_dev
+# DATABASE_URL overrides the constructed URL if set
 
 # Redis
+REDIS_HOST=localhost
 REDIS_PORT=6379
+# REDIS_URL overrides the constructed URL if set
 
-# Email (Mailpit for local testing)
+# Mail (Mailpit in development)
+MAIL_HOST=localhost
 MAIL_SMTP_PORT=1025
 MAIL_UI_PORT=8025
 
-# Application
-NODE_ENV=development
-DATABASE_URL=postgresql://quark:development@localhost:5432/my_app_dev
-REDIS_URL=redis://localhost:6379
+# Auth
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=<generated, at least 32 characters>
+# Derived from APP_URL when unset. Must match the origin you browse on exactly.
 
+# Application identity
+APP_NAME=My App
+APP_DESCRIPTION=...
+
+# SEO: set true only in production
+ALLOW_INDEXING=false
+
+# Worker
+WORKER_CONCURRENCY=5
+
+# Storage: local or s3
+STORAGE_PROVIDER=local
 ```
+
+`.env` and `.quark-link.json` are both excluded from scaffold drift checks. Never commit `.env`.
 
 ---
 
@@ -660,44 +919,91 @@ pnpm install
 
 ### Next.js build fails after Quark update
 
-Make sure `next.config.js` includes Quark packages in `transpilePackages`:
+Make sure `next.config.js` includes your workspace packages in `transpilePackages`. Names use **your** scope, not `@usequark/`:
 
 ```javascript
 // apps/web/next.config.js
 const nextConfig = {
   transpilePackages: [
     "@usequark/quark-core",
-    "@usequark/quark-db",
-    "@usequark/quark-ui",
-    "@usequark/quark-jobs",
+    "@myscope/db",
+    "@myscope/ui",
+    "@myscope/jobs",
   ],
 };
 ```
+
+This is only needed for workspace-linked packages. `@usequark/quark-core` is consumed from npm and needs no entry beyond what the scaffold generates.
+
+### Prisma client out of date after a schema change
+
+The client is generated into `packages/db/src/generated/prisma`, not into `node_modules`, so it does not refresh automatically:
+
+```bash
+pnpm db:generate
+```
+
+Then re-run `pnpm db:migrate` if the schema change needs a migration.
 
 ---
 
 ## Quick Reference
 
+### Creating and Updating
+
 | Task | Command |
 |------|---------|
-| Create new project | `pnpm new my-app` (from Quark root) or `quark-create-app my-app` |
-| Install dependencies | `pnpm install` |
-| Update Quark packages | `quark-update` or `pnpm update @usequark/quark-*` |
+| Create a project (from the Quark repo) | `pnpm new my-app` |
+| Create a project (installed CLI) | `quark my-app` |
+| Create without installing | `npx @usequark/quark-create-app@latest my-app` |
+| Choose optional packages | `quark my-app --packages ui,jobs,pwa,mobile` |
+| Add a package later | `quark add jobs` |
+| Print a skill | `quark skill bookings` |
+| Deploy to Railway (dry run) | `quark deploy railway --dry-run` |
+| Update Quark core | `quark-update` |
 | Check for updates | `quark-update --check` |
+| Check scaffold drift | `quark-update --scaffold-check --fail-on-drift` |
+
+There is no `create` subcommand and no `--preset` flag.
+
+### Day-to-Day in a Scaffolded Project
+
+| Task | Command |
+|------|---------|
+| Install dependencies | `pnpm install` |
 | Start development | `pnpm dev` |
 | Run tests | `pnpm test` |
-| Run linter | `pnpm lint` |
+| Run integration tests | `pnpm test:integration` |
+| Lint and format | `pnpm lint` |
+| Build | `pnpm build` |
+| Generate Prisma client | `pnpm db:generate` |
+| Run migrations | `pnpm db:migrate` |
 | Start local services | `docker compose up -d` |
 | Stop services | `docker compose down` |
+
+### Day-to-Day in the Quark Monorepo
+
+| Task | Command |
+|------|---------|
+| Run tests | `pnpm test` |
+| Lint and format | `pnpm lint` |
+| Repo convention checks | `pnpm standards` |
+| Sync CLI templates | `pnpm --filter @usequark/quark-create-app sync-templates` |
+| Check template drift | `pnpm --filter @usequark/quark-create-app sync-templates:check` |
+| CLI unit tests | `pnpm --filter @usequark/quark-create-app test` |
+| CLI full E2E | `pnpm --filter @usequark/quark-create-app test:e2e:full` |
+| Create a changeset | `pnpm changeset` |
 
 ---
 
 ## Next Steps
 
 - **Read** [packages/core/README.md](../packages/core/README.md) for API documentation
+- **Read** [packages/cli/README.md](../packages/cli/README.md) for the full CLI reference
 - **Read** [ARCHITECTURE.md](./ARCHITECTURE.md) to understand Quark design
 - **Read** [MAINTAINABILITY.md](./MAINTAINABILITY.md) for best practices
-- **Review** [docs/API.md](./API.md) for package-specific APIs
+- **Read** [TESTING_INFRASTRUCTURE.md](./TESTING_INFRASTRUCTURE.md) for the test suite layout and counts
+- **Review** [API.md](./API.md) for package-specific APIs
 
 ---
 
