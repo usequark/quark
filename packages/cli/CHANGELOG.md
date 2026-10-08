@@ -1,5 +1,208 @@
 # @usequark/quark-create-app
 
+## 1.25.5
+
+### Patch Changes
+
+- [#239](https://github.com/usequark/quark/pull/239) [`3269068`](https://github.com/usequark/quark/commit/3269068620be9b6845ac5792c0dd33fcf889752b) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Warn when a project will never sweep its orphaned files.
+  
+  `File.uploadedBy` is `onDelete: SetNull`, so deleting a user leaves their file rows
+  and blobs behind rather than removing them. `CLEANUP_ORPHANED_FILES` is the only
+  thing that sweeps those, and it runs in the worker — which is scaffolded only
+  alongside the optional `jobs` feature.
+  
+  Declining `jobs` therefore left orphaned rows and blobs accumulating with nothing to
+  surface them: the rows are valid, and no route reads `uploadedById = null`. The
+  realistic path there was declining the prompt or passing `--packages ui`, since
+  `--no-prompts` defaults to including `jobs`.
+  
+  Two warnings now, both non-blocking:
+  
+  - **At scaffold time**, when `jobs` is not selected, naming the consequence and the
+    command to add it later.
+  - **At deploy time**, `discoverQuarkDeployProject` returns a `warnings` array
+    alongside `diagnostics`, and `quark deploy inspect` prints it. A warning does not
+    fail the deploy: `jobs` is optional and a project with no uploads has no orphan
+    problem.
+  
+  `warnings` is deliberately a separate field from `diagnostics`, because
+  `resolveQuarkDeployProject` throws on any diagnostic — folding this in would make
+  worker-less projects undeployable.
+
+- [#240](https://github.com/usequark/quark/pull/240) [`2585390`](https://github.com/usequark/quark/commit/25853908071eba908a65786217d14d4de6578f39) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add `pnpm audit:check` and enforce it in CI.
+  
+  `pnpm audit` reports 3 advisories, all in `apps/mobile`'s Expo build toolchain and all
+  documented as accepted in `docs/dependency-audit.md` — `node-forge` and `braces`, which
+  have no patched release at all, and `decode-uri-component`, whose fix is ESM-only and
+  would break the CommonJS `query-string` that calls it.
+  
+  A bare `pnpm audit` step in CI exits non-zero for any advisory, so it would fail forever
+  on those three and get ignored. `scripts/check-audit.mjs` instead allowlists the three
+  GitHub advisory IDs, passes today, and turns red when a fourth appears. When an accepted
+  one disappears — an upstream fix landed — it prints a notice naming the entry to retire
+  rather than failing, so the drift is visible.
+  
+  The check treats "the audit did not run" as a failure, not a clean tree. `pnpm audit`
+  reports its own errors as JSON on stdout with exit 1, e.g.
+  `{"error":{"code":"ERR_PNPM_AUDIT_NO_LOCKFILE"}}`, which has no `advisories` key; reading
+  that as zero advisories turns a missing lockfile or unreachable registry into a green
+  build that verified nothing.
+  
+  It fails closed on unrecognised report shapes for the same reason: an `advisories` key
+  that is present but null, or any non-object, is rejected rather than defaulted to an
+  empty set. So is an advisory with no usable `github_advisory_id` — a legacy or CVE-only
+  record can never match the allowlist, so dropping it would report a clean tree while a
+  vulnerability is present. An advisory the check cannot identify is one it cannot clear.
+  17 tests cover both directions.
+  
+  The allowlist stays in code rather than `auditConfig.ignoreCves` or `audit.level`, which
+  mute the audit database and would hide the accepted three as well as anything new.
+
+- [#246](https://github.com/usequark/quark/pull/246) [`bb7d1c5`](https://github.com/usequark/quark/commit/bb7d1c56e8ec46a342796140f5cff07a0b3dcc5b) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - fix(deps): bump `next` to 16.3.8 — four published advisories
+  
+  Next.js 16.3.6 is affected by four advisories, all patched in 16.3.8:
+  
+  | Severity | Advisory | Issue |
+  |---|---|---|
+  | HIGH | GHSA-cjq9-62q9-8jv4 | SSRF in Image Optimization |
+  | HIGH | (second HIGH) | — |
+  | MODERATE | GHSA-f87g-xv8r-7p7x | Information disclosure in App Router metadata image routes via `dynamicParams` bypass |
+  | MODERATE | GHSA-mcj8-r9mp-w47p | Cache poisoning in SSG/ISR rendering |
+  
+  `scripts/check-audit.mjs` fails the `Lint & Standards` check on these, which
+  blocks every PR — not just dependency bumps.
+  
+  Two pins needed changing, not one:
+  
+  - `apps/web` — `16.3.6` → `16.3.8`
+  - `packages/ui` — `16.3.6` → `16.3.8`
+  
+  `packages/ui` carries `next` as a regular dependency (it renders through the
+  App Router), so bumping only `apps/web` left 16.3.6 in the tree and the audit
+  still failed. Scaffolded projects inherit both pins via `sync-templates`.
+  
+  After the bump: `No new advisories. 3 accepted (0 now resolved).`
+
+- [#247](https://github.com/usequark/quark/pull/247) [`e720122`](https://github.com/usequark/quark/commit/e720122e3535260ced5bb9a7ad84bec69390a806) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Author the release commit as the token's own user, so the release PR is mergeable.
+  
+  The release PR showed `Bobnoddle` as its author while its head commit was
+  authored by `github-actions[bot]`, and GitHub held every `pull_request` run on
+  it at `action_required` with no check result — so the PR was permanently
+  `BLOCKED` and the release could not be merged. Eight changesets were pending
+  against it.
+  
+  Two separate identities were wrong, and GitHub gates on both:
+  
+  **The pusher.** GitHub decides whether a `pull_request` run may start from the
+  credential that pushed the head commit, not from the PR's author.
+  `changesets/action` opens the PR with its `github-token` input
+  (`RELEASE_PR_TOKEN`) but pushes the branch with the git CLI — and
+  `actions/checkout` persists an `http.https://github.com/.extraheader` carrying
+  the job's `GITHUB_TOKEN` into the local git config, which outranks whatever the
+  release step authenticates with. So the push went out as `github-actions[bot]`.
+  `persist-credentials: false` fixes that.
+  
+  **The commit author.** The action runs with `setupGitUser` enabled, whose
+  `setupUser()` writes `user.name`/`user.email` = `github-actions[bot]` into the
+  repo config. Local config outranks the environment for those two, so exporting
+  `GIT_AUTHOR_*` alone does not help — the commit came out bot-authored even with
+  all four set. The repo config is now written too, which is what actually takes
+  effect.
+  
+  The existing `Verify the release PR token` guard could not see either one: it
+  inspects the secret rather than the resulting commit or the pushing credential,
+  so it logged `Release PRs will be opened by Bobnoddle` in the very run that
+  pushed a bot-authored commit. That is a green run reproducing the exact bug the
+  step exists to prevent. A new probe fails the run if the author or committer
+  identity is still unresolvable, so a bot-authored release commit is now a red
+  run rather than a green one followed by an unmergeable PR.
+  
+  No change to what gets published, or when. This only affects who the commit is
+  attributed to.
+
+- [#244](https://github.com/usequark/quark/pull/244) [`ae0e3be`](https://github.com/usequark/quark/commit/ae0e3bef349d8c2ec8691009ab854322a0cdf759) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Correct the `--packages` help text. It advertised `mobile` as a create-time option, but the
+  create command rejects `mobile` outright and tells you to run `quark add mobile` after
+  scaffolding. The help now lists the actual create-time set (`ui,jobs,pwa`), states that
+  `db`, `config`, and `ui` are always scaffolded, and points mobile at the post-create path.
+  
+  Docs only otherwise. The embedded skill index shipped a table advertising five skills that
+  were removed from the template (`admin-dashboard`, `bookings`, `crm`, `cms`, `ai`), so an
+  agent reading it would try to load files that were not there. It now lists the eleven skills
+  that actually ship.
+
+- [#235](https://github.com/usequark/quark/pull/235) [`57ebd06`](https://github.com/usequark/quark/commit/57ebd0615c66fcc6ede8b1414648f1031578da39) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Refuse admin self-deletion on `DELETE /api/users/[id]`, and return `401` rather
+  than an unhandled rejection when a CSRF check fails.
+  
+  **Admin self-deletion is refused.** The route resolved its target purely from the
+  path segment and only checked the caller's role, so an admin could delete their
+  own row — and if they were the last admin, leave the deployment with nobody able
+  to administer it. The guard compares the session identity against the path
+  segment and returns `409`. It runs before the existence check, so a refused
+  request never reads from the database and cannot be used to probe which ids are
+  real.
+  
+  This is a per-request guard, not a check on the remaining admin count. Two
+  concurrent deletes of the two last admins can still both pass it; enforcing that
+  invariant needs a transaction around the count and the delete.
+  
+  **CSRF failures now return `401`.** `withCsrfProtection` calls
+  `requireCsrfToken` in its own wrapper, outside the route handler's `try`/`catch`,
+  so `handleError` never saw the rejection and the client got an unhandled
+  rejection instead of a status code. Fixed in `@usequark/quark-core`; see that
+  package's changeset.
+
+- [#245](https://github.com/usequark/quark/pull/245) [`14ae3c3`](https://github.com/usequark/quark/commit/14ae3c36805ffcd91d45e1dbc5b5661f60088628) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Normalise CHANGELOG links to the current repository URL
+  
+  153 links across three CHANGELOG files still pointed at
+  `github.com/Bobnoddle/quark`, from before the repository moved to the `usequark`
+  org. GitHub redirects them correctly, so no link was broken — but the repo is
+  public now, and a reader expanding a diff link sees the pre-transfer path.
+  
+  This rewrites the host only: `github.com/Bobnoddle/quark` becomes
+  `github.com/usequark/quark`. Commit SHAs, PR numbers, and the
+  `Thanks [@Bobnoddle]` attributions are untouched, because those are the
+  historical record and they remain accurate.
+  
+  Pure substitution — 102 lines, all URL host. No behaviour change and no
+  published-file content change beyond the link target.
+
+- [#244](https://github.com/usequark/quark/pull/244) [`ae0e3be`](https://github.com/usequark/quark/commit/ae0e3bef349d8c2ec8691009ab854322a0cdf759) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Upgrade Next.js from `16.3.6` to `16.3.8`, clearing six advisories and failing
+  `pnpm audit:check` in CI. Two are production-reachable: SSRF in Image Optimization
+  (`GHSA-cjq9-62q9-8jv4`) and SSG/ISR cache poisoning leading to cross-user content
+  substitution and persistent DoS (`GHSA-mcj8-r9mp-w47p`). The other four are Draft Mode
+  content leakage, metadata image route disclosure, a self-hosted cache poisoning variant,
+  and a dev-server MCP disclosure.
+  
+  The bump is a patch within Next 16, so the scaffolded template changes with it: new
+  projects no longer pin the vulnerable version. Both `apps/web` and `packages/ui` move, and
+  `sync-templates` propagates to `templates/base-project/apps/web/package.json` and
+  `templates/ui/package.json`.
+  
+  The three deliberately accepted Expo build-toolchain advisories are unaffected. Full
+  write-up in `docs/dependency-audit.md`.
+
+- [#234](https://github.com/usequark/quark/pull/234) [`ce912c5`](https://github.com/usequark/quark/commit/ce912c51a9a77e5da997bcc835797a0cbdd71f93) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Triage dependency vulnerabilities: 21 advisories down to 3.
+  
+  - Remove the auto-installed `nodemailer@7.0.13` optional peer that `next-auth` and
+    `@auth/core` pull in, clearing 13 advisories. Nothing uses Auth.js's Nodemailer
+    provider, so the peer edge is deleted rather than forced past its declared range.
+  - Override `qs` to `>=6.16.0` via `stripe`, inside the range `stripe` itself declares.
+  - Override `uuid` to `>=11.1.1`. `xcode@3.0.1` calls only `v4()`, and that call site was
+    exercised against a real generated pbxproj to confirm it still returns a valid ID.
+  - Refresh `shell-quote` and `source-map-js` in the lockfile; no override needed.
+  - `pnpm standards` now fails the build if anything imports
+    `next-auth/providers/nodemailer`, since removing that peer edge is what makes it
+    unresolvable. It matches static, dynamic and re-export forms, and the message names
+    the fix. 20 tests in `scripts/check-standards.test.mjs` cover both the forms it must
+    catch and the near-misses it must ignore.
+  
+  Three advisories remain in the Expo mobile build toolchain and are documented as
+  accepted risks in `docs/dependency-audit.md`: `node-forge` and `braces`, which have no
+  patched release at all, and `decode-uri-component`, whose fix is ESM-only and would
+  break the CommonJS `query-string` that depends on it.
+  
+  Scaffolded projects inherit these overrides, so they audit clean.
+
 ## 1.25.4
 
 ### Patch Changes

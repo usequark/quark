@@ -1,5 +1,48 @@
 # @usequark/quark-core
 
+## 2.6.1
+
+### Patch Changes
+
+- [#238](https://github.com/usequark/quark/pull/238) [`a5e2eb3`](https://github.com/usequark/quark/commit/a5e2eb31d7447f86f52a1fc7f02e7306df548e73) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Remove named client projects from a source comment
+  
+  `packages/core/src/db.js` credited the database utilities with replacing
+  per-project re-implementations in three named client engagements. The repo is
+  about to be made public, which would publish those names — and other people's
+  engagements — as a reference list.
+  
+  The comment now describes what the utilities actually provide, which is what a
+  reader of the package needs to know anyway. Behaviour is unchanged; this is a
+  docstring edit.
+
+- [#245](https://github.com/usequark/quark/pull/245) [`14ae3c3`](https://github.com/usequark/quark/commit/14ae3c36805ffcd91d45e1dbc5b5661f60088628) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Normalise CHANGELOG links to the current repository URL
+  
+  153 links across three CHANGELOG files still pointed at
+  `github.com/Bobnoddle/quark`, from before the repository moved to the `usequark`
+  org. GitHub redirects them correctly, so no link was broken — but the repo is
+  public now, and a reader expanding a diff link sees the pre-transfer path.
+  
+  This rewrites the host only: `github.com/Bobnoddle/quark` becomes
+  `github.com/usequark/quark`. Commit SHAs, PR numbers, and the
+  `Thanks [@Bobnoddle]` attributions are untouched, because those are the
+  historical record and they remain accurate.
+  
+  Pure substitution — 102 lines, all URL host. No behaviour change and no
+  published-file content change beyond the link target.
+
+- [#235](https://github.com/usequark/quark/pull/235) [`57ebd06`](https://github.com/usequark/quark/commit/57ebd0615c66fcc6ede8b1414648f1031578da39) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - `withCsrfProtection` returns a `401` Response on a failed check instead of
+  throwing.
+  
+  The check runs in the wrapper, outside the route handler's own `try`/`catch`, so
+  a rejection escaped `handleError` entirely. Every `withCsrfProtection` route —
+  `users/route.js`, `users/[id]/route.js`, `users/me/route.js`, `files/route.js`,
+  `files/[id]/route.js` and `auth/register/route.js` — reached the client as an
+  unhandled rejection rather than the status code its fetch handling expects.
+  
+  Only `UnauthorizedError` is converted. Any other error from the check keeps
+  propagating, so a genuine fault is not reported to the caller as an
+  authentication problem.
+
 ## 2.6.0
 
 ### Minor Changes
