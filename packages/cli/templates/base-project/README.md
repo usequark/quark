@@ -1,8 +1,4 @@
 <p align="center">
-  <img src="apps/web/public/images/logos/logo.png" alt="__QUARK_PROJECT_NAME__" width="400" />
-</p>
-
-<p align="center">
   <img src="https://img.shields.io/badge/Node.js-22-339933?style=flat&logo=node.js&logoColor=white" alt="Node.js 22" />
   <img src="https://img.shields.io/badge/Next.js-16-000000?style=flat&logo=next.js&logoColor=white" alt="Next.js 16" />
   <img src="https://img.shields.io/badge/Prisma-7-2D3748?style=flat&logo=prisma&logoColor=white" alt="Prisma 7" />
@@ -61,8 +57,7 @@ apps/
 __QUARK_OPTIONAL_APPS__packages/
   config/     → Shared environment & app configuration
   db/         → Prisma schema, migrations & queries
-  jobs/       → Job definitions shared between web & worker
-  ui/         → Shared UI component library
+__QUARK_OPTIONAL_PACKAGES__
 ```
 
 ## Tech Stack
@@ -75,8 +70,8 @@ __QUARK_OPTIONAL_APPS__packages/
 - **Monorepo** - pnpm workspaces + Turborepo
 - **Linting** - Biome
 
-## License
+## Deployment
 
-Private - All rights reserved.
+See [DEPLOYMENT.md](DEPLOYMENT.md) for Railway setup instructions.
 
 <!-- Scaffolded with Quark on __QUARK_SCAFFOLD_DATE__ -->
