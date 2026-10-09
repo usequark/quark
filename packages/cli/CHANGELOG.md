@@ -1,5 +1,96 @@
 # @usequark/quark-create-app
 
+## 1.25.8
+
+### Patch Changes
+
+- [#255](https://github.com/usequark/quark/pull/255) [`e0aa5f9`](https://github.com/usequark/quark/commit/e0aa5f91d581968567b7c6fcf39624ab6f3d8165) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - fix(auth): bind OAuth sign-in tokens to this deployment
+  
+  `POST /api/auth/google` and `POST /api/auth/apple` verified that a token was
+  genuine and then minted a first-party session for whatever address it carried.
+  Neither checked the token's audience, so an id token Google or Apple issued to a
+  *different* app for the victim's address was accepted here.
+  
+  The exploit needs no stolen credential. The attacker gets the victim to sign in
+  to any app registered with the same provider — one they control — and posts the
+  resulting token to this route. The signature verifies, `findByEmail` finds the
+  victim, and the attacker is logged in as them. Google guarantees the `email`
+  claim belongs to the token's subject, which is precisely what makes it usable.
+  
+  Three changes, all fail-closed:
+  
+  - **`aud` is checked against the configured client id.** Google via
+    `tokeninfo.aud`; Apple by passing `audience` to `jwtVerify`, which enforces it
+    during verification.
+  - **Both routes return `503` when no client id is configured.** These routes are
+    public — nothing about them requires your frontend to call them, or anyone to
+    have enabled social sign-in — so "nobody configured it" is not a reason to
+    keep serving. Serving unconfigured meant accepting tokens with no audience check
+    at all, strictly weaker than the configured case that at least returns 401.
+  - **Apple's `nonce` is no longer discarded.** The client sends a raw nonce and
+    hands Apple its SHA-256 digest; the route re-hashes what it received and
+    compares in constant time. The claim is required rather than optional, because
+    a token with no `nonce` proves nothing about which sign-in attempt it came
+    from, and treating "client sent no nonce" as "skip the check" would leave
+    Apple's replay defence off for any caller who simply omits the field.
+  
+  Every rejection returns one generic `401`. A distinct message for an audience
+  mismatch or a nonce mismatch tells an attacker their forged token was
+  structurally valid and names the check left to work around.
+  
+  The two `KNOWN GAP` tests that recorded this are inverted into assertions that
+  the token is refused and that no user row and no token are created. Each new
+  guard is mutation-tested: removing the audience comparison fails 4 Google and 3
+  Apple tests, removing the 503 gate fails 2 each, removing the nonce checks fails
+  4, and removing the blank-trim guard in the config accessor fails 2.
+  
+  `GET /api/auth/apple` now requires `nonce` in the request body. The bundled
+  mobile client already sends one.
+  
+  Apple's `APPLE_CLIENT_ID` accepts a comma-separated list of audiences. Native
+  iOS identity tokens carry the bundle identifier as `aud`; web-flow tokens carry
+  the Services ID. A single-value audience would reject one of the two, so both
+  are accepted when configured as a list. `getAppleClientIds()` in
+  `@usequark/quark-config/oauth` returns the parsed list and `isAudienceValid`
+  accepts either a single id or an array.
+  
+  Behaviour change: an app with no OAuth client id configured can no longer use
+  these endpoints. That is the point — but it is a change, so set the client id
+  before deploying if you rely on mobile sign-in.
+
+- [#257](https://github.com/usequark/quark/pull/257) [`d3183ff`](https://github.com/usequark/quark/commit/d3183ff107ce49e13e939aa53987d429e89d7d3e) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Declare the Postgres and Redis databases in the generated `.railway/railway.ts`, so a second `quark deploy railway` no longer plans to delete them.
+  
+  `generateIacFile()` emitted `${{Postgres.DATABASE_URL}}` and `${{Redis.REDIS_URL}}` references but never declared the resources they point at. Railway treats an omitted resource in a whole-project file as absent, and absent means delete — so the second apply of every scaffolded project planned to destroy the databases the first one created.
+  
+  The scaffold template `packages/cli/templates/base-project/.railway/railway.ts` carried the same omission, and is updated to match. A test now fails if a generated file references a database without declaring it.
+
+- [#256](https://github.com/usequark/quark/pull/256) [`abc9114`](https://github.com/usequark/quark/commit/abc911475581ebf324f911584f0f6133ecdbeba2) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - refactor(cli): overhaul base-project README template to match calibre-surveying style
+  
+  The scaffolded README was 164 lines of dense onboarding content — scaffold
+  metadata, PWA docs, "First Files to Edit", "Feature Guides", internal CLI
+  commands, a 40-line Railway deploy section, and an AI-Assisted Development
+  prompt. It read like a manual, not a front door.
+  
+  The new template is ~55 lines and mirrors the calibre-surveying README:
+  a branding block (logo, tagline, tech badges), Quick Start, Services table,
+  Development commands, Database table, Project Structure with inline comments,
+  Tech Stack bullets, and a Deployment pointer. Scaffold metadata moves to an
+  invisible HTML comment. Railway deploy instructions move to a new
+  DEPLOYMENT.md. Onboarding docs stay in docs/ where they belong.
+  
+  The branding block is seeded from data the CLI already collects: the logo
+  points at apps/web/public/quark.svg (the Quark mark the scaffold already
+  ships as a stand-in icon) and the tagline is the project brief captured by
+  --prompt or the interactive prompt. Both are placeholders on purpose — the
+  doctor now reports them:
+  
+  - check S6 ("README branding block is still the Quark default") warns while
+    the logo still points at quark.svg or the tagline is still the default
+    "<name> application", and says what to swap in
+  - check E7 ("README still contains references to Quark") no longer fires on
+    the invisible scaffold comment or the stand-in logo src, so it only reports
+    Quark references the author actually wrote into the README
+
 ## 1.25.7
 
 ### Patch Changes
