@@ -181,6 +181,9 @@ paths:
         from `https://appleid.apple.com/auth/keys` and verified against issuer
         `https://appleid.apple.com`. A user matching the token's email is
         created on first sign-in.
+
+        `APPLE_CLIENT_ID` is the token audience and is not yet checked by this
+        endpoint.
       requestBody:
         required: true
         content:
@@ -226,6 +229,9 @@ paths:
 
         The ID token is verified against Google's `tokeninfo` endpoint. A user
         matching the token's email is created on first sign-in.
+
+        `GOOGLE_CLIENT_ID` is the token audience and is not yet checked by this
+        endpoint.
       requestBody:
         required: true
         content:

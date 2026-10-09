@@ -98,7 +98,17 @@ The session cookie is missing or expired. Check:
 ### OAuth sign-in returns `OAuthCallbackError`
 
 1. Verify the provider's callback URL is set to `http://localhost:3000/api/auth/callback/<provider>`
-2. Check that `AUTH_<PROVIDER>_ID` and `AUTH_<PROVIDER>_SECRET` are correct in `.env`
+2. Check that `GITHUB_ID`/`GITHUB_SECRET`, or `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`, are correct in `.env`
+
+### The Google or GitHub sign-in button is missing
+
+`auth.js` registers a NextAuth provider only when **both** halves are present — a client id without its secret, or a secret without its id, registers nothing and the button silently disappears. Startup logs a warning naming the provider and the missing half.
+
+### Google or Apple sign-in fails from the mobile app
+
+The mobile app posts to `/api/auth/google` and `/api/auth/apple`, which verify the token themselves rather than going through NextAuth. Set `GOOGLE_CLIENT_ID` and `APPLE_CLIENT_ID` on the **server**.
+
+Google's client id must match the app's `EXPO_PUBLIC_GOOGLE_CLIENT_ID` — they are the same OAuth client, registered in one console.
 
 ### CSRF errors on form submissions
 

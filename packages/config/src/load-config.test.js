@@ -377,3 +377,189 @@ describe("Environment Validation - canonical origin warnings", () => {
 		);
 	});
 });
+
+describe("Environment Validation - OAuth variables", () => {
+	let savedEnv;
+	let originalWarn;
+
+	const OAUTH_KEYS = [
+		"GITHUB_ID",
+		"GITHUB_SECRET",
+		"GOOGLE_CLIENT_ID",
+		"GOOGLE_CLIENT_SECRET",
+		"APPLE_CLIENT_ID",
+	];
+
+	beforeEach(() => {
+		savedEnv = { ...process.env };
+		originalWarn = console.warn;
+		console.warn = () => {};
+		resetConfig();
+		process.env.NEXTAUTH_SECRET = "test-secret-at-least-32-characters-long";
+		process.env.POSTGRES_USER = "test_user";
+		process.env.POSTGRES_PASSWORD = "test_pass";
+		process.env.POSTGRES_DB = "test_db";
+		for (const key of OAUTH_KEYS) delete process.env[key];
+	});
+
+	afterEach(() => {
+		console.warn = originalWarn;
+		for (const key of Object.keys(process.env)) {
+			if (!(key in savedEnv)) delete process.env[key];
+		}
+		for (const [key, value] of Object.entries(savedEnv)) {
+			process.env[key] = value;
+		}
+		resetConfig();
+	});
+
+	test("exposes the OAuth client ids it was given", () => {
+		// The auth routes read their client id through the config layer, so a
+		// variable that validates but never reaches `validated` would leave
+		// /api/auth/google permanently disabled on a correctly configured app.
+		process.env.GOOGLE_CLIENT_ID =
+			"google-client-id.apps.googleusercontent.com";
+		process.env.APPLE_CLIENT_ID = "com.example.web";
+
+		const { validated } = validateEnv();
+
+		assert.strictEqual(
+			validated.GOOGLE_CLIENT_ID,
+			"google-client-id.apps.googleusercontent.com",
+		);
+		assert.strictEqual(validated.APPLE_CLIENT_ID, "com.example.web");
+	});
+
+	test("leaves the OAuth client ids absent when unset", () => {
+		// The default for every app that does not use social sign-in. Emitting
+		// an empty string instead of omitting the key would leave the routes
+		// reading "configured" and comparing tokens against "".
+		const { validated } = validateEnv();
+
+		assert.ok(!("GOOGLE_CLIENT_ID" in validated));
+		assert.ok(!("APPLE_CLIENT_ID" in validated));
+	});
+
+	test("requires nothing for OAuth", () => {
+		// Every Quark deployment that never touches social sign-in must still
+		// boot. Mandatory here would fail startup for the whole scaffold.
+		assert.doesNotThrow(() => validateEnv());
+	});
+});
+
+describe("Environment Validation - OAuth completeness warnings", () => {
+	let savedEnv;
+	let originalWarn;
+
+	beforeEach(() => {
+		savedEnv = { ...process.env };
+		originalWarn = console.warn;
+		console.warn = () => {};
+		resetConfig();
+		process.env.NEXTAUTH_SECRET = "test-secret-at-least-32-characters-long";
+		process.env.POSTGRES_USER = "test_user";
+		process.env.POSTGRES_PASSWORD = "test_pass";
+		process.env.POSTGRES_DB = "test_db";
+		for (const key of [
+			"GITHUB_ID",
+			"GITHUB_SECRET",
+			"GOOGLE_CLIENT_ID",
+			"GOOGLE_CLIENT_SECRET",
+		]) {
+			delete process.env[key];
+		}
+	});
+
+	afterEach(() => {
+		console.warn = originalWarn;
+		for (const key of Object.keys(process.env)) {
+			if (!(key in savedEnv)) delete process.env[key];
+		}
+		for (const [key, value] of Object.entries(savedEnv)) {
+			process.env[key] = value;
+		}
+		resetConfig();
+	});
+
+	test("stays quiet when OAuth is fully unset", () => {
+		// The default state. A warning here would fire on every boot of every
+		// Quark app, which is how warnings stop being read.
+		const result = validateEnv();
+
+		assert.deepEqual(result.warnings, []);
+	});
+
+	test("warns when a client id is set without its secret", () => {
+		// `auth.js` registers a NextAuth provider only when both halves are
+		// present, so the sign-in button silently does not appear. The operator
+		// has set a credential and sees no effect, with nothing to explain why.
+		process.env.GOOGLE_CLIENT_ID = "google-client-id";
+
+		const result = validateEnv();
+
+		assert.deepEqual(result.warnings, [
+			"Google OAuth is incomplete: set both GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to enable it. The sign-in button stays hidden until both are present.",
+		]);
+	});
+
+	test("warns when a secret is set without its client id", () => {
+		// The same hole from the other direction: a secret alone cannot register
+		// a provider either, and it is just as invisible.
+		process.env.GITHUB_SECRET = "github-secret";
+
+		const result = validateEnv();
+
+		assert.ok(
+			result.warnings.some((w) => w.startsWith("GitHub OAuth is incomplete")),
+			`expected a GitHub incompleteness warning, got: ${JSON.stringify(result.warnings)}`,
+		);
+	});
+
+	test("stays quiet when a provider is fully configured", () => {
+		process.env.GOOGLE_CLIENT_ID = "google-client-id";
+		process.env.GOOGLE_CLIENT_SECRET = "google-secret";
+
+		const result = validateEnv();
+
+		assert.deepEqual(result.warnings, []);
+	});
+
+	test("ignores a blank secret when deciding completeness", () => {
+		// An operator clearing a variable in a dashboard leaves it present but
+		// empty. Counting that as configured would suppress the one warning that
+		// explains the missing button.
+		process.env.GOOGLE_CLIENT_ID = "google-client-id";
+		process.env.GOOGLE_CLIENT_SECRET = "";
+
+		const result = validateEnv();
+
+		assert.ok(
+			result.warnings.some((w) => w.startsWith("Google OAuth is incomplete")),
+			`expected a Google incompleteness warning, got: ${JSON.stringify(result.warnings)}`,
+		);
+	});
+
+	test("warns about each incomplete provider separately", () => {
+		// GitHub incomplete AND Google incomplete are two independent mistakes.
+		// Reporting one would send the operator to fix it, find the button still
+		// missing, and have no signal a second variable was also missing.
+		process.env.GITHUB_ID = "github-id";
+		process.env.GOOGLE_CLIENT_ID = "google-client-id";
+
+		const result = validateEnv();
+
+		assert.ok(result.warnings.some((w) => w.startsWith("GitHub OAuth")));
+		assert.ok(result.warnings.some((w) => w.startsWith("Google OAuth")));
+	});
+
+	test("does not warn about Apple, which has no secret half", () => {
+		// The Apple route verifies a signed identity token locally and only ever
+		// needs the audience. There is no secret to pair it with, so treating
+		// APPLE_CLIENT_ID as half a provider would warn on a correct setup.
+		process.env.APPLE_CLIENT_ID = "com.example.web";
+
+		const result = validateEnv();
+
+		assert.deepEqual(result.warnings, []);
+	});
+});

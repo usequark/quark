@@ -337,9 +337,14 @@ APP_URL=https://yourdomain.com
 # NextAuth
 NEXTAUTH_SECRET=<strong-secret-from-vault>
 
-# OAuth (from provider consoles)
-GITHUB_ID=<production-oauth-id>
-GITHUB_SECRET=<production-oauth-secret>
+# OAuth (optional - from provider consoles)
+# Each provider is enabled by its client id alone. Google also needs the secret
+# for the NextAuth sign-in button; the mobile routes need only the client id.
+# GITHUB_ID=<production-oauth-id>
+# GITHUB_SECRET=<production-oauth-secret>
+# GOOGLE_CLIENT_ID=<production-google-client-id>
+# GOOGLE_CLIENT_SECRET=<production-google-secret>
+# APPLE_CLIENT_ID=com.example.yourapp
 
 # Additional CORS origins (optional - APP_URL is always included)
 # ALLOWED_ORIGINS=https://admin.yourdomain.com,https://app.yourdomain.com
