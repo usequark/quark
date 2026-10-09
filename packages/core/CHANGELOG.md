@@ -1,5 +1,37 @@
 # @usequark/quark-core
 
+## 2.6.2
+
+### Patch Changes
+
+- [#252](https://github.com/usequark/quark/pull/252) [`286fb7e`](https://github.com/usequark/quark/commit/286fb7ee654a0c9e0aa0ffca4dd1a4538831e816) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Close a path in `requireCsrfToken` that disarmed `withCsrfProtection` on every hand-written route under `/api/auth/`.
+  
+  The check skipped any path matching `path.startsWith("/api/auth/")`, written for NextAuth's `[...nextauth]` catch-all. The exemption was unnecessary: `app/api/auth/[...nextauth]/route.js` exports `handlers.GET`/`handlers.POST` directly and is never wrapped in `withCsrfProtection`, so a request to `/api/auth/signin` or `/api/auth/callback/credentials` never reaches `requireCsrfToken` at all. NextAuth validates its own CSRF token inside its handler.
+  
+  It was not free. `/api/auth/register` is a hand-written route inside that prefix whose wrapper had therefore never run a check — a cookie-bearing browser could be POSTed to it cross-site and create an account, which is the exact attack `withCsrfProtection` was added there to stop.
+  
+  `requireCsrfToken` now skips only safe methods and `Bearer`-authenticated requests. No path is exempt by name.
+  
+  **This changes behaviour for any consumer wrapping a route under `/api/auth/` in `withCsrfProtection`.** Such requests previously passed unchecked and now receive `401` unless they carry a matching `csrf_token` cookie and `x-csrf-token` header. Obtain a token from `GET /api/csrf` first — `getCsrfToken()` in `@usequark/quark-core/csrf-client` does this and is safe to call before sign-in.
+  
+  Safe methods and `Bearer` requests are unaffected. `withCsrfProtection` still returns `401` rather than throwing.
+
+- [#250](https://github.com/usequark/quark/pull/250) [`da7b6a5`](https://github.com/usequark/quark/commit/da7b6a5fc898e40f0040bd4324a8c4ea7e192bd8) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add `getCsrfToken()` / `clearCsrfToken()`, and make `/api/csrf` usable before sign-in.
+  
+  `withCsrfProtection` was a no-op on any route under `/api/auth/`, because `requireCsrfToken` exempted the whole prefix for the sake of NextAuth's `[...nextauth]` catch-all. The one hand-written route in that prefix — `/api/auth/register` — therefore accepted a cookie-bearing cross-site POST, which is exactly what the wrapper was added to prevent.
+  
+  Closing that is a two-part change, and this is the client half:
+  
+  - `getCsrfToken()` lives in a new `@usequark/quark-core/csrf-client` subpath and imports nothing, so a `"use client"` component can use it. It must not join the main barrel or `@usequark/quark-core/core`: both re-export the server-side `csrf.js`, which imports `node:crypto`, and reaching the helper through either would put a Node builtin in the browser bundle. `packages/core/src/exports.test.js` asserts both halves of that.
+  - The helper fetches `/api/csrf`, caches the token, shares one request between concurrent callers, and refetches at 50 minutes — ahead of the cookie's one-hour `maxAge`, so a cached token cannot outlive the cookie it has to match.
+  - `clearCsrfToken()` drops the cache for the case the TTL cannot cover: the server rotating the cookie underneath a live client.
+  
+  This also makes the documentation true. `getCsrfToken()` was referenced by `docs/TROUBLESHOOTING.md` and `docs/SECURITY_FEATURES.md` but had never been implemented.
+  
+  Server-side, `GET /api/csrf` no longer requires a session, because registration is pre-authentication and a visitor with no account cannot have one. Its previous 401 guard was sound — the property that mattered was that a token must never be cacheable — and that is now enforced by headers (`Cache-Control: no-store` and `Vary: Cookie` on every response, errors included) rather than by refusing anonymous callers. The route also drops its `@/lib/auth` import, so a pre-auth page no longer pays for a Prisma-backed session read.
+  
+  Narrowing the exemption in `requireCsrfToken` is deliberately **not** part of this release. Until it lands, the register page sends a token it is not yet required to, and `KNOWN GAP` tests on `/api/auth/register` still record the gap.
+
 ## 2.6.1
 
 ### Patch Changes
