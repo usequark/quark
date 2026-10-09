@@ -1,4 +1,5 @@
 import assert from "node:assert";
+import { createHash } from "node:crypto";
 import { register } from "node:module";
 import { afterEach, beforeEach, mock, test } from "node:test";
 import { pathToFileURL } from "node:url";
@@ -140,13 +141,27 @@ const APPLE_KEYS = [
 	{ kid: "KID_LIVE", kty: "RSA", alg: "RS256", n: "live-n", e: "AQAB" },
 ];
 
+/**
+ * The Services ID this suite treats as configured, and the raw nonce the client
+ * signs in with.
+ *
+ * Apple receives the *digest* of `NONCE` and returns it in the token's `nonce`
+ * claim, so the happy path needs both halves to agree.
+ */
+const CLIENT_ID = "com.example.service";
+const NONCE = "3f2504e0-4f89-41d3-9a0c-0305e82c3301";
+
+/** SHA-256 of `NONCE`, lowercase hex — what Apple echoes back in `nonce`. */
+const NONCE_DIGEST = createHash("sha256").update(NONCE, "utf8").digest("hex");
+
 /** The payload `jwtVerify` resolves to for a genuine Apple identity token. */
 const VALID_PAYLOAD = {
 	iss: "https://appleid.apple.com",
-	aud: "com.example.service",
+	aud: CLIENT_ID,
 	email: "alice@icloud.com",
 	sub: "apple-sub-001",
 	email_verified: "true",
+	nonce: NONCE_DIGEST,
 	name: { firstName: "Alice", lastName: "Liddell" },
 };
 
@@ -174,7 +189,7 @@ function identityToken(header = { kid: "KID_LIVE", alg: "RS256" }) {
 }
 
 /** An Apple sign-in request carrying the given body. */
-function appleRequest(body = { identityToken: identityToken() }) {
+function appleRequest(body = { identityToken: identityToken(), nonce: NONCE }) {
 	return new Request("http://localhost/api/auth/apple", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
@@ -201,9 +216,12 @@ function resetFixtures() {
 }
 
 let originalFetch;
+let originalClientId;
 
 beforeEach(() => {
 	originalFetch = globalThis.fetch;
+	originalClientId = process.env.APPLE_CLIENT_ID;
+	process.env.APPLE_CLIENT_ID = CLIENT_ID;
 	resetFixtures();
 
 	globalThis.fetch = async (url) => {
@@ -222,6 +240,11 @@ afterEach(() => {
 		globalThis.fetch = originalFetch;
 	} else {
 		delete globalThis.fetch;
+	}
+	if (originalClientId === undefined) {
+		delete process.env.APPLE_CLIENT_ID;
+	} else {
+		process.env.APPLE_CLIENT_ID = originalClientId;
 	}
 	mock.restoreAll();
 });
@@ -256,7 +279,10 @@ test("POST fetches Apple's key set from the published JWKS URL", async () => {
 
 test("POST picks the key whose kid matches the identity token header", async () => {
 	await POST(
-		appleRequest({ identityToken: identityToken({ kid: "KID_LIVE" }) }),
+		appleRequest({
+			identityToken: identityToken({ kid: "KID_LIVE" }),
+			nonce: NONCE,
+		}),
 	);
 
 	// `keys[0]` would import KID_OLD. Picking the wrong key fails verification in
@@ -281,12 +307,13 @@ test("POST imports the matched key as RS256 and verifies under Apple's issuer", 
 		key: "public-key-for-KID_LIVE",
 		alg: "RS256",
 	});
-	// The issuer constraint is the whole reason this is not just "decoded a
-	// token". Without it any Apple-signed token from any tenant would be
-	// accepted here, since the keys are shared across every Sign in with Apple
-	// deployment.
+	// Both constraints are what make this "verified" rather than "decoded".
+	// Without `issuer` any Apple-signed token from any tenant is accepted, since
+	// the keys are shared across every Sign in with Apple deployment. Without
+	// `audience` a token minted for a different bundle or service id is accepted.
 	assert.deepStrictEqual(verifyCalls[0].options, {
 		issuer: "https://appleid.apple.com",
+		audience: [CLIENT_ID],
 	});
 });
 
@@ -297,6 +324,7 @@ test("POST takes the email from the verified payload, not the body", async () =>
 	const response = await POST(
 		appleRequest({
 			identityToken: identityToken(),
+			nonce: NONCE,
 			email: "admin@example.com",
 			sub: "apple-sub-999",
 		}),
@@ -357,7 +385,10 @@ test("POST returns 401 and verifies nothing when Apple publishes no key for the 
 	// old kid, and there is no key to check the signature against. It must be
 	// rejected, not verified against whatever key happens to be first.
 	const response = await POST(
-		appleRequest({ identityToken: identityToken({ kid: "KID_RETIRED" }) }),
+		appleRequest({
+			identityToken: identityToken({ kid: "KID_RETIRED" }),
+			nonce: NONCE,
+		}),
 	);
 	const body = await response.json();
 
@@ -398,7 +429,12 @@ test("POST does not echo the verification error or the token in the 401 body", a
 });
 
 test("POST returns 400 and creates nothing when the verified token carries no email", async () => {
-	verifiedPayload = { iss: "https://appleid.apple.com", sub: "apple-sub-001" };
+	verifiedPayload = {
+		iss: "https://appleid.apple.com",
+		aud: CLIENT_ID,
+		nonce: NONCE_DIGEST,
+		sub: "apple-sub-001",
+	};
 
 	const response = await POST(appleRequest());
 	const body = await response.json();
@@ -542,28 +578,173 @@ test("POST turns a thrown error into a response instead of propagating it", asyn
 	);
 });
 
-test("POST currently verifies no audience and no nonce", async () => {
-	// KNOWN GAP, not intended behaviour. The schema accepts a `nonce` and the
-	// route ignores it, and `jwtVerify` is called with an issuer constraint but no
-	// `audience`. Apple's `aud` is the bundle id / service id the identity token
-	// was minted for, and the nonce is what binds a token to the one sign-in
-	// attempt that requested it — Apple's whole replay defence. Together, a token
-	// Apple issued to another app for the same Apple ID is accepted here and can
-	// be replayed indefinitely, because `iss` and the signature are the only
-	// things checked. Recorded so the gap is visible; expected to be inverted
-	// once APPLE_CLIENT_ID is wired in.
-	const response = await POST(
-		appleRequest({
-			identityToken: identityToken(),
-			nonce: "client-supplied-nonce",
-		}),
-	);
+test("POST verifies the audience constraint with jwtVerify", async () => {
+	// `audience` is what binds the identity token to this app. An identity token
+	// Apple issued to a different bundle or service id for the same Apple ID
+	// verifies against the same issuer and the same Apple keys — `aud` is the only
+	// claim that separates them.
+	await POST(appleRequest());
 
-	assert.strictEqual(response.status, 200);
 	assert.deepStrictEqual(verifyCalls[0].options, {
 		issuer: "https://appleid.apple.com",
+		audience: [CLIENT_ID],
 	});
-	assert.deepStrictEqual(createCalls, [
-		{ email: "alice@icloud.com", name: "Alice Liddell" },
+});
+
+test("POST passes this app's Services ID as the audience, not a literal", async () => {
+	// A hardcoded audience would pass every test above while binding the token to
+	// whatever the previous deployment happened to be. This asserts the value
+	// actually comes from configuration.
+	process.env.APPLE_CLIENT_ID = "com.example.different-service";
+
+	await POST(appleRequest());
+
+	assert.deepStrictEqual(verifyCalls[0].options.audience, [
+		"com.example.different-service",
 	]);
+});
+
+test("POST accepts both the bundle identifier and the Services ID as audiences", async () => {
+	// Apple identity tokens carry *either* the bundle identifier (native iOS)
+	// *or* the Services ID (web flow) as their `aud` claim, depending on which
+	// flow the client uses. Both must be accepted.
+	process.env.APPLE_CLIENT_ID = "com.example.web, com.example.app";
+
+	await POST(appleRequest());
+
+	assert.deepStrictEqual(verifyCalls[0].options.audience, [
+		"com.example.web",
+		"com.example.app",
+	]);
+});
+
+test("POST trims whitespace around each configured audience", async () => {
+	process.env.APPLE_CLIENT_ID = "  com.example.web ,  com.example.app  ";
+
+	await POST(appleRequest());
+
+	assert.deepStrictEqual(verifyCalls[0].options.audience, [
+		"com.example.web",
+		"com.example.app",
+	]);
+});
+
+test("POST rejects a token whose nonce does not match the one it was sent", async () => {
+	// The replay defence. Apple returned a digest of a *different* nonce, so this
+	// identity token was minted for some earlier sign-in attempt and is being
+	// presented again.
+	verifiedPayload = {
+		...VALID_PAYLOAD,
+		nonce: createHash("sha256").update("an-older-nonce", "utf8").digest("hex"),
+	};
+
+	const response = await POST(appleRequest());
+
+	assert.strictEqual(response.status, 401);
+	assert.deepStrictEqual(createCalls, []);
+	assert.deepStrictEqual(issueCalls, []);
+});
+
+test("POST rejects a token with no nonce claim even when the client sent one", async () => {
+	// A token with no `nonce` claim proves nothing about which sign-in attempt it
+	// came from. Treating that as "no nonce to check" would hand the replay window
+	// to any caller presenting an identity token Apple issued without one.
+	verifiedPayload = { ...VALID_PAYLOAD };
+	delete verifiedPayload.nonce;
+
+	const response = await POST(appleRequest());
+
+	assert.strictEqual(response.status, 401);
+	assert.deepStrictEqual(createCalls, []);
+	assert.deepStrictEqual(issueCalls, []);
+});
+
+test("POST rejects a token with an empty nonce claim", async () => {
+	// The other shape of "missing": present but blank. A truthiness check would
+	// pass it and compare sha256(nonce) against "", which never matches — so this
+	// has to be refused for the right reason, not by accident.
+	verifiedPayload = { ...VALID_PAYLOAD, nonce: "" };
+
+	const response = await POST(appleRequest());
+
+	assert.strictEqual(response.status, 401);
+	assert.deepStrictEqual(createCalls, []);
+});
+
+test("POST requires the client to send a nonce", async () => {
+	// The mirror of the claim check: a caller who omits the nonce must not get a
+	// free pass. The mobile client always sends one, so this is not a legitimate
+	// request shape.
+	const response = await POST(appleRequest({ identityToken: identityToken() }));
+	const body = await response.json();
+
+	assert.strictEqual(response.status, 400);
+	assert.strictEqual(body.code, "VALIDATION_ERROR");
+	// Schema first: refused before any key is fetched from Apple.
+	assert.deepStrictEqual(fetchUrls, []);
+});
+
+test("POST compares the hashed nonce, not the raw one", async () => {
+	// The client sends the raw nonce and hands Apple the digest, so the two strings
+	// are deliberately different. A route comparing `nonce` to `payload.nonce`
+	// directly would see two unrelated values and reject a genuine sign-in, so the
+	// digest step has to happen — and this pins that it does, since the happy path
+	// only returns 200 when sha256(NONCE) === payload.nonce.
+	assert.notStrictEqual(NONCE, NONCE_DIGEST);
+	assert.strictEqual(
+		createHash("sha256").update(NONCE, "utf8").digest("hex"),
+		NONCE_DIGEST,
+	);
+
+	const response = await POST(appleRequest());
+
+	assert.strictEqual(response.status, 200);
+	assert.deepStrictEqual(issueCalls, [CREATED]);
+});
+
+test("POST refuses every request with 503 when no Services ID is configured", async () => {
+	// This route is public. Serving while unconfigured means accepting identity
+	// tokens with no audience constraint at all — weaker than the configured case,
+	// which at least returns 401 for a token from another app.
+	delete process.env.APPLE_CLIENT_ID;
+
+	const response = await POST(appleRequest());
+	const body = await response.json();
+
+	assert.strictEqual(response.status, 503);
+	assert.strictEqual(
+		body.message,
+		"Apple sign-in is not configured on this server",
+	);
+	// Fail before the network. Fetching Apple's keys and then refusing would still
+	// tell an attacker the deployment is unconfigured.
+	assert.deepStrictEqual(fetchUrls, []);
+	assert.deepStrictEqual(findByEmailCalls, []);
+	assert.deepStrictEqual(createCalls, []);
+	assert.deepStrictEqual(issueCalls, []);
+});
+
+test("POST treats a whitespace-only Services ID as unconfigured", async () => {
+	process.env.APPLE_CLIENT_ID = "   ";
+
+	const response = await POST(appleRequest());
+
+	assert.strictEqual(response.status, 503);
+	assert.deepStrictEqual(fetchUrls, []);
+});
+
+test("POST does not distinguish a nonce failure from any other 401", async () => {
+	// Every rejection on this route returns the same body. A "nonce mismatch"
+	// message tells an attacker their forged token was structurally valid and the
+	// replay defence is the only thing standing between them and the account.
+	verifiedPayload = {
+		...VALID_PAYLOAD,
+		nonce: createHash("sha256").update("wrong", "utf8").digest("hex"),
+	};
+
+	const response = await POST(appleRequest());
+	const raw = await response.text();
+
+	assert.strictEqual(response.status, 401);
+	assert.deepStrictEqual(JSON.parse(raw), { message: "Invalid Apple token" });
 });

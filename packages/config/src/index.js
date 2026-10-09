@@ -12,7 +12,7 @@ export {
 } from "./environment.js";
 export { getConfig, loadConfig, resetConfig } from "./load-config.js";
 export {
-	getAppleClientId,
+	getAppleClientIds,
 	getGoogleClientId,
 	isAppleAuthEnabled,
 	isAudienceValid,

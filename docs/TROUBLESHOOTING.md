@@ -108,7 +108,20 @@ The session cookie is missing or expired. Check:
 
 The mobile app posts to `/api/auth/google` and `/api/auth/apple`, which verify the token themselves rather than going through NextAuth. Set `GOOGLE_CLIENT_ID` and `APPLE_CLIENT_ID` on the **server**.
 
-Google's client id must match the app's `EXPO_PUBLIC_GOOGLE_CLIENT_ID` — they are the same OAuth client, registered in one console.
+Google's client id must match the app's `EXPO_PUBLIC_GOOGLE_CLIENT_ID` — they are the same OAuth client, registered in one console. Apple has no mobile-side id: the native flow's audience is the app's bundle identifier, so `APPLE_CLIENT_ID` on the server takes that bundle id, the Services ID (web flow), or both comma-separated.
+
+Three distinct failures, told apart by status:
+
+- **`503 Google sign-in is not configured on this server`** / **`503 Apple sign-in is not configured on this server`** — the client id is unset (or blank). The endpoint is off. Nothing about the token matters; fix the server config.
+- **`401 Invalid Google token`** — the token is genuine but its `aud` is not this app's client id. Almost always a client-id mismatch between the mobile app and the server.
+- **`400`** on Apple — the request omitted `nonce`. It is required, not optional. (A token that *arrives* with no `nonce` claim, or a stale one, is a `401` instead — see below.)
+
+### Google or Apple sign-in returns 401 on a correctly configured server
+
+Both routes return the same generic `401` for every verification failure — a token the provider rejected, an audience that does not match, and on Apple also a missing or replayed `nonce` — deliberately, because distinguishing them tells a caller which check to work around. Diagnose per provider:
+
+- **Google**: log the configured `GOOGLE_CLIENT_ID` and compare it against the mobile app's `EXPO_PUBLIC_GOOGLE_CLIENT_ID`. They must be the same OAuth client, registered once in Google Cloud Console.
+- **Apple**: `APPLE_CLIENT_ID` is not read from any mobile env var. The bundled iOS client signs in with the native flow, so Apple stamps the token's `aud` with the app's bundle identifier (`com.quark.app`, in `apps/mobile/app.json`). The Services ID applies only to the web flow. Set `APPLE_CLIENT_ID` to the bundle ID, or to both comma-separated when web and native flows both run. If the audience matches and sign-in still 401s, suspect a stale or replayed `nonce` — the client must generate a fresh one per attempt.
 
 ### CSRF errors on form submissions
 

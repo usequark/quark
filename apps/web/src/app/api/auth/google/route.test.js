@@ -112,10 +112,18 @@ const CREATED = {
 	role: "viewer",
 };
 
-/** A tokeninfo body for a token Google accepted. */
+/**
+ * The client id this suite treats as configured.
+ *
+ * `VALID_TOKEN_INFO.aud` must equal it, or every happy-path test would be
+ * exercising the audience-mismatch branch instead of the success path.
+ */
+const CLIENT_ID = "quark-client-id";
+
+/** A tokeninfo body for a token Google accepted *for this app*. */
 const VALID_TOKEN_INFO = {
 	iss: "https://accounts.google.com",
-	aud: "quark-client-id",
+	aud: CLIENT_ID,
 	email: "alice@example.com",
 	email_verified: "true",
 	name: "Alice",
@@ -150,9 +158,12 @@ function resetFixtures() {
 }
 
 let originalFetch;
+let originalClientId;
 
 beforeEach(() => {
 	originalFetch = globalThis.fetch;
+	originalClientId = process.env.GOOGLE_CLIENT_ID;
+	process.env.GOOGLE_CLIENT_ID = CLIENT_ID;
 	resetFixtures();
 
 	// The tokeninfo endpoint. Replaced rather than mocked per-test so `steps`
@@ -173,6 +184,11 @@ afterEach(() => {
 		globalThis.fetch = originalFetch;
 	} else {
 		delete globalThis.fetch;
+	}
+	if (originalClientId === undefined) {
+		delete process.env.GOOGLE_CLIENT_ID;
+	} else {
+		process.env.GOOGLE_CLIENT_ID = originalClientId;
 	}
 	mock.restoreAll();
 });
@@ -424,21 +440,113 @@ test("POST turns a thrown error into a response instead of propagating it", asyn
 	);
 });
 
-test("POST currently never checks the audience of the token Google verified", async () => {
-	// KNOWN GAP, not intended behaviour. `tokeninfo` returns `aud` — the OAuth
-	// client id the id token was minted for — and this route reads `email` and
-	// nothing else. An id token Google issued to a *different* app is therefore
-	// accepted here. Google guarantees the `email` claim belongs to the subject,
-	// so the practical blast radius is limited to replaying one's own Google
-	// token against this app, but the audience check is the check that makes the
-	// token bound to *this* deployment. Recorded so the gap is visible; expected
-	// to be inverted once `GOOGLE_CLIENT_ID` is wired in.
+test("POST rejects a token Google minted for a different app", async () => {
+	// The token is genuine and Google verified the signature — `tokeninfo`
+	// returned 200. It was just issued to somebody else's OAuth client. Without the
+	// audience comparison this is the whole attack: an attacker gets a victim to
+	// sign in to any Google app they control, then posts that id token here. No
+	// credential is ever stolen; the victim's own Google session is the weapon.
 	tokenInfo = { ...VALID_TOKEN_INFO, aud: "some-other-apps-client-id" };
 
 	const response = await POST(googleRequest());
 
+	assert.strictEqual(response.status, 401);
+	// Nothing may happen past the check: no row created, no token minted, and no
+	// database read that would let a caller probe which addresses exist.
+	assert.deepStrictEqual(findByEmailCalls, []);
+	assert.deepStrictEqual(createCalls, []);
+	assert.deepStrictEqual(issueCalls, []);
+});
+
+test("POST rejects a token with no audience claim at all", async () => {
+	// `tokeninfo` omits `aud` on some shapes. A missing claim must not read as a
+	// match — falling through to a truthy check here would accept any token whose
+	// claims happen to omit it.
+	tokenInfo = { ...VALID_TOKEN_INFO, aud: undefined };
+
+	const response = await POST(googleRequest());
+
+	assert.strictEqual(response.status, 401);
+	assert.deepStrictEqual(createCalls, []);
+	assert.deepStrictEqual(issueCalls, []);
+});
+
+test("POST refuses every request with 503 when no client id is configured", async () => {
+	// This route is public: it does not need our frontend to call it, or anyone
+	// to have set up Google sign-in. Leaving it serving while unconfigured would
+	// mean accepting tokens with no audience check at all — strictly weaker than
+	// the configured-but-wrong case above, which at least returns 401.
+	delete process.env.GOOGLE_CLIENT_ID;
+
+	const response = await POST(googleRequest());
+	const body = await response.json();
+
+	assert.strictEqual(response.status, 503);
+	assert.strictEqual(
+		body.message,
+		"Google sign-in is not configured on this server",
+	);
+	// Fail before the network entirely. Calling Google first and refusing after
+	// would still tell an attacker this deployment is unconfigured, and would
+	// depend on Google being reachable.
+	assert.deepStrictEqual(fetchUrls, []);
+	assert.deepStrictEqual(findByEmailCalls, []);
+	assert.deepStrictEqual(createCalls, []);
+	assert.deepStrictEqual(issueCalls, []);
+});
+
+test("POST treats a whitespace-only client id as unconfigured", async () => {
+	// An operator clearing the variable in a dashboard leaves it present but
+	// blank. Counting that as configured would compare every token against the
+	// empty string and 401 every real sign-in, which reads as "Google is broken"
+	// rather than "Google is off".
+	process.env.GOOGLE_CLIENT_ID = "   ";
+
+	const response = await POST(googleRequest());
+
+	assert.strictEqual(response.status, 503);
+	assert.deepStrictEqual(fetchUrls, []);
+});
+
+test("POST tolerates surrounding whitespace in the configured client id", async () => {
+	// A trailing newline in a .env file or a Railway variable is routine. The
+	// comparison trims, so this is a working deployment rather than a 401 on
+	// every sign-in with nothing pointing at the cause.
+	process.env.GOOGLE_CLIENT_ID = `  ${CLIENT_ID}  `;
+
+	const response = await POST(googleRequest());
+
 	assert.strictEqual(response.status, 200);
-	assert.deepStrictEqual(createCalls, [
-		{ email: "alice@example.com", name: "Alice" },
-	]);
+	assert.deepStrictEqual(issueCalls, [CREATED]);
+});
+
+test("POST does not say which check failed when the audience mismatches", async () => {
+	// The body must stay identical to the generic invalid-token response. A
+	// distinct message here tells an attacker their forged token was structurally
+	// fine and only the audience was wrong, which is the useful bit of feedback
+	// for tuning the forgery.
+	tokenInfo = { ...VALID_TOKEN_INFO, aud: "some-other-apps-client-id" };
+
+	const response = await POST(googleRequest());
+	const raw = await response.text();
+
+	assert.strictEqual(response.status, 401);
+	assert.deepStrictEqual(JSON.parse(raw), { message: "Invalid Google token" });
+});
+
+test("POST verifies the audience before it trusts the email in the same payload", async () => {
+	// Ordering is the fix. Reading the email first and only then checking `aud`
+	// would let a mismatched token's email reach `findByEmail`, turning the
+	// response difference between a known and unknown address into a
+	// registration oracle.
+	tokenInfo = {
+		...VALID_TOKEN_INFO,
+		aud: "some-other-apps-client-id",
+		email: "victim@example.com",
+	};
+
+	const response = await POST(googleRequest());
+
+	assert.strictEqual(response.status, 401);
+	assert.deepStrictEqual(findByEmailCalls, []);
 });

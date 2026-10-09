@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { afterEach, beforeEach, describe, test } from "node:test";
 import {
-	getAppleClientId,
+	getAppleClientIds,
 	getGoogleClientId,
 	isAppleAuthEnabled,
 	isAudienceValid,
@@ -34,7 +34,7 @@ describe("OAuth config - provider enablement", () => {
 		assert.strictEqual(isGoogleAuthEnabled(), false);
 		assert.strictEqual(isAppleAuthEnabled(), false);
 		assert.strictEqual(getGoogleClientId(), undefined);
-		assert.strictEqual(getAppleClientId(), undefined);
+		assert.strictEqual(getAppleClientIds(), undefined);
 	});
 
 	test("reports Google on when only its client id is set", () => {
@@ -90,6 +90,49 @@ describe("OAuth config - provider enablement", () => {
 		assert.strictEqual(isAppleAuthEnabled(), true);
 		assert.strictEqual(isGoogleAuthEnabled(), false);
 	});
+
+	test("reads a single Apple audience as a one-element list", () => {
+		process.env.APPLE_CLIENT_ID = "com.example.web";
+
+		assert.deepStrictEqual(getAppleClientIds(), ["com.example.web"]);
+	});
+
+	test("reads multiple comma-separated Apple audiences", () => {
+		// Apple identity tokens carry *either* the bundle identifier (native
+		// iOS) *or* the Services ID (web flow) as their `aud` claim, depending on
+		// which flow the client uses. Both must be accepted.
+		process.env.APPLE_CLIENT_ID = "com.example.web, com.example.app";
+
+		assert.deepStrictEqual(getAppleClientIds(), [
+			"com.example.web",
+			"com.example.app",
+		]);
+	});
+
+	test("trims whitespace around each Apple audience", () => {
+		process.env.APPLE_CLIENT_ID = "  com.example.web ,  com.example.app  ";
+
+		assert.deepStrictEqual(getAppleClientIds(), [
+			"com.example.web",
+			"com.example.app",
+		]);
+	});
+
+	test("drops blank entries from the Apple audience list", () => {
+		// A trailing comma or a doubled separator is a routine .env mistake.
+		// Counting a blank entry as an audience would make the list non-empty
+		// and report the provider as configured with nothing to compare against.
+		process.env.APPLE_CLIENT_ID = "com.example.web,, ";
+
+		assert.deepStrictEqual(getAppleClientIds(), ["com.example.web"]);
+	});
+
+	test("treats a comma-only Apple value as unconfigured", () => {
+		process.env.APPLE_CLIENT_ID = " , ";
+
+		assert.strictEqual(getAppleClientIds(), undefined);
+		assert.strictEqual(isAppleAuthEnabled(), false);
+	});
 });
 
 describe("OAuth config - audience comparison", () => {
@@ -130,5 +173,29 @@ describe("OAuth config - audience comparison", () => {
 		assert.strictEqual(isAudienceValid("anything-at-all", undefined), false);
 		assert.strictEqual(isAudienceValid("anything-at-all", ""), false);
 		assert.strictEqual(isAudienceValid("anything-at-all", "   "), false);
+	});
+
+	test("accepts any audience in a multi-id list", () => {
+		// Apple passes the full list from getAppleClientIds() so both the bundle
+		// identifier and the Services ID are valid.
+		const audiences = ["com.example.web", "com.example.app"];
+
+		assert.strictEqual(isAudienceValid("com.example.web", audiences), true);
+		assert.strictEqual(isAudienceValid("com.example.app", audiences), true);
+		assert.strictEqual(isAudienceValid("com.other.app", audiences), false);
+	});
+
+	test("rejects an empty audience list", () => {
+		// An empty list means "no audiences configured" — the same as undefined.
+		assert.strictEqual(isAudienceValid("com.example.web", []), false);
+	});
+
+	test("rejects a missing or non-string audience against a list", () => {
+		const audiences = ["com.example.web", "com.example.app"];
+
+		assert.strictEqual(isAudienceValid(undefined, audiences), false);
+		assert.strictEqual(isAudienceValid(null, audiences), false);
+		assert.strictEqual(isAudienceValid("", audiences), false);
+		assert.strictEqual(isAudienceValid(123, audiences), false);
 	});
 });
