@@ -264,30 +264,23 @@ pnpm dev
 
 CSRF tokens are automatically available via the `/api/csrf` endpoint.
 
+The endpoint mints a token, sets it as an `httpOnly` `SameSite=Strict` cookie, and returns the same value in the body. It does **not** require a session — registration is pre-authentication, so a visitor with no account has to be able to obtain a token before they can register. Because the token in the body is a write credential, every response carries `Cache-Control: no-store` and `Vary: Cookie`.
+
+Wrap each mutating route in `withCsrfProtection`; it compares the `x-csrf-token` header against the cookie and rejects the request before your handler runs.
+
 #### Client-Side Integration
 
-**React/Next.js Example**:
+Use the bundled helper rather than rolling your own. It fetches the token, caches it, dedupes concurrent callers, and refetches before the cookie's one-hour lifetime runs out:
+
 ```javascript
-// hooks/useCsrfToken.js
-import { useEffect, useState } from 'react';
+// components/CreatePost.js
+"use client";
+import { getCsrfToken } from '@usequark/quark-core/csrf-client';
 
-export function useCsrfToken() {
-  const [token, setToken] = useState(null);
-  
-  useEffect(() => {
-    fetch('/api/csrf')
-      .then(res => res.json())
-      .then(data => setToken(data.csrfToken));
-  }, []);
-  
-  return token;
-}
-
-// Usage in component
-function CreatePost() {
-  const csrfToken = useCsrfToken();
-  
+export function CreatePost() {
   const handleSubmit = async (data) => {
+    const csrfToken = await getCsrfToken();
+
     await fetch('/api/posts', {
       method: 'POST',
       headers: {
@@ -297,24 +290,19 @@ function CreatePost() {
       body: JSON.stringify(data)
     });
   };
-  
+
   return <form onSubmit={handleSubmit}>...</form>;
 }
 ```
 
-**Alternative: API Route Helper**:
+Import from `@usequark/quark-core/csrf-client`, not the package root. The root barrel re-exports the server-side `csrf.js`, which imports `node:crypto`; reaching the helper through it pulls a Node builtin into the browser bundle and fails the build.
+
+If you keep your own cache, match the cookie's lifetime. A cached token that outlives the one-hour cookie produces `Invalid CSRF token`, which reads like a header bug rather than staleness. `clearCsrfToken()` is exported for the other case — the server rotating the cookie underneath the client, e.g. after sign-out.
+
+**API client wrapper**:
 ```javascript
 // lib/api-client.js
-let csrfToken = null;
-
-async function getCsrfToken() {
-  if (!csrfToken) {
-    const res = await fetch('/api/csrf');
-    const data = await res.json();
-    csrfToken = data.csrfToken;
-  }
-  return csrfToken;
-}
+import { getCsrfToken } from '@usequark/quark-core/csrf-client';
 
 export async function apiPost(url, data) {
   const token = await getCsrfToken();

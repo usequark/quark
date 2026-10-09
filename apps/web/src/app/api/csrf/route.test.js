@@ -1,7 +1,7 @@
 import assert from "node:assert";
+import { readFile } from "node:fs/promises";
 import { register } from "node:module";
 import { afterEach, beforeEach, mock, test } from "node:test";
-import { pathToFileURL } from "node:url";
 
 // Resolve the @/ alias used by route files.
 // `csrf/` is 4 levels below apps/web (csrf → api → app → src → web).
@@ -13,49 +13,33 @@ register(new URL("../../../../scripts/test-alias-loader.mjs", import.meta.url));
 // after the first call, so a later `mock.module` would not reach the bindings the
 // route already holds.
 //
-// `@/lib/auth` is replaced wholesale: the real module builds a NextAuth instance at
-// first use and imports the Prisma adapter, none of which belongs in a test of this
-// 40-line route. `getCsrfCookieOptions` is *not* mocked — what this route does with
-// it is half the behaviour under test.
-
-const authUrl = pathToFileURL(
-	new URL("../../../lib/auth.js", import.meta.url).pathname,
-).href;
-
-/** What `auth()` resolves to for the current test; null means no session. */
-let session;
-/** When set, `auth()` rejects with this error instead. */
-let authError;
-
-mock.module(authUrl, {
-	namedExports: {
-		auth: async () => {
-			if (authError) throw authError;
-			return session;
-		},
-	},
-});
+// Only `@usequark/quark-core` is replaced, and only to make token *generation*
+// observable and forceable — the response body alone cannot show whether a token
+// was minted and then discarded, or whether the mint is what failed.
+//
+// `@/lib/auth` is deliberately NOT mocked, and the route deliberately does not
+// import it; see the "no session dependency" test below.
 
 const core = await import("@usequark/quark-core");
 
 /** How many times the route asked for a token. */
 let tokenCalls;
+/** When set, the generator throws this instead of returning a token. */
+let tokenError;
 
 // Delegates to the real generator so the token under test is genuinely random — a
 // stubbed constant would make "a fresh token per request" untestable. The wrapper
-// exists to make *that* generation observable: the response body alone cannot show
-// whether a token was minted and then discarded.
+// exists to make *that* generation observable and to open the 500 path.
 mock.module("@usequark/quark-core", {
 	namedExports: {
 		...core,
 		generateCsrfToken: () => {
 			tokenCalls++;
+			if (tokenError) throw tokenError;
 			return core.generateCsrfToken();
 		},
 	},
 });
-
-const SESSION = { user: { id: "user-1", email: "alice@example.com" } };
 
 const { GET } = await import("./route.js");
 
@@ -96,10 +80,29 @@ function readSetCookie(response) {
 	};
 }
 
+/**
+ * Assert the response cannot be stored by any cache.
+ *
+ * The token in the body is a write credential, so a shared cache holding it
+ * would let a second caller write as the first.
+ */
+function assertNotCacheable(response) {
+	const cacheControl = response.headers.get("cache-control") || "";
+	assert.match(
+		cacheControl,
+		/no-store/,
+		`response is cacheable: Cache-Control is "${cacheControl}"`,
+	);
+	assert.match(
+		response.headers.get("vary") || "",
+		/cookie/i,
+		"response does not Vary on Cookie",
+	);
+}
+
 beforeEach(() => {
-	session = { ...SESSION };
-	authError = null;
 	tokenCalls = 0;
+	tokenError = null;
 });
 
 afterEach(() => {
@@ -132,6 +135,8 @@ test("the cookie is httpOnly, SameSite=Strict, and scoped to the whole site", as
 		`cookie is not HttpOnly: ${cookie.rawValue}`,
 	);
 	// SameSite=Strict: a cross-site form post must not carry the cookie along.
+	// This is the property that makes the double-submit check work for an
+	// unauthenticated endpoint: the forgery arrives with no cookie to match.
 	assert.strictEqual(cookie.attr("samesite").toLowerCase(), "strict");
 	// Path=/: /api/csrf sets the cookie and /api/* are the routes that read it. A
 	// narrower path (or a missing one) silently stops it reaching those requests.
@@ -174,30 +179,67 @@ test("each request mints a new token rather than returning a stable one", async 
 	assert.notStrictEqual(first.csrfToken, second.csrfToken);
 });
 
-test("GET returns 401, mints nothing and sets no cookie when there is no session", async () => {
-	session = null;
-
+test("GET mints a token for a caller with no session at all", async () => {
+	// Registration is pre-authentication: the visitor on /auth/register has no
+	// session and cannot have one. Gating this endpoint on a session made it
+	// impossible for them to obtain the token that /api/auth/register then
+	// requires, which is why that route's CSRF wrapper had to be inert.
+	// The original 401-here guard was sound on its own terms — an uncacheable
+	// token is the property that actually matters — and that property is now
+	// enforced by headers rather than by refusing anonymous callers.
 	const response = await GET(csrfRequest());
 	const body = await response.json();
+	const cookie = readSetCookie(response);
 
-	assert.strictEqual(response.status, 401);
-	assert.strictEqual(body.error, "Unauthorized");
-	// A token handed to an unauthenticated caller is a forgeable write credential:
-	// it would be cached by an intermediate proxy and replayed after login.
+	assert.strictEqual(response.status, 200);
+	assert.strictEqual(typeof body.csrfToken, "string");
+	assert.ok(
+		body.csrfToken.length > 0,
+		"an anonymous caller got an empty token",
+	);
+	assert.strictEqual(cookie.value, body.csrfToken);
 	assert.strictEqual(
 		tokenCalls,
-		0,
-		"a token was minted for an unauthenticated request",
+		1,
+		"a token was not minted for an anonymous caller",
 	);
-	assert.strictEqual(
-		response.headers.get("set-cookie"),
-		null,
-		"an unauthenticated response set a csrf_token cookie",
+});
+
+test("no response from this route is cacheable", async () => {
+	// A token body is a write credential. If a shared cache stored it, the next
+	// caller through that cache would receive a token it could pair with a
+	// cookie of its own — but the reverse case is the damaging one: a cached
+	// response replayed to a caller who did not trigger the mint hands out a
+	// credential that outlives the request that created it.
+	assertNotCacheable(await GET(csrfRequest()));
+});
+
+test("the route reaches for no session at all", async () => {
+	// Guard against reintroducing an `auth()` call here. The endpoint has to work
+	// before sign-in, and reading a session needs the Prisma-backed Auth.js
+	// instance — which turns a pre-auth page's CSRF fetch into a database
+	// round-trip that can fail with a 500 for a visitor who simply has no
+	// account. Asserted against the source because the alternative is a test that
+	// fails somewhere deep inside Auth.js with an unrelated message.
+	const source = await readFile(
+		new URL("./route.js", import.meta.url),
+		"utf-8",
+	);
+
+	assert.doesNotMatch(
+		source,
+		/from\s+["']@\/lib\/auth["']/,
+		"the CSRF route imports the session module again",
+	);
+	assert.doesNotMatch(
+		source,
+		/\bauth\s*\(/,
+		"the CSRF route calls auth() again",
 	);
 });
 
 test("a failure inside the handler becomes a 500 that leaks no detail", async () => {
-	authError = new Error(
+	tokenError = new Error(
 		"PrismaClientInitializationError: DATABASE_URL is not set",
 	);
 
@@ -215,13 +257,11 @@ test("a failure inside the handler becomes a 500 that leaks no detail", async ()
 	});
 });
 
-test("the 500 path is not a general catch-all for a missing session", async () => {
-	// `auth()` returning null is an ordinary outcome (signed out, expired cookie)
-	// and must stay a 401. Only a thrown error is a 500 — conflating the two would
-	// send every signed-out visitor's client down a retry-on-500 path.
-	session = null;
+test("the 500 path is uncacheable too", async () => {
+	// The 500 still reports on a credential endpoint. Letting an intermediary
+	// store *that* response is how a cached token ends up being served after the
+	// underlying fault is gone.
+	tokenError = new Error("entropy pool unavailable");
 
-	const response = await GET(csrfRequest());
-
-	assert.strictEqual(response.status, 401);
+	assertNotCacheable(await GET(csrfRequest()));
 });
