@@ -33,6 +33,8 @@ Separately from NextAuth, `POST /api/auth/google` and `POST /api/auth/apple` are
 
 Each endpoint verifies the token's audience against the configured client id, so a token the provider issued to a *different* app for the same address is rejected with `401`. Apple additionally requires a `nonce`: the client sends a raw nonce, Apple returns its SHA-256 digest in the token, and the server re-hashes and compares. A nonce mismatch is a `401`.
 
+`APPLE_CLIENT_ID` accepts a comma-separated list of audiences. Apple identity tokens carry *either* the bundle identifier (native iOS) *or* the Services ID (web flow) as their `aud` claim, depending on which flow the client uses — set both to accept either.
+
 ### `GET /api/auth/session`
 
 Get the current session. Session strategy is JWT.

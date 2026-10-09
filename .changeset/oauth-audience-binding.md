@@ -45,6 +45,13 @@ Apple tests, removing the 503 gate fails 2 each, removing the nonce checks fails
 `GET /api/auth/apple` now requires `nonce` in the request body. The bundled
 mobile client already sends one.
 
+Apple's `APPLE_CLIENT_ID` accepts a comma-separated list of audiences. Native
+iOS identity tokens carry the bundle identifier as `aud`; web-flow tokens carry
+the Services ID. A single-value audience would reject one of the two, so both
+are accepted when configured as a list. `getAppleClientIds()` in
+`@usequark/quark-config/oauth` returns the parsed list and `isAudienceValid`
+accepts either a single id or an array.
+
 Behaviour change: an app with no OAuth client id configured can no longer use
 these endpoints. That is the point — but it is a change, so set the client id
 before deploying if you rely on mobile sign-in.

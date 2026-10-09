@@ -313,7 +313,7 @@ test("POST imports the matched key as RS256 and verifies under Apple's issuer", 
 	// `audience` a token minted for a different bundle or service id is accepted.
 	assert.deepStrictEqual(verifyCalls[0].options, {
 		issuer: "https://appleid.apple.com",
-		audience: CLIENT_ID,
+		audience: [CLIENT_ID],
 	});
 });
 
@@ -587,7 +587,7 @@ test("POST verifies the audience constraint with jwtVerify", async () => {
 
 	assert.deepStrictEqual(verifyCalls[0].options, {
 		issuer: "https://appleid.apple.com",
-		audience: CLIENT_ID,
+		audience: [CLIENT_ID],
 	});
 });
 
@@ -599,10 +599,34 @@ test("POST passes this app's Services ID as the audience, not a literal", async 
 
 	await POST(appleRequest());
 
-	assert.strictEqual(
-		verifyCalls[0].options.audience,
+	assert.deepStrictEqual(verifyCalls[0].options.audience, [
 		"com.example.different-service",
-	);
+	]);
+});
+
+test("POST accepts both the bundle identifier and the Services ID as audiences", async () => {
+	// Apple identity tokens carry *either* the bundle identifier (native iOS)
+	// *or* the Services ID (web flow) as their `aud` claim, depending on which
+	// flow the client uses. Both must be accepted.
+	process.env.APPLE_CLIENT_ID = "com.example.web, com.example.app";
+
+	await POST(appleRequest());
+
+	assert.deepStrictEqual(verifyCalls[0].options.audience, [
+		"com.example.web",
+		"com.example.app",
+	]);
+});
+
+test("POST trims whitespace around each configured audience", async () => {
+	process.env.APPLE_CLIENT_ID = "  com.example.web ,  com.example.app  ";
+
+	await POST(appleRequest());
+
+	assert.deepStrictEqual(verifyCalls[0].options.audience, [
+		"com.example.web",
+		"com.example.app",
+	]);
 });
 
 test("POST rejects a token whose nonce does not match the one it was sent", async () => {

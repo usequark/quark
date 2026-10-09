@@ -184,6 +184,11 @@ paths:
         digest in the token's `nonce` claim, and the route re-hashes and
         compares. A user matching the token's email is created on first sign-in.
 
+        `APPLE_CLIENT_ID` accepts a comma-separated list of audiences. Apple
+        identity tokens carry *either* the bundle identifier (native iOS) *or*
+        the Services ID (web flow) as their `aud` claim, depending on which
+        flow the client uses — set both to accept either.
+
         With `APPLE_CLIENT_ID` unset the endpoint refuses every request with
         `503` rather than verifying a token it cannot bind to this deployment.
       requestBody:

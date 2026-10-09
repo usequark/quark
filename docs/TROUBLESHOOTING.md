@@ -112,7 +112,7 @@ Google's client id must match the app's `EXPO_PUBLIC_GOOGLE_CLIENT_ID` — they 
 
 Three distinct failures, told apart by status:
 
-- **`503 OAuth is not configured on this server`** — the client id is unset (or blank). The endpoint is off. Nothing about the token matters; fix the server config.
+- **`503 Google sign-in is not configured on this server`** / **`503 Apple sign-in is not configured on this server`** — the client id is unset (or blank). The endpoint is off. Nothing about the token matters; fix the server config.
 - **`401 Invalid Google token`** — the token is genuine but its `aud` is not this app's client id. Almost always a client-id mismatch between the mobile app and the server.
 - **`400`** on Apple — the request omitted `nonce`. It is required, not optional.
 

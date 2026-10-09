@@ -35,6 +35,21 @@ function readClientId(value) {
 }
 
 /**
+ * Splits a comma-separated audience list into individual ids, trimming each
+ * and dropping blanks. Returns undefined when the whole value is blank.
+ *
+ * @param {string | undefined} value
+ * @returns {string[] | undefined}
+ */
+function readClientIdList(value) {
+	const ids = (value ?? "")
+		.split(",")
+		.map((id) => id.trim())
+		.filter(Boolean);
+	return ids.length > 0 ? ids : undefined;
+}
+
+/**
  * The Google OAuth client id, or undefined when Google sign-in is not configured.
  *
  * @returns {string | undefined}
@@ -44,12 +59,17 @@ export function getGoogleClientId() {
 }
 
 /**
- * The Apple Services ID, or undefined when Apple sign-in is not configured.
+ * The Apple OAuth audience(s), or undefined when Apple sign-in is not configured.
  *
- * @returns {string | undefined}
+ * Apple identity tokens can carry *either* the bundle identifier (native iOS)
+ * *or* the Services ID (web flow) as their `aud` claim — which one depends on
+ * how the client was registered and which flow it uses. A single-value audience
+ * would reject one of the two, so this returns a list.
+ *
+ * @returns {string[] | undefined}
  */
-export function getAppleClientId() {
-	return readClientId(process.env.APPLE_CLIENT_ID);
+export function getAppleClientIds() {
+	return readClientIdList(process.env.APPLE_CLIENT_ID);
 }
 
 /**
@@ -67,19 +87,23 @@ export function isGoogleAuthEnabled() {
  * @returns {boolean}
  */
 export function isAppleAuthEnabled() {
-	return Boolean(getAppleClientId());
+	return Boolean(getAppleClientIds());
 }
 
 /**
- * Compares a token's `aud` claim against the expected client id.
+ * Compares a token's `aud` claim against the expected client id(s).
  *
  * Used for Google, where the token is verified out of process by the provider's
  * own introspection endpoint and the claims arrive as parsed JSON. Apple
  * verifies the signature locally, so its audience is passed to `jwtVerify`
  * instead and never comes through here.
  *
+ * Accepts either a single id or an array. For Apple, pass the full list from
+ * `getAppleClientIds()` so both the bundle identifier and the Services ID are
+ * accepted.
+ *
  * @param {unknown} actual - The `aud` claim from the verified token.
- * @param {string | undefined} expected - The configured client id.
+ * @param {string | string[] | undefined} expected - The configured client id(s).
  * @returns {boolean} False when either side is missing, so an unconfigured
  *   deployment cannot pass by accident.
  */
@@ -87,6 +111,12 @@ export function isAudienceValid(actual, expected) {
 	if (typeof actual !== "string" || actual === "") {
 		return false;
 	}
+
+	if (Array.isArray(expected)) {
+		if (expected.length === 0) return false;
+		return expected.includes(actual);
+	}
+
 	if (typeof expected !== "string" || expected === "") {
 		return false;
 	}

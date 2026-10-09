@@ -1,5 +1,5 @@
 import { createHash, timingSafeEqual } from "node:crypto";
-import { getAppleClientId } from "@usequark/quark-config/oauth";
+import { getAppleClientIds } from "@usequark/quark-config/oauth";
 import { validateBody } from "@usequark/quark-core";
 import { user } from "@usequark/quark-db";
 import { importJWK, jwtVerify } from "jose";
@@ -32,12 +32,12 @@ function sha256Hex(value) {
  */
 export async function POST(request) {
 	try {
-		const clientId = getAppleClientId();
+		const clientIds = getAppleClientIds();
 
 		// Fail closed when unconfigured. This route is public, so an unconfigured
 		// deployment must not keep authenticating people — see the note in the
 		// Google route for the full reasoning.
-		if (!clientId) {
+		if (!clientIds) {
 			return NextResponse.json(
 				{ message: "Apple sign-in is not configured on this server" },
 				{ status: 503 },
@@ -70,13 +70,17 @@ export async function POST(request) {
 		// identity token to this app: without it, an identity token Apple issued
 		// to a different bundle or service id for the same Apple ID verifies fine
 		// and would be exchanged for a first-party session.
+		//
+		// Apple identity tokens can carry *either* the bundle identifier (native
+		// iOS) *or* the Services ID (web flow) as their `aud` claim, depending on
+		// which flow the client uses. Passing both accepts either.
 		const publicKey = await importJWK(matchingKey, "RS256");
 
 		let payload;
 		try {
 			const result = await jwtVerify(identityToken, publicKey, {
 				issuer: "https://appleid.apple.com",
-				audience: clientId,
+				audience: clientIds,
 			});
 			payload = result.payload;
 		} catch {
