@@ -181,6 +181,7 @@ export async function deployToRailway(options = {}) {
 		services: discovery.services,
 		// Pass raw name — generateIacFile handles escaping internally
 		projectName: projectLabel,
+		provision,
 		variableRefs: {
 			// Quoted: these land inside generated TypeScript as object values,
 			// where `${{...}}` must be a string literal to parse at all. The

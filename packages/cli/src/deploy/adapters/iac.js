@@ -106,6 +106,7 @@ export async function generateIacFile({
 	variableRefs = {},
 	serviceVars = {},
 	projectName = "quark-app",
+	provision = true,
 }) {
 	const { default: fs } = await import("fs-extra");
 	const { dirname } = await import("node:path");
@@ -176,14 +177,20 @@ export async function generateIacFile({
 	// `ensurePlugin()` (`railway add --database`), then referenced here via
 	// `${{Postgres.DATABASE_URL}}`. Without this block a second deploy plans to
 	// destroy the databases the first one created.
+	//
+	// Skipped when `provision` is false (`--no-provision`): the caller has
+	// explicitly opted out of database provisioning, so declaring the resources
+	// here would provision them anyway on the next `railway config apply`.
 	const serviceIdentifiers = new Set(services.map((s) => toIdentifier(s.name)));
 	const databaseNames = new Set();
 	const referencePattern = /\$\{\{([A-Za-z_][\w]*)\.([A-Za-z_][\w]*)\}\}/g;
 
-	for (const value of Object.values(variableRefs)) {
-		for (const match of String(value).matchAll(referencePattern)) {
-			if (!serviceIdentifiers.has(match[1])) {
-				databaseNames.add(match[1]);
+	if (provision) {
+		for (const value of Object.values(variableRefs)) {
+			for (const match of String(value).matchAll(referencePattern)) {
+				if (!serviceIdentifiers.has(match[1])) {
+					databaseNames.add(match[1]);
+				}
 			}
 		}
 	}

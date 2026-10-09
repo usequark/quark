@@ -189,6 +189,36 @@ test("generated IaC declares databases it references", async () => {
 	);
 });
 
+test("generated IaC omits database declarations when provision is false", async () => {
+	// `--no-provision` skips ensurePlugin() but still passes DATABASE_URL and
+	// REDIS_URL references. Without this guard the generator would declare the
+	// database resources anyway, provisioning them on the next apply despite
+	// the explicit opt-out.
+	const { content } = await generate({
+		...realDeployArgs(),
+		provision: false,
+	});
+
+	assert.ok(
+		!content.includes("postgres("),
+		`no Postgres declaration expected when provision=false:\n${content}`,
+	);
+	assert.ok(
+		!content.includes("redis("),
+		`no Redis declaration expected when provision=false:\n${content}`,
+	);
+	assert.ok(
+		content.includes("resources: [web, worker]"),
+		`resources must contain only the services:\n${content}`,
+	);
+	// The variable references are still emitted — the caller may have external
+	// databases. Only the resource declarations are suppressed.
+	assert.ok(
+		content.includes("DATABASE_URL"),
+		`DATABASE_URL reference must still be present:\n${content}`,
+	);
+});
+
 test("generated IaC omits database declarations when no database is referenced", async () => {
 	// A project that references no databases must not declare any — otherwise
 	// every worker-only or database-less scaffold ships dead code.
