@@ -1,5 +1,6 @@
 "use client";
 
+import { getCsrfToken } from "@usequark/quark-core/csrf-client";
 import {
 	Button,
 	ErrorBanner,
@@ -98,9 +99,26 @@ function RegisterForm() {
 		setPasswordError("");
 		setLoading(true);
 
+		// The CSRF token has to be in hand before the write. `GET /api/csrf` sets
+		// the matching httpOnly cookie and returns the same value; the server
+		// compares the two, so a request that arrives without the cookie is
+		// rejected before the handler runs. This page is pre-authentication, which
+		// is why the endpoint mints tokens for callers with no session.
+		let csrfToken;
+		try {
+			csrfToken = await getCsrfToken();
+		} catch {
+			setError("Could not start a secure session. Try again.");
+			setLoading(false);
+			return;
+		}
+
 		const res = await fetch("/api/auth/register", {
 			method: "POST",
-			headers: { "Content-Type": "application/json" },
+			headers: {
+				"Content-Type": "application/json",
+				"X-CSRF-Token": csrfToken,
+			},
 			body: JSON.stringify({
 				email: email.trim(),
 				password,

@@ -32,6 +32,7 @@
 		"./admin": "./src/admin.js",
 		"./auth": "./src/auth/index.js",
 		"./auth/middleware": "./src/auth/middleware.js",
+		"./csrf-client": "./src/csrf-client.js",
 		"./db": "./src/db.js",
 		"./email": "./src/email.js",
 		"./errors": "./src/errors.js",

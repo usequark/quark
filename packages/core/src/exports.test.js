@@ -7,6 +7,7 @@ import * as admin from "@usequark/quark-core/admin";
 import * as auth from "@usequark/quark-core/auth";
 import * as authMiddleware from "@usequark/quark-core/auth/middleware";
 import * as coreLight from "@usequark/quark-core/core";
+import * as csrfClient from "@usequark/quark-core/csrf-client";
 import * as db from "@usequark/quark-core/db";
 import * as email from "@usequark/quark-core/email";
 import * as errors from "@usequark/quark-core/errors";
@@ -109,6 +110,42 @@ test("subpath '.' (full barrel) re-exports the health-check API", () => {
 
 test("subpath './logger' exports the browser-safe logger", () => {
 	assert.equal(typeof logger.createLogger, "function");
+});
+
+test("subpath './csrf-client' exports the browser-safe CSRF client", () => {
+	// Importable from a `"use client"` component. It must stay off the barrels
+	// (`.` and `./core`) because those re-export `csrf.js`, which imports
+	// `node:crypto` — reaching the client helper through either of them would
+	// put a Node builtin in the browser bundle and fail the build.
+	assert.equal(typeof csrfClient.getCsrfToken, "function");
+	assert.equal(typeof csrfClient.clearCsrfToken, "function");
+	assert.equal(core.getCsrfToken, undefined);
+	assert.equal(coreLight.getCsrfToken, undefined);
+});
+
+test("subpath './csrf-client' pulls in no Node builtins", async () => {
+	// The hazard is transitive, so checking this module's own source is not
+	// enough: assert the whole graph it loads stays free of `node:` imports.
+	const loaded = new Set();
+	const pending = ["./csrf-client.js"];
+
+	while (pending.length > 0) {
+		const relative = pending.pop();
+		const url = new URL(relative, import.meta.url);
+		if (loaded.has(url.href)) continue;
+		loaded.add(url.href);
+
+		const source = readFileSync(url, "utf-8");
+		assert.doesNotMatch(
+			source,
+			/from\s+["']node:/,
+			`${relative} imports a Node builtin`,
+		);
+
+		for (const match of source.matchAll(/from\s+["'](\.[^"']+)["']/g)) {
+			pending.push(new URL(match[1], url).href);
+		}
+	}
 });
 
 test("subpath './locale' exports locale utilities", () => {

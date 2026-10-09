@@ -308,11 +308,19 @@ paths:
       tags: [Auth]
       summary: Get a CSRF token
       description: |
-        Returns a CSRF token and sets an `httpOnly` cookie.
-        Requires an active session (401 if unauthenticated).
-        Include the token in the `x-csrf-token` header for state-changing requests.
-      security:
-        - session: []
+        Returns a CSRF token and sets an `httpOnly` cookie holding the same
+        value. Include the token in the `x-csrf-token` header on every
+        state-changing request; the server compares the two.
+
+        No session is required. Registration is pre-authentication, so a
+        visitor with no account must be able to obtain a token before they can
+        register. The token is a write credential, so every response from this
+        endpoint — errors included — is sent `Cache-Control: no-store` and
+        `Vary: Cookie`.
+
+        From the browser, `getCsrfToken()` in `@usequark/quark-core/csrf-client`
+        fetches and caches it.
+      security: []
       responses:
         '200':
           description: CSRF token
@@ -325,12 +333,16 @@ paths:
                     type: string
                     example: 'a1b2c3d4e5f6...'
           headers:
+            Cache-Control:
+              schema:
+                type: string
+                description: Always `no-store`; the body is a write credential.
             Set-Cookie:
               schema:
                 type: string
                 example: 'csrf_token=abc123; HttpOnly; SameSite=Strict; Path=/; Max-Age=3600'
-        '401':
-          description: Not authenticated
+        '500':
+          description: Token could not be generated
           content:
             application/json:
               schema:

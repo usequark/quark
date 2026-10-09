@@ -102,7 +102,12 @@ The session cookie is missing or expired. Check:
 
 ### CSRF errors on form submissions
 
-All mutating requests (POST, PUT, PATCH, DELETE) must include the CSRF token. Use `withCsrfProtection` on API routes and ensure your forms call `getCsrfToken()` from `@usequark/quark-core`.
+All mutating requests (POST, PUT, PATCH, DELETE) must include the CSRF token. Use `withCsrfProtection` on API routes and send the token that `getCsrfToken()` returns, imported from `@usequark/quark-core/csrf-client`.
+
+Two failure modes account for most reports:
+
+- **`CSRF token not found`** — the request carried no `csrf_token` cookie. Either `GET /api/csrf` was never called, or the cookie was dropped. The cookie is `SameSite=Strict`, so it is also absent from any cross-site request; that is the protection working, not a bug.
+- **`Invalid CSRF token`** — the header and cookie disagreed. Usually a token cached in client state that has outlived the cookie's one-hour `maxAge`. `getCsrfToken()` refetches before this can happen; hand-rolled caching needs to do the same, or call `clearCsrfToken()`.
 
 ---
 
