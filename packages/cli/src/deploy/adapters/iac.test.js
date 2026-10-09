@@ -166,6 +166,123 @@ test("iacRef survives the generator unaltered", async () => {
 	assert.ok(content.includes(`REDIS_URL: ${iacRef("Redis", "REDIS_URL")},`));
 });
 
+// --- The database-deletion bug (#243) ---
+
+test("generated IaC declares databases it references", async () => {
+	// The bug: a second `quark deploy railway` planned to DELETE Postgres and
+	// Redis. `generateIacFile` referenced them via ${{Postgres.DATABASE_URL}}
+	// but never declared them, and Railway treats an omitted resource in a
+	// whole-project file as absent — and absent means delete.
+	const { content } = await generate(realDeployArgs());
+
+	assert.ok(
+		content.includes('postgres("Postgres")'),
+		`generated IaC must declare the Postgres database:\n${content}`,
+	);
+	assert.ok(
+		content.includes('redis("Redis")'),
+		`generated IaC must declare the Redis database:\n${content}`,
+	);
+	assert.ok(
+		content.includes("PostgresDb, RedisDb"),
+		`both databases must appear in the project resources:\n${content}`,
+	);
+});
+
+test("generated IaC omits database declarations when provision is false", async () => {
+	// `--no-provision` skips ensurePlugin() but still passes DATABASE_URL and
+	// REDIS_URL references. Without this guard the generator would declare the
+	// database resources anyway, provisioning them on the next apply despite
+	// the explicit opt-out.
+	const { content } = await generate({
+		...realDeployArgs(),
+		provision: false,
+	});
+
+	assert.ok(
+		!content.includes("postgres("),
+		`no Postgres declaration expected when provision=false:\n${content}`,
+	);
+	assert.ok(
+		!content.includes("redis("),
+		`no Redis declaration expected when provision=false:\n${content}`,
+	);
+	assert.ok(
+		content.includes("resources: [web, worker]"),
+		`resources must contain only the services:\n${content}`,
+	);
+	// The variable references are still emitted — the caller may have external
+	// databases. Only the resource declarations are suppressed.
+	assert.ok(
+		content.includes("DATABASE_URL"),
+		`DATABASE_URL reference must still be present:\n${content}`,
+	);
+});
+
+test("generated IaC preserves existing database declarations when provision is false", async () => {
+	// A project previously deployed with provisioning has its databases
+	// declared in .railway/railway.ts. Redeploying with --no-provision must
+	// preserve those declarations, because omitting a resource makes
+	// `railway config apply` delete it — the opt-out should skip provisioning
+	// new databases, not destroy existing ones.
+	const dir = await makeTempDir();
+	const iacPath = path.join(dir, ".railway", "railway.ts");
+	await fs.mkdir(path.dirname(iacPath), { recursive: true });
+	await fs.writeFile(
+		iacPath,
+		'import { defineRailway, postgres, preserve, project, redis, service } from "railway/iac";\n' +
+			"\nexport default defineRailway(() => {\n" +
+			'\tconst web = service("web", { env: { DATABASE_URL: "${{Postgres.DATABASE_URL}}" } });\n' +
+			'\tconst PostgresDb = postgres("Postgres");\n' +
+			'\tconst RedisDb = redis("Redis");\n' +
+			'\treturn project("existing", { resources: [web, PostgresDb, RedisDb] });\n' +
+			"});\n",
+		"utf8",
+	);
+
+	const result = await generateIacFile({
+		iacPath,
+		...realDeployArgs(),
+		provision: false,
+	});
+
+	assert.ok(
+		result.content.includes('postgres("Postgres")'),
+		`existing Postgres declaration must be preserved:\n${result.content}`,
+	);
+	assert.ok(
+		result.content.includes('redis("Redis")'),
+		`existing Redis declaration must be preserved:\n${result.content}`,
+	);
+	assert.ok(
+		result.content.includes("PostgresDb, RedisDb"),
+		`both databases must remain in resources:\n${result.content}`,
+	);
+});
+
+test("generated IaC omits database declarations when no database is referenced", async () => {
+	// A project that references no databases must not declare any — otherwise
+	// every worker-only or database-less scaffold ships dead code.
+	const { content } = await generate({
+		services: [{ name: "web", kind: "web", relativeRootDir: "apps/web" }],
+		projectName: "no-db",
+		variableRefs: { NODE_ENV: '"production"' },
+	});
+
+	assert.ok(
+		!content.includes("postgres("),
+		`no Postgres declaration expected:\n${content}`,
+	);
+	assert.ok(
+		!content.includes("redis("),
+		`no Redis declaration declaration expected:\n${content}`,
+	);
+	assert.ok(
+		content.includes("resources: [web]"),
+		`resources must contain only the service:\n${content}`,
+	);
+});
+
 // --- The gap that let all of the above ship ---
 
 test("generated IaC matches the IaC file shipped in every scaffold", async () => {
