@@ -1,4 +1,5 @@
-import { validateBody, verifyPassword } from "@usequark/quark-core";
+import { verifyPassword } from "@usequark/quark-core/auth";
+import { validateBody } from "@usequark/quark-core/core";
 import { user } from "@usequark/quark-db";
 import { NextResponse } from "next/server";
 import { z } from "zod";

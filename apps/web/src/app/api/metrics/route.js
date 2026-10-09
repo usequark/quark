@@ -9,7 +9,8 @@
  * support Prometheus scraping without additional config.
  */
 
-import { createLogger, metrics } from "@usequark/quark-core";
+import { createLogger } from "@usequark/quark-core/core";
+import { metrics } from "@usequark/quark-core/metrics";
 import { NextResponse } from "next/server";
 
 const logger = createLogger("metrics");

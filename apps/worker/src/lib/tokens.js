@@ -1,4 +1,4 @@
-import { createLogger } from "@usequark/quark-core";
+import { createLogger } from "@usequark/quark-core/core";
 
 const _logger = createLogger("worker:tokens");
 

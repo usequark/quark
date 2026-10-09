@@ -3,7 +3,7 @@
  * Processes file-related background jobs (cleanup, etc.)
  */
 
-import { createStorage } from "@usequark/quark-core";
+import { createStorage } from "@usequark/quark-core/storage";
 import { file } from "@usequark/quark-db";
 import { JOB_NAMES } from "@usequark/quark-jobs";
 

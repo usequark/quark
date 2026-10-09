@@ -48,7 +48,7 @@ resetProbes();
 
 probesRan = new Set();
 
-const core = await import("@usequark/quark-core");
+const core = await import("@usequark/quark-core/health");
 
 mock.module("@usequark/quark-db", {
 	namedExports: {
@@ -65,7 +65,7 @@ mock.module("@usequark/quark-db", {
 // queue registry through health.js's *own* imports — which a barrel mock does
 // not intercept. Mocking the probe functions themselves is what keeps this test
 // about the route's wiring; their internals are covered by health.test.js.
-mock.module("@usequark/quark-core", {
+mock.module("@usequark/quark-core/health", {
 	namedExports: {
 		...core,
 		createLogger: () => ({

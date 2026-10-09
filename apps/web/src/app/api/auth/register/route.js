@@ -1,9 +1,5 @@
-import {
-	createQueue,
-	hashPassword,
-	validateBody,
-	withCsrfProtection,
-} from "@usequark/quark-core";
+import { hashPassword } from "@usequark/quark-core/auth";
+import { validateBody, withCsrfProtection } from "@usequark/quark-core/core";
 import { user, userRegisterSchema } from "@usequark/quark-db";
 import { JOB_NAMES, JOB_QUEUES } from "@usequark/quark-jobs";
 import { NextResponse } from "next/server";
@@ -46,12 +42,18 @@ export const POST = withCsrfProtection(async (request) => {
 		// Don't return the password
 		const { password: _, ...safeUser } = newUser;
 
-		// Enqueue welcome email (fire-and-forget - don't block the response)
+		// Enqueue welcome email (fire-and-forget - don't block the response).
+		// The queue module is imported lazily so BullMQ stays out of the web
+		// process module graph until a registration actually happens, and the
+		// Queue is closed afterwards so the Redis connection is not held for
+		// the lifetime of the process.
 		try {
+			const { createQueue } = await import("@usequark/quark-core/queue");
 			const emailQueue = createQueue(JOB_QUEUES.EMAIL);
 			await emailQueue.add(JOB_NAMES.SEND_WELCOME_EMAIL, {
 				userId: newUser.id,
 			});
+			await emailQueue.close();
 		} catch {
 			// Non-critical - user is created even if email fails to enqueue
 		}

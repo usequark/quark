@@ -1,9 +1,6 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import {
-	createAuthConfig,
-	createLogger,
-	verifyPassword,
-} from "@usequark/quark-core";
+import { createAuthConfig, verifyPassword } from "@usequark/quark-core/auth";
+import { createLogger } from "@usequark/quark-core/core";
 import { Prisma, prisma, user } from "@usequark/quark-db";
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";

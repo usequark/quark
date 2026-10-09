@@ -7,11 +7,11 @@
 import {
 	ConflictError,
 	createLogger,
-	createStorage,
 	ForbiddenError,
 	NotFoundError,
 	withCsrfProtection,
-} from "@usequark/quark-core";
+} from "@usequark/quark-core/core";
+import { createStorage } from "@usequark/quark-core/storage";
 import { file } from "@usequark/quark-db";
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth-middleware";

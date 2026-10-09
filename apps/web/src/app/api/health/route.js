@@ -24,7 +24,7 @@ import {
 	getRegisteredQueues,
 	pingRedis,
 	runHealthChecks,
-} from "@usequark/quark-core";
+} from "@usequark/quark-core/health";
 import { pingDatabase } from "@usequark/quark-db";
 import { NextResponse } from "next/server";
 

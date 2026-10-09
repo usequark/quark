@@ -1,4 +1,5 @@
-import { AppError, getAuthSecret } from "@usequark/quark-core";
+import { getAuthSecret } from "@usequark/quark-core/auth";
+import { AppError } from "@usequark/quark-core/core";
 import { jwtVerify, SignJWT } from "jose";
 
 const ISSUER = "quark-mobile";
