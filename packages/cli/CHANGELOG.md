@@ -1,5 +1,23 @@
 # @usequark/quark-create-app
 
+## 1.25.6
+
+### Patch Changes
+
+- [#250](https://github.com/usequark/quark/pull/250) [`da7b6a5`](https://github.com/usequark/quark/commit/da7b6a5fc898e40f0040bd4324a8c4ea7e192bd8) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Scaffolded projects get a working pre-auth CSRF handshake.
+  
+  The template's register page posted to `/api/auth/register` with no `x-csrf-token`, and its `/api/csrf` route required a session — so a visitor could not obtain a token, and no client anywhere in the template ever called the endpoint. The four other `withCsrfProtection` routes (`/api/users`, `/api/users/me`, `/api/files`, `/api/files/[id]`) were unreachable from the browser for the same reason.
+  
+  `GET /api/csrf` now serves callers with no session and marks every response `no-store` + `Vary: Cookie`, and `RegisterPageClient` sends the token via `getCsrfToken()` from `@usequark/quark-core/csrf-client`. Builds from this template against `@usequark/quark-core` 2.6.2 or later.
+
+- [#252](https://github.com/usequark/quark/pull/252) [`286fb7e`](https://github.com/usequark/quark/commit/286fb7ee654a0c9e0aa0ffca4dd1a4538831e816) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - The scaffolded register page now proves its CSRF token, and retries once if the server has rotated the cookie.
+  
+  `RegisterPageClient` retried nothing on a `401`, so a client holding a token the server no longer recognises — after a sign-out, or anything else that clears cookies — was left with a dead button and no explanation. It now clears the cached token, fetches a fresh one, and retries the write once; a second failure surfaces normally.
+  
+  The scaffolded integration tests send a real token instead of relying on the exemption this repo no longer ships.
+  
+  Requires `@usequark/quark-core` 2.6.2 or later.
+
 ## 1.25.5
 
 ### Patch Changes
