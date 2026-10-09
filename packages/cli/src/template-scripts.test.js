@@ -158,3 +158,53 @@ describe("check-standards.mjs", () => {
 		assert.match(result.stderr, /createLogger\(\)/);
 	});
 });
+
+describe("doctor.js", () => {
+	// The scaffolded README seeds the branding block with the Quark mark and
+	// the default "<name> application" tagline. Both are deliberate placeholders
+	// that resolve on GitHub - the doctor's job is to say so until they are
+	// replaced.
+	const DEFAULT_BRANDING = `<p align="center">
+  <img src="apps/web/public/quark.svg" alt="Demo App" width="120" />
+</p>
+
+<p align="center">
+  <strong>Demo App application</strong>
+</p>
+`;
+
+	const CUSTOM_BRANDING = `<p align="center">
+  <img src="apps/web/public/logo.svg" alt="Acme" width="120" />
+</p>
+
+<p align="center">
+  <strong>Precision surveying for land development</strong>
+</p>
+`;
+
+	it("warns while the README still carries the Quark branding block", () => {
+		const dir = makeTempDir();
+		copyScript(dir, "scripts/doctor.js");
+		writeFile(dir, "README.md", `# Demo\n\n${DEFAULT_BRANDING}\n`);
+
+		const result = runScript(dir, "scripts/doctor.js");
+
+		assert.match(
+			result.stdout,
+			/README branding block is still the Quark default/,
+		);
+	});
+
+	it("stays quiet once the logo and tagline are customised", () => {
+		const dir = makeTempDir();
+		copyScript(dir, "scripts/doctor.js");
+		writeFile(dir, "README.md", `# Demo\n\n${CUSTOM_BRANDING}\n`);
+
+		const result = runScript(dir, "scripts/doctor.js");
+
+		assert.ok(
+			!result.stdout.includes("README branding block"),
+			`customised branding must not warn\n${result.stdout}`,
+		);
+	});
+});

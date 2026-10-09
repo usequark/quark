@@ -204,6 +204,8 @@ const TEMPLATE_ONLY = new Set([
 	"base-project/.github/dependabot.yml",
 	// Scaffold starter README (different from monorepo README)
 	"base-project/README.md",
+	// Deployment guide - hand-authored for scaffolded projects (no monorepo source)
+	"base-project/DEPLOYMENT.md",
 	// GENERATED files — produced by generate-templates.js, never synced from source
 	"base-project/package.json",
 	"base-project/.gitignore",

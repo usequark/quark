@@ -51,6 +51,9 @@ yarn-error.log*
 # conductor (machine-local settings)
 .conductor/settings.local.toml
 
+# playwright-cli (local tool artifacts)
+.playwright-cli/
+
 # railway (project link - machine-specific)
 .railway/config.json
 
