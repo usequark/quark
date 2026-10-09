@@ -178,25 +178,33 @@ paths:
         Public endpoint.
 
         The `kid` in the token header selects Apple's public key, fetched live
-        from `https://appleid.apple.com/auth/keys` and verified against issuer
-        `https://appleid.apple.com`. A user matching the token's email is
-        created on first sign-in.
+        from `https://appleid.apple.com/auth/keys`, and verified against issuer
+        `https://appleid.apple.com` and audience `APPLE_CLIENT_ID`. The `nonce`
+        is required: the client sends a raw nonce, Apple returns its SHA-256
+        digest in the token's `nonce` claim, and the route re-hashes and
+        compares. A user matching the token's email is created on first sign-in.
 
-        `APPLE_CLIENT_ID` is the token audience and is not yet checked by this
-        endpoint.
+        With `APPLE_CLIENT_ID` unset the endpoint refuses every request with
+        `503` rather than verifying a token it cannot bind to this deployment.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [identityToken]
+              required: [identityToken, nonce]
               properties:
                 identityToken:
                   type: string
                   minLength: 1
                 nonce:
                   type: string
+                  minLength: 1
+                  description: |
+                    Required. The raw nonce for this sign-in attempt. Apple is
+                    given its SHA-256 digest and returns that digest in the
+                    token's `nonce` claim, which the server re-hashes and
+                    compares. Omitting it is a `400`.
       responses:
         '200':
           description: Token pair issued
@@ -211,7 +219,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '401':
-          description: Invalid Apple token
+          description: |
+            Invalid Apple token. One response for a bad signature, a wrong
+            issuer, a wrong audience, and a nonce mismatch alike — the route
+            does not distinguish them.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Apple sign-in is not configured on this server
           content:
             application/json:
               schema:
@@ -227,11 +244,12 @@ paths:
       description: |
         Public endpoint.
 
-        The ID token is verified against Google's `tokeninfo` endpoint. A user
-        matching the token's email is created on first sign-in.
+        The ID token is verified against Google's `tokeninfo` endpoint, and its
+        `aud` claim must equal `GOOGLE_CLIENT_ID`. A user matching the token's
+        email is created on first sign-in.
 
-        `GOOGLE_CLIENT_ID` is the token audience and is not yet checked by this
-        endpoint.
+        With `GOOGLE_CLIENT_ID` unset the endpoint refuses every request with
+        `503` rather than verifying a token it cannot bind to this deployment.
       requestBody:
         required: true
         content:
@@ -257,7 +275,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '401':
-          description: Invalid Google token
+          description: |
+            Invalid Google token. One response for a token Google rejected and
+            for an `aud` that does not match `GOOGLE_CLIENT_ID` alike — the
+            route does not distinguish them.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Google sign-in is not configured on this server
           content:
             application/json:
               schema:

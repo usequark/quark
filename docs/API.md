@@ -29,7 +29,9 @@ Sign in with credentials. Handled by NextAuth.js at `/api/auth/[...nextauth]`.
 
 GitHub and Google OAuth providers are registered automatically when `GITHUB_ID` and `GITHUB_SECRET`, or `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`, are set. All five OAuth variables are optional; an app that sets none is unaffected.
 
-Separately from NextAuth, `POST /api/auth/google` and `POST /api/auth/apple` are hand-written token-exchange endpoints used by the mobile app. They read `GOOGLE_CLIENT_ID` and `APPLE_CLIENT_ID` respectively. Both are declared and validated, but the endpoints do not yet gate on them — binding the token to this deployment is the next change.
+Separately from NextAuth, `POST /api/auth/google` and `POST /api/auth/apple` are hand-written token-exchange endpoints used by the mobile app. Both are enabled by their client id — `GOOGLE_CLIENT_ID` and `APPLE_CLIENT_ID` — and **both refuse every request with `503` when that variable is unset**, rather than exchanging a token they cannot bind to this deployment.
+
+Each endpoint verifies the token's audience against the configured client id, so a token the provider issued to a *different* app for the same address is rejected with `401`. Apple additionally requires a `nonce`: the client sends a raw nonce, Apple returns its SHA-256 digest in the token, and the server re-hashes and compares. A nonce mismatch is a `401`.
 
 ### `GET /api/auth/session`
 
