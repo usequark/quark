@@ -219,6 +219,47 @@ test("generated IaC omits database declarations when provision is false", async 
 	);
 });
 
+test("generated IaC preserves existing database declarations when provision is false", async () => {
+	// A project previously deployed with provisioning has its databases
+	// declared in .railway/railway.ts. Redeploying with --no-provision must
+	// preserve those declarations, because omitting a resource makes
+	// `railway config apply` delete it — the opt-out should skip provisioning
+	// new databases, not destroy existing ones.
+	const dir = await makeTempDir();
+	const iacPath = path.join(dir, ".railway", "railway.ts");
+	await fs.mkdir(path.dirname(iacPath), { recursive: true });
+	await fs.writeFile(
+		iacPath,
+		'import { defineRailway, postgres, preserve, project, redis, service } from "railway/iac";\n' +
+			"\nexport default defineRailway(() => {\n" +
+			'\tconst web = service("web", { env: { DATABASE_URL: "${{Postgres.DATABASE_URL}}" } });\n' +
+			'\tconst PostgresDb = postgres("Postgres");\n' +
+			'\tconst RedisDb = redis("Redis");\n' +
+			'\treturn project("existing", { resources: [web, PostgresDb, RedisDb] });\n' +
+			"});\n",
+		"utf8",
+	);
+
+	const result = await generateIacFile({
+		iacPath,
+		...realDeployArgs(),
+		provision: false,
+	});
+
+	assert.ok(
+		result.content.includes('postgres("Postgres")'),
+		`existing Postgres declaration must be preserved:\n${result.content}`,
+	);
+	assert.ok(
+		result.content.includes('redis("Redis")'),
+		`existing Redis declaration must be preserved:\n${result.content}`,
+	);
+	assert.ok(
+		result.content.includes("PostgresDb, RedisDb"),
+		`both databases must remain in resources:\n${result.content}`,
+	);
+});
+
 test("generated IaC omits database declarations when no database is referenced", async () => {
 	// A project that references no databases must not declare any — otherwise
 	// every worker-only or database-less scaffold ships dead code.
