@@ -550,3 +550,125 @@ test("POST verifies the audience before it trusts the email in the same payload"
 	assert.strictEqual(response.status, 401);
 	assert.deepStrictEqual(findByEmailCalls, []);
 });
+
+test("POST rejects a token whose address Google has not verified", async () => {
+	// The account already exists, so the only thing standing between an
+	// unconfirmed address and someone else's session is this check. Google mints
+	// tokens for unverified addresses (Workspace accounts, freshly created ones
+	// before the confirmation round-trip), and "Google vouched for this token"
+	// says nothing about who can read the mail.
+	existingUser = { id: "user-1", email: "alice@example.com" };
+	tokenInfo = { ...VALID_TOKEN_INFO, email_verified: "false" };
+
+	const response = await POST(googleRequest());
+
+	assert.strictEqual(response.status, 401);
+	assert.deepStrictEqual(findByEmailCalls, []);
+	assert.deepStrictEqual(createCalls, []);
+	assert.deepStrictEqual(issueCalls, []);
+});
+
+test("POST rejects a token with no email_verified claim at all", async () => {
+	// Absent is not the same as confirmed. A payload that simply omits the claim
+	// must not be read as a pass — that is the shape an attacker would send.
+	tokenInfo = { ...VALID_TOKEN_INFO, email_verified: undefined };
+
+	const response = await POST(googleRequest());
+
+	assert.strictEqual(response.status, 401);
+	assert.deepStrictEqual(createCalls, []);
+	assert.deepStrictEqual(issueCalls, []);
+});
+
+test("POST accepts the string form of email_verified that tokeninfo returns", async () => {
+	// Google's tokeninfo documents this claim as the string "true", not a
+	// boolean. Reading it as a boolean would reject every real sign-in while
+	// accepting the string "false", so the suite pins the actual wire shape.
+	tokenInfo = { ...VALID_TOKEN_INFO, email_verified: "true" };
+
+	const response = await POST(googleRequest());
+
+	assert.strictEqual(response.status, 200);
+	assert.deepStrictEqual(issueCalls, [CREATED]);
+});
+
+test("POST accepts a boolean email_verified too", async () => {
+	// The id token's own claim is a boolean; only `tokeninfo`'s rendering is a
+	// string. Both spellings mean the same thing, and neither should lock a
+	// legitimate user out if Google ever changes which one it serves.
+	tokenInfo = { ...VALID_TOKEN_INFO, email_verified: true };
+
+	const response = await POST(googleRequest());
+
+	assert.strictEqual(response.status, 200);
+	assert.deepStrictEqual(issueCalls, [CREATED]);
+});
+
+test("POST treats anything short of an explicit confirmation as unverified", async () => {
+	// Only "true" in one of its two real spellings is a pass. Every other value —
+	// including the truthy-looking ones — is a refusal, because the cost of
+	// guessing wrong in this direction is an unconfirmed address holding a
+	// session.
+	const unconfirmed = [
+		"false",
+		"yes",
+		"1",
+		"",
+		"TRUE verified",
+		1,
+		null,
+		{},
+		[],
+	];
+
+	for (const value of unconfirmed) {
+		tokenInfo = { ...VALID_TOKEN_INFO, email_verified: value };
+
+		const response = await POST(googleRequest());
+
+		assert.strictEqual(
+			response.status,
+			401,
+			`email_verified=${JSON.stringify(value)} should be refused`,
+		);
+		// Re-asserted every pass: a single leak into the database anywhere in this
+		// loop would be the bug this test exists to catch.
+		assert.deepStrictEqual(findByEmailCalls, []);
+		assert.deepStrictEqual(createCalls, []);
+		assert.deepStrictEqual(issueCalls, []);
+	}
+});
+
+test("POST does not say which check failed when the address is unverified", async () => {
+	// Same reasoning as the audience mismatch: the body must be byte-identical to
+	// the generic invalid-token response. Telling a caller "your token was valid,
+	// only the address was unconfirmed" names the remaining check.
+	tokenInfo = { ...VALID_TOKEN_INFO, email_verified: "false" };
+
+	const response = await POST(googleRequest());
+	const raw = await response.text();
+
+	assert.strictEqual(response.status, 401);
+	assert.deepStrictEqual(JSON.parse(raw), { message: "Invalid Google token" });
+});
+
+test("POST never lets an unverified address reach the database", async () => {
+	// The audience check has already passed here, so this token is one Google
+	// genuinely issued for this app. Letting its email reach `findByEmail` would
+	// still be wrong twice over: it would sign in, or create, an account for an
+	// address nobody has confirmed, and it would expose whether that address is
+	// registered through the difference between a 401 and a 201.
+	tokenInfo = {
+		...VALID_TOKEN_INFO,
+		email_verified: "false",
+		email: "victim@example.com",
+	};
+
+	const response = await POST(googleRequest());
+
+	assert.strictEqual(response.status, 401);
+	assert.deepStrictEqual(steps, ["tokeninfo"]);
+	assert.deepStrictEqual(findByEmailCalls, []);
+	assert.deepStrictEqual(createCalls, []);
+	assert.deepStrictEqual(issueCalls, []);
+});

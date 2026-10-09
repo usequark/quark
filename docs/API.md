@@ -143,11 +143,15 @@ Verify a Google ID token and issue a JWT pair. Public.
 }
 ```
 
-The ID token is verified against Google's `tokeninfo` endpoint. A user matching the token's email is created on first sign-in.
+The ID token is verified against Google's `tokeninfo` endpoint, and two claims must hold before an account is touched: `aud` must equal `GOOGLE_CLIENT_ID`, and `email_verified` must confirm the address — this endpoint creates the account on first sight, so an unconfirmed address would make the confirmation the attacker's to skip rather than the owner's to perform. A user matching the token's email is created on first sign-in.
 
 **Response (200):** `{ "token": "...", "refreshToken": "...", "expiresAt": "..." }`.
 
 **Response (400):** the verified token carries no email address.
+
+**Response (401):** one generic `Invalid Google token` for a token Google rejected, an audience that does not match, and an unverified address alike.
+
+**Response (503):** `GOOGLE_CLIENT_ID` is unset or blank.
 
 ### `GET /api/csrf`
 
