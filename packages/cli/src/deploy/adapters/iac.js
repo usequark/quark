@@ -167,7 +167,45 @@ export async function generateIacFile({
 		);
 	}
 
-	const resources = services.map((s) => toIdentifier(s.name)).join(", ");
+	// Declare every database the services reference, so a whole-project apply
+	// does not plan to delete it.
+	//
+	// Railway treats an omitted resource in a single-file project as absent, and
+	// absent means delete: "One project definition, one apply, and omitting a
+	// resource means deleting it." The databases are provisioned out-of-band by
+	// `ensurePlugin()` (`railway add --database`), then referenced here via
+	// `${{Postgres.DATABASE_URL}}`. Without this block a second deploy plans to
+	// destroy the databases the first one created.
+	const serviceIdentifiers = new Set(services.map((s) => toIdentifier(s.name)));
+	const databaseNames = new Set();
+	const referencePattern = /\$\{\{([A-Za-z_][\w]*)\.([A-Za-z_][\w]*)\}\}/g;
+
+	for (const value of Object.values(variableRefs)) {
+		for (const match of String(value).matchAll(referencePattern)) {
+			if (!serviceIdentifiers.has(match[1])) {
+				databaseNames.add(match[1]);
+			}
+		}
+	}
+
+	// `postgres` and `redis` are dedicated helpers; anything else falls back to
+	// the generic `database` helper. Both are already in IAC_HELPERS, so the
+	// import list picks them up automatically.
+	const DATABASE_HELPERS = { Postgres: "postgres", Redis: "redis" };
+	const sortedDatabases = [...databaseNames].sort();
+
+	for (const dbName of sortedDatabases) {
+		const helper = DATABASE_HELPERS[dbName] ?? "database";
+		const dbIdentifier = `${toIdentifier(dbName)}Db`;
+		resourceLines.push(
+			`\tconst ${dbIdentifier} = ${helper}("${escapeTsString(dbName)}");`,
+		);
+	}
+
+	const resources = [
+		...services.map((s) => toIdentifier(s.name)),
+		...sortedDatabases.map((name) => `${toIdentifier(name)}Db`),
+	].join(", ");
 
 	const body = `export default defineRailway(() => {
 ${resourceLines.join("\n\n")}

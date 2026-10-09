@@ -1,4 +1,4 @@
-import { defineRailway, preserve, project, service } from "railway/iac";
+import { defineRailway, postgres, preserve, project, redis, service } from "railway/iac";
 
 export default defineRailway(() => {
 	const web = service("web", {
@@ -34,7 +34,10 @@ export default defineRailway(() => {
 		},
 	});
 
+	const PostgresDb = postgres("Postgres");
+	const RedisDb = redis("Redis");
+
 	return project("__QUARK_PROJECT_NAME__", {
-		resources: [web, worker],
+		resources: [web, worker, PostgresDb, RedisDb],
 	});
 });

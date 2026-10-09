@@ -166,6 +166,52 @@ test("iacRef survives the generator unaltered", async () => {
 	assert.ok(content.includes(`REDIS_URL: ${iacRef("Redis", "REDIS_URL")},`));
 });
 
+// --- The database-deletion bug (#243) ---
+
+test("generated IaC declares databases it references", async () => {
+	// The bug: a second `quark deploy railway` planned to DELETE Postgres and
+	// Redis. `generateIacFile` referenced them via ${{Postgres.DATABASE_URL}}
+	// but never declared them, and Railway treats an omitted resource in a
+	// whole-project file as absent — and absent means delete.
+	const { content } = await generate(realDeployArgs());
+
+	assert.ok(
+		content.includes('postgres("Postgres")'),
+		`generated IaC must declare the Postgres database:\n${content}`,
+	);
+	assert.ok(
+		content.includes('redis("Redis")'),
+		`generated IaC must declare the Redis database:\n${content}`,
+	);
+	assert.ok(
+		content.includes("PostgresDb, RedisDb"),
+		`both databases must appear in the project resources:\n${content}`,
+	);
+});
+
+test("generated IaC omits database declarations when no database is referenced", async () => {
+	// A project that references no databases must not declare any — otherwise
+	// every worker-only or database-less scaffold ships dead code.
+	const { content } = await generate({
+		services: [{ name: "web", kind: "web", relativeRootDir: "apps/web" }],
+		projectName: "no-db",
+		variableRefs: { NODE_ENV: '"production"' },
+	});
+
+	assert.ok(
+		!content.includes("postgres("),
+		`no Postgres declaration expected:\n${content}`,
+	);
+	assert.ok(
+		!content.includes("redis("),
+		`no Redis declaration declaration expected:\n${content}`,
+	);
+	assert.ok(
+		content.includes("resources: [web]"),
+		`resources must contain only the service:\n${content}`,
+	);
+});
+
 // --- The gap that let all of the above ship ---
 
 test("generated IaC matches the IaC file shipped in every scaffold", async () => {
