@@ -98,16 +98,57 @@ test("CSRF Module", async (t) => {
 		});
 	});
 
-	await t.test("requireCsrfToken skips NextAuth routes", () => {
+	await t.test(
+		"requireCsrfToken no longer skips /api/auth/ paths",
+		async () => {
+			// The exemption existed for NextAuth, and it was costing more than it
+			// bought: every hand-written route filed under that prefix inherited it.
+			// `/api/auth/register` is the one that mattered — its wrapper was inert.
+			// NextAuth itself is unaffected because `app/api/auth/[...nextauth]/route.js`
+			// exports `handlers.POST` directly and never calls `withCsrfProtection`,
+			// so no request to `/api/auth/signin` reaches this function at all.
+			const request = mockRequest({
+				method: "POST",
+				url: "http://localhost/api/auth/register",
+			});
+
+			assert.throws(() => requireCsrfToken(request), /CSRF token not found/);
+		},
+	);
+
+	await t.test("a NextAuth callback path is not exempted either", async () => {
+		// Guards the reasoning above: if a NextAuth request ever did reach this
+		// function, it would be rejected. That is correct, because it cannot
+		// happen - and if it ever starts happening, this fails loudly instead of
+		// silently relying on an exemption that no longer exists.
 		const request = mockRequest({
 			method: "POST",
-			url: "http://localhost/api/auth/signin",
+			url: "http://localhost/api/auth/callback/credentials",
 		});
 
-		assert.doesNotThrow(() => {
-			requireCsrfToken(request);
-		});
+		assert.throws(() => requireCsrfToken(request), /CSRF token not found/);
 	});
+
+	await t.test(
+		"a hand-written /api/auth/ route with a valid token passes",
+		async () => {
+			// The fix must narrow the exemption, not break the route. A matching
+			// cookie/header pair is all `/api/auth/register` ever needed.
+			const token = generateCsrfToken();
+			const request = mockRequest({
+				method: "POST",
+				url: "http://localhost/api/auth/register",
+				headers: {
+					"x-csrf-token": token,
+					cookie: `csrf_token=${encodeURIComponent(token)}`,
+				},
+			});
+
+			assert.doesNotThrow(() => {
+				requireCsrfToken(request);
+			});
+		},
+	);
 
 	await t.test("requireCsrfToken skips Bearer-authenticated requests", () => {
 		const request = mockRequest({
