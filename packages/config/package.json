@@ -10,6 +10,7 @@
 		"./rate-limit": "./src/rate-limit.js",
 		"./app-url": "./src/app-url.js",
 		"./environment": "./src/environment.js",
+		"./oauth": "./src/oauth.js",
 		"./load-config": "./src/load-config.js",
 		"./validate-env": "./src/validate-env.js",
 		"./redis": "./src/redis.js"

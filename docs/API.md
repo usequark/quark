@@ -27,7 +27,9 @@ Sign in with credentials. Handled by NextAuth.js at `/api/auth/[...nextauth]`.
 
 **Response:** Redirects to callback URL with session cookie.
 
-GitHub and Google OAuth providers are registered automatically when `GITHUB_ID` and `GITHUB_SECRET`, or `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`, are set.
+GitHub and Google OAuth providers are registered automatically when `GITHUB_ID` and `GITHUB_SECRET`, or `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`, are set. All five OAuth variables are optional; an app that sets none is unaffected.
+
+Separately from NextAuth, `POST /api/auth/google` and `POST /api/auth/apple` are hand-written token-exchange endpoints used by the mobile app. They read `GOOGLE_CLIENT_ID` and `APPLE_CLIENT_ID` respectively. Both are declared and validated, but the endpoints do not yet gate on them — binding the token to this deployment is the next change.
 
 ### `GET /api/auth/session`
 

@@ -85,6 +85,15 @@ const ENV_DESCRIPTIONS = {
 	NEXTAUTH_SECRET: "NextAuth secret for JWT signing",
 	NEXTAUTH_URL: "NextAuth callback URL (derived from APP_URL if not set)",
 
+	// OAuth (optional — each provider is inert unless its client id is set)
+	GITHUB_ID: "GitHub OAuth client id for NextAuth sign-in",
+	GITHUB_SECRET: "GitHub OAuth client secret for NextAuth sign-in",
+	GOOGLE_CLIENT_ID:
+		"Google OAuth client id — enables POST /api/auth/google and the id token audience check",
+	GOOGLE_CLIENT_SECRET: "Google OAuth client secret for NextAuth sign-in",
+	APPLE_CLIENT_ID:
+		"Apple Services ID — enables POST /api/auth/apple and the identity token audience check",
+
 	// Application
 	APP_NAME: "Application name - used in metadata, emails, and page titles",
 	APP_DESCRIPTION:
@@ -220,6 +229,13 @@ function createEnvSchema(service) {
 			NEXTAUTH_URL: absoluteHttpUrl(
 				"NEXTAUTH_URL must be an absolute http(s) URL",
 			),
+
+			// OAuth (optional — each provider is inert unless its client id is set)
+			GITHUB_ID: optionalString,
+			GITHUB_SECRET: optionalString,
+			GOOGLE_CLIENT_ID: optionalString,
+			GOOGLE_CLIENT_SECRET: optionalString,
+			APPLE_CLIENT_ID: optionalString,
 
 			// Application
 			APP_NAME: optionalString,
@@ -414,6 +430,24 @@ function collectWarnings() {
 		warnings.push(
 			"APP_URL not set: Auth.js and CORS origins will fall back to http://localhost. Set APP_URL to your real https origin before production.",
 		);
+	}
+
+	// OAuth: half a provider is a provider that silently does not work.
+	// `auth.js` only registers a NextAuth provider when BOTH the client id and
+	// the secret are set, so an id with no secret leaves the sign-in button
+	// absent and the failure looks like a missing feature rather than a
+	// half-finished configuration. Worth saying out loud.
+	for (const [idKey, secretKey, label] of [
+		["GITHUB_ID", "GITHUB_SECRET", "GitHub"],
+		["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "Google"],
+	]) {
+		const hasId = Boolean(process.env[idKey]?.trim());
+		const hasSecret = Boolean(process.env[secretKey]?.trim());
+		if (hasId !== hasSecret) {
+			warnings.push(
+				`${label} OAuth is incomplete: set both ${idKey} and ${secretKey} to enable it. The sign-in button stays hidden until both are present.`,
+			);
+		}
 	}
 
 	// Umami pair completeness

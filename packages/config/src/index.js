@@ -11,6 +11,13 @@ export {
 	resolveEnvironment,
 } from "./environment.js";
 export { getConfig, loadConfig, resetConfig } from "./load-config.js";
+export {
+	getAppleClientId,
+	getGoogleClientId,
+	isAppleAuthEnabled,
+	isAudienceValid,
+	isGoogleAuthEnabled,
+} from "./oauth.js";
 export { applyRateLimit, rateLimit } from "./rate-limit.js";
 export { closeSharedRedisClient, getSharedRedisClient } from "./redis.js";
 export { loadEnv } from "./validate-env.js";
