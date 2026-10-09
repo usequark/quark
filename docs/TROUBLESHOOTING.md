@@ -108,13 +108,13 @@ The session cookie is missing or expired. Check:
 
 The mobile app posts to `/api/auth/google` and `/api/auth/apple`, which verify the token themselves rather than going through NextAuth. Set `GOOGLE_CLIENT_ID` and `APPLE_CLIENT_ID` on the **server**.
 
-Google's client id must match the app's `EXPO_PUBLIC_GOOGLE_CLIENT_ID` — they are the same OAuth client, registered in one console.
+Google's client id must match the app's `EXPO_PUBLIC_GOOGLE_CLIENT_ID` — they are the same OAuth client, registered in one console. Apple has no mobile-side id: the native flow's audience is the app's bundle identifier, so `APPLE_CLIENT_ID` on the server takes that bundle id, the Services ID (web flow), or both comma-separated.
 
 Three distinct failures, told apart by status:
 
 - **`503 Google sign-in is not configured on this server`** / **`503 Apple sign-in is not configured on this server`** — the client id is unset (or blank). The endpoint is off. Nothing about the token matters; fix the server config.
 - **`401 Invalid Google token`** — the token is genuine but its `aud` is not this app's client id. Almost always a client-id mismatch between the mobile app and the server.
-- **`400`** on Apple — the request omitted `nonce`. It is required, not optional.
+- **`400`** on Apple — the request omitted `nonce`. It is required, not optional. (A token that *arrives* with no `nonce` claim, or a stale one, is a `401` instead — see below.)
 
 ### Google or Apple sign-in returns 401 on a correctly configured server
 
