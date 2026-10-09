@@ -1,4 +1,12 @@
 <p align="center">
+  <img src="apps/web/public/quark.svg" alt="__QUARK_PROJECT_NAME__" width="120" />
+</p>
+
+<p align="center">
+  <strong>__QUARK_PROJECT_BRIEF__</strong>
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/Node.js-22-339933?style=flat&logo=node.js&logoColor=white" alt="Node.js 22" />
   <img src="https://img.shields.io/badge/Next.js-16-000000?style=flat&logo=next.js&logoColor=white" alt="Next.js 16" />
   <img src="https://img.shields.io/badge/Prisma-7-2D3748?style=flat&logo=prisma&logoColor=white" alt="Prisma 7" />

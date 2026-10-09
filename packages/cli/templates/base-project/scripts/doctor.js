@@ -221,6 +221,42 @@ if (exampleContent) {
 	}
 }
 
+// ── Check S6: README branding block is still the Quark default ───────────────
+{
+	const readmeForBranding = read("README.md");
+	if (readmeForBranding) {
+		const staleBranding = [];
+
+		// The scaffold ships the Quark mark as a stand-in logo; it resolves
+		// (unlike a missing file) but it is Quark's brand, not the user's.
+		if (/src="[^"]*quark\.svg"/i.test(readmeForBranding)) {
+			staleBranding.push(
+				"README.md → logo still points at apps/web/public/quark.svg (the Quark mark)",
+			);
+		}
+
+		// Mirrors the S5 heuristic: a tagline that is only "<name> application"
+		// is the default the CLI seeds from the project name, not a real one.
+		const tagline =
+			readmeForBranding.match(/<strong>(.*?)<\/strong>/)?.[1]?.trim() ?? "";
+		if (/\bapplication\b$/i.test(tagline) && tagline.split(/\s+/).length <= 3) {
+			staleBranding.push(
+				`README.md → tagline is still the scaffold default: "${tagline}"`,
+			);
+		}
+
+		if (staleBranding.length > 0) {
+			warn(
+				"readme-branding",
+				"branding",
+				"README branding block is still the Quark default",
+				staleBranding.join("\n"),
+				"Swap apps/web/public/quark.svg for your own logo (keep the filename so the PWA icon keeps working) and rewrite the tagline to describe your app",
+			);
+		}
+	}
+}
+
 // ── Environment-dependent checks (skipped in CI mode) ─────────────────────────
 
 if (!CI) {
@@ -318,14 +354,22 @@ if (envContent && exampleContent) {
 
 // ── Check E7: README still contains Quark template content ───────────────────
 const readmeContent = read("README.md");
-if (readmeContent && /quark/i.test(readmeContent)) {
-	info(
-		"readme",
-		"documentation",
-		"README.md still contains references to Quark",
-		"README.md",
-		"Update the README to describe your own project",
-	);
+if (readmeContent) {
+	// Strip the invisible scaffold-metadata comment and the default logo src -
+	// check S6 owns the branding block. What is left is Quark references the
+	// author actually wrote into the README content.
+	const visibleReadme = readmeContent
+		.replace(/<!--[\s\S]*?-->/g, "")
+		.replace(/src="[^"]*quark\.svg"/gi, "");
+	if (/quark/i.test(visibleReadme)) {
+		info(
+			"readme",
+			"documentation",
+			"README.md still contains references to Quark",
+			"README.md",
+			"Update the README to describe your own project",
+		);
+	}
 }
 
 } // end if (!CI)

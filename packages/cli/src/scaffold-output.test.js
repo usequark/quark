@@ -352,6 +352,44 @@ describe("scaffold output placeholders", () => {
 		}
 	});
 
+	// The README branding block ships the Quark mark as a stand-in logo from
+	// apps/web/public/quark.svg. An earlier template referenced a logo path the
+	// scaffold never creates, so the hero of every generated README was a broken
+	// image. This asserts every local src resolves - a badge that 404s is worse
+	// than no badge.
+	it("resolves every local image in the README to a file the scaffold creates", () => {
+		const readme = fs.readFileSync(path.join(projectDir, "README.md"), "utf-8");
+
+		const localSrcs = [...readme.matchAll(/<img[^>]*\ssrc="([^"]+)"/g)]
+			.map((match) => match[1])
+			.filter((src) => !/^https?:\/\//.test(src));
+
+		assert.ok(
+			localSrcs.length > 0,
+			"README must reference at least one local image - the branding block is the point of the template",
+		);
+
+		for (const src of localSrcs) {
+			assert.ok(
+				fs.existsSync(path.join(projectDir, src)),
+				`README references ${src} but the scaffold never creates it`,
+			);
+		}
+	});
+
+	it("seeds the README tagline from the project brief the CLI captured", () => {
+		const readme = fs.readFileSync(path.join(projectDir, "README.md"), "utf-8");
+		assert.match(
+			readme,
+			/<strong>Placeholder App application<\/strong>/,
+			"README tagline must be the substituted __QUARK_PROJECT_BRIEF__ value, not a leftover placeholder",
+		);
+		assert.ok(
+			!/__QUARK_/.test(readme),
+			"README must not keep any __QUARK_* placeholder after substitution",
+		);
+	});
+
 	it("does not point MAIN.md at files the scaffold never creates", () => {
 		const mainMd = fs.readFileSync(path.join(projectDir, "MAIN.md"), "utf-8");
 		const readFirst = mainMd.split("## Read this first")[1]?.split("##")[0];
