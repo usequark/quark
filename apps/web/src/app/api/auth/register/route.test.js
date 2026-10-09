@@ -402,14 +402,15 @@ test("POST turns a thrown error into a response instead of propagating it", asyn
 	assert.strictEqual((await response.json()).code, "VALIDATION_ERROR");
 });
 
-test("POST currently enforces no CSRF token on this path", async () => {
-	// KNOWN GAP, not intended behaviour. `withCsrfProtection` delegates to
-	// `requireCsrfToken`, which returns early for every path under
-	// `/api/auth/` (NextAuth owns CSRF there). So the wrapper on this handler is
-	// a no-op: a cookie-bearing browser cross-site POST to /api/auth/register
-	// creates an account, which is what the wrapper was added to prevent.
-	// This test records the current behaviour so the gap is visible; it is
-	// expected to be inverted when the exemption is narrowed.
+test("POST rejects a cross-site request that carries no CSRF token", async () => {
+	// This wrapper used to be inert. `requireCsrfToken` returned early for every
+	// path under `/api/auth/`, written for NextAuth's `[...nextauth]` catch-all,
+	// so a cookie-bearing browser could be POSTed here from another origin and
+	// create an account — precisely what the wrapper was added to prevent.
+	//
+	// A real cross-site POST arrives without the `csrf_token` cookie: it is
+	// SameSite=Strict, so the browser withholds it. That is the forgery, and it
+	// must die here rather than inside the handler.
 	const response = await POST(
 		new Request("http://localhost/api/auth/register", {
 			method: "POST",
@@ -418,6 +419,61 @@ test("POST currently enforces no CSRF token on this path", async () => {
 		}),
 	);
 
+	assert.strictEqual(response.status, 401);
+	assert.deepStrictEqual(
+		createCalls,
+		[],
+		"an account was created from a request with no CSRF token",
+	);
+	assert.deepStrictEqual(
+		steps.filter((s) => s.startsWith("queue.add")),
+		[],
+		"a welcome email was enqueued for an account that was never created",
+	);
+});
+
+test("POST rejects a forged header when the cookie is absent", async () => {
+	// The header alone proves nothing — it is the pairing with the httpOnly
+	// cookie that does. A cross-site page can set a header but cannot read or set
+	// the cookie, so a token without one must not be believed.
+	const response = await POST(
+		new Request("http://localhost/api/auth/register", {
+			method: "POST",
+			headers: {
+				"content-type": "application/json",
+				"x-csrf-token": "guessed-token",
+			},
+			body: JSON.stringify(VALID_BODY),
+		}),
+	);
+
+	assert.strictEqual(response.status, 401);
+	assert.deepStrictEqual(createCalls, []);
+});
+
+test("POST rejects a header that does not match the cookie", async () => {
+	const response = await POST(
+		new Request("http://localhost/api/auth/register", {
+			method: "POST",
+			headers: {
+				"content-type": "application/json",
+				cookie: "csrf_token=cookie-token",
+				"x-csrf-token": "header-token",
+			},
+			body: JSON.stringify(VALID_BODY),
+		}),
+	);
+
+	assert.strictEqual(response.status, 401);
+	assert.deepStrictEqual(createCalls, []);
+});
+
+test("POST accepts a matching cookie and header pair", async () => {
+	// The counterweight to the three above: narrowing the exemption must reject
+	// forgery without rejecting the legitimate page, which obtains its token
+	// from GET /api/csrf and sends the pair.
+	const response = await POST(registerRequest());
+
 	assert.strictEqual(response.status, 201);
-	assert.deepStrictEqual(createCalls.length, 1);
+	assert.strictEqual(createCalls.length, 1);
 });

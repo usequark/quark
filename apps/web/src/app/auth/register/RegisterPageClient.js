@@ -1,6 +1,6 @@
 "use client";
 
-import { getCsrfToken } from "@usequark/quark-core/csrf-client";
+import { clearCsrfToken, getCsrfToken } from "@usequark/quark-core/csrf-client";
 import {
 	Button,
 	ErrorBanner,
@@ -104,16 +104,35 @@ function RegisterForm() {
 		// compares the two, so a request that arrives without the cookie is
 		// rejected before the handler runs. This page is pre-authentication, which
 		// is why the endpoint mints tokens for callers with no session.
-		let csrfToken;
+		//
+		// Both the token fetch and the write can fail on the network, and this
+		// handler has already set `loading`. Without a catch, either one would
+		// leave the button spinning forever.
 		try {
-			csrfToken = await getCsrfToken();
-		} catch {
-			setError("Could not start a secure session. Try again.");
-			setLoading(false);
-			return;
-		}
+			const res = await postRegistration(await getCsrfToken());
 
-		const res = await fetch("/api/auth/register", {
+			// The cache refetches on a timer, which covers expiry. It cannot cover
+			// the server rotating the cookie underneath us — a sign-out, or anything
+			// else that clears cookies — and that surfaces as a rejected write with
+			// nothing visibly wrong. Drop the stale token and try once more; a
+			// second failure is a real failure and falls through to the banner.
+			if (res.status === 401) {
+				clearCsrfToken();
+				return await completeRegistration(
+					await postRegistration(await getCsrfToken()),
+				);
+			}
+
+			return await completeRegistration(res);
+		} catch {
+			setError("Could not reach the server. Try again.");
+			setLoading(false);
+		}
+	}
+
+	/** POST the form to /api/auth/register with the given token. */
+	async function postRegistration(csrfToken) {
+		return await fetch("/api/auth/register", {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
@@ -125,7 +144,10 @@ function RegisterForm() {
 				name: name.trim() || undefined,
 			}),
 		});
+	}
 
+	/** Surface a failure, or sign the new account in. */
+	async function completeRegistration(res) {
 		if (!res.ok) {
 			const body = await res.json().catch(() => ({}));
 			setError(body.message || "Registration failed. Try again.");

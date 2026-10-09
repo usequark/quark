@@ -56,7 +56,14 @@ export function validateCsrfToken(request, sessionToken) {
  *   2. Compare it against the `X-CSRF-Token` (or `CSRF-Token`) request header
  *      that the client attaches to every mutating request.
  *
- * NextAuth already handles CSRF for /api/auth/* routes, so those are skipped.
+ * NextAuth needs no exemption here. It validates its own CSRF token inside
+ * `handlers.POST`, and `app/api/auth/[...nextauth]/route.js` exports that
+ * handler directly — it is never wrapped in `withCsrfProtection`, so a request
+ * to `/api/auth/signin` or `/api/auth/callback/credentials` never reaches this
+ * function. The blanket `/api/auth/` skip that used to sit here was therefore
+ * protecting nothing, while silently disarming every hand-written route filed
+ * under that prefix — `/api/auth/register` included, whose wrapper had never
+ * run a check in its life.
  *
  * @param {Request} request - Next.js Request object
  * @returns {void}
@@ -64,17 +71,14 @@ export function validateCsrfToken(request, sessionToken) {
  */
 export function requireCsrfToken(request) {
 	const method = request.method;
-	const path = new URL(request.url).pathname;
 
 	// Skip CSRF check for:
 	// - Safe methods (GET, HEAD, OPTIONS)
-	// - NextAuth routes (they have their own CSRF protection)
 	// - Bearer-authenticated requests (e.g. mobile app) - CSRF exploits ambient
 	//   cookie credentials; an Authorization header is not sent automatically
 	//   by browsers, so cross-site forgery is not possible.
 	if (
 		["GET", "HEAD", "OPTIONS"].includes(method) ||
-		path.startsWith("/api/auth/") ||
 		request.headers.get("authorization")?.startsWith("Bearer ")
 	) {
 		return;
