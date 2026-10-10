@@ -1,6 +1,6 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { getAppleClientIds } from "@usequark/quark-config/oauth";
-import { validateBody } from "@usequark/quark-core";
+import { validateBody } from "@usequark/quark-core/core";
 import { user } from "@usequark/quark-db";
 import { importJWK, jwtVerify } from "jose";
 import { NextResponse } from "next/server";

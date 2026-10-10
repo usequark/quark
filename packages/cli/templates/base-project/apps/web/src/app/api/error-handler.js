@@ -1,4 +1,4 @@
-import { AppError, createLogger } from "@usequark/quark-core";
+import { AppError, createLogger } from "@usequark/quark-core/core";
 import { NextResponse } from "next/server";
 
 const logger = createLogger("api");

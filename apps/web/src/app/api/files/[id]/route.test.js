@@ -43,9 +43,9 @@ let storageGetImpl = async () => ({
 	contentType: null,
 });
 
-const core = await import("@usequark/quark-core");
+const core = await import("@usequark/quark-core/core");
 
-mock.module("@usequark/quark-core", {
+mock.module("@usequark/quark-core/core", {
 	namedExports: {
 		...core,
 		createLogger: () => ({
@@ -54,6 +54,11 @@ mock.module("@usequark/quark-core", {
 			warn() {},
 			debug() {},
 		}),
+	},
+});
+
+mock.module("@usequark/quark-core/storage", {
+	namedExports: {
 		createStorage: () => ({
 			provider: "local",
 			put: async () => {},

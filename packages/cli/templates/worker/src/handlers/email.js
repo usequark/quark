@@ -3,11 +3,11 @@
  * Processes email-related background jobs
  */
 
+import { createEmailService } from "@usequark/quark-core/email";
 import {
-	createEmailService,
 	passwordResetEmail,
 	welcomeEmail,
-} from "@usequark/quark-core";
+} from "@usequark/quark-core/email-templates";
 import { prisma } from "@usequark/quark-db";
 import { JOB_NAMES } from "@usequark/quark-jobs";
 import {

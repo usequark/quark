@@ -4,15 +4,15 @@
  * Handles job execution, retries, and error tracking
  */
 
+import { createLogger } from "@usequark/quark-core/core";
+import { AppError } from "@usequark/quark-core/errors";
 import {
 	checkQueueHealth,
-	createLogger,
 	createQueue,
 	createWorker,
-	getRedisEndpoint,
 	updateQueueDepths,
-} from "@usequark/quark-core";
-import { AppError } from "@usequark/quark-core/errors";
+} from "@usequark/quark-core/queue";
+import { getRedisEndpoint, getRedisUrl } from "@usequark/quark-core/redis";
 import { job, prisma } from "@usequark/quark-db";
 import { JOB_NAMES, JOB_QUEUES } from "@usequark/quark-jobs";
 import { jobHandlers } from "./handlers/index.js";

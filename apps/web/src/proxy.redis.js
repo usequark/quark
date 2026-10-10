@@ -13,7 +13,7 @@ import {
 	createLogger,
 	createRateLimiter,
 	RATE_LIMIT_PRESETS,
-} from "@usequark/quark-core";
+} from "@usequark/quark-core/core";
 import { NextResponse } from "next/server";
 
 import { buildContentSecurityPolicy } from "./lib/analytics/umami-csp.js";

@@ -53,9 +53,9 @@ mock.module(jwtUrl, {
 	},
 });
 
-const core = await import("@usequark/quark-core");
+const core = await import("@usequark/quark-core/core");
 
-mock.module("@usequark/quark-core", {
+mock.module("@usequark/quark-core/core", {
 	namedExports: {
 		...core,
 		createLogger: () => ({

@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadConfig } from "@usequark/quark-config";
-import { createLogger } from "@usequark/quark-core";
+import { createLogger } from "@usequark/quark-core/core";
 import { pingDatabase } from "@usequark/quark-db";
 
 const logger = createLogger("web-preflight");

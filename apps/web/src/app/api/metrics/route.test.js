@@ -17,7 +17,7 @@ register(new URL("../../../../scripts/test-alias-loader.mjs", import.meta.url));
 // covered by packages/core/src/metrics.test.js; what is under test here is the
 // response the route builds around it.
 
-const core = await import("@usequark/quark-core");
+const core = await import("@usequark/quark-core/core");
 
 /** What `metrics.serialize()` returns for the current test. */
 let serialized;
@@ -28,7 +28,7 @@ let serializeCalls;
 /** Messages the route's logger received at error level. */
 let logErrors;
 
-mock.module("@usequark/quark-core", {
+mock.module("@usequark/quark-core/core", {
 	namedExports: {
 		...core,
 		createLogger: () => ({
@@ -39,6 +39,11 @@ mock.module("@usequark/quark-core", {
 				logErrors.push(message);
 			},
 		}),
+	},
+});
+
+mock.module("@usequark/quark-core/metrics", {
+	namedExports: {
 		metrics: {
 			serialize: () => {
 				serializeCalls++;

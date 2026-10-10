@@ -1,4 +1,4 @@
-import { validateBody } from "@usequark/quark-core";
+import { validateBody } from "@usequark/quark-core/core";
 import { prisma } from "@usequark/quark-db";
 import { NextResponse } from "next/server";
 import { z } from "zod";
