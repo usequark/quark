@@ -16,6 +16,26 @@ const googleAuthSchema = z.object({
 const GOOGLE_TOKENINFO_URL = "https://oauth2.googleapis.com/tokeninfo";
 
 /**
+ * Whether Google's `email_verified` claim says the address is confirmed.
+ *
+ * `tokeninfo` returns the claim as the *string* `"true"` or `"false"`, not a
+ * boolean, so a plain truthiness check would do the exact opposite of the
+ * obvious thing: reject every real sign-in (`"false"` is truthy) while waving
+ * through the one case that matters. Only an explicit confirmation counts.
+ * Anything else — a missing claim, a number, a null — is unverified, because
+ * the failure modes here are asymmetric: a wrong refusal costs one unlucky
+ * sign-in, and a wrong acceptance hands an unconfirmed address a session.
+ *
+ * @param {unknown} value
+ * @returns {boolean}
+ */
+function isEmailVerified(value) {
+	if (typeof value === "boolean") return value;
+	if (typeof value !== "string") return false;
+	return value.trim().toLowerCase() === "true";
+}
+
+/**
  * POST /api/auth/google
  * Verify Google ID token and issue a custom JWT.
  */
@@ -70,6 +90,24 @@ export async function POST(request) {
 			return NextResponse.json(
 				{ message: "Google token does not contain an email" },
 				{ status: 400 },
+			);
+		}
+
+		// An unverified address proves nothing about who controls the inbox, and
+		// this route creates the account on first sight — so without this check the
+		// confirmation that is supposed to establish ownership of the address is
+		// the attacker's to skip rather than the victim's to perform.
+		//
+		// It sits after the missing-email `400` on purpose. That one describes the
+		// shape of the token rather than reporting that the token was refused, and
+		// putting this check ahead of it would change a response operators already
+		// read for what it is. What matters for security is the position relative
+		// to the database: both checks land before `findByEmail`, so an unverified
+		// address can never become a registration or existence oracle.
+		if (!isEmailVerified(tokenInfo.email_verified)) {
+			return NextResponse.json(
+				{ message: "Invalid Google token" },
+				{ status: 401 },
 			);
 		}
 

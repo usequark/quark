@@ -250,8 +250,11 @@ paths:
         Public endpoint.
 
         The ID token is verified against Google's `tokeninfo` endpoint, and its
-        `aud` claim must equal `GOOGLE_CLIENT_ID`. A user matching the token's
-        email is created on first sign-in.
+        `aud` claim must equal `GOOGLE_CLIENT_ID`. The token's
+        `email_verified` claim must also confirm the address, because this
+        endpoint creates the account on first sight and an unconfirmed address
+        is not proof its owner can read it. A user matching the token's email is
+        created on first sign-in.
 
         With `GOOGLE_CLIENT_ID` unset the endpoint refuses every request with
         `503` rather than verifying a token it cannot bind to this deployment.
@@ -281,9 +284,9 @@ paths:
                 $ref: '#/components/schemas/Error'
         '401':
           description: |
-            Invalid Google token. One response for a token Google rejected and
-            for an `aud` that does not match `GOOGLE_CLIENT_ID` alike — the
-            route does not distinguish them.
+            Invalid Google token. One response for a token Google rejected, for an `aud`
+            that does not match `GOOGLE_CLIENT_ID`, and for an address Google
+            has not verified alike — the route does not distinguish them.
           content:
             application/json:
               schema:

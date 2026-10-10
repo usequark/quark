@@ -118,9 +118,9 @@ Three distinct failures, told apart by status:
 
 ### Google or Apple sign-in returns 401 on a correctly configured server
 
-Both routes return the same generic `401` for every verification failure — a token the provider rejected, an audience that does not match, and on Apple also a missing or replayed `nonce` — deliberately, because distinguishing them tells a caller which check to work around. Diagnose per provider:
+Both routes return the same generic `401` for every verification failure — a token the provider rejected, an audience that does not match, an address the provider has not verified, and on Apple also a missing or replayed `nonce` — deliberately, because distinguishing them tells a caller which check to work around. Diagnose per provider:
 
-- **Google**: log the configured `GOOGLE_CLIENT_ID` and compare it against the mobile app's `EXPO_PUBLIC_GOOGLE_CLIENT_ID`. They must be the same OAuth client, registered once in Google Cloud Console.
+- **Google**: log the configured `GOOGLE_CLIENT_ID` and compare it against the mobile app's `EXPO_PUBLIC_GOOGLE_CLIENT_ID`. They must be the same OAuth client, registered once in Google Cloud Console. If they match, check that the account's address is verified — Google issues tokens for unconfirmed addresses (some Workspace accounts, newly created accounts before the round-trip completes), and this route refuses them because it would otherwise create the account without proof anyone can read the inbox.
 - **Apple**: `APPLE_CLIENT_ID` is not read from any mobile env var. The bundled iOS client signs in with the native flow, so Apple stamps the token's `aud` with the app's bundle identifier (`com.quark.app`, in `apps/mobile/app.json`). The Services ID applies only to the web flow. Set `APPLE_CLIENT_ID` to the bundle ID, or to both comma-separated when web and native flows both run. If the audience matches and sign-in still 401s, suspect a stale or replayed `nonce` — the client must generate a fresh one per attempt.
 
 ### CSRF errors on form submissions
