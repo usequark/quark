@@ -5,6 +5,18 @@ import { NextRequest } from "next/server.js";
 
 import { proxy } from "./proxy.redis.js";
 
+// Pin the limiter to its in-memory backend.
+//
+// `proxy.redis.js` swaps in a Redis-backed limiter whenever REDIS_URL is set,
+// caches it for the life of the process and never disconnects the client — so
+// the file then hangs the runner for two minutes after every test has passed,
+// and a shared Redis is shared 15-minute memory, so the second run of the file
+// opens on a 429 for a request that must succeed. Both are properties of the
+// backend, not of what this file asserts (the exemption, which is identical
+// either way), so take the backend out of the picture rather than the assertion.
+// `getRateLimiter()` reads the variable per call, so this lands in time.
+process.env.REDIS_URL = "";
+
 // This file is the documented drop-in replacement for proxy.js in multi-instance
 // deployments ("Replace proxy.js with this file"), and proxy.test.js never touches
 // it — so without this test the healthcheck exemption could silently lapse here
