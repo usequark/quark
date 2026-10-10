@@ -1,11 +1,13 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { createAuthConfig, verifyPassword } from "@usequark/quark-core/auth";
 import { createLogger } from "@usequark/quark-core/core";
+import { AppError } from "@usequark/quark-core/errors";
 import { Prisma, prisma, user } from "@usequark/quark-db";
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GithubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
+import { isEmailVerified } from "./email-verified";
 
 const logger = createLogger({ name: "auth" });
 const STALE_SESSION_PATTERN = /jwtsessionerror|no matching decryption secret/i;
@@ -125,6 +127,31 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 		GoogleProvider({
 			clientId: process.env.GOOGLE_CLIENT_ID,
 			clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+			// The web sign-in creates its account on first sight through the
+			// Prisma adapter, so an unconfirmed address here means the same thing it
+			// does on the mobile route: the confirmation that is supposed to
+			// establish ownership of the address never happened. Google does issue
+			// tokens for unconfirmed addresses.
+			//
+			// The refusal is thrown rather than returned, and that is deliberate.
+			// Auth.js has no "null means refuse" contract: `getUserAndAccount` reads
+			// `profile.email` straight off whatever the mapper hands back, so a null
+			// denial works only because it trips a TypeError that is caught and
+			// logged as `OAuthProfileParseError` — indistinguishable, in the log, from
+			// a malformed provider response or a user who cancelled. Throwing says
+			// why in the one place an operator can read it, and lands in the same
+			// catch: no session, no user row, redirect back to the sign-in page.
+			profile: (profile) => {
+				if (!isEmailVerified(profile.email_verified)) {
+					throw new AppError(
+						"Google sign-in refused: the account's email address is not verified",
+						401,
+						"OAUTH_EMAIL_NOT_VERIFIED",
+					);
+				}
+
+				return profile;
+			},
 		}),
 	);
 }

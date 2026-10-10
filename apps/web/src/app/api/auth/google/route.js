@@ -6,6 +6,7 @@ import { validateBody } from "@usequark/quark-core/core";
 import { user } from "@usequark/quark-db";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { isEmailVerified } from "../../../../lib/email-verified";
 import { issueTokenPair } from "../../../../lib/jwt";
 import { handleError } from "../../error-handler";
 
@@ -14,26 +15,6 @@ const googleAuthSchema = z.object({
 });
 
 const GOOGLE_TOKENINFO_URL = "https://oauth2.googleapis.com/tokeninfo";
-
-/**
- * Whether Google's `email_verified` claim says the address is confirmed.
- *
- * `tokeninfo` returns the claim as the *string* `"true"` or `"false"`, not a
- * boolean, so a plain truthiness check would do the exact opposite of the
- * obvious thing: reject every real sign-in (`"false"` is truthy) while waving
- * through the one case that matters. Only an explicit confirmation counts.
- * Anything else — a missing claim, a number, a null — is unverified, because
- * the failure modes here are asymmetric: a wrong refusal costs one unlucky
- * sign-in, and a wrong acceptance hands an unconfirmed address a session.
- *
- * @param {unknown} value
- * @returns {boolean}
- */
-function isEmailVerified(value) {
-	if (typeof value === "boolean") return value;
-	if (typeof value !== "string") return false;
-	return value.trim().toLowerCase() === "true";
-}
 
 /**
  * POST /api/auth/google

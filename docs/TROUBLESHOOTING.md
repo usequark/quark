@@ -99,6 +99,7 @@ The session cookie is missing or expired. Check:
 
 1. Verify the provider's callback URL is set to `http://localhost:3000/api/auth/callback/<provider>`
 2. Check that `GITHUB_ID`/`GITHUB_SECRET`, or `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`, are correct in `.env`
+3. On Google, check that the account's address is verified. The provider refuses a profile whose `email_verified` claim is not confirmed, because the sign-in creates its account on first sight. An unconfirmed address is refused with no detail on the error page, by design.
 
 ### The Google or GitHub sign-in button is missing
 
