@@ -12,7 +12,7 @@ import {
 	createWorker,
 	updateQueueDepths,
 } from "@usequark/quark-core/queue";
-import { getRedisEndpoint, getRedisUrl } from "@usequark/quark-core/redis";
+import { getRedisEndpoint } from "@usequark/quark-core/redis";
 import { job, prisma } from "@usequark/quark-db";
 import { JOB_NAMES, JOB_QUEUES } from "@usequark/quark-jobs";
 import { jobHandlers } from "./handlers/index.js";
