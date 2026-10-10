@@ -4,7 +4,7 @@
  * and returns it to the client for inclusion in request headers.
  */
 
-import { generateCsrfToken } from "@usequark/quark-core";
+import { generateCsrfToken } from "@usequark/quark-core/core";
 import { NextResponse } from "next/server";
 import { getCsrfCookieOptions } from "@/lib/csrf-cookie";
 

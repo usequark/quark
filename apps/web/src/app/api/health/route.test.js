@@ -48,7 +48,8 @@ resetProbes();
 
 probesRan = new Set();
 
-const core = await import("@usequark/quark-core");
+const core = await import("@usequark/quark-core/health");
+const coreModule = await import("@usequark/quark-core/core");
 
 mock.module("@usequark/quark-db", {
 	namedExports: {
@@ -59,13 +60,35 @@ mock.module("@usequark/quark-db", {
 	},
 });
 
-// `checkStorage` / `checkQueues` are overridden rather than `createStorage` /
-// `getRegisteredQueues`. The route now passes these two straight into
-// `runHealthChecks`, and the real implementations reach for the adapter and the
-// queue registry through health.js's *own* imports — which a barrel mock does
-// not intercept. Mocking the probe functions themselves is what keeps this test
-// about the route's wiring; their internals are covered by health.test.js.
-mock.module("@usequark/quark-core", {
+// The route wires these in as raw probe functions, so each module it actually
+// imports has to be substitutable here. `checkStorage` / `checkQueues` are
+// overridden rather than `createStorage` / `getRegisteredQueues`: the real
+// implementations reach for the adapter and the queue registry through
+// health.js's *own* imports — which a mock of this module does not intercept.
+// Overriding the probe functions themselves is what keeps this test about the
+// route's wiring; their internals are covered by health.test.js.
+mock.module("@usequark/quark-core/core", {
+	namedExports: {
+		...coreModule,
+		createLogger: () => ({
+			info() {},
+			error() {},
+			warn() {},
+			debug() {},
+		}),
+	},
+});
+
+mock.module("@usequark/quark-core/redis", {
+	namedExports: {
+		pingRedis: () => {
+			probesRan.add("redis");
+			return probes.redis();
+		},
+	},
+});
+
+mock.module("@usequark/quark-core/health", {
 	namedExports: {
 		...core,
 		createLogger: () => ({
@@ -91,6 +114,13 @@ mock.module("@usequark/quark-core", {
 			probesRan.add("queues");
 			return core.checkQueues(() => probes.queues());
 		},
+	},
+});
+
+// The route reaches the registry directly rather than through a probe
+// parameter, so the registry itself is what has to be substitutable here.
+mock.module("@usequark/quark-core/queue", {
+	namedExports: {
 		getRegisteredQueues: () => probes.queues(),
 	},
 });

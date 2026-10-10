@@ -1,4 +1,4 @@
-import { createLogger } from "@usequark/quark-core";
+import { createLogger } from "@usequark/quark-core/core";
 import { ValidationError } from "@usequark/quark-core/errors";
 import { z } from "zod";
 import { syncNextAuthUrl } from "./app-url.js";

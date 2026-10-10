@@ -73,7 +73,8 @@ mock.module("@usequark/quark-db", {
 	},
 });
 
-const core = await import("@usequark/quark-core");
+const core = await import("@usequark/quark-core/core");
+const auth = await import("@usequark/quark-core/auth");
 
 /** Every `[plaintext, hash]` pair `verifyPassword` was handed. */
 let verifyCalls;
@@ -82,7 +83,7 @@ let verifyResult;
 /** When set, `verifyPassword` rejects with this error. */
 let verifyError;
 
-mock.module("@usequark/quark-core", {
+mock.module("@usequark/quark-core/core", {
 	namedExports: {
 		...core,
 		createLogger: () => ({
@@ -91,6 +92,12 @@ mock.module("@usequark/quark-core", {
 			warn() {},
 			debug() {},
 		}),
+	},
+});
+
+mock.module("@usequark/quark-core/auth", {
+	namedExports: {
+		...auth,
 		verifyPassword: async (plaintext, hash) => {
 			verifyCalls.push([plaintext, hash]);
 			if (verifyError) throw verifyError;

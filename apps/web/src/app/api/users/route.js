@@ -2,7 +2,7 @@ import {
 	parsePaginationQuery,
 	validateBody,
 	withCsrfProtection,
-} from "@usequark/quark-core";
+} from "@usequark/quark-core/core";
 import { user, userCreateSchema } from "@usequark/quark-db";
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth-middleware";

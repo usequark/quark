@@ -2,7 +2,7 @@ import {
 	ConflictError,
 	validateBody,
 	withCsrfProtection,
-} from "@usequark/quark-core";
+} from "@usequark/quark-core/core";
 import { user, userUpdateSchema } from "@usequark/quark-db";
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth-middleware";

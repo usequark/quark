@@ -2,7 +2,7 @@ import {
 	getGoogleClientId,
 	isAudienceValid,
 } from "@usequark/quark-config/oauth";
-import { validateBody } from "@usequark/quark-core";
+import { validateBody } from "@usequark/quark-core/core";
 import { user } from "@usequark/quark-db";
 import { NextResponse } from "next/server";
 import { z } from "zod";

@@ -1,13 +1,9 @@
-import {
-	createQueue,
-	hashPassword,
-	validateBody,
-	withCsrfProtection,
-} from "@usequark/quark-core";
+import { hashPassword } from "@usequark/quark-core/auth";
+import { validateBody, withCsrfProtection } from "@usequark/quark-core/core";
 import { user, userRegisterSchema } from "@usequark/quark-db";
-import { JOB_NAMES, JOB_QUEUES } from "@usequark/quark-jobs";
 import { NextResponse } from "next/server";
 import { isSignupEnabled } from "@/lib/auth-signup";
+import { enqueueWelcomeEmail } from "@/lib/enqueue-welcome-email";
 import { handleError } from "../../error-handler";
 
 export const POST = withCsrfProtection(async (request) => {
@@ -46,12 +42,11 @@ export const POST = withCsrfProtection(async (request) => {
 		// Don't return the password
 		const { password: _, ...safeUser } = newUser;
 
-		// Enqueue welcome email (fire-and-forget - don't block the response)
+		// Enqueue welcome email (fire-and-forget - don't block the response).
+		// The queue module is reached through a lazily-loaded helper, so BullMQ
+		// stays out of this process until a registration actually happens.
 		try {
-			const emailQueue = createQueue(JOB_QUEUES.EMAIL);
-			await emailQueue.add(JOB_NAMES.SEND_WELCOME_EMAIL, {
-				userId: newUser.id,
-			});
+			await enqueueWelcomeEmail(newUser.id);
 		} catch {
 			// Non-critical - user is created even if email fails to enqueue
 		}
