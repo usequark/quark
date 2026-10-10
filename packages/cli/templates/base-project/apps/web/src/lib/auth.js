@@ -9,6 +9,7 @@ import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GithubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
+import { isEmailVerified } from "./email-verified";
 
 const logger = createLogger({ name: "auth" });
 const STALE_SESSION_PATTERN = /jwtsessionerror|no matching decryption secret/i;
@@ -128,6 +129,18 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 		GoogleProvider({
 			clientId: process.env.GOOGLE_CLIENT_ID,
 			clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+			// The web sign-in creates its account on first sight through the
+			// Prisma adapter, so an unconfirmed address here means the same thing it
+			// does on the mobile route: the confirmation that is supposed to
+			// establish ownership of the address never happened. Google does issue
+			// tokens for unconfirmed addresses.
+			//
+			// Returning null is Auth.js's refusal — the sign-in is denied and no user
+			// row is written. Google sets `email_verified` on every account it will
+			// authenticate, so the only accounts this turns away are the ones nobody
+			// can prove they own.
+			profile: (profile) =>
+				isEmailVerified(profile.email_verified) ? profile : null,
 		}),
 	);
 }
