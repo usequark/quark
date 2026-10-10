@@ -21,14 +21,14 @@ Quark includes several security features out of the box:
 
 #### 2. **Security Headers**
 - **Location**: [apps/web/src/proxy.js](../apps/web/src/proxy.js), [apps/web/next.config.js](../apps/web/next.config.js)
-- **Headers Applied** (in both `proxy.js` and `next.config.js` `headers()`):
+- **Headers Applied** (in both `proxy.js` and `next.config.js` `headers()`, which acts as the fallback for routes the proxy does not match):
   - `X-Frame-Options: SAMEORIGIN` - Prevent clickjacking
   - `X-Content-Type-Options: nosniff` - Prevent MIME sniffing
-  - `Strict-Transport-Security` - Force HTTPS
   - `Referrer-Policy: strict-origin-when-cross-origin`
   - `Permissions-Policy` - Restrict browser features
   - `X-DNS-Prefetch-Control: on` - Performance optimization
   - `Content-Security-Policy` - Built by `apps/web/src/lib/analytics/umami-csp.js`; Turbopack's `unsafe-eval` is added only outside production
+  - `Strict-Transport-Security` - **`proxy.js` only**: `next.config.js` `headers()` omits it, so a route the proxy does not match (its matcher excludes `_next/static`, `_next/image`, `favicon.ico`, and image files) gets no HSTS from config
 
   `X-XSS-Protection` is not set; the CSP directive above is what ships.
 

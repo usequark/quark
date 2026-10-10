@@ -35,8 +35,9 @@ import {
 ```
 
 Most modules are re-exported from the package root, but not all: `locale`,
-`stripe`, `storage/s3`, and `csrf-client` are **subpath-only** — import them from
-their subpath. See JSDoc comments on each function for options and usage details.
+`stripe`, `storage/s3`, `csrf-client`, and `testing` are **subpath-only** —
+import them from their subpath. See JSDoc comments on each function for options
+and usage details.
 
 ### Subpath exports
 

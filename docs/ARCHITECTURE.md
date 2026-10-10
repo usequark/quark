@@ -716,9 +716,12 @@ export default function RootLayout({ children }) {
 
 - Remove the `themeScript` constant and its `<script>` tag.
 - Remove `<ThemeProvider>` (and its import). Keeping it silently overrides the
-  static attribute - if you keep it for `useTheme()` consumers, pass
-  `defaultTheme="light"` so it resolves to the pinned theme instead of the OS
-  preference.
+  static attribute, and `defaultTheme` does not fix that: `ThemeProvider`
+  resolves a stored `localStorage` preference **before** `defaultTheme`
+  (`packages/ui/src/theme.js`), so a visitor who once toggled dark still gets
+  dark. If you must keep it for `useTheme()` consumers, pin it by clearing the
+  stored preference (`localStorage.removeItem("quark-theme")`) or document that
+  visitors' stored choice wins over your static theme.
 - Add `data-theme="light"` (or `"dark"`) directly to `<html>`.
 - Remove `suppressHydrationWarning` - it is only needed when `data-theme` may differ between server and client.
 

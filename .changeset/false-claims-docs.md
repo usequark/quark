@@ -42,6 +42,6 @@ was changed. No code changed.
 - `packages/core/README.md`: the subpath table claimed to list every export
   but omitted `csrf-client`, `email-templates`, `multipart`, and `redis`;
   "all modules are re-exported from the package root" is not true of `locale`,
-  `stripe`, `storage-s3`, and `csrf-client`.
+  `stripe`, `storage-s3`, `csrf-client`, and `testing`.
 
 No published-package behaviour changes.
