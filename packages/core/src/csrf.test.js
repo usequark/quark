@@ -153,7 +153,7 @@ test("CSRF Module", async (t) => {
 	await t.test("requireCsrfToken skips Bearer-authenticated requests", () => {
 		const request = mockRequest({
 			method: "POST",
-			url: "http://localhost/api/device/register",
+			url: "http://localhost/api/files",
 			headers: { authorization: "Bearer some-jwt-token" },
 		});
 

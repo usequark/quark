@@ -164,23 +164,6 @@ Generate a CSRF token. Returns `401` when there is no active session. The token 
 }
 ```
 
-### `POST /api/device/register`
-
-Register a mobile device for push notifications. Requires a Bearer JWT.
-
-**Request Body:**
-```json
-{
-  "platform": "ios",
-  "pushToken": "string",
-  "deviceId": "string"
-}
-```
-
-`platform` is `ios` or `android`. The record is upserted on `(userId, deviceId)`, so re-registering after a token rotation updates in place.
-
-**Response (200):** `{ "success": true }`
-
 ---
 
 ## Users
@@ -373,13 +356,11 @@ import { JOB_NAMES, JOB_QUEUES } from "@<scope>/jobs";
 
 JOB_QUEUES.EMAIL   // "email-queue"
 JOB_QUEUES.FILES   // "files-queue"
-JOB_QUEUES.PUSH    // "push-queue"
 JOB_QUEUES.DEFAULT // "default-queue"
 
 JOB_NAMES.SEND_WELCOME_EMAIL        // "send-welcome-email"
 JOB_NAMES.SEND_RESET_PASSWORD_EMAIL // "send-reset-password-email"
 JOB_NAMES.CLEANUP_ORPHANED_FILES    // "cleanup-orphaned-files"
-JOB_NAMES.SEND_PUSH_NOTIFICATION    // "send-push-notification"
 ```
 
 The worker registers a BullMQ worker for every queue in `JOB_QUEUES`.
@@ -421,24 +402,6 @@ Deletes files with no owner older than a retention period. The worker schedules 
 
 ```js
 await queue.add(JOB_NAMES.CLEANUP_ORPHANED_FILES, { retentionHours: 24 });
-```
-
-### Push Queue
-
-Queue name: `push-queue`
-
-#### Jobs
-
-**SEND_PUSH_NOTIFICATION**
-
-Delivers a push notification to a device registered through `POST /api/device/register`.
-
-```js
-await queue.add(JOB_NAMES.SEND_PUSH_NOTIFICATION, {
-  deviceId: "device123",
-  title: "New message",
-  body: "You have a new message",
-});
 ```
 
 ### Default Queue

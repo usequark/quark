@@ -19,7 +19,6 @@ test("mobile template has required files", () => {
 		"lib/auth.ts",
 		"lib/api.ts",
 		"lib/api-client.ts",
-		"lib/notifications.ts",
 		"lib/storage.ts",
 		"hooks/use-auth.ts",
 		"app/_layout.tsx",
@@ -124,44 +123,6 @@ test("mobile config.ts uses lazy getConfig() pattern", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Notifications use dynamic imports and shouldShowBanner
-// ---------------------------------------------------------------------------
-
-test("mobile notifications.ts uses dynamic imports", () => {
-	const content = readFileSync(
-		join(TEMPLATES_DIR, "mobile/lib/notifications.ts"),
-		"utf-8",
-	);
-	assert.ok(
-		content.includes('await import("expo-notifications")'),
-		"notifications.ts should use dynamic import for expo-notifications",
-	);
-	assert.ok(
-		content.includes('await import("expo-device")'),
-		"notifications.ts should use dynamic import for expo-device",
-	);
-});
-
-test("mobile notifications.ts uses shouldShowBanner/shouldShowList", () => {
-	const content = readFileSync(
-		join(TEMPLATES_DIR, "mobile/lib/notifications.ts"),
-		"utf-8",
-	);
-	assert.ok(
-		content.includes("shouldShowBanner"),
-		"notifications.ts should use shouldShowBanner",
-	);
-	assert.ok(
-		content.includes("shouldShowList"),
-		"notifications.ts should use shouldShowList",
-	);
-	assert.ok(
-		!content.includes("shouldShowAlert"),
-		"notifications.ts should not use deprecated shouldShowAlert",
-	);
-});
-
-// ---------------------------------------------------------------------------
 // Auth screens use TS-strict-safe error handling
 // ---------------------------------------------------------------------------
 
@@ -188,21 +149,6 @@ test("mobile sign-up.tsx uses safe error handling", () => {
 });
 
 // ---------------------------------------------------------------------------
-// use-auth uses lazy notification imports
-// ---------------------------------------------------------------------------
-
-test("mobile use-auth.ts uses lazy notification imports", () => {
-	const content = readFileSync(
-		join(TEMPLATES_DIR, "mobile/hooks/use-auth.ts"),
-		"utf-8",
-	);
-	assert.ok(
-		content.includes('import("../lib/notifications")'),
-		"use-auth.ts should use dynamic import for notifications",
-	);
-});
-
-// ---------------------------------------------------------------------------
 // No placeholder leaks — all __QUARK_ placeholders are in expected files
 // ---------------------------------------------------------------------------
 
@@ -212,7 +158,6 @@ test("mobile template has no stray __QUARK_ placeholders in source files", () =>
 		"lib/auth.ts",
 		"lib/api.ts",
 		"lib/api-client.ts",
-		"lib/notifications.ts",
 		"lib/storage.ts",
 		"hooks/use-auth.ts",
 		"app/_layout.tsx",
