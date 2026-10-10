@@ -139,9 +139,12 @@ test("getRateLimitBucket only applies strict auth limits to credential writes", 
 		getRateLimitBucket("/api/auth/callback/credentials", "POST"),
 		"auth",
 	);
+	// The v5 client POSTs credentials sign-ins to `callback/credentials`; the
+	// `signin/credentials` POST only redirects, so it stays in the general
+	// bucket rather than spending the 5-request auth budget on a no-op.
 	assert.equal(
 		getRateLimitBucket("/api/auth/signin/credentials", "POST"),
-		"auth",
+		"api",
 	);
 	assert.equal(getRateLimitBucket("/api/auth/register", "POST"), "auth");
 	assert.equal(getRateLimitBucket("/api/auth/signout", "POST"), "api");

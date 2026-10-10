@@ -42,10 +42,21 @@ async function csrfAuth() {
 }
 
 /**
+ * A distinct client identity per test run.
+ *
+ * The `auth` bucket counts `ip:path`, so every run that presents the same IP
+ * inherits the previous run's counter — and a re-run against the same server
+ * inside the 15-minute window then fails on 429s, a failure about the limiter's
+ * memory rather than about anything the routes under test did. Each run is a
+ * new client, which is what a re-run actually is.
+ */
+const RUN_IP = `203.0.113.${10 + Math.floor(Math.random() * 200)}`;
+
+/**
  * Helper: make a JSON request to the API
  */
 async function api(path, options = {}) {
-	const { method = "GET", body, headers = {}, cookies } = options;
+	const { method = "GET", body, headers = {}, cookies, ip } = options;
 
 	const fetchHeaders = {
 		"Content-Type": "application/json",
@@ -54,6 +65,10 @@ async function api(path, options = {}) {
 
 	if (cookies) {
 		fetchHeaders.Cookie = cookies;
+	}
+
+	if (ip) {
+		fetchHeaders["X-Forwarded-For"] = ip;
 	}
 
 	const response = await fetch(`${BASE_URL}${path}`, {
@@ -95,13 +110,16 @@ describe("API Integration Tests", () => {
 	});
 
 	describe("POST /api/auth/register", () => {
-		// The `auth` rate-limit bucket allows 5 POSTs per 15 minutes, and every
-		// call here shares one `ip:path` counter. These tests therefore get five
-		// requests between them — no headroom, and a second run against the same
-		// server starts returning 429. The register and duplicate cases are one
-		// test because together they need three requests, not four. If you add a
-		// case, merge it into an existing test or assert through a route outside
-		// the bucket; see the forgery case below for the pattern.
+		// The `auth` rate-limit bucket allows 5 POSTs per 15 minutes per
+		// `ip:path`. Every request here carries RUN_IP, so the three calls this
+		// block makes (forgery, create + duplicate as one test) sit in a counter
+		// no other run touches — see RUN_IP above. Body-validation cases
+		// (missing password, bad email) are NOT tested here:
+		// register/route.test.js covers them against the real schema with
+		// stronger assertions, and each one here would spend a slot in the same
+		// bucket. If you add a case that must POST to register, reuse RUN_IP and
+		// keep the block's total under 5, or assert through a route outside the
+		// bucket; see the forgery case below for the pattern.
 		it("should reject a cross-site write that carries no CSRF token", async () => {
 			// The forgery this endpoint has to refuse: a request from another
 			// origin, which the browser sends without the SameSite=Strict cookie.
@@ -112,6 +130,7 @@ describe("API Integration Tests", () => {
 
 			const forged = await api("/api/auth/register", {
 				method: "POST",
+				ip: RUN_IP,
 				body: { email, password, name: "Forged" },
 			});
 
@@ -141,6 +160,7 @@ describe("API Integration Tests", () => {
 
 			const created = await api("/api/auth/register", {
 				method: "POST",
+				ip: RUN_IP,
 				body: { email, password: "SecurePass123!", name: "Test User" },
 				...csrf,
 			});
@@ -150,6 +170,7 @@ describe("API Integration Tests", () => {
 
 			const duplicate = await api("/api/auth/register", {
 				method: "POST",
+				ip: RUN_IP,
 				body: { email, password: "SecurePass123!", name: "Test User" },
 				...csrf,
 			});
@@ -157,24 +178,6 @@ describe("API Integration Tests", () => {
 				[400, 409, 422].includes(duplicate.status),
 				`Expected 400/409/422 for a duplicate, got ${duplicate.status}`,
 			);
-		});
-
-		it("should reject missing password", async () => {
-			const { status } = await api("/api/auth/register", {
-				method: "POST",
-				body: { email: testEmail() },
-				...(await csrfAuth()),
-			});
-			assert.ok([400, 422].includes(status), `Expected 400/422, got ${status}`);
-		});
-
-		it("should reject invalid email format", async () => {
-			const { status } = await api("/api/auth/register", {
-				method: "POST",
-				body: { email: "not-an-email", password: "SecurePass123!" },
-				...(await csrfAuth()),
-			});
-			assert.ok([400, 422].includes(status), `Expected 400/422, got ${status}`);
 		});
 	});
 
@@ -186,8 +189,12 @@ describe("API Integration Tests", () => {
 	});
 
 	describe("Rate Limiting", () => {
-		it("should include rate limit headers on API responses", async () => {
-			const { headers } = await api("/api/health");
+		it("should include rate limit headers on rate-limited responses", async () => {
+			// A limited route, not `/api/health`: the healthcheck is exempt by
+			// design (proxy.js skips the bucket entirely for exempt paths), so
+			// the headers this test asserts are absent there by intent. See
+			// lib/proxy-auth.js for why the probe must never be limited.
+			const { headers } = await api("/api/users");
 			assert.ok(
 				headers.get("x-ratelimit-limit"),
 				"Should have X-RateLimit-Limit header",

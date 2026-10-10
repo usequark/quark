@@ -6,7 +6,7 @@ import { NextRequest } from "next/server.js";
 import { proxy } from "./proxy.js";
 
 // The auth bucket allows 5 requests per window; `api` allows 100.
-const AUTH_ROUTE = "/api/auth/signin/credentials";
+const AUTH_ROUTE = "/api/auth/callback/credentials";
 
 function authRequest(forwardedIp) {
 	return new NextRequest(`http://localhost:3005${AUTH_ROUTE}`, {
