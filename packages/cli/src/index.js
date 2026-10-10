@@ -1219,37 +1219,6 @@ program
 			);
 			console.log(chalk.green(`    ✓ next.config.js patched`));
 
-			// Step 7d: Strip jobs-related code from register route when jobs not selected
-			if (!features.includes("jobs")) {
-				const registerPath = path.join(
-					targetDir,
-					"apps",
-					"web",
-					"src",
-					"app",
-					"api",
-					"auth",
-					"register",
-					"route.js",
-				);
-				if (await fs.pathExists(registerPath)) {
-					let content = await fs.readFile(registerPath, "utf-8");
-					// Remove the jobs import line
-					content = content.replace(
-						/import\s*\{[^}]*\}\s*from\s*["']@[^/]+\/jobs["'];?\n/,
-						"",
-					);
-					// Remove createQueue from the core import if present
-					content = content.replace(/\tcreateQueue,\n/, "");
-					// Remove the @quark:start:jobs ... @quark:end:jobs block (inclusive)
-					content = content.replace(
-						/[ \t]*\/\/ @quark:start:jobs[\s\S]*?\/\/ @quark:end:jobs\n?/,
-						"",
-					);
-					await fs.writeFile(registerPath, content);
-				}
-			}
-
 			// Step 8: Create .env.example file
 			console.log(chalk.cyan("\n  📋 Creating environment configuration..."));
 			const envExampleTemplate = `# ⚠️  IMPORTANT: Copy this file to .env and fill in the values for your environment.
@@ -1867,6 +1836,34 @@ async function detectInstalledFeatures(projectDir) {
 	return installed;
 }
 
+/**
+ * Detect which AI-harness skill directory a project uses.
+ *
+ * The scaffold writes embedded skills to exactly one of HARNESS_SKILL_DIRS and
+ * points the AI-context docs at that path. The drift check rebuilds a reference
+ * scaffold to compare against, so it must pass the same `--harness` the project
+ * was built with — otherwise the reference lands skills in .opencode/skills for
+ * a claude/copilot project and reports those files as drift forever.
+ *
+ * `.github/skills` is checked last on purpose: every scaffold carries
+ * `.github/skills/project-context/SKILL.md` regardless of harness, so its
+ * presence alone says nothing about the selection.
+ *
+ * @param {string} projectDir
+ * @returns {Promise<string>} A key of HARNESS_SKILL_DIRS, defaulting to
+ *   DEFAULT_HARNESS when no skill directory exists yet.
+ */
+async function detectConfiguredHarness(projectDir) {
+	for (const harness of ["opencode", "claude", "copilot"]) {
+		if (
+			await fs.pathExists(path.join(projectDir, HARNESS_SKILL_DIRS[harness]))
+		) {
+			return harness;
+		}
+	}
+	return DEFAULT_HARNESS;
+}
+
 async function collectRelativeFilePaths(
 	rootDir,
 	currentDir = rootDir,
@@ -1944,6 +1941,16 @@ async function createReferenceScaffold(projectDir, quarkLink) {
 		...linkedFeatures,
 		...detectedFeatures,
 	]);
+	// `mobile` is a post-creation-only feature: `create` rejects it ("run quark
+	// add mobile after scaffolding") while `add mobile` records it in
+	// .quark-link.json like any other package. Forwarding it below therefore
+	// made the reference-scaffold subprocess exit non-zero, which crashed
+	// `update --scaffold-check` with "Could not generate the reference
+	// scaffold" on every project that had ever run `add mobile` — the check
+	// meant to keep projects healthy took the whole command down instead.
+	const scaffoldFeatures = comparisonFeatures.filter(
+		(feature) => feature !== "mobile",
+	);
 	const allowSignup =
 		typeof quarkLink.authAllowSignup === "boolean"
 			? quarkLink.authAllowSignup
@@ -1957,11 +1964,28 @@ async function createReferenceScaffold(projectDir, quarkLink) {
 		"--no-prompts",
 		"--skip-install",
 		"--skip-docker",
+		// A hand-edited or legacy .quark-link.json can leave the optional set
+		// empty (only mobile recorded). `--packages ""` parses as one invalid
+		// feature and the subprocess rejects it, so fall back to the minimum
+		// scaffoldable set rather than failing the check on a technicality.
 		"--packages",
-		comparisonFeatures.join(","),
+		scaffoldFeatures.length > 0 ? scaffoldFeatures.join(",") : "ui",
 		"--signup",
 		allowSignup ? "enabled" : "disabled",
 	];
+	// Forward the project's brief and harness so the reference scaffold is
+	// byte-comparable. Without them the reference is built with the default
+	// brief and the default harness directory, so every project with a custom
+	// `--prompt` reports false drift on the brief-seeded doc files, and every
+	// `--harness claude|copilot` project reports false-missing skill files for
+	// the default .opencode/skills directory it never had.
+	if (
+		typeof quarkLink.brief === "string" &&
+		quarkLink.brief.trim().length > 0
+	) {
+		args.push("--prompt", quarkLink.brief);
+	}
+	args.push("--harness", await detectConfiguredHarness(projectDir));
 
 	try {
 		await execa(process.execPath, args, {
@@ -1975,7 +1999,15 @@ async function createReferenceScaffold(projectDir, quarkLink) {
 			stdio: "pipe",
 		});
 	} catch (error) {
-		const details = error.stderr || error.stdout || error.shortMessage;
+		// Keep the subprocess's own error output, drop its stack trace: the
+		// reference scaffold is a CLI invocation whose failure reason is the
+		// line it printed before it exited, and a raw "at ..." dump only makes
+		// a failed check look like a CLI crash.
+		const details = (error.stderr || error.stdout || error.shortMessage || "")
+			.split("\n")
+			.filter((line) => !/^\s*at\s/.test(line))
+			.join("\n")
+			.trim();
 		await fs.remove(tempRoot);
 		throw new Error(
 			details
@@ -2794,10 +2826,23 @@ program
 		}
 
 		if (options.scaffoldCheck) {
-			const scaffoldReport = await reportScaffoldDrift(
-				process.cwd(),
-				quarkLink,
-			);
+			let scaffoldReport;
+			try {
+				scaffoldReport = await reportScaffoldDrift(process.cwd(), quarkLink);
+			} catch (error) {
+				// A drift check that cannot build its reference scaffold must
+				// fail loudly and cleanly. The old behaviour rethrew into the
+				// command handler, so a subprocess rejection surfaced as a raw
+				// stack trace — indistinguishable from a CLI crash, when what
+				// actually happened is that the check could not run.
+				console.error(
+					chalk.red(
+						`✗ Scaffold check could not run: ${error?.message || error}`,
+					),
+				);
+				process.exitCode = 1;
+				return;
+			}
 			const hasDrift =
 				scaffoldReport.changed.length > 0 || scaffoldReport.missing.length > 0;
 			if (options.failOnDrift && hasDrift) {

@@ -32,6 +32,11 @@ export function warnIfJobsOmitted(features, log = console.log) {
 	);
 	log(
 		chalk.dim(
+			`      Signup welcome emails are also skipped: nothing processes the queue.`,
+		),
+	);
+	log(
+		chalk.dim(
 			`      Add it later with: npx @usequark/quark-create-app add jobs\n`,
 		),
 	);

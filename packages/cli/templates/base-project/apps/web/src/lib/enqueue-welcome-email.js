@@ -1,4 +1,15 @@
-import { JOB_NAMES, JOB_QUEUES } from "@usequark/quark-jobs";
+/**
+ * Queue and job name for the signup welcome email.
+ *
+ * These mirror `JOB_QUEUES.EMAIL` and `JOB_NAMES.SEND_WELCOME_EMAIL` in the
+ * `@<scope>/jobs` package — an *optional* scaffold package. Importing them from
+ * there puts `@<scope>/jobs` in the web module graph of every project, and a
+ * project that declines `jobs` has no such dependency to resolve: the web app
+ * fails to build before any test can run. The strings are duplicated here on
+ * purpose; a `packages/cli` test fails when the two copies diverge.
+ */
+export const EMAIL_QUEUE = "email-queue";
+export const SEND_WELCOME_EMAIL = "send-welcome-email";
 
 /**
  * Loads the queue module on demand.
@@ -39,10 +50,10 @@ function loadQueueModule() {
  */
 export async function enqueueWelcomeEmail(userId, loadQueue = loadQueueModule) {
 	const { createQueue } = await loadQueue();
-	const queue = createQueue(JOB_QUEUES.EMAIL);
+	const queue = createQueue(EMAIL_QUEUE);
 
 	try {
-		await queue.add(JOB_NAMES.SEND_WELCOME_EMAIL, { userId });
+		await queue.add(SEND_WELCOME_EMAIL, { userId });
 	} finally {
 		// Never let a failing close mask the enqueue outcome — the caller only
 		// needs to know whether the job reached the queue.

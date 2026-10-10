@@ -1,7 +1,11 @@
 import assert from "node:assert";
 import { beforeEach, describe, test } from "node:test";
-import { JOB_NAMES, JOB_QUEUES } from "@usequark/quark-jobs";
-import { enqueueWelcomeEmail } from "./enqueue-welcome-email.js";
+
+import {
+	EMAIL_QUEUE,
+	enqueueWelcomeEmail,
+	SEND_WELCOME_EMAIL,
+} from "./enqueue-welcome-email.js";
 
 /**
  * The queue factory the helper was handed, and the queue it built.
@@ -44,14 +48,25 @@ beforeEach(() => {
 });
 
 describe("enqueueWelcomeEmail", () => {
+	test("queue and job names mirror the jobs package contract", () => {
+		// The names are duplicated from `@<scope>/jobs` on purpose (see the
+		// constants in enqueue-welcome-email.js) — the jobs package is optional
+		// and importing it breaks the build of every project that declines it.
+		// This pins the values here, and the packages/cli scaffold-drift test
+		// pins them against the jobs definitions, so the two copies cannot
+		// drift apart silently.
+		assert.strictEqual(EMAIL_QUEUE, "email-queue");
+		assert.strictEqual(SEND_WELCOME_EMAIL, "send-welcome-email");
+	});
+
 	test("adds the welcome-email job for the given user", async () => {
 		await enqueueWelcomeEmail("user-42", stubQueueModule);
 
 		assert.strictEqual(created.length, 1);
-		assert.strictEqual(created[0].name, JOB_QUEUES.EMAIL);
+		assert.strictEqual(created[0].name, EMAIL_QUEUE);
 		assert.deepStrictEqual(addCalls, [
 			{
-				job: JOB_NAMES.SEND_WELCOME_EMAIL,
+				job: SEND_WELCOME_EMAIL,
 				data: { userId: "user-42" },
 				jobOptions: undefined,
 			},
