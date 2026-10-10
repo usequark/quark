@@ -1,5 +1,25 @@
 # @usequark/quark-create-app
 
+## 1.25.13
+
+### Patch Changes
+
+- [#270](https://github.com/usequark/quark/pull/270) [`752304d`](https://github.com/usequark/quark/commit/752304d4046168616acbb9b36f69eda14f9ee7f0) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Fix two CLI defects in scaffolded output and drift checking.
+  
+  - `quark create <name> --packages ui` (or `--packages pwa`) no longer produces a project that fails `next build`. The register route reached the queue through an enqueue helper that imported `@<scope>/jobs`; the dependency was dropped and `transpilePackages` patched when jobs was not selected, so the import resolved to nothing. The queue and job names now live in the web module as local constants, and the dead scaffold-time stripper (which had been orphaned since the enqueue moved to its own module, and whose marker regex matched nothing in the repository) is gone. A cross-template test now fails if the web-side names ever drift from the jobs package definitions.
+  - `quark update --scaffold-check` no longer crashes on projects that ran `quark add mobile`. `mobile` is a post-creation-only feature, so it is stripped before the reference scaffold is requested instead of being forwarded to a subprocess that rejects it.
+  - `quark update --scaffold-check` no longer reports guaranteed false drift. The reference scaffold is now built with the project's brief and harness (detected from its skill directory), so projects with a custom `--prompt` or a non-default `--harness` compare byte-for-byte.
+  - When the reference scaffold cannot be built, the check now fails with a single clear error line and exit code 1 instead of an unhandled stack trace.
+  - The jobs-omitted warning now also names the skipped signup welcome emails, and `scaffold-warning`/`scaffold-drift` tests are wired into `pnpm test`.
+
+- [#273](https://github.com/usequark/quark/pull/273) [`96701e5`](https://github.com/usequark/quark/commit/96701e50639ace004840e2b0d702889cf4a8d8ed) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Remove the dead push-notification pipeline end to end.
+  
+  The device-register endpoint, the worker's push handler, and the mobile app's token registration all targeted a `Device` model that has never existed in the base schema — `POST /api/device/register` 500'd on every request and every `SEND_PUSH_NOTIFICATION` job threw a TypeError. `quark add mobile` patched the model into project schemas at add-time, but the routes ship in the base template, so every default scaffold carried a dead endpoint. A hand-built test double hid all of it behind a green suite.
+  
+  Removed: `POST /api/device/register` (route + test), the worker push handler (APNs/FCM via `jose`), `JOB_QUEUES.PUSH` and `JOB_NAMES.SEND_PUSH_NOTIFICATION` from the scaffolded jobs package, the mobile app's `lib/notifications.ts`/`AuthGate` push registration, the `Device`-model schema patch in `quark add mobile`, the APNs/FCM next-steps hint, and the now-unneeded `jose`, `expo-device`, and `expo-notifications` dependencies. `docs/API.md` and `docs/QUARK_USAGE.md` updated to match.
+  
+  The scaffolded `csrf` test's Bearer-skip fixture now uses `/api/files` instead of the deleted route, and `mobile-template.test.js` (updated, previously unwired) is wired into the CLI test suite.
+
 ## 1.25.12
 
 ### Patch Changes
