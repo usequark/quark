@@ -27,7 +27,7 @@ const testLogger = {
 	fatal: () => {},
 };
 
-mock.module("@usequark/quark-core", {
+mock.module("@usequark/quark-core/storage", {
 	namedExports: {
 		createStorage: () => ({
 			provider: "local",

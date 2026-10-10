@@ -13,14 +13,14 @@ register(new URL("../../../../scripts/test-alias-loader.mjs", import.meta.url));
 // after the first call, so a later `mock.module` would not reach the bindings the
 // route already holds.
 //
-// Only `@usequark/quark-core` is replaced, and only to make token *generation*
+// Only `@usequark/quark-core/core` is replaced, and only to make token *generation*
 // observable and forceable — the response body alone cannot show whether a token
 // was minted and then discarded, or whether the mint is what failed.
 //
 // `@/lib/auth` is deliberately NOT mocked, and the route deliberately does not
 // import it; see the "no session dependency" test below.
 
-const core = await import("@usequark/quark-core");
+const core = await import("@usequark/quark-core/core");
 
 /** How many times the route asked for a token. */
 let tokenCalls;
@@ -30,7 +30,7 @@ let tokenError;
 // Delegates to the real generator so the token under test is genuinely random — a
 // stubbed constant would make "a fresh token per request" untestable. The wrapper
 // exists to make *that* generation observable and to open the 500 path.
-mock.module("@usequark/quark-core", {
+mock.module("@usequark/quark-core/core", {
 	namedExports: {
 		...core,
 		generateCsrfToken: () => {

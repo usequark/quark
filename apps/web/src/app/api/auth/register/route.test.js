@@ -76,18 +76,15 @@ mock.module("@usequark/quark-db", {
 	},
 });
 
-const core = await import("@usequark/quark-core");
+const core = await import("@usequark/quark-core/core");
+const auth = await import("@usequark/quark-core/auth");
 
 /** Every plaintext passed to `hashPassword`. */
 let hashCalls;
 /** The digest `hashPassword` resolves to. */
 let hashedPassword;
-/** `{ queue, job, data }` for every job the route enqueued. */
-let queueCalls;
-/** When set, `emailQueue.add` rejects with this error. */
-let queueAddError;
 
-mock.module("@usequark/quark-core", {
+mock.module("@usequark/quark-core/core", {
 	namedExports: {
 		...core,
 		createLogger: () => ({
@@ -96,18 +93,41 @@ mock.module("@usequark/quark-core", {
 			warn() {},
 			debug() {},
 		}),
+	},
+});
+
+mock.module("@usequark/quark-core/auth", {
+	namedExports: {
+		...auth,
 		hashPassword: async (password) => {
 			steps.push(`hash:${password}`);
 			hashCalls.push(password);
 			return hashedPassword;
 		},
-		createQueue: (name) => ({
-			add: async (job, data) => {
-				steps.push(`queue.add:${job}`);
-				if (queueAddError) throw queueAddError;
-				queueCalls.push({ queue: name, job, data });
-			},
-		}),
+	},
+});
+
+// The route reaches the queue through `@/lib/enqueue-welcome-email`, which it
+// imports statically. Mocking that module — rather than the queue module behind
+// it — is what makes the enqueue observable: `mock.module` substitutes into a
+// dynamic import only when the importing module registered the mock, and that
+// dynamic import now lives one file away, inside the helper.
+const enqueueUrl = pathToFileURL(
+	new URL("../../../../lib/enqueue-welcome-email.js", import.meta.url).pathname,
+).href;
+
+/** The `userId` of every welcome email the route asked to enqueue, in order. */
+let enqueuedUserIds;
+/** When set, `enqueueWelcomeEmail` rejects with this error. */
+let queueAddError;
+
+mock.module(enqueueUrl, {
+	namedExports: {
+		enqueueWelcomeEmail: async (userId) => {
+			steps.push("enqueue:welcome-email");
+			if (queueAddError) throw queueAddError;
+			enqueuedUserIds.push(userId);
+		},
 	},
 });
 
@@ -166,8 +186,8 @@ function resetFixtures() {
 	findByEmailCalls = [];
 	hashCalls = [];
 	hashedPassword = "hashed:Str0ngPassphrase";
-	queueCalls = [];
 	queueAddError = null;
+	enqueuedUserIds = [];
 }
 
 beforeEach(() => {
@@ -265,7 +285,7 @@ test("POST checks for a duplicate before spending a hash", async () => {
 	// ordering is what makes the duplicate path cheap rather than merely correct.
 	assert.deepStrictEqual(hashCalls, []);
 	assert.deepStrictEqual(createCalls, []);
-	assert.deepStrictEqual(queueCalls, []);
+	assert.deepStrictEqual(enqueuedUserIds, []);
 	assert.deepStrictEqual(steps, ["signup", `findByEmail:${VALID_BODY.email}`]);
 });
 
@@ -280,7 +300,7 @@ test("POST runs signup gate, lookup, hash and write in that order", async () => 
 		`findByEmail:${VALID_BODY.email}`,
 		"hash:Str0ngPassphrase",
 		"create",
-		"queue.add:send-welcome-email",
+		"enqueue:welcome-email",
 	]);
 });
 
@@ -289,13 +309,7 @@ test("POST enqueues the welcome email for the user it just created", async () =>
 
 	// The payload has to carry the new id, not the email: the worker's
 	// validation rejects a job with no userId.
-	assert.deepStrictEqual(queueCalls, [
-		{
-			queue: "email-queue",
-			job: "send-welcome-email",
-			data: { userId: "user-new" },
-		},
-	]);
+	assert.deepStrictEqual(enqueuedUserIds, ["user-new"]);
 });
 
 test("POST returns 403 and writes nothing when signup is disabled", async () => {
@@ -310,7 +324,7 @@ test("POST returns 403 and writes nothing when signup is disabled", async () => 
 	);
 	assert.deepStrictEqual(findByEmailCalls, []);
 	assert.deepStrictEqual(createCalls, []);
-	assert.deepStrictEqual(queueCalls, []);
+	assert.deepStrictEqual(enqueuedUserIds, []);
 });
 
 test("POST applies the signup gate before it validates the body", async () => {
@@ -383,9 +397,9 @@ test("POST returns 500 and enqueues nothing when the insert fails", async () => 
 		`error body leaked the database message: ${raw}`,
 	);
 	// The write failed, so there is no user to welcome.
-	assert.deepStrictEqual(queueCalls, []);
+	assert.deepStrictEqual(enqueuedUserIds, []);
 	assert.deepStrictEqual(
-		steps.filter((s) => s.startsWith("queue.add")),
+		steps.filter((s) => s.startsWith("enqueue:")),
 		[],
 	);
 });
