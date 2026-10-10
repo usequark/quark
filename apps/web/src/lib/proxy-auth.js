@@ -2,9 +2,14 @@ import { getAuthSecret } from "@usequark/quark-core/auth";
 import { getToken } from "next-auth/jwt";
 
 const STRICT_AUTH_RATE_LIMIT_ROUTES = new Set([
+	// `callback/credentials` is where the next-auth client POSTs a credentials
+	// sign-in (next-auth/react posts to `callback/<provider>` for credentials
+	// providers), so this is the credential-stuffing surface and stays strict.
+	// `signin/credentials` is deliberately NOT listed: no client POSTs there,
+	// and @auth/core's POST `signin` action for a credentials provider just
+	// redirects to the sign-in page — nothing to brute force.
 	"/api/auth/callback/credentials",
 	"/api/auth/register",
-	"/api/auth/signin/credentials",
 ]);
 
 /**

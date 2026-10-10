@@ -17,7 +17,7 @@ import {
 import { NextResponse } from "next/server";
 
 import { buildContentSecurityPolicy } from "./lib/analytics/umami-csp.js";
-import { getRateLimitBucket } from "./lib/proxy-auth";
+import { getRateLimitBucket, isRateLimitExempt } from "./lib/proxy-auth";
 
 const logger = createLogger("proxy");
 
@@ -208,8 +208,12 @@ export async function proxy(request) {
 		}
 	}
 
-	// Apply rate limiting to API routes only
-	if (pathname.startsWith("/api/")) {
+	// Apply rate limiting to API routes only. Exempt routes (the healthcheck)
+	// skip the bucket entirely — no counter, no headers — exactly as proxy.js
+	// does. A probe that gets a 429 reads as unhealthy and makes the
+	// orchestrator restart the container, so limiting the one route a platform
+	// polls for liveness is how a healthy service gets killed.
+	if (pathname.startsWith("/api/") && !isRateLimitExempt(pathname)) {
 		const ip = getClientIp(request);
 		const rateLimitBucket = getRateLimitBucket(pathname, request.method);
 		const maxRequests = RATE_LIMIT_PRESETS[rateLimitBucket].maxRequests;
