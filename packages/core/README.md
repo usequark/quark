@@ -34,7 +34,10 @@ import {
 } from "@usequark/quark-core";
 ```
 
-All modules are re-exported from the package root. See JSDoc comments on each function for options and usage details.
+Most modules are re-exported from the package root, but not all: `locale`,
+`stripe`, `storage/s3`, `csrf-client`, and `testing` are **subpath-only** —
+import them from their subpath. See JSDoc comments on each function for options
+and usage details.
 
 ### Subpath exports
 
@@ -44,22 +47,26 @@ Every subpath in `packages/core/package.json` `exports`, verified against the fi
 
 | Subpath | Contents |
 |---|---|
-| `@usequark/quark-core` | everything below, re-exported from the root |
+| `@usequark/quark-core` | most modules re-exported from the root (exceptions listed below) |
 | `@usequark/quark-core/core` | errors, logger, validation, utils, pagination, csrf, rate limiter, file validation, db |
 | `@usequark/quark-core/auth` | auth config helpers + session guards |
 | `@usequark/quark-core/auth/middleware` | session guards only |
+| `@usequark/quark-core/csrf-client` | browser-side CSRF token helper (subpath-only) |
 | `@usequark/quark-core/db` | `createPrismaClient`, connection string, pool config, `pingDatabase()` |
 | `@usequark/quark-core/queue` | BullMQ queue and worker helpers |
 | `@usequark/quark-core/email` | `EmailProvider`, `registerEmailProvider`, `createEmailService` |
+| `@usequark/quark-core/email-templates` | `welcomeEmail`, `passwordResetEmail` templates |
 | `@usequark/quark-core/errors` | error classes only |
 | `@usequark/quark-core/health` | health check runners and default probes |
 | `@usequark/quark-core/metrics` | metrics registry and default instruments |
+| `@usequark/quark-core/multipart` | multipart form parsing |
+| `@usequark/quark-core/redis` | `resolveRedisConnection` and Redis helpers |
 | `@usequark/quark-core/storage` | local adapter, storage factory, key/URL helpers, `createS3Storage` |
-| `@usequark/quark-core/storage/s3` | S3 adapter only |
+| `@usequark/quark-core/storage/s3` | S3 adapter only (subpath-only) |
 | `@usequark/quark-core/sms` | SMS provider |
-| `@usequark/quark-core/stripe` | Stripe client + webhook helpers |
+| `@usequark/quark-core/stripe` | Stripe client + webhook helpers (subpath-only) |
 | `@usequark/quark-core/admin` | Prisma schema introspection helpers |
-| `@usequark/quark-core/locale` | locale helpers |
+| `@usequark/quark-core/locale` | locale helpers (subpath-only) |
 | `@usequark/quark-core/logger` | browser-safe logger |
 | `@usequark/quark-core/testing` | test factories, mocks, helpers |
 
