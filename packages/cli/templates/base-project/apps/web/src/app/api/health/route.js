@@ -17,14 +17,14 @@
  * what the core module replaces.
  */
 
+import { createLogger } from "@usequark/quark-core/core";
 import {
 	checkQueues,
 	checkStorage,
-	createLogger,
-	getRegisteredQueues,
-	pingRedis,
 	runHealthChecks,
 } from "@usequark/quark-core/health";
+import { getRegisteredQueues } from "@usequark/quark-core/queue";
+import { pingRedis } from "@usequark/quark-core/redis";
 import { pingDatabase } from "@usequark/quark-db";
 import { NextResponse } from "next/server";
 
