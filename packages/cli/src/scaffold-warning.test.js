@@ -21,6 +21,8 @@ test("warnIfJobsOmitted warns when jobs is not selected", () => {
 	// and the person deciding needs that before they decide.
 	assert.match(output, /orphaned/);
 	assert.match(output, /nothing sweeps them/);
+	// Without a worker the signup welcome-email job is never processed either.
+	assert.match(output, /welcome emails are also skipped/);
 	// And the escape hatch, so the warning is actionable rather than fatalistic.
 	assert.match(output, /add jobs/);
 });

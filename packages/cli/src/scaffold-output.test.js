@@ -148,6 +148,38 @@ describe("scaffold output placeholders", () => {
 		);
 	});
 
+	// Regression: `quark create x --packages ui` (and `--packages pwa`)
+	// produced a project that could not build. The register route reached the
+	// queue through an enqueue helper that imported `@<scope>/jobs`, but
+	// replaceDepsScope deletes that dependency and patchNextConfig strips its
+	// transpile entry whenever jobs is not selected — so the import resolved to
+	// nothing and `next build` failed with "Can't resolve '@<scope>/jobs'".
+	// The CLI's stripper meant to prevent this had been dead since the enqueue
+	// moved to its own module. The fix dropped the import from the web module
+	// entirely; this asserts the condition that broke cannot come back.
+	it("keeps the jobs package out of the web module graph when jobs is declined", () => {
+		const jobsImport = new RegExp(`@${PROJECT_NAME}/jobs\\b`);
+		const offenders = [];
+
+		for (const file of collectFiles(path.join(projectDir, "apps", "web"))) {
+			let content;
+			try {
+				content = fs.readFileSync(file, "utf-8");
+			} catch {
+				continue;
+			}
+			if (jobsImport.test(content)) {
+				offenders.push(path.relative(projectDir, file));
+			}
+		}
+
+		assert.deepStrictEqual(
+			offenders,
+			[],
+			`web source imports the jobs package, which was not scaffolded — the build fails with "Can't resolve '@${PROJECT_NAME}/jobs'": ${offenders.join(", ")}`,
+		);
+	});
+
 	// npm strips every .gitignore from published tarballs, so the template copy
 	// never reaches a CLI installed from npm. The scaffolder writes one from
 	// src/scaffold-gitignore.js instead - this asserts it actually arrives, and
