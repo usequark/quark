@@ -1,5 +1,110 @@
 # @usequark/quark-create-app
 
+## 1.25.9
+
+### Patch Changes
+
+- [#260](https://github.com/usequark/quark/pull/260) [`d51904d`](https://github.com/usequark/quark/commit/d51904d2e6821919da7708b95058504950219603) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - fix(auth): refuse Google sign-in for an unverified address
+  
+  `POST /api/auth/google` checked that the token was genuine and bound to this
+  app, then read the address off it and either signed that account in or created
+  it on the spot. It never looked at `email_verified`.
+  
+  Google issues ID tokens for unconfirmed addresses — some Workspace accounts,
+  and accounts created recently enough that the confirmation round-trip has not
+  finished. Nothing about such a token proves the person presenting it can read
+  the inbox, and since this route creates the account on first sight, the
+  confirmation that is supposed to establish ownership of the address was simply
+  skipped. A working address on an account someone else controls is an account to
+  receive password resets and notifications for, not proof of identity.
+  
+  The check is deliberately strict: only an explicit confirmation passes. A
+  missing claim, a null, a number, or anything that is not `true` is refused —
+  a wrong refusal costs one unlucky sign-in, and a wrong acceptance hands an
+  unconfirmed address a session. Google's `tokeninfo` endpoint reports the claim
+  as the string `"true"`, not a boolean, so a naive truthiness check would have
+  done the opposite of the obvious thing: accepted `"false"` while rejecting every
+  real sign-in. The helper accepts both the string and boolean spellings.
+  
+  Ordering: the check runs after the missing-email `400`, which describes the
+  shape of a token rather than reporting a refusal, and before any database work.
+  An unverified address never reaches `findByEmail`, so it cannot become an
+  account-creation or existence oracle.
+  
+  Refusals return the same generic `401` as every other verification failure.
+  A distinct message would tell a caller that their token was structurally valid
+  and name the one check left to work around.
+  
+  Behaviour change: a Google account whose address is not verified can no longer
+  sign in through this endpoint. Verify the address in the Google account, or
+  sign in with a provider that returns a confirmed one.
+  
+  Seven tests, each mutation-checked — replacing the helper's explicit comparison
+  with a truthiness check fails 4, returning `true` from it fails 5, and removing
+  the check fails 5.
+
+- [#259](https://github.com/usequark/quark/pull/259) [`41b3c11`](https://github.com/usequark/quark/commit/41b3c11ce1e20a7c1a9cacc2b54ca9767bd52172) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - perf(core): keep BullMQ out of the web process via narrow subpath imports
+  
+  The `@usequark/quark-core` barrel re-exports 27 modules, one of which
+  statically imports BullMQ. A route that imported the barrel for a single
+  symbol — `validateBody`, `createLogger` — pulled BullMQ, ioredis and msgpackr
+  into that route's module graph. Measured on Node 24, importing the barrel
+  costs roughly 60 MB of RSS before doing any work, almost all of it BullMQ. A
+  web service holding that for its lifetime is a direct Railway memory charge
+  at $10/GB-month.
+  
+  This does not change the barrel. It stops the framework's own routes from
+  needing it.
+  
+  **Three additive subpaths** cover the symbols that previously had no narrow
+  entry point, so callers no longer have to reach for the barrel to get them:
+  
+  - `./redis` — `resolveRedisConnection`, `pingRedis`, `getRedisUrl`
+  - `./multipart` — `parseMultipart`
+  - `./email-templates` — `welcomeEmail`, `passwordResetEmail`
+  
+  The existing exports map is unchanged and the barrel still re-exports
+  everything it always did, including `./queue/index.js`. Removing that
+  re-export would break any consumer importing `createQueue` from the barrel,
+  so it stays.
+  
+  **Every internal call site in `apps/web` and `apps/worker` now imports a
+  narrow subpath** — 29 files, plus the 3 in `packages/config` and
+  `packages/db`. No file in either app imports the barrel at module scope
+  anymore.
+  
+  Two routes needed more than a mechanical rewrite because importing the queue
+  module there would have moved the cost onto the worst possible path:
+  
+  `/api/health` previously called `getRegisteredQueues` to report queue depths.
+  This endpoint is polled by the Railway healthcheck and by
+  `<HealthIndicator />` on every page view, so importing the queue module here
+  loads BullMQ on the hottest path in the app — the exact regression this
+  change exists to prevent. Queue introspection now belongs to the worker, and
+  `/api/metrics` is the place to read queue depth. The health response no
+  longer carries a `checks.queues` key.
+  
+  `/api/auth/register` previously imported `createQueue` at module scope, which
+  both loaded BullMQ at startup and permanently attached a Redis connection to
+  the web process on the first successful registration. The queue module is
+  now a dynamic import inside the handler, and the `Queue` is closed once the
+  job is added, so the connection is released rather than held for the
+  lifetime of the process. The job is already persisted in Redis by then, so
+  closing is safe. A failed enqueue still does not block account creation.
+  
+  `health/route.test.js` mocked the barrel; its mocks are now scoped to the
+  three subpaths the route actually imports, and it no longer stubs
+  `getRegisteredQueues`.
+  
+  The `@usequark/quark-create-app` bump ships the equivalent template changes,
+  so newly scaffolded projects start with the narrow imports rather than
+  inheriting the barrel.
+  
+  Also fixes a Biome 2.x config error that made `pnpm lint` exit non-zero on
+  every run: `linter.rules.preset` is not a known key, the group is
+  `linter.rules.recommended`. This was pre-existing and unrelated; it is
+  included because the lint gate could not pass without it.
+
 ## 1.25.8
 
 ### Patch Changes
