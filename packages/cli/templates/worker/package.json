@@ -26,8 +26,7 @@
 		"@usequark/quark-core": "^2.0.0",
 		"@usequark/quark-db": "workspace:*",
 		"@usequark/quark-jobs": "workspace:*",
-		"bullmq": "^6.3.8",
-		"jose": "^6.2.12"
+		"bullmq": "^6.3.8"
 	},
 	"devDependencies": {
 		"@types/node": "^26.6.2",

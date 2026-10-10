@@ -37,7 +37,7 @@ Hot reload works out of the box. Shake menu (`Cmd+M`) to open dev tools.
 
 1. Install **Expo Go** from the Play Store
 2. Run `npx expo start` and scan the QR code
-3. Limitation: `expo-secure-store` and `expo-notifications` behave differently in Expo Go — use for UI/layout review only
+3. Limitation: `expo-secure-store` behaves differently in Expo Go — use for UI/layout review only
 
 ### Option B: Development Build (full fidelity)
 
@@ -51,7 +51,7 @@ npx eas build --profile development --platform android
 # Download the .apk from the EAS dashboard, install on phone
 ```
 
-Development builds support all native modules (`expo-secure-store`, `expo-notifications`) identically to production.
+Development builds support all native modules (`expo-secure-store`) identically to production.
 
 ## Commands Reference
 
@@ -112,12 +112,6 @@ Set in `apps/mobile/.env`. The `EXPO_PUBLIC_` prefix is required by Expo for cli
 3. API calls include `Authorization: Bearer <token>` header
 4. On 401, token refresh attempted via `/api/auth/refresh`
 5. On refresh failure, auth cleared and user redirected to sign-in
-
-## Push Notifications
-
-- Token registered on app launch after authentication
-- APNs (iOS) and FCM (Android) handled server-side via worker jobs
-- No Firebase SDK on client or server
 
 ## Deep Linking
 

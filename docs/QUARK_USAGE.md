@@ -501,14 +501,12 @@ import { JOB_QUEUES, JOB_NAMES } from "@myscope/jobs";
 // Queue names
 JOB_QUEUES.EMAIL; // "email-queue"
 JOB_QUEUES.FILES; // "files-queue"
-JOB_QUEUES.PUSH; // "push-queue"
 JOB_QUEUES.DEFAULT; // "default-queue"
 
 // Job type names
 JOB_NAMES.SEND_WELCOME_EMAIL; // "send-welcome-email"
 JOB_NAMES.SEND_RESET_PASSWORD_EMAIL; // "send-reset-password-email"
 JOB_NAMES.CLEANUP_ORPHANED_FILES; // "cleanup-orphaned-files"
-JOB_NAMES.SEND_PUSH_NOTIFICATION; // "send-push-notification"
 ```
 
 The queue machinery itself (`createQueue`, `createWorker`, `addJob`, `getJobStatus`, `closeAllQueues`, `checkQueueHealth`) comes from `@usequark/quark-core` and runs on BullMQ `^6.3.8`.

@@ -2413,60 +2413,15 @@ program
 							);
 						}
 
-						// Add DEVICE model to Prisma schema
-						const schemaPath = path.join(
-							projectDir,
-							"packages/db/prisma/schema.prisma",
-						);
-						if (await fs.pathExists(schemaPath)) {
-							let schema = await fs.readFile(schemaPath, "utf-8");
-							if (!schema.includes("model Device")) {
-								// Insert Device model after AuditLog
-								const deviceModel = `
-
-// ─── Device Model (Mobile Push Notifications) ────────────────────────────────
-
-model Device {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  platform  String   // "ios" | "android"
-  pushToken String
-  deviceId  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([userId, deviceId])
-  @@index([userId])
-  @@index([pushToken])
-  @@index([createdAt])
-}
-`;
-								schema = schema.replace(
-									/(\/\/ Audit Log Model[\s\S]*?^}\s)/m,
-									`$1${deviceModel}`,
-								);
-								// Add devices relation to User model
-								schema = schema.replace(
-									/(files\s+File\[\])/,
-									"$1\n  devices       Device[]",
-								);
-								await fs.writeFile(schemaPath, schema);
-							}
-						}
-
 						console.log(
 							chalk.green("    ✓ Mobile app scaffolded (apps/mobile)"),
-						);
-						console.log(
-							chalk.green("    ✓ DEVICE model added to Prisma schema"),
 						);
 						console.log(
 							chalk.green("    ✓ EXPO_PUBLIC_API_URL added to .env.example"),
 						);
 						console.log(
 							chalk.dim(
-								"    · API routes (token, refresh, device/register) already in base template",
+								"    · API routes (token, refresh) already in base template",
 							),
 						);
 					}
@@ -2636,12 +2591,7 @@ model Device {
 				console.log(chalk.white("  3. pnpm dev (starts web + worker)"));
 				console.log(
 					chalk.white(
-						"  4. pnpm dev:mobile (starts Expo in a second terminal)",
-					),
-				);
-				console.log(
-					chalk.white(
-						"  5. Configure APNs/FCM env vars for push notifications\n",
+						"  4. pnpm dev:mobile (starts Expo in a second terminal)\n",
 					),
 				);
 			}

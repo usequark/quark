@@ -17,19 +17,14 @@ describe("JOB_QUEUES", () => {
 		assert.strictEqual(JOB_QUEUES.DEFAULT, "default-queue");
 	});
 
-	test("defines push queue", () => {
-		assert.strictEqual(JOB_QUEUES.PUSH, "push-queue");
-	});
-
 	test("queues are strings", () => {
 		assert.strictEqual(typeof JOB_QUEUES.EMAIL, "string");
 		assert.strictEqual(typeof JOB_QUEUES.FILES, "string");
 		assert.strictEqual(typeof JOB_QUEUES.DEFAULT, "string");
-		assert.strictEqual(typeof JOB_QUEUES.PUSH, "string");
 	});
 
-	test("defines exactly 4 queues", () => {
-		assert.strictEqual(Object.keys(JOB_QUEUES).length, 4);
+	test("defines exactly 3 queues", () => {
+		assert.strictEqual(Object.keys(JOB_QUEUES).length, 3);
 	});
 });
 
@@ -54,15 +49,8 @@ describe("JOB_NAMES", () => {
 		);
 	});
 
-	test("defines send push notification job name", () => {
-		assert.strictEqual(
-			JOB_NAMES.SEND_PUSH_NOTIFICATION,
-			"send-push-notification",
-		);
-	});
-
-	test("defines exactly 4 job names", () => {
-		assert.strictEqual(Object.keys(JOB_NAMES).length, 4);
+	test("defines exactly 3 job names", () => {
+		assert.strictEqual(Object.keys(JOB_NAMES).length, 3);
 	});
 
 	test("all job names are strings", () => {

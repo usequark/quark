@@ -10,7 +10,6 @@ interface AuthState {
 	isLoading: boolean;
 	signIn: (email: string, password: string) => Promise<void>;
 	signOut: () => Promise<void>;
-	registerPushToken: () => Promise<void>;
 }
 
 let authStateListeners: Array<() => void> = [];
@@ -19,7 +18,6 @@ let globalAuthState: AuthState = {
 	isLoading: true,
 	signIn: async () => {},
 	signOut: async () => {},
-	registerPushToken: async () => {},
 };
 
 function notifyListeners() {
@@ -35,10 +33,6 @@ export function useAuthInit() {
 	const [, setState] = useState<AuthState>(globalAuthState);
 
 	useEffect(() => {
-		import("../lib/notifications")
-			.then((m) => m.configureNotificationHandler())
-			.catch(() => {});
-
 		(async () => {
 			try {
 				const authenticated = await checkAuth();
@@ -104,24 +98,9 @@ export function useAuth(): AuthState {
 		notifyListeners();
 	}, []);
 
-	const registerPushToken = useCallback(async () => {
-		try {
-			const { registerForPushNotifications, registerDevice } = await import(
-				"../lib/notifications"
-			);
-			const token = await registerForPushNotifications();
-			if (token) {
-				await registerDevice(token);
-			}
-		} catch {
-			// Non-critical - don't block auth flow
-		}
-	}, []);
-
 	return {
 		...state,
 		signIn,
 		signOut,
-		registerPushToken,
 	};
 }
