@@ -695,7 +695,6 @@ export async function GET() {
         database: pingDatabase,
         redis: pingRedis,
         storage: checkStorage,
-        queues: () => checkQueues(getRegisteredQueues),
       },
     });
 

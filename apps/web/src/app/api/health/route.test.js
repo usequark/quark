@@ -40,7 +40,6 @@ function resetProbes() {
 			put: async () => {},
 			delete: async () => {},
 		}),
-		queues: () => new Map(),
 	};
 }
 
@@ -61,12 +60,11 @@ mock.module("@usequark/quark-db", {
 });
 
 // The route wires these in as raw probe functions, so each module it actually
-// imports has to be substitutable here. `checkStorage` / `checkQueues` are
-// overridden rather than `createStorage` / `getRegisteredQueues`: the real
-// implementations reach for the adapter and the queue registry through
-// health.js's *own* imports — which a mock of this module does not intercept.
-// Overriding the probe functions themselves is what keeps this test about the
-// route's wiring; their internals are covered by health.test.js.
+// imports has to be substitutable here. `checkStorage` is overridden rather than
+// `createStorage`: the real implementation reaches for the adapter through
+// health.js's *own* imports, which a mock of this module does not intercept.
+// Overriding the probe function itself is what keeps this test about the route's
+// wiring; the internals are covered by health.test.js.
 mock.module("@usequark/quark-core/core", {
 	namedExports: {
 		...coreModule,
@@ -110,18 +108,6 @@ mock.module("@usequark/quark-core/health", {
 			await storage.delete(".health-check-sentinel");
 			return { status: "ok", provider: storage.provider };
 		},
-		checkQueues: async () => {
-			probesRan.add("queues");
-			return core.checkQueues(() => probes.queues());
-		},
-	},
-});
-
-// The route reaches the registry directly rather than through a probe
-// parameter, so the registry itself is what has to be substitutable here.
-mock.module("@usequark/quark-core/queue", {
-	namedExports: {
-		getRegisteredQueues: () => probes.queues(),
 	},
 });
 
@@ -233,26 +219,15 @@ describe("GET /api/health", () => {
 			put: () => tracked(60),
 			delete: async () => {},
 		});
-		probes.queues = () =>
-			new Map([
-				[
-					"emails",
-					{
-						getWaitingCount: () => tracked(60),
-						getActiveCount: async () => 0,
-						getFailedCount: async () => 0,
-					},
-				],
-			]);
 
 		await GET();
 
-		// One probe per dependency: database, redis, storage, queues. Sequentially,
-		// 4 x 60ms would never put more than 1 in flight — and 240ms of serial
-		// probes is a meaningful fraction of the 5s budget.
+		// One probe per dependency: database, redis, storage. Sequentially, 3 x 60ms
+		// would never put more than 1 in flight — and 180ms of serial probes is a
+		// meaningful fraction of the 5s budget.
 		assert.strictEqual(
 			peakInFlight,
-			4,
+			3,
 			"probes did not overlap — they are running sequentially",
 		);
 	});
@@ -275,57 +250,21 @@ describe("GET /api/health", () => {
 		assert.ok(elapsed < 4500, `probe deadline not enforced (${elapsed}ms)`);
 	});
 
-	test("omits the queues key when no queues are registered in this process", async () => {
+	test("never reports queues, and so never loads the queue module", async () => {
 		const body = await (await GET()).json();
 
+		// `getRegisteredQueues()` reads a per-process Map of queues created in
+		// *this* process. The web service creates none — the worker owns every
+		// long-lived queue — so this probe returned null on every request while
+		// loading all of BullMQ into a route polled by the platform healthcheck
+		// and by every page view. Queue depth is published by the worker as
+		// `job_queue_depth`; see `updateQueueDepths()` in apps/worker/src/index.js.
 		assert.ok(!("queues" in body.checks));
-	});
-
-	test("reports a failing queue as degraded", async () => {
-		probes.queues = () =>
-			new Map([
-				[
-					"emails",
-					{
-						getWaitingCount: async () => {
-							throw new Error("queue gone");
-						},
-						getActiveCount: async () => 0,
-						getFailedCount: async () => 0,
-					},
-				],
-			]);
-
-		const response = await GET();
-		const body = await response.json();
-
-		assert.strictEqual(response.status, 200);
-		assert.strictEqual(body.status, "degraded");
-		assert.strictEqual(body.checks.queues.emails.status, "error");
-	});
-
-	test("reports queue depths when queues are registered", async () => {
-		probes.queues = () =>
-			new Map([
-				[
-					"emails",
-					{
-						getWaitingCount: async () => 3,
-						getActiveCount: async () => 1,
-						getFailedCount: async () => 0,
-					},
-				],
-			]);
-
-		const body = await (await GET()).json();
-
-		assert.strictEqual(body.status, "ok");
-		assert.deepStrictEqual(body.checks.queues.emails, {
-			status: "ok",
-			waiting: 3,
-			active: 1,
-			failed: 0,
-		});
+		assert.deepStrictEqual(Object.keys(body.checks).sort(), [
+			"database",
+			"redis",
+			"storage",
+		]);
 	});
 
 	test("never returns a credential from a probe message in production", async () => {
@@ -372,33 +311,15 @@ describe("GET /api/health", () => {
 	});
 
 	test("probes every dependency the route wires in", async () => {
-		// The route's remaining job is wiring: which probes run, and that all four
+		// The route's remaining job is wiring: which probes run, and that all three
 		// reach the aggregate. The concurrency and deadline behaviour those probes
 		// need now lives in core and is covered by health.test.js.
-		probes.queues = () =>
-			new Map([
-				[
-					"emails",
-					{
-						getWaitingCount: async () => {
-							probesRan.add("queues:depth");
-							return 0;
-						},
-						getActiveCount: async () => 0,
-						getFailedCount: async () => 0,
-					},
-				],
-			]);
-
 		const body = await (await GET()).json();
 
 		assert.strictEqual(body.status, "ok");
-		for (const probe of ["database", "redis", "storage", "queues"]) {
+		for (const probe of ["database", "redis", "storage"]) {
 			assert.ok(probesRan.has(probe), `route never ran the ${probe} probe`);
 		}
-		// The queue probe is reached through getRegisteredQueues, so the registry
-		// itself has to be consulted.
-		assert.ok(probesRan.has("queues:depth"), "queue depths were never read");
 	});
 
 	test("sets Cache-Control: no-store so a probe result is never cached", async () => {
