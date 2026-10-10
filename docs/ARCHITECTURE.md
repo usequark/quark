@@ -68,13 +68,13 @@ Quark takes a hybrid approach:
 - Storage adapter abstraction (swap local ↔ S3 via env var)
 
 ✅ **More Infrastructure**
-- CSRF tokens, rate limiting (in-memory, Redis-backed when `REDIS_URL` is set)
+- CSRF tokens, rate limiting (in-memory; a Redis-backed limiter ships in `rate-limiter.js` but nothing wires it into the web middleware)
 - Metrics registry and default instruments; health-check runners
 - Cache, query builder, pagination helpers
 - Stripe client and webhook helpers; SMS provider
 - Test factories and mocks under `@usequark/quark-core/testing`
 
-Core ships 18 subpath exports. `packages/core/package.json` is the authoritative list; see `packages/core/README.md` for what each one contains.
+Core ships 21 subpath exports. `packages/core/package.json` is the authoritative list; see `packages/core/README.md` for what each one contains.
 
 ✅ **Documentation**
 - JSDoc for IDE support
@@ -200,8 +200,8 @@ export const createDbClient = () => {
 
 **Now (Core-Only Registry - Clean):**
 ```javascript
-// ✅ Core has NO database code
-// @usequark/quark-core exports: auth, queues, validation, errors ONLY
+// ✅ Core has NO database client and no Prisma dependency
+// @usequark/quark-core exports: auth, queues, validation, errors, and db helpers
 ```
 
 **In Your Local DB Package:**
@@ -219,7 +219,7 @@ export const prisma = new PrismaClient({
 ```
 
 **Key Points:**
-- Core has NO database client (no Prisma dependency)
+- Core has NO database client (no Prisma dependency) - only the `./db` helper subpath described above
 - Each app creates client based on its own schema
 - Your schema.prisma is completely custom
 
@@ -508,40 +508,62 @@ Quark ships with a complete CSS token layer. Every colour, radius, and surface v
 
 ### Token Source of Truth
 
-All design tokens live in `apps/web/src/app/globals.css` inside the `@theme inline` block:
+Design tokens live in `apps/web/src/app/globals.css`, but not in the `@theme inline`
+block. They are declared dark-first in `:root`, then overridden for light by
+`@media (prefers-color-scheme: light)` and by `[data-theme="light"]`:
 
 ```css
-@theme inline {
-  /* Brand colour - swap this one value to change every button, link, and accent */
-  --color-primary: oklch(0.6 0.15 250);
-  --color-primary-hover: oklch(0.55 0.15 250);
+:root {
+  /* Shape - 0px for sharp, 0.25rem for rounded, 0.5rem for pill */
+  --radius-default: 0px;
+
+  /* Primary brand colour - swap this one value to change every button, link, and accent */
+  --color-primary: #377dff;
+  --color-primary-hover: #5594ff;
 
   /* Surfaces */
-  --color-bg: oklch(0.98 0 0);
-  --color-surface: oklch(1 0 0);
-  --color-surface-hover: oklch(0.96 0 0);
+  --color-bg: #09101a;
+  --color-surface: #101827;
+  --color-surface-hover: #1c2642;
 
   /* Borders */
-  --color-border: oklch(0.88 0 0);
-  --color-border-hover: oklch(0.78 0 0);
+  --color-border: #263044;
+  --color-border-hover: rgba(55, 125, 255, 0.4);
+}
 
-  /* Text */
-  --color-text: oklch(0.15 0 0);
-  --color-text-muted: oklch(0.45 0 0);
-  --color-text-faint: oklch(0.6 0 0);
+@media (prefers-color-scheme: light) {
+  /* OS says light AND the user hasn't explicitly pinned dark via the toggle */
+  :root:not([data-theme="dark"]) {
+    --color-primary: #1d4ed8;
+    --color-primary-hover: #1a56db;
+    --color-bg: #f7f8fa;
+    --color-surface: #ffffff;
+  }
+}
 
-  /* Semantic */
-  --color-danger: oklch(0.6 0.18 25);
-  --color-success: oklch(0.55 0.15 145);
-  --color-warning: oklch(0.65 0.15 80);
-  --color-info: oklch(0.6 0.12 230);
-
-  /* Geometry - 0px for sharp, 0.25rem for rounded, 0.5rem for pill */
-  --radius-default: 0px;
+/* User explicitly toggled to light */
+:root[data-theme="light"] {
+  --color-primary: #1d4ed8;
+  /* ...same overrides as above... */
 }
 ```
 
-Dark mode overrides follow immediately under `[data-theme="dark"]`. To retheme a scaffolded project, edit **only** this block - no component files need touching.
+`@theme inline` (near the bottom of the file) re-exports each of those tokens so
+Tailwind registers them as first-class utilities - it holds references, not
+values:
+
+```css
+@theme inline {
+  --color-primary: var(--color-primary);
+  --color-bg: var(--color-bg);
+  --radius-default: var(--radius-default);
+}
+```
+
+Component-level variables (`--btn-*`, `--badge-*`, `--input-*`, ...) sit in their
+own block in the same file and reference the tokens with `var(--...)`. To retheme a
+scaffolded project, edit the `:root` and `[data-theme="light"]` blocks - no
+component files need touching.
 
 ### Geometry
 
@@ -587,9 +609,9 @@ CI checks for drift on every push and fails if templates are stale.
 
 To rebrand a scaffolded project:
 
-1. Edit `--color-primary` (and `--color-primary-hover`) in `globals.css`
+1. Edit `--color-primary` (and `--color-primary-hover`) in the `:root` block of `globals.css`, plus the matching light values in `@media (prefers-color-scheme: light)` and `[data-theme="light"]`
 2. Edit `--radius-default` for the geometry feel
-3. Update dark-mode overrides in `[data-theme="dark"]` if needed
+3. Mirror the light values in the `[data-theme="light"]` block if you changed the dark baseline, so an explicit toggle to light stays coherent
 4. Replace `QuarkLogo` with your own logo component
 5. Update brand copy in the auth page brand panels (`auth/signin/page.js`, `auth/register/page.js`)
 
@@ -606,7 +628,7 @@ Quark ships a **dark-mode-first** theme system built entirely on CSS custom prop
 1. **`data-theme` attribute** on `<html>` is the single source of truth - `"dark"` or `"light"`.
 2. **Tailwind uses** `@custom-variant dark (&:is([data-theme="dark"] *))` so `dark:` utility classes react to the attribute, not a `dark` class.
 3. **FOUC prevention**: a small blocking `<script>` in `layout.js` reads `localStorage.getItem("quark-theme")` and `prefers-color-scheme` synchronously before the first paint, writing `data-theme` before any React hydration.
-4. **CSS custom properties**: all theme-sensitive colors (`--quark-page-bg`, `--quark-text-primary`, `--quark-border`, etc.) are defined dark-first in `:root` with light overrides in `@media (prefers-color-scheme: light)` and `[data-theme="light"]`.
+4. **CSS custom properties**: the colour tokens (`--color-primary`, `--color-bg`, `--color-text`, ...) and the landing-page variables that read them (`--quark-page-bg`, `--quark-home-muted`, `--quark-toast-track`, ...) are defined dark-first in `:root` with light overrides in `@media (prefers-color-scheme: light)` and `[data-theme="light"]`.
 
 ### Theme API (from `@scope/ui`)
 
@@ -658,7 +680,11 @@ function ThemeToggle() {
 
 Some sites should not offer theme switching - a marketing page with a specific aesthetic, or an app where dark mode simply doesn't fit. The correct method is to **set `data-theme` statically on `<html>`** and **remove the blocking script and toggle**. Because the attribute is present in the server-rendered HTML, there is no FOUC and no need for a script.
 
-**To lock to light mode**, edit `apps/web/src/app/layout.js`:
+**To lock to light mode**, edit `apps/web/src/app/layout.js`. The shipped file wraps
+`{children}` in `<ThemeProvider>` and injects the blocking `themeScript` - both have
+to go, because `ThemeProvider` re-writes `data-theme` from `localStorage`, then
+`defaultTheme`, then the OS preference, in a `useLayoutEffect` that runs after the
+static attribute is in the DOM:
 
 ```jsx
 // Before (dynamic theme system):
@@ -669,8 +695,7 @@ export default function RootLayout({ children }) {
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>
-        <FloatingThemeToggle />
-        {children}
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );
@@ -690,11 +715,18 @@ export default function RootLayout({ children }) {
 ```
 
 - Remove the `themeScript` constant and its `<script>` tag.
-- Remove `<FloatingThemeToggle />` (and its import).
+- Remove `<ThemeProvider>` (and its import). Keeping it silently overrides the
+  static attribute - if you keep it for `useTheme()` consumers, pass
+  `defaultTheme="light"` so it resolves to the pinned theme instead of the OS
+  preference.
 - Add `data-theme="light"` (or `"dark"`) directly to `<html>`.
 - Remove `suppressHydrationWarning` - it is only needed when `data-theme` may differ between server and client.
 
-**Why not just remove the toggle?** The blocking script restores the user's previously stored preference from `localStorage` on every visit. A user who previously switched to dark will still get dark even after the toggle is removed. The only reliable fix is to replace the script with a static attribute.
+**Why not just remove the toggle?** Two writers fight over the attribute. The blocking
+script restores the user's previously stored preference from `localStorage` on every
+visit, and `ThemeProvider` re-applies a preference in a layout effect. A user who
+previously switched to dark still gets dark even after the toggle is removed. The
+only reliable fix is to replace both with a static attribute.
 
 **Re-enableable flag pattern** - if you want to switch back later without hunting through JSX, add a single config constant:
 
@@ -722,8 +754,7 @@ export default function RootLayout({ children }) {
         )}
       </head>
       <body>
-        {!FORCED_THEME && <FloatingThemeToggle />}
-        {children}
+        {FORCED_THEME ? children : <ThemeProvider>{children}</ThemeProvider>}
       </body>
     </html>
   );

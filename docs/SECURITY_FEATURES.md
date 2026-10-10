@@ -17,18 +17,20 @@ Quark includes several security features out of the box:
   - General API endpoints: 100 requests per 15 minutes
   - Auth endpoints: 5 requests per 15 minutes
 - **Headers**: Returns `X-RateLimit-*` headers for client feedback
-- **Storage**: in-memory by default, Redis-backed when `REDIS_URL` is set. For multi-instance deployments `REDIS_URL` is required, otherwise each instance counts independently. See [Redis-based Rate Limiting](#3-redis-based-rate-limiting-) below.
+- **Storage**: in-memory by default. `REDIS_URL` is **not** consulted by the shipped proxy — every instance keeps its own counters, so a multi-instance deployment counts each instance independently. A Redis-backed limiter exists as a core building block (`createRateLimiter({ type: "redis", redisClient })` in `packages/core/src/rate-limiter.js`), but nothing wires it into the web middleware yet. See [Redis-based Rate Limiting](#3-redis-based-rate-limiting-) below.
 
 #### 2. **Security Headers**
 - **Location**: [apps/web/src/proxy.js](../apps/web/src/proxy.js), [apps/web/next.config.js](../apps/web/next.config.js)
-- **Headers Applied**:
+- **Headers Applied** (in both `proxy.js` and `next.config.js` `headers()`):
   - `X-Frame-Options: SAMEORIGIN` - Prevent clickjacking
   - `X-Content-Type-Options: nosniff` - Prevent MIME sniffing
-  - `X-XSS-Protection: 1; mode=block` - Enable XSS filter
-  - `Strict-Transport-Security` - Force HTTPS (production)
+  - `Strict-Transport-Security` - Force HTTPS
   - `Referrer-Policy: strict-origin-when-cross-origin`
   - `Permissions-Policy` - Restrict browser features
   - `X-DNS-Prefetch-Control: on` - Performance optimization
+  - `Content-Security-Policy` - Built by `apps/web/src/lib/analytics/umami-csp.js`; Turbopack's `unsafe-eval` is added only outside production
+
+  `X-XSS-Protection` is not set; the CSP directive above is what ships.
 
 #### 3. **CORS Configuration**
 - **Location**: [apps/web/src/proxy.js](../apps/web/src/proxy.js)
@@ -51,7 +53,7 @@ Quark includes several security features out of the box:
 
 #### 6. **SQL Injection Protection**
 - **ORM**: Prisma (all queries parameterized)
-- **Risk**: LOW - No raw SQL queries in codebase
+- **Risk**: LOW - No raw SQL interpolating user input. The only raw statements are the constant `prisma.$queryRaw\`SELECT 1\`` health probes in `apps/worker/src/index.js`
 - **Recommendation**: Continue using Prisma for all database operations
 
 #### 7. **Session Management**
@@ -155,12 +157,12 @@ All high-priority security tasks have been completed! ✅
    - Per-file cap: 10MB (env: `UPLOAD_MAX_SIZE`, read by `packages/core/src/file-validation.js`). Separate knob from the request-body limit; both default to 10MB
    - Response: 413 Payload Too Large when exceeded
 
-3. **Redis-based Rate Limiting** ✅
-   - Status: ✅ Implemented with fallback
+3. **Redis-based Rate Limiting** ⚠️
+   - Status: ⚠️ Library implemented, not wired into the shipped middleware
    - Location: [packages/core/src/rate-limiter.js](../packages/core/src/rate-limiter.js)
-   - In-memory: Default for single-instance deployments
-   - Redis: Set `REDIS_URL` to enable (recommended for production)
-   - Alternative: Use [proxy.redis.js](../apps/web/src/proxy.redis.js)
+   - In-memory: what `apps/web/src/proxy.js` actually uses today, for single-instance deployments
+   - Redis: `createRateLimiter({ type: "redis", redisClient })` takes a client you build and hand it; setting `REDIS_URL` alone changes nothing in the web middleware
+   - Alternative: [proxy.redis.js](../apps/web/src/proxy.redis.js) is a Redis-capable proxy that no build imports - only its own test. Swapping it in is a manual, uncovered step (see below)
 
 ### Medium Priority
 
@@ -172,7 +174,7 @@ All high-priority security tasks have been completed! ✅
 
 5. **Dependency Scanning**
    - Status: ✅ Configured via Dependabot
-   - Config: `.github/dependabot.yml` for this monorepo. Scaffolded projects get their own copy at `.github/dependabot.yml` plus `.github/dependabot-auto-merge.yml`
+   - Config: `.github/dependabot.yml` for this monorepo. Scaffolded projects get their own copy at `.github/dependabot.yml` plus `.github/workflows/dependabot-auto-merge.yml`
    - Triage record: [`docs/dependency-audit.md`](./dependency-audit.md)
    - Note: the `pnpm-lock.yaml` overrides in `pnpm-workspace.yaml` are audited there and must stay in sync
 
@@ -225,38 +227,56 @@ repository's [SECURITY.md](../SECURITY.md). Do not open a public issue.
 
 ### Redis Rate Limiting Setup
 
-For production deployments with multiple instances, enable Redis-based rate limiting:
+**Status: there is no automatic path today.** `apps/web/src/proxy.js` never reads
+`REDIS_URL`, so nothing below moves the web middleware off its in-memory counters
+by itself. `REDIS_URL` is still required for the worker's BullMQ connections and
+for the job queues - it just has no effect on web rate limiting.
 
-**Option 1: Environment Variable (Automatic)**
+**Option 1: Wire the core limiter yourself (not built)**
 ```bash
-# Set in production .env
+# Set in production .env - consumed by the worker and BullMQ
 REDIS_URL=redis://your-redis-host:6379
 # or for Redis with password
 REDIS_URL=redis://:password@your-redis-host:6379
 ```
 
-The middleware will automatically detect `REDIS_URL` and use Redis for rate limiting.
+To use the Redis limiter in the web layer you have to build the client and pass it
+in yourself - there is no env-var switch:
 
-**Option 2: Explicit Redis Middleware**
+```javascript
+import { createRateLimiter } from "@usequark/quark-core/core";
+import { resolveRedisConnection } from "@usequark/quark-core/redis";
+import { Redis } from "ioredis";
+
+const limiter = createRateLimiter({
+  type: "redis",
+  redisClient: new Redis(resolveRedisConnection()),
+});
+```
+
+**Option 2: Swap in the Redis proxy (manual, not wired up)**
 ```bash
-# Install ioredis
-pnpm add ioredis
-
 # Replace proxy.js with proxy.redis.js
 mv apps/web/src/proxy.redis.js apps/web/src/proxy.js
 ```
+
+`apps/web/src/proxy.redis.js` is not referenced by any build - it is only loaded
+by its own test. Moving it into place is a manual step with no app-level coverage.
 
 **Testing Redis Rate Limiting**:
 ```bash
 # Start Redis locally
 docker run -d -p 6379:6379 redis:7-alpine
 
-# Set environment variable
+# Set environment variable (affects the worker/BullMQ, not the web middleware)
 export REDIS_URL=redis://localhost:6379
 
 # Restart your application
 pnpm dev
 ```
+
+Setting `REDIS_URL` alone will not move web rate limiting to Redis - see the
+status note above.
 
 ### CSRF Token Implementation
 
@@ -329,6 +349,8 @@ POSTGRES_PASSWORD=<strong-password-from-secret-manager>
 DATABASE_URL=<connection-string-with-ssl>
 
 # Redis (use managed service)
+# Consumed by the worker and BullMQ. The web middleware's rate limiter is still
+# in-memory and does not read this variable - see the Redis setup note above.
 REDIS_URL=<redis-connection-string-with-password>
 
 # Application URL (derives NEXTAUTH_URL and CORS origins)

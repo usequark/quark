@@ -17,14 +17,12 @@ The worker service is designed around resilience, observability, and graceful de
 ├─────────────────────────────────────────────────────┤
 │  Runtime Phase:                                     │
 │  └─ Dispatch jobs to registered handlers            │
-│  └─ Track failures with exponential backoff         │
 │  └─ Log events at each state transition             │
-│  └─ Report errors to centralized error reporter     │
+│  └─ Persist each state change to the Job table      │
 ├─────────────────────────────────────────────────────┤
 │  Shutdown Phase:                                    │
-│  └─ Drain in-flight jobs gracefully (up to 30s)    │
-│  └─ Close database connection                       │
-│  └─ Close Redis connection                          │
+│  └─ Close workers (releases their Redis connections)│
+│  └─ Disconnect the database                         │
 │  └─ Exit with success/failure code                  │
 └─────────────────────────────────────────────────────┘
 ```
@@ -75,40 +73,60 @@ The preflight check runs `node src/index.js --preflight` and validates:
 REDIS_HOST=localhost
 REDIS_PORT=6379
 REDIS_DB=0
-REDIS_PASSWORD=          # Optional
-REDIS_TLS_CA=           # Optional: Path to CA certificate
-REDIS_TLS_CERT=         # Optional: Path to client certificate
-REDIS_TLS_KEY=          # Optional: Path to client key
 ```
+
+Read by `packages/core/src/redis.js` (`resolveRedisConnection`). `REDIS_URL` is
+preferred when set, and may carry credentials and TLS:
+
+```env
+REDIS_URL=redis://user:password@your-redis-host:6379
+REDIS_URL=rediss://your-redis-host:6380          # rediss:// enables TLS
+```
+
+There is no `REDIS_PASSWORD`, `REDIS_TLS_CA`, `REDIS_TLS_CERT`, or `REDIS_TLS_KEY`
+support - certificate-based auth is not implemented. Pass credentials in the URL.
 
 ### Worker Configuration
 
 ```env
 # Job processing
 WORKER_CONCURRENCY=5                  # Number of concurrent jobs per queue
-WORKER_HEALTH_RETRIES=10              # Max attempts to connect on startup
-WORKER_HEALTH_INTERVAL_MS=1000        # Delay between health check attempts (ms)
-WORKER_MAX_FAILURES=100               # Threshold for circuit breaker (jobs/minute)
+WORKER_HEALTH_RETRIES=10              # Max attempts to connect to Redis on startup
+WORKER_HEALTH_INTERVAL_MS=1000        # Delay between Redis health check attempts (ms)
+WORKER_DB_RETRIES=30                  # Max attempts waiting for the DB schema
+WORKER_DB_INTERVAL_MS=2000            # Delay between DB schema checks (ms)
 
-# Graceful shutdown (in production, orchestrator timeout should be 5-10s more)
-WORKER_SHUTDOWN_TIMEOUT_MS=30000      # Max time to drain in-flight jobs
+# Graceful shutdown
+# No drain timeout exists yet - shutdown waits on worker.close() for as long as
+# BullMQ takes, with no upper bound. WORKER_SHUTDOWN_TIMEOUT_MS is not read by
+# any code, so set your orchestrator's terminationGracePeriod generously.
 ```
+
+There is no circuit breaker. `WORKER_MAX_FAILURES` is not read by any code, and the
+worker tracks no failure counter - an error is logged and the job is either retried
+by BullMQ or marked failed.
 
 ### Job Queue Configuration
 
-Job defaults are defined in `@usequark/quark-jobs`:
+`packages/jobs/src/definitions.js` only names the queues and job types. The retry
+defaults live in `createQueue()` in `packages/core/src/queue/index.js`; jobs inherit
+them from the queue they are added to:
 
 ```javascript
-// Default retry strategy for all jobs
+// Default retry strategy for all jobs (packages/core/src/queue/index.js)
 {
   attempts: 3,                    // Retry up to 3 times
   backoff: {
     type: "exponential",          // 2s → 4s → 8s delays
     delay: 2000
   },
-  removeOnComplete: true          // Clean up jobs after success
+  removeOnComplete: { age: 60, count: 100 }  // Keep the last 100 for 60s
 }
 ```
+
+Queues: `email-queue`, `files-queue`, `push-queue`, `default-queue`. The worker
+starts one BullMQ worker per queue and dispatches by job name, so any registered
+handler in a queue will be picked up by that queue's worker.
 
 ### Database Configuration
 
@@ -129,30 +147,71 @@ DATABASE_URL=postgresql://user:password@localhost:5432/quark_dev
 
 ## Job Handler Patterns
 
-All job handlers are registered in `src/handlers/index.js`:
+All job handlers are registered in `src/handlers/index.js`, mapping job names from
+`@usequark/quark-jobs`:
+
+| Job name | Handler |
+|---|---|
+| `send-welcome-email` | `handleSendWelcomeEmail` (`handlers/email.js`) |
+| `send-reset-password-email` | `handleSendResetPasswordEmail` (`handlers/email.js`) |
+| `cleanup-orphaned-files` | `handleCleanupOrphanedFiles` (`handlers/files.js`) |
+| `send-push-notification` | `handleSendPushNotification` (`handlers/push-notification.js`) |
+
+⚠️ `send-push-notification` is registered but inoperable today: the handler queries
+`prisma.device`, and there is no `Device` model in `packages/db/prisma/schema.prisma`
+(the schema holds 7 core models). Every `send-push-notification` job fails on its
+first database call. Add a `Device` model (see the `add-model` skill) or drop the
+registration - the handler is not dead code you can switch on with config.
+
+The shipped web app only enqueues `send-welcome-email`
+(`apps/web/src/lib/enqueue-welcome-email.js`); the worker itself schedules
+`cleanup-orphaned-files` every 24h via `upsertJobScheduler`.
+
+The shipped handler pulls its guards out into `handlers/email-job-validation.js`
+(`requireWelcomeEmailUserId`, `requireUserEmailRecord`) so they can be unit-tested
+without Prisma. `src/handlers/email.js` reads, in outline:
 
 ```javascript
 // src/handlers/email.js
+import { createEmailService } from "@usequark/quark-core/email";
+import { welcomeEmail, passwordResetEmail } from "@usequark/quark-core/email-templates";
+import { prisma } from "@usequark/quark-db";
+import { requireUserEmailRecord, requireWelcomeEmailUserId } from "./email-job-validation.js";
+
+const emailService = createEmailService();
+
 export async function handleSendWelcomeEmail(bullJob, logger) {
-  const { userId } = bullJob.data;
-  
-  if (!userId) {
-    throw new Error("userId is required");
-  }
+  const userId = requireWelcomeEmailUserId(bullJob.data);
 
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user?.email) {
-    throw new Error(`User ${userId} not found or has no email`);
-  }
-
-  await emailService.send({
-    to: user.email,
-    subject: "Welcome to Quark",
-    html: "<p>Welcome!</p>"
+  logger.info(`Sending welcome email for user ${userId}`, {
+    job: "send-welcome-email",
+    userId,
   });
 
-  logger.info(`Welcome email sent to ${user.email}`);
-  return { success: true, email: user.email };
+  const userRecord = requireUserEmailRecord(
+    userId,
+    await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, name: true },
+    }),
+  );
+
+  const template = welcomeEmail({
+    name: userRecord.name,
+    appName: process.env.APP_NAME,
+    loginUrl: process.env.APP_URL
+      ? `${process.env.APP_URL}/api/auth/signin`
+      : undefined,
+  });
+
+  await emailService.sendEmail(
+    userRecord.email,
+    template.subject,
+    template.html,
+    template.text,
+  );
+
+  return { success: true, userId, email: userRecord.email };
 }
 ```
 
@@ -160,58 +219,55 @@ export async function handleSendWelcomeEmail(bullJob, logger) {
 
 Every job handler receives:
 
-```typescript
-async function jobHandler(
-  bullJob: {
-    id: string;          // Unique job ID
-    name: string;        // Job type (e.g., "send-welcome-email")
-    data: Object;        // Payload from queue.add()
-    attemptsMade: number;// Number of retry attempts
-  },
-  logger: {
-    info: Function;
-    warn: Function;
-    error: Function;
-  }
-): Promise<any> {
-  // Return: Success result (serializable)
-  // Throw: Error (triggers retry or failure)
+```javascript
+async function jobHandler(bullJob, logger) {
+  // bullJob.id          - unique job ID
+  // bullJob.name        - job type (e.g., "send-welcome-email")
+  // bullJob.data        - payload from queue.add()
+  // bullJob.attemptsMade- number of attempts already made
+  // logger              - createLogger() instance (info/warn/error/fatal)
+
+  // Return: success result (serializable)
+  // Throw: Error (triggers retry or failure). Prefer ValidationError/AppError
+  // from @usequark/quark-core/errors over a bare Error.
+  return { success: true };
 }
 ```
 
 ### Error Handling in Handlers
 
+`handleCleanupOrphanedFiles` is the pattern to copy - it continues past a failing
+record and reports what it could not delete:
+
 ```javascript
-export async function handleCleanupFiles(bullJob, logger) {
+// src/handlers/files.js
+export async function handleCleanupOrphanedFiles(bullJob, logger) {
   const retentionHours = bullJob.data?.retentionHours || 24;
-  
-  logger.info("Starting cleanup", { retentionHours });
+  const cutoff = new Date(Date.now() - retentionHours * 60 * 60 * 1000);
 
-  const orphaned = await prisma.file.findMany(where: {
-    createdAt: { lt: cutoffDate }
-  });
+  logger.info("Starting orphaned file cleanup", { retentionHours, cutoff });
 
+  const orphaned = await file.findOlderThan(cutoff);
+  const storage = createStorage();
   let deleted = 0;
   const errors = [];
 
-  for (const file of orphaned) {
+  for (const record of orphaned) {
     try {
-      await storage.delete(file.storageKey);
-      await prisma.file.delete({ where: { id: file.id } });
+      // Row first, storage second - a failed row delete cannot be recovered,
+      // a failed storage delete is swept up by the next pass of this job.
+      const { count } = await file.deleteIfPresent(record.id);
+      if (count === 0) continue; // taken by a concurrent request or earlier pass
+
+      await storage.delete(record.storageKey);
       deleted++;
     } catch (err) {
-      // Continue processing others, log failures
-      errors.push({ fileId: file.id, error: err.message });
-      logger.warn(`Failed to delete file ${file.id}`, { error: err.message });
+      errors.push({ id: record.id, error: err.message });
+      logger.warn(`Failed to delete file ${record.id}: ${err.message}`);
     }
   }
 
-  return {
-    success: errors.length < orphaned.length,
-    deleted,
-    total: orphaned.length,
-    errors
-  };
+  return { success: true, deleted, total: orphaned.length, errors };
 }
 ```
 
@@ -246,7 +302,8 @@ test("isConnectionError detects common connection failures", () => {
 
 ### Testing `throttledError`
 
-Suppresses repeated errors within a time window:
+Suppresses repeated errors within a time window. Note that `throttledError` logs at
+**warn**, not error — it reports "Waiting for Redis", a recoverable condition:
 
 ```javascript
 import { throttledError } from "./index.js";
@@ -257,16 +314,16 @@ test("throttledError suppresses duplicate errors within window", async () => {
 
   // First error logs
   throttle(new Error("Redis unavailable"));
-  assert.strictEqual(logger.error.mock.callCount(), 1);
+  assert.strictEqual(logger.warn.mock.callCount(), 1);
 
   // Second error within window suppressed
   throttle(new Error("Redis unavailable"));
-  assert.strictEqual(logger.error.mock.callCount(), 1);
+  assert.strictEqual(logger.warn.mock.callCount(), 1);
 
   // After window, error logs again
   await new Promise(r => setTimeout(r, 150));
   throttle(new Error("Redis unavailable"));
-  assert.strictEqual(logger.error.mock.callCount(), 2);
+  assert.strictEqual(logger.warn.mock.callCount(), 2);
 });
 ```
 
@@ -393,23 +450,26 @@ The worker handles `SIGTERM` and `SIGINT` signals:
 
 ```javascript
 // When orchestrator sends SIGTERM (deployment update, node drain, etc.)
-process.on("SIGTERM", async () => {
-  logger.info("Graceful shutdown initiated");
-  
-  // 1. Stop accepting new jobs
+async function shutdown(signal) {
+  logger.info("Graceful shutdown initiated", { signal });
+
+  // 1. Stop intake and close workers - BullMQ waits for in-flight jobs to
+  //    return or throw. There is no built-in 30s cap (no WORKER_SHUTDOWN_TIMEOUT_MS),
+  //    so a stuck handler blocks this loop indefinitely.
   for (const worker of workers) {
     await worker.close();
   }
-  
-  // 2. Wait for in-flight jobs (up to 30s)
-  // 3. Disconnect database
-  // 4. Exit cleanly
-  
+
+  // 2. Disconnect the database
+  await prisma.$disconnect();
+
+  // 3. Exit cleanly
   process.exit(0);
-});
+}
 ```
 
-**Important**: Configure your orchestrator to wait at least 40 seconds before force-killing the container:
+**Important**: because there is no drain timeout of its own, the worker relies on your
+orchestrator's grace period. Configure it above the longest job you expect to run:
 
 ```yaml
 # Kubernetes
@@ -425,9 +485,9 @@ stop_grace_period: 40s
 
 The worker uses a **fault-tolerant error handling** approach:
 
-1. **Job-Level Errors**: Failures inside handlers trigger retries with exponential backoff
-2. **Connection Errors**: Temporary network issues don't crash the process, they're throttled
-3. **Permanent Failures**: After max retries, jobs move to dead-letter queue
+1. **Job-Level Errors**: Failures inside handlers trigger retries with exponential backoff (3 attempts, 2s → 4s → 8s, from `createQueue` defaults)
+2. **Connection Errors**: Temporary network issues don't crash the process, they're throttled (`throttledError`, warn level)
+3. **Permanent Failures**: After the retries are exhausted the job is marked `failed`, logged, and persisted to the `Job` table as `FAILED`. There is **no dead-letter queue** — a job that has used every attempt stays in the `failed` set in Redis with nothing re-dispatching it
 4. **Process-Level Errors**: Unhandled errors exit the process (expect orchestrator restart)
 
 ### State Management
@@ -436,9 +496,10 @@ Workers maintain minimal state:
 
 ```javascript
 // Global state (kept to a minimum)
-const workers = [];        // Active queue workers
+const workers = [];         // Active queue workers
+let devDisabledKeepAlive = null; // Dev-only keep-alive timer
+let depthTimer = null;      // Queue-depth gauge refresh timer
 let isShuttingDown = false; // Graceful shutdown flag
-let connectionErrors = 0;  // Failure tracking for circuit breaker
 
 // Why minimal? Stateless workers are easier to:
 // - Scale horizontally
@@ -470,27 +531,32 @@ if (isConnectionError(error)) {
 
 ### Graceful Shutdown
 
-The shutdown sequence ensures no job data loss:
+The shutdown sequence stops intake, closes each worker (which releases its Redis
+connection), and disconnects Prisma:
 
 ```javascript
 // Signal received (SIGTERM from orchestrator)
-process.on("SIGTERM", () => {
-  // 1. Stop accepting new jobs
+process.on("SIGTERM", () => void shutdown("SIGTERM"));
+process.on("SIGINT", () => void shutdown("SIGINT"));
+
+async function shutdown(signal) {
   isShuttingDown = true;
-  for (const worker of workers) {
-    await worker.close();
-  }
-
-  // 2. In-flight jobs are allowed to finish (up to WORKER_SHUTDOWN_TIMEOUT_MS)
-  // BullMQ will wait for handlers to return/throw
-
-  // 3. Close database connection
+  // 1. Stop the queue-depth gauge and the dev keep-alive timer
+  clearInterval(depthTimer);
+  // 2. Close every worker. BullMQ waits for the jobs already being processed
+  //    to return or throw - there is no WORKER_SHUTDOWN_TIMEOUT_MS cap on this,
+  //    so a handler that never returns blocks shutdown indefinitely.
+  for (const worker of workers) await worker.close();
+  // 3. Disconnect the database
   await prisma.$disconnect();
-
   // 4. Exit
   process.exit(0);
-});
+}
 ```
+
+Because there is no drain timeout, a stuck handler holds the process open. Set your
+orchestrator's `terminationGracePeriodSeconds` / `stop_grace_period` above the
+longest job you expect to run, and treat that as the only bound.
 
 ## Development Experience Improvements
 
@@ -518,16 +584,21 @@ node -e "
 
 ### Debugging Tips
 
-**Enable verbose logging**: Set `DEBUG=*` environment variable
+**Enable verbose logging**: the worker's logger (`createLogger` from core) reads
+`LOG_LEVEL`; `debug` is the default outside production. Force it with:
 
 ```bash
-DEBUG=* pnpm dev
+LOG_LEVEL=debug pnpm dev
 ```
 
-**Inspect job state**: Use Prisma Studio to see job records
+`DEBUG=*` has no effect — the repo does not use the `debug` package.
+
+**Inspect job state**: job records are persisted to the `Job` table, so Prisma
+Studio shows them. `pnpm db:studio` runs from `packages/db` (this repo root has no
+such script):
 
 ```bash
-pnpm db:studio
+pnpm --filter @usequark/quark-db db:studio
 ```
 
 **Monitor queue in real-time**: Connect to Redis CLI
@@ -553,7 +624,9 @@ node -e "
 
 - **Concurrency**: Default 5 jobs/queue. Adjust via `WORKER_CONCURRENCY`
 - **Memory**: Each job handler runs in the same process. Memory leaks compound
-- **Timeouts**: Default 30s per job. BullMQ will timeout long-running jobs
+- **Timeouts**: none are configured. A handler that never returns blocks that
+  concurrency slot (and shutdown) indefinitely — enforce your own timeouts in the
+  handler if the downstream call has no timeout of its own
 - **Database Connections**: Worker reuses a single Prisma client across all jobs
 
 If you need horizontal scaling:
@@ -561,11 +634,7 @@ If you need horizontal scaling:
 ```bash
 # Each worker process is independent
 # Deploy multiple instances; they'll auto-divide work via Redis
-
-# Example: 3 workers on same Redis
-NODE_INSTANCE_ID=1 pnpm dev
-NODE_INSTANCE_ID=2 pnpm dev
-NODE_INSTANCE_ID=3 pnpm dev
+# (NODE_INSTANCE_ID is illustrative only - the worker does not read it)
 ```
 
 ## Complete Example: Send Email Job
@@ -575,90 +644,78 @@ Here's a full example combining all patterns:
 **Job Handler** (`src/handlers/email.js`):
 
 ```javascript
-import { emailService } from "@usequark/quark-core";
+import { createEmailService } from "@usequark/quark-core/email";
+import { welcomeEmail } from "@usequark/quark-core/email-templates";
 import { prisma } from "@usequark/quark-db";
+import { JOB_NAMES } from "@usequark/quark-jobs";
+import {
+  requireUserEmailRecord,
+  requireWelcomeEmailUserId,
+} from "./email-job-validation.js";
+
+const emailService = createEmailService();
 
 export async function handleSendWelcomeEmail(bullJob, logger) {
-  const { userId } = bullJob.data;
-  const startTime = Date.now();
+  const userId = requireWelcomeEmailUserId(bullJob.data);
 
-  try {
-    // Validate input
-    if (!userId) {
-      throw new Error("userId is required");
-    }
+  logger.info(`Sending welcome email for user ${userId}`, {
+    job: JOB_NAMES.SEND_WELCOME_EMAIL,
+    userId,
+  });
 
-    // Fetch user
-    const user = await prisma.user.findUnique({
+  const userRecord = requireUserEmailRecord(
+    userId,
+    await prisma.user.findUnique({
       where: { id: userId },
-      select: { email: true, name: true }
-    });
+      select: { email: true, name: true },
+    }),
+  );
 
-    if (!user?.email) {
-      throw new Error(`User ${userId} not found or has no email`);
-    }
+  const template = welcomeEmail({
+    name: userRecord.name,
+    appName: process.env.APP_NAME,
+    loginUrl: process.env.APP_URL
+      ? `${process.env.APP_URL}/api/auth/signin`
+      : undefined,
+  });
 
-    // Send email
-    await emailService.send({
-      to: user.email,
-      template: "welcome",
-      subject: "Welcome!",
-      variables: { name: user.name }
-    });
+  await emailService.sendEmail(
+    userRecord.email,
+    template.subject,
+    template.html,
+    template.text,
+  );
 
-    const duration = Date.now() - startTime;
-    logger.info(`Welcome email sent to ${user.email}`, {
-      userId,
-      duration,
-      jobId: bullJob.id
-    });
-
-    return { success: true, email: user.email };
-  } catch (error) {
-    logger.error(`Failed to send welcome email`, {
-      userId,
-      error: error.message,
-      jobId: bullJob.id,
-      attempt: bullJob.attemptsMade
-    });
-    throw error; // Let BullMQ retry
-  }
+  return { success: true, userId, email: userRecord.email };
 }
 ```
 
-**Test** (`src/handlers/email.test.js`):
+Templates return `{ subject, html, text }` - pass them straight through. `welcomeEmail`
+and `passwordResetEmail` live in `@usequark/quark-core/email-templates`.
+
+**Tests**: there is no `src/handlers/email.test.js`. The handler's guards are
+unit-tested through the validation helpers in `src/index.test.js` (describe blocks
+"handleSendWelcomeEmail" / "handleSendResetPasswordEmail"), and
+`src/handlers/files.test.js` covers `handleCleanupOrphanedFiles`.
 
 ```javascript
+// src/index.test.js (abridged)
 import assert from "node:assert";
-import { test } from "node:test";
-import { handleSendWelcomeEmail } from "./email.js";
+import { describe, test } from "node:test";
+import { AppError } from "@usequark/quark-core/errors";
+import { requireUserEmailRecord } from "./handlers/email-job-validation.js";
 
-test("handleSendWelcomeEmail sends email to valid user", async () => {
-  const mockLogger = { info: () => {}, error: () => {} };
-  const job = {
-    id: "job-1",
-    data: { userId: "user-123" },
-    attemptsMade: 0
-  };
-
-  const result = await handleSendWelcomeEmail(job, mockLogger);
-
-  assert.strictEqual(result.success, true);
-  assert.strictEqual(result.email, "user@example.com");
-});
-
-test("handleSendWelcomeEmail throws on missing userId", async () => {
-  const mockLogger = { info: () => {}, error: () => {} };
-  const job = {
-    id: "job-1",
-    data: {},
-    attemptsMade: 0
-  };
-
-  await assert.rejects(
-    () => handleSendWelcomeEmail(job, mockLogger),
-    { message: "userId is required" }
-  );
+describe("handleSendWelcomeEmail", () => {
+  test("throws when user is not found", () => {
+    assert.throws(
+      () => requireUserEmailRecord("user-123", null),
+      (error) => {
+        assert.ok(error instanceof AppError);
+        assert.strictEqual(error.code, "USER_EMAIL_NOT_FOUND");
+        return true;
+      },
+    );
+  });
 });
 ```
 
