@@ -18,12 +18,7 @@
  */
 
 import { createLogger } from "@usequark/quark-core/core";
-import {
-	checkQueues,
-	checkStorage,
-	runHealthChecks,
-} from "@usequark/quark-core/health";
-import { getRegisteredQueues } from "@usequark/quark-core/queue";
+import { checkStorage, runHealthChecks } from "@usequark/quark-core/health";
 import { pingRedis } from "@usequark/quark-core/redis";
 import { pingDatabase } from "@usequark/quark-db";
 import { NextResponse } from "next/server";
@@ -35,12 +30,21 @@ export async function GET() {
 		// `pingDatabase` is passed in rather than imported by the core module:
 		// `@usequark/quark-db` depends on `@usequark/quark-core`, so core cannot
 		// import it back without a cycle.
+		//
+		// There is deliberately no `queues` probe. `getRegisteredQueues()` reads a
+		// Map that only queues created *in this process* are registered in, and
+		// the web service creates none: the worker owns every long-lived queue.
+		// So the probe reported `null` on every request here — while its
+		// `getRegisteredQueues` import pulled all of BullMQ into this route.
+		// This endpoint is polled by the platform healthcheck and by
+		// `<HealthIndicator />` on every page view, making it the worst possible
+		// place to load a queue library for a result that is always empty.
+		// Queue depth is the worker's to publish, via `job_queue_depth`.
 		const result = await runHealthChecks({
 			probes: {
 				database: pingDatabase,
 				redis: pingRedis,
 				storage: checkStorage,
-				queues: () => checkQueues(getRegisteredQueues),
 			},
 		});
 

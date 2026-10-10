@@ -246,7 +246,7 @@ Update the authenticated user's own profile. Requires a Bearer JWT and a CSRF to
 
 ### `GET /api/health`
 
-Probe the database, Redis, storage, and queues concurrently, each under its own deadline, capped by an overall 5 second budget.
+Probe the database, Redis, and storage concurrently, each under its own deadline, capped by an overall 5 second budget.
 
 Always returns `200`. The verdict is in the body's `status` field (`ok` / `degraded`), not in the status code: this is the platform healthcheck, and a non-200 makes the orchestrator restart the container, which drops every warm connection and produces a fresh connection storm on the dependency that was already struggling. Exempt from rate limiting, so a probe can never be answered with a `429`. Error messages are generic in production and carry the underlying driver error elsewhere. No response contains a credential.
 
@@ -259,11 +259,12 @@ Always returns `200`. The verdict is in the body's `status` field (`ok` / `degra
   "checks": {
     "database": { "status": "ok" },
     "redis": { "status": "ok", "latencyMs": 1.23 },
-    "storage": { "status": "ok", "provider": "local" },
-    "queues": { "email-queue": { "status": "ok", "waiting": 0 } }
+    "storage": { "status": "ok", "provider": "local" }
   }
 }
 ```
+
+There is no `queues` key. `getRegisteredQueues()` reports queues registered *in the web process*, and the web service registers none — the worker owns every long-lived queue. Reading it here would return `null` on every request while loading BullMQ into the route the platform healthcheck and every page view poll. Queue depth is published by the worker as the `job_queue_depth` gauge; see `GET /api/metrics`.
 
 ### `GET /api/metrics`
 
