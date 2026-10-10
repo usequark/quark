@@ -48,16 +48,54 @@ function googleProfile() {
 	return provider.options.profile;
 }
 
+/**
+ * Whether the mapper lets a profile through.
+ *
+ * The refusal is thrown rather than returned, so "did it accept this" is a
+ * question about the exception, not the return value.
+ */
+function mapperAccepts(profile) {
+	// Resolved outside the try on purpose. The existence assertion in
+	// `googleProfile()` has to be allowed to escape: swallowing it would make this
+	// helper answer "refused" for a provider that has no mapper at all, and every
+	// value in the table below would pass against the vulnerable default.
+	const map = googleProfile();
+
+	try {
+		map(profile);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
 test("the Google provider refuses a profile Google has not verified", () => {
 	// The same gap as the mobile route, one layer up: the Prisma adapter creates
 	// the user on first sight, so an unconfirmed address would reach the database
 	// with the confirmation that is supposed to establish ownership of it skipped.
-	const refused = googleProfile()({
-		...GOOGLE_PROFILE,
-		email_verified: "false",
-	});
+	assert.throws(
+		() =>
+			googleProfile()({
+				...GOOGLE_PROFILE,
+				email_verified: "false",
+			}),
+		/not verified/,
+	);
+});
 
-	assert.strictEqual(refused, null);
+test("the refusal names itself so an operator can tell it from a broken provider", () => {
+	// Auth.js catches whatever the mapper throws and logs it as an
+	// `OAuthProfileParseError` — the same bucket as a malformed provider response
+	// or a user who cancelled. A bare TypeError in that log would be a puzzle; the
+	// message is the only place the actual reason can be read.
+	assert.throws(
+		() => googleProfile()({ ...GOOGLE_PROFILE, email_verified: "false" }),
+		(error) => {
+			assert.strictEqual(error.name, "AppError");
+			assert.strictEqual(error.code, "OAUTH_EMAIL_NOT_VERIFIED");
+			return true;
+		},
+	);
 });
 
 test("the Google provider returns the profile when the address is verified", () => {
@@ -95,14 +133,9 @@ test("the Google provider treats anything short of an explicit confirmation as u
 	];
 
 	for (const email_verified of unconfirmed) {
-		const refused = googleProfile()({
-			...GOOGLE_PROFILE,
-			email_verified,
-		});
-
 		assert.strictEqual(
-			refused,
-			null,
+			mapperAccepts({ ...GOOGLE_PROFILE, email_verified }),
+			false,
 			`email_verified=${JSON.stringify(email_verified)} should be refused`,
 		);
 	}
@@ -113,7 +146,7 @@ test("the Google provider refuses a profile with no email_verified claim at all"
 	// would produce, and "absent" must not read as a pass.
 	const { email_verified: _omitted, ...withoutClaim } = GOOGLE_PROFILE;
 
-	assert.strictEqual(googleProfile()(withoutClaim), null);
+	assert.throws(() => googleProfile()(withoutClaim), /not verified/);
 });
 
 test("the shared helper and the provider agree on what confirmed means", () => {
@@ -130,7 +163,7 @@ test("the shared helper and the provider agree on what confirmed means", () => {
 	]) {
 		assert.strictEqual(
 			isEmailVerified(email_verified),
-			googleProfile()({ ...GOOGLE_PROFILE, email_verified }) !== null,
+			mapperAccepts({ ...GOOGLE_PROFILE, email_verified }),
 			`the helper and the provider disagree about ${JSON.stringify(email_verified)}`,
 		);
 	}

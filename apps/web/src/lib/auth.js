@@ -4,6 +4,7 @@ import {
 	createLogger,
 	verifyPassword,
 } from "@usequark/quark-core";
+import { AppError } from "@usequark/quark-core/errors";
 import { Prisma, prisma, user } from "@usequark/quark-db";
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -135,12 +136,25 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 			// establish ownership of the address never happened. Google does issue
 			// tokens for unconfirmed addresses.
 			//
-			// Returning null is Auth.js's refusal — the sign-in is denied and no user
-			// row is written. Google sets `email_verified` on every account it will
-			// authenticate, so the only accounts this turns away are the ones nobody
-			// can prove they own.
-			profile: (profile) =>
-				isEmailVerified(profile.email_verified) ? profile : null,
+			// The refusal is thrown rather than returned, and that is deliberate.
+			// Auth.js has no "null means refuse" contract: `getUserAndAccount` reads
+			// `profile.email` straight off whatever the mapper hands back, so a null
+			// denial works only because it trips a TypeError that is caught and
+			// logged as `OAuthProfileParseError` — indistinguishable, in the log, from
+			// a malformed provider response or a user who cancelled. Throwing says
+			// why in the one place an operator can read it, and lands in the same
+			// catch: no session, no user row, redirect back to the sign-in page.
+			profile: (profile) => {
+				if (!isEmailVerified(profile.email_verified)) {
+					throw new AppError(
+						"Google sign-in refused: the account's email address is not verified",
+						401,
+						"OAUTH_EMAIL_NOT_VERIFIED",
+					);
+				}
+
+				return profile;
+			},
 		}),
 	);
 }
