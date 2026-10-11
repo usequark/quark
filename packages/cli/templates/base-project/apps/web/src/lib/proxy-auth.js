@@ -1,6 +1,3 @@
-import { getAuthSecret } from "@usequark/quark-core/auth";
-import { getToken } from "next-auth/jwt";
-
 const STRICT_AUTH_RATE_LIMIT_ROUTES = new Set([
 	// `callback/credentials` is where the next-auth client POSTs a credentials
 	// sign-in (next-auth/react posts to `callback/<provider>` for credentials
