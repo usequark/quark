@@ -99,7 +99,13 @@ class MemoryRateLimiter {
 class RedisRateLimiter {
 	constructor(redisClient, options = {}) {
 		this.redis = redisClient;
-		this.failOpen = options.failOpen ?? true;
+		// Fails CLOSED by default: if Redis errors mid-request, the request is
+		// treated as rate-limited rather than allowed through. A limiter that
+		// disables itself precisely when it is being hammered (the classic
+		// fail-open) is worst exactly when it matters. Opt back in with
+		// `failOpen: true` only if an outage-driven 429 is worse for you than
+		// an attacker-driven flood.
+		this.failOpen = options.failOpen ?? false;
 	}
 
 	/**

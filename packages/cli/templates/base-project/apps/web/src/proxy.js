@@ -10,10 +10,13 @@
  */
 
 import { getAllowedOrigins } from "@usequark/quark-config/app-url";
+import { createLogger, createRateLimiter } from "@usequark/quark-core/core";
 import { NextResponse } from "next/server";
 
 import { buildContentSecurityPolicy } from "./lib/analytics/umami-csp.js";
 import { getRateLimitBucket, isRateLimitExempt } from "./lib/proxy-auth";
+
+const logger = createLogger("proxy");
 
 // ─── 1. Metrics guard ────────────────────────────────────────────────────────
 
@@ -38,8 +41,57 @@ function metricsGuard(request) {
 	return null; // authorised - continue
 }
 
-// Simple in-memory rate limiter (use Redis for production)
-const rateLimit = new Map();
+// Rate limiter: Redis-backed when REDIS_URL is set (multi-instance), otherwise
+// in-memory (single instance). Fails CLOSED by default (see createRateLimiter).
+// The Redis client is created once and reused; ioredis reconnects on its own.
+let rateLimiterPromise = null;
+
+// Exported for tests: the Redis-vs-memory backend selection is otherwise only
+// observable through a live Redis connection, which the unit suite doesn't have.
+// The reset clears the memoised instance so a test can flip REDIS_URL and
+// re-select a backend; production code never calls it.
+export function __resetRateLimiterForTests() {
+	rateLimiterPromise = null;
+}
+
+export async function getRateLimiter() {
+	if (rateLimiterPromise) return rateLimiterPromise;
+
+	rateLimiterPromise = (async () => {
+		if (!process.env.REDIS_URL) {
+			return createRateLimiter({ type: "memory" });
+		}
+
+		try {
+			const { default: Redis } = await import("ioredis");
+			const redisClient = new Redis(process.env.REDIS_URL, {
+				maxRetriesPerRequest: 1,
+				enableReadyCheck: true,
+				retryStrategy(times) {
+					return Math.min(times * 50, 2000);
+				},
+			});
+			// ioredis emits an 'error' event on connection trouble; without a
+			// listener Node treats it as unhandled and kills the process.
+			redisClient.on("error", (err) => {
+				logger.error("Redis rate-limiter client error", {
+					message: err?.message ?? String(err),
+				});
+			});
+			return createRateLimiter({ type: "redis", redisClient });
+		} catch (error) {
+			logger.error("Redis rate limiter unavailable; using in-memory", {
+				message: error?.message ?? String(error),
+			});
+			// Losing Redis must not lose rate limiting entirely: a per-instance
+			// in-memory limiter is still a limiter. It just no longer spans
+			// instances, so a distributed attacker gets one budget per instance.
+			return createRateLimiter({ type: "memory" });
+		}
+	})();
+
+	return rateLimiterPromise;
+}
 
 /**
  * Resolve the client IP for rate-limit keying.
@@ -83,60 +135,24 @@ const RATE_LIMIT_CONFIG = {
 };
 
 /**
- * Rate limiting implementation
+ * Rate limiting implementation.
+ *
+ * Delegates to the core limiter (`createRateLimiter`): Redis-backed when
+ * REDIS_URL is set, in-memory otherwise. Its `checkLimit(key, max, window)`
+ * returns `{ limited, remaining, resetTime }` — the same shape this proxy
+ * already returned, so the response headers below are unchanged.
  */
-function checkRateLimit(ip, path, method) {
-	const now = Date.now();
-	const key = `${ip}:${path}`;
-
+async function checkRateLimit(ip, path, method) {
+	const limiter = await getRateLimiter();
 	const maxRequests =
 		RATE_LIMIT_CONFIG.maxRequests[getRateLimitBucket(path, method)];
 
-	// Get or create rate limit record
-	const record = rateLimit.get(key) || {
-		count: 0,
-		resetTime: now + RATE_LIMIT_CONFIG.windowMs,
-	};
-
-	// Reset if window has passed
-	if (now > record.resetTime) {
-		record.count = 0;
-		record.resetTime = now + RATE_LIMIT_CONFIG.windowMs;
-	}
-
-	// Check if limit exceeded
-	if (record.count >= maxRequests) {
-		return {
-			limited: true,
-			resetTime: record.resetTime,
-			remaining: 0,
-		};
-	}
-
-	// Increment counter
-	record.count++;
-	rateLimit.set(key, record);
-
-	return {
-		limited: false,
-		resetTime: record.resetTime,
-		remaining: maxRequests - record.count,
-	};
+	return limiter.checkLimit(
+		`${ip}:${path}`,
+		maxRequests,
+		RATE_LIMIT_CONFIG.windowMs,
+	);
 }
-
-/**
- * Clean up old rate limit records periodically.
- * `unref()` so the timer never holds the Node process open on shutdown.
- */
-const rateLimitCleanup = setInterval(() => {
-	const now = Date.now();
-	for (const [key, record] of rateLimit.entries()) {
-		if (now > record.resetTime) {
-			rateLimit.delete(key);
-		}
-	}
-}, 60 * 1000); // Clean up every minute
-if (typeof rateLimitCleanup.unref === "function") rateLimitCleanup.unref();
 
 /**
  * CORS configuration
@@ -225,7 +241,7 @@ export async function proxy(request) {
 		const ip = getClientIp(request);
 		const rateLimitBucket = getRateLimitBucket(pathname, request.method);
 		const maxRequests = RATE_LIMIT_CONFIG.maxRequests[rateLimitBucket];
-		const rateLimitResult = checkRateLimit(ip, pathname, request.method);
+		const rateLimitResult = await checkRateLimit(ip, pathname, request.method);
 
 		if (rateLimitResult.limited) {
 			const retryAfter = Math.ceil(

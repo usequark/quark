@@ -157,12 +157,12 @@ All high-priority security tasks have been completed! ✅
    - Per-file cap: 10MB (env: `UPLOAD_MAX_SIZE`, read by `packages/core/src/file-validation.js`). Separate knob from the request-body limit; both default to 10MB
    - Response: 413 Payload Too Large when exceeded
 
-3. **Redis-based Rate Limiting** ⚠️
-   - Status: ⚠️ Library implemented, not wired into the shipped middleware
-   - Location: [packages/core/src/rate-limiter.js](../packages/core/src/rate-limiter.js)
-   - In-memory: what `apps/web/src/proxy.js` actually uses today, for single-instance deployments
-   - Redis: `createRateLimiter({ type: "redis", redisClient })` takes a client you build and hand it; setting `REDIS_URL` alone changes nothing in the web middleware
-   - Alternative: [proxy.redis.js](../apps/web/src/proxy.redis.js) is a Redis-capable proxy that no build imports - only its own test. Swapping it in is a manual, uncovered step (see below)
+3. **Redis-based Rate Limiting** ✅
+   - Status: ✅ Wired into the shipped middleware; fails closed on Redis errors
+   - Location: [packages/core/src/rate-limiter.js](../packages/core/src/rate-limiter.js), consumed by [apps/web/src/proxy.js](../apps/web/src/proxy.js)
+   - `apps/web/src/proxy.js` reads `REDIS_URL`: set it and the limiter is Redis-backed (shared budget across instances); leave it unset and it uses in-memory counters (single instance)
+   - Fail-closed: a Redis error mid-request returns "limited" (429), not "allowed". A limiter that allows traffic through the moment it is unreachable is no limiter during the flood that knocked Redis over. Opt back into the old permissive behavior with `createRateLimiter({ type: "redis", failOpen: true })` if outage-driven 429s are the bigger risk for you
+   - Losing Redis degrades to in-memory counters rather than dropping rate limiting entirely; the trade is that the budget is then per-instance, not global
 
 ### Medium Priority
 
@@ -227,21 +227,21 @@ repository's [SECURITY.md](../SECURITY.md). Do not open a public issue.
 
 ### Redis Rate Limiting Setup
 
-**Status: there is no automatic path today.** `apps/web/src/proxy.js` never reads
-`REDIS_URL`, so nothing below moves the web middleware off its in-memory counters
-by itself. `REDIS_URL` is still required for the worker's BullMQ connections and
-for the job queues - it just has no effect on web rate limiting.
+`REDIS_URL` now does double duty: it feeds the worker's BullMQ connections **and**
+selects the web middleware's rate-limit backend. Set it and `apps/web/src/proxy.js`
+builds a shared Redis-backed limiter; leave it unset and the limiter is in-memory,
+which is correct for a single-instance deployment.
 
-**Option 1: Wire the core limiter yourself (not built)**
 ```bash
-# Set in production .env - consumed by the worker and BullMQ
+# Set in production .env - consumed by the worker/BullMQ and the web rate limiter
 REDIS_URL=redis://your-redis-host:6379
 # or for Redis with password
 REDIS_URL=redis://:password@your-redis-host:6379
 ```
 
-To use the Redis limiter in the web layer you have to build the client and pass it
-in yourself - there is no env-var switch:
+No code changes are required. If you need the web layer to talk to Redis through a
+custom client (TLS, a sentinel topology, an in-process mock), build it and pass it
+to `createRateLimiter` directly:
 
 ```javascript
 import { createRateLimiter } from "@usequark/quark-core/core";
@@ -254,29 +254,20 @@ const limiter = createRateLimiter({
 });
 ```
 
-**Option 2: Swap in the Redis proxy (manual, not wired up)**
-```bash
-# Replace proxy.js with proxy.redis.js
-mv apps/web/src/proxy.redis.js apps/web/src/proxy.js
-```
-
-`apps/web/src/proxy.redis.js` is not referenced by any build - it is only loaded
-by its own test. Moving it into place is a manual step with no app-level coverage.
-
 **Testing Redis Rate Limiting**:
 ```bash
 # Start Redis locally
 docker run -d -p 6379:6379 redis:7-alpine
 
-# Set environment variable (affects the worker/BullMQ, not the web middleware)
+# Set environment variable (now also switches the web middleware's limiter)
 export REDIS_URL=redis://localhost:6379
 
 # Restart your application
 pnpm dev
 ```
 
-Setting `REDIS_URL` alone will not move web rate limiting to Redis - see the
-status note above.
+With `REDIS_URL` set, repeated hits to an API route are counted in Redis rather than
+in the process, so two instances of the app share one budget.
 
 ### CSRF Token Implementation
 
