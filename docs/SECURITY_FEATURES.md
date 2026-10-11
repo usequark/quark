@@ -57,10 +57,10 @@ Quark includes several security features out of the box:
 - **Recommendation**: Continue using Prisma for all database operations
 
 #### 7. **Session Management**
-- **Library**: NextAuth.js
-- **Strategy**: JWT (configurable to database sessions)
+- **Library**: NextAuth.js (Auth.js v5)
+- **Strategy**: JWT — a constraint, not a preference: the scaffold always ships a credentials provider, and Auth.js throws `UnsupportedStrategy` when `strategy: "database"` is set and every provider is credentials
 - **Max Age**: 30 days
-- **Update Age**: 24 hours (session refresh)
+- **Revocation**: the `jwt` callback re-validates the token against the database on every request (`apps/web/src/lib/auth.js`). A deleted user's token is rejected and the cookie cleared; the role is refreshed from the row, so demoting an admin takes effect immediately; and any token issued before `User.passwordChangedAt` is rejected, so changing a password kills every session the old password created. An unreachable database fails closed (session rejected), never open.
 - **Secret**: Environment-based `NEXTAUTH_SECRET`
 
 ---

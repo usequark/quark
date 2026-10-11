@@ -16,6 +16,7 @@ CREATE TABLE "User" (
     "password" TEXT,
     "image" TEXT,
     "role" "UserRole" NOT NULL DEFAULT 'viewer',
+    "passwordChangedAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 

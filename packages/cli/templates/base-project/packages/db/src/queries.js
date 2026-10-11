@@ -11,6 +11,7 @@ const USER_SAFE_SELECT = {
 	name: true,
 	image: true,
 	role: true,
+	passwordChangedAt: true,
 	createdAt: true,
 	updatedAt: true,
 };

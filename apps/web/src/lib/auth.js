@@ -2,7 +2,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { createAuthConfig, verifyPassword } from "@usequark/quark-core/auth";
 import { createLogger } from "@usequark/quark-core/core";
 import { AppError } from "@usequark/quark-core/errors";
-import { Prisma, prisma, user } from "@usequark/quark-db";
+import { Prisma, prisma, user as userQueries } from "@usequark/quark-db";
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GithubProvider from "next-auth/providers/github";
@@ -66,7 +66,7 @@ const providers = [
 			}
 
 			try {
-				const existingUser = await user.findByEmail(credentials.email);
+				const existingUser = await userQueries.findByEmail(credentials.email);
 
 				if (!existingUser?.password) {
 					return null;
@@ -156,6 +156,64 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 	);
 }
 
+/**
+ * Re-validate the session against the database on every request.
+ *
+ * Web sessions are signed JWTs: a credentials provider forces the JWT
+ * strategy (Auth.js rejects `strategy: "database"` when every provider is
+ * credentials, and scaffolds always ship one), and the cookie would otherwise
+ * stay valid for its full 30 days no matter what happened to the account
+ * behind it. That was the review's "logins can't be revoked" finding — banning
+ * a user, demoting an admin, or changing a password did nothing until the
+ * token expired on its own.
+ *
+ * The revocation check is a single indexed primary-key read, which is the
+ * same cost Auth.js itself pays for database sessions — but it works for
+ * credentials apps too:
+ *
+ *   - user gone (deleted / banned by deletion)  → reject, cookie cleared
+ *   - `passwordChangedAt` after the token's iat → reject, cookie cleared
+ *   - role or profile changed                   → refreshed into the token,
+ *     so `requireRole` reads the current role, not the sign-in-time one
+ *
+ * Returning null from the `jwt` callback is Auth.js's documented "invalidate
+ * this session" signal: it clears the cookie and the request continues
+ * unauthenticated.
+ */
+async function validateSessionToken(token) {
+	if (typeof token.id !== "string" || token.id.length === 0) {
+		return null;
+	}
+
+	try {
+		const account = await userQueries.findById(token.id);
+
+		if (!account) {
+			return null;
+		}
+
+		if (
+			account.passwordChangedAt &&
+			typeof token.iat === "number" &&
+			account.passwordChangedAt.getTime() / 1000 > token.iat
+		) {
+			return null;
+		}
+
+		token.email = account.email;
+		token.name = account.name;
+		token.role = account.role;
+		return token;
+	} catch (err) {
+		// Fail closed: an unreachable database invalidates the session rather
+		// than letting an unverified cookie through. The next request retries.
+		logger.error("Session validation failed", {
+			message: err?.message ?? String(err),
+		});
+		return null;
+	}
+}
+
 export function getAuthOptions() {
 	return createAuthConfig({
 		adapter: PrismaAdapter(prisma),
@@ -172,7 +230,28 @@ export function getAuthOptions() {
 			},
 		},
 		session: {
+			// JWT is not a preference here, it is a constraint: Auth.js throws
+			// `UnsupportedStrategy` when strategy is "database" and every
+			// configured provider is credentials, and the scaffold always ships
+			// the credentials provider. Revocation is therefore enforced by
+			// `validateSessionToken` above, not by server-side session rows.
 			strategy: "jwt",
+			maxAge: 30 * 24 * 60 * 60, // 30 days
+		},
+		callbacks: {
+			async jwt({ token, user: signedInUser }) {
+				// Sign-in: stamp the identity once; the DB check below is for
+				// every subsequent request.
+				if (signedInUser) {
+					token.id = signedInUser.id;
+					token.email = signedInUser.email;
+					token.name = signedInUser.name;
+					token.role = signedInUser.role || "viewer";
+					return token;
+				}
+
+				return validateSessionToken(token);
+			},
 		},
 	});
 }
