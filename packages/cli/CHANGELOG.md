@@ -1,5 +1,63 @@
 # @usequark/quark-create-app
 
+## 1.25.14
+
+### Patch Changes
+
+- [#274](https://github.com/usequark/quark/pull/274) [`c310fb2`](https://github.com/usequark/quark/commit/c310fb2ba79651afa5dcf285fbe5ecbbeded4f9b) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Reconcile migration history with the 7-model schema; drop four redundant indexes.
+  
+  The monorepo's migration log created 15 domain-vertical tables (CMS, CRM,
+  AI, bookings) that were later deleted from `schema.prisma` but never from
+  the migration history. `migrate deploy` therefore materialised them on every
+  database, and the next `migrate dev` would have emitted destructive,
+  machine-local drops — the review's "migration landmine". A new migration
+  (`20261011000000_reconcile_orphan_tables_and_indexes`) drops all 15 tables
+  plus their three orphan enums (`AiRole`, `BookingStatus`, `ContentStatus`),
+  guarded with `IF EXISTS`, and is verified against both a fresh database and
+  one replayed to the pre-reconciliation state. After it, `migrate diff
+  --from-migrations --to-schema` is empty: history and schema agree exactly.
+  
+  Also removes four indexes that duplicated other indexes the same schema
+  declared: `User_email_idx` and `VerificationToken_token_idx` duplicate
+  unique constraints on the same columns, and `Job_status_idx`/`Job_runAt_idx`
+  are leftmost-prefix subsumed by `Job_status_runAt_idx`. The template's
+  squashed initial migration is regenerated to match, so newly scaffolded
+  projects carry neither the redundant indexes nor any orphan table (they
+  never shipped the monorepo history — this fix touches only databases
+  deployed from the monorepo log).
+
+- [#276](https://github.com/usequark/quark/pull/276) [`35f596a`](https://github.com/usequark/quark/commit/35f596a52715390fdbc0e827263fada033a84591) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Make web sessions revocable: re-validate every session token against the database.
+  
+  The audit's "logins can't be revoked" finding: sessions were signed JWTs
+  valid for 30 days, and nothing that happened to the account — deletion,
+  role change, password change — shortened that. `requireRole` also read the
+  role stamped at sign-in, so a demoted admin kept admin rights until the
+  token expired.
+  
+  Database-backed sessions (`strategy: "database"`) are not available here:
+  Auth.js throws `UnsupportedStrategy` when the strategy is database and every
+  configured provider is credentials, and the scaffold always ships the
+  credentials provider. Revocation is therefore enforced in the `jwt`
+  callback, which now re-checks the user on every request (one indexed
+  primary-key read — the same cost Auth.js pays for database sessions):
+  
+  - user deleted (ban-by-deletion) → token rejected, cookie cleared
+  - role changed → refreshed into the token; `requireRole` reads the current role
+  - new `User.passwordChangedAt` column → any token issued before it is
+    rejected, so changing a password kills every session the old password
+    created (migration backfills NULL, so no deployed user is signed out by
+    the upgrade itself)
+  - database unreachable → fails closed, never open
+  
+  Also removes `getProxyToken` from `apps/web/src/lib/proxy-auth.js`: a
+  JWT-cookie decoder with no production caller since the proxy's auth guard
+  was removed, and the one piece of code that would have silently broken
+  under this change. Its tests go with it; `shouldUseSecureAuthCookie`
+  (used by the CSRF cookie) stays.
+  
+  `docs/SECURITY_FEATURES.md`'s session section now describes the real
+  mechanism.
+
 ## 1.25.13
 
 ### Patch Changes
