@@ -132,3 +132,51 @@ export function passwordResetEmail(data) {
 
 	return { subject: `Reset your ${appName} password`, html, text };
 }
+
+/**
+ * Email verification email - sent to confirm ownership of an address
+ *
+ * @param {{ name?: string, verifyUrl: string, appName?: string, expiresIn?: string }} data
+ * @returns {{ subject: string, html: string, text: string }}
+ */
+export function emailVerificationEmail(data) {
+	if (!data?.verifyUrl) {
+		throw new Error("verifyUrl is required for email verification email");
+	}
+
+	const name = data.name ? escapeHtml(data.name) : "there";
+	const appName = data.appName || "Quark";
+	const expiresIn = data.expiresIn || "24 hours";
+
+	const html = layout(`
+    <h1 style="margin:0 0 16px;font-size:24px;color:#18181b">Confirm your email</h1>
+    <p style="color:#3f3f46;line-height:1.6;margin:0 0 16px">
+      Hi ${name}, confirm this address to finish setting up your ${escapeHtml(appName)} account.
+    </p>
+    <p style="text-align:center;margin:24px 0">
+      <a href="${escapeHtml(data.verifyUrl)}" style="display:inline-block;padding:12px 24px;background:#18181b;color:#fff;text-decoration:none;border-radius:6px;font-weight:500">
+        Verify email
+      </a>
+    </p>
+    <p style="color:#71717a;font-size:14px;margin:0 0 8px">
+      This link will expire in ${escapeHtml(expiresIn)}.
+    </p>
+    <p style="color:#71717a;font-size:14px;margin:0">
+      If you didn't create this account, you can safely ignore this email — no one can sign in as you until the address is confirmed.
+    </p>
+  `);
+
+	const text = [
+		`Confirm your email`,
+		"",
+		`Hi ${data.name || "there"}, confirm this address to finish setting up your ${appName} account.`,
+		"",
+		`Verify email: ${data.verifyUrl}`,
+		"",
+		`This link will expire in ${expiresIn}.`,
+		"",
+		"If you didn't create this account, you can safely ignore this email — no one can sign in as you until the address is confirmed.",
+	].join("\n");
+
+	return { subject: `Confirm your ${appName} email`, html, text };
+}

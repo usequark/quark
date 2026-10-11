@@ -90,6 +90,165 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /api/auth/forgot-password:
+    post:
+      operationId: requestPasswordReset
+      tags: [Auth]
+      summary: Request a password-reset link
+      description: |
+        Public endpoint. Requires a CSRF token. Rate-limited with the strict
+        auth bucket (5 requests / 15 min).
+
+        Always answers with the same neutral body, whether or not the address
+        has an account. Answering differently would turn the route into an
+        email-enumeration oracle. A send failure for a known address is logged,
+        never surfaced.
+
+        When the address matches an account, an outstanding token is replaced,
+        a single-use token is issued (1 hour TTL, stored only as a SHA-256
+        digest), and `SEND_RESET_PASSWORD_EMAIL` is enqueued.
+      parameters:
+        - $ref: '#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Neutral acknowledgement, independent of whether the address exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: If that email address has an account, a reset link is on its way.
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/auth/reset-password:
+    get:
+      operationId: checkPasswordResetLink
+      tags: [Auth]
+      summary: Check whether a reset link is still usable
+      description: |
+        Public and not CSRF-protected — it changes nothing. Lets the page render
+        the form or an error before a password is typed into a dead form.
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The link is usable
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    example: true
+        '400':
+          description: The token is unknown, expired, or already redeemed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    example: false
+    post:
+      operationId: resetPassword
+      tags: [Auth]
+      summary: Redeem a reset link and set a new password
+      description: |
+        Public endpoint. Requires a CSRF token. Rate-limited with the strict
+        auth bucket.
+
+        The password is validated with `passwordSchema` — the same rules as
+        registration, so a reset can never downgrade a credential. The token is
+        resolved by its SHA-256 digest, is single-use, and is deleted on
+        redemption. Stamping `passwordChangedAt` invalidates every session
+        issued before the reset, web JWT and mobile refresh alike.
+
+        An unknown token, an expired token, and an account deleted after the
+        link was issued all return the same `400` body, so a stolen link cannot
+        be probed for which case it is.
+      parameters:
+        - $ref: '#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, password]
+              properties:
+                token:
+                  type: string
+                  minLength: 1
+                password:
+                  type: string
+                  minLength: 8
+      responses:
+        '200':
+          description: Password updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Your password has been updated. You can now sign in.
+        '400':
+          description: Unusable link (unknown, expired, or account gone) or a rejected password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/verify-email:
+    get:
+      operationId: verifyEmail
+      tags: [Auth]
+      summary: Redeem an email-verification link
+      description: |
+        Public endpoint. A `GET` performs the state change because that is the
+        shape of an emailed link: a mail client fetches it by navigation. The
+        token is a 256-bit bearer value, stored only as a SHA-256 digest, and
+        single-use.
+
+        Every outcome is a `307` redirect to `/auth/signin` with a `verified`
+        query parameter (`1`, `invalid`, or `error`), so a mail client never
+        lands on a bare error page. There is no CSRF token: this is a top-level
+        navigation, not a scripted request.
+      parameters:
+        - name: token
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '307':
+          description: Redirect to `/auth/signin?verified=1|invalid|error`
+          headers:
+            Location:
+              schema:
+                type: string
+
   /api/auth/token:
     post:
       operationId: issueTokenPair

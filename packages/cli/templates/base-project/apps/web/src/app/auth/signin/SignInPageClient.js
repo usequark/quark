@@ -37,6 +37,7 @@ function SignInForm({ allowSignup }) {
 	const searchParams = useSearchParams();
 	const callbackUrl = searchParams.get("callbackUrl") || "/";
 	const errorCode = searchParams.get("error");
+	const verified = searchParams.get("verified");
 
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
@@ -45,6 +46,18 @@ function SignInForm({ allowSignup }) {
 	const [providerError, setProviderError] = useState("");
 	const [error, setError] = useState(
 		errorCode ? (ERROR_MESSAGES[errorCode] ?? ERROR_MESSAGES.Default) : "",
+	);
+	// `/api/auth/verify-email` redirects here with ?verified=1|invalid|error.
+	// A notice is the difference between "why can I sign in now?" and "did my
+	// email even work?" for a user arriving from their mailbox.
+	const [notice] = useState(
+		verified === "1"
+			? "Your email address is verified. You can sign in."
+			: verified === "invalid"
+				? "That verification link is invalid or has expired."
+				: verified === "error"
+					? "Verification failed. Try again from the link in your email."
+					: "",
 	);
 
 	useEffect(() => {
@@ -130,6 +143,15 @@ function SignInForm({ allowSignup }) {
 					</div>
 
 					<ErrorBanner message={error} />
+
+					{notice ? (
+						<div
+							role="status"
+							className="border border-success/40 bg-success-muted px-4 py-3 text-sm text-success mb-8"
+						>
+							{notice}
+						</div>
+					) : null}
 
 					<form onSubmit={handleSubmit} className="space-y-5">
 						<div className="space-y-2">

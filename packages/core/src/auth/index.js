@@ -8,6 +8,7 @@ import { createLogger } from "../logger.js";
 
 export * from "./middleware.js";
 export * from "./password.js";
+export * from "./tokens.js";
 
 const logger = createLogger({ name: "auth" });
 

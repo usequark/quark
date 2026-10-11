@@ -1,62 +1,27 @@
-/**
- * Queue and job name for the signup welcome email.
- *
- * These mirror `JOB_QUEUES.EMAIL` and `JOB_NAMES.SEND_WELCOME_EMAIL` in the
- * `@<scope>/jobs` package — an *optional* scaffold package. Importing them from
- * there puts `@<scope>/jobs` in the web module graph of every project, and a
- * project that declines `jobs` has no such dependency to resolve: the web app
- * fails to build before any test can run. The strings are duplicated here on
- * purpose; a `packages/cli` test fails when the two copies diverge.
- */
-export const EMAIL_QUEUE = "email-queue";
-export const SEND_WELCOME_EMAIL = "send-welcome-email";
+import { enqueueEmailJob } from "./enqueue-email-job.js";
+
+// Re-exported so callers that already import the welcome helper keep their
+// import site, and so its test still asserts the queue name in one place.
+export { EMAIL_QUEUE } from "./enqueue-email-job.js";
 
 /**
- * Loads the queue module on demand.
+ * Job name for the signup welcome email.
  *
- * Kept as a named binding rather than an inline `import()` so it can be
- * substituted — see `loadQueue` on {@link enqueueWelcomeEmail}.
- *
- * @returns {Promise<typeof import("@usequark/quark-core/queue")>}
+ * Mirrors `JOB_NAMES.SEND_WELCOME_EMAIL` in the optional `@<scope>/jobs`
+ * package (see `enqueue-email-job.js` for why it is duplicated). The
+ * `packages/cli` scaffold-drift test fails when the two copies diverge.
  */
-function loadQueueModule() {
-	return import("@usequark/quark-core/queue");
-}
+export const SEND_WELCOME_EMAIL = "send-welcome-email";
 
 /**
  * Enqueues the post-signup welcome email for a newly created user.
  *
- * This lives in its own module for two reasons.
- *
- * The queue module is imported dynamically from inside this file, so callers
- * that import *this* statically never pull BullMQ into their module graph. That
- * matters most for `/api/auth/register`, which is reachable on the web service:
- * a module-scope `createQueue` import both loaded BullMQ at startup and pinned a
- * Redis connection to the web process for as long as the process lived.
- *
- * It also gives the route a static boundary to substitute in tests. `mock.module`
- * intercepts a dynamic import only when the importing module registered the mock,
- * so a dynamic import made by the route itself cannot be mocked from the route's
- * test. A static import of this module can.
- *
  * @param {string} userId - The user to welcome. The worker rejects a job with
  *   no userId, so this is required rather than defaulted.
  * @param {() => Promise<{ createQueue: (name: string, options?: object) => object }>} [loadQueue]
- *   How to obtain the queue module. Defaults to the dynamic import above;
- *   overridden in tests.
+ *   Queue-module loader, overridden in tests. See {@link enqueueEmailJob}.
  * @returns {Promise<void>}
- * @throws Whatever `createQueue` or `add` throws. The queue is closed either
- *   way, so a caller that swallows the error still leaves no connection behind.
  */
-export async function enqueueWelcomeEmail(userId, loadQueue = loadQueueModule) {
-	const { createQueue } = await loadQueue();
-	const queue = createQueue(EMAIL_QUEUE);
-
-	try {
-		await queue.add(SEND_WELCOME_EMAIL, { userId });
-	} finally {
-		// Never let a failing close mask the enqueue outcome — the caller only
-		// needs to know whether the job reached the queue.
-		await queue.close().catch(() => {});
-	}
+export async function enqueueWelcomeEmail(userId, loadQueue) {
+	return enqueueEmailJob(SEND_WELCOME_EMAIL, { userId }, loadQueue);
 }

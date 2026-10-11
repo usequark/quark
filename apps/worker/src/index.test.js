@@ -2,11 +2,14 @@ import assert from "node:assert";
 import { readFileSync } from "node:fs";
 import { describe, mock, test } from "node:test";
 import { AppError, ValidationError } from "@usequark/quark-core/errors";
+import { JOB_NAMES } from "@usequark/quark-jobs";
 import {
 	requireResetPasswordEmailData,
 	requireUserEmailRecord,
+	requireVerifyEmailData,
 	requireWelcomeEmailUserId,
 } from "./handlers/email-job-validation.js";
+import { jobHandlers } from "./handlers/index.js";
 import {
 	getJobHandlerOrThrow,
 	isConnectionError,
@@ -123,9 +126,61 @@ describe("handleSendResetPasswordEmail", () => {
 });
 
 // ---------------------------------------------------------------------------
-// handleCleanupOrphanedFiles
+// handleSendVerificationEmail
 // ---------------------------------------------------------------------------
 
+describe("handleSendVerificationEmail", () => {
+	test("throws when userId or verifyUrl is missing", () => {
+		assert.throws(
+			() =>
+				requireVerifyEmailData(
+					makeBullJob("send-verify-email", { userId: "user-1" }).data,
+				),
+			(error) => {
+				assert.ok(error instanceof ValidationError);
+				assert.strictEqual(
+					error.message,
+					"userId and verifyUrl are required for SEND_VERIFY_EMAIL job",
+				);
+				return true;
+			},
+		);
+
+		assert.throws(
+			() =>
+				requireVerifyEmailData(
+					makeBullJob("send-verify-email", {
+						verifyUrl: "https://example.com/verify?token=abc",
+					}).data,
+				),
+			(error) => {
+				assert.ok(error instanceof ValidationError);
+				assert.strictEqual(
+					error.message,
+					"userId and verifyUrl are required for SEND_VERIFY_EMAIL job",
+				);
+				return true;
+			},
+		);
+	});
+
+	test("accepts userId and verifyUrl", () => {
+		assert.deepStrictEqual(
+			requireVerifyEmailData({
+				userId: "user-1",
+				verifyUrl: "https://example.com/verify?token=abc",
+			}),
+			{
+				userId: "user-1",
+				verifyUrl: "https://example.com/verify?token=abc",
+			},
+		);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// handleCleanupOrphanedFiles
+// ---------------------------------------------------------------------------
 describe("handleCleanupOrphanedFiles", () => {
 	test("returns deleted: 0 when no orphaned files exist", async () => {
 		const handler = async (bullJob, logger) => {
@@ -248,24 +303,18 @@ describe("handleCleanupOrphanedFiles", () => {
 // ---------------------------------------------------------------------------
 
 describe("jobHandlers registry", () => {
-	test("maps all expected job names to functions", () => {
-		const JOB_NAMES = {
-			SEND_WELCOME_EMAIL: "send-welcome-email",
-			SEND_RESET_PASSWORD_EMAIL: "send-reset-password-email",
-			CLEANUP_ORPHANED_FILES: "cleanup-orphaned-files",
-		};
-
-		// Simulate the registry
-		const jobHandlers = {
-			[JOB_NAMES.SEND_WELCOME_EMAIL]: () => {},
-			[JOB_NAMES.SEND_RESET_PASSWORD_EMAIL]: () => {},
-			[JOB_NAMES.CLEANUP_ORPHANED_FILES]: () => {},
-		};
+	test("registers a real handler for every known job name", () => {
+		// Asserted against the shipped registry, not a local copy of it. The
+		// previous version rebuilt the map by hand and asserted its own three
+		// entries, so adding a job name to the jobs package without mapping a
+		// handler — which the worker's preflight only *logs* a count for — passed
+		// here and shipped a job that no worker can process.
+		const handlers = Object.entries(jobHandlers);
 
 		assert.strictEqual(
-			Object.keys(jobHandlers).length,
-			3,
-			"Should have exactly 3 handlers",
+			handlers.length,
+			Object.keys(JOB_NAMES).length,
+			"every job name must have exactly one registered handler",
 		);
 
 		for (const name of Object.values(JOB_NAMES)) {

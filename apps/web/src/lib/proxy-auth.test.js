@@ -42,6 +42,8 @@ test("getRateLimitBucket only applies strict auth limits to credential writes", 
 		"api",
 	);
 	assert.equal(getRateLimitBucket("/api/auth/register", "POST"), "auth");
+	assert.equal(getRateLimitBucket("/api/auth/forgot-password", "POST"), "auth");
+	assert.equal(getRateLimitBucket("/api/auth/reset-password", "POST"), "auth");
 	assert.equal(getRateLimitBucket("/api/auth/signout", "POST"), "api");
 });
 

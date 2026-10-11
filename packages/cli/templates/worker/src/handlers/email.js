@@ -5,6 +5,7 @@
 
 import { createEmailService } from "@usequark/quark-core/email";
 import {
+	emailVerificationEmail,
 	passwordResetEmail,
 	welcomeEmail,
 } from "@usequark/quark-core/email-templates";
@@ -13,6 +14,7 @@ import { JOB_NAMES } from "@usequark/quark-jobs";
 import {
 	requireResetPasswordEmailData,
 	requireUserEmailRecord,
+	requireVerifyEmailData,
 	requireWelcomeEmailUserId,
 } from "./email-job-validation.js";
 
@@ -82,6 +84,43 @@ export async function handleSendResetPasswordEmail(bullJob, logger) {
 		name: userRecord.name,
 		appName: process.env.APP_NAME,
 		resetUrl,
+	});
+
+	await emailService.sendEmail(
+		userRecord.email,
+		template.subject,
+		template.html,
+		template.text,
+	);
+
+	return { success: true, userId, email: userRecord.email };
+}
+
+/**
+ * Job handler for SEND_VERIFY_EMAIL
+ * @param {import("bullmq").Job} bullJob
+ * @param {import("@usequark/quark-core").Logger} logger
+ */
+export async function handleSendVerificationEmail(bullJob, logger) {
+	const { userId, verifyUrl } = requireVerifyEmailData(bullJob.data);
+
+	logger.info(`Sending email verification for user ${userId}`, {
+		job: JOB_NAMES.SEND_VERIFY_EMAIL,
+		userId,
+	});
+
+	const userRecord = requireUserEmailRecord(
+		userId,
+		await prisma.user.findUnique({
+			where: { id: userId },
+			select: { email: true, name: true },
+		}),
+	);
+
+	const template = emailVerificationEmail({
+		name: userRecord.name,
+		appName: process.env.APP_NAME,
+		verifyUrl,
 	});
 
 	await emailService.sendEmail(

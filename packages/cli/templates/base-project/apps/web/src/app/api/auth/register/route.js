@@ -1,10 +1,17 @@
 import { hashPassword } from "@usequark/quark-core/auth";
-import { validateBody, withCsrfProtection } from "@usequark/quark-core/core";
+import {
+	createLogger,
+	validateBody,
+	withCsrfProtection,
+} from "@usequark/quark-core/core";
 import { user, userRegisterSchema } from "@usequark/quark-db";
 import { NextResponse } from "next/server";
 import { isSignupEnabled } from "@/lib/auth-signup";
 import { enqueueWelcomeEmail } from "@/lib/enqueue-welcome-email";
+import { sendVerificationEmail } from "@/lib/send-verification-email";
 import { handleError } from "../../error-handler";
+
+const logger = createLogger("auth:register");
 
 export const POST = withCsrfProtection(async (request) => {
 	if (!isSignupEnabled()) {
@@ -49,6 +56,18 @@ export const POST = withCsrfProtection(async (request) => {
 			await enqueueWelcomeEmail(newUser.id);
 		} catch {
 			// Non-critical - user is created even if email fails to enqueue
+		}
+
+		// Issue and enqueue the email-verification link. Equally non-fatal: the
+		// account exists either way, and an unverified address is not (yet) a
+		// gated account — it just has no confirmation on file.
+		try {
+			await sendVerificationEmail(newUser);
+		} catch (error) {
+			logger.error("Failed to send verification email", {
+				userId: newUser.id,
+				message: error?.message ?? String(error),
+			});
 		}
 
 		return NextResponse.json(safeUser, { status: 201 });

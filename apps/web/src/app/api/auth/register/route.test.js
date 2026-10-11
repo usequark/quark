@@ -131,6 +131,29 @@ mock.module(enqueueUrl, {
 	},
 });
 
+// The verification email is reached through `@/lib/send-verification-email`,
+// which the route imports statically. Mocking that module makes the call
+// observable, exactly as for the welcome helper above.
+const sendVerifyUrl = pathToFileURL(
+	new URL("../../../../lib/send-verification-email.js", import.meta.url)
+		.pathname,
+).href;
+
+/** Every account handed to `sendVerificationEmail`, in order. */
+let sendVerifyCalls;
+/** When set, `sendVerificationEmail` rejects with this error. */
+let sendVerifyError;
+
+mock.module(sendVerifyUrl, {
+	namedExports: {
+		sendVerificationEmail: async (account) => {
+			steps.push("send:verify-email");
+			if (sendVerifyError) throw sendVerifyError;
+			sendVerifyCalls.push(account);
+		},
+	},
+});
+
 const VALID_BODY = {
 	email: "new-user@example.com",
 	name: "New User",
@@ -188,6 +211,8 @@ function resetFixtures() {
 	hashedPassword = "hashed:Str0ngPassphrase";
 	queueAddError = null;
 	enqueuedUserIds = [];
+	sendVerifyError = null;
+	sendVerifyCalls = [];
 }
 
 beforeEach(() => {
@@ -286,21 +311,23 @@ test("POST checks for a duplicate before spending a hash", async () => {
 	assert.deepStrictEqual(hashCalls, []);
 	assert.deepStrictEqual(createCalls, []);
 	assert.deepStrictEqual(enqueuedUserIds, []);
+	assert.deepStrictEqual(sendVerifyCalls, []);
 	assert.deepStrictEqual(steps, ["signup", `findByEmail:${VALID_BODY.email}`]);
 });
 
-test("POST runs signup gate, lookup, hash and write in that order", async () => {
+test("POST runs signup gate, lookup, hash, write, and email hand-offs in order", async () => {
 	await POST(registerRequest());
 
 	// The whole ordering in one assertion. Swapping the duplicate check and the
-	// hash passes every other test here; swapping the write and the enqueue
-	// would email a user id that does not exist yet.
+	// hash passes every other test here; swapping the write and the enqueues
+	// would email or verify a user id that does not exist yet.
 	assert.deepStrictEqual(steps, [
 		"signup",
 		`findByEmail:${VALID_BODY.email}`,
 		"hash:Str0ngPassphrase",
 		"create",
 		"enqueue:welcome-email",
+		"send:verify-email",
 	]);
 });
 
@@ -310,6 +337,29 @@ test("POST enqueues the welcome email for the user it just created", async () =>
 	// The payload has to carry the new id, not the email: the worker's
 	// validation rejects a job with no userId.
 	assert.deepStrictEqual(enqueuedUserIds, ["user-new"]);
+});
+
+test("POST issues a verification email for the account it just created", async () => {
+	await POST(registerRequest());
+
+	// The whole new account, with email and id, goes to the send helper, which
+	// is responsible for token issue + enqueue. The address is re-derived from
+	// the account — never read back from the body.
+	assert.deepStrictEqual(sendVerifyCalls, [CREATED]);
+});
+
+test("POST still returns 201 when the verification email cannot be sent", async () => {
+	sendVerifyError = new Error("connect ECONNREFUSED redis://cache:6379");
+
+	const response = await POST(registerRequest());
+	const body = await response.json();
+
+	// The account exists either way. Surfacing the failure would tell the
+	// caller to retry, and the retry would be a 409 for an address they already
+	// created; the operator finds it in the logs instead.
+	assert.strictEqual(response.status, 201);
+	assert.strictEqual(body.id, "user-new");
+	assert.strictEqual(createCalls.length, 1);
 });
 
 test("POST returns 403 and writes nothing when signup is disabled", async () => {
@@ -325,6 +375,7 @@ test("POST returns 403 and writes nothing when signup is disabled", async () => 
 	assert.deepStrictEqual(findByEmailCalls, []);
 	assert.deepStrictEqual(createCalls, []);
 	assert.deepStrictEqual(enqueuedUserIds, []);
+	assert.deepStrictEqual(sendVerifyCalls, []);
 });
 
 test("POST applies the signup gate before it validates the body", async () => {
@@ -396,8 +447,9 @@ test("POST returns 500 and enqueues nothing when the insert fails", async () => 
 		!raw.includes("Unique constraint"),
 		`error body leaked the database message: ${raw}`,
 	);
-	// The write failed, so there is no user to welcome.
+	// The write failed, so there is no user to welcome or verify.
 	assert.deepStrictEqual(enqueuedUserIds, []);
+	assert.deepStrictEqual(sendVerifyCalls, []);
 	assert.deepStrictEqual(
 		steps.filter((s) => s.startsWith("enqueue:")),
 		[],
@@ -443,6 +495,11 @@ test("POST rejects a cross-site request that carries no CSRF token", async () =>
 		steps.filter((s) => s.startsWith("queue.add")),
 		[],
 		"a welcome email was enqueued for an account that was never created",
+	);
+	assert.deepStrictEqual(
+		sendVerifyCalls,
+		[],
+		"a verification email was issued for an account that was never created",
 	);
 });
 

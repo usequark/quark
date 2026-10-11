@@ -6,6 +6,7 @@ export const JOB_QUEUES = {
 
 export const JOB_NAMES = {
 	SEND_WELCOME_EMAIL: "send-welcome-email",
+	SEND_VERIFY_EMAIL: "send-verify-email",
 	SEND_RESET_PASSWORD_EMAIL: "send-reset-password-email",
 	CLEANUP_ORPHANED_FILES: "cleanup-orphaned-files",
 };

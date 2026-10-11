@@ -23,6 +23,19 @@ export function requireResetPasswordEmailData(data) {
 	return { userId, resetUrl };
 }
 
+export function requireVerifyEmailData(data) {
+	const userId = data?.userId;
+	const verifyUrl = data?.verifyUrl;
+
+	if (!userId || !verifyUrl) {
+		throw new ValidationError(
+			"userId and verifyUrl are required for SEND_VERIFY_EMAIL job",
+		);
+	}
+
+	return { userId, verifyUrl };
+}
+
 export function requireUserEmailRecord(userId, userRecord) {
 	if (!userRecord?.email) {
 		throw new AppError(
