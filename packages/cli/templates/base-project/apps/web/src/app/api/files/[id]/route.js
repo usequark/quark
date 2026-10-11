@@ -59,16 +59,42 @@ export async function GET(_request, { params }) {
 		// max-age bounds that window instead.
 		headers.set("Cache-Control", "public, max-age=3600");
 
-		// Inline display for images; attachment download for everything else
-		const isImage = record.mimeType.startsWith("image/");
+		// Inline display is limited to raster formats. SVG is deliberately not
+		// among them: an SVG is an XML document that can carry <script>, this
+		// endpoint is public and same-origin, and CSP `default-src 'self'`
+		// permits those scripts to run — so a stored SVG served inline executes
+		// in the app's own origin (stored XSS; audit item 8). SVG therefore
+		// downloads as an attachment, and its response additionally carries a
+		// sandbox CSP so a browser that ignores the disposition still cannot
+		// run scripts, fetch, or embed the document.
+		const INLINE_SAFE_TYPES = new Set([
+			"image/jpeg",
+			"image/png",
+			"image/gif",
+			"image/webp",
+			"image/avif",
+		]);
+		const isInlineSafe = INLINE_SAFE_TYPES.has(record.mimeType);
+		const isSvg = record.mimeType === "image/svg+xml";
 		const safeName = record.originalName.replace(/[\\"\r\n]/g, "_");
 		const encodedName = encodeURIComponent(record.originalName);
 		headers.set(
 			"Content-Disposition",
-			isImage
+			isInlineSafe
 				? `inline; filename="${safeName}"; filename*=UTF-8''${encodedName}`
 				: `attachment; filename="${safeName}"; filename*=UTF-8''${encodedName}`,
 		);
+
+		if (isSvg) {
+			// `sandbox` with no allow-list: no scripts, no same-origin framing,
+			// no form submission. `style-src 'unsafe-inline'` keeps simple
+			// presentational SVGs viewable; nothing in this policy can execute
+			// code.
+			headers.set(
+				"Content-Security-Policy",
+				"default-src 'none'; style-src 'unsafe-inline'; sandbox",
+			);
+		}
 
 		return new Response(body, { status: 200, headers });
 	} catch (error) {
