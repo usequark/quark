@@ -118,9 +118,6 @@ CREATE TABLE "AuditLog" (
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
-CREATE INDEX "User_email_idx" ON "User"("email");
-
--- CreateIndex
 CREATE INDEX "User_createdAt_idx" ON "User"("createdAt");
 
 -- CreateIndex
@@ -142,9 +139,6 @@ CREATE INDEX "Session_expires_idx" ON "Session"("expires");
 CREATE UNIQUE INDEX "VerificationToken_token_key" ON "VerificationToken"("token");
 
 -- CreateIndex
-CREATE INDEX "VerificationToken_token_idx" ON "VerificationToken"("token");
-
--- CreateIndex
 CREATE INDEX "VerificationToken_expires_idx" ON "VerificationToken"("expires");
 
 -- CreateIndex
@@ -152,12 +146,6 @@ CREATE UNIQUE INDEX "VerificationToken_identifier_token_key" ON "VerificationTok
 
 -- CreateIndex
 CREATE INDEX "Job_queue_idx" ON "Job"("queue");
-
--- CreateIndex
-CREATE INDEX "Job_status_idx" ON "Job"("status");
-
--- CreateIndex
-CREATE INDEX "Job_runAt_idx" ON "Job"("runAt");
 
 -- CreateIndex
 CREATE INDEX "Job_status_runAt_idx" ON "Job"("status", "runAt");
