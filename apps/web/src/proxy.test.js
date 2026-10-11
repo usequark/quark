@@ -1,9 +1,36 @@
 import assert from "node:assert/strict";
-import test from "node:test";
+import { beforeEach, mock, test } from "node:test";
 
 import { NextRequest } from "next/server.js";
 
-import { proxy } from "./proxy.js";
+/** What the stubbed `ioredis` client's `eval()` does for the current test. */
+let redisEvalImpl;
+
+// ioredis is CJS; proxy.js reads `const { default: Redis } = await import(...)`.
+// Provide both shapes so the interop can't resolve to undefined.
+class StubRedis {
+	constructor(url) {
+		this.url = url;
+	}
+	on() {}
+	async eval(...args) {
+		return redisEvalImpl(...args);
+	}
+}
+
+mock.module("ioredis", {
+	exports: { default: StubRedis },
+});
+
+const { __resetRateLimiterForTests, getRateLimiter, proxy } = await import(
+	"./proxy.js"
+);
+
+beforeEach(() => {
+	// A working Redis: first hit in a window returns count 1, ttl = window.
+	redisEvalImpl = async () => [1, 60000];
+	__resetRateLimiterForTests();
+});
 
 // The auth bucket allows 5 requests per window; `api` allows 100.
 const AUTH_ROUTE = "/api/auth/callback/credentials";
@@ -128,4 +155,35 @@ test("omits rate limit headers on exempt routes", async () => {
 
 	assert.equal(response.headers.get("X-RateLimit-Limit"), null);
 	assert.equal(response.headers.get("X-RateLimit-Remaining"), null);
+});
+
+test("uses in-memory limiting when REDIS_URL is unset", async () => {
+	delete process.env.REDIS_URL;
+	const limiter = await getRateLimiter();
+	assert.equal(limiter.constructor.name, "MemoryRateLimiter");
+});
+
+test("uses the Redis limiter when REDIS_URL is set", async () => {
+	process.env.REDIS_URL = "redis://localhost:6379";
+	// The limiter memoises on first use, so reach the memoised instance through
+	// the same path the proxy does rather than asserting on a fresh one.
+	const limiter = await getRateLimiter();
+	assert.equal(limiter.constructor.name, "RedisRateLimiter");
+});
+
+test("Redis limiter fails CLOSED when Redis errors mid-request", async () => {
+	process.env.REDIS_URL = "redis://localhost:6379";
+	redisEvalImpl = async () => {
+		throw new Error("connection lost");
+	};
+
+	const limiter = await getRateLimiter();
+	const result = await limiter.checkLimit("203.0.113.1:/api/x", 100, 60000);
+
+	assert.equal(
+		result.limited,
+		true,
+		"a limiter that allows traffic through the moment Redis is unreachable is no limiter during a flood",
+	);
+	assert.equal(result.remaining, 0);
 });

@@ -127,4 +127,48 @@ test("Rate Limiter Module", async (t) => {
 		limiter.stopCleanup();
 		assert(limiter.cleanupInterval === null);
 	});
+
+	// A Redis-backed limiter that fails OPEN disables itself precisely when it
+	// is being hammered — Redis erroring under load is the moment an attacker
+	// most needs the limiter to hold. Default must be fail-CLOSED.
+	await t.test(
+		"Redis limiter fails CLOSED by default when Redis errors",
+		async () => {
+			const limiter = createRateLimiter({
+				type: "redis",
+				redisClient: {
+					eval: async () => {
+						throw new Error("redis down");
+					},
+				},
+			});
+
+			const result = await limiter.checkLimit("k", 100, 60000);
+			assert.strictEqual(
+				result.limited,
+				true,
+				"must block, not allow, on error",
+			);
+			assert.strictEqual(result.remaining, 0);
+		},
+	);
+
+	await t.test(
+		"Redis limiter can opt back into fail-open explicitly",
+		async () => {
+			const limiter = createRateLimiter({
+				type: "redis",
+				failOpen: true,
+				redisClient: {
+					eval: async () => {
+						throw new Error("redis down");
+					},
+				},
+			});
+
+			const result = await limiter.checkLimit("k", 100, 60000);
+			assert.strictEqual(result.limited, false);
+			assert.strictEqual(result.remaining, 100);
+		},
+	);
 });
