@@ -7,6 +7,13 @@ const STRICT_AUTH_RATE_LIMIT_ROUTES = new Set([
 	// redirects to the sign-in page — nothing to brute force.
 	"/api/auth/callback/credentials",
 	"/api/auth/register",
+	// Password recovery surfaces are credential-adjacent and stay strict:
+	// `forgot-password` is an email-sending surface (5 per 15 minutes per
+	// IP:path stops an attacker from flooding one mailbox), and
+	// `reset-password` is a token-redeeming surface (the same budget limits
+	// grinding through stolen or guessed links).
+	"/api/auth/forgot-password",
+	"/api/auth/reset-password",
 ]);
 
 /**

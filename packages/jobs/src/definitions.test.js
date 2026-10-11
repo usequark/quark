@@ -42,6 +42,10 @@ describe("JOB_NAMES", () => {
 		);
 	});
 
+	test("defines email verification job name", () => {
+		assert.strictEqual(JOB_NAMES.SEND_VERIFY_EMAIL, "send-verify-email");
+	});
+
 	test("defines cleanup orphaned files job name", () => {
 		assert.strictEqual(
 			JOB_NAMES.CLEANUP_ORPHANED_FILES,
@@ -49,8 +53,8 @@ describe("JOB_NAMES", () => {
 		);
 	});
 
-	test("defines exactly 3 job names", () => {
-		assert.strictEqual(Object.keys(JOB_NAMES).length, 3);
+	test("defines exactly 4 job names", () => {
+		assert.strictEqual(Object.keys(JOB_NAMES).length, 4);
 	});
 
 	test("all job names are strings", () => {

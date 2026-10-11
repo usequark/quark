@@ -1,6 +1,10 @@
 import assert from "node:assert";
 import { test } from "node:test";
-import { passwordResetEmail, welcomeEmail } from "./email-templates.js";
+import {
+	emailVerificationEmail,
+	passwordResetEmail,
+	welcomeEmail,
+} from "./email-templates.js";
 
 test("welcomeEmail", async (t) => {
 	await t.test("returns subject, html, and text", () => {
@@ -118,6 +122,66 @@ test("passwordResetEmail", async (t) => {
 
 	await t.test("wraps content in html layout", () => {
 		const result = passwordResetEmail(validArgs);
+		assert.ok(result.html.includes("<!DOCTYPE html>"));
+		assert.ok(result.html.includes("</html>"));
+	});
+});
+
+test("emailVerificationEmail", async (t) => {
+	const validArgs = {
+		verifyUrl: "https://app.test/api/auth/verify-email?token=abc123",
+	};
+
+	await t.test("returns subject, html, and text", () => {
+		const result = emailVerificationEmail(validArgs);
+		assert.ok(result.subject);
+		assert.ok(result.html);
+		assert.ok(result.text);
+	});
+
+	await t.test("throws when verifyUrl is missing", () => {
+		assert.throws(() => emailVerificationEmail({}), /verifyUrl is required/);
+	});
+
+	await t.test("includes verify URL in html and text", () => {
+		const result = emailVerificationEmail(validArgs);
+		assert.ok(result.html.includes(validArgs.verifyUrl));
+		assert.ok(result.text.includes(validArgs.verifyUrl));
+	});
+
+	await t.test("uses default app name", () => {
+		const result = emailVerificationEmail(validArgs);
+		assert.ok(result.subject.includes("Quark"));
+	});
+
+	await t.test("uses custom app name", () => {
+		const result = emailVerificationEmail({ ...validArgs, appName: "MyApp" });
+		assert.ok(result.subject.includes("MyApp"));
+	});
+
+	await t.test("includes user name when provided", () => {
+		const result = emailVerificationEmail({ ...validArgs, name: "Bob" });
+		assert.ok(result.html.includes("Bob"));
+		assert.ok(result.text.includes("Bob"));
+	});
+
+	await t.test("uses default expiry time", () => {
+		const result = emailVerificationEmail(validArgs);
+		assert.ok(result.html.includes("24 hours"));
+		assert.ok(result.text.includes("24 hours"));
+	});
+
+	await t.test("escapes HTML in user name", () => {
+		const result = emailVerificationEmail({
+			...validArgs,
+			name: '<img src=x onerror="alert(1)">',
+		});
+		assert.ok(!result.html.includes("<img"));
+		assert.ok(result.html.includes("&lt;img"));
+	});
+
+	await t.test("wraps content in html layout", () => {
+		const result = emailVerificationEmail(validArgs);
 		assert.ok(result.html.includes("<!DOCTYPE html>"));
 		assert.ok(result.html.includes("</html>"));
 	});

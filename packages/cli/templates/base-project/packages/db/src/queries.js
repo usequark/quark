@@ -197,6 +197,19 @@ export const verificationToken = {
 			where: { identifier, token },
 		});
 	},
+	/**
+	 * Removes every token for an identifier.
+	 *
+	 * A verification or reset flow issues one live token per address: without
+	 * this, requesting a second link leaves the first valid too, so an old email
+	 * keeps working after the user asked for a new one. Called before issuing a
+	 * replacement, and again once a token has been redeemed.
+	 */
+	deleteByIdentifier: (identifier) => {
+		return prisma.verificationToken.deleteMany({
+			where: { identifier },
+		});
+	},
 	deleteExpired: () => {
 		return prisma.verificationToken.deleteMany({
 			where: { expires: { lt: new Date() } },

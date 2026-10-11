@@ -61,7 +61,7 @@ Sign out the current user.
 
 ### `POST /api/auth/register`
 
-Create a user with a hashed password and enqueue a welcome email. Public, but returns `403` when self-service signup is disabled via `AUTH_ALLOW_SIGNUP=false`. Requires a CSRF token.
+Create a user with a hashed password, enqueue a welcome email, and issue an email-verification link. Public, but returns `403` when self-service signup is disabled via `AUTH_ALLOW_SIGNUP=false`. Requires a CSRF token.
 
 **Request Body:**
 ```json
@@ -74,7 +74,61 @@ Create a user with a hashed password and enqueue a welcome email. Public, but re
 
 **Validation** (`userRegisterSchema`): valid email; password at least 8 characters with an uppercase letter, a lowercase letter, and a digit; name at least 2 characters.
 
-**Response (201):** the created user, password omitted. Enqueuing the welcome email is fire-and-forget: if that fails the user is still created.
+**Response (201):** the created user, password omitted. Both email hand-offs are fire-and-forget: if either fails the user is still created and the request still answers `201`. Confirming the address does not gate sign-in — `emailVerified` is enforced nowhere yet; the verification flow exists so an address can be confirmed on the user's schedule.
+
+### `POST /api/auth/forgot-password`
+
+Request a password-reset link. Public. Requires a CSRF token. Rate-limited with the strict auth bucket (5 requests / 15 min).
+
+**Request Body:** `{ "email": "string" }`
+
+**Response (200):** always the same neutral body, whether or not the address has an account:
+```json
+{ "message": "If that email address has an account, a reset link is on its way." }
+```
+
+Answering differently for an unknown address would turn the route into an email-enumeration oracle. A failure while sending for a *known* address is logged, never surfaced to the caller. When the address matches an account, an outstanding token is replaced, a single-use token is issued (1 hour TTL, stored only as a SHA-256 digest), and `SEND_RESET_PASSWORD_EMAIL` is enqueued.
+
+### `GET /api/auth/reset-password?token=…`
+
+Check whether a reset link is still usable, so the page can render the form or an error before the user types a new password into a dead form. Public and not CSRF-protected — it changes nothing.
+
+**Response (200):** `{ "valid": true }`.
+
+**Response (400):** `{ "valid": false }` — the token is unknown, expired, or already redeemed.
+
+### `POST /api/auth/reset-password`
+
+Redeem a reset link and set a new password. Public. Requires a CSRF token. Rate-limited with the strict auth bucket.
+
+**Request Body:** `{ "token": "string", "password": "string" }`
+
+The password is validated with `passwordSchema` — the same rules as registration, so a reset can never downgrade a credential. The token is resolved by its SHA-256 digest (never the raw value), is single-use, and is deleted on redemption. Stamping `passwordChangedAt` invalidates every session issued before the reset, web JWT and mobile refresh alike.
+
+**Response (200):** `{ "message": "Your password has been updated. You can now sign in." }`.
+
+**Response (400):** one deliberately identical body for an unknown token, an expired token, and an account deleted after the link was issued, so a stolen link cannot be probed for which case it is:
+```json
+{
+  "name": "ValidationError",
+  "message": "This reset link is invalid or has expired. Request a new one.",
+  "code": "VALIDATION_ERROR"
+}
+```
+
+### `GET /api/auth/verify-email?token=…`
+
+Redeem an emailed email-verification link. Public. A `GET` performs the state change because that is the shape of an emailed link — a mail client fetches it by navigation, not by posting JSON. The token is a 256-bit bearer value, stored only as a SHA-256 digest, and single-use.
+
+Every outcome is a `307` redirect to the sign-in page with a `verified` query parameter, so a mail client never lands on a bare error page:
+
+| `verified` | Meaning |
+|---|---|
+| `1` | The address is confirmed (or was already confirmed). |
+| `invalid` | No token, expired, consumed, or the account is gone. |
+| `error` | Something failed server-side; logged, and still a redirect. The account is unaffected. |
+
+There is no CSRF token on this route: it is a top-level navigation, not a scripted request.
 
 ### `POST /api/auth/token`
 
@@ -359,6 +413,7 @@ JOB_QUEUES.FILES   // "files-queue"
 JOB_QUEUES.DEFAULT // "default-queue"
 
 JOB_NAMES.SEND_WELCOME_EMAIL        // "send-welcome-email"
+JOB_NAMES.SEND_VERIFY_EMAIL         // "send-verify-email"
 JOB_NAMES.SEND_RESET_PASSWORD_EMAIL // "send-reset-password-email"
 JOB_NAMES.CLEANUP_ORPHANED_FILES    // "cleanup-orphaned-files"
 ```
@@ -379,14 +434,25 @@ Sends a welcome email to a new user. Enqueued automatically on registration.
 await queue.add(JOB_NAMES.SEND_WELCOME_EMAIL, { userId: "cuid123" });
 ```
 
+**SEND_VERIFY_EMAIL**
+
+Sends an email-verification link. Enqueued automatically on registration, and again whenever the app re-issues a link. The worker handler rejects the job unless both `userId` and `verifyUrl` are present.
+
+```js
+await queue.add(JOB_NAMES.SEND_VERIFY_EMAIL, {
+  userId: "cuid123",
+  verifyUrl: "https://app.example.com/api/auth/verify-email?token=abc",
+});
+```
+
 **SEND_RESET_PASSWORD_EMAIL**
 
-Sends a password reset email. The worker handler rejects the job unless both `userId` and `resetUrl` are present. No scaffolded route enqueues it, so your app calls it.
+Sends a password reset email. Enqueued by `POST /api/auth/forgot-password`. The worker handler rejects the job unless both `userId` and `resetUrl` are present.
 
 ```js
 await queue.add(JOB_NAMES.SEND_RESET_PASSWORD_EMAIL, {
   userId: "cuid123",
-  resetUrl: "https://app.example.com/reset?token=abc",
+  resetUrl: "https://app.example.com/auth/reset-password?token=abc",
 });
 ```
 
@@ -437,7 +503,7 @@ const record = await file.findById("fileid");
 const orphaned = await file.findOlderThan(new Date("2026-01-01"));
 ```
 
-Query helpers are exported for `user`, `job`, `account`, `session`, `verificationToken`, `auditLog`, and `file`. Validation schemas (`userCreateSchema`, `userRegisterSchema`, `userUpdateSchema`, `fileUploadSchema`) come from the same package.
+Query helpers are exported for `user`, `job`, `account`, `session`, `verificationToken`, `auditLog`, and `file`. Validation schemas (`userCreateSchema`, `userRegisterSchema`, `passwordSchema`, `userUpdateSchema`, `fileUploadSchema`) come from the same package. `passwordSchema` is the single source of the password rules, composed into `userRegisterSchema` and reused by password reset so the two cannot drift.
 
 ### `@usequark/quark-core`
 

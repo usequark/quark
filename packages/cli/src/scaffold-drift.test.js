@@ -189,43 +189,70 @@ describe("update --scaffold-check", () => {
 	});
 });
 
-// The web-side enqueue helper duplicates the queue and job names from the jobs
+// The web-side enqueue helpers duplicate the queue and job names from the jobs
 // package on purpose: `@<scope>/jobs` is an optional scaffold package, and
 // importing it from the web module broke the build of every project that
 // declined jobs. The duplication is only safe if it cannot drift — this is the
 // guard that fails when the two copies diverge. Asserted against the templates
 // because those are the shipped artifacts the scaffolder copies.
-describe("welcome-email queue/job name contract", () => {
+describe("email queue/job name contract", () => {
 	it("keeps the web-side names in sync with the jobs package definitions", () => {
 		const definitions = readFileSync(
 			path.join(import.meta.dirname, "../templates/jobs/src/definitions.js"),
 			"utf8",
 		);
-		const enqueue = readFileSync(
+
+		const queueName = definitions.match(/EMAIL:\s*"([^"]+)"/)?.[1];
+		assert.ok(queueName, "jobs definitions must define the EMAIL queue name");
+
+		const contract = [
+			{
+				jobKey: "SEND_WELCOME_EMAIL",
+				helper: "enqueue-welcome-email.js",
+			},
+			{
+				jobKey: "SEND_VERIFY_EMAIL",
+				helper: "enqueue-verification-email.js",
+			},
+			{
+				jobKey: "SEND_RESET_PASSWORD_EMAIL",
+				helper: "enqueue-reset-password-email.js",
+			},
+		];
+
+		// The queue name now lives in the shared helper; every enqueue wrapper
+		// re-exports it from there, so one check covers them all.
+		const sharedEnqueue = readFileSync(
 			path.join(
 				import.meta.dirname,
-				"../templates/base-project/apps/web/src/lib/enqueue-welcome-email.js",
+				"../templates/base-project/apps/web/src/lib/enqueue-email-job.js",
 			),
 			"utf8",
 		);
-
-		const queueName = definitions.match(/EMAIL:\s*"([^"]+)"/)?.[1];
-		const jobName = definitions.match(/SEND_WELCOME_EMAIL:\s*"([^"]+)"/)?.[1];
-		assert.ok(queueName, "jobs definitions must define the EMAIL queue name");
-		assert.ok(
-			jobName,
-			"jobs definitions must define the SEND_WELCOME_EMAIL job name",
-		);
-
 		assert.match(
-			enqueue,
+			sharedEnqueue,
 			new RegExp(`EMAIL_QUEUE = "${queueName}"`),
 			`web-side EMAIL_QUEUE must be "${queueName}" to match the jobs package`,
 		);
-		assert.match(
-			enqueue,
-			new RegExp(`SEND_WELCOME_EMAIL = "${jobName}"`),
-			`web-side SEND_WELCOME_EMAIL must be "${jobName}" to match the jobs package`,
-		);
+
+		for (const { jobKey, helper } of contract) {
+			const jobName = definitions.match(
+				new RegExp(`${jobKey}:\\s*"([^"]+)"`),
+			)?.[1];
+			assert.ok(jobName, `jobs definitions must define the ${jobKey} job name`);
+
+			const helperSource = readFileSync(
+				path.join(
+					import.meta.dirname,
+					`../templates/base-project/apps/web/src/lib/${helper}`,
+				),
+				"utf8",
+			);
+			assert.match(
+				helperSource,
+				new RegExp(`${jobKey} = "${jobName}"`),
+				`web-side ${jobKey} must be "${jobName}" to match the jobs package`,
+			);
+		}
 	});
 });
