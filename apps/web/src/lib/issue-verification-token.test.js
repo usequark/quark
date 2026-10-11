@@ -78,36 +78,52 @@ test("stores only the SHA-256 digest, never the raw token", async () => {
 test("creates the row with an expiry honoring the requested TTL", async () => {
 	const before = Date.now();
 	await issueVerificationToken(IDENTIFIER, VERIFY_TOKEN_TTL_MS);
+	const after = Date.now();
 
+	// The expiry is computed as `now + TTL` at some instant inside
+	// [before, after]. Bounding it by `before + TTL` alone assumes the call
+	// completed in the same millisecond it started: one tick later the expiry
+	// is `before + TTL + 1` and the assertion fails on a slower machine. The
+	// window keeps it true regardless of scheduling.
 	const expires = createCalls[0].expires.getTime();
-	assert.ok(expires >= before, "expiry is in the future");
-	assert.ok(expires <= before + VERIFY_TOKEN_TTL_MS, "expiry honors the TTL");
+	assert.ok(
+		expires >= before + VERIFY_TOKEN_TTL_MS,
+		"expiry is at least the TTL ahead",
+	);
+	assert.ok(
+		expires <= after + VERIFY_TOKEN_TTL_MS,
+		"expiry is no more than the TTL ahead",
+	);
 });
 
 test("reset and verify links carry their distinct lifetimes", async () => {
 	const resetBefore = Date.now();
 	await issueVerificationToken(IDENTIFIER, RESET_TOKEN_TTL_MS);
+	const resetAfter = Date.now();
 	const resetExpires = createCalls[0].expires.getTime();
 
 	const verifyBefore = Date.now();
 	await issueVerificationToken(IDENTIFIER, VERIFY_TOKEN_TTL_MS);
+	const verifyAfter = Date.now();
 	const verifyExpires = createCalls[1].expires.getTime();
 
 	// An address is confirmed on the user's own schedule (24h); a reset is
 	// acted on in the hour it arrives (1h). The emailed templates quote the
-	// same windows, so the TTLs are asserted distinct and each expiry is
-	// checked against its own window — strict inequality between two expiries
-	// computed within the same millisecond is not something to depend on.
+	// same windows, so the two TTLs must differ or one of the emails is lying.
+	// Each expiry is bounded by the window its call ran in — a single sample of
+	// `now` on the low end cannot serve as the upper bound, because it is only
+	// exact when the call lands in that same millisecond.
 	assert.strictEqual(RESET_TOKEN_TTL_MS, 60 * 60 * 1000);
 	assert.strictEqual(VERIFY_TOKEN_TTL_MS, 24 * 60 * 60 * 1000);
+	assert.notStrictEqual(RESET_TOKEN_TTL_MS, VERIFY_TOKEN_TTL_MS);
 	assert.ok(
-		resetExpires >= resetBefore &&
-			resetExpires <= resetBefore + RESET_TOKEN_TTL_MS,
-		"reset expiry honors the 1h TTL",
+		resetExpires >= resetBefore + RESET_TOKEN_TTL_MS &&
+			resetExpires <= resetAfter + RESET_TOKEN_TTL_MS,
+		"reset expiry is one hour after issuance",
 	);
 	assert.ok(
-		verifyExpires >= verifyBefore &&
-			verifyExpires <= verifyBefore + VERIFY_TOKEN_TTL_MS,
-		"verify expiry honors the 24h TTL",
+		verifyExpires >= verifyBefore + VERIFY_TOKEN_TTL_MS &&
+			verifyExpires <= verifyAfter + VERIFY_TOKEN_TTL_MS,
+		"verify expiry is 24 hours after issuance",
 	);
 });
