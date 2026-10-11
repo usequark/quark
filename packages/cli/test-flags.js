@@ -8,7 +8,13 @@
 
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import {
+	existsSync,
+	mkdtempSync,
+	readdirSync,
+	readFileSync,
+	rmSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import path, { join } from "node:path";
 import { describe, it } from "node:test";
@@ -162,15 +168,12 @@ describe("Feature Validation", () => {
 			assert.ok(
 				!existsSync(join(projectDir, "apps", "web", "src", "app", "admin")),
 			);
+			// Skills still ship — bundled for the AI to use on demand. Assert
+			// one that exists in the template rather than the removed
+			// `admin-dashboard` vertical skill.
 			assert.ok(
 				existsSync(
-					join(
-						projectDir,
-						".opencode",
-						"skills",
-						"admin-dashboard",
-						"SKILL.md",
-					),
+					join(projectDir, ".opencode", "skills", "add-dashboard", "SKILL.md"),
 				),
 			);
 			assert.ok(
@@ -210,19 +213,39 @@ describe("Feature Validation", () => {
 			);
 
 			const projectDir = join(tmpDir, projectName);
-			for (const skill of [
-				"cms",
-				"crm",
-				"bookings",
-				"ai",
-				"admin-dashboard",
-				"quark-skills",
-			]) {
+			// Assert against what the template actually ships rather than a
+			// hardcoded list: the vertical skills (cms, crm, bookings, ai,
+			// admin-dashboard) were removed with the verticals, and a hardcoded
+			// list either asserts their ghosts or rots again on the next change.
+			const templateSkillsDir = join(
+				__dirname,
+				"templates",
+				"base-project",
+				"skills",
+			);
+			const shippedSkills = readdirSync(templateSkillsDir).filter((entry) =>
+				existsSync(join(templateSkillsDir, entry, "SKILL.md")),
+			);
+			assert.ok(shippedSkills.length > 0, "template must ship skills");
+			for (const skill of shippedSkills) {
 				assert.ok(
 					existsSync(
 						join(projectDir, ".opencode", "skills", skill, "SKILL.md"),
 					),
 					`missing skill: ${skill}`,
+				);
+			}
+			// The removed verticals must not come back.
+			for (const vertical of [
+				"cms",
+				"crm",
+				"bookings",
+				"ai",
+				"admin-dashboard",
+			]) {
+				assert.ok(
+					!existsSync(join(projectDir, ".opencode", "skills", vertical)),
+					`removed vertical skill resurfaced: ${vertical}`,
 				);
 			}
 
@@ -274,9 +297,12 @@ describe("Feature Validation", () => {
 			assert.strictEqual(addResult.status, 1);
 			assert.ok(addResult.stderr.includes('Unknown feature: "cms"'));
 
-			// The bundled skill is still present for the AI to use on demand.
+			// Skills are still bundled regardless of what `add` accepts — assert
+			// one the template actually ships (the `cms` vertical skill is gone).
 			assert.ok(
-				existsSync(join(projectDir, ".opencode", "skills", "cms", "SKILL.md")),
+				existsSync(
+					join(projectDir, ".opencode", "skills", "add-model", "SKILL.md"),
+				),
 			);
 		} finally {
 			cleanup(tmpDir);
@@ -516,22 +542,6 @@ describe("AI View Params", () => {
 // ---------------------------------------------------------------------------
 
 describe("skill command", () => {
-	it("skill bookings prints the bookings skill", () => {
-		const tmpDir = makeTempDir();
-		try {
-			const result = runCLI(["skill", "bookings"], tmpDir);
-			assert.strictEqual(
-				result.status,
-				0,
-				`Expected exit 0\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
-			);
-			assert.ok(result.stdout.includes("Bookings Skill"));
-			assert.ok(result.stdout.includes("reference/verticals/bookings"));
-		} finally {
-			cleanup(tmpDir);
-		}
-	});
-
 	it("skill model prints the add-model skill", () => {
 		const tmpDir = makeTempDir();
 		try {
@@ -592,9 +602,12 @@ describe("Existing git repository", () => {
 			);
 			assert.ok(
 				(result.stdout + result.stderr).includes(
-					"Already inside a git repository",
-				),
-				`Expected existing-repo notice\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
+					"This project will be created inside an existing git repository",
+				) &&
+					(result.stdout + result.stderr).includes(
+						"Skipping git initialization (inside an existing repository)",
+					),
+				`Expected the pre-flight warning and the skip notice\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
 			);
 		} finally {
 			cleanup(tmpDir);

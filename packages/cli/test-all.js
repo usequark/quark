@@ -21,9 +21,10 @@ const tests = [
 		description: "Verify all templates exist and are properly structured",
 	},
 	{
-		name: "E2E Simulation - Project Creation",
-		command: "node test-e2e.js",
-		description: "Simulate creating a project and verify structure",
+		name: "Flag Tests - CLI options and git init",
+		command: "node --test test-flags.js",
+		description:
+			"Verify CLI flags, skill bundling, and nested-repo git behavior",
 	},
 	{
 		name: "Build Test - Scaffold, Install, Build",

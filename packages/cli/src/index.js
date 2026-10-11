@@ -705,8 +705,11 @@ program
 						`          as its own repository, or\n` +
 						`        • scaffold into a temporary folder and move the files to\n` +
 						`          the repository root before the first commit.\n\n` +
-						`      Git initialization will be skipped to avoid creating a\n` +
-						`      nested repository.\n\n` +
+						`      Git initialization ${
+							process.env.QUARK_FORCE_GIT_INIT === "true"
+								? "will run anyway (QUARK_FORCE_GIT_INIT=true)."
+								: "will be skipped to avoid creating a\n      nested repository."
+						}\n\n` +
 						`      GitHub only runs workflows stored at the repository root, so\n` +
 						`      <project>/.github/workflows/*.yml will be ignored by GitHub\n` +
 						`      Actions.\n`,
@@ -1577,7 +1580,11 @@ STORAGE_PROVIDER=local
 			// Step 11: Initialize git repository
 			if (process.env.QUARK_SKIP_GIT_INIT === "true") {
 				console.log(chalk.dim("\n  · Skipping git initialization"));
-			} else if (enclosingRepo) {
+			} else if (enclosingRepo && process.env.QUARK_FORCE_GIT_INIT !== "true") {
+				// `initializeGit()` also checks QUARK_FORCE_GIT_INIT internally,
+				// but it is only reached in the else branch below — short-
+				// circuiting here on `enclosingRepo` alone made the documented
+				// force flag a no-op.
 				console.log(
 					chalk.dim(
 						"\n  · Skipping git initialization (inside an existing repository)",
