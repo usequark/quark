@@ -281,6 +281,77 @@ test("GET does not promise immutability on a non-versioned URL", async () => {
 	);
 });
 
+test("GET serves SVG as an attachment with a sandbox CSP, never inline", async () => {
+	// An SVG is an XML document that can carry <script>. Served `inline` from a
+	// same-origin public endpoint, a stored SVG executes in the app's own
+	// origin — stored XSS. The response must therefore never be inline, and it
+	// carries a sandbox CSP as a second lock for browsers that ignore the
+	// disposition header.
+	fileById = {
+		...UPLOAD,
+		mimeType: "image/svg+xml",
+		originalName: "logo.svg",
+		storageKey: "uploads/2026/02/logo.svg",
+	};
+	storageGetImpl = async () => ({
+		body: Buffer.from(
+			'<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>',
+		),
+		contentType: "image/svg+xml",
+	});
+
+	const response = await GET(getRequest("file-1"), {
+		params: { id: "file-1" },
+	});
+
+	assert.strictEqual(response.status, 200);
+	const disposition = response.headers.get("Content-Disposition");
+	assert.ok(
+		disposition?.startsWith("attachment"),
+		`SVG must download, not render inline: ${disposition}`,
+	);
+	const csp = response.headers.get("Content-Security-Policy");
+	assert.ok(csp, "SVG response must carry a sandbox CSP");
+	assert.ok(
+		csp.includes("sandbox"),
+		`CSP must include sandbox to block script execution: ${csp}`,
+	);
+	assert.ok(
+		!csp.includes("script-src") || csp.includes("'none'"),
+		`CSP must not permit scripts: ${csp}`,
+	);
+});
+
+test("GET serves a raster image inline, without the SVG sandbox CSP", async () => {
+	// The regression guard for the other direction: locking down SVG must not
+	// break inline rendering of actual images, which is the normal case.
+	fileById = {
+		...UPLOAD,
+		mimeType: "image/png",
+		originalName: "logo.png",
+		storageKey: "uploads/2026/02/logo.png",
+	};
+	storageGetImpl = async () => ({
+		body: Buffer.from([0x89, 0x50, 0x4e, 0x47]),
+		contentType: "image/png",
+	});
+
+	const response = await GET(getRequest("file-1"), {
+		params: { id: "file-1" },
+	});
+
+	assert.strictEqual(response.status, 200);
+	assert.ok(
+		response.headers.get("Content-Disposition")?.startsWith("inline"),
+		"raster images must still render inline",
+	);
+	assert.strictEqual(
+		response.headers.get("Content-Security-Policy"),
+		null,
+		"the sandbox CSP belongs to SVG only",
+	);
+});
+
 test("DELETE /api/files/[id] deletes the row then the storage object", async () => {
 	const response = await DELETE(deleteRequest(), { params: { id: "file-1" } });
 	const body = await response.json();
