@@ -37,7 +37,8 @@ model User {
   auditLogs     AuditLog[]
   files         File[]
 
-  @@index([email])
+  // `email` is already @unique (User_email_key); a second plain index on the
+  // same column only adds write cost.
   @@index([createdAt])
 }
 
@@ -85,8 +86,9 @@ model VerificationToken {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
+  // `token` is already @unique (VerificationToken_token_key); a second plain
+  // index on the same column only adds write cost.
   @@unique([identifier, token])
-  @@index([token])
   @@index([expires])
 }
 
@@ -106,9 +108,9 @@ model Job {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
+  // (status, runAt) serves status-only queries through its leftmost prefix;
+  // single-column [status] and [runAt] indexes were removed as redundant.
   @@index([queue])
-  @@index([status])
-  @@index([runAt])
   @@index([status, runAt])
   @@index([createdAt])
 }
