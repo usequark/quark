@@ -4,7 +4,14 @@ Status as of the original triage: **21 advisories -> 3.** This document explains
 what was deliberately left, and why.
 
 Since then: **6 Next.js advisories -> 0**, fixed by upgrading `16.3.6` to `16.3.8`. See
-[Next.js](#nextjs-6-advisories-fixed-by-upgrade) below. The standing accepted count is still 3.
+[Next.js](#nextjs---6-advisories-fixed-by-upgrade) below. The standing accepted count is still 3.
+
+Re-checked **2026-10-12** against the GitHub advisory database and the npm registry: the three
+open Dependabot alerts are the same three, `pnpm audit` still reports exactly three advisories
+and no more, and none of them has become fixable in the meantime. Each entry under
+[Not fixed](#not-fixed---documented-accepts) carries its own re-verified date and evidence, and
+[Re-checked 2026-10-12](#re-checked-2026-10-12---no-fix-became-reachable) records why no fix is
+reachable today.
 
 Severity labels come from the advisory database. **Exposure** is a separate question and is
 recorded per finding below, because most of the original count was toolchain code that never
@@ -153,47 +160,116 @@ that leaves a declared range, so it was checked rather than assumed:
 These three remain. None has a fix we can take without breaking something, and all three sit
 in `apps/mobile`'s Expo build toolchain. **None of them is shipped application code.**
 
+**Re-verified 2026-10-12.** The resolved version, the module and the exposure path are unchanged
+from the original triage for all three, and no upstream package has published a patched release
+that a bump or an override could reach. Each entry below carries its own evidence.
+
 ### decode-uri-component 0.2.2 - moderate
 
-- **Path:** `apps/mobile -> expo-router -> query-string@7.1.3 -> decode-uri-component`
+- **Path:** `apps/mobile -> expo-router@57.0.23 -> query-string@7.1.3 -> decode-uri-component`
+  (re-checked with `pnpm why decode-uri-component`; the same chain repeats through
+  `@expo/cli@57.0.27 -> @expo/router-server@57.0.11`)
 - **Fix available but rejected:** the advisory needs `>=0.5.0`. `query-string@7.1.3` declares
   `^0.2.2` and is CommonJS; it does `const decodeComponent = require('decode-uri-component')`
   and then calls it as a function. `decode-uri-component@0.5.0` is ESM-only, so under
   `require(esm)` it returns a namespace object. Verified directly: the direct call fails with
-  `TypeError: m is not a function`, while `m.default(...)` works. Forcing the upgrade would
-  break `query-string` at runtime.
-- **Why query-string cannot move:** 7.1.3 is the newest 7.x, and `expo-router@57.0.23` pins it.
+  `TypeError: decodeComponent is not a function`, while `decodeComponent.default(...)` works.
+  Forcing the upgrade would break `query-string` at runtime.
+- **Re-verified 2026-10-12** in a scratch install (nothing added to this repo): forcing
+  `decode-uri-component@0.5.0` into `query-string@7.1.3`'s tree reproduces the failure on Node
+  v24.21.0 for `parse`, `parseUrl`, `pick` and `exclude`. `decode-uri-component@0.5.0` is
+  `"type": "module"` with an `exports` map and no CommonJS entry point, so `require()` returns
+  `{ __esModule, default }`. The message name differs from the original note (`m` is the
+  minified binding) but the cause is the same.
+- **Why query-string cannot move:** 7.1.3 is the newest 7.x, and `expo-router@57.0.25` - the
+  newest stable release, on both the `latest` and `sdk-57` dist-tags - still pins
+  `query-string: ^7.1.3`. `query-string@8.x` also still depends on `decode-uri-component@^0.4.1`,
+  which is inside the vulnerable `<=0.4.2` range, so even a 7 -> 8 move changes nothing.
+  Expo SDK 58 exists only on the `next` and `canary` dist-tags (`expo@58.0.7`,
+  `expo-router@58.0.17`), so there is no stable release to move to.
+- **The other override is worse, not better:** `query-string@9.5.1` is the first version that
+  depends on `decode-uri-component@^0.5.0`, but it is also ESM-only, so
+  `require("query-string")` returns `{ __esModule, default }` and `qs.parse(...)` throws
+  `TypeError: qs.parse is not a function`. Verified in a scratch install on the same Node. It is
+  additionally a two-major jump over what `expo-router` declares, on a path that runs inside the
+  app bundle - the guardrails rule that out.
 - **Exposure:** dev/build only. Reached via `@expo/router-server` while Expo builds or serves
   the app. The advisory is a DoS via exponential decoding of malformed percent-encoding in a
-  URL query string.
+  URL query string. No file under `apps/`, `packages/` or `scripts/` imports either package.
 - **Unblocked by:** `query-string` bumping to a version that drops the dependency, or a
   patched `decode-uri-component` release that keeps a CommonJS entry point.
 
 ### node-forge 1.4.0 - high
 
 - **Path:** `apps/mobile -> expo@57.0.25 -> @expo/cli@57.0.27 -> node-forge@1.4.0` (also via
-  `@expo/code-signing-certificates@0.0.6`)
+  `@expo/code-signing-certificates@0.0.6`) - both re-confirmed with `pnpm why node-forge`.
 - **Patched versions: `<0.0.0`.** There is no fixed release. 1.4.0 is the newest version
   published.
+- **Re-verified 2026-10-12:** GitHub still reports `first_patched_version: null` and
+  `vulnerable_version_range: <= 1.4.0`. The registry's version list ends at 1.4.0 and no
+  dist-tag carries a newer or prerelease build, so there is nothing to upgrade to and nothing
+  to pin an override to.
 - **Advisory:** RSA PKCS#1 v1.5 signature verification accepts extra nested DigestAlgorithm
   elements (GHSA-86w9-cpqp-85rv).
 - **Exposure:** build-time only, and only while Expo generates iOS signing assets. Not in any
   shipped JS bundle.
-- **Recommendation:** accept and revisit when `@expo/cli` moves off `node-forge@1.4.0`.
+- **Recommendation:** accept and revisit when `@expo/cli` moves off `node-forge@1.4.0`. The
+  newest `@expo/cli@57.0.28` still declares `node-forge: ^1.3.3`.
   **Do not** force an override: there is no version to force it to.
 
 ### braces 3.0.3 - high
 
-- **Path:** `apps/mobile -> expo@57.0.25 -> @expo/cli -> @expo/metro-file-map ->
-  micromatch@4.0.8 -> braces@3.0.3`
 - **Patched versions: `<0.0.0`.** No fixed release exists; 3.0.3 is the newest version.
+- **Re-verified 2026-10-12:** GitHub still reports `first_patched_version: null` and
+  `vulnerable_version_range: <= 3.0.3`, and the registry's version list ends at 3.0.3.
+  `micromatch`'s newest release, 4.0.8, declares `braces: ^3.0.3`, so even the newest parent
+  resolves the vulnerable version. Nothing to upgrade to.
+- **Path (re-checked with `pnpm why braces`) - and there is more than one.** The advisory
+  names one chain, `apps/mobile -> expo@57.0.25 -> @expo/cli@57.0.27 ->
+  @expo/metro-file-map@57.0.3 -> micromatch@4.0.8 -> braces@3.0.3`, but `pnpm why braces` shows
+  `braces` entering the tree through three independent routes:
+  1. `@expo/cli -> @expo/metro-file-map@57.0.3 -> micromatch@4.0.8 -> braces`
+  2. `@expo/cli -> @expo/metro@56.0.2 -> metro@0.84.5` and
+     `... -> metro-file-map@0.84.5 -> micromatch@4.0.8 -> braces` (and again via
+     `@expo/cli -> @expo/metro-config@57.0.12 -> @expo/metro@56.0.2`)
+  3. `react-native@0.87.1 -> @react-native/community-cli-plugin@0.87.1 -> metro@0.87.1 ->
+     metro-file-map@0.87.1 -> micromatch@4.0.8 -> braces`
+- **Why a `@expo/metro-file-map` bump would not retire this advisory:**
+  `@expo/metro-file-map@57.0.4` does drop `micromatch` from its own manifest, but that only
+  removes route 1. Routes 2 and 3 resolve `braces@3.0.3` regardless, so `pnpm audit` keeps
+  reporting it. Bumping it would be churn with no security outcome, so it was not done.
 - **Advisory:** stack-exhaustion DoS through deeply nested glob patterns
   (GHSA-vfj7-8cjw-p6xm).
 - **Exposure:** build-time only. `micromatch` matches file paths against developer-authored
   glob patterns at bundle time. Reaching the DoS needs a pathological pattern authored in the
   repo, not attacker-controlled input.
-- **Recommendation:** accept. Reachable only if `@expo/metro-file-map` moves to a `micromatch`
-  release whose `braces` range admits a fixed version.
+- **Recommendation:** accept. Reachable only if `metro-file-map` stops depending on
+  `micromatch@4.0.8` on every route above, or if `micromatch` moves to a `braces` range that
+  admits a fixed version.
+
+## Re-checked 2026-10-12 - no fix became reachable
+
+Checked against the GitHub advisory database (`gh api repos/usequark/quark/dependabot/alerts`)
+and the npm registry, per advisory:
+
+| Advisory | Newest published | GitHub `first_patched_version` | Reachable by | Verdict |
+|---|---|---|---|---|
+| `node-forge` GHSA-86w9-cpqp-85rv | 1.4.0 | `null` | nothing - no patched release exists | still accept |
+| `braces` GHSA-vfj7-8cjw-p6xm | 3.0.3 | `null` | nothing - no patched release exists | still accept |
+| `decode-uri-component` GHSA-vcc3-ghjq-m6fr | 0.5.0 | `0.5.0` | only by overriding past `query-string@7.1.3` | still accept |
+
+A lockfile refresh was considered for all three and cannot move any of them:
+
+- `node-forge` and `braces` have no newer release at all, so any resolution lands on the same
+  affected version.
+- `query-string@7.1.3` declares `decode-uri-component: ^0.2.2`, and a caret range on a `0.x`
+  version pins the minor (`>=0.2.2 <0.3.0`). 0.2.2 is already the newest version that range can
+  resolve, so a refresh keeps 0.2.2 and only a deliberate override could change it.
+
+The only edits that could take the decode-uri-component fix - overriding
+`decode-uri-component` to `0.5.0`, or `query-string` to `9.x` - both break the CommonJS caller,
+and the second is a two-major jump on a path that runs inside the app bundle. Both were tested
+rather than assumed. No `package.json` or lockfile change was made.
 
 ## Re-checking after an upgrade
 
@@ -201,6 +277,10 @@ Run `pnpm audit:check`. If any of the three remaining advisories disappears, it 
 this document should be updated - the check prints a notice naming the entry to retire. Note that
 `pnpm audit` reads the lockfile, so a stale `.pnpm` directory can make a resolved tree look
 unfixed - `rm -rf node_modules && pnpm install` if a count looks stale.
+
+A refresh of the lockfile on its own will not retire any of the three, for the reasons listed
+under [Re-checked 2026-10-12](#re-checked-2026-10-12---no-fix-became-reachable). The signal to
+watch for is an upstream release, not a lockfile resolution.
 
 ## Enforced in CI
 
