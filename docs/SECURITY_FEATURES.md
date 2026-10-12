@@ -17,7 +17,7 @@ Quark includes several security features out of the box:
   - General API endpoints: 100 requests per 15 minutes
   - Auth endpoints: 5 requests per 15 minutes
 - **Headers**: Returns `X-RateLimit-*` headers for client feedback
-- **Storage**: in-memory by default. `REDIS_URL` is **not** consulted by the shipped proxy — every instance keeps its own counters, so a multi-instance deployment counts each instance independently. A Redis-backed limiter exists as a core building block (`createRateLimiter({ type: "redis", redisClient })` in `packages/core/src/rate-limiter.js`), but nothing wires it into the web middleware yet. See [Redis-based Rate Limiting](#3-redis-based-rate-limiting-) below.
+- **Storage**: Redis-backed when `REDIS_URL` is set (shared budget across instances), in-memory when it is unset (single instance). `apps/web/src/proxy.js` reads `REDIS_URL` and builds the limiter from the core building block (`createRateLimiter({ type: "redis", redisClient })` in `packages/core/src/rate-limiter.js`), failing closed by default. See [Redis-based Rate Limiting](#3-redis-based-rate-limiting-) below.
 
 #### 2. **Security Headers**
 - **Location**: [apps/web/src/proxy.js](../apps/web/src/proxy.js), [apps/web/next.config.js](../apps/web/next.config.js)
@@ -340,8 +340,9 @@ POSTGRES_PASSWORD=<strong-password-from-secret-manager>
 DATABASE_URL=<connection-string-with-ssl>
 
 # Redis (use managed service)
-# Consumed by the worker and BullMQ. The web middleware's rate limiter is still
-# in-memory and does not read this variable - see the Redis setup note above.
+# Consumed by the worker/BullMQ connections and by the web middleware's
+# rate limiter - setting it makes the limiter Redis-backed (shared budget
+# across instances). Leave it unset for in-memory, per-instance counters.
 REDIS_URL=<redis-connection-string-with-password>
 
 # Application URL (derives NEXTAUTH_URL and CORS origins)

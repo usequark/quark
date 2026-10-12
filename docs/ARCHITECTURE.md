@@ -68,7 +68,7 @@ Quark takes a hybrid approach:
 - Storage adapter abstraction (swap local ↔ S3 via env var)
 
 ✅ **More Infrastructure**
-- CSRF tokens, rate limiting (in-memory; a Redis-backed limiter ships in `rate-limiter.js` but nothing wires it into the web middleware)
+- CSRF tokens, rate limiting (Redis-backed when `REDIS_URL` is set, in-memory otherwise; `apps/web/src/proxy.js` wires the core limiter from `rate-limiter.js` into the web middleware, failing closed by default)
 - Metrics registry and default instruments; health-check runners
 - Cache, query builder, pagination helpers
 - Stripe client and webhook helpers; SMS provider
@@ -83,7 +83,7 @@ Core ships 21 subpath exports. `packages/core/package.json` is the authoritative
 ⚠️ **Prisma Helpers, Not a Client**
 - `createPrismaClient(ClientClass)` is a factory that takes your generated client class, so core never imports your generated output
 - `pingDatabase()` and pool config helpers
-- Schema introspection (`parseSchema`, `getModels`, `getEnums`, `coerceId`)
+- Schema introspection (`parseSchema`, `getModels`, `getEnums`, `coerceId` — exported from the `./admin` subpath)
 
 ❌ **A Database Client Instance** (lives in your local `@yourapp/db`)
 - Prisma schema is always customized per app

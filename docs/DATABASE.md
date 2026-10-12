@@ -51,8 +51,8 @@ This project does support `NODE_ENV=staging` via `resolveEnvironment()` in `pack
 ## Overview
 
 | Models | Enums | Relations | `@@index` blocks | Unique constraints |
-|--------|-------|-----------|-----------------|-------------------|
-| 7 | 2 | 4 | 19 | 6 |
+|--------|-------|-----------|------------------|-------------------|
+| 7 | 2 | 4 | 15 | 6 |
 
 ```
 User ─┬── Account    (1:many, cascade delete)
@@ -183,7 +183,7 @@ Database-side audit trail for background jobs. **Not actively used by the BullMQ
 | `createdAt` | `DateTime` | Default: `now()` | - |
 | `updatedAt` | `DateTime` | `@updatedAt` | - |
 
-**Indexes:** `queue`, `status`, `runAt`, `(status, runAt)` (compound), `createdAt`
+**Indexes:** `queue`, `(status, runAt)` (compound), `createdAt`. The compound index serves `status`-only and `(status, runAt)` queries through its leftmost prefix. It does **not** index `runAt` alone — on PostgreSQL a `runAt`-only range query cannot use this index, so add a single-column `runAt` index if a query ever filters on it without `status`. The shipped code has no such query: the worker schedules through BullMQ in Redis, and this model is an audit trail. The single-column `status` and `runAt` indexes were removed as redundant with the compound index for the query patterns the codebase actually uses.
 
 **Enum `JobStatus`:** `PENDING` | `IN_PROGRESS` | `COMPLETED` | `FAILED` | `CANCELLED`
 

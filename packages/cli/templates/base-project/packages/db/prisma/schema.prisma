@@ -112,8 +112,13 @@ model Job {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  // (status, runAt) serves status-only queries through its leftmost prefix;
-  // single-column [status] and [runAt] indexes were removed as redundant.
+  // (status, runAt) serves status-only and (status, runAt) queries
+  // through its leftmost prefix. It does not index runAt alone: a
+  // runAt-only range query cannot use it, so add a single-column
+  // [runAt] index if such a query appears. The shipped code has none
+  // (BullMQ schedules in Redis; this model is an audit trail), so the
+  // single-column [status] and [runAt] indexes were redundant for the
+  // query patterns in use and were removed.
   @@index([queue])
   @@index([status, runAt])
   @@index([createdAt])
