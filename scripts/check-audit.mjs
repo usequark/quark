@@ -14,11 +14,25 @@ const execFileAsync = promisify(execFile);
  * is `<0.0.0`, and the resolved version *is* the newest published. The third
  * (`decode-uri-component`) needs >=0.5.0, which is ESM-only, while
  * `query-string@7.1.3` is CommonJS and calls it as a function - forcing the
- * upgrade breaks it at runtime with `TypeError: m is not a function`.
+ * upgrade breaks it at runtime with `TypeError: <binding> is not a function`.
+ * Overriding `query-string` to the first version that wants 0.5.0 (9.x) breaks
+ * the same caller for the same reason, because 9.x is ESM-only too.
  *
- * All three sit in `apps/mobile`'s Expo toolchain and none ships in a JS bundle,
- * so they cannot be fixed without breaking something else. What *can* be fixed is
- * a fourth advisory appearing, and `pnpm audit` alone cannot tell those apart.
+ * All three sit in `apps/mobile`'s Expo dependency graph. Two of them (`node-forge`,
+ * `braces`) are build toolchain only and never enter a JS bundle. The third
+ * (`decode-uri-component`) does ship: expo-router bundles `query-string` and calls
+ * `queryString.parse` on incoming deep-link query strings at app runtime, so it is
+ * runtime-reachable and is accepted as a residual risk, not as a non-issue.
+ * Fixing any of them breaks something else first. What *can* be fixed is a fourth
+ * advisory appearing, and `pnpm audit` alone cannot tell those apart.
+ *
+ * Re-verified 2026-10-12 against the GitHub advisory database and the npm
+ * registry: no patched release has landed for `node-forge` or `braces`
+ * (`first_patched_version` is still null, and the newest published version of
+ * each is still the affected one), and the `decode-uri-component` fix is still
+ * unreachable for the reasons above. Resolved versions, modules and exposure
+ * paths are unchanged, so all three stay. See docs/dependency-audit.md, section
+ * "Re-checked 2026-10-12 - no fix became reachable".
  *
  * So the gate is an allowlist keyed on the GitHub advisory ID, which is stable
  * across advisory metadata edits in a way the npm advisory ID is not.
@@ -38,19 +52,19 @@ const acceptedAdvisories = {
 		module: "node-forge",
 		severity: "high",
 		reason:
-			"No patched release exists (patched_versions is `<0.0.0`; 1.4.0 is newest). Build-time only, Expo code signing. Do not override - there is nothing to force it to.",
+			"Re-verified 2026-10-12: no patched release exists (`patched_versions` is `<0.0.0`, GitHub `first_patched_version` is null, 1.4.0 is still the newest published). Build-time only, Expo code signing - `@expo/cli@57.0.28` still declares `^1.3.3`. Do not override: there is nothing to force it to.",
 	},
 	"GHSA-vfj7-8cjw-p6xm": {
 		module: "braces",
 		severity: "high",
 		reason:
-			"No patched release exists (patched_versions is `<0.0.0`; 3.0.3 is newest). Build-time only, via Expo's file-map glob matching. Needs a pathological repo-authored glob to reach.",
+			"Re-verified 2026-10-12: no patched release exists (`patched_versions` is `<0.0.0`, GitHub `first_patched_version` is null, 3.0.3 is still the newest published, and `micromatch@4.0.8` still wants `^3.0.3`). Build-time only, via three independent micromatch routes, so a `@expo/metro-file-map` bump would not retire it. Needs a pathological repo-authored glob to reach.",
 	},
 	"GHSA-vcc3-ghjq-m6fr": {
 		module: "decode-uri-component",
 		severity: "moderate",
 		reason:
-			"Fix requires >=0.5.0, which is ESM-only; `query-string@7.1.3` is CommonJS and calls it as a function, so the upgrade breaks it. Build-time only, via Expo router.",
+			"Re-verified 2026-10-12: fix requires >=0.5.0, which is ESM-only; `query-string@7.1.3` is CommonJS and calls it as a function, so the upgrade breaks it (`TypeError: decodeComponent is not a function`, reproduced on Node v24.21.0). Overriding `query-string` to 9.x breaks the same caller the same way. Runtime-reachable, not build-only: expo-router calls `queryString.parse` on incoming deep-link query strings, so a malformed one crashes the app - accepted because the fix would crash it on every link instead. See docs/dependency-audit.md.",
 	},
 };
 
