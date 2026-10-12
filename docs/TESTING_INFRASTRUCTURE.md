@@ -1,6 +1,6 @@
 # Quark Testing Infrastructure Report
 
-**Last Updated:** October 7, 2026  
+**Last Updated:** October 12, 2026  
 **Audience:** Contributors, maintainers, CI engineers  
 **Purpose:** Comprehensive reference for testing approach, organization, tools, and patterns
 
@@ -31,12 +31,12 @@ Quark uses a **lightweight, dependency-free testing approach** built on the Node
 | Aspect | Value |
 |--------|-------|
 | **Framework** | Node.js native `node:test` |
-| **Total `*.test.js` files (repo-wide)** | **130** |
-| **Live test files wired into a `test` script** | **100** |
+| **Total `*.test.js` files (repo-wide)** | **154** |
+| **Live test files wired into a `test` script** | **124** |
 | **Archived reference test files** | **30** (under `docs/archive/reference/`) |
-| **Additional `*.test.mjs` files** | **3** (under `scripts/`) |
+| **Additional `*.test.mjs` files** | **4** (under `scripts/`) |
 | **Assertion Library** | `node:assert/strict` |
-| **Most Tested Workspace** | `packages/core` (27 test files) |
+| **Most Tested Workspace** | `apps/web` (45 test files) |
 | **CI Services** | PostgreSQL 16 (`postgres:16-alpine`), Redis 7 (`redis:7-alpine`) |
 | **Root Command** | `pnpm test` → `node --test 'scripts/*.test.mjs' && turbo run test` |
 | **Coverage** | Optional/ad-hoc. **Not enforced** anywhere in CI |
@@ -49,11 +49,11 @@ Every count in this document comes from the filesystem, not from an estimate. Re
 ```bash
 # Repo-wide total for *.test.js
 find . -name "*.test.js" -not -path "*/node_modules/*" -not -path "*/.next/*" | wc -l
-# => 130
+# => 154
 
 # Per-workspace counts (same find, scoped to each workspace directory)
 find packages/core -name "*.test.js" -not -path "*/node_modules/*" -not -path "*/.next/*" | wc -l
-# => 27
+# => 29
 
 # The 30 files that are archived reference material, not wired into any test script
 find docs/archive -name "*.test.js" -not -path "*/node_modules/*" | wc -l
@@ -61,12 +61,13 @@ find docs/archive -name "*.test.js" -not -path "*/node_modules/*" | wc -l
 
 # The .mjs suites run by the root script before turbo takes over
 ls scripts/*.test.mjs
-# => scripts/check-release-published.test.mjs
+# => scripts/check-audit.test.mjs
+#    scripts/check-release-published.test.mjs
 #    scripts/check-standards.test.mjs
 #    scripts/run-tests.test.mjs
 ```
 
-`100 + 30 = 130`. The `docs/archive/reference/` files are preserved vertical examples (cms, crm, ai, bookings) that were removed from the build. They are not executed by `pnpm test`, so the number that matters for the pipeline is **100 live test files**.
+`124 + 30 = 154`. The `docs/archive/reference/` files are preserved vertical examples (cms, crm, ai, bookings) that were removed from the build. They are not executed by `pnpm test`, so the number that matters for the pipeline is **124 live test files**.
 
 ---
 
@@ -140,35 +141,36 @@ Quark's error convention applies in tests too: throw `ValidationError` or `AppEr
 
 | Workspace | `*.test.js` | Notes |
 |-----------|-------------|-------|
-| `packages/core` | **27** | Most comprehensive |
-| `apps/web` | **26** | Route handlers, SEO, analytics, proxy |
+| `packages/core` | **29** | Most infrastructure coverage |
+| `apps/web` | **45** | Route handlers, SEO, analytics, proxy, auth |
 | `packages/ui` | **20** | One suite per UI module |
-| `packages/cli` | **15** | Scaffold guards, deploy adapters, templates |
+| `packages/cli` | **17** | Scaffold guards, deploy adapters, templates |
 | `packages/db` | **4** | Includes `queries.integration.test.js` |
-| `packages/config` | **4** | |
+| `packages/config` | **5** | |
 | `apps/worker` | **3** | |
 | `packages/jobs` | **1** | |
-| **Live total** | **100** | Wired into a `test` script |
+| **Live total** | **124** | Wired into a `test` script |
 | `docs/archive/reference` | **30** | Archived verticals, not executed |
-| **Repo-wide total** | **130** | |
+| **Repo-wide total** | **154** | |
 
-#### `packages/core` (27 test files)
+#### `packages/core` (29 test files)
 
 ```
-src/admin.test.js                    src/health.test.js
-src/auth.test.js                     src/logger.test.js
-src/auth/middleware.test.js          src/metrics.test.js
+src/admin.test.js                    src/file-validation.test.js
+src/auth.test.js                     src/health.test.js
+src/auth/middleware.test.js          src/logger.test.js
+src/auth/tokens.test.js              src/metrics.test.js
 src/authorization.test.js            src/multipart.test.js
 src/cache.test.js                    src/pagination.test.js
 src/csrf.test.js                     src/query-builder.test.js
-src/db-instrumentation.test.js       src/queue/queue.test.js
-src/db.test.js                       src/rate-limiter.test.js
-src/email-templates.test.js          src/redis.test.js
-src/email.test.js                    src/request-logger.test.js
-src/error-reporter.test.js           src/storage.test.js
-src/errors.test.js                   src/testing/testing.test.js
-src/exports.test.js                  src/utils.test.js
-src/file-validation.test.js
+src/csrf-client.test.js              src/queue/queue.test.js
+src/db-instrumentation.test.js       src/rate-limiter.test.js
+src/db.test.js                       src/redis.test.js
+src/email-templates.test.js          src/request-logger.test.js
+src/email.test.js                    src/storage.test.js
+src/error-reporter.test.js           src/testing/testing.test.js
+src/errors.test.js                   src/utils.test.js
+src/exports.test.js
 ```
 
 `exports.test.js` is worth calling out: it asserts the public export surface of the package, so an accidental removal from `src/index.js` fails the suite rather than surfacing as a broken import in a consumer app.
@@ -195,7 +197,7 @@ Filtering by directory path rather than by package name keeps this unambiguous: 
 
 Note the suffix is `-integration-test.js`, which is deliberately distinct from `*.integration.test.js`. The `test` script excludes only the latter name, so these two do run under `turbo run test`.
 
-#### `packages/config` (4 test files)
+#### `packages/config` (5 test files)
 
 | Test File | Purpose |
 |-----------|---------|
@@ -203,6 +205,7 @@ Note the suffix is `-integration-test.js`, which is deliberately distinct from `
 | `environment.test.js` | Env var resolution, Zod schemas |
 | `load-config.test.js` | Configuration loading order |
 | `app-url.test.js` | URL formatting logic |
+| `oauth.test.js` | OAuth client-id and audience helpers |
 
 #### `packages/db` (4 test files)
 
@@ -221,7 +224,7 @@ Note the suffix is `-integration-test.js`, which is deliberately distinct from `
 |-----------|---------|
 | `definitions.test.js` | `JOB_QUEUES` and `JOB_NAMES` shape |
 
-#### `packages/cli` (15 test files)
+#### `packages/cli` (17 test files)
 
 ```
 src/dependabot-config.test.js         src/scaffold-output.test.js
@@ -231,6 +234,7 @@ src/deploy/discovery.test.js          src/worker-dockerfile.test.js
 src/deploy/adapters/iac.test.js       src/mobile-template.test.js
 src/deploy/adapters/railway.test.js   src/prepare-hooks.test.js
 src/git-branch.test.js                src/scaffold-guards.test.js
+src/scaffold-drift.test.js            src/scaffold-warning.test.js
 src/utils.test.js
 ```
 
@@ -250,17 +254,18 @@ The CLI package also ships non-`node:test` harnesses at the package root: `test-
 | `lib/tokens.test.js` | Token helpers |
 | `handlers/files.test.js` | File job handler |
 
-#### `apps/web` (26 test files)
+#### `apps/web` (45 test files)
 
 | Area | Test Files |
 |------|-------------|
-| **API routes** | `api/auth/[...nextauth]/route.test.js`, `api/files/route.test.js`, `api/files/[id]/route.test.js`, `api/health/route.test.js`, `api/users/route.test.js`, `api/users/[id]/route.test.js` |
+| **API routes** (17) | `api/auth/[...nextauth]/route.test.js`, `api/auth/apple/route.test.js`, `api/auth/forgot-password/route.test.js`, `api/auth/google/route.test.js`, `api/auth/refresh/route.test.js`, `api/auth/register/route.test.js`, `api/auth/reset-password/route.test.js`, `api/auth/token/route.test.js`, `api/auth/verify-email/route.test.js`, `api/csrf/route.test.js`, `api/files/route.test.js`, `api/files/[id]/route.test.js`, `api/health/route.test.js`, `api/metrics/route.test.js`, `api/users/route.test.js`, `api/users/[id]/route.test.js`, `api/users/me/route.test.js` |
 | **Integration** | `app/api/integration.test.js` (excluded from `test`, run by `test:integration`) |
 | **Pages & layout** | `app/page.test.js`, `app/layout-theme.test.js`, `app/manifest.test.js`, `app/auth/provider-loading.test.js` |
 | **SEO** | `app/seo-routes.test.js`, `lib/seo/indexing.test.js`, `lib/seo/site-metadata.test.js` |
 | **Analytics** | `lib/analytics/umami-before-send.test.js`, `umami-config.test.js`, `umami-csp.test.js`, `umami-marketing.test.js`, `umami-replay.test.js` |
-| **Auth internals** | `lib/auth-middleware.test.js`, `lib/normalize-auth-request.test.js`, `lib/proxy-auth.test.js`, `lib/csrf-cookie.test.js`, `proxy.test.js` |
-| **Config & preflight** | `next-config.test.js`, `preflight.test.js` |
+| **Auth internals** | `lib/auth.test.js`, `lib/auth-google-profile.test.js`, `lib/auth-middleware.test.js`, `lib/normalize-auth-request.test.js`, `lib/proxy-auth.test.js`, `lib/csrf-cookie.test.js` |
+| **Email helpers** | `lib/enqueue-welcome-email.test.js`, `lib/enqueue-verification-email.test.js`, `lib/enqueue-reset-password-email.test.js`, `lib/issue-verification-token.test.js`, `lib/send-verification-email.test.js`, `lib/send-reset-password-email.test.js` |
+| **Config, preflight & proxy** | `next-config.test.js`, `preflight.test.js`, `proxy.test.js` |
 
 ---
 
@@ -326,7 +331,7 @@ Root `test` is:
 node --test 'scripts/*.test.mjs' && turbo run test
 ```
 
-Two phases. First the three root `scripts/*.test.mjs` suites run directly, then `turbo run test` fans out to every workspace that defines a `test` script. `turbo run test` depends on `^build` and `db:generate`, so the Prisma client is generated before any suite that needs it.
+Two phases. First the four root `scripts/*.test.mjs` suites run directly, then `turbo run test` fans out to every workspace that defines a `test` script. `turbo run test` depends on `^build` and `db:generate`, so the Prisma client is generated before any suite that needs it.
 
 The web app's integration suite is **not** part of `pnpm test`:
 
@@ -1171,7 +1176,7 @@ Run it once per release, write the number down here, and treat a drop as a revie
 
 #### P4: Expand `apps/web` Route Handler Coverage
 
-The `apps/web` tree has 26 suites and only six cover route handlers. The Server Action surface is the largest untested user-facing area:
+The `apps/web` tree has 45 suites, 17 of which cover route handlers. The Server Action surface is the largest untested user-facing area:
 
 ```js
 // apps/web/src/app/actions/user.test.js
