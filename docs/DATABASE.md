@@ -183,7 +183,7 @@ Database-side audit trail for background jobs. **Not actively used by the BullMQ
 | `createdAt` | `DateTime` | Default: `now()` | - |
 | `updatedAt` | `DateTime` | `@updatedAt` | - |
 
-**Indexes:** `queue`, `(status, runAt)` (compound), `createdAt`. The compound index serves status-only queries through its leftmost prefix; single-column `status` and `runAt` indexes were removed as redundant.
+**Indexes:** `queue`, `(status, runAt)` (compound), `createdAt`. The compound index serves `status`-only and `(status, runAt)` queries through its leftmost prefix. It does **not** index `runAt` alone — on PostgreSQL a `runAt`-only range query cannot use this index, so add a single-column `runAt` index if a query ever filters on it without `status`. The shipped code has no such query: the worker schedules through BullMQ in Redis, and this model is an audit trail. The single-column `status` and `runAt` indexes were removed as redundant with the compound index for the query patterns the codebase actually uses.
 
 **Enum `JobStatus`:** `PENDING` | `IN_PROGRESS` | `COMPLETED` | `FAILED` | `CANCELLED`
 
