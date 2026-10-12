@@ -11,7 +11,8 @@ open Dependabot alerts are the same three, `pnpm audit` still reports exactly th
 and no more, and none of them has become fixable in the meantime. Each entry under
 [Not fixed](#not-fixed---documented-accepts) carries its own re-verified date and evidence, and
 [Re-checked 2026-10-12](#re-checked-2026-10-12---no-fix-became-reachable) records why no fix is
-reachable today.
+reachable today. That pass also **corrected the exposure of `decode-uri-component`**: it is
+runtime-reachable, not build-toolchain-only.
 
 Severity labels come from the advisory database. **Exposure** is a separate question and is
 recorded per finding below, because most of the original count was toolchain code that never
@@ -157,12 +158,17 @@ that leaves a declared range, so it was checked rather than assumed:
 
 ## Not fixed - documented accepts
 
-These three remain. None has a fix we can take without breaking something, and all three sit
-in `apps/mobile`'s Expo build toolchain. **None of them is shipped application code.**
+These three remain. None has a fix we can take without breaking something, and all three sit in
+`apps/mobile`'s Expo dependency graph.
 
-**Re-verified 2026-10-12.** The resolved version, the module and the exposure path are unchanged
-from the original triage for all three, and no upstream package has published a patched release
-that a bump or an override could reach. Each entry below carries its own evidence.
+**Two of the three are build-toolchain only** - `node-forge` and `braces` never enter a JS bundle.
+The third, `decode-uri-component`, is the exception: it is **reachable at app runtime**, as
+corrected on 2026-10-12 after review. The original triage's blanket claim that none of them is
+shipped application code was wrong for that one, so exposure is now stated per entry.
+
+**Re-verified 2026-10-12.** The resolved version and the module are unchanged from the original
+triage for all three, and no upstream package has published a patched release that a bump or an
+override could reach.
 
 ### decode-uri-component 0.2.2 - moderate
 
@@ -193,11 +199,43 @@ that a bump or an override could reach. Each entry below carries its own evidenc
   `TypeError: qs.parse is not a function`. Verified in a scratch install on the same Node. It is
   additionally a two-major jump over what `expo-router` declares, on a path that runs inside the
   app bundle - the guardrails rule that out.
-- **Exposure:** dev/build only. Reached via `@expo/router-server` while Expo builds or serves
-  the app. The advisory is a DoS via exponential decoding of malformed percent-encoding in a
-  URL query string. No file under `apps/`, `packages/` or `scripts/` imports either package.
-- **Unblocked by:** `query-string` bumping to a version that drops the dependency, or a
-  patched `decode-uri-component` release that keeps a CommonJS entry point.
+- **Exposure: runtime, not dev/build only.** Corrected 2026-10-12 after review: this was
+  previously recorded as build-time only, which is wrong. `query-string` **is** in the shipped
+  mobile bundle, and it parses incoming URL query strings while the app runs. The chain, read off
+  `node_modules`:
+
+  ```
+  apps/mobile package.json "main": "expo-router/entry"
+    -> expo-router/entry.js -> entry-classic -> build/qualified-entry
+    -> build/ExpoRoot.js:135        <NavigationContainer linking={store.linking} ... />
+    -> build/fork/NavigationContainer.js:12   require("./useLinking")   (native: useLinking.native)
+    -> build/fork/useLinking.native.js:46     Linking.addEventListener('url', ...)
+       build/fork/useLinking.native.js:115    getStateFromPath(path, config)
+    -> build/react-navigation/core/getStateFromPath.js:41   require("query-string")
+       build/react-navigation/core/getStateFromPath.js:499  queryString.parse(query)
+    -> query-string@7.1.3/index.js:3          require('decode-uri-component')
+       query-string@7.1.3/index.js:233        decodeComponent(value)   <- 0.2.2
+  ```
+
+  So a deep-link query string reaches the vulnerable decoder on device. `apps/mobile/app.json`
+  declares `"scheme": "quark"`, so `quark://...?q=...` links are handled by the app.
+  (Establishment is module-graph analysis, not an emitted bundle: `expo export` cannot currently
+  produce one - see "Known unrelated breakage" below.)
+- **What that changes about the risk:** the DoS is now reachable from attacker-influenced input -
+  a malformed query string in a link a user opens - instead of only from something authored
+  locally. It is still a **moderate** advisory, and it is still a denial of service in URL query
+  parsing, not code execution or disclosure. But it is not zero-exposure, and the residual risk
+  should be stated rather than waved away.
+- **Why it is still accepted rather than fixed:** taking the fix converts that into a guaranteed
+  crash. `decode-uri-component@0.5.0` is ESM-only, so under `query-string@7.1.3`'s
+  `require('decode-uri-component')` `decodeComponent` is a namespace object and every call throws
+  `TypeError: decodeComponent is not a function` - i.e. the app breaks on *every* deep link that
+  carries a query parameter, including well-formed ones. Overriding `query-string@9.5.1` instead
+  breaks it at module scope. A crash on all links is strictly worse than a crash on a
+  pathological one, so the fix is not an improvement and is not taken. Node v24.21.0, reproduced.
+- **Unblocked by (now higher priority):** `query-string` bumping to a version that drops the
+  dependency, or a patched `decode-uri-component` release that keeps a CommonJS entry point. Both
+  are tracked as the follow-up that would actually retire this advisory.
 
 ### node-forge 1.4.0 - high
 
@@ -211,8 +249,12 @@ that a bump or an override could reach. Each entry below carries its own evidenc
   to pin an override to.
 - **Advisory:** RSA PKCS#1 v1.5 signature verification accepts extra nested DigestAlgorithm
   elements (GHSA-86w9-cpqp-85rv).
-- **Exposure:** build-time only, and only while Expo generates iOS signing assets. Not in any
-  shipped JS bundle.
+- **Exposure: build-time only, and only while Expo generates iOS signing assets. Not in any
+  shipped JS bundle.** Re-checked 2026-10-12 rather than assumed: `expo@57.0.25`'s `bin` is
+  `bin/cli`, so `@expo/cli` is reached through the CLI binary, and `expo`'s own `src`/`build`
+  never imports `@expo/cli`. Inside `@expo/cli@57.0.27`, `node-forge` is imported only by
+  `src/utils/codesigning.js` and `src/run/ios/codeSigning/Security.js` - iOS code signing. The
+  app bundle follows imports from `expo-router/entry` and never reaches either.
 - **Recommendation:** accept and revisit when `@expo/cli` moves off `node-forge@1.4.0`. The
   newest `@expo/cli@57.0.28` still declares `node-forge: ^1.3.3`.
   **Do not** force an override: there is no version to force it to.
@@ -240,9 +282,13 @@ that a bump or an override could reach. Each entry below carries its own evidenc
   reporting it. Bumping it would be churn with no security outcome, so it was not done.
 - **Advisory:** stack-exhaustion DoS through deeply nested glob patterns
   (GHSA-vfj7-8cjw-p6xm).
-- **Exposure:** build-time only. `micromatch` matches file paths against developer-authored
+- **Exposure: build-time only.** `micromatch` matches file paths against developer-authored
   glob patterns at bundle time. Reaching the DoS needs a pathological pattern authored in the
-  repo, not attacker-controlled input.
+  repo, not attacker-controlled input. Re-checked 2026-10-12 rather than assumed: every route
+  into `micromatch` runs through `metro-file-map`, which is Metro's file crawler and runs in Node
+  during `expo start`/`expo export`. `expo@57.0.25`'s own `src`/`build` never imports
+  `metro-file-map` or `micromatch`, and nothing in `apps/mobile`'s source does either, so it does
+  not enter the app bundle. Unlike `decode-uri-component`, this one is genuinely not shipped.
 - **Recommendation:** accept. Reachable only if `metro-file-map` stops depending on
   `micromatch@4.0.8` on every route above, or if `micromatch` moves to a `braces` range that
   admits a fixed version.
@@ -254,9 +300,9 @@ and the npm registry, per advisory:
 
 | Advisory | Newest published | GitHub `first_patched_version` | Reachable by | Verdict |
 |---|---|---|---|---|
-| `node-forge` GHSA-86w9-cpqp-85rv | 1.4.0 | `null` | nothing - no patched release exists | still accept |
-| `braces` GHSA-vfj7-8cjw-p6xm | 3.0.3 | `null` | nothing - no patched release exists | still accept |
-| `decode-uri-component` GHSA-vcc3-ghjq-m6fr | 0.5.0 | `0.5.0` | only by overriding past `query-string@7.1.3` | still accept |
+| `node-forge` GHSA-86w9-cpqp-85rv | 1.4.0 | `null` | nothing - no patched release exists | still accept, build-only |
+| `braces` GHSA-vfj7-8cjw-p6xm | 3.0.3 | `null` | nothing - no patched release exists | still accept, build-only |
+| `decode-uri-component` GHSA-vcc3-ghjq-m6fr | 0.5.0 | `0.5.0` | only by overriding past `query-string@7.1.3` | still accept, **runtime-reachable** |
 
 A lockfile refresh was considered for all three and cannot move any of them:
 
@@ -270,6 +316,13 @@ The only edits that could take the decode-uri-component fix - overriding
 `decode-uri-component` to `0.5.0`, or `query-string` to `9.x` - both break the CommonJS caller,
 and the second is a two-major jump on a path that runs inside the app bundle. Both were tested
 rather than assumed. No `package.json` or lockfile change was made.
+
+**One correction made during this pass, after review:** the original triage recorded all three as
+build-toolchain only. That holds for `node-forge` and `braces`, but `decode-uri-component` is
+runtime-reachable — expo-router's linking stack calls `queryString.parse` on incoming deep-link
+query strings, so a malformed one reaches the vulnerable decoder on device. The verdict is
+unchanged (the fix would break every deep link, not just the pathological one), but the exposure is
+recorded as it is rather than as the old blanket claim described it.
 
 ## Re-checking after an upgrade
 

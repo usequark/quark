@@ -18,9 +18,13 @@ const execFileAsync = promisify(execFile);
  * Overriding `query-string` to the first version that wants 0.5.0 (9.x) breaks
  * the same caller for the same reason, because 9.x is ESM-only too.
  *
- * All three sit in `apps/mobile`'s Expo toolchain and none ships in a JS bundle,
- * so they cannot be fixed without breaking something else. What *can* be fixed is
- * a fourth advisory appearing, and `pnpm audit` alone cannot tell those apart.
+ * All three sit in `apps/mobile`'s Expo dependency graph. Two of them (`node-forge`,
+ * `braces`) are build toolchain only and never enter a JS bundle. The third
+ * (`decode-uri-component`) does ship: expo-router bundles `query-string` and calls
+ * `queryString.parse` on incoming deep-link query strings at app runtime, so it is
+ * runtime-reachable and is accepted as a residual risk, not as a non-issue.
+ * Fixing any of them breaks something else first. What *can* be fixed is a fourth
+ * advisory appearing, and `pnpm audit` alone cannot tell those apart.
  *
  * Re-verified 2026-10-12 against the GitHub advisory database and the npm
  * registry: no patched release has landed for `node-forge` or `braces`
@@ -60,7 +64,7 @@ const acceptedAdvisories = {
 		module: "decode-uri-component",
 		severity: "moderate",
 		reason:
-			"Re-verified 2026-10-12: fix requires >=0.5.0, which is ESM-only; `query-string@7.1.3` is CommonJS and calls it as a function, so the upgrade breaks it (`TypeError: decodeComponent is not a function`, reproduced on Node v24.21.0). Overriding `query-string` to 9.x breaks the same caller the same way. Build-time only, via Expo router.",
+			"Re-verified 2026-10-12: fix requires >=0.5.0, which is ESM-only; `query-string@7.1.3` is CommonJS and calls it as a function, so the upgrade breaks it (`TypeError: decodeComponent is not a function`, reproduced on Node v24.21.0). Overriding `query-string` to 9.x breaks the same caller the same way. Runtime-reachable, not build-only: expo-router calls `queryString.parse` on incoming deep-link query strings, so a malformed one crashes the app - accepted because the fix would crash it on every link instead. See docs/dependency-audit.md.",
 	},
 };
 
