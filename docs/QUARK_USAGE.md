@@ -273,8 +273,8 @@ Exactly **two** packages are published to **npmjs.org** as public packages:
 
 | Package | Version |
 |---------|---------|
-| `@usequark/quark-core` | 2.6.0 |
-| `@usequark/quark-create-app` | 1.25.4 |
+| `@usequark/quark-core` | 2.8.0 |
+| `@usequark/quark-create-app` | 1.26.0 |
 
 No authentication is required to install or update them. There are no published database, UI, jobs, or config packages, and no admin package.
 
@@ -355,8 +355,8 @@ pnpm install
 
 Quark uses a **Core-Only Registry** architecture:
 
-- **`@usequark/quark-core`** (2.6.0) is published to npmjs.org. You consume it like any npm package.
-- **`@usequark/quark-create-app`** (1.25.4) is published to npmjs.org. It is the scaffolder.
+- **`@usequark/quark-core`** (2.8.0) is published to npmjs.org. You consume it like any npm package.
+- **`@usequark/quark-create-app`** (1.26.0) is published to npmjs.org. It is the scaffolder.
 - **Four packages are scaffolded into your project** and scoped to your npm scope: `db`, `config`, `ui`, `jobs`. Three of those (`db`, `config`, `ui`) are always present. `jobs` is optional.
 
 Nothing else is published. There is no published database, UI, jobs, or config package, and no admin package.
@@ -405,25 +405,29 @@ The complete subpath list from the package's `exports` map:
 ```
 @usequark/quark-core                 → src/index.js
 @usequark/quark-core/core            → src/core.js
-@usequark/quark-core/errors          → src/errors.js
-@usequark/quark-core/testing         → src/testing/index.js
+@usequark/quark-core/admin           → src/admin.js
 @usequark/quark-core/auth            → src/auth/index.js
 @usequark/quark-core/auth/middleware → src/auth/middleware.js
-@usequark/quark-core/admin           → src/admin.js
+@usequark/quark-core/csrf-client     → src/csrf-client.js
 @usequark/quark-core/db              → src/db.js
 @usequark/quark-core/email           → src/email.js
+@usequark/quark-core/email-templates → src/email-templates.js
+@usequark/quark-core/errors          → src/errors.js
 @usequark/quark-core/health          → src/health.js
 @usequark/quark-core/locale          → src/locale.js
 @usequark/quark-core/logger          → src/logger.js
 @usequark/quark-core/metrics         → src/metrics.js
+@usequark/quark-core/multipart       → src/multipart.js
 @usequark/quark-core/queue           → src/queue/index.js
+@usequark/quark-core/redis           → src/redis.js
 @usequark/quark-core/sms             → src/sms.js
 @usequark/quark-core/storage         → src/storage.js
 @usequark/quark-core/storage/s3      → src/storage-s3.js
 @usequark/quark-core/stripe          → src/stripe.js
+@usequark/quark-core/testing         → src/testing/index.js
 ```
 
-`/core` here is a **subpath inside** `@usequark/quark-core`. It is not a package of its own, and there is no admin, database, UI, jobs, or config package published to npm.
+`/core` here is a **subpath inside** `@usequark/quark-core`. It is not a package of its own, and there is no admin, database, UI, jobs, or config package published to npm. The list above is the complete `exports` map; `packages/core/package.json` is authoritative if they ever disagree.
 
 See [packages/core/README.md](../packages/core/README.md) for the full API reference.
 
@@ -483,6 +487,7 @@ getAllowedOrigins();
 config
 getAllowedOrigins, getAppUrl, syncNextAuthUrl
 ENVIRONMENTS, getEnvironmentConfig, mergeConfig, resolveEnvironment
+getAppleClientIds, getGoogleClientId, isAppleAuthEnabled, isAudienceValid, isGoogleAuthEnabled
 getConfig, loadConfig, resetConfig
 applyRateLimit, rateLimit
 closeSharedRedisClient, getSharedRedisClient
@@ -767,7 +772,7 @@ Tracks version and metadata:
 
 ```json
 {
-  "quarkVersion": "2.6.0",
+  "quarkVersion": "2.8.0",
   "quarkSourcePath": "../../quark",
   "scaffoldedDate": "2026-02-11T10:30:00Z",
   "packages": ["db", "config", "ui", "jobs"],
@@ -775,7 +780,7 @@ Tracks version and metadata:
 }
 ```
 
-`quarkVersion` tracks the **`@usequark/quark-core` version your project is on** (currently 2.6.0). It is what `quark-update` reads and writes. The scaffolded CLI is 1.25.4 and is not a runtime dependency of your project, so it does not appear here.
+`quarkVersion` tracks the **`@usequark/quark-core` version your project is on** (currently 2.8.0). It is what `quark-update` reads and writes. The scaffolded CLI is 1.26.0 and is not a runtime dependency of your project, so it does not appear here.
 
 The `packages` list records the scaffolded set. `db`, `config`, and `ui` are always present. `jobs` appears only if you asked for it. `pwa` and `mobile` are recorded as feature selections without scaffolding code.
 

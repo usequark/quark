@@ -152,7 +152,7 @@ npx quark deploy inspect    # applied config per service
 Quark includes production-ready security features:
 
 - 🔒 **CSRF Protection** - Token-based protection for state-changing requests
-- 🚦 **Rate Limiting** - In-memory in the shipped proxy; a Redis-backed limiter ships in core but is not wired into the web middleware
+- 🚦 **Rate Limiting** - Redis-backed when `REDIS_URL` is set (shared budget across instances), in-memory otherwise; the shipped proxy wires the core limiter in and fails closed
 - 📏 **Request Size Limits** - Configurable payload restrictions (2MB API, 10MB uploads)
 - 🛡️ **Security Headers** - HSTS, X-Frame-Options, CSP, X-Content-Type-Options
 - 🌐 **CORS** - Environment-based origin control

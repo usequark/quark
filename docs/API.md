@@ -209,7 +209,7 @@ The ID token is verified against Google's `tokeninfo` endpoint, and two claims m
 
 ### `GET /api/csrf`
 
-Generate a CSRF token. Returns `401` when there is no active session. The token is also written to an `httpOnly` cookie so the server can validate it later.
+Generate a CSRF token. Requires no session — registration is pre-authentication, so a visitor with no account can obtain a token. The token is also written to an `httpOnly` cookie so the server can validate it later.
 
 **Response:**
 ```json
@@ -561,7 +561,7 @@ logger.info("did the thing");
 
 `getAssetUrl(key)` returns a URL rooted at `ASSET_CDN_URL` when a CDN is configured, and falls back to the local `/api/files/<key>` route otherwise.
 
-Subpath entry points exist for narrower imports: `@usequark/quark-core/errors`, `/auth`, `/db`, `/email`, `/health`, `/locale`, `/logger`, `/metrics`, `/queue`, `/sms`, `/storage`, `/storage/s3`, `/stripe`, `/testing`.
+Subpath entry points exist for narrower imports (the full list is the `exports` map in `packages/core/package.json`): `@usequark/quark-core/core`, `/admin`, `/auth`, `/auth/middleware`, `/csrf-client`, `/db`, `/email`, `/email-templates`, `/errors`, `/health`, `/locale`, `/logger`, `/metrics`, `/multipart`, `/queue`, `/redis`, `/sms`, `/storage`, `/storage/s3`, `/stripe`, `/testing`.
 
 ### `@<scope>/ui`
 
