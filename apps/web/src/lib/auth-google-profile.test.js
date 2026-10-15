@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { test } from "node:test";
+import { mock, test } from "node:test";
 
 // `auth.js` builds its provider list at import time, so the environment has to
 // be in place before the import runs — a `beforeEach` would be too late, and the
@@ -7,6 +7,18 @@ import { test } from "node:test";
 process.env.GOOGLE_CLIENT_ID = "google-client-id";
 process.env.GOOGLE_CLIENT_SECRET = "google-client-secret";
 process.env.NEXTAUTH_SECRET = "test-secret-that-is-at-least-32-characters";
+
+// The flag is mocked rather than set through `loadConfig()`: that path validates
+// the whole environment on first call, which a unit test does not provide. The
+// default below is the value the scaffold ships, so the suite runs against the
+// shipped configuration and only the opt-out test flips it.
+let emailVerificationRequired = true;
+
+mock.module("./auth-email-verification.js", {
+	namedExports: {
+		isEmailVerificationRequired: () => emailVerificationRequired,
+	},
+});
 
 const { getAuthOptions } = await import("./auth.js");
 const { isEmailVerified } = await import("./email-verified.js");
@@ -166,5 +178,22 @@ test("the shared helper and the provider agree on what confirmed means", () => {
 			mapperAccepts({ ...GOOGLE_PROFILE, email_verified }),
 			`the helper and the provider disagree about ${JSON.stringify(email_verified)}`,
 		);
+	}
+});
+
+test("the Google provider lets an unconfirmed address through when REQUIRE_EMAIL_VERIFICATION=false", () => {
+	// The opt-out governs this path and the credentials one alike: with
+	// enforcement off, the mapper returns to what it did before the check
+	// existed and hands the profile back untouched.
+	emailVerificationRequired = false;
+
+	try {
+		assert.deepStrictEqual(
+			googleProfile()({ ...GOOGLE_PROFILE, email_verified: "false" }),
+			{ ...GOOGLE_PROFILE, email_verified: "false" },
+		);
+	} finally {
+		// Restore the shipped default for any test that runs after this one.
+		emailVerificationRequired = true;
 	}
 });

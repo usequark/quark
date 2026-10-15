@@ -27,6 +27,8 @@ Sign in with credentials. Handled by NextAuth.js at `/api/auth/[...nextauth]`.
 
 **Response:** Redirects to callback URL with session cookie.
 
+Sign-in is gated on the address being confirmed: when `REQUIRE_EMAIL_VERIFICATION` is `true` (the default), a password that verifies for an account with no `emailVerified` on file is refused with an `AppError` carrying code `OAUTH_EMAIL_NOT_VERIFIED`. The check runs after the password, so a wrong password still answers `Invalid credentials` and the error code cannot be used to probe which addresses are registered or confirmed. Set `REQUIRE_EMAIL_VERIFICATION=false` to lift the gate.
+
 GitHub and Google OAuth providers are registered automatically when `GITHUB_ID` and `GITHUB_SECRET`, or `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`, are set. All five OAuth variables are optional; an app that sets none is unaffected.
 
 Separately from NextAuth, `POST /api/auth/google` and `POST /api/auth/apple` are hand-written token-exchange endpoints used by the mobile app. Both are enabled by their client id — `GOOGLE_CLIENT_ID` and `APPLE_CLIENT_ID` — and **both refuse every request with `503` when that variable is unset**, rather than exchanging a token they cannot bind to this deployment.
@@ -74,7 +76,7 @@ Create a user with a hashed password, enqueue a welcome email, and issue an emai
 
 **Validation** (`userRegisterSchema`): valid email; password at least 8 characters with an uppercase letter, a lowercase letter, and a digit; name at least 2 characters.
 
-**Response (201):** the created user, password omitted. Both email hand-offs are fire-and-forget: if either fails the user is still created and the request still answers `201`. Confirming the address does not gate sign-in — `emailVerified` is enforced nowhere yet; the verification flow exists so an address can be confirmed on the user's schedule.
+**Response (201):** the created user, password omitted. Both email hand-offs are fire-and-forget: if either fails the user is still created and the request still answers `201`. Registration does **not** set `emailVerified`, so the account exists unconfirmed until `GET /api/auth/verify-email?token=…` is redeemed. Since `REQUIRE_EMAIL_VERIFICATION` defaults to `true`, an unconfirmed address cannot sign in with credentials — set the flag to `false` to let the address in without confirming it (see [SECURITY_FEATURES.md](./SECURITY_FEATURES.md)).
 
 ### `POST /api/auth/forgot-password`
 
@@ -180,11 +182,13 @@ Verify an Apple identity token and issue a JWT pair. Public.
 }
 ```
 
-The `kid` from the token header selects Apple's public key, which is fetched live from `https://appleid.apple.com/auth/keys` and verified against issuer `https://appleid.apple.com`. A user matching the token's email is created on first sign-in.
+The `kid` from the token header selects Apple's public key, which is fetched live from `https://appleid.apple.com/auth/keys` and verified against issuer `https://appleid.apple.com`. The token's `email_verified` claim must confirm the address — this endpoint creates the account on first sight, so an unconfirmed address would make the confirmation the attacker's to skip rather than the owner's to perform. The check is governed by `REQUIRE_EMAIL_VERIFICATION` and is skipped when the flag is `false`, as it is everywhere else. A user matching the token's email is created on first sign-in.
 
 **Response (200):** `{ "token": "...", "refreshToken": "...", "expiresAt": "..." }`.
 
 **Response (400):** the verified token carries no email address.
+
+**Response (401):** one generic `Invalid Apple token` for a token that fails verification, a nonce mismatch, and an unverified address alike.
 
 ### `POST /api/auth/google`
 
@@ -197,7 +201,7 @@ Verify a Google ID token and issue a JWT pair. Public.
 }
 ```
 
-The ID token is verified against Google's `tokeninfo` endpoint, and two claims must hold before an account is touched: `aud` must equal `GOOGLE_CLIENT_ID`, and `email_verified` must confirm the address — this endpoint creates the account on first sight, so an unconfirmed address would make the confirmation the attacker's to skip rather than the owner's to perform. A user matching the token's email is created on first sign-in.
+The ID token is verified against Google's `tokeninfo` endpoint, and two claims must hold before an account is touched: `aud` must equal `GOOGLE_CLIENT_ID`, and `email_verified` must confirm the address — this endpoint creates the account on first sight, so an unconfirmed address would make the confirmation the attacker's to skip rather than the owner's to perform. The second check is governed by `REQUIRE_EMAIL_VERIFICATION` and is skipped when the flag is `false`, as it is everywhere else. A user matching the token's email is created on first sign-in.
 
 **Response (200):** `{ "token": "...", "refreshToken": "...", "expiresAt": "..." }`.
 
@@ -319,7 +323,7 @@ The schema ships exactly seven models: `User`, `Account`, `Session`, `Verificati
 |---------------|----------|----------------------------------------------------------------|
 | id            | String   | Unique identifier (CUID)                                       |
 | email         | String   | User email (unique)                                            |
-| emailVerified | DateTime? | OAuth email verification timestamp                             |
+| emailVerified | DateTime? | When the confirmation link was redeemed. Null = unverified, and this is the value the sign-in gate reads |
 | name          | String?  | Optional display name                                          |
 | password      | String?  | Password hash, null for OAuth-only accounts                    |
 | image         | String?  | Avatar URL                                                     |
@@ -613,6 +617,7 @@ import { JOB_NAMES, JOB_QUEUES } from "@<scope>/jobs";
 | APP_URL              | Application URL (auto-derived in dev)                  | `https://yourdomain.com`                   |
 | WORKER_CONCURRENCY   | Worker job concurrency                                 | `5`                                        |
 | AUTH_ALLOW_SIGNUP    | Set to `false` to disable public self-service signup   | `false`                                    |
+| REQUIRE_EMAIL_VERIFICATION | Require a confirmed address for credentials and OAuth sign-in | `true` (unset = `true`) |
 | **Email**            |                                                        |                                            |
 | EMAIL_PROVIDER       | `"smtp"` (default), `"resend"`, `"zeptomail"`, or custom | `zeptomail`                              |
 | EMAIL_FROM           | Sender address                                         | `App <noreply@yourdomain.com>`             |

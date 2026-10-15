@@ -64,6 +64,17 @@ Quark includes several security features out of the box:
 - **Revocation**: the `jwt` callback re-validates the token against the database on every request (`apps/web/src/lib/auth.js`). A deleted user's token is rejected and the cookie cleared; the role is refreshed from the row, so demoting an admin takes effect immediately; and any token issued before `User.passwordChangedAt` is rejected, so changing a password kills every session the old password created. An unreachable database fails closed (session rejected), never open.
 - **Secret**: Environment-based `NEXTAUTH_SECRET`
 
+#### 8. **Email Verification Gate**
+- **Flag**: `REQUIRE_EMAIL_VERIFICATION` — **default `true`**. Set to `false` to restore the pre-gate behaviour on every path at once.
+- **Validated**: declared in [packages/config/src/validate-env.js](../packages/config/src/validate-env.js) with the same Zod `booleanLike` schema as `AUTH_ALLOW_SIGNUP`, and surfaced as `config.auth.requireEmailVerification` (defaulted per environment in [packages/config/src/environment.js](../packages/config/src/environment.js)). Accepted spellings: `true/false`, `1/0`, `yes/no`, `on/off`.
+- **Governs two paths, from one source** ([apps/web/src/lib/auth-email-verification.js](../apps/web/src/lib/auth-email-verification.js)):
+  - **Credentials** — the `authorize()` in [apps/web/src/lib/auth.js](../apps/web/src/lib/auth.js) checks `User.emailVerified` after the password verifies and throws an `AppError` with code `OAUTH_EMAIL_NOT_VERIFIED` (401) when it is unset or null. It throws rather than returning `null` so the reason survives to the operator's log instead of collapsing into Auth.js's generic "Invalid credentials".
+  - **OAuth** — the Google provider's `profile()` mapper applies the same rule to the provider's `email_verified` claim, and the mobile `POST /api/auth/google` and `POST /api/auth/apple` routes apply it to the verified token payload. With the flag off, all four fall back to their prior behaviour.
+- **`null` reads as unverified.** `User.emailVerified` is a nullable column with no default, so a row that has never been through `/api/auth/verify-email` is unverified — whether it was created by registration, by the seed, or by OAuth.
+- **Password is checked first.** The verification refusal only fires once the password matches; the other order would answer "is this address registered and confirmed" for anyone who can submit a name, using the error code as the oracle.
+
+**Migration note:** turning this on (it is on by default) refuses sign-in for **every existing credentials user whose `emailVerified` is null** — in practice, all users who signed up before the verification link existed and never clicked one. Registration has never set `emailVerified`, so this is not limited to old rows. On upgrade, either confirm your existing user base before deploying, tell users to request a fresh link, or ship with `REQUIRE_EMAIL_VERIFICATION=false` and flip it once the backlog is verified. A SQL backfill that stamps `emailVerified = now()` for known-good addresses is the other option; it is a judgement call only you can make, because it asserts something about an address you did not observe being confirmed.
+
 ---
 
 ## Environment Variable Security
@@ -135,6 +146,7 @@ The following environment variables contain sensitive data and must be kept secu
 - [ ] ⚠️ Dependency vulnerability scanning enabled
 - [ ] ⚠️ Error tracking configured (Sentry, etc.)
 - [ ] ⚠️ Logging configured (no sensitive data logged)
+- [ ] ⚠️ `REQUIRE_EMAIL_VERIFICATION` reviewed against the installed base — default `true` refuses sign-in for any account with no confirmation on file
 
 ---
 
@@ -416,6 +428,11 @@ APP_URL=https://yourdomain.com
 
 # NextAuth
 NEXTAUTH_SECRET=<strong-secret-from-vault>
+
+# Email verification gate (default: true - uncomment only to opt out)
+# Governs both the credentials sign-in check and the OAuth email_verified
+# check. Setting it to false restores the behaviour from before the gate.
+# REQUIRE_EMAIL_VERIFICATION=false
 
 # OAuth (optional - from provider consoles)
 # Each provider is enabled by its client id alone. Google also needs the secret

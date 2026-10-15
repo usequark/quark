@@ -105,6 +105,40 @@ describe("Configuration Loader - loadConfig", () => {
 		assert.strictEqual(config.auth.allowSignup, false);
 	});
 
+	test("REQUIRE_EMAIL_VERIFICATION defaults to true when unset", () => {
+		// The default is the point of the flag: an operator who has not heard of
+		// it gets the enforced behaviour, not the permissive one.
+		const config = loadConfig();
+		assert.strictEqual(config.auth.requireEmailVerification, true);
+	});
+
+	test("reads REQUIRE_EMAIL_VERIFICATION from env", () => {
+		process.env.REQUIRE_EMAIL_VERIFICATION = "false";
+		const config = loadConfig();
+		assert.strictEqual(config.auth.requireEmailVerification, false);
+	});
+
+	test("REQUIRE_EMAIL_VERIFICATION accepts the boolean spellings Zod allows", () => {
+		for (const [value, expected] of [
+			["true", true],
+			["1", true],
+			["yes", true],
+			["on", true],
+			["false", false],
+			["0", false],
+			["no", false],
+			["off", false],
+		]) {
+			resetConfig();
+			process.env.REQUIRE_EMAIL_VERIFICATION = value;
+			assert.strictEqual(
+				loadConfig().auth.requireEmailVerification,
+				expected,
+				`${value} should read as ${expected}`,
+			);
+		}
+	});
+
 	test("reads DB_POOL_MAX from env", () => {
 		process.env.DB_POOL_MAX = "20";
 		const config = loadConfig();

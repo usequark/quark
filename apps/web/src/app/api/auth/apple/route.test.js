@@ -173,6 +173,27 @@ const CREATED = {
 	role: "viewer",
 };
 
+const emailVerificationUrl = pathToFileURL(
+	new URL("../../../../lib/auth-email-verification.js", import.meta.url)
+		.pathname,
+).href;
+
+/**
+ * `isEmailVerificationRequired()` for the current test.
+ *
+ * Defaults to `true`, which is the value the scaffold ships, so the suite runs
+ * against the shipped configuration and only the tests that cover the opt-out
+ * flip it. The accessor reads `loadConfig()`, which validates the environment
+ * on first call — an env that the tests deliberately do not provide.
+ */
+let emailVerificationRequired;
+
+mock.module(emailVerificationUrl, {
+	namedExports: {
+		isEmailVerificationRequired: () => emailVerificationRequired,
+	},
+});
+
 const { POST } = await import("./route.js");
 
 /**
@@ -213,6 +234,8 @@ function resetFixtures() {
 	findByEmailCalls = [];
 	issueCalls = [];
 	issueError = null;
+	// The shipped default. Tests covering the opt-out flip this before POSTing.
+	emailVerificationRequired = true;
 }
 
 let originalFetch;
@@ -747,4 +770,55 @@ test("POST does not distinguish a nonce failure from any other 401", async () =>
 
 	assert.strictEqual(response.status, 401);
 	assert.deepStrictEqual(JSON.parse(raw), { message: "Invalid Apple token" });
+});
+
+test("POST rejects a token whose address Apple has not verified", async () => {
+	// The same gap the Google route closed: this endpoint creates the account on
+	// first sight, so an unconfirmed address would make the confirmation the
+	// attacker's to skip rather than the owner's to perform.
+	verifiedPayload = { ...VALID_PAYLOAD, email_verified: "false" };
+
+	const response = await POST(appleRequest());
+
+	assert.strictEqual(response.status, 401);
+	assert.deepStrictEqual(findByEmailCalls, []);
+	assert.deepStrictEqual(createCalls, []);
+	assert.deepStrictEqual(issueCalls, []);
+});
+
+test("POST never lets an unverified address reach the database", async () => {
+	// The signature, audience, and nonce have all passed here, so this token is
+	// one Apple genuinely issued for this app. Letting its email reach
+	// `findByEmail` would still be wrong twice over: it would sign in, or
+	// create, an account for an address nobody has confirmed, and it would
+	// expose whether that address is registered through the difference between
+	// a 401 and a 200.
+	verifiedPayload = {
+		...VALID_PAYLOAD,
+		email_verified: "false",
+		email: "victim@icloud.com",
+	};
+
+	const response = await POST(appleRequest());
+
+	assert.strictEqual(response.status, 401);
+	assert.deepStrictEqual(
+		steps.filter((s) => s.startsWith("findByEmail")),
+		[],
+	);
+	assert.deepStrictEqual(createCalls, []);
+	assert.deepStrictEqual(issueCalls, []);
+});
+
+test("POST accepts an unverified address when REQUIRE_EMAIL_VERIFICATION=false", async () => {
+	// The opt-out is the whole reason the flag exists: with enforcement off, the
+	// route returns to the behaviour it had before the check, so an address
+	// Apple has not confirmed signs in rather than being refused.
+	emailVerificationRequired = false;
+	verifiedPayload = { ...VALID_PAYLOAD, email_verified: "false" };
+
+	const response = await POST(appleRequest());
+
+	assert.strictEqual(response.status, 200);
+	assert.strictEqual(issueCalls.length, 1);
 });
