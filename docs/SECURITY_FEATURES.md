@@ -18,7 +18,7 @@ Quark includes several security features out of the box:
   - Auth endpoints: 5 requests per 15 minutes
 - **Headers**: Returns `X-RateLimit-*` headers for client feedback
 - **Storage**: Redis-backed when `REDIS_URL` is set (shared budget across instances), in-memory when it is unset (single instance). `apps/web/src/proxy.js` reads `REDIS_URL` and builds the limiter from the core building block (`createRateLimiter({ type: "redis", redisClient })` in `packages/core/src/rate-limiter.js`), failing closed by default. See [Redis-based Rate Limiting](#3-redis-based-rate-limiting-) below.
-- **Keying**: buckets are keyed on the client IP resolved from proxy headers — see [Rate-Limit Keying & Proxy Headers](#rate-limit-keying--proxy-headers) for the trust flag and its spoofing trade-off.
+- **Keying**: buckets are keyed on `${clientIp}:${path}`, with the client IP resolved from proxy headers — see [Rate-Limit Keying & Proxy Headers](#rate-limit-keying--proxy-headers) for the trust flag and its spoofing trade-off.
 
 #### 2. **Security Headers**
 - **Location**: [apps/web/src/proxy.js](../apps/web/src/proxy.js), [apps/web/next.config.js](../apps/web/next.config.js)
@@ -279,7 +279,7 @@ middleware resolves the client IP from the request's proxy headers instead:
 
 1. the left-most entry of `x-forwarded-for`, then
 2. `x-real-ip`, then
-3. the literal `"unknown"` — one shared bucket for every client.
+3. the literal `"unknown"`, which makes the key `unknown:<path>`.
 
 Both headers are client-supplied. They are only an identity if something in
 front of the app — Railway, a Docker/nginx reverse proxy, a CDN — **overwrites
@@ -287,27 +287,34 @@ them on every request**. When the app is reachable directly, a client can send
 its own `x-forwarded-for` and rotate it per request, and each value earns a
 fresh bucket. That is the spoofing story this flag exists to close.
 
+Because the key includes the pathname, every route has its own bucket. Disabling
+trust collapses *each* route's clients onto one shared `unknown:<path>` bucket —
+not one bucket across all routes.
+
 #### `TRUST_PROXY_HEADERS`
 
 | Value | Behaviour |
 |---|---|
 | unset (default) | Trust `x-forwarded-for` / `x-real-ip`. The left-most forwarded entry is the client IP. Preserves the shipped behaviour. |
-| `false`, `0`, `no`, `off` | Ignore both headers; every client keys on `"unknown"`. |
+| `false`, `0`, `no`, `off` | Ignore both headers; all clients share the `unknown:<path>` bucket for each route. |
 | anything else | Treated as the default (trust). Only explicit false-like values disable it. |
 
 **Default: trust.** This is deliberate and preserves today's behaviour. The app
 is deployed behind a platform proxy by default (Railway terminates TLS and sets
 `x-forwarded-for`), so trusting the header is what gives per-client buckets
-rather than one shared bucket.
+rather than one bucket shared by every client of a route.
 
 Set `TRUST_PROXY_HEADERS=false` when the app is exposed directly (no proxy
 rewriting the header on the way in). Requests then collapse onto the shared
-`"unknown"` bucket, so a spoofed `x-forwarded-for` cannot buy a fresh bucket per
-request. The limiter still counts — it just cannot distinguish clients anymore,
-which is the trade-off: with the flag off, one client's burst of 5 credential
-posts locks out the `auth` bucket for everyone for the window. That is exactly
-why the default trusts the headers, and why the flag should only be turned off
-when the alternative — a trivially spoofable key — is the worse risk for you.
+`unknown:<path>` bucket for each route, so a spoofed `x-forwarded-for` cannot buy
+a fresh bucket per request. The limiter still counts — it just cannot distinguish
+clients anymore, which is the trade-off: with the flag off, one client's burst of
+5 credential posts on `/api/auth/callback/credentials` locks out **that path** for
+everyone for the window, while other paths (`/api/auth/register`,
+`/api/auth/forgot-password`, and the general `api` routes) keep their own buckets.
+That is exactly why the default trusts the headers, and why the flag should only
+be turned off when the alternative — a trivially spoofable key — is the worse
+risk for you.
 
 The flag is read per request, so it can be flipped without a rebuild; a change
 takes effect on the next request. It only controls the rate-limit key. It does

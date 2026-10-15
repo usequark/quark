@@ -111,11 +111,13 @@ const PROXY_HEADERS_FALSY_VALUES = new Set(["false", "0", "no", "off"]);
  *
  * Set `TRUST_PROXY_HEADERS=false` when the app is reachable directly (no
  * proxy rewriting the header on the way in). The headers are then ignored and
- * every client keys on the literal "unknown" — a single shared bucket. A
- * header a client can set is not an identity, so this is what stops a spoofed
- * `x-forwarded-for` from buying a fresh bucket per request. The trade-off is
- * the reverse of the default: one client can now exhaust the shared bucket,
- * which is why the default keeps trusting the headers.
+ * every client keys on the literal "unknown". Because the bucket key is
+ * `${ip}:${path}`, that means one bucket shared by every client of a route —
+ * not one bucket across all routes. A header a client can set is not an
+ * identity, so this is what stops a spoofed `x-forwarded-for` from buying a
+ * fresh bucket per request. The trade-off is the reverse of the default: one
+ * client can now exhaust the shared bucket for the route it floods, which is
+ * why the default keeps trusting the headers.
  *
  * Read lazily (per request) rather than at module load: tests flip it and a
  * value set after import still takes effect. Only explicit false-like values
@@ -132,8 +134,10 @@ export function shouldTrustProxyHeaders() {
  * Resolve the client IP for rate-limit keying.
  *
  * `NextRequest.ip` was removed in Next 15, so `request.ip` is always
- * `undefined` here and the literal key "unknown" would collapse every caller
- * onto one shared bucket — which is why this reads the proxy headers instead.
+ * `undefined` here and every caller would key on the literal "unknown" — one
+ * bucket shared by every client of a route (the bucket key is `${ip}:${path}`).
+ * That is what made one burst of 5 credential posts lock out sign-in for
+ * everyone for 15 minutes, which is why this reads the proxy headers instead.
  *
  * When `TRUST_PROXY_HEADERS` is enabled (the default) the left-most
  * `x-forwarded-for` entry is used, falling back to `x-real-ip`; both are

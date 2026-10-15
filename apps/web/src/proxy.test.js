@@ -32,6 +32,11 @@ const {
 beforeEach(() => {
 	// A working Redis: first hit in a window returns count 1, ttl = window.
 	redisEvalImpl = async () => [1, 60000];
+	// Pin the shipped default (trust proxy headers). Without this, running the
+	// suite with the documented `TRUST_PROXY_HEADERS=false` in the ambient
+	// environment flips the per-IP tests below onto the shared "unknown" bucket
+	// and fails them. Tests that need the flag off set it themselves.
+	delete process.env.TRUST_PROXY_HEADERS;
 	__resetRateLimiterForTests();
 });
 
@@ -163,55 +168,46 @@ test("omits rate limit headers on exempt routes", async () => {
 // ── TRUST_PROXY_HEADERS ──────────────────────────────────────────────────────
 // The flag gates whether the proxy headers above are trusted. Default is
 // "trust" (the shipped behaviour); only an explicit false-like value disables
-// it. The behaviour tests use the in-memory limiter, so they clear REDIS_URL
-// and re-select the backend, and restore both env vars afterwards.
+// it. `beforeEach` clears any ambient setting, so each test states the mode it
+// needs. The behaviour tests use the in-memory limiter, so they clear REDIS_URL
+// and re-select the backend, restoring it afterwards.
 
 test("TRUST_PROXY_HEADERS parses boolean-like values, trusting by default", () => {
-	const env = process.env.TRUST_PROXY_HEADERS;
-	try {
-		for (const value of ["1", "true", "yes", "on", "TRUE", " on "]) {
-			process.env.TRUST_PROXY_HEADERS = value;
-			assert.equal(
-				shouldTrustProxyHeaders(),
-				true,
-				`"${value}" should trust proxy headers`,
-			);
-		}
-
-		for (const value of ["0", "false", "no", "off", "FALSE", " off "]) {
-			process.env.TRUST_PROXY_HEADERS = value;
-			assert.equal(
-				shouldTrustProxyHeaders(),
-				false,
-				`"${value}" should not trust proxy headers`,
-			);
-		}
-
-		delete process.env.TRUST_PROXY_HEADERS;
+	for (const value of ["1", "true", "yes", "on", "TRUE", " on "]) {
+		process.env.TRUST_PROXY_HEADERS = value;
 		assert.equal(
 			shouldTrustProxyHeaders(),
 			true,
-			"unset must preserve the shipped behaviour of trusting proxy headers",
+			`"${value}" should trust proxy headers`,
 		);
-	} finally {
-		if (env === undefined) delete process.env.TRUST_PROXY_HEADERS;
-		else process.env.TRUST_PROXY_HEADERS = env;
 	}
+
+	for (const value of ["0", "false", "no", "off", "FALSE", " off "]) {
+		process.env.TRUST_PROXY_HEADERS = value;
+		assert.equal(
+			shouldTrustProxyHeaders(),
+			false,
+			`"${value}" should not trust proxy headers`,
+		);
+	}
+
+	delete process.env.TRUST_PROXY_HEADERS;
+	assert.equal(
+		shouldTrustProxyHeaders(),
+		true,
+		"unset must preserve the shipped behaviour of trusting proxy headers",
+	);
 });
 
 test("TRUST_PROXY_HEADERS on keys each forwarded IP into its own bucket", async (t) => {
 	const savedRedisUrl = process.env.REDIS_URL;
-	const savedTrust = process.env.TRUST_PROXY_HEADERS;
 
 	t.after(() => {
 		if (savedRedisUrl === undefined) delete process.env.REDIS_URL;
 		else process.env.REDIS_URL = savedRedisUrl;
-		if (savedTrust === undefined) delete process.env.TRUST_PROXY_HEADERS;
-		else process.env.TRUST_PROXY_HEADERS = savedTrust;
 	});
 
 	delete process.env.REDIS_URL;
-	delete process.env.TRUST_PROXY_HEADERS;
 	__resetRateLimiterForTests();
 
 	const ipA = "203.0.113.40";
@@ -233,29 +229,29 @@ test("TRUST_PROXY_HEADERS on keys each forwarded IP into its own bucket", async 
 	);
 });
 
-test("TRUST_PROXY_HEADERS off ignores spoofed headers (one shared bucket)", async (t) => {
+test("TRUST_PROXY_HEADERS off ignores spoofed headers (one bucket per path)", async (t) => {
 	const savedRedisUrl = process.env.REDIS_URL;
 
 	t.after(() => {
 		if (savedRedisUrl === undefined) delete process.env.REDIS_URL;
 		else process.env.REDIS_URL = savedRedisUrl;
-		delete process.env.TRUST_PROXY_HEADERS;
 	});
 
-	delete process.env.REDIS_URL;
 	process.env.TRUST_PROXY_HEADERS = "false";
+	delete process.env.REDIS_URL;
 	__resetRateLimiterForTests();
 
 	const ipA = "203.0.113.50";
 	const ipB = "203.0.113.51";
 
-	// Exhaust the shared bucket through A.
+	// Exhaust the shared bucket for this path through A.
 	for (let i = 0; i < 5; i++) {
 		await proxy(authRequest(ipA));
 	}
 
 	// A different spoofed x-forwarded-for value must NOT earn a fresh bucket:
-	// with trust off there is no per-client key to rotate.
+	// with trust off the key is "unknown:<path>", so there is no client IP to
+	// rotate.
 	const limitedB = await proxy(authRequest(ipB));
 	assert.equal(
 		limitedB.status,
