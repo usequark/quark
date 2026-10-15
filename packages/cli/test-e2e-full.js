@@ -6,13 +6,19 @@
  * Full lifecycle test:
  * 1. Create project with CLI (--no-prompts flag)
  * 2. Verify project structure
- * 3. Install dependencies (pnpm install)
+ * 3. Build the scaffolded project (pnpm build - the compile check)
  * 4. Start Docker infrastructure
  * 5. Run database migrations
  * 6. Run database seed
  * 7. Start the application (pnpm dev)
  * 8. Run health checks
  * 9. Cleanup
+ *
+ * The production build (step 3) is the only phase that compiles the generated
+ * project. `next dev` compiles routes lazily and the health check only visits
+ * `/`, so an import that no selected feature satisfies would otherwise go
+ * undetected. Set QUARK_CLI_E2E_SKIP_BUILD=1 to skip it, or
+ * QUARK_CLI_E2E_BUILD_MATRIX=1 to also build additional --packages combinations.
  */
 
 import { spawn, spawnSync } from "node:child_process";
@@ -33,6 +39,29 @@ const E2E_RESULTS_FILE = path.join(
 const PROJECT_NAME = "e2e-test-app";
 const PROJECT_PATH = path.join(E2E_TEST_DIR, PROJECT_NAME);
 const STEP_TIMEOUT = 60000; // 60s per step timeout
+// A cold production build (turbo -> next build) of a freshly scaffolded project
+// measures well under a minute on a warm runner but can approach a couple of
+// minutes on a cold one, so it gets its own budget separate from STEP_TIMEOUT.
+const BUILD_TIMEOUT = 300000; // 5 min for one production build
+// The build is what catches import-level regressions in the generated output:
+// a static import the selected feature set does not satisfy (a workspace
+// package that no selected feature scaffolds, or a relative file a feature
+// template omitted). `next dev` compiles routes lazily and the Phase 8 health
+// check only ever touches `/`, so nothing else in this harness compiles a route
+// that is not visited. The build is on by default; the env vars below exist for
+// triage and for widening coverage without widening the default CI runtime.
+const SKIP_BUILD = process.env.QUARK_CLI_E2E_SKIP_BUILD === "1";
+const RUN_BUILD_MATRIX = process.env.QUARK_CLI_E2E_BUILD_MATRIX === "1";
+// Additional representative --packages combinations compiled only when
+// QUARK_CLI_E2E_BUILD_MATRIX=1. Each entry needs a fresh scaffold + install, so
+// the full matrix is opt-in: the default CI run builds exactly one project.
+const EXTRA_BUILD_SCENARIOS = [
+	{ name: "pwa", projectName: "e2e-test-app-pwa", packages: "pwa" },
+	{ name: "jobs-only", projectName: "e2e-test-app-jobs", packages: "jobs" },
+];
+// Accumulated production-build time, reported separately so the performance
+// gate can keep judging the Docker lifecycle against its original budget.
+let buildDurationMs = 0;
 
 // Color codes
 const colors = {
@@ -177,6 +206,50 @@ function executeBackground(cmd, args, options = {}) {
 }
 
 /**
+ * Run the scaffolded project's own production build.
+ *
+ * This is the compile-level assertion. Every other check in the CLI suite is
+ * structural (existsSync / string matching): a scaffold can pass all of them
+ * and still not compile. `pnpm build` is what a user runs and what the deploy
+ * path (`build:deploy`) wraps, so a broken import fails here with the same
+ * "Module not found" the user would see.
+ *
+ * A build artefact is required as well, so a cache hit or a silently skipped
+ * task cannot read as a pass.
+ */
+async function buildScaffoldedProject(projectPath, label) {
+	const nextDir = path.join(projectPath, "apps", "web", ".next");
+	const buildIdPath = path.join(nextDir, "BUILD_ID");
+
+	// Drop any stale artefact so a no-op build cannot "pass" against it.
+	await fs.remove(nextDir);
+
+	log.info(`Running: pnpm build (${label})`);
+	const startedAt = Date.now();
+	// `execute` rejects on a non-zero exit, which is how a compile failure
+	// (turbo -> next build, exit 1) becomes a hard test failure.
+	await execute("pnpm", ["build"], {
+		cwd: projectPath,
+		stdio: "inherit",
+		timeout: BUILD_TIMEOUT,
+	});
+	const duration = Date.now() - startedAt;
+
+	// Next.js writes BUILD_ID only after it has compiled and finalised the
+	// build. Requiring it proves the compiler actually ran and succeeded.
+	if (!(await fs.pathExists(buildIdPath))) {
+		throw new Error(
+			`Build exited 0 but produced no ${path.relative(projectPath, buildIdPath)} - nothing was compiled`,
+		);
+	}
+
+	buildDurationMs += duration;
+	log.success(
+		`Production build compiled (${label}) in ${(duration / 1000).toFixed(1)}s`,
+	);
+}
+
+/**
  * Main test function
  */
 async function runE2ETest() {
@@ -259,8 +332,54 @@ async function runE2ETest() {
 
 		endPhase();
 
-		// === PHASE 3: Docker Setup ===
-		startPhase("Phase 3: Docker Infrastructure Setup");
+		// === PHASE 3: Production Build (compile check) ===
+		startPhase("Phase 3: Production Build");
+
+		if (SKIP_BUILD) {
+			log.warn("Skipped production build (QUARK_CLI_E2E_SKIP_BUILD=1)");
+		} else {
+			// The compile-level assertion the suite was missing. It needs no
+			// Docker service (prisma generate is offline and Next.js only
+			// compiles), so it runs before the infrastructure phases and fails
+			// fast on a broken scaffold. The dev server started later reuses the
+			// generated .next output.
+			await buildScaffoldedProject(PROJECT_PATH, "default ui,jobs");
+
+			// Opt-in: compile additional representative --packages combinations.
+			// Each needs its own scaffold + install, so this is gated behind an
+			// env var and stays out of the default CI runtime.
+			if (RUN_BUILD_MATRIX) {
+				for (const scenario of EXTRA_BUILD_SCENARIOS) {
+					const scenarioPath = path.join(E2E_TEST_DIR, scenario.projectName);
+					log.info(
+						`Build matrix: scaffolding ${scenario.projectName} (--packages ${scenario.packages})`,
+					);
+					await execute(
+						"node",
+						[
+							path.join(__dirname, "src/index.js"),
+							scenario.projectName,
+							"--no-prompts",
+							"--packages",
+							scenario.packages,
+							"--skip-docker",
+						],
+						{
+							cwd: E2E_TEST_DIR,
+							stdio: "inherit",
+							timeout: 120000,
+							env: { ...process.env, QUARK_SKIP_GIT_INIT: "true" },
+						},
+					);
+					await buildScaffoldedProject(scenarioPath, scenario.name);
+				}
+			}
+		}
+
+		endPhase();
+
+		// === PHASE 4: Docker Setup ===
+		startPhase("Phase 4: Docker Infrastructure Setup");
 
 		// Check if Docker is available
 		try {
@@ -318,9 +437,9 @@ async function runE2ETest() {
 
 		endPhase();
 
-		// === PHASE 4: Database Setup ===
+		// === PHASE 5: Database Setup ===
 		if (dockerRunning) {
-			startPhase("Phase 4: Database Migrations");
+			startPhase("Phase 5: Database Migrations");
 
 			// Use prisma migrate deploy (non-interactive) instead of migrate dev
 			// which would prompt for new migration names
@@ -361,8 +480,8 @@ async function runE2ETest() {
 
 			endPhase();
 
-			// === PHASE 5: Database Seed ===
-			startPhase("Phase 5: Database Seed");
+			// === PHASE 6: Database Seed ===
+			startPhase("Phase 6: Database Seed");
 
 			log.info("Running: pnpm db:seed");
 			try {
@@ -380,8 +499,8 @@ async function runE2ETest() {
 
 			endPhase();
 
-			// === PHASE 6: Application Startup ===
-			startPhase("Phase 6: Application Startup");
+			// === PHASE 7: Application Startup ===
+			startPhase("Phase 7: Application Startup");
 
 			// Determine app port from .env
 			const envContent = await fs.readFile(
@@ -442,8 +561,8 @@ async function runE2ETest() {
 
 			endPhase();
 
-			// === PHASE 7: Health Checks ===
-			startPhase("Phase 7: Health Checks");
+			// === PHASE 8: Health Checks ===
+			startPhase("Phase 8: Health Checks");
 
 			log.info("Checking application health...");
 			let healthOk = false;
@@ -506,6 +625,13 @@ async function runE2ETest() {
 		console.log("  ✓ Project creation with CLI (--no-prompts)");
 		console.log("  ✓ Project structure and files");
 		console.log("  ✓ Dependency installation (pnpm install)");
+		if (SKIP_BUILD) {
+			console.log(
+				"  ⏭ Production build (skipped via QUARK_CLI_E2E_SKIP_BUILD=1)",
+			);
+		} else {
+			console.log("  ✓ Production build (pnpm build - compile check)");
+		}
 		console.log("  ✓ Docker Compose infrastructure");
 		console.log("  ✓ Database migrations");
 		console.log("  ✓ Database seeding");
@@ -515,7 +641,9 @@ async function runE2ETest() {
 		}
 
 		console.log("\n💡 Recommendations:\n");
-		console.log("  • E2E test is viable for CI/CD (runtime ~3-4 min)");
+		console.log(
+			"  • E2E test is viable for CI/CD (runtime ~4-5 min incl. build)",
+		);
 		console.log("  • Consider running on schedule, not every commit");
 		console.log("  • CLI --no-prompts flag reduces flakiness");
 		console.log("  • Docker health checks are critical");
@@ -549,10 +677,16 @@ async function runE2ETest() {
 	} finally {
 		// Write structured results for monitoring
 		try {
+			const totalDuration = Date.now() - testStartTime;
 			const results = {
 				timestamp: new Date().toISOString(),
 				passed: testPassed,
-				totalDuration: Date.now() - testStartTime,
+				totalDuration,
+				// The production build is reported separately so the performance
+				// gate can keep judging the Docker lifecycle against its original
+				// budget instead of absorbing a compile step it never had.
+				buildDuration: buildDurationMs,
+				lifecycleDuration: totalDuration - buildDurationMs,
 				phases: phases.map((p) => ({
 					name: p.name,
 					duration: p.duration || 0,

@@ -192,6 +192,10 @@ pnpm test
 # E2E scaffold simulation
 pnpm test:e2e
 
+# Full lifecycle E2E (scaffold -> build -> Docker -> migrate -> run). Phase 3
+# runs `pnpm build`, so a scaffolded import that does not compile fails here.
+pnpm test:e2e:full
+
 # Full build verification (opt-in)
 QUARK_CLI_BUILD_TEST=1 pnpm test:build
 ```

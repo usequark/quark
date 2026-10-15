@@ -5,6 +5,9 @@ on:
     branches: [main]
     paths:
       - "packages/cli/**"
+  pull_request:
+    paths:
+      - "packages/cli/**"
   workflow_dispatch:
     inputs:
       ref:
@@ -16,7 +19,10 @@ jobs:
   cli-e2e-full:
     name: Full Docker Lifecycle E2E
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # The harness now scaffolds, installs, builds the generated project, and
+    # runs the Docker lifecycle end to end. The build alone can approach a
+    # couple of minutes on a cold runner, so the ceiling is 15 rather than 10.
+    timeout-minutes: 15
     env:
       CI: "true"
     steps:
