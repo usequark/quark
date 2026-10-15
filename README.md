@@ -5,7 +5,7 @@
 <h1 align="center">Quark</h1>
 
 <p align="center">
-  A full-stack JavaScript framework with centralized infrastructure updates. 
+  Next.js apps whose auth, queues and security keep updating after you scaffold. 
 </p>
 
 <p align="center">
