@@ -7,6 +7,7 @@ import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GithubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
+import { isEmailVerificationRequired } from "./auth-email-verification";
 import { isEmailVerified } from "./email-verified";
 
 const logger = createLogger({ name: "auth" });
@@ -65,8 +66,10 @@ const providers = [
 				return null;
 			}
 
+			let existingUser;
+
 			try {
-				const existingUser = await userQueries.findByEmail(credentials.email);
+				existingUser = await userQueries.findByEmail(credentials.email);
 
 				if (!existingUser?.password) {
 					return null;
@@ -80,14 +83,6 @@ const providers = [
 				if (!isValid) {
 					return null;
 				}
-
-				return {
-					id: existingUser.id,
-					email: existingUser.email,
-					name: existingUser.name,
-					image: existingUser.image,
-					role: existingUser.role,
-				};
 			} catch (err) {
 				// Re-throw if the database is unreachable so Auth.js surfaces a server error
 				// rather than "Invalid credentials", which misleads both user and developer.
@@ -109,6 +104,29 @@ const providers = [
 				});
 				return null;
 			}
+
+			// Deliberately after the try/catch above. The verification refusal is a
+			// decision, not a failure: leaving it outside means the fail-closed
+			// handler cannot turn it into a bare `null` that Auth.js would report as
+			// "Invalid credentials". It throws the same `OAUTH_EMAIL_NOT_VERIFIED`
+			// error the OAuth path does, so the operator sees one reason, with one
+			// code, whichever provider the sign-in came through — and, as there, a
+			// missing or unset `emailVerified` reads as unverified.
+			if (isEmailVerificationRequired() && !existingUser.emailVerified) {
+				throw new AppError(
+					"Credentials sign-in refused: the email address is not verified",
+					401,
+					"OAUTH_EMAIL_NOT_VERIFIED",
+				);
+			}
+
+			return {
+				id: existingUser.id,
+				email: existingUser.email,
+				name: existingUser.name,
+				image: existingUser.image,
+				role: existingUser.role,
+			};
 		},
 	}),
 ];
@@ -142,7 +160,10 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 			// why in the one place an operator can read it, and lands in the same
 			// catch: no session, no user row, redirect back to the sign-in page.
 			profile: (profile) => {
-				if (!isEmailVerified(profile.email_verified)) {
+				if (
+					isEmailVerificationRequired() &&
+					!isEmailVerified(profile.email_verified)
+				) {
 					throw new AppError(
 						"Google sign-in refused: the account's email address is not verified",
 						401,

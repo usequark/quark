@@ -34,6 +34,7 @@
  * @property {boolean} security.trustProxy - Trust proxy headers
  * @property {Object} auth - Authentication configuration
  * @property {boolean} auth.allowSignup - Allow public self-service signup
+ * @property {boolean} auth.requireEmailVerification - Require verified email for sign-in
  * @property {Object} features - Feature flags
  * @property {boolean} features.debugRoutes - Enable debug endpoints
  * @property {boolean} features.seedOnStart - Auto-seed database on startup
@@ -76,6 +77,7 @@ const ENVIRONMENT_CONFIGS = {
 		},
 		auth: {
 			allowSignup: true,
+			requireEmailVerification: true,
 		},
 		features: {
 			debugRoutes: true,
@@ -118,6 +120,7 @@ const ENVIRONMENT_CONFIGS = {
 		},
 		auth: {
 			allowSignup: true,
+			requireEmailVerification: true,
 		},
 		features: {
 			debugRoutes: true,
@@ -160,6 +163,7 @@ const ENVIRONMENT_CONFIGS = {
 		},
 		auth: {
 			allowSignup: true,
+			requireEmailVerification: true,
 		},
 		features: {
 			debugRoutes: false,
@@ -202,6 +206,7 @@ const ENVIRONMENT_CONFIGS = {
 		},
 		auth: {
 			allowSignup: true,
+			requireEmailVerification: true,
 		},
 		features: {
 			debugRoutes: false,

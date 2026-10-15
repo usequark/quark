@@ -110,6 +110,8 @@ const ENV_DESCRIPTIONS = {
 	PORT: "Web server port",
 	AUTH_ALLOW_SIGNUP:
 		'Set to "false" to disable public self-service signup routes and UI',
+	REQUIRE_EMAIL_VERIFICATION:
+		'Set to "true" (default) to require verified email for sign-in; set to "false" to allow unverified emails',
 
 	// Worker
 	WORKER_CONCURRENCY: "Number of concurrent jobs per queue (default: 5)",
@@ -258,6 +260,9 @@ function createEnvSchema(service) {
 			PORT: optionalString,
 			AUTH_ALLOW_SIGNUP: booleanLike(
 				"AUTH_ALLOW_SIGNUP must be a boolean-like value (true/false/1/0/yes/no/on/off)",
+			),
+			REQUIRE_EMAIL_VERIFICATION: booleanLike(
+				"REQUIRE_EMAIL_VERIFICATION must be a boolean-like value (true/false/1/0/yes/no/on/off)",
 			),
 
 			// Worker

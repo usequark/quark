@@ -6,6 +6,7 @@ import { validateBody } from "@usequark/quark-core/core";
 import { user } from "@usequark/quark-db";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { isEmailVerificationRequired } from "../../../../lib/auth-email-verification";
 import { isEmailVerified } from "../../../../lib/email-verified";
 import { issueTokenPair } from "../../../../lib/jwt";
 import { handleError } from "../../error-handler";
@@ -85,7 +86,10 @@ export async function POST(request) {
 		// read for what it is. What matters for security is the position relative
 		// to the database: both checks land before `findByEmail`, so an unverified
 		// address can never become a registration or existence oracle.
-		if (!isEmailVerified(tokenInfo.email_verified)) {
+		if (
+			isEmailVerificationRequired() &&
+			!isEmailVerified(tokenInfo.email_verified)
+		) {
 			return NextResponse.json(
 				{ message: "Invalid Google token" },
 				{ status: 401 },

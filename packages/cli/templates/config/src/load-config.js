@@ -121,6 +121,14 @@ function buildEnvOverrides(_envConfig) {
 			overrides.auth = { ...overrides.auth, allowSignup };
 		}
 	}
+	if (process.env.REQUIRE_EMAIL_VERIFICATION) {
+		const requireEmailVerification = parseBooleanEnv(
+			process.env.REQUIRE_EMAIL_VERIFICATION,
+		);
+		if (requireEmailVerification !== undefined) {
+			overrides.auth = { ...overrides.auth, requireEmailVerification };
+		}
+	}
 
 	// Database pool
 	if (process.env.DB_POOL_MAX) {
