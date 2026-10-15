@@ -47,7 +47,7 @@ describe("README job handler table", () => {
 		assert.strictEqual(
 			readmeHandlerTable(),
 			renderHandlerTable(jobHandlers),
-			"README handler table disagrees with JOB_NAMES — regenerate it with renderHandlerTable()",
+			"README handler table disagrees with JOB_NAMES — run `pnpm sync-readme` to regenerate it",
 		);
 	});
 });

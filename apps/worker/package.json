@@ -15,6 +15,7 @@
 		"dev": "tsx watch src/index.js",
 		"start:deploy": "node src/index.js",
 		"preflight": "node src/index.js --preflight",
+		"sync-readme": "node scripts/sync-readme.js",
 		"lint": "biome format --write && biome check --write"
 	},
 	"keywords": [],

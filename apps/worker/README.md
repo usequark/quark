@@ -143,14 +143,16 @@ DATABASE_URL=postgresql://user:password@localhost:5432/quark_dev
 | `pnpm dev` | Run worker in watch mode (tsx watch) |
 | `pnpm preflight` | Execute health checks and exit |
 | `pnpm test` | Run all tests in src/*.test.js |
+| `pnpm sync-readme` | Regenerate the handler table below from `JOB_NAMES` |
 | `pnpm lint` | Format and lint code with Biome |
 
 ## Job Handler Patterns
 
 All job handlers are registered in `src/handlers/index.js`, mapping job names from
 `@usequark/quark-jobs`. The table below is generated from `JOB_NAMES` by
-`src/readme-table.js`; `src/readme-consistency.test.js` fails if it drifts from
-either the job definitions or the registry.
+`src/readme-table.js` — run `pnpm sync-readme` to rewrite it after adding a job —
+and `src/readme-consistency.test.js` fails if it drifts from either the job
+definitions or the registry.
 
 <!-- handler-table:start -->
 | Job name | Handler |
