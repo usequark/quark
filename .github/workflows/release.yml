@@ -159,6 +159,12 @@ jobs:
       # "chore: version packages (#123)", so this action skips publishing and
       # only regenerates the release PR - the release then silently never
       # reaches npm. Use "Create a merge commit" (gh pr merge --merge).
+      #
+      # Dated releases: the `version` script (node scripts/release-version.mjs)
+      # runs `changeset version` and then `node scripts/stamp-changelog-dates.mjs`,
+      # which stamps each new CHANGELOG heading as `## x.y.z - YYYY-MM-DD`
+      # (version-PR creation date, UTC). Changesets emits no dates, so without
+      # that step every release would land undated again.
       - name: Create Release PR or Publish
         id: changesets
         uses: changesets/action@v1
