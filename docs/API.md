@@ -182,11 +182,13 @@ Verify an Apple identity token and issue a JWT pair. Public.
 }
 ```
 
-The `kid` from the token header selects Apple's public key, which is fetched live from `https://appleid.apple.com/auth/keys` and verified against issuer `https://appleid.apple.com`. A user matching the token's email is created on first sign-in.
+The `kid` from the token header selects Apple's public key, which is fetched live from `https://appleid.apple.com/auth/keys` and verified against issuer `https://appleid.apple.com`. The token's `email_verified` claim must confirm the address — this endpoint creates the account on first sight, so an unconfirmed address would make the confirmation the attacker's to skip rather than the owner's to perform. The check is governed by `REQUIRE_EMAIL_VERIFICATION` and is skipped when the flag is `false`, as it is everywhere else. A user matching the token's email is created on first sign-in.
 
 **Response (200):** `{ "token": "...", "refreshToken": "...", "expiresAt": "..." }`.
 
 **Response (400):** the verified token carries no email address.
+
+**Response (401):** one generic `Invalid Apple token` for a token that fails verification, a nonce mismatch, and an unverified address alike.
 
 ### `POST /api/auth/google`
 

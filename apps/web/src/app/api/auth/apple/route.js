@@ -5,6 +5,8 @@ import { user } from "@usequark/quark-db";
 import { importJWK, jwtVerify } from "jose";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { isEmailVerificationRequired } from "../../../../lib/auth-email-verification";
+import { isEmailVerified } from "../../../../lib/email-verified";
 import { issueTokenPair } from "../../../../lib/jwt";
 import { handleError } from "../../error-handler";
 
@@ -119,6 +121,28 @@ export async function POST(request) {
 			return NextResponse.json(
 				{ message: "Apple token does not contain an email" },
 				{ status: 400 },
+			);
+		}
+
+		// An unverified address proves nothing about who controls the inbox, and
+		// this route creates the account on first sight — so without this check the
+		// confirmation that is supposed to establish ownership of the address is
+		// the attacker's to skip rather than the victim's to perform.
+		//
+		// It sits after the missing-email `400` on purpose, matching the Google
+		// route's ordering: that response describes the shape of the token rather
+		// than reporting that the token was refused. What matters for security is
+		// the position relative to the database: the check lands before
+		// `findByEmail`, so an unverified address can never become a registration
+		// or existence oracle. Governed by `REQUIRE_EMAIL_VERIFICATION` like every
+		// other sign-in path — `false` restores the pre-gate behaviour.
+		if (
+			isEmailVerificationRequired() &&
+			!isEmailVerified(payload.email_verified)
+		) {
+			return NextResponse.json(
+				{ message: "Invalid Apple token" },
+				{ status: 401 },
 			);
 		}
 
