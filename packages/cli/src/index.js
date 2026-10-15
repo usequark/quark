@@ -1936,6 +1936,58 @@ async function compareScaffoldManagedFiles(expectedDir, projectDir) {
 	};
 }
 
+/**
+ * Apply the mobile-specific edits `add mobile` makes to scaffold-managed ROOT
+ * files.
+ *
+ * `mobile` is a post-creation-only feature: `create` rejects it, so the
+ * reference scaffold `update --scaffold-check` builds can never carry these
+ * edits. Replaying them on the reference when the project has mobile installed
+ * scopes the byte comparison by installed feature instead of reporting the
+ * expected `EXPO_PUBLIC_API_URL` block as drift.
+ *
+ * This does not weaken drift detection: the edits are constants, so tampering
+ * with — or deleting — the mobile block in a project still differs from the
+ * reference and is still reported.
+ *
+ * Idempotent, and only writes a file when it actually changes it.
+ *
+ * @param {string} projectDir
+ */
+async function applyMobileScaffoldEdits(projectDir) {
+	const envExamplePath = path.join(projectDir, ".env.example");
+	if (await fs.pathExists(envExamplePath)) {
+		const envContent = await fs.readFile(envExamplePath, "utf-8");
+		if (!envContent.includes("EXPO_PUBLIC_API_URL")) {
+			await fs.writeFile(
+				envExamplePath,
+				`${envContent}\n# --- Mobile App ---\nEXPO_PUBLIC_API_URL=http://localhost:3000\n`,
+			);
+		}
+	}
+
+	const rootPkgPath = path.join(projectDir, "package.json");
+	if (!(await fs.pathExists(rootPkgPath))) return;
+
+	const scope = await detectProjectScope(projectDir);
+	if (!scope) return;
+
+	const rootPkg = await fs.readJSON(rootPkgPath);
+	rootPkg.scripts = rootPkg.scripts || {};
+	let changed = false;
+	if (!rootPkg.scripts["dev:mobile"]) {
+		rootPkg.scripts["dev:mobile"] = `pnpm --filter @${scope}/mobile start`;
+		changed = true;
+	}
+	if (!rootPkg.scripts["build:mobile"]) {
+		rootPkg.scripts["build:mobile"] = `pnpm --filter @${scope}/mobile export`;
+		changed = true;
+	}
+	if (changed) {
+		await fs.writeFile(rootPkgPath, `${JSON.stringify(rootPkg, null, "\t")}\n`);
+	}
+}
+
 async function createReferenceScaffold(projectDir, quarkLink) {
 	const projectName = quarkLink.projectName || path.basename(projectDir);
 	const linkedFeatures = resolveFeatureSelection(
@@ -2023,9 +2075,19 @@ async function createReferenceScaffold(projectDir, quarkLink) {
 		);
 	}
 
+	const expectedDir = path.join(tempRoot, projectName);
+
+	// `mobile` is post-creation only, so the subprocess above can never build its
+	// root edits (see scaffoldFeatures). Replay them onto the reference when the
+	// project has mobile installed so the mobile block reads as expected, not as
+	// drift.
+	if (comparisonFeatures.includes("mobile")) {
+		await applyMobileScaffoldEdits(expectedDir);
+	}
+
 	return {
 		tempRoot,
-		expectedDir: path.join(tempRoot, projectName),
+		expectedDir,
 		linkedFeatures,
 		detectedFeatures,
 		comparisonFeatures,
@@ -2390,35 +2452,11 @@ program
 							scope,
 						);
 
-						// Add EXPO_PUBLIC_API_URL to .env.example
-						const envExamplePath = path.join(projectDir, ".env.example");
-						if (await fs.pathExists(envExamplePath)) {
-							let envContent = await fs.readFile(envExamplePath, "utf-8");
-							if (!envContent.includes("EXPO_PUBLIC_API_URL")) {
-								envContent +=
-									"\n# --- Mobile App ---\nEXPO_PUBLIC_API_URL=http://localhost:3000\n";
-								await fs.writeFile(envExamplePath, envContent);
-							}
-						}
-
-						// Add mobile scripts to root package.json
-						const rootPkgPath = path.join(projectDir, "package.json");
-						if (await fs.pathExists(rootPkgPath)) {
-							const rootPkg = await fs.readJSON(rootPkgPath);
-							rootPkg.scripts = rootPkg.scripts || {};
-							if (!rootPkg.scripts["dev:mobile"]) {
-								rootPkg.scripts["dev:mobile"] =
-									`pnpm --filter @${scope}/mobile start`;
-							}
-							if (!rootPkg.scripts["build:mobile"]) {
-								rootPkg.scripts["build:mobile"] =
-									`pnpm --filter @${scope}/mobile export`;
-							}
-							await fs.writeFile(
-								rootPkgPath,
-								`${JSON.stringify(rootPkg, null, "\t")}\n`,
-							);
-						}
+						// Mobile-specific root edits (`.env.example` +
+						// dev:mobile/build:mobile scripts). Shared with the reference
+						// scaffold so `update --scaffold-check` can reproduce them —
+						// see applyMobileScaffoldEdits.
+						await applyMobileScaffoldEdits(projectDir);
 
 						console.log(
 							chalk.green("    ✓ Mobile app scaffolded (apps/mobile)"),
