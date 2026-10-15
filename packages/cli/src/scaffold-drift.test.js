@@ -16,6 +16,11 @@
  *      brief-seeded doc files, and every `--harness claude|copilot` project
  *      reported false-missing skill files for the default .opencode/skills
  *      directory it never had.
+ *   3. `add mobile` appends EXPO_PUBLIC_API_URL to the scaffold-managed root
+ *      .env.example, but `create` rejects mobile so the reference scaffold can
+ *      never carry that block. The comparison was unscoped by feature, so every
+ *      project that had run `add mobile` reported permanent false drift on
+ *      .env.example.
  *
  * A drift detector that fails both ways is worse than none — it trains
  * maintainers to ignore it.
@@ -35,6 +40,7 @@ const PROJECT_NAME = "drift-app";
 
 let tempDir;
 let projectDir;
+let mobileDir;
 
 function runCreate(args, cwd) {
 	// Create is the default command: the project name is the first argument,
@@ -45,6 +51,21 @@ function runCreate(args, cwd) {
 		timeout: 180_000,
 		env: { ...process.env, QUARK_SKIP_GIT_INIT: "true" },
 	});
+}
+
+function runAddMobile(cwd) {
+	// `--force` skips the uncommitted-changes guard: the fixture is not a git
+	// repo, so the guard would read the whole tree as uncommitted.
+	return spawnSync(
+		process.execPath,
+		[CLI, "add", "mobile", "--skip-install", "--force"],
+		{
+			cwd,
+			encoding: "utf8",
+			timeout: 180_000,
+			env: { ...process.env, QUARK_SKIP_GIT_INIT: "true" },
+		},
+	);
 }
 
 function runUpdate(cwd) {
@@ -76,6 +97,18 @@ function scaffold(name, extraArgs = []) {
 before(() => {
 	tempDir = mkdtempSync(path.join(tmpdir(), "quark-scaffold-drift-"));
 	projectDir = scaffold(PROJECT_NAME);
+
+	// The headline case: `add mobile` edits a scaffold-managed root file
+	// (.env.example). `create` rejects mobile, so the reference scaffold can
+	// never carry that block — the check must scope the comparison by installed
+	// feature instead of reporting the mobile lines as drift.
+	mobileDir = scaffold("mobile-app", ["--packages", "ui"]);
+	const addResult = runAddMobile(mobileDir);
+	assert.strictEqual(
+		addResult.status,
+		0,
+		`add mobile failed\nstdout: ${addResult.stdout}\nstderr: ${addResult.stderr}`,
+	);
 });
 
 after(() => {
@@ -125,37 +158,51 @@ describe("update --scaffold-check", () => {
 		);
 	});
 
-	// `add mobile` records mobile in .quark-link.json. Before the fix that value
-	// was forwarded to the create subprocess, which rejects mobile at creation
-	// time, and the rejection crashed the whole command:
+	// `add mobile` records mobile in .quark-link.json and appends
+	// EXPO_PUBLIC_API_URL to the scaffold-managed root .env.example. `create`
+	// rejects mobile, so the reference scaffold can never carry that block.
+	// Before the fix the check reported it as drift on every mobile project —
+	// "Scaffold drift detected in 1 file(s): .env.example" — and --fail-on-drift
+	// exited 1. It also used to crash outright when the recorded mobile feature
+	// was forwarded to the create subprocess:
 	//   Error: Could not generate the reference scaffold.
 	//   ✗ Error creating project: Mobile app cannot be included during project
 	//     creation.
-	it("does not crash when .quark-link.json records mobile", () => {
-		const linkPath = path.join(projectDir, ".quark-link.json");
-		const link = JSON.parse(readFileSync(linkPath, "utf8"));
-		const withMobile = {
-			...link,
-			packages: [...link.packages, "mobile"],
-		};
-		writeFileSync(linkPath, JSON.stringify(withMobile, null, "\t"));
+	it("reports no drift for a project that has run add mobile", () => {
+		const result = runUpdate(mobileDir);
+
+		assert.strictEqual(
+			result.status,
+			0,
+			`expected no drift on an add-mobile project\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
+		);
+		assert.match(result.stdout, /No scaffold drift detected/);
+		assert.ok(
+			!/Could not generate the reference scaffold/.test(
+				`${result.stdout}${result.stderr}`,
+			),
+			"drift check failed to build its reference scaffold",
+		);
+	});
+
+	// Scoping the comparison by feature must not blanket-ignore .env.example:
+	// the mobile block is scaffold-managed, so tampering with it is still drift.
+	it("still reports drift when a scaffold-managed file is tampered with on a mobile project", () => {
+		const envPath = path.join(mobileDir, ".env.example");
+		const original = readFileSync(envPath, "utf8");
+		writeFileSync(envPath, `${original}TAMPERED=1\n`);
 
 		try {
-			const result = runUpdate(projectDir);
+			const result = runUpdate(mobileDir);
 
 			assert.strictEqual(
 				result.status,
-				0,
-				`drift check must not crash on an add-mobile project\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
+				1,
+				`a tampered .env.example must still be reported as drift\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
 			);
-			assert.ok(
-				!/Could not generate the reference scaffold/.test(
-					`${result.stdout}${result.stderr}`,
-				),
-				"drift check failed to build its reference scaffold",
-			);
+			assert.match(result.stdout, /\.env\.example/);
 		} finally {
-			writeFileSync(linkPath, JSON.stringify(link, null, "\t"));
+			writeFileSync(envPath, original);
 		}
 	});
 
