@@ -1,6 +1,6 @@
 # @usequark/quark-create-app
 
-## 1.26.0
+## 1.26.0 - 2026-10-11
 
 ### Minor Changes
 

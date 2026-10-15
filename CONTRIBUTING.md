@@ -92,6 +92,34 @@ pnpm changeset         # Interactive changeset creation
 
 This creates a changeset file that describes your change. Include it in your commit.
 
+## Versioning and release policy
+
+This is the canonical semver policy. [docs/UPGRADING.md](docs/UPGRADING.md)
+is its per-release consequence — link there, do not restate it.
+
+- **Minor or major with a migration note:** any security-default change and
+  any behaviour change. Security-sensitive defaults fail closed, and the
+  changeset plus `docs/UPGRADING.md` must say what changed, who is affected,
+  and what to do about it.
+- **Patch:** docs, tests, comments, and CI only. A patch must not change
+  runtime behaviour. If it changes what the code does, it is at least a minor.
+- **Dated releases:** every new CHANGELOG heading carries its date as
+  `## x.y.z - YYYY-MM-DD`. Changesets emits no dates, so the release
+  workflow stamps them automatically: `scripts/release-version.mjs` (the
+  `version` step of `.github/workflows/release.yml`) runs
+  `node scripts/stamp-changelog-dates.mjs` after `changeset version`, which
+  stamps only the just-added heading (top heading equals the bumped
+  `package.json` version). Never hand-edit a date; historical undated
+  headings stay undated rather than carry an invented one.
+
+Wave-1 is the conforming reference: the refresh-token DB re-read (minor
+with migration note), `TRUST_PROXY_HEADERS` (minor),
+`REQUIRE_EMAIL_VERIFICATION` defaulting to true (minor with migration note),
+and the scaffold-check scoping fix (minor with note) all shipped as minors,
+while the CI scaffold-compile harness, the Job index comment correction, and
+the worker README table generation shipped as patches (docs/tests only, no
+runtime behaviour change).
+
 ## Reporting Issues
 
 - **Bugs**: Open a GitHub issue with steps to reproduce

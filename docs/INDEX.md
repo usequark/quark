@@ -42,6 +42,7 @@ Entry point: [../README.md](../README.md)
 |----------|---------|
 | [DEPLOY_RAILWAY.md](./DEPLOY_RAILWAY.md) | Railway deployment, env vars, and troubleshooting |
 | [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) | Common failures and their fixes |
+| [UPGRADING.md](./UPGRADING.md) | Per-release migration notes for behaviour changes |
 | [SECURITY_FEATURES.md](./SECURITY_FEATURES.md) | Security features, checklists, and incident response |
 | [DESIGN_NOTES.md](./DESIGN_NOTES.md) | Design direction, partly superseded. Read the status banner first |
 

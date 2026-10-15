@@ -1,6 +1,6 @@
 # @usequark/quark-core
 
-## 2.8.0
+## 2.8.0 - 2026-10-11
 
 ### Minor Changes
 
