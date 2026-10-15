@@ -22,9 +22,12 @@ mock.module("ioredis", {
 	exports: { default: StubRedis },
 });
 
-const { __resetRateLimiterForTests, getRateLimiter, proxy } = await import(
-	"./proxy.js"
-);
+const {
+	__resetRateLimiterForTests,
+	getRateLimiter,
+	proxy,
+	shouldTrustProxyHeaders,
+} = await import("./proxy.js");
 
 beforeEach(() => {
 	// A working Redis: first hit in a window returns count 1, ttl = window.
@@ -155,6 +158,111 @@ test("omits rate limit headers on exempt routes", async () => {
 
 	assert.equal(response.headers.get("X-RateLimit-Limit"), null);
 	assert.equal(response.headers.get("X-RateLimit-Remaining"), null);
+});
+
+// ── TRUST_PROXY_HEADERS ──────────────────────────────────────────────────────
+// The flag gates whether the proxy headers above are trusted. Default is
+// "trust" (the shipped behaviour); only an explicit false-like value disables
+// it. The behaviour tests use the in-memory limiter, so they clear REDIS_URL
+// and re-select the backend, and restore both env vars afterwards.
+
+test("TRUST_PROXY_HEADERS parses boolean-like values, trusting by default", () => {
+	const env = process.env.TRUST_PROXY_HEADERS;
+	try {
+		for (const value of ["1", "true", "yes", "on", "TRUE", " on "]) {
+			process.env.TRUST_PROXY_HEADERS = value;
+			assert.equal(
+				shouldTrustProxyHeaders(),
+				true,
+				`"${value}" should trust proxy headers`,
+			);
+		}
+
+		for (const value of ["0", "false", "no", "off", "FALSE", " off "]) {
+			process.env.TRUST_PROXY_HEADERS = value;
+			assert.equal(
+				shouldTrustProxyHeaders(),
+				false,
+				`"${value}" should not trust proxy headers`,
+			);
+		}
+
+		delete process.env.TRUST_PROXY_HEADERS;
+		assert.equal(
+			shouldTrustProxyHeaders(),
+			true,
+			"unset must preserve the shipped behaviour of trusting proxy headers",
+		);
+	} finally {
+		if (env === undefined) delete process.env.TRUST_PROXY_HEADERS;
+		else process.env.TRUST_PROXY_HEADERS = env;
+	}
+});
+
+test("TRUST_PROXY_HEADERS on keys each forwarded IP into its own bucket", async (t) => {
+	const savedRedisUrl = process.env.REDIS_URL;
+	const savedTrust = process.env.TRUST_PROXY_HEADERS;
+
+	t.after(() => {
+		if (savedRedisUrl === undefined) delete process.env.REDIS_URL;
+		else process.env.REDIS_URL = savedRedisUrl;
+		if (savedTrust === undefined) delete process.env.TRUST_PROXY_HEADERS;
+		else process.env.TRUST_PROXY_HEADERS = savedTrust;
+	});
+
+	delete process.env.REDIS_URL;
+	delete process.env.TRUST_PROXY_HEADERS;
+	__resetRateLimiterForTests();
+
+	const ipA = "203.0.113.40";
+	const ipB = "203.0.113.41";
+
+	// Exhaust A's auth bucket (limit is 5 per window).
+	for (let i = 0; i < 5; i++) {
+		await proxy(authRequest(ipA));
+	}
+	const limitedA = await proxy(authRequest(ipA));
+	assert.equal(limitedA.status, 429, `${ipA} should be rate limited`);
+
+	// B has its own bucket because the forwarded header is trusted.
+	const allowedB = await proxy(authRequest(ipB));
+	assert.notEqual(
+		allowedB.status,
+		429,
+		`${ipB} must not inherit ${ipA}'s bucket while headers are trusted`,
+	);
+});
+
+test("TRUST_PROXY_HEADERS off ignores spoofed headers (one shared bucket)", async (t) => {
+	const savedRedisUrl = process.env.REDIS_URL;
+
+	t.after(() => {
+		if (savedRedisUrl === undefined) delete process.env.REDIS_URL;
+		else process.env.REDIS_URL = savedRedisUrl;
+		delete process.env.TRUST_PROXY_HEADERS;
+	});
+
+	delete process.env.REDIS_URL;
+	process.env.TRUST_PROXY_HEADERS = "false";
+	__resetRateLimiterForTests();
+
+	const ipA = "203.0.113.50";
+	const ipB = "203.0.113.51";
+
+	// Exhaust the shared bucket through A.
+	for (let i = 0; i < 5; i++) {
+		await proxy(authRequest(ipA));
+	}
+
+	// A different spoofed x-forwarded-for value must NOT earn a fresh bucket:
+	// with trust off there is no per-client key to rotate.
+	const limitedB = await proxy(authRequest(ipB));
+	assert.equal(
+		limitedB.status,
+		429,
+		"a spoofed x-forwarded-for must not evade the limiter when trust is off",
+	);
+	assert.equal(limitedB.headers.get("X-RateLimit-Limit"), "5");
 });
 
 test("uses in-memory limiting when REDIS_URL is unset", async () => {

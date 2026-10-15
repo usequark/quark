@@ -94,22 +94,59 @@ export async function getRateLimiter() {
 }
 
 /**
+ * Boolean-like values that disable trusting proxy headers. Mirrors the
+ * "explicit false wins" convention used by `AUTH_ALLOW_SIGNUP` and
+ * `DB_INSTRUMENTATION`, so operators don't have to learn a new dialect.
+ */
+const PROXY_HEADERS_FALSY_VALUES = new Set(["false", "0", "no", "off"]);
+
+/**
+ * Whether the client-supplied proxy headers (`x-forwarded-for`, `x-real-ip`)
+ * may be trusted to identify the client.
+ *
+ * Default `true`: the shipped behaviour. The app assumes it sits behind a
+ * reverse proxy (Railway, Docker, nginx) that overwrites these headers on
+ * every request, so the left-most `x-forwarded-for` entry is treated as the
+ * client IP.
+ *
+ * Set `TRUST_PROXY_HEADERS=false` when the app is reachable directly (no
+ * proxy rewriting the header on the way in). The headers are then ignored and
+ * every client keys on the literal "unknown" — a single shared bucket. A
+ * header a client can set is not an identity, so this is what stops a spoofed
+ * `x-forwarded-for` from buying a fresh bucket per request. The trade-off is
+ * the reverse of the default: one client can now exhaust the shared bucket,
+ * which is why the default keeps trusting the headers.
+ *
+ * Read lazily (per request) rather than at module load: tests flip it and a
+ * value set after import still takes effect. Only explicit false-like values
+ * disable trusting; unset, empty, "true", or a typo all keep the default.
+ *
+ * @returns {boolean}
+ */
+export function shouldTrustProxyHeaders() {
+	const raw = process.env.TRUST_PROXY_HEADERS?.trim().toLowerCase();
+	return !(raw && PROXY_HEADERS_FALSY_VALUES.has(raw));
+}
+
+/**
  * Resolve the client IP for rate-limit keying.
  *
  * `NextRequest.ip` was removed in Next 15, so `request.ip` is always
- * `undefined` here and every caller collapsed onto the literal key
- * "unknown" — one shared bucket for the whole server. That let a single
- * burst of 5 credential posts (the `auth` bucket) lock out sign-in for
- * everyone for 15 minutes.
+ * `undefined` here and the literal key "unknown" would collapse every caller
+ * onto one shared bucket — which is why this reads the proxy headers instead.
  *
- * Trust `x-forwarded-for`/`x-real-ip` only when you are actually behind a
- * reverse proxy (Railway, Docker, nginx) that overwrites them; otherwise a
- * client can spoof them to evade the limiter.
+ * When `TRUST_PROXY_HEADERS` is enabled (the default) the left-most
+ * `x-forwarded-for` entry is used, falling back to `x-real-ip`; both are
+ * client-supplied unless a reverse proxy overwrites them, which is the
+ * assumption the default bakes in (see `shouldTrustProxyHeaders`). With the
+ * flag off both headers are ignored and every request resolves to "unknown".
  *
  * @param {import("next/server").NextRequest} request
  * @returns {string}
  */
 function getClientIp(request) {
+	if (!shouldTrustProxyHeaders()) return "unknown";
+
 	const forwardedFor = request.headers.get("x-forwarded-for");
 	if (forwardedFor) {
 		// Left-most entry is the originating client; later entries are proxies.

@@ -1363,6 +1363,12 @@ STORAGE_PROVIDER=local
 # RATE_LIMIT_WINDOW_MS=900000  # Window in ms (default: 15 minutes)
 # API_BODY_SIZE_LIMIT=2097152  # 2MB (default)
 # UPLOAD_SIZE_LIMIT=10485760   # 10MB proxy-level limit (default)
+# Rate-limit buckets key on the client IP from the proxy headers (left-most
+# x-forwarded-for, then x-real-ip). Default (unset) trusts those headers - the
+# right choice behind a reverse proxy (Railway/Docker/nginx) that overwrites
+# them. Set to false when the app is exposed directly, so a spoofed header
+# cannot earn a fresh bucket; every client then shares one bucket.
+# TRUST_PROXY_HEADERS=true
 
 # --- Logging & Cache ---
 # LOG_LEVEL=debug              # debug, info, warn, error (default: debug dev, info prod)
