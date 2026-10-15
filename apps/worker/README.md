@@ -148,20 +148,18 @@ DATABASE_URL=postgresql://user:password@localhost:5432/quark_dev
 ## Job Handler Patterns
 
 All job handlers are registered in `src/handlers/index.js`, mapping job names from
-`@usequark/quark-jobs`:
+`@usequark/quark-jobs`. The table below is generated from `JOB_NAMES` by
+`src/readme-table.js`; `src/readme-consistency.test.js` fails if it drifts from
+either the job definitions or the registry.
 
+<!-- handler-table:start -->
 | Job name | Handler |
 |---|---|
 | `send-welcome-email` | `handleSendWelcomeEmail` (`handlers/email.js`) |
+| `send-verify-email` | `handleSendVerificationEmail` (`handlers/email.js`) |
 | `send-reset-password-email` | `handleSendResetPasswordEmail` (`handlers/email.js`) |
 | `cleanup-orphaned-files` | `handleCleanupOrphanedFiles` (`handlers/files.js`) |
-| `send-push-notification` | `handleSendPushNotification` (`handlers/push-notification.js`) |
-
-⚠️ `send-push-notification` is registered but inoperable today: the handler queries
-`prisma.device`, and there is no `Device` model in `packages/db/prisma/schema.prisma`
-(the schema holds 7 core models). Every `send-push-notification` job fails on its
-first database call. Add a `Device` model (see the `add-model` skill) or drop the
-registration - the handler is not dead code you can switch on with config.
+<!-- handler-table:end -->
 
 The shipped web app only enqueues `send-welcome-email`
 (`apps/web/src/lib/enqueue-welcome-email.js`); the worker itself schedules
