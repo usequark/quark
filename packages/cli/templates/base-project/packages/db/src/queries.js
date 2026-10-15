@@ -139,6 +139,12 @@ export const account = {
 };
 
 // Session queries (NextAuth)
+//
+// App-owned helpers, not Auth.js storage: the scaffold pins
+// `session.strategy: "jwt"` (see `apps/web/src/lib/auth.js`), under which
+// Auth.js neither reads nor writes session rows — revocation is enforced by
+// `validateSessionToken` re-reading the user row instead. Kept for apps that
+// need server-side session bookkeeping of their own.
 export const session = {
 	findByToken: (sessionToken) => {
 		return prisma.session.findUnique({

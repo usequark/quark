@@ -237,6 +237,13 @@ async function validateSessionToken(token) {
 
 export function getAuthOptions() {
 	return createAuthConfig({
+		// The adapter is load-bearing even though sessions are JWT (see
+		// `session.strategy` below): it persists the `Account` rows that link
+		// OAuth identities to users — the adapter reads and writes them, and
+		// `account.findByUserIdAndProvider` is covered in `packages/db`. Do
+		// not remove it. The `Session` model queries (`session.*` in
+		// `packages/db/src/queries.js`) are the opposite: app-owned helpers the
+		// JWT strategy never populates.
 		adapter: PrismaAdapter(prisma),
 		providers: providers,
 		logger: {

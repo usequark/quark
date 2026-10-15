@@ -51,6 +51,7 @@ Quark includes several security features out of the box:
 - **Location**: [packages/db/src/schemas.js](../packages/db/src/schemas.js)
 - **Validation**: All API inputs validated against schemas
 - **Error Handling**: Returns structured validation errors
+- **Privilege boundary**: `userUpdateSchema` deliberately omits `role`. Both profile writers — `PATCH /api/users/me` and the admin-only `PATCH /api/users/[id]` — validate with this schema, so no shipped route can set or promote a role (pinned by the "cannot promote the caller" tests). Role changes happen outside the API, directly on the row, and are picked up by the next session validation (web) or refresh exchange (mobile), which both re-read the row.
 
 #### 6. **SQL Injection Protection**
 - **ORM**: Prisma (all queries parameterized)

@@ -5,7 +5,7 @@
 <h1 align="center">Quark</h1>
 
 <p align="center">
-  A full-stack JavaScript framework with centralized infrastructure updates. 
+  Next.js apps with Quark Core infrastructure for auth, queues and security.
 </p>
 
 <p align="center">
