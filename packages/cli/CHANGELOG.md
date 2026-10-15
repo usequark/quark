@@ -1,5 +1,11 @@
 # @usequark/quark-create-app
 
+## 1.27.1 - 2026-10-15
+
+### Patch Changes
+
+- [#297](https://github.com/usequark/quark/pull/297) [`b868ec9`](https://github.com/usequark/quark/commit/b868ec9141420087f7b2001ca9636bbc26a0b074) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Docs-only trust gaps (no behaviour change): `README.md` positioning line now claims the updatable core instead of "framework"; `apps/web/src/lib/auth.js` documents why `PrismaAdapter` stays (OAuth `Account` rows) and marks the `Session` queries app-owned under the JWT strategy (mirrored in `packages/db/src/queries.js`); `docs/SECURITY_FEATURES.md` records that `userUpdateSchema` omits `role` as a privilege boundary. Template copies synced.
+
 ## 1.27.0 - 2026-10-15
 
 ### Minor Changes
