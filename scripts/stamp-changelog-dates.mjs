@@ -54,6 +54,19 @@ export const STAMP_TARGETS = ["packages/core", "packages/cli"];
 
 export const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
+/**
+ * True only for a real calendar date. The shape check alone accepts
+ * `2026-02-31`, and `new Date()` silently rolls it over to March — so the
+ * round-trip through UTC must reproduce the input exactly.
+ */
+export function isCalendarDate(value) {
+	if (!DATE_RE.test(value)) return false;
+	const day = new Date(`${value}T00:00:00Z`);
+	return (
+		!Number.isNaN(day.getTime()) && day.toISOString().slice(0, 10) === value
+	);
+}
+
 const HEADING_RE =
 	/^## (\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)(?:\s+-\s+(\d{4}-\d{2}-\d{2}))?\s*$/;
 
@@ -64,9 +77,9 @@ const HEADING_RE =
 export function resolveDate(env = process.env) {
 	const override = env.CHANGELOG_DATE?.trim();
 	if (override !== undefined && override !== "") {
-		if (!DATE_RE.test(override)) {
+		if (!isCalendarDate(override)) {
 			throw new Error(
-				`CHANGELOG_DATE must be YYYY-MM-DD, got ${JSON.stringify(override)}.`,
+				`CHANGELOG_DATE must be a real calendar date (YYYY-MM-DD), got ${JSON.stringify(override)}.`,
 			);
 		}
 		return override;

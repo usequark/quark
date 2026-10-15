@@ -74,8 +74,30 @@ test("resolveDate honours a well-formed CHANGELOG_DATE", () => {
 test("resolveDate rejects a malformed CHANGELOG_DATE", () => {
 	assert.throws(
 		() => resolveDate({ CHANGELOG_DATE: "15/10/2026" }),
-		/CHANGELOG_DATE must be YYYY-MM-DD/,
+		/CHANGELOG_DATE must be a real calendar date/,
 	);
+});
+
+test("resolveDate rejects a non-existent calendar date", () => {
+	// Right shape, wrong calendar: February never has 31 days, and 2026 is
+	// not a leap year. Without the round-trip check `new Date()` rolls both
+	// over into March and the stamp would carry a date that never existed.
+	assert.throws(
+		() => resolveDate({ CHANGELOG_DATE: "2026-02-31" }),
+		/CHANGELOG_DATE must be a real calendar date/,
+	);
+	assert.throws(
+		() => resolveDate({ CHANGELOG_DATE: "2026-02-29" }),
+		/CHANGELOG_DATE must be a real calendar date/,
+	);
+	assert.throws(
+		() => resolveDate({ CHANGELOG_DATE: "2026-13-01" }),
+		/CHANGELOG_DATE must be a real calendar date/,
+	);
+});
+
+test("resolveDate accepts a leap day that exists", () => {
+	assert.equal(resolveDate({ CHANGELOG_DATE: "2024-02-29" }), "2024-02-29");
 });
 
 test("resolveDate defaults to today in UTC", () => {
