@@ -186,9 +186,9 @@ The `kid` from the token header selects Apple's public key, which is fetched liv
 
 **Response (200):** `{ "token": "...", "refreshToken": "...", "expiresAt": "..." }`.
 
-**Response (400):** the verified token carries no email address.
+**Response (400):** the verified token carries no email address, or the request omits the `identityToken`/`nonce` field (`appleAuthSchema` via `validateBody`).
 
-**Response (401):** `Invalid Apple token` for a token that fails verification, a missing or mismatched nonce, and an unverified address alike — except when no Apple public key matches the token's `kid`, which answers `Invalid Apple token: no matching key`.
+**Response (401):** `Invalid Apple token` for a token that fails verification, a missing token `nonce` claim or a mismatch with the request `nonce`, and an unverified address alike — except when no Apple public key matches the token's `kid`, which answers `Invalid Apple token: no matching key`.
 
 **Response (503):** `APPLE_CLIENT_ID` is unset or blank.
 

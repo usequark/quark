@@ -54,7 +54,7 @@ Quark includes several security features out of the box:
 
 #### 6. **SQL Injection Protection**
 - **ORM**: Prisma (all queries parameterized)
-- **Risk**: LOW - No raw SQL interpolating user input. The only raw statements are constant `SELECT 1` health probes: `prisma.$queryRaw\`SELECT 1\`` in `apps/worker/src/index.js`, the `client.query("SELECT 1")` ping in `packages/core/src/db.js`, and a constant test-only `$queryRawUnsafe("SELECT 1 …")`.
+- **Risk**: LOW - No raw SQL interpolating user input. The raw statements are constant `SELECT 1` health probes (`prisma.$queryRaw\`SELECT 1\`` in `apps/worker/src/index.js`, the `client.query("SELECT 1")` ping in `packages/core/src/db.js` and in `packages/db/src/umami.js:34`, plus a constant test-only `$queryRawUnsafe("SELECT 1 …")`) and the parameterized Umami analytics `SELECT`s in `packages/db/src/umami.js` (e.g. `website_event` counts filtered by `website_id::text = $1`, dates `$2/$3`, `LIMIT $4`), executed via `pool.query(text, params)` with bound parameters — values are never interpolated into the SQL string. The scaffold template ships the same file as a generated copy.
 - **Recommendation**: Continue using Prisma for all database operations
 
 #### 7. **Session Management**
