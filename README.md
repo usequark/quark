@@ -5,7 +5,7 @@
 <h1 align="center">Quark</h1>
 
 <p align="center">
-  Next.js apps whose auth, queues and security keep updating after you scaffold. 
+  Next.js apps with Quark Core infrastructure for auth, queues and security.
 </p>
 
 <p align="center">
