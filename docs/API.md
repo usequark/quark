@@ -7,7 +7,7 @@ Quark provides a REST API for interacting with the platform. Authentication runs
 - **Session cookie (web):** NextAuth.js issues a `next-auth.session-token` cookie after login. Server code reads it with `auth()`, and guarded routes call `requireAuth(session)` or `requireRole(role, session)` from `@/lib/auth-middleware`.
 - **Bearer JWT (mobile):** `POST /api/auth/token`, `/api/auth/apple`, and `/api/auth/google` return an access token, a refresh token, and an expiry. Send the access token as `Authorization: Bearer <token>`.
 
-State-changing routes are wrapped in `withCsrfProtection` and require a token from `GET /api/csrf` in the `x-csrf-token` header.
+State-changing web routes are wrapped in `withCsrfProtection` and require a token from `GET /api/csrf` in the `x-csrf-token` header. The mobile Bearer-token endpoints (`POST /api/auth/token`, `/api/auth/refresh`, `/api/auth/apple`, `/api/auth/google`) are not wrapped — they authenticate with credentials or provider tokens, not cookies, so CSRF does not apply.
 
 ---
 
@@ -70,11 +70,11 @@ Create a user with a hashed password, enqueue a welcome email, and issue an emai
 {
   "email": "string",
   "password": "string",
-  "name": "string"
+  "name?": "string"
 }
 ```
 
-**Validation** (`userRegisterSchema`): valid email; password at least 8 characters with an uppercase letter, a lowercase letter, and a digit; name at least 2 characters.
+**Validation** (`userRegisterSchema`): valid email; password at least 8 characters with an uppercase letter, a lowercase letter, and a digit; `name` optional (min 2 characters when present).
 
 **Response (201):** the created user, password omitted. Both email hand-offs are fire-and-forget: if either fails the user is still created and the request still answers `201`. Registration does **not** set `emailVerified`, so the account exists unconfirmed until `GET /api/auth/verify-email?token=…` is redeemed. Since `REQUIRE_EMAIL_VERIFICATION` defaults to `true`, an unconfirmed address cannot sign in with credentials — set the flag to `false` to let the address in without confirming it (see [SECURITY_FEATURES.md](./SECURITY_FEATURES.md)).
 
@@ -109,7 +109,7 @@ The password is validated with `passwordSchema` — the same rules as registrati
 
 **Response (200):** `{ "message": "Your password has been updated. You can now sign in." }`.
 
-**Response (400):** one deliberately identical body for an unknown token, an expired token, and an account deleted after the link was issued, so a stolen link cannot be probed for which case it is:
+**Response (400):** one deliberately identical body for an unknown token, an expired token, and an account deleted after the link was issued, so a stolen link cannot be probed for which case it is (shown abridged — `ValidationError.toJSON()` also carries `statusCode`, `timestamp`, and `details`):
 ```json
 {
   "name": "ValidationError",
@@ -186,9 +186,11 @@ The `kid` from the token header selects Apple's public key, which is fetched liv
 
 **Response (200):** `{ "token": "...", "refreshToken": "...", "expiresAt": "..." }`.
 
-**Response (400):** the verified token carries no email address.
+**Response (400):** the verified token carries no email address, or the request omits the `identityToken`/`nonce` field (`appleAuthSchema` via `validateBody`).
 
-**Response (401):** one generic `Invalid Apple token` for a token that fails verification, a nonce mismatch, and an unverified address alike.
+**Response (401):** `Invalid Apple token` for a token that fails verification, a missing token `nonce` claim or a mismatch with the request `nonce`, and an unverified address alike — except when no Apple public key matches the token's `kid`, which answers `Invalid Apple token: no matching key`.
+
+**Response (503):** `APPLE_CLIENT_ID` is unset or blank.
 
 ### `POST /api/auth/google`
 
@@ -226,7 +228,7 @@ Generate a CSRF token. Requires no session — registration is pre-authenticatio
 
 ## Users
 
-All `/api/users` routes return `USER_SAFE_SELECT` fields only: `id`, `email`, `emailVerified`, `name`, `image`, `role`, `createdAt`, `updatedAt`. The `password` column is never selected.
+All `/api/users` routes return `USER_SAFE_SELECT` fields only: `id`, `email`, `emailVerified`, `name`, `image`, `role`, `passwordChangedAt`, `createdAt`, `updatedAt`. The `password` column is never selected.
 
 ### `GET /api/users`
 
@@ -253,7 +255,7 @@ Accepts `page` (default 1) and `limit` (default 20, max 100).
 
 Create a user. Admin only. Requires a CSRF token.
 
-**Request Body:** `{ "email": "string", "name": "string", "image": "string" }`
+**Request Body:** `{ "email": "string", "name?": "string", "image?": "string" }` (`userCreateSchema`: only `email` is required).
 
 **Response (201):** the created user. **Response (409):** email already exists.
 
@@ -270,6 +272,8 @@ Update a user. Admin only. Requires a CSRF token. Body matches `userUpdateSchema
 Delete a user. Admin only. Requires a CSRF token.
 
 **Response (200):** `{ "success": true }`
+
+**Response (409):** the target is the caller's own account — self-deletion is refused with a `ConflictError`.
 
 ### `GET /api/users/me`
 
@@ -357,7 +361,7 @@ The schema ships exactly seven models: `User`, `Account`, `Session`, `Verificati
 
 ### `POST /api/files`
 
-Upload one or more files via `multipart/form-data`. Requires authentication.
+Upload one or more files via `multipart/form-data`. Requires session-cookie authentication plus a CSRF token.
 
 **Request:** `Content-Type: multipart/form-data` with file field(s).
 
@@ -387,7 +391,7 @@ Upload one or more files via `multipart/form-data`. Requires authentication.
 
 ### `GET /api/files`
 
-List files uploaded by the current user. Requires authentication.
+List files uploaded by the current user. Requires session-cookie authentication (a mobile Bearer token does not authenticate here).
 
 **Query Parameters:**
 | Param | Type | Default | Description                |
@@ -395,13 +399,15 @@ List files uploaded by the current user. Requires authentication.
 | page  | int  | 1       | Page number                |
 | limit | int  | 20      | Items per page, maximum 100 |
 
+`page`/`limit` control `skip`/`take` on the query, but the route returns a bare array of file objects — not the `{ data, pagination }` envelope that `GET /api/users` returns.
+
 ### `GET /api/files/[id]`
 
-Download/serve a file by database ID or storage key. No authentication required (access by knowledge of the identifier). Images are served inline; other types as attachment downloads. Responses include a bounded `Cache-Control: public, max-age=3600`, because the URL carries no version segment and `immutable` would be a promise the route cannot keep.
+Download/serve a file by database ID or storage key. No authentication required (access by knowledge of the identifier). Only `image/jpeg`, `image/png`, `image/gif`, `image/webp`, and `image/avif` are served inline; everything else — including `image/svg+xml`, which downloads as an attachment with a sandbox CSP — is an attachment download. Responses include a bounded `Cache-Control: public, max-age=3600`, because the URL carries no version segment and `immutable` would be a promise the route cannot keep.
 
 ### `DELETE /api/files/[id]`
 
-Delete a file. Requires authentication + CSRF token. Only the uploader or an admin can delete.
+Delete a file. Requires session-cookie authentication + CSRF token. Only the uploader or an admin can delete.
 
 ---
 

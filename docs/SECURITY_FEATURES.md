@@ -15,7 +15,7 @@ Quark includes several security features out of the box:
 - **Protection**: Prevents brute force attacks and API abuse
 - **Configuration**:
   - General API endpoints: 100 requests per 15 minutes
-  - Auth endpoints: 5 requests per 15 minutes
+  - Auth endpoints: 5 requests per 15 minutes (POST only, on `/api/auth/callback/credentials`, `/api/auth/register`, `/api/auth/forgot-password`, and `/api/auth/reset-password`; GETs to auth paths use the general bucket)
 - **Headers**: Returns `X-RateLimit-*` headers for client feedback
 - **Storage**: Redis-backed when `REDIS_URL` is set (shared budget across instances), in-memory when it is unset (single instance). `apps/web/src/proxy.js` reads `REDIS_URL` and builds the limiter from the core building block (`createRateLimiter({ type: "redis", redisClient })` in `packages/core/src/rate-limiter.js`), failing closed by default. See [Redis-based Rate Limiting](#3-redis-based-rate-limiting-) below.
 - **Keying**: buckets are keyed on `${clientIp}:${path}`, with the client IP resolved from proxy headers — see [Rate-Limit Keying & Proxy Headers](#rate-limit-keying--proxy-headers) for the trust flag and its spoofing trade-off.
@@ -54,7 +54,7 @@ Quark includes several security features out of the box:
 
 #### 6. **SQL Injection Protection**
 - **ORM**: Prisma (all queries parameterized)
-- **Risk**: LOW - No raw SQL interpolating user input. The only raw statements are the constant `prisma.$queryRaw\`SELECT 1\`` health probes in `apps/worker/src/index.js`
+- **Risk**: LOW - No raw SQL interpolating user input. The raw statements are constant `SELECT 1` health probes (`prisma.$queryRaw\`SELECT 1\`` in `apps/worker/src/index.js`, the `client.query("SELECT 1")` ping in `packages/core/src/db.js` and in `packages/db/src/umami.js:34`, plus a constant test-only `$queryRawUnsafe("SELECT 1 …")`) and the parameterized Umami analytics `SELECT`s in `packages/db/src/umami.js` (e.g. `website_event` counts filtered by `website_id::text = $1`, dates `$2/$3`, `LIMIT $4`), executed via `pool.query(text, params)` with bound parameters — values are never interpolated into the SQL string. The scaffold template ships the same file as a generated copy.
 - **Recommendation**: Continue using Prisma for all database operations
 
 #### 7. **Session Management**

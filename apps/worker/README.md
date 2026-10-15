@@ -62,7 +62,7 @@ The preflight check runs `node src/index.js --preflight` and validates:
 - Redis connectivity
 - Database connectivity (Prisma)
 - All required environment variables
-- Job handler registration
+- Counts registered job handlers (logged for observability; a missing handler does not fail preflight)
 
 ## Configuration & Environment Variables
 
@@ -124,7 +124,7 @@ them from the queue they are added to:
 }
 ```
 
-Queues: `email-queue`, `files-queue`, `push-queue`, `default-queue`. The worker
+Queues: `email-queue`, `files-queue`, `default-queue`. The worker
 starts one BullMQ worker per queue and dispatches by job name, so any registered
 handler in a queue will be picked up by that queue's worker.
 
@@ -142,7 +142,7 @@ DATABASE_URL=postgresql://user:password@localhost:5432/quark_dev
 |--------|---------|
 | `pnpm dev` | Run worker in watch mode (tsx watch) |
 | `pnpm preflight` | Execute health checks and exit |
-| `pnpm test` | Run all tests in src/*.test.js |
+| `pnpm test` | Run all tests recursively under `src/` (handlers, lib, and root) |
 | `pnpm sync-readme` | Regenerate the handler table below from `JOB_NAMES` |
 | `pnpm lint` | Format and lint code with Biome |
 
@@ -163,8 +163,9 @@ definitions or the registry.
 | `cleanup-orphaned-files` | `handleCleanupOrphanedFiles` (`handlers/files.js`) |
 <!-- handler-table:end -->
 
-The shipped web app only enqueues `send-welcome-email`
-(`apps/web/src/lib/enqueue-welcome-email.js`); the worker itself schedules
+The shipped web app enqueues `send-welcome-email` and `send-verify-email` on
+registration (`apps/web/src/app/api/auth/register/route.js`), `send-reset-password-email`
+from `POST /api/auth/forgot-password`, and the worker itself schedules
 `cleanup-orphaned-files` every 24h via `upsertJobScheduler`.
 
 The shipped handler pulls its guards out into `handlers/email-job-validation.js`

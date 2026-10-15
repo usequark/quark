@@ -27,7 +27,7 @@ invited.
    pnpm lint              # Biome formatting and linting
    pnpm test              # All tests (requires Docker)
    ```
-4. **Open a PR** against `main`. CI will run lint, test, build, and security scans.
+4. **Open a PR** against `main`. CI will run lint, test, build, and security scans. Review against [docs/CODE_REVIEW_CHECKLIST.md](docs/CODE_REVIEW_CHECKLIST.md) before requesting review.
 
 ### What happens next
 
