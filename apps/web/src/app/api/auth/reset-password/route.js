@@ -84,10 +84,11 @@ export const POST = withCsrfProtection(async (request) => {
 		const hashedPassword = await hashPassword(password);
 		await user.update(account.id, {
 			password: hashedPassword,
-			// Stamping the change is what reaches every live session (web JWT and
-			// mobile refresh token): `validateSessionToken` and the refresh route
-			// reject anything issued before this instant, so a password known to
-			// an attacker stops working the moment it is replaced.
+			// Stamping the change is what reaches every live session even though
+			// both are self-contained tokens: `validateSessionToken` refuses a web
+			// JWT issued before this instant, and `POST /api/auth/refresh` refuses
+			// a mobile refresh token issued before it — so a password known to an
+			// attacker stops working the moment it is replaced.
 			passwordChangedAt: new Date(),
 		});
 

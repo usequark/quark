@@ -33,6 +33,10 @@ let issueCalls;
 let verifyCalls;
 /** Warning messages the route's logger received. */
 let logWarnings;
+/** The row `user.findById` resolves to for the current test, or null. */
+let storedAccount;
+/** Every subject the route asked the query layer to resolve. */
+let lookupCalls;
 
 mock.module(jwtUrl, {
 	namedExports: {
@@ -69,13 +73,44 @@ mock.module("@usequark/quark-core/core", {
 	},
 });
 
+// The route re-reads identity and role from the database on every exchange, so
+// that read is the seam for these fast unit tests. The real-Prisma kill-tests
+// live in `route.integration.test.js`; here the row is a fixture.
+const db = await import("@usequark/quark-db");
+
+/** The row `user.findById` resolves to when `storedAccount` is not null. */
+function accountFixture(overrides = {}) {
+	return {
+		id: "user-1",
+		email: "alice@example.com",
+		name: "Alice",
+		role: "viewer",
+		passwordChangedAt: null,
+		...overrides,
+	};
+}
+
+mock.module("@usequark/quark-db", {
+	namedExports: {
+		...db,
+		user: {
+			findById: async (id) => {
+				lookupCalls.push(id);
+				return storedAccount;
+			},
+		},
+	},
+});
+
 /** A payload as `verifyMobileToken` returns it for a genuine refresh token. */
 const REFRESH_PAYLOAD = {
 	sub: "user-1",
 	type: "refresh",
-	email: "alice@example.com",
-	name: "Alice",
-	role: "viewer",
+	// The token itself only carries `sub` and `type` (see lib/jwt.js). Any other
+	// claim here is bait: the route must ignore it and use the database row.
+	email: "stale@example.com",
+	name: "Stale Name",
+	role: "admin",
 };
 
 const { POST } = await import("./route.js");
@@ -92,8 +127,10 @@ beforeEach(() => {
 	tokenPayload = { ...REFRESH_PAYLOAD };
 	verifyError = null;
 	issueError = null;
+	storedAccount = accountFixture();
 	issueCalls = [];
 	verifyCalls = [];
+	lookupCalls = [];
 	logWarnings = [];
 });
 
@@ -110,8 +147,10 @@ test("POST /api/auth/refresh issues a new access token for a valid refresh token
 	assert.strictEqual(response.status, 200);
 	assert.strictEqual(body.token, "issued.access.token");
 	assert.deepStrictEqual(verifyCalls, ["a.b.c"]);
-	// The claims must be lifted out of the *token*, not echoed from the request.
-	// `sub` is remapped to `id` because that is the field `issueTokenPair` reads.
+	// The subject selects the row; the claims come from the database, never from
+	// the 30-day-old token. `sub` is remapped to `id` because that is the field
+	// `issueTokenPair` reads.
+	assert.deepStrictEqual(lookupCalls, ["user-1"]);
 	assert.deepStrictEqual(issueCalls, [
 		{
 			id: "user-1",
@@ -144,6 +183,8 @@ test("POST returns 401 and issues nothing for a token that fails verification", 
 	assert.strictEqual(response.status, 401);
 	assert.strictEqual(body.message, "Invalid or expired refresh token");
 	assert.deepStrictEqual(issueCalls, []);
+	// A token that never verified must not reach the database.
+	assert.deepStrictEqual(lookupCalls, []);
 	// A rejected refresh is an operational signal worth a warning line.
 	assert.deepStrictEqual(logWarnings, ["Invalid refresh token"]);
 });
@@ -165,6 +206,9 @@ test("POST rejects an access token presented as a refresh token", async () => {
 	assert.strictEqual(response.status, 401);
 	assert.strictEqual(body.message, "Invalid token type");
 	assert.deepStrictEqual(issueCalls, []);
+	// The type is checked before any lookup, so a misused access token costs no
+	// database round trip.
+	assert.deepStrictEqual(lookupCalls, []);
 	// The type rejection is a client error, not a token forgery — it is not
 	// logged as one.
 	assert.deepStrictEqual(logWarnings, []);
@@ -191,7 +235,16 @@ test("POST does not echo the rejected token or its claims in the 401 body", asyn
 	});
 });
 
-test("POST takes the identity from the token and ignores it in the body", async () => {
+test("POST takes the identity from the database row and ignores stale token and body claims", async () => {
+	// REFRESH_PAYLOAD carries a stale email/name and an `admin` role that a
+	// 30-day-old token might still be holding; the row says viewer. Body fields
+	// are a privilege-escalation primitive if honoured.
+	storedAccount = accountFixture({
+		email: "alice@example.com",
+		name: "Alice",
+		role: "viewer",
+	});
+
 	const response = await POST(
 		refreshRequest({
 			refreshToken: "a.b.c",
@@ -203,8 +256,7 @@ test("POST takes the identity from the token and ignores it in the body", async 
 	const body = await response.json();
 
 	assert.strictEqual(response.status, 200);
-	// Body-supplied identity would be a privilege-escalation primitive: any
-	// holder of a valid low-privilege refresh token could mint an admin one.
+	assert.deepStrictEqual(lookupCalls, ["user-1"]);
 	assert.deepStrictEqual(issueCalls, [
 		{
 			id: "user-1",
@@ -214,6 +266,95 @@ test("POST takes the identity from the token and ignores it in the body", async 
 		},
 	]);
 	assert.strictEqual(body.token, "issued.access.token");
+});
+
+test("POST mints the current role, so a demotion is not undone by an old token", async () => {
+	// The row is the only source of the role; whatever the token once said is
+	// irrelevant. This mirrors `validateSessionToken`, which refreshes the role
+	// into a web session on every request.
+	storedAccount = accountFixture({ role: "viewer" });
+
+	const response = await POST(refreshRequest());
+	const body = await response.json();
+
+	assert.strictEqual(response.status, 200);
+	assert.deepStrictEqual(issueCalls, [
+		{
+			id: "user-1",
+			email: "alice@example.com",
+			name: "Alice",
+			role: "viewer",
+		},
+	]);
+	assert.strictEqual(body.token, "issued.access.token");
+});
+
+test("POST refuses a refresh token whose account no longer exists", async () => {
+	// Deleted (or otherwise removed) between issue and exchange: there is no row
+	// to re-derive identity from, so the exchange is refused rather than minting
+	// an access token for a ghost.
+	storedAccount = null;
+
+	const response = await POST(refreshRequest());
+	const body = await response.json();
+
+	assert.strictEqual(response.status, 401);
+	assert.strictEqual(body.message, "Invalid or expired refresh token");
+	assert.deepStrictEqual(issueCalls, []);
+	assert.deepStrictEqual(logWarnings, [
+		"Refresh token for an account that no longer exists",
+	]);
+});
+
+test("POST refuses a refresh token issued before the password was changed", async () => {
+	// A password reset stamps `passwordChangedAt`. A refresh token minted before
+	// that instant must not survive it, or an attacker holding the old token
+	// keeps minting access tokens for 30 days.
+	const passwordChangedAt = new Date("2026-10-11T12:00:00Z");
+	storedAccount = accountFixture({ passwordChangedAt });
+	tokenPayload = {
+		...REFRESH_PAYLOAD,
+		iat: Math.floor(passwordChangedAt.getTime() / 1000) - 3600,
+	};
+
+	const response = await POST(refreshRequest());
+	const body = await response.json();
+
+	assert.strictEqual(response.status, 401);
+	assert.strictEqual(body.message, "Invalid or expired refresh token");
+	assert.deepStrictEqual(issueCalls, []);
+	assert.deepStrictEqual(logWarnings, [
+		"Refresh token issued before the password changed",
+	]);
+});
+
+test("POST accepts a refresh token issued at or after the password change", async () => {
+	const passwordChangedAt = new Date("2026-10-11T12:00:00Z");
+	storedAccount = accountFixture({ passwordChangedAt });
+	tokenPayload = {
+		...REFRESH_PAYLOAD,
+		iat: Math.floor(passwordChangedAt.getTime() / 1000) + 60,
+	};
+
+	const response = await POST(refreshRequest());
+
+	assert.strictEqual(response.status, 200);
+	assert.deepStrictEqual(issueCalls.length, 1);
+});
+
+test("POST refuses a verified token that carries no subject", async () => {
+	// `verifyMobileToken` only proves the signature, issuer and expiry. A token
+	// with no `sub` names no row, so it is refused without a lookup.
+	tokenPayload = { type: "refresh" };
+
+	const response = await POST(refreshRequest());
+	const body = await response.json();
+
+	assert.strictEqual(response.status, 401);
+	assert.strictEqual(body.message, "Invalid or expired refresh token");
+	assert.deepStrictEqual(lookupCalls, []);
+	assert.deepStrictEqual(issueCalls, []);
+	assert.deepStrictEqual(logWarnings, ["Refresh token has no subject"]);
 });
 
 test("POST returns 400 and verifies nothing when refreshToken is missing", async () => {
