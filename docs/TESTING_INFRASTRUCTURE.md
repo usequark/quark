@@ -400,6 +400,13 @@ pnpm --filter @usequark/quark-create-app test:e2e
 # Full E2E with real Docker services (Postgres, Redis, Mailpit)
 pnpm --filter @usequark/quark-create-app test:e2e:full
 
+# Compile extra --packages combinations too (each adds its own scaffold +
+# install; off by default so the default CI runtime stays a single build)
+QUARK_CLI_E2E_BUILD_MATRIX=1 pnpm --filter @usequark/quark-create-app test:e2e:full
+
+# Skip only the production build (for triaging the Docker lifecycle alone)
+QUARK_CLI_E2E_SKIP_BUILD=1 pnpm --filter @usequark/quark-create-app test:e2e:full
+
 # Performance gate, run after test:e2e:full
 pnpm --filter @usequark/quark-create-app check:perf
 
@@ -536,9 +543,11 @@ Service-level `POSTGRES_*` env and ports mirror these on the `postgres:16-alpine
 
 **Workflow:** [.github/workflows/cli-e2e-full.yml](../.github/workflows/cli-e2e-full.yml)
 
-- **Trigger:** pushes to `main` touching `packages/cli/**`, or manual `workflow_dispatch` with a ref input
-- **Timeout:** 10 minutes
+- **Trigger:** pushes to `main` and pull requests touching `packages/cli/**`, or manual `workflow_dispatch` with a ref input
+- **Timeout:** 15 minutes
 - **Steps:** `test:e2e:full` then `check:perf`, with **one automatic retry**. The step is `continue-on-error: true` so a single noisy sample cannot latch the job to failure, and a real regression still has to fail twice.
+- **Compile check:** `test:e2e-full.js` Phase 3 runs the generated project's own `pnpm build` and asserts `apps/web/.next/BUILD_ID` exists. This is the only place in CI that compiles a scaffolded project, and it is why a broken import in a template now fails this workflow instead of reaching the user. It runs before the Docker phases (a build needs no database), so it fails fast.
+- **Budget:** `check:perf` judges the Docker lifecycle against the original 120 s limit and gives the production build its own 300 s budget, reported separately as `buildDuration` in `e2e-test-results-latest.json`. The default run compiles exactly one combination (`--packages ui,jobs`); `QUARK_CLI_E2E_BUILD_MATRIX=1` widens it.
 - **Artifacts:** `e2e-results-${{ github.run_id }}` on every run, plus `e2e-debug-*` on failure
 
 There is no separate coverage job in any workflow.
