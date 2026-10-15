@@ -31,12 +31,12 @@ Quark uses a **lightweight, dependency-free testing approach** built on the Node
 | Aspect | Value |
 |--------|-------|
 | **Framework** | Node.js native `node:test` |
-| **Total `*.test.js` files (repo-wide)** | **154** |
-| **Live test files wired into a `test` script** | **124** |
+| **Total `*.test.js` files (repo-wide)** | **156** |
+| **Live test files wired into a `test` script** | **126** |
 | **Archived reference test files** | **30** (under `docs/archive/reference/`) |
 | **Additional `*.test.mjs` files** | **4** (under `scripts/`) |
 | **Assertion Library** | `node:assert/strict` |
-| **Most Tested Workspace** | `apps/web` (45 test files) |
+| **Most Tested Workspace** | `apps/web` (46 test files) |
 | **CI Services** | PostgreSQL 16 (`postgres:16-alpine`), Redis 7 (`redis:7-alpine`) |
 | **Root Command** | `pnpm test` → `node --test 'scripts/*.test.mjs' && turbo run test` |
 | **Coverage** | Optional/ad-hoc. **Not enforced** anywhere in CI |
@@ -49,7 +49,7 @@ Every count in this document comes from the filesystem, not from an estimate. Re
 ```bash
 # Repo-wide total for *.test.js
 find . -name "*.test.js" -not -path "*/node_modules/*" -not -path "*/.next/*" | wc -l
-# => 154
+# => 156
 
 # Per-workspace counts (same find, scoped to each workspace directory)
 find packages/core -name "*.test.js" -not -path "*/node_modules/*" -not -path "*/.next/*" | wc -l
@@ -67,7 +67,7 @@ ls scripts/*.test.mjs
 #    scripts/run-tests.test.mjs
 ```
 
-`124 + 30 = 154`. The `docs/archive/reference/` files are preserved vertical examples (cms, crm, ai, bookings) that were removed from the build. They are not executed by `pnpm test`, so the number that matters for the pipeline is **124 live test files**.
+`126 + 30 = 156`. The `docs/archive/reference/` files are preserved vertical examples (cms, crm, ai, bookings) that were removed from the build. They are not executed by `pnpm test`, so the number that matters for the pipeline is **126 live test files**.
 
 ---
 
@@ -142,16 +142,16 @@ Quark's error convention applies in tests too: throw `ValidationError` or `AppEr
 | Workspace | `*.test.js` | Notes |
 |-----------|-------------|-------|
 | `packages/core` | **29** | Most infrastructure coverage |
-| `apps/web` | **45** | Route handlers, SEO, analytics, proxy, auth |
+| `apps/web` | **46** | Route handlers, SEO, analytics, proxy, auth |
 | `packages/ui` | **20** | One suite per UI module |
 | `packages/cli` | **17** | Scaffold guards, deploy adapters, templates |
 | `packages/db` | **4** | Includes `queries.integration.test.js` |
 | `packages/config` | **5** | |
-| `apps/worker` | **3** | |
+| `apps/worker` | **4** | Includes `readme-consistency.test.js` |
 | `packages/jobs` | **1** | |
-| **Live total** | **124** | Wired into a `test` script |
+| **Live total** | **126** | Wired into a `test` script |
 | `docs/archive/reference` | **30** | Archived verticals, not executed |
-| **Repo-wide total** | **154** | |
+| **Repo-wide total** | **156** | |
 
 #### `packages/core` (29 test files)
 
@@ -184,7 +184,7 @@ badge, button, card, checkbox, container, dialog, footer, form-field, input, lab
 lightbox, rich-text, select, skeleton, spinner, table, textarea, theme, theme-vars, toast
 ```
 
-Plus two integration suites that are **not** picked up by `test` and run separately via `test:integration`:
+Plus two integration suites that run under **both** `test` and `test:integration`:
 
 - `src/lightbox.integration-test.js`
 - `src/form-field.integration-test.js`
@@ -244,21 +244,22 @@ The `test` script runs these explicitly, and pins integration suites to serial e
 "test": "node test-cli.js && node --test src/utils.test.js && ... && node --test 'src/deploy/**/*.test.js' && node --test --test-concurrency=1 'src/deploy/**/*.integration.test.js'"
 ```
 
-The CLI package also ships non-`node:test` harnesses at the package root: `test-cli.js`, `test-build.js`, `test-e2e.js`, `test-e2e-full.js`, `test-integration.js`, `test-flags.js`, `test-all.js`.
+The CLI package also ships non-`node:test` harnesses at the package root: `test-cli.js`, `test-build.js`, `test-e2e-full.js`, `test-integration.js`, `test-flags.js`, `test-all.js`.
 
-#### `apps/worker` (3 test files)
+#### `apps/worker` (4 test files)
 
 | Test File | Purpose |
 |-----------|---------|
 | `index.test.js` | BullMQ worker and handler registration |
 | `lib/tokens.test.js` | Token helpers |
 | `handlers/files.test.js` | File job handler |
+| `readme-consistency.test.js` | README handler table matches `JOB_NAMES` + registry |
 
-#### `apps/web` (45 test files)
+#### `apps/web` (46 test files)
 
 | Area | Test Files |
 |------|-------------|
-| **API routes** (17) | `api/auth/[...nextauth]/route.test.js`, `api/auth/apple/route.test.js`, `api/auth/forgot-password/route.test.js`, `api/auth/google/route.test.js`, `api/auth/refresh/route.test.js`, `api/auth/register/route.test.js`, `api/auth/reset-password/route.test.js`, `api/auth/token/route.test.js`, `api/auth/verify-email/route.test.js`, `api/csrf/route.test.js`, `api/files/route.test.js`, `api/files/[id]/route.test.js`, `api/health/route.test.js`, `api/metrics/route.test.js`, `api/users/route.test.js`, `api/users/[id]/route.test.js`, `api/users/me/route.test.js` |
+| **API routes** (18) | `api/auth/[...nextauth]/route.test.js`, `api/auth/apple/route.test.js`, `api/auth/forgot-password/route.test.js`, `api/auth/google/route.test.js`, `api/auth/refresh/route.test.js`, `api/auth/refresh/route.revocation.test.js`, `api/auth/register/route.test.js`, `api/auth/reset-password/route.test.js`, `api/auth/token/route.test.js`, `api/auth/verify-email/route.test.js`, `api/csrf/route.test.js`, `api/files/route.test.js`, `api/files/[id]/route.test.js`, `api/health/route.test.js`, `api/metrics/route.test.js`, `api/users/route.test.js`, `api/users/[id]/route.test.js`, `api/users/me/route.test.js` |
 | **Integration** | `app/api/integration.test.js` (excluded from `test`, run by `test:integration`) |
 | **Pages & layout** | `app/page.test.js`, `app/layout-theme.test.js`, `app/manifest.test.js`, `app/auth/provider-loading.test.js` |
 | **SEO** | `app/seo-routes.test.js`, `lib/seo/indexing.test.js`, `lib/seo/site-metadata.test.js` |
@@ -345,7 +346,7 @@ pnpm test:integration    # → pnpm --filter @usequark/quark-web test:integratio
 |-----------|--------|--------------------|
 | root | `node --test 'scripts/*.test.mjs' && turbo run test` | `test:integration` |
 | `packages/core` | `node ../../scripts/run-tests.mjs src` | - |
-| `packages/cli` | `node test-cli.js && node --test src/*.test.js ...` | `test:build`, `test:e2e`, `test:e2e:full`, `test:integration`, `test:flags`, `test:all` |
+| `packages/cli` | `node test-cli.js && node --test src/*.test.js ...` | `test:build`, `test:e2e:full`, `test:integration`, `test:flags`, `test:all` |
 | `packages/ui` | `node ../../scripts/run-tests.mjs src` | `test:integration` |
 | `packages/db` | `node --test 'src/**/*.test.js'` | - |
 | `packages/config` | `node --test $(find src -name '*.test.js')` | - |
@@ -393,9 +394,6 @@ pnpm --filter @usequark/quark-create-app test
 
 # Build verification of generated projects (opt-in via env var)
 QUARK_CLI_BUILD_TEST=1 pnpm --filter @usequark/quark-create-app test:build
-
-# Lightweight E2E scaffold simulation
-pnpm --filter @usequark/quark-create-app test:e2e
 
 # Full E2E with real Docker services (Postgres, Redis, Mailpit)
 pnpm --filter @usequark/quark-create-app test:e2e:full
@@ -481,6 +479,7 @@ Defined in [.github/workflows/ci.yml](../.github/workflows/ci.yml). Triggers: pu
 │ - pnpm install --frozen-lockfile                             │
 │ - pnpm lint           (biome format --write && biome check)  │
 │ - pnpm standards      (node scripts/check-standards.mjs)     │
+│ - pnpm audit:check    (node scripts/check-audit.mjs)           │
 │ - pnpm --filter @usequark/quark-create-app sync-templates    │
 │ - git diff --quiet packages/cli/templates/  (drift gate)     │
 └──────────────────────────────────────────────────────────────┘
@@ -512,7 +511,7 @@ The template drift gate shares the `checks` job's install rather than paying for
 
 | Job | Command | `needs` | Services |
 |-----|---------|---------|----------|
-| **checks** | `pnpm lint`, `pnpm standards`, template drift diff | - | None |
+| **checks** | `pnpm lint`, `pnpm standards`, `pnpm audit:check`, template drift diff | - | None |
 | **test** | `pnpm test` | - | Postgres 16, Redis 7 |
 | **mobile** | `pnpm --filter @usequark/quark-mobile lint`, `tsc --noEmit` | - | None |
 | **build** | `pnpm build` | checks, test, mobile | None |
@@ -1185,7 +1184,7 @@ Run it once per release, write the number down here, and treat a drop as a revie
 
 #### P4: Expand `apps/web` Route Handler Coverage
 
-The `apps/web` tree has 45 suites, 17 of which cover route handlers. The Server Action surface is the largest untested user-facing area:
+The `apps/web` tree has 46 suites, 18 of which cover route handlers. The Server Action surface is the largest untested user-facing area:
 
 ```js
 // apps/web/src/app/actions/user.test.js

@@ -48,7 +48,7 @@ npx @usequark/quark-create-app@latest my-app
 npx @usequark/quark-create-app add jobs
 
 # Print an embedded skill for a feature
-npx @usequark/quark-create-app skill bookings
+npx @usequark/quark-create-app skill model
 
 # Update Quark packages in an existing project
 npx @usequark/quark-create-app update
@@ -95,7 +95,7 @@ npx @usequark/quark-create-app@latest my-app --no-prompts
 
 ### Packages
 
-Specify which optional packages to include (default: `ui,jobs`; valid: `ui`, `jobs`):
+Specify which optional packages to include (default: `ui,jobs`; valid: `ui`, `jobs`, `pwa` — `mobile` is added post-creation via `quark add mobile`):
 
 ```bash
 # Only include UI package
@@ -131,16 +131,13 @@ npx @usequark/quark-create-app@latest my-app --no-prompts --signup disabled
 Print an embedded skill for a feature:
 
 ```bash
-# Print the bookings skill
-npx @usequark/quark-create-app@latest skill bookings
-
 # Print a core skill (model, endpoint, dashboard)
 npx @usequark/quark-create-app@latest skill model
 npx @usequark/quark-create-app@latest skill endpoint
 npx @usequark/quark-create-app@latest skill dashboard
 ```
 
-Available skills: `model`, `endpoint`, `dashboard`, `bookings`, `crm`, `cms`, `ai`.
+Available skills: `model`, `endpoint`, `dashboard` (core workflows), plus the embedded domain skills shipped with every project (`payment`, `ecommerce` incl. catalog/cart/checkout, `i18n`). Domain verticals (`bookings`, `crm`, `cms`, `ai`) are built on demand via those workflows, not printed as named skills.
 
 ### Skip Installation Steps
 
@@ -188,9 +185,6 @@ npx @usequark/quark-create-app@latest my-app \
 ```bash
 # Lightweight template checks
 pnpm test
-
-# E2E scaffold simulation
-pnpm test:e2e
 
 # Full lifecycle E2E (scaffold -> build -> Docker -> migrate -> run). Phase 3
 # runs `pnpm build`, so a scaffolded import that does not compile fails here.
