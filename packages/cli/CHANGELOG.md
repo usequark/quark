@@ -1,5 +1,67 @@
 # @usequark/quark-create-app
 
+## 1.27.0 - 2026-10-15
+
+### Minor Changes
+
+- [#289](https://github.com/usequark/quark/pull/289) [`60aa2f9`](https://github.com/usequark/quark/commit/60aa2f9d11a7b3d82b33dc866c9daa2c63a4ef31) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Scope `update --scaffold-check` by installed feature so a project that has run `add mobile` no longer fails the check on a false positive.
+  
+  `add mobile` appends the mobile block (`# --- Mobile App ---` / `EXPO_PUBLIC_API_URL`) to the scaffold-managed root `.env.example`, but `create` rejects `mobile`, so the reference scaffold the check rebuilds could never carry it. The byte comparison is unscoped by feature, so every mobile project failed `update --scaffold-check --fail-on-drift` with `Scaffold drift detected in 1 file(s): .env.example`.
+  
+  The reference scaffold now replays the mobile-specific root edits when `mobile` is recorded in `.quark-link.json`, so those lines are expected rather than drift. This does not weaken detection: the edits are constants, so editing or deleting the mobile block — or any other managed line — is still reported.
+  
+  Migration: none required. No project files change. A mobile project that previously failed the check because of this false positive passes once it updates `@usequark/quark-create-app`; projects with genuine drift are unaffected.
+
+- [#290](https://github.com/usequark/quark/pull/290) [`37404e3`](https://github.com/usequark/quark/commit/37404e312910ed81984223f692e905e618398b7f) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - **Security (mobile refresh tokens):** Re-derive the identity and role for `/api/auth/refresh` from the database on every exchange. Refresh tokens are now rejected if the account no longer exists or if `passwordChangedAt` is after the token's `iat` (password reset kills live refresh tokens). Role/email/name changes are reflected immediately. This mirrors the web session revocation model and closes the window where a 30-day mobile refresh token could mint access tokens for a deleted, demoted, or password-reset account.
+  
+  **Tests:** Added `route.revocation.test.js` (real Prisma) proving password reset and profile changes behave correctly; updated `route.test.js` to stub the DB read.
+  
+  **Docs:** Corrected the reset-password comment to accurately reflect that the refresh route rejects tokens issued before a password change.
+  
+  Sync templates with the updated refresh-token revocation logic and corrected comments.
+
+- [#293](https://github.com/usequark/quark/pull/293) [`0e9984e`](https://github.com/usequark/quark/commit/0e9984e7c99e99c2668518e4f08da9a57c9e3b14) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Gate credentials sign-in on email verification, matching OAuth (review decision D1).
+  
+  One flag, `REQUIRE_EMAIL_VERIFICATION`, defaults to `true` and governs both
+  paths: the credentials `authorize()` in `apps/web/src/lib/auth.js` now refuses
+  an account with no `emailVerified` on file with the same
+  `OAUTH_EMAIL_NOT_VERIFIED` `AppError` (401) the Google provider mapper throws,
+  and the existing OAuth checks (the NextAuth `profile()` mapper and the mobile
+  `POST /api/auth/google` and `POST /api/auth/apple` routes) read the same flag.
+  `null`/unset reads as unverified, and the password is still checked first so
+  the error code cannot become an account-enumeration oracle. Set
+  `REQUIRE_EMAIL_VERIFICATION=false` to restore the pre-gate behaviour on every
+  path at once.
+  
+  **Migration note:** registration has never set `emailVerified`, and neither
+  does the seed — so with the default on, every existing credentials account
+  that never redeemed a verification link is refused sign-in after upgrade
+  (and OAuth accounts whose provider reports an unconfirmed address too).
+  Before deploying, either confirm the installed base, tell users to request a
+  fresh verification link, backfill `emailVerified` for known-good addresses,
+  or ship with `REQUIRE_EMAIL_VERIFICATION=false` and flip it once the backlog
+  is verified.
+
+- [#288](https://github.com/usequark/quark/pull/288) [`8629446`](https://github.com/usequark/quark/commit/8629446bbb5fa94ded3e3600c9f9426ad97236b0) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Add `TRUST_PROXY_HEADERS` to control whether the rate limiter trusts client-supplied proxy headers.
+  
+  The scaffolded `apps/web/src/proxy.js` keyed rate-limit buckets on the left-most `x-forwarded-for` entry (falling back to `x-real-ip`) unconditionally, so a client that could reach the app directly could rotate a spoofed header and earn a fresh bucket per request.
+  
+  `TRUST_PROXY_HEADERS` now gates that trust. **Default (unset) preserves today's behaviour** — the headers are trusted, which is correct behind a reverse proxy (Railway, Docker, nginx) that overwrites them. Set `TRUST_PROXY_HEADERS=false` when the app is exposed directly; the headers are then ignored and every client keys on the literal `"unknown"`. Buckets are keyed on `<client-ip>:<path>`, so that is one bucket shared by every client *of each route* — a spoofed header cannot evade the limiter that way, but one client's burst can exhaust the bucket for the route it floods. Only explicit false-like values (`false`, `0`, `no`, `off`) disable trust; anything else keeps the default.
+  
+  **Migration:** none required. Leave the variable unset behind a proxy. Only set `TRUST_PROXY_HEADERS=false` if the app is reachable without a proxy rewriting the headers — note that collapses each route's clients onto a shared `unknown:<path>` bucket, so a single client can lock out one path (e.g. `POST /api/auth/callback/credentials`) for everyone during the window; other routes keep their own buckets. See `docs/SECURITY_FEATURES.md` ("Rate-Limit Keying & Proxy Headers") and `apps/web/.env.example`.
+
+### Patch Changes
+
+- [#292](https://github.com/usequark/quark/pull/292) [`8dd1cc2`](https://github.com/usequark/quark/commit/8dd1cc2b09fc4d66fe52ca35fd6e746e1dac3941) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Compile a scaffolded project in CI. The full-lifecycle E2E harness (`test-e2e-full.js`) now runs the generated project's own `pnpm build` and asserts the Next.js build artefact exists, and the CLI E2E workflow runs on pull requests touching `packages/cli/**`. Previously every CLI check was structural (`existsSync` / string matching) and `pnpm dev` compiled routes lazily, so a static import of a package that the selected features did not install passed CI and only failed for the user. Test infrastructure only; no scaffold output changes.
+
+- [#294](https://github.com/usequark/quark/pull/294) [`da304cc`](https://github.com/usequark/quark/commit/da304cccda73bb848315d3d6e6725566172064f9) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Docs truth-sweep (no behaviour change): correct CLI README `--packages` values (`ui,jobs,pwa`), fix the `skill` command examples and skill list, and drop the removed `test:e2e` references. Companion doc fixes in `docs/API.md`, `docs/SECURITY_FEATURES.md`, `docs/TESTING_INFRASTRUCTURE.md`, `apps/worker/README.md`, plus the new `docs/CODE_REVIEW_CHECKLIST.md` review gate (linked from `CONTRIBUTING.md`).
+
+- [#285](https://github.com/usequark/quark/pull/285) [`77cacca`](https://github.com/usequark/quark/commit/77caccafaac9751de341adfac492e252249e65ee) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Correct the Job index comment in the scaffolded Prisma schema: the `(status, runAt)` compound index does not index `runAt` alone, so a `runAt`-only range query would still need its own index. Comment-only change; no schema or migration is affected.
+
+- [#295](https://github.com/usequark/quark/pull/295) [`64aa89d`](https://github.com/usequark/quark/commit/64aa89d53284acec35c284f973d82ed152e3defb) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Date every release and write down the release policy. `scripts/release-version.mjs` (the release workflow's `version` step) now runs `node scripts/stamp-changelog-dates.mjs` after `changeset version`, so each new CHANGELOG heading lands as `## x.y.z - YYYY-MM-DD`; only the just-added heading is stamped and already-dated or historical headings are never rewritten. Adds `docs/UPGRADING.md` (per-major skeleton, 2.6.2/2.7.0 backfills, pending Wave-1 notes) and states the semver policy in `CONTRIBUTING.md` (security-default and behaviour changes ship as minor/major with a migration note; patch is docs/tests only). Backfills the verified 2026-10-11 date onto the current 2.8.0 / 1.26.0 headings. Docs and CI only — no runtime behaviour change.
+
+- [#291](https://github.com/usequark/quark/pull/291) [`1d1eb15`](https://github.com/usequark/quark/commit/1d1eb1562556d436d727a480733095fe98ad5a41) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Generate the worker README's job-handler table from `JOB_NAMES` instead of hand-maintaining it: `pnpm sync-readme` (in `apps/worker`) rewrites the marked block via `apps/worker/src/readme-table.js`, and `apps/worker/src/readme-consistency.test.js` fails when a job name has no registered handler or when the README table disagrees with the job definitions. The table listed `send-push-notification` / `handleSendPushNotification` as registered, but no such handler file exists and `handlers/index.js` registers exactly the four real jobs; the contradictory row and warning are removed, and the missing `send-verify-email` row is added. Docs and tests only — no runtime behaviour changes.
+
 ## 1.26.0 - 2026-10-11
 
 ### Minor Changes
