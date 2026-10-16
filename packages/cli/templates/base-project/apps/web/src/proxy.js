@@ -14,7 +14,16 @@ import { createLogger, createRateLimiter } from "@usequark/quark-core/core";
 import { NextResponse } from "next/server";
 
 import { buildContentSecurityPolicy } from "./lib/analytics/umami-csp.js";
-import { getRateLimitBucket, isRateLimitExempt } from "./lib/proxy-auth";
+import {
+	getRateLimitBucket,
+	isRateLimitExempt,
+	shouldTrustProxyHeaders,
+} from "./lib/proxy-auth";
+
+// Re-exported: proxy.test.js and external callers resolve it from here.
+// The definition lives in lib/proxy-auth.js, shared with the Umami ingest
+// proxy so both honor TRUST_PROXY_HEADERS identically.
+export { shouldTrustProxyHeaders };
 
 const logger = createLogger("proxy");
 
@@ -91,43 +100,6 @@ export async function getRateLimiter() {
 	})();
 
 	return rateLimiterPromise;
-}
-
-/**
- * Boolean-like values that disable trusting proxy headers. Mirrors the
- * "explicit false wins" convention used by `AUTH_ALLOW_SIGNUP` and
- * `DB_INSTRUMENTATION`, so operators don't have to learn a new dialect.
- */
-const PROXY_HEADERS_FALSY_VALUES = new Set(["false", "0", "no", "off"]);
-
-/**
- * Whether the client-supplied proxy headers (`x-forwarded-for`, `x-real-ip`)
- * may be trusted to identify the client.
- *
- * Default `true`: the shipped behaviour. The app assumes it sits behind a
- * reverse proxy (Railway, Docker, nginx) that overwrites these headers on
- * every request, so the left-most `x-forwarded-for` entry is treated as the
- * client IP.
- *
- * Set `TRUST_PROXY_HEADERS=false` when the app is reachable directly (no
- * proxy rewriting the header on the way in). The headers are then ignored and
- * every client keys on the literal "unknown". Because the bucket key is
- * `${ip}:${path}`, that means one bucket shared by every client of a route —
- * not one bucket across all routes. A header a client can set is not an
- * identity, so this is what stops a spoofed `x-forwarded-for` from buying a
- * fresh bucket per request. The trade-off is the reverse of the default: one
- * client can now exhaust the shared bucket for the route it floods, which is
- * why the default keeps trusting the headers.
- *
- * Read lazily (per request) rather than at module load: tests flip it and a
- * value set after import still takes effect. Only explicit false-like values
- * disable trusting; unset, empty, "true", or a typo all keep the default.
- *
- * @returns {boolean}
- */
-export function shouldTrustProxyHeaders() {
-	const raw = process.env.TRUST_PROXY_HEADERS?.trim().toLowerCase();
-	return !(raw && PROXY_HEADERS_FALSY_VALUES.has(raw));
 }
 
 /**

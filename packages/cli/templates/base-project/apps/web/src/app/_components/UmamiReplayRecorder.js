@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useEffect, useEffectEvent, useRef } from "react";
 import { isUmamiStaff } from "../../lib/analytics/umami.js";
-import { getUmamiConfig } from "../../lib/analytics/umami-config.js";
+import { getUmamiClientConfig } from "../../lib/analytics/umami-config.js";
 import {
 	buildReplayEndpoint,
 	createReplayBuffer,
@@ -65,7 +65,7 @@ export default function UmamiReplayRecorder() {
 	);
 
 	useEffect(() => {
-		const umamiConfig = getUmamiConfig();
+		const umamiConfig = getUmamiClientConfig();
 		if (!umamiConfig.replayEnabled || !shouldSampleReplay()) {
 			return undefined;
 		}
@@ -92,7 +92,7 @@ export default function UmamiReplayRecorder() {
 			if (cancelled) return;
 
 			cacheRef.current = cache;
-			endpointRef.current = buildReplayEndpoint(umamiConfig.url);
+			endpointRef.current = umamiConfig.proxyRecordUrl || buildReplayEndpoint();
 			websiteIdRef.current = umamiConfig.websiteId;
 			startedAtRef.current = Date.now();
 

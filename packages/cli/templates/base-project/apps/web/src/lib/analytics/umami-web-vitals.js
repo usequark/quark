@@ -18,11 +18,12 @@
  *  (e.g. a "use client" wrapper in the root layout).
  *
  * Environment:
- *  Controlled by NEXT_PUBLIC_UMAMI_URL and NEXT_PUBLIC_UMAMI_WEBSITE_ID.
+ *  Controlled by NEXT_PUBLIC_UMAMI_WEBSITE_ID (first-party proxy paths are
+ *  static, so no upstream URL is needed in the browser).
  *  When Umami analytics is not configured, the observer is a no-op.
  */
 
-import { getUmamiConfig } from "./umami-config.js";
+import { getUmamiClientConfig } from "./umami-config.js";
 
 // ── Initialization guard ──────────────────────────────────────
 
@@ -62,7 +63,7 @@ function sanitiseUrl(url) {
  * @param {{ name: string, value: number, rating: string, navigationType?: string }} metric
  */
 function dispatchMetric(metric) {
-	const config = getUmamiConfig();
+	const config = getUmamiClientConfig();
 	if (!config.enabled) return;
 
 	const payload = {
@@ -83,13 +84,17 @@ function dispatchMetric(metric) {
 
 	const body = JSON.stringify(payload);
 
+	// First-party ingest: same-origin POSTs survive blocklists that match the
+	// upstream analytics host as third-party.
+	const endpoint = config.proxyCollectUrl || `${config.url}/api/collect`;
+
 	// Use sendBeacon for reliability during page lifecycle transitions.
 	if (navigator.sendBeacon) {
 		const blob = new Blob([body], { type: "application/json" });
-		navigator.sendBeacon(`${config.url}/api/collect`, blob);
+		navigator.sendBeacon(endpoint, blob);
 	} else {
 		// Fallback to fetch with keepalive.
-		fetch(`${config.url}/api/collect`, {
+		fetch(endpoint, {
 			method: "POST",
 			body,
 			keepalive: true,

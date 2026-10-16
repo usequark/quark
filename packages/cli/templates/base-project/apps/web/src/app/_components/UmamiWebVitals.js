@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { isUmamiStaff } from "../../lib/analytics/umami.js";
-import { getUmamiConfig } from "../../lib/analytics/umami-config.js";
+import { getUmamiClientConfig } from "../../lib/analytics/umami-config.js";
 import { observeWebVitals } from "../../lib/analytics/umami-web-vitals.js";
 
 /**
@@ -22,7 +22,7 @@ import { observeWebVitals } from "../../lib/analytics/umami-web-vitals.js";
  */
 export default function UmamiWebVitals() {
 	useEffect(() => {
-		const config = getUmamiConfig();
+		const config = getUmamiClientConfig();
 		if (!config.enabled) return;
 
 		// Skip web vitals dispatch for any staff user (identified by the

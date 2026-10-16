@@ -1,5 +1,4 @@
 import { hostname, networkInterfaces } from "node:os";
-
 import { buildContentSecurityPolicy } from "./src/lib/analytics/umami-csp.js";
 
 function getLocalNetworkHosts() {
@@ -127,10 +126,16 @@ const nextConfig = {
 		},
 	},
 
-	// API route configuration
-	async rewrites() {
-		return [];
-	},
+	// First-party Umami proxy: GET /s/script.js and POST
+	// /s/api/send|collect|record are served by Route Handlers under
+	// src/app/s/*, not rewrites(). A handler is required in both cases:
+	// rewrites proxy incoming request headers unchanged, which would forward
+	// app session cookies to the analytics host (script) and cannot strip or
+	// append the ingest headers (cookie strip, X-Forwarded-For for geo,
+	// x-umami-cache for replay).
+	// NOTE: the tracker destination is resolved at request time from
+	// UMAMI_UPSTREAM_URL (preferred) or NEXT_PUBLIC_UMAMI_URL, so unlike
+	// rewrites() it needs no rebuild to take effect — only a restart.
 
 	// Compiler options for production optimization
 	compiler: {

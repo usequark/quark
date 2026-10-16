@@ -1,4 +1,4 @@
-import { getUmamiConfig } from "./umami-config.js";
+import { getUmamiClientConfig, readPublicEnv } from "./umami-config.js";
 
 /**
  * Read the Umami user role cookie set by the admin layout.
@@ -18,12 +18,15 @@ export function isUmamiStaff() {
 
 function getUmamiClient() {
 	if (typeof window === "undefined") return null;
-	if (!getUmamiConfig().enabled) return null;
+	// Client config deliberately: the server-only upstream URL is invisible
+	// here, so gating on getUmamiConfig would wrongly disable track() and
+	// identify() in server-only-upstream deployments.
+	if (!getUmamiClientConfig().enabled) return null;
 	return window.umami ?? null;
 }
 
-export function isUmamiEnabled(env = process.env) {
-	return getUmamiConfig(env).enabled;
+export function isUmamiEnabled(env = readPublicEnv()) {
+	return getUmamiClientConfig(env).enabled;
 }
 
 export function track(name, data) {
