@@ -86,6 +86,27 @@ test("rejects oversized bodies", async () => {
 	assert.equal(response.headers.get("Cache-Control"), "no-store");
 });
 
+test("rejects oversized chunked bodies without a Content-Length", async () => {
+	const stream = new ReadableStream({
+		start(controller) {
+			controller.enqueue(new TextEncoder().encode("x".repeat(600_000)));
+			controller.enqueue(new TextEncoder().encode("x".repeat(600_000)));
+			controller.close();
+		},
+	});
+	const request = new Request("http://localhost/s/api/send", {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: stream,
+		duplex: "half",
+	});
+
+	const response = await POST(request, paramsFor("send"));
+
+	assert.equal(response.status, 413);
+	assert.equal(response.headers.get("Cache-Control"), "no-store");
+});
+
 test("forwards analytics headers and strips credentials", async () => {
 	let seen;
 	globalThis.fetch = async (url, options) => {
@@ -137,6 +158,29 @@ test("prefers server-only upstream over the public URL", async () => {
 	await POST(postRequest("collect"), paramsFor("collect"));
 
 	assert.equal(seenUrl, "https://upstream.example.com/api/collect");
+});
+
+test("drops spoofable visitor IP headers when proxy headers are untrusted", async () => {
+	process.env.TRUST_PROXY_HEADERS = "false";
+	let seen;
+	globalThis.fetch = async (url, options) => {
+		seen = { url, options };
+		return new NextResponseShim(200, JSON.stringify({ ok: true }));
+	};
+
+	const response = await POST(
+		postRequest("send", {
+			headers: {
+				"X-Forwarded-For": "203.0.113.7",
+				"X-Real-IP": "203.0.113.7",
+			},
+		}),
+		paramsFor("send"),
+	);
+
+	assert.equal(response.status, 200);
+	assert.equal(seen.options.headers["X-Forwarded-For"], "unknown");
+	assert.equal(seen.options.headers["X-Real-IP"], "unknown");
 });
 
 test("strips upstream Set-Cookie from passthrough responses", async () => {

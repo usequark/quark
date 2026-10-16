@@ -15,8 +15,10 @@
  * - Header hygiene — `cookie`, `authorization`, and `x-metrics-token` are
  *   never forwarded; only the analytics-relevant headers cross the boundary.
  * - `X-Forwarded-For` / `X-Real-IP` are preserved so Umami geolocates the
- *   visitor, not the Railway egress IP.
- * - 1 MB body cap + 5s upstream timeout bound abuse and slowloris cost.
+ *   visitor, not the Railway egress IP — unless TRUST_PROXY_HEADERS=false,
+ *   in which case "unknown" crosses instead (same rule as proxy.js).
+ * - 1 MB body cap enforced while streaming (a missing/lying Content-Length
+ *   cannot force full buffering) + 5s upstream timeout bound abuse cost.
  * - `Cache-Control: no-store` on every response; upstream `Set-Cookie` is
  *   stripped and never reaches the browser.
  * - Fail-open 202 on upstream 5xx/timeout so analytics never fails the
@@ -30,6 +32,7 @@
 import { createLogger } from "@usequark/quark-core/core";
 import { NextResponse } from "next/server";
 import { getUmamiUpstreamBase } from "@/lib/analytics/umami-config.js";
+import { shouldTrustProxyHeaders } from "@/lib/proxy-auth.js";
 
 const logger = createLogger("umami-proxy");
 
@@ -59,6 +62,43 @@ function resolveClientIp(request) {
 	}
 
 	return request.headers.get("x-real-ip")?.trim() || "unknown";
+}
+
+// Streams the request body under a running byte budget. The Content-Length
+// pre-check above is only an early exit: a missing or lying header must not
+// force full buffering of an unbounded body before the 413 fires.
+async function readCappedBody(request) {
+	if (!request.body) return { status: "empty" };
+
+	const reader = request.body.getReader();
+	const chunks = [];
+	let total = 0;
+
+	try {
+		for (;;) {
+			const { done, value } = await reader.read();
+			if (done) break;
+			total += value.byteLength;
+			if (total > MAX_BODY_BYTES) {
+				await reader.cancel().catch(() => {});
+				return { status: "too-large" };
+			}
+			chunks.push(value);
+		}
+	} catch {
+		return { status: "unreadable" };
+	}
+
+	if (!total) return { status: "empty" };
+
+	const bytes = new Uint8Array(total);
+	let offset = 0;
+	for (const chunk of chunks) {
+		bytes.set(chunk, offset);
+		offset += chunk.byteLength;
+	}
+
+	return { status: "ok", bytes };
 }
 
 export async function POST(request, { params } = {}) {
@@ -92,7 +132,7 @@ export async function POST(request, { params } = {}) {
 
 	let body;
 	try {
-		body = await request.arrayBuffer();
+		body = await readCappedBody(request);
 	} catch {
 		return NextResponse.json(
 			{ error: "Unreadable request body" },
@@ -100,17 +140,20 @@ export async function POST(request, { params } = {}) {
 		);
 	}
 
-	if (!body?.byteLength) {
-		return NextResponse.json(
-			{ error: "Empty body" },
-			{ status: 400, headers: noStoreHeaders() },
-		);
-	}
-
-	if (body.byteLength > MAX_BODY_BYTES) {
+	if (body.status === "too-large") {
 		return NextResponse.json(
 			{ error: "Payload too large" },
 			{ status: 413, headers: noStoreHeaders() },
+		);
+	}
+
+	if (body.status !== "ok") {
+		return NextResponse.json(
+			{
+				error:
+					body.status === "empty" ? "Empty body" : "Unreadable request body",
+			},
+			{ status: 400, headers: noStoreHeaders() },
 		);
 	}
 
@@ -122,8 +165,15 @@ export async function POST(request, { params } = {}) {
 		);
 	}
 
-	const incomingForwardedFor = request.headers.get("x-forwarded-for");
-	const clientIp = resolveClientIp(request);
+	// Honor the same proxy-header trust setting as proxy.js: with
+	// TRUST_PROXY_HEADERS=false the app is directly reachable, the headers
+	// are attacker-controlled, and forwarding them would poison Umami geo.
+	// "unknown" (never client bytes) crosses the boundary instead.
+	const trustProxyHeaders = shouldTrustProxyHeaders();
+	const incomingForwardedFor = trustProxyHeaders
+		? request.headers.get("x-forwarded-for")
+		: null;
+	const clientIp = trustProxyHeaders ? resolveClientIp(request) : "unknown";
 	const forwardedFor = incomingForwardedFor?.trim()
 		? incomingForwardedFor
 		: clientIp;
@@ -131,7 +181,9 @@ export async function POST(request, { params } = {}) {
 	const forwardHeaders = {
 		"Content-Type": "application/json",
 		"X-Forwarded-For": forwardedFor,
-		"X-Real-IP": request.headers.get("x-real-ip")?.trim() || clientIp,
+		"X-Real-IP": trustProxyHeaders
+			? request.headers.get("x-real-ip")?.trim() || clientIp
+			: clientIp,
 	};
 
 	const userAgent = request.headers.get("user-agent");
@@ -147,7 +199,7 @@ export async function POST(request, { params } = {}) {
 	try {
 		upstreamResponse = await fetch(`${upstreamBase}/api/${endpoint}`, {
 			method: "POST",
-			body,
+			body: body.bytes,
 			headers: forwardHeaders,
 			signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
 		});

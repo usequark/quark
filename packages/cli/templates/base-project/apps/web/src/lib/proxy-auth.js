@@ -107,3 +107,36 @@ export function getRateLimitBucket(pathname, method = "GET") {
 export function isRateLimitExempt(pathname) {
 	return RATE_LIMIT_EXEMPT_ROUTES.has(pathname);
 }
+
+/**
+ * Boolean-like values that disable trusting proxy headers. Mirrors the
+ * "explicit false wins" convention used by `AUTH_ALLOW_SIGNUP` and
+ * `DB_INSTRUMENTATION`, so operators don't have to learn a new dialect.
+ */
+const PROXY_HEADERS_FALSY_VALUES = new Set(["false", "0", "no", "off"]);
+
+/**
+ * Whether the client-supplied proxy headers (`x-forwarded-for`, `x-real-ip`)
+ * may be trusted to identify the client.
+ *
+ * Default `true`: the shipped behaviour. The app assumes it sits behind a
+ * reverse proxy (Railway, Docker, nginx) that overwrites these headers on
+ * every request, so the left-most `x-forwarded-for` entry is treated as the
+ * client IP.
+ *
+ * Set `TRUST_PROXY_HEADERS=false` when the app is reachable directly (no
+ * proxy rewriting the header on the way in). Callers must then ignore both
+ * headers: proxy.js keys every client on the literal "unknown", and the
+ * Umami ingest proxy forwards "unknown" instead of attacker bytes. A header
+ * a client can set is not an identity.
+ *
+ * Read lazily (per request) rather than at module load: tests flip it and a
+ * value set after import still takes effect. Only explicit false-like values
+ * disable trusting; unset, empty, "true", or a typo all keep the default.
+ *
+ * @returns {boolean}
+ */
+export function shouldTrustProxyHeaders() {
+	const raw = process.env.TRUST_PROXY_HEADERS?.trim().toLowerCase();
+	return !(raw && PROXY_HEADERS_FALSY_VALUES.has(raw));
+}
