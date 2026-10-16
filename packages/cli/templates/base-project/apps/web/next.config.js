@@ -1,5 +1,5 @@
 import { hostname, networkInterfaces } from "node:os";
-
+import { getUmamiUpstreamBase } from "./src/lib/analytics/umami-config.js";
 import { buildContentSecurityPolicy } from "./src/lib/analytics/umami-csp.js";
 
 function getLocalNetworkHosts() {
@@ -68,6 +68,18 @@ const nextConfig = {
 	async headers() {
 		return [
 			{
+				// First-party Umami tracker. Served via rewrites() from the
+				// upstream host; tuned cache here because rewrites pass the
+				// upstream Cache-Control through unchanged.
+				source: "/s/script.js",
+				headers: [
+					{
+						key: "Cache-Control",
+						value: "public, max-age=3600, stale-while-revalidate=86400",
+					},
+				],
+			},
+			{
 				source: "/:path*",
 				headers: [
 					{
@@ -128,8 +140,15 @@ const nextConfig = {
 	},
 
 	// API route configuration
+	// First-party Umami proxy: GET /s/script.js is served from the upstream
+	// analytics host so the tracker URL is same-origin. POST ingest
+	// (/s/api/send|collect|record) goes through a Route Handler instead —
+	// rewrites cannot strip/append headers (cookie strip, X-Forwarded-For
+	// for geo, x-umami-cache for replay).
 	async rewrites() {
-		return [];
+		const upstream = getUmamiUpstreamBase(process.env);
+		if (!upstream) return [];
+		return [{ source: "/s/script.js", destination: `${upstream}/script.js` }];
 	},
 
 	// Compiler options for production optimization

@@ -101,6 +101,10 @@ const ENV_DESCRIPTIONS = {
 	APP_URL: "Canonical application URL - derives NEXTAUTH_URL and CORS origins",
 	NEXT_PUBLIC_UMAMI_URL:
 		"Public Umami base URL for script.js and replay uploads",
+	UMAMI_UPSTREAM_URL:
+		"Server-only Umami base URL for the first-party proxy (rewrites + /s/api/* destination). Takes precedence over NEXT_PUBLIC_UMAMI_URL and keeps the analytics host out of the client bundle",
+	UMAMI_URL:
+		"Server-only Umami base URL alias for the first-party proxy (same as UMAMI_UPSTREAM_URL)",
 	NEXT_PUBLIC_UMAMI_WEBSITE_ID: "Public Umami website UUID",
 	NEXT_PUBLIC_UMAMI_REPLAY_ENABLED:
 		"Enable local rrweb session replay uploads to Umami",
@@ -246,6 +250,10 @@ function createEnvSchema(service) {
 			NEXT_PUBLIC_UMAMI_URL: absoluteHttpUrl(
 				"NEXT_PUBLIC_UMAMI_URL must be an absolute http(s) URL",
 			),
+			UMAMI_UPSTREAM_URL: absoluteHttpUrl(
+				"UMAMI_UPSTREAM_URL must be an absolute http(s) URL",
+			),
+			UMAMI_URL: absoluteHttpUrl("UMAMI_URL must be an absolute http(s) URL"),
 			NEXT_PUBLIC_UMAMI_WEBSITE_ID: z
 				.string()
 				.refine((value) => isUuid(value), {
@@ -370,8 +378,13 @@ function createEnvSchema(service) {
 				}
 			}
 
-			// Umami replay requires full analytics contract
-			const umamiUrl = data.NEXT_PUBLIC_UMAMI_URL?.trim();
+			// Umami replay requires full analytics contract. A server-only
+			// upstream (UMAMI_UPSTREAM_URL / UMAMI_URL) counts as URL-present:
+			// the proxy rewrite/handler destination follows it.
+			const umamiUrl =
+				data.UMAMI_UPSTREAM_URL?.trim() ||
+				data.UMAMI_URL?.trim() ||
+				data.NEXT_PUBLIC_UMAMI_URL?.trim();
 			const umamiWebsiteId = data.NEXT_PUBLIC_UMAMI_WEBSITE_ID?.trim();
 			const umamiReplayEnabled = data.NEXT_PUBLIC_UMAMI_REPLAY_ENABLED?.trim();
 			const hasUmamiUrl = Boolean(umamiUrl);
@@ -385,7 +398,7 @@ function createEnvSchema(service) {
 				ctx.addIssue({
 					code: "custom",
 					message:
-						"NEXT_PUBLIC_UMAMI_REPLAY_ENABLED requires NEXT_PUBLIC_UMAMI_URL and NEXT_PUBLIC_UMAMI_WEBSITE_ID.",
+						"NEXT_PUBLIC_UMAMI_REPLAY_ENABLED requires an Umami URL (UMAMI_UPSTREAM_URL, UMAMI_URL, or NEXT_PUBLIC_UMAMI_URL) and NEXT_PUBLIC_UMAMI_WEBSITE_ID.",
 				});
 			}
 		});
@@ -455,14 +468,20 @@ function collectWarnings() {
 		}
 	}
 
-	// Umami pair completeness
-	const umamiUrl = process.env.NEXT_PUBLIC_UMAMI_URL?.trim();
+	// Umami pair completeness. Server-only upstream vars count as
+	// URL-present, matching the proxy destination preference.
+	const umamiUrl = (
+		process.env.UMAMI_UPSTREAM_URL ||
+		process.env.UMAMI_URL ||
+		process.env.NEXT_PUBLIC_UMAMI_URL ||
+		""
+	).trim();
 	const umamiWebsiteId = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID?.trim();
 	const hasUmamiUrl = Boolean(umamiUrl);
 	const hasUmamiWebsiteId = Boolean(umamiWebsiteId);
 	if (hasUmamiUrl !== hasUmamiWebsiteId) {
 		warnings.push(
-			"Umami analytics is incomplete: set both NEXT_PUBLIC_UMAMI_URL and NEXT_PUBLIC_UMAMI_WEBSITE_ID to enable tracking.",
+			"Umami analytics is incomplete: set an Umami URL (UMAMI_UPSTREAM_URL, UMAMI_URL, or NEXT_PUBLIC_UMAMI_URL) and NEXT_PUBLIC_UMAMI_WEBSITE_ID to enable tracking.",
 		);
 	}
 

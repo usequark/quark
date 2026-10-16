@@ -21,6 +21,9 @@ const themeScript = `(function(){try{var t=localStorage.getItem("${THEME_STORAGE
 const umamiBeforeSendScript = buildUmamiBeforeSendScript();
 
 export default function RootLayout({ children }) {
+	// Server config deliberately: the gate stays upstream-aware so a missing
+	// upstream never emits a 404 script tag, while only websiteId + proxy
+	// paths reach the HTML. Browser code uses getUmamiClientConfig instead.
 	const umamiConfig = getUmamiConfig();
 
 	return (
@@ -31,21 +34,14 @@ export default function RootLayout({ children }) {
 				{/* biome-ignore lint/security/noDangerouslySetInnerHtml: static inline before-send handler */}
 				<script dangerouslySetInnerHTML={{ __html: umamiBeforeSendScript }} />
 				{umamiConfig.enabled ? (
-					<>
-						<link
-							crossOrigin="anonymous"
-							href={umamiConfig.origin}
-							rel="preconnect"
-						/>
-						<link href={umamiConfig.dnsPrefetchHref} rel="dns-prefetch" />
-						<script
-							defer
-							data-performance="true"
-							data-website-id={umamiConfig.websiteId}
-							src={umamiConfig.scriptUrl}
-							data-before-send="__umamiBeforeSend"
-						/>
-					</>
+					<script
+						defer
+						data-performance="true"
+						data-website-id={umamiConfig.websiteId}
+						data-host-url={umamiConfig.proxyHostUrl}
+						src={umamiConfig.proxyScriptUrl}
+						data-before-send="__umamiBeforeSend"
+					/>
 				) : null}
 			</head>
 			<body>

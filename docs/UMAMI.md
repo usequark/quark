@@ -4,7 +4,7 @@ Quark's recommended default is a dormant Umami baseline in every scaffolded Next
 
 ## Recommendation
 
-- Load `script.js` from `NEXT_PUBLIC_UMAMI_URL` in the root layout head.
+- Serve the tracker first-party from `/s/script.js` (rewritten to the upstream host) with `data-host-url="/s"` so beacons POST same-origin.
 - Enable Umami Performance on the main tracker by default when base analytics is already enabled.
 - Keep Umami helpers app-local in `apps/web/src/lib/analytics/*` and sync them into the scaffold templates. Do not move vendor-specific code into `@usequark/quark-core`.
 - Use a local `rrweb` client component for replay uploads instead of Umami's hosted `recorder.js`.
@@ -35,15 +35,33 @@ The generated web app should include these surfaces:
 
 | Surface | Purpose |
 |---|---|
-| `apps/web/src/lib/analytics/umami-config.js` | Normalize URL, derive origin and dns-prefetch hint, build `script.js` URL, expose `enabled` and `replayEnabled` |
+| `apps/web/src/lib/analytics/umami-config.js` | Normalize upstream URL (server-only override first), expose first-party proxy URLs (`/s/script.js`, `/s/api/*`), expose `enabled` and `replayEnabled` |
 | `apps/web/src/lib/analytics/umami.js` | Thin client wrapper for `track()`, `identify()`, and optional revenue helpers |
 | `apps/web/src/lib/analytics/umami-marketing.js` | Dormant helpers for campaign URLs, dashboard-generated Umami Links, Pixels, and marketing-email snippets |
-| `apps/web/src/lib/analytics/umami-replay.js` | Replay defaults, buffering, session-cache waiting, and `/api/record` payload helpers |
+| `apps/web/src/lib/analytics/umami-replay.js` | Replay defaults, buffering, session-cache waiting, and first-party `/s/api/record` payload helpers |
 | `apps/web/src/app/_components/UmamiReplayRecorder.js` | Local rrweb recorder that waits for `window.umami.getSession().cache`, batches events, flushes on hidden/pagehide, and checkpoints across App Router transitions |
-| `apps/web/src/app/layout.js` | Adds preconnect, dns-prefetch, a deferred `script.js` tag with `data-performance="true"`, and conditionally mounts the replay recorder |
-| `apps/web/src/proxy.js` and `apps/web/next.config.js` | Derive Umami CSP allowlists from shared config instead of hardcoded hosts |
-| `packages/config/src/validate-env.js` | Validates the three-variable contract and replay preconditions |
+| `apps/web/src/app/s/api/[endpoint]/route.js` | First-party ingest proxy: POST-only whitelist (`send`, `collect`, `record`), strips credentials, forwards geo headers, `no-store`, fail-open 202 |
+| `apps/web/src/app/layout.js` | Deferred first-party `script.js` tag (`src="/s/script.js"`, `data-host-url="/s"`) with `data-performance="true"`, and conditionally mounts the replay recorder. No cross-origin preconnect — same-origin needs none |
+| `apps/web/src/proxy.js` and `apps/web/next.config.js` | CSP stays `'self'`-only for analytics (no Umami origin allowlist); `next.config.js` rewrites `GET /s/script.js` to the upstream host |
+| `packages/config/src/validate-env.js` | Validates the three-variable contract and replay preconditions, plus optional server-only `UMAMI_UPSTREAM_URL` / `UMAMI_URL` override |
 | `apps/web/.env.example` | Documents the public Umami setup without adding extra env sprawl |
+
+## First-Party Proxy Shape
+
+Tracker, web-vitals beacons, and replay batches never touch the upstream
+host from the browser:
+
+| First-party | Upstream | Transport |
+|---|---|---|
+| `GET /s/script.js` | `${UMAMI}/script.js` | `rewrites()` in `next.config.js` (edge, cacheable) |
+| `POST /s/api/send` | `${UMAMI}/api/send` (tracker) | Route handler (strips credentials, forwards geo) |
+| `POST /s/api/collect` | `${UMAMI}/api/collect` (web-vitals) | Same handler, whitelisted |
+| `POST /s/api/record` | `${UMAMI}/api/record` (replay) | Same handler, whitelisted |
+
+`/s/*` never starts with `/api/`, so the `proxy.js` rate limiter does not
+apply — no exemption change needed, and analytics beacons must never 429.
+CSP is `'self'`-only for analytics in both `next.config.js` headers and
+`proxy.js` security headers.
 
 ## Replay Defaults
 
@@ -98,9 +116,12 @@ Those can be added later by projects that need them, but they should not widen t
 
 ## Implementation Notes
 
-- Use a deferred `script` tag in the layout head for `script.js` so the tracker can bootstrap in parallel before replay polling begins.
+- Use a deferred first-party `script` tag (`src="/s/script.js"`, `data-host-url="/s"`) so the tracker bootstraps in parallel before replay polling begins.
 - Add `data-performance="true"` to the main tracker when a site is already opted into Umami analytics.
-- Derive `script-src` and `connect-src` from the normalized Umami origin.
+- Keep `script-src` and `connect-src` at `'self'` for analytics — the proxy is same-origin, so no Umami host ever enters CSP.
+- Operate the proxy with `UMAMI_UPSTREAM_URL` (server-only, preferred) falling back to `NEXT_PUBLIC_UMAMI_URL` for the rewrite/handler destination.
+- Railway gotcha: the `rewrites()` destination is resolved when the Next.js server starts, not per request. Set `UMAMI_UPSTREAM_URL` (or `NEXT_PUBLIC_UMAMI_URL`) at build AND deploy time with the same value — a change takes effect only after a redeploy/restart, and mismatched build/deploy values split traffic between two upstreams.
+- Browser code must use `getUmamiClientConfig()` (website ID + static proxy paths only), never the server `getUmamiConfig()`, so the analytics host cannot end up in client bundles. Verify with `grep -r <umami-host> .next/static` — it must be empty.
 - Preserve development-only `unsafe-eval` where Turbopack still requires it.
 - Do not send PII in events, replay metadata, or session properties.
 - Wait for `window.umami.getSession().cache` before starting rrweb capture; the main tracker owns the session token.

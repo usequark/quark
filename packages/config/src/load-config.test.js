@@ -314,7 +314,7 @@ describe("Environment Validation - Umami contract", () => {
 		const result = validateEnv();
 
 		assert.deepEqual(result.warnings, [
-			"Umami analytics is incomplete: set both NEXT_PUBLIC_UMAMI_URL and NEXT_PUBLIC_UMAMI_WEBSITE_ID to enable tracking.",
+			"Umami analytics is incomplete: set an Umami URL (UMAMI_UPSTREAM_URL, UMAMI_URL, or NEXT_PUBLIC_UMAMI_URL) and NEXT_PUBLIC_UMAMI_WEBSITE_ID to enable tracking.",
 		]);
 	});
 
@@ -343,8 +343,29 @@ describe("Environment Validation - Umami contract", () => {
 
 		assert.throws(
 			() => validateEnv(),
-			/NEXT_PUBLIC_UMAMI_REPLAY_ENABLED requires NEXT_PUBLIC_UMAMI_URL and NEXT_PUBLIC_UMAMI_WEBSITE_ID/,
+			/NEXT_PUBLIC_UMAMI_REPLAY_ENABLED requires an Umami URL/,
 		);
+	});
+
+	test("accepts replay enablement with a server-only upstream URL", () => {
+		process.env.UMAMI_UPSTREAM_URL = "https://stats.example.com";
+		process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID =
+			"133660ed-e51c-4ed9-84aa-c86654460cae";
+		process.env.NEXT_PUBLIC_UMAMI_REPLAY_ENABLED = "true";
+
+		const result = validateEnv();
+
+		assert.deepEqual(result.warnings, []);
+	});
+
+	test("stays silent when only a server-only upstream and website ID are set", () => {
+		process.env.UMAMI_URL = "https://stats.example.com";
+		process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID =
+			"133660ed-e51c-4ed9-84aa-c86654460cae";
+
+		const result = validateEnv();
+
+		assert.deepEqual(result.warnings, []);
 	});
 });
 

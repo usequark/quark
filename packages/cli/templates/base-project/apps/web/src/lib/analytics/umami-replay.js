@@ -1,5 +1,5 @@
 import { createLogger } from "@usequark/quark-core/logger";
-import { getUmamiConfig, normalizeUmamiUrl } from "./umami-config.js";
+import { getUmamiClientConfig, normalizeUmamiUrl } from "./umami-config.js";
 
 const log = createLogger("umami-replay");
 
@@ -68,8 +68,16 @@ export function createReplayBuffer() {
 }
 
 export function buildReplayEndpoint(env = process.env) {
-	const url =
-		typeof env === "string" ? normalizeUmamiUrl(env) : getUmamiConfig(env).url;
+	// First-party ingest is the default: replay batches POST same-origin so
+	// blocklists never see the upstream analytics host.
+	if (typeof env !== "string") {
+		const config = getUmamiClientConfig(env);
+		return config.enabled ? config.proxyRecordUrl : "";
+	}
+
+	// Explicit upstream URL string (legacy direct mode, e.g. server-side
+	// callers that already resolved the upstream base).
+	const url = normalizeUmamiUrl(env);
 
 	return url ? `${url}/api/record` : "";
 }

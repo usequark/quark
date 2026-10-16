@@ -16,13 +16,31 @@ test("replay defaults record every session and wait indefinitely for the cache",
 	assert.equal(UMAMI_REPLAY_DEFAULTS.sessionPollAttempts, Infinity);
 });
 
-test("buildReplayEndpoint uses the normalized Umami URL", () => {
+test("buildReplayEndpoint uses the first-party proxy path", () => {
+	assert.equal(
+		buildReplayEndpoint({
+			NEXT_PUBLIC_UMAMI_URL: "https://stats.example.com/",
+			NEXT_PUBLIC_UMAMI_WEBSITE_ID: "133660ed-e51c-4ed9-84aa-c86654460cae",
+		}),
+		"/s/api/record",
+	);
+});
+
+test("buildReplayEndpoint returns empty when analytics is disabled", () => {
 	assert.equal(
 		buildReplayEndpoint({
 			NEXT_PUBLIC_UMAMI_URL: "https://stats.example.com/",
 		}),
+		"",
+	);
+});
+
+test("buildReplayEndpoint keeps direct mode for explicit upstream URL strings", () => {
+	assert.equal(
+		buildReplayEndpoint("https://stats.example.com/"),
 		"https://stats.example.com/api/record",
 	);
+	assert.equal(buildReplayEndpoint(""), "");
 });
 
 test("shouldSampleReplay respects sample-rate bounds", () => {
