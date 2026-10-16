@@ -1,5 +1,11 @@
 # @usequark/quark-create-app
 
+## 1.27.2 - 2026-10-16
+
+### Patch Changes
+
+- [#299](https://github.com/usequark/quark/pull/299) [`e12fea0`](https://github.com/usequark/quark/commit/e12fea0b027b6f76ba249c8d312621f794658437) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Scaffold Umami analytics behind a first-party proxy: the tracker loads from `/s/script.js` with `data-host-url="/s"` and beacons/replay POST same-origin to `/s/api/send`, `/s/api/collect`, and `/s/api/record`, so blocklists never see the upstream host and CSP stays `'self'`-only. Adds the ingest Route Handler (endpoint whitelist, POST-only, credential strip, geo header forwarding, `no-store`, fail-open 202), a client/server config split keeping the upstream host out of browser bundles, and an optional server-only `UMAMI_UPSTREAM_URL`/`UMAMI_URL` override.
+
 ## 1.27.1 - 2026-10-15
 
 ### Patch Changes
