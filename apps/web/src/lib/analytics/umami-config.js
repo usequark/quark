@@ -80,6 +80,25 @@ export function getUmamiUpstreamBase(env = process.env) {
 	return "";
 }
 
+// Default env for browser-safe readers. Each NEXT_PUBLIC_* access MUST stay
+// a literal member expression: Next.js statically inlines those literals in
+// client bundles, where bare `process` does not exist — a whole-`process.env`
+// default throws ReferenceError in every browser, which previously killed
+// track(), web-vitals, and replay client-side. Do not refactor this into a
+// `process.env` passthrough. Exported for tests (the no-process fallback).
+export function readPublicEnv() {
+	try {
+		return {
+			NEXT_PUBLIC_UMAMI_URL: process.env.NEXT_PUBLIC_UMAMI_URL,
+			NEXT_PUBLIC_UMAMI_WEBSITE_ID: process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID,
+			NEXT_PUBLIC_UMAMI_REPLAY_ENABLED:
+				process.env.NEXT_PUBLIC_UMAMI_REPLAY_ENABLED,
+		};
+	} catch {
+		return {};
+	}
+}
+
 export function parseUmamiBooleanFlag(value) {
 	if (typeof value !== "string") return false;
 	return TRUE_VALUES.has(value.trim().toLowerCase());
@@ -125,7 +144,11 @@ export function getUmamiConfig(env = process.env) {
 // in client bundles. `enabled` needs only a valid website ID because every
 // client surface is same-origin; the server layout keeps the upstream-aware
 // gate so a missing upstream never emits a 404 script tag.
-export function getUmamiClientConfig(env = process.env) {
+//
+// The default env is readPublicEnv(), not process.env: bare `process` does
+// not exist in browsers, so a process.env default throws on every no-arg
+// browser call.
+export function getUmamiClientConfig(env = readPublicEnv()) {
 	const rawWebsiteId =
 		typeof env.NEXT_PUBLIC_UMAMI_WEBSITE_ID === "string"
 			? env.NEXT_PUBLIC_UMAMI_WEBSITE_ID.trim()

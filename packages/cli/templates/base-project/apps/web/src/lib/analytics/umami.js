@@ -1,4 +1,4 @@
-import { getUmamiClientConfig } from "./umami-config.js";
+import { getUmamiClientConfig, readPublicEnv } from "./umami-config.js";
 
 /**
  * Read the Umami user role cookie set by the admin layout.
@@ -25,7 +25,7 @@ function getUmamiClient() {
 	return window.umami ?? null;
 }
 
-export function isUmamiEnabled(env = process.env) {
+export function isUmamiEnabled(env = readPublicEnv()) {
 	return getUmamiClientConfig(env).enabled;
 }
 

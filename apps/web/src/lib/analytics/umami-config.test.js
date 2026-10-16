@@ -8,6 +8,7 @@ import {
 	isUmamiWebsiteId,
 	normalizeUmamiUrl,
 	parseUmamiBooleanFlag,
+	readPublicEnv,
 } from "./umami-config.js";
 
 test("normalizeUmamiUrl trims whitespace and drops query, hash, and trailing slash", () => {
@@ -179,6 +180,22 @@ test("getUmamiClientConfig enables on website ID alone and disables cleanly", ()
 		proxyCollectUrl: "",
 		proxyRecordUrl: "",
 	});
+});
+
+test("readPublicEnv degrades to {} when process is absent (browser shape)", () => {
+	const realProcess = globalThis.process;
+	globalThis.process = undefined;
+	try {
+		assert.deepEqual(readPublicEnv(), {});
+		// No-arg client config must disable cleanly, never throw: bare
+		// `process.env` defaults threw ReferenceError in every browser,
+		// killing track(), web-vitals, and replay client-side.
+		const config = getUmamiClientConfig();
+		assert.equal(config.enabled, false);
+		assert.equal(config.proxyCollectUrl, "");
+	} finally {
+		globalThis.process = realProcess;
+	}
 });
 
 test("getUmamiCspOrigins stays self-only in proxy mode", () => {

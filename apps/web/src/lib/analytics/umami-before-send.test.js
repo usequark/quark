@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import vm from "node:vm";
 
 import {
 	buildUmamiBeforeSendScript,
@@ -105,4 +106,37 @@ test("buildUmamiBeforeSendScript output is valid JS defining __umamiBeforeSend",
 		// Syntax check only — do not execute against real document
 		new Function(script);
 	});
+});
+
+test("inline script stays valid if minification drops the function name", () => {
+	// Production bundlers stripped `shouldBlockUmamiPayload` down to an
+	// anonymous `function({...})`, which as a bare statement is a SyntaxError
+	// that kills the whole inline tag. The `var` assignment must hold for
+	// named, anonymous, and arrow shapes alike.
+	const minifiedShape = buildUmamiBeforeSendScript().replace(
+		"function shouldBlockUmamiPayload",
+		"function",
+	);
+	assert.doesNotThrow(() => {
+		new Function(minifiedShape);
+	});
+});
+
+test("inline script defines a working hook when executed", () => {
+	// URL is a browser global but absent from bare vm contexts.
+	const sandbox = { window: {}, document: { cookie: "" }, URL };
+	vm.createContext(sandbox);
+	vm.runInContext(buildUmamiBeforeSendScript(), sandbox);
+
+	const hook = sandbox.window.__umamiBeforeSend;
+	assert.equal(typeof hook, "function");
+
+	// Admin URLs are dropped (hook returns false).
+	assert.equal(hook(null, { url: "https://x.test/admin" }), false);
+	// Public URLs pass the payload through.
+	const payload = { url: "https://x.test/pricing" };
+	assert.equal(hook(null, payload), payload);
+	// Staff cookies drop everything.
+	sandbox.document.cookie = "umami_user_role=admin";
+	assert.equal(hook(null, { url: "https://x.test/" }), false);
 });

@@ -123,6 +123,8 @@ Those can be added later by projects that need them, but they should not widen t
 - Replay batches are chunked client-side to stay under the proxy's 1 MB cap (single poison events are dropped with a warning, never retried forever). Proxy fail-open is endpoint-aware: `record` answers `{ ok: false }` so batches are retained, `send`/`collect` answer `{ ok: true }` (fire-and-forget, no retry path).
 - Operate the proxy with `UMAMI_UPSTREAM_URL` (server-only, preferred) falling back to `NEXT_PUBLIC_UMAMI_URL` for the handler destination. Both are resolved at request time (not build time), so an upstream change needs only a restart, not a rebuild.
 - Browser code must use `getUmamiClientConfig()` (website ID + static proxy paths only), never the server `getUmamiConfig()`, so the analytics host cannot end up in client bundles. Verify with `grep -r <umami-host> .next/static` — it must be empty.
+- Client env defaults must stay literal `process.env.NEXT_PUBLIC_*` member expressions (see `readPublicEnv()`): bare `process` does not exist in browsers, so a `process.env` default throws on every no-arg browser call and silently kills track(), web-vitals, and replay.
+- The inline before-send script must assign the embedded helper via `var` (`var shouldBlockUmamiPayload=<fn>;`): production minification can drop the function name from `.toString()`, and a bare anonymous `function(...){...}` statement is a SyntaxError that kills the whole tag.
 - Preserve development-only `unsafe-eval` where Turbopack still requires it.
 - Do not send PII in events, replay metadata, or session properties.
 - Wait for `window.umami.getSession().cache` before starting rrweb capture; the main tracker owns the session token.

@@ -1,5 +1,9 @@
 import { createLogger } from "@usequark/quark-core/logger";
-import { getUmamiClientConfig, normalizeUmamiUrl } from "./umami-config.js";
+import {
+	getUmamiClientConfig,
+	normalizeUmamiUrl,
+	readPublicEnv,
+} from "./umami-config.js";
 
 const log = createLogger("umami-replay");
 
@@ -73,7 +77,7 @@ export function createReplayBuffer() {
 	};
 }
 
-export function buildReplayEndpoint(env = process.env) {
+export function buildReplayEndpoint(env = readPublicEnv()) {
 	// First-party ingest is the default: replay batches POST same-origin so
 	// blocklists never see the upstream analytics host.
 	if (typeof env !== "string") {
