@@ -1,5 +1,4 @@
 import { hostname, networkInterfaces } from "node:os";
-import { getUmamiUpstreamBase } from "./src/lib/analytics/umami-config.js";
 import { buildContentSecurityPolicy } from "./src/lib/analytics/umami-csp.js";
 
 function getLocalNetworkHosts() {
@@ -127,21 +126,16 @@ const nextConfig = {
 		},
 	},
 
-	// API route configuration
-	// First-party Umami proxy: GET /s/script.js is served from the upstream
-	// analytics host so the tracker URL is same-origin. POST ingest
-	// (/s/api/send|collect|record) goes through a Route Handler instead —
-	// rewrites cannot strip/append headers (cookie strip, X-Forwarded-For
-	// for geo, x-umami-cache for replay).
-	// NOTE: headers() entries do not apply to externally-rewritten responses
-	// (verified: no headers() output on /s/script.js), so the tracker's
-	// caching comes from the upstream's own Cache-Control, which passes
-	// through untouched. Do not add tuning headers here expecting effect.
-	async rewrites() {
-		const upstream = getUmamiUpstreamBase(process.env);
-		if (!upstream) return [];
-		return [{ source: "/s/script.js", destination: `${upstream}/script.js` }];
-	},
+	// First-party Umami proxy: GET /s/script.js and POST
+	// /s/api/send|collect|record are served by Route Handlers under
+	// src/app/s/*, not rewrites(). A handler is required in both cases:
+	// rewrites proxy incoming request headers unchanged, which would forward
+	// app session cookies to the analytics host (script) and cannot strip or
+	// append the ingest headers (cookie strip, X-Forwarded-For for geo,
+	// x-umami-cache for replay).
+	// NOTE: the tracker destination is resolved at request time from
+	// UMAMI_UPSTREAM_URL (preferred) or NEXT_PUBLIC_UMAMI_URL, so unlike
+	// rewrites() it needs no rebuild to take effect — only a restart.
 
 	// Compiler options for production optimization
 	compiler: {

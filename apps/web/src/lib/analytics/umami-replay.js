@@ -18,6 +18,12 @@ export const UMAMI_REPLAY_DEFAULTS = Object.freeze({
 	blockSelector: "[data-umami-block]",
 });
 
+// Max serialized bytes per replay POST. Stays under the first-party proxy's
+// 1 MB cap with headroom for headers and JSON overhead, so a large DOM
+// snapshot cannot turn into a 413-restore-retry loop that grows the buffer
+// forever (each 413 restores the whole batch alongside new events).
+export const MAX_REPLAY_REQUEST_BYTES = 900_000;
+
 export function shouldSampleReplay(
 	randomValue = Math.random(),
 	sampleRate = UMAMI_REPLAY_DEFAULTS.sampleRate,
@@ -152,6 +158,158 @@ export function buildReplayBody({ websiteId, events, timestamp }) {
 	});
 }
 
+function replayBodyBytes(body) {
+	if (typeof TextEncoder !== "undefined") {
+		return new TextEncoder().encode(body).length;
+	}
+	return body.length;
+}
+
+async function postReplayChunk({
+	endpoint,
+	sessionCache,
+	websiteId,
+	events,
+	timestamp,
+	useKeepalive,
+	fetchImpl,
+}) {
+	const body = buildReplayBody({ websiteId, events, timestamp });
+	const keepalive = useKeepalive && body.length < 60000;
+
+	try {
+		const response = await fetchImpl(endpoint, {
+			keepalive,
+			method: "POST",
+			body,
+			headers: {
+				"Content-Type": "application/json",
+				"x-umami-cache": sessionCache,
+			},
+			credentials: "omit",
+		});
+
+		if (!response) return "retry";
+
+		// A 413 means the bytes exceed the proxy's cap. Multi-event chunks
+		// split and retry halves; a single event that 413s can never be
+		// delivered, so drop it with a warning instead of restoring it into
+		// an infinite retry loop.
+		if (response.status === 413) {
+			if (events.length > 1) return "split";
+			log.warn("dropping replay event rejected as oversized (413)");
+			return "drop";
+		}
+
+		if (!response.ok) return "retry";
+
+		// Umami answers 200 with { ok: false, reason } when replay is disabled
+		// server-side — and the first-party proxy answers 202 with
+		// { ok: false } when the upstream is unavailable. Treat both as a
+		// failure so events are restored instead of silently dropped.
+		const responseBody =
+			typeof response.json === "function"
+				? await response.json().catch(() => null)
+				: null;
+		if (responseBody && responseBody.ok === false) {
+			log.warn(
+				`batch rejected by server: ${responseBody.reason ?? "unknown reason"}`,
+			);
+			return "retry";
+		}
+
+		return "sent";
+	} catch {
+		return "retry";
+	}
+}
+
+async function postReplayChunks({
+	endpoint,
+	sessionCache,
+	websiteId,
+	events,
+	timestamp,
+	useKeepalive,
+	fetchImpl,
+}) {
+	if (!events.length) return true;
+
+	const probe = buildReplayBody({ websiteId, events, timestamp });
+	if (replayBodyBytes(probe) <= MAX_REPLAY_REQUEST_BYTES) {
+		const outcome = await postReplayChunk({
+			endpoint,
+			sessionCache,
+			websiteId,
+			events,
+			timestamp,
+			useKeepalive,
+			fetchImpl,
+		});
+		if (outcome === "sent" || outcome === "drop") return true;
+		if (outcome === "split") {
+			const mid = Math.max(1, Math.ceil(events.length / 2));
+			return (
+				(await postReplayChunks({
+					endpoint,
+					sessionCache,
+					websiteId,
+					events: events.slice(0, mid),
+					timestamp,
+					useKeepalive,
+					fetchImpl,
+				})) &&
+				(await postReplayChunks({
+					endpoint,
+					sessionCache,
+					websiteId,
+					events: events.slice(mid),
+					timestamp,
+					useKeepalive,
+					fetchImpl,
+				}))
+			);
+		}
+		return false;
+	}
+
+	// Oversized batch: split before sending. A single event that alone
+	// exceeds the cap can never be delivered, so drop it with a warning
+	// instead of restoring it into an infinite 413 loop.
+	if (events.length === 1) {
+		log.warn(
+			`dropping oversized replay event (${replayBodyBytes(probe)} bytes exceeds cap)`,
+		);
+		return true;
+	}
+
+	const mid = Math.max(1, Math.ceil(events.length / 2));
+	// Sequential halves: on partial failure the caller restores the whole
+	// batch, so an already-sent half may duplicate on retry. Accepted as
+	// rare best-effort duplication (upstream outage mid-oversized-batch);
+	// the alternative is silent loss.
+	return (
+		(await postReplayChunks({
+			endpoint,
+			sessionCache,
+			websiteId,
+			events: events.slice(0, mid),
+			timestamp,
+			useKeepalive,
+			fetchImpl,
+		})) &&
+		(await postReplayChunks({
+			endpoint,
+			sessionCache,
+			websiteId,
+			events: events.slice(mid),
+			timestamp,
+			useKeepalive,
+			fetchImpl,
+		}))
+	);
+}
+
 export async function postReplayBatch({
 	endpoint,
 	cache,
@@ -174,39 +332,13 @@ export async function postReplayBatch({
 		return false;
 	}
 
-	const body = buildReplayBody({ websiteId, events, timestamp });
-	const keepalive = useKeepalive && body.length < 60000;
-
-	try {
-		const response = await fetchImpl(endpoint, {
-			keepalive,
-			method: "POST",
-			body,
-			headers: {
-				"Content-Type": "application/json",
-				"x-umami-cache": sessionCache,
-			},
-			credentials: "omit",
-		});
-
-		if (!response?.ok) return false;
-
-		// Umami answers 200 with { ok: false, reason } when replay is disabled
-		// server-side. Treat that as a failure so events are restored instead
-		// of silently dropped.
-		const responseBody =
-			typeof response.json === "function"
-				? await response.json().catch(() => null)
-				: null;
-		if (responseBody && responseBody.ok === false) {
-			log.warn(
-				`batch rejected by server: ${responseBody.reason ?? "unknown reason"}`,
-			);
-			return false;
-		}
-
-		return true;
-	} catch {
-		return false;
-	}
+	return postReplayChunks({
+		endpoint,
+		sessionCache,
+		websiteId,
+		events,
+		timestamp,
+		useKeepalive,
+		fetchImpl,
+	});
 }

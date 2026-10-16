@@ -22,7 +22,10 @@
  * - `Cache-Control: no-store` on every response; upstream `Set-Cookie` is
  *   stripped and never reaches the browser.
  * - Fail-open 202 on upstream 5xx/timeout so analytics never fails the
- *   product flow — and never retry-storms a struggling upstream.
+ *   product flow — and never retry-storms a struggling upstream. The body
+ *   is endpoint-aware: `record` answers `{ ok: false }` so replay batches
+ *   are retained and retried, while `send`/`collect` answer `{ ok: true }`
+ *   because those beacons have no retry path.
  *
  * Deliberately NOT rate-limited by proxy.js: that limiter keys on `/api/*`
  * paths and analytics beacons must never 429. The body cap, content-type
@@ -49,6 +52,24 @@ function methodNotAllowed() {
 		{ error: "Method not allowed" },
 		{ status: 405, headers: noStoreHeaders() },
 	);
+}
+
+// Fail-open without losing replay data. Tracker (`send`) and web-vitals
+// (`collect`) beacons are fire-and-forget with no retry path, so they keep
+// `{ ok: true }` to avoid any client-side retry storm against a struggling
+// upstream. Replay (`record`) has a restore/retry path keyed on
+// `body.ok === false` in postReplayBatch: answering `ok: true` there would
+// discard the batch, so record answers `ok: false` and the events are
+// retained and retried.
+function failOpenResponse(endpoint) {
+	const body =
+		endpoint === "record"
+			? { ok: false, proxied: false, reason: "upstream_unavailable" }
+			: { ok: true, proxied: false };
+	return NextResponse.json(body, {
+		status: 202,
+		headers: noStoreHeaders(),
+	});
 }
 
 function resolveClientIp(request) {
@@ -159,10 +180,7 @@ export async function POST(request, { params } = {}) {
 
 	const upstreamBase = getUmamiUpstreamBase(process.env);
 	if (!upstreamBase) {
-		return NextResponse.json(
-			{ ok: true, proxied: false },
-			{ status: 202, headers: noStoreHeaders() },
-		);
+		return failOpenResponse(endpoint);
 	}
 
 	// Honor the same proxy-header trust setting as proxy.js: with
@@ -208,10 +226,7 @@ export async function POST(request, { params } = {}) {
 			endpoint,
 			message: error?.message ?? String(error),
 		});
-		return NextResponse.json(
-			{ ok: true, proxied: false },
-			{ status: 202, headers: noStoreHeaders() },
-		);
+		return failOpenResponse(endpoint);
 	}
 
 	if (upstreamResponse.status >= 500) {
@@ -219,10 +234,7 @@ export async function POST(request, { params } = {}) {
 			endpoint,
 			status: upstreamResponse.status,
 		});
-		return NextResponse.json(
-			{ ok: true, proxied: false },
-			{ status: 202, headers: noStoreHeaders() },
-		);
+		return failOpenResponse(endpoint);
 	}
 
 	let responseBody;
@@ -233,10 +245,7 @@ export async function POST(request, { params } = {}) {
 			endpoint,
 			message: error?.message ?? String(error),
 		});
-		return NextResponse.json(
-			{ ok: true, proxied: false },
-			{ status: 202, headers: noStoreHeaders() },
-		);
+		return failOpenResponse(endpoint);
 	}
 
 	const responseHeaders = noStoreHeaders();

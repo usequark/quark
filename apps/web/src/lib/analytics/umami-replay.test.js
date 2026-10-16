@@ -4,6 +4,7 @@ import test from "node:test";
 import {
 	buildReplayEndpoint,
 	createReplayBuffer,
+	MAX_REPLAY_REQUEST_BYTES,
 	postReplayBatch,
 	resolveUmamiSessionCache,
 	shouldSampleReplay,
@@ -194,6 +195,107 @@ test("postReplayBatch returns false when the server rejects the batch", async ()
 		fetchImpl: async () => ({
 			ok: true,
 			json: async () => ({ ok: false, reason: "replay_disabled" }),
+		}),
+	});
+
+	assert.equal(sent, false);
+});
+
+test("postReplayBatch splits oversized batches into sub-cap POSTs", async () => {
+	const bodies = [];
+
+	const sent = await postReplayBatch({
+		endpoint: "/s/api/record",
+		cache: "cache-token",
+		websiteId: "site_123",
+		events: [
+			{ timestamp: 1, text: "a".repeat(400_000) },
+			{ timestamp: 2, text: "b".repeat(400_000) },
+			{ timestamp: 3, text: "c".repeat(400_000) },
+		],
+		fetchImpl: async (_endpoint, options) => {
+			bodies.push(options.body);
+			return { ok: true, status: 200 };
+		},
+	});
+
+	assert.equal(sent, true);
+	assert.ok(bodies.length > 1);
+	for (const body of bodies) {
+		assert.ok(
+			new TextEncoder().encode(body).length <= MAX_REPLAY_REQUEST_BYTES,
+		);
+	}
+	// Every event is delivered exactly once across the chunks.
+	const delivered = bodies.flatMap((body) => JSON.parse(body).payload.events);
+	assert.equal(delivered.length, 3);
+});
+
+test("postReplayBatch drops a single poison event instead of looping", async () => {
+	let calls = 0;
+
+	const sent = await postReplayBatch({
+		endpoint: "/s/api/record",
+		cache: "cache-token",
+		websiteId: "site_123",
+		events: [{ timestamp: 1, text: "x".repeat(MAX_REPLAY_REQUEST_BYTES) }],
+		fetchImpl: async () => {
+			calls++;
+			return { ok: true, status: 200 };
+		},
+	});
+
+	assert.equal(sent, true);
+	assert.equal(calls, 0);
+});
+
+test("postReplayBatch splits and retries halves on a 413", async () => {
+	const bodies = [];
+
+	const sent = await postReplayBatch({
+		endpoint: "/s/api/record",
+		cache: "cache-token",
+		websiteId: "site_123",
+		events: [{ timestamp: 1 }, { timestamp: 2 }],
+		fetchImpl: async (_endpoint, options) => {
+			bodies.push(options.body);
+			if (bodies.length === 1) return { ok: false, status: 413 };
+			return { ok: true, status: 200 };
+		},
+	});
+
+	assert.equal(sent, true);
+	assert.equal(bodies.length, 3);
+});
+
+test("postReplayBatch drops a single event that 413s", async () => {
+	let calls = 0;
+
+	const sent = await postReplayBatch({
+		endpoint: "/s/api/record",
+		cache: "cache-token",
+		websiteId: "site_123",
+		events: [{ timestamp: 1 }],
+		fetchImpl: async () => {
+			calls++;
+			return { ok: false, status: 413 };
+		},
+	});
+
+	assert.equal(sent, true);
+	assert.equal(calls, 1);
+});
+
+test("postReplayBatch returns false on proxy fail-open for replay", async () => {
+	const sent = await postReplayBatch({
+		endpoint: "/s/api/record",
+		cache: "cache-token",
+		websiteId: "site_123",
+		events: [{ timestamp: 1, type: 4 }],
+		fetchImpl: async () => ({
+			ok: true,
+			status: 202,
+			json: async () => ({ ok: false, proxied: false }),
 		}),
 	});
 

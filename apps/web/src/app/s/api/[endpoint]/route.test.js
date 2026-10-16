@@ -217,6 +217,51 @@ test("fails open with 202 on upstream 5xx", async () => {
 	assert.deepEqual(await response.json(), { ok: true, proxied: false });
 });
 
+test("fails open for replay with ok:false so batches are retained", async () => {
+	globalThis.fetch = async () => {
+		throw new Error("connection refused");
+	};
+
+	const response = await POST(postRequest("record"), paramsFor("record"));
+
+	assert.equal(response.status, 202);
+	assert.deepEqual(await response.json(), {
+		ok: false,
+		proxied: false,
+		reason: "upstream_unavailable",
+	});
+});
+
+test("fails open for replay with ok:false on upstream 5xx", async () => {
+	globalThis.fetch = async () => new NextResponseShim(502, "bad gateway");
+
+	const response = await POST(postRequest("record"), paramsFor("record"));
+
+	assert.equal(response.status, 202);
+	const body = await response.json();
+	assert.equal(body.ok, false);
+	assert.equal(body.proxied, false);
+});
+
+test("fails open without an upstream: send ok:true, record ok:false", async () => {
+	delete process.env.NEXT_PUBLIC_UMAMI_URL;
+	let called = false;
+	globalThis.fetch = async () => {
+		called = true;
+		return new NextResponseShim(200, JSON.stringify({ ok: true }));
+	};
+
+	const send = await POST(postRequest("send"), paramsFor("send"));
+	assert.equal(send.status, 202);
+	assert.deepEqual(await send.json(), { ok: true, proxied: false });
+
+	const record = await POST(postRequest("record"), paramsFor("record"));
+	assert.equal(record.status, 202);
+	assert.equal((await record.json()).ok, false);
+
+	assert.equal(called, false);
+});
+
 test("passes upstream 4xx through instead of masking client errors", async () => {
 	globalThis.fetch = async () =>
 		new NextResponseShim(400, JSON.stringify({ error: "bad payload" }), {
