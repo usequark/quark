@@ -68,18 +68,6 @@ const nextConfig = {
 	async headers() {
 		return [
 			{
-				// First-party Umami tracker. Served via rewrites() from the
-				// upstream host; tuned cache here because rewrites pass the
-				// upstream Cache-Control through unchanged.
-				source: "/s/script.js",
-				headers: [
-					{
-						key: "Cache-Control",
-						value: "public, max-age=3600, stale-while-revalidate=86400",
-					},
-				],
-			},
-			{
 				source: "/:path*",
 				headers: [
 					{
@@ -145,6 +133,10 @@ const nextConfig = {
 	// (/s/api/send|collect|record) goes through a Route Handler instead —
 	// rewrites cannot strip/append headers (cookie strip, X-Forwarded-For
 	// for geo, x-umami-cache for replay).
+	// NOTE: headers() entries do not apply to externally-rewritten responses
+	// (verified: no headers() output on /s/script.js), so the tracker's
+	// caching comes from the upstream's own Cache-Control, which passes
+	// through untouched. Do not add tuning headers here expecting effect.
 	async rewrites() {
 		const upstream = getUmamiUpstreamBase(process.env);
 		if (!upstream) return [];
