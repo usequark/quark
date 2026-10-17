@@ -1,5 +1,11 @@
 # @usequark/quark-create-app
 
+## 1.27.3 - 2026-10-17
+
+### Patch Changes
+
+- [#301](https://github.com/usequark/quark/pull/301) [`f80f383`](https://github.com/usequark/quark/commit/f80f383c47e235744c1c1410239b534c82850e31) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Fix two analytics-correctness issues found by reading Umami v3.1.0 source against the scaffold: web-vitals beacons now post the send-schema custom event (`name: "cwv"` + `data`, incl. hostname) to `/s/api/send` — the old `event_name`/`event_data` payload to a nonexistent `/api/collect` endpoint was silently dropped upstream while recording nothing. The ingest proxy now prefers `CF-Connecting-IP` behind an explicit `TRUST_CF_CONNECTING_IP=true` opt-in (unconditional trust would let any client override XFF, which most proxies pass through unsanitized); forwarding falls back to the XFF chain by default and to `"unknown"` when `TRUST_PROXY_HEADERS=false`. Documents the `data-performance` twin-row display artifact.
+
 ## 1.27.2 - 2026-10-16
 
 ### Patch Changes
