@@ -1,5 +1,11 @@
 # @usequark/quark-create-app
 
+## 1.27.4 - 2026-10-17
+
+### Patch Changes
+
+- [#303](https://github.com/usequark/quark/pull/303) [`fef77aa`](https://github.com/usequark/quark/commit/fef77aae5e0e266f32f6fa44d45b13bbe5d7c66a) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Remove dead direct-mode fallback in web-vitals dispatch and fix a stale rewrite reference in a config comment. No behavior change: the client config carries no upstream URL, so the fallback could never fire.
+
 ## 1.27.3 - 2026-10-17
 
 ### Patch Changes
