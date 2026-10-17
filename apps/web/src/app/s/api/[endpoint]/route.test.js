@@ -36,6 +36,12 @@ beforeEach(() => {
 		"133660ed-e51c-4ed9-84aa-c86654460cae";
 	delete process.env.UMAMI_UPSTREAM_URL;
 	delete process.env.UMAMI_URL;
+	// Pin the shipped defaults: an ambient TRUST_PROXY_HEADERS=false or
+	// TRUST_CF_CONNECTING_IP=true in the runner's environment would flip
+	// the trust tests below onto the wrong branch. Tests that need a flag
+	// set it themselves.
+	delete process.env.TRUST_PROXY_HEADERS;
+	delete process.env.TRUST_CF_CONNECTING_IP;
 });
 
 afterEach(() => {
@@ -148,6 +154,7 @@ test("forwards analytics headers and strips credentials", async () => {
 });
 
 test("prefers CF-Connecting-IP as the stable client IP behind Cloudflare", async () => {
+	process.env.TRUST_CF_CONNECTING_IP = "true";
 	let seen;
 	globalThis.fetch = async (url, options) => {
 		seen = { url, options };
@@ -169,6 +176,54 @@ test("prefers CF-Connecting-IP as the stable client IP behind Cloudflare", async
 	assert.equal(seen.options.headers["X-Forwarded-For"], "203.0.113.99");
 	assert.equal(seen.options.headers["X-Real-IP"], "203.0.113.99");
 	assert.equal(seen.options.headers["CF-Connecting-IP"], "203.0.113.99");
+});
+
+test("ignores CF-Connecting-IP without the explicit opt-in", async () => {
+	// Without TRUST_CF_CONNECTING_IP the header must not override an
+	// otherwise-legitimate X-Forwarded-For: most proxies pass it through
+	// unsanitized, so any client could set it.
+	let seen;
+	globalThis.fetch = async (url, options) => {
+		seen = { url, options };
+		return new NextResponseShim(200, JSON.stringify({ ok: true }));
+	};
+
+	const response = await POST(
+		postRequest("send", {
+			headers: {
+				"CF-Connecting-IP": "203.0.113.99",
+				"X-Forwarded-For": "203.0.113.7, 10.0.0.1",
+			},
+		}),
+		paramsFor("send"),
+	);
+
+	assert.equal(response.status, 200);
+	assert.equal(seen.options.headers["X-Forwarded-For"], "203.0.113.7");
+	assert.equal(seen.options.headers["X-Real-IP"], "203.0.113.7");
+	assert.ok(!("CF-Connecting-IP" in seen.options.headers));
+});
+
+test("untrusted proxy headers win over the CF opt-in", async () => {
+	process.env.TRUST_PROXY_HEADERS = "false";
+	process.env.TRUST_CF_CONNECTING_IP = "true";
+	let seen;
+	globalThis.fetch = async (url, options) => {
+		seen = { url, options };
+		return new NextResponseShim(200, JSON.stringify({ ok: true }));
+	};
+
+	const response = await POST(
+		postRequest("send", {
+			headers: { "CF-Connecting-IP": "203.0.113.99" },
+		}),
+		paramsFor("send"),
+	);
+
+	assert.equal(response.status, 200);
+	assert.equal(seen.options.headers["X-Forwarded-For"], "unknown");
+	assert.equal(seen.options.headers["X-Real-IP"], "unknown");
+	assert.ok(!("CF-Connecting-IP" in seen.options.headers));
 });
 
 test("drops CF-Connecting-IP when proxy headers are untrusted", async () => {

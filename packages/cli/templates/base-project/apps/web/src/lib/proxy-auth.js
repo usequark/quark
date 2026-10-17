@@ -140,3 +140,33 @@ export function shouldTrustProxyHeaders() {
 	const raw = process.env.TRUST_PROXY_HEADERS?.trim().toLowerCase();
 	return !(raw && PROXY_HEADERS_FALSY_VALUES.has(raw));
 }
+
+/**
+ * Boolean-like values that opt into trusting `CF-Connecting-IP`. Deliberately
+ * the mirror of the proxy-headers convention: "explicit true wins", default
+ * off. `CF-Connecting-IP` is only overwritten by Cloudflare itself — unlike
+ * `X-Forwarded-For`, most proxies (Railway, nginx, Docker) pass it through
+ * untouched. Trusting it unconditionally would let any client override an
+ * otherwise-legitimate `X-Forwarded-For` with an arbitrary IP, so it stays
+ * ignored unless the operator confirms Cloudflare is in the path.
+ */
+const CF_CONNECTING_IP_TRUTHY_VALUES = new Set(["true", "1", "yes", "on"]);
+
+/**
+ * Whether `CF-Connecting-IP` may identify the client in the Umami ingest
+ * proxy (resolution preference and upstream passthrough).
+ *
+ * Default `false`: the header is ignored entirely. Set
+ * `TRUST_CF_CONNECTING_IP=true` only when Cloudflare sits in front of the
+ * app (it overwrites the header with the true client IP on every request).
+ * Independently of this flag, `TRUST_PROXY_HEADERS=false` still forces
+ * `"unknown"` — distrust always wins over trust.
+ *
+ * Read lazily (per request) like `shouldTrustProxyHeaders`.
+ *
+ * @returns {boolean}
+ */
+export function shouldTrustCfConnectingIp() {
+	const raw = process.env.TRUST_CF_CONNECTING_IP?.trim().toLowerCase();
+	return !!raw && CF_CONNECTING_IP_TRUTHY_VALUES.has(raw);
+}

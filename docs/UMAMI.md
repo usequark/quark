@@ -67,12 +67,16 @@ nonexistent `/api/collect` endpoint — silently dropped upstream while
 recording nothing. Pin the schema with `umami-web-vitals.test.js`, not just
 the URL.
 
-Visitor IP resolution prefers `CF-Connecting-IP` (Cloudflare overwrites it;
-Railway replaces `X-Forwarded-For` with the edge address, so XFF alone
-misattributes geo and rotating edge IPs split Umami's `hash(IP, UA, site)`
-session identity into duplicates). Only the single resolved IP crosses to
-upstream — never the chain — and `CF-Connecting-IP` is passed through for
-Umami's Cloudflare-headers mode. Both are dropped to `"unknown"` when
+Visitor IP resolution prefers `CF-Connecting-IP`, but only with explicit
+opt-in (`TRUST_CF_CONNECTING_IP=true`, for Cloudflare-fronted deployments):
+Cloudflare overwrites it while Railway replaces `X-Forwarded-For` with the
+edge address, so XFF alone misattributes geo and rotating edge IPs split
+Umami's `hash(IP, UA, site)` session identity into duplicates. Unconditional
+trust would let any client override a legitimate XFF (most proxies pass the
+CF header through unsanitized), hence default-off — unlike
+`TRUST_PROXY_HEADERS`, which is default-on. Only the single resolved IP
+crosses to upstream — never the chain — and `CF-Connecting-IP` passthrough
+follows the same opt-in. Both drop to `"unknown"` when
 `TRUST_PROXY_HEADERS=false`.
 
 `/s/*` never starts with `/api/`, so the `proxy.js` rate limiter does not

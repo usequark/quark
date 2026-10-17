@@ -17,12 +17,12 @@
  * - `X-Forwarded-For` / `X-Real-IP` carry the single resolved visitor IP so
  *   Umami geolocates the visitor, not the Railway egress IP — unless
  *   TRUST_PROXY_HEADERS=false, in which case "unknown" crosses instead (same
- *   rule as proxy.js). Resolution prefers `CF-Connecting-IP` (Cloudflare
- *   overwrites it; Railway replaces X-Forwarded-For with the edge address, so
- *   XFF alone misattributes visitors and rotating edge IPs split Umami's
- *   hash(IP, UA, site) session identity into duplicates). `CF-Connecting-IP`
- *   is also passed through for Umami's Cloudflare-headers mode — never when
- *   untrusted. Tracker metadata (`x-umami-cache`) is forwarded; `cookie`,
+ *   rule as proxy.js). Resolution prefers `CF-Connecting-IP`, but only with
+ *   explicit opt-in (`TRUST_CF_CONNECTING_IP=true`, for Cloudflare-fronted
+ *   deployments): the header takes precedence yet generic proxies pass it
+ *   through unsanitized, so unconditional trust would let any client override
+ *   a legitimate X-Forwarded-For. `CF-Connecting-IP` passthrough follows the
+ *   same opt-in — never when untrusted. Tracker metadata (`x-umami-cache`) is forwarded; `cookie`,
  *   `authorization`, and `x-metrics-token` never are.
  * - 1 MB body cap enforced while streaming (a missing/lying Content-Length
  *   cannot force full buffering) + 5s upstream timeout bound abuse cost.
@@ -42,7 +42,10 @@
 import { createLogger } from "@usequark/quark-core/core";
 import { NextResponse } from "next/server";
 import { getUmamiUpstreamBase } from "@/lib/analytics/umami-config.js";
-import { shouldTrustProxyHeaders } from "@/lib/proxy-auth.js";
+import {
+	shouldTrustCfConnectingIp,
+	shouldTrustProxyHeaders,
+} from "@/lib/proxy-auth.js";
 
 const logger = createLogger("umami-proxy");
 
@@ -79,21 +82,24 @@ function failOpenResponse(endpoint) {
 	});
 }
 
-function resolveClientIp(request) {
-	// Preference: Cloudflare overwrites CF-Connecting-IP with the true client
-	// IP and Railway passes it through, while Railway REPLACES X-Forwarded-For
-	// with the Cloudflare edge address. Reading XFF alone therefore
-	// misattributes every visitor behind Cloudflare — wrong geo, and rotating
-	// edge IPs change Umami's hash(IP, UA, site) session identity between
-	// requests of one visit, splitting it into duplicate sessions. Only
-	// consulted when proxy headers are trusted (see the TRUST_PROXY_HEADERS
-	// gate at the call site): on the direct path a caller can set
-	// CF-Connecting-IP arbitrarily, so directly-reachable deployments must set
-	// TRUST_PROXY_HEADERS=false, which forwards "unknown" instead. (The same
-	// spoofing was already possible via X-Forwarded-For before this change,
-	// and the blast radius is confined to the caller's own analytics
-	// attribution — no credential, session, or cross-user boundary.)
-	const cloudflareIp = request.headers.get("cf-connecting-ip")?.trim();
+function resolveClientIp(request, { trustCfConnectingIp = false } = {}) {
+	// Preference (only when the operator opted in via TRUST_CF_CONNECTING_IP):
+	// Cloudflare overwrites CF-Connecting-IP with the true client IP and
+	// Railway passes it through, while Railway REPLACES X-Forwarded-For with
+	// the Cloudflare edge address. Reading XFF alone therefore misattributes
+	// every visitor behind Cloudflare — wrong geo, and rotating edge IPs
+	// change Umami's hash(IP, UA, site) session identity between requests of
+	// one visit, splitting it into duplicate sessions.
+	//
+	// The opt-in is load-bearing, not bureaucracy: CF-Connecting-IP takes
+	// precedence over X-Forwarded-For, and most proxies pass it through
+	// untouched — so trusting it unconditionally would let any client override
+	// an otherwise-legitimate XFF with an arbitrary IP. Only Cloudflare
+	// itself sanitizes this header, hence explicit opt-in (and
+	// TRUST_PROXY_HEADERS=false still forces "unknown" at the call site).
+	const cloudflareIp = trustCfConnectingIp
+		? request.headers.get("cf-connecting-ip")?.trim()
+		: null;
 	if (cloudflareIp) return cloudflareIp;
 
 	const forwardedFor = request.headers.get("x-forwarded-for");
@@ -210,8 +216,14 @@ export async function POST(request, { params } = {}) {
 	// TRUST_PROXY_HEADERS=false the app is directly reachable, the headers
 	// are attacker-controlled, and forwarding them would poison Umami geo.
 	// "unknown" (never client bytes) crosses the boundary instead.
+	// CF-Connecting-IP additionally needs TRUST_CF_CONNECTING_IP=true:
+	// unlike XFF it is not sanitized by generic proxies, so trusting it
+	// unconditionally would let a client override a legitimate XFF.
 	const trustProxyHeaders = shouldTrustProxyHeaders();
-	const clientIp = trustProxyHeaders ? resolveClientIp(request) : "unknown";
+	const trustCfConnectingIp = trustProxyHeaders && shouldTrustCfConnectingIp();
+	const clientIp = trustProxyHeaders
+		? resolveClientIp(request, { trustCfConnectingIp })
+		: "unknown";
 
 	const forwardHeaders = {
 		"Content-Type": "application/json",
@@ -226,9 +238,10 @@ export async function POST(request, { params } = {}) {
 
 	// Umami reads cf-connecting-ip before X-Forwarded-For, and behind
 	// Cloudflare it is the only header carrying the true client IP (Railway
-	// replaces XFF with the edge address). Pass it through — but never when
+	// replaces XFF with the edge address). Pass it through — but only under
+	// the same opt-in that allowed it to win resolution above, and never when
 	// untrusted, when it is client-set bytes like every other proxy header.
-	if (trustProxyHeaders) {
+	if (trustCfConnectingIp) {
 		const cloudflareIp = request.headers.get("cf-connecting-ip")?.trim();
 		if (cloudflareIp) forwardHeaders["CF-Connecting-IP"] = cloudflareIp;
 	}
