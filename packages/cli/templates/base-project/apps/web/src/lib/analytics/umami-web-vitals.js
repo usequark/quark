@@ -97,8 +97,11 @@ export function dispatchMetric(metric) {
 	const body = JSON.stringify(payload);
 
 	// First-party ingest: same-origin POSTs survive blocklists that match the
-	// upstream analytics host as third-party.
-	const endpoint = config.proxySendUrl || `${config.url}/api/send`;
+	// upstream analytics host as third-party. The client config carries no
+	// upstream URL, so there is no direct-mode fallback — when disabled the
+	// function already returned above.
+	const endpoint = config.proxySendUrl;
+	if (!endpoint) return;
 
 	// Use sendBeacon for reliability during page lifecycle transitions.
 	if (navigator.sendBeacon) {
