@@ -67,7 +67,7 @@ export const UMAMI_PROXY_RECORD_PATH = "/s/api/record";
 
 // Server-side upstream preference: an operator that wants the analytics host
 // out of the client bundle entirely sets UMAMI_UPSTREAM_URL (or UMAMI_URL)
-// and the rewrite/handler destination follows it. NEXT_PUBLIC_UMAMI_URL
+// and the handler destination follows it. NEXT_PUBLIC_UMAMI_URL
 // remains the default so existing deployments keep working with no new vars.
 export function getUmamiUpstreamBase(env = process.env) {
 	const candidates = [
