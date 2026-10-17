@@ -55,9 +55,29 @@ host from the browser:
 | First-party | Upstream | Transport |
 |---|---|---|
 | `GET /s/script.js` | `${UMAMI}/script.js` | Route handler (forwards **no** client headers — rewrites would leak app cookies) |
-| `POST /s/api/send` | `${UMAMI}/api/send` (tracker) | Route handler (strips credentials, forwards geo) |
-| `POST /s/api/collect` | `${UMAMI}/api/collect` (web-vitals) | Same handler, whitelisted |
+| `POST /s/api/send` | `${UMAMI}/api/send` (tracker + web-vitals CWV custom events) | Route handler (strips credentials, forwards geo) |
+| `POST /s/api/collect` | `${UMAMI}/api/collect` (legacy alias, pre-v2 Umami only) | Same handler, whitelisted — nothing in the scaffold posts here anymore |
 | `POST /s/api/record` | `${UMAMI}/api/record` (replay) | Same handler, whitelisted |
+
+Web-vitals posts custom events through `/api/send` with the send schema
+(`{ type: "event", payload: { website, name: "cwv", data, url, hostname } }`):
+Umami derives the event type server-side from `name` and persists
+`name`/`data`. An earlier revision posted `event_name`/`event_data` keys to a
+nonexistent `/api/collect` endpoint — silently dropped upstream while
+recording nothing. Pin the schema with `umami-web-vitals.test.js`, not just
+the URL.
+
+Visitor IP resolution prefers `CF-Connecting-IP`, but only with explicit
+opt-in (`TRUST_CF_CONNECTING_IP=true`, for Cloudflare-fronted deployments):
+Cloudflare overwrites it while Railway replaces `X-Forwarded-For` with the
+edge address, so XFF alone misattributes geo and rotating edge IPs split
+Umami's `hash(IP, UA, site)` session identity into duplicates. Unconditional
+trust would let any client override a legitimate XFF (most proxies pass the
+CF header through unsanitized), hence default-off — unlike
+`TRUST_PROXY_HEADERS`, which is default-on. Only the single resolved IP
+crosses to upstream — never the chain — and `CF-Connecting-IP` passthrough
+follows the same opt-in. Both drop to `"unknown"` when
+`TRUST_PROXY_HEADERS=false`.
 
 `/s/*` never starts with `/api/`, so the `proxy.js` rate limiter does not
 apply — no exemption change needed, and analytics beacons must never 429.
@@ -118,9 +138,9 @@ Those can be added later by projects that need them, but they should not widen t
 ## Implementation Notes
 
 - Use a deferred first-party `script` tag (`src="/s/script.js"`, `data-host-url="/s"`) so the tracker bootstraps in parallel before replay polling begins.
-- Add `data-performance="true"` to the main tracker when a site is already opted into Umami analytics.
+- Add `data-performance="true"` to the main tracker when a site is already opted into Umami analytics. Known display artifact: Umami's sessions list groups by `(session_id, hostname)` and performance beacons save with no hostname, so each session renders as twin rows (one with views, one with 0 views). This is upstream query behavior, not a proxy bug — keep the flag for the metrics unless the twins annoy.
 - Keep `script-src` and `connect-src` at `'self'` for analytics — the proxy is same-origin, so no Umami host ever enters CSP.
-- Replay batches are chunked client-side to stay under the proxy's 1 MB cap (single poison events are dropped with a warning, never retried forever). Proxy fail-open is endpoint-aware: `record` answers `{ ok: false }` so batches are retained, `send`/`collect` answer `{ ok: true }` (fire-and-forget, no retry path).
+- Replay batches are chunked client-side to stay under the proxy's 1 MB cap (single poison events are dropped with a warning, never retried forever). Proxy fail-open is endpoint-aware: `record` answers `{ ok: false }` so batches are retained, `send` (tracker + web-vitals) and legacy `collect` answer `{ ok: true }` (fire-and-forget, no retry path).
 - Operate the proxy with `UMAMI_UPSTREAM_URL` (server-only, preferred) falling back to `NEXT_PUBLIC_UMAMI_URL` for the handler destination. Both are resolved at request time (not build time), so an upstream change needs only a restart, not a rebuild.
 - Browser code must use `getUmamiClientConfig()` (website ID + static proxy paths only), never the server `getUmamiConfig()`, so the analytics host cannot end up in client bundles. Verify with `grep -r <umami-host> .next/static` — it must be empty.
 - Client env defaults must stay literal `process.env.NEXT_PUBLIC_*` member expressions (see `readPublicEnv()`): bare `process` does not exist in browsers, so a `process.env` default throws on every no-arg browser call and silently kills track(), web-vitals, and replay.

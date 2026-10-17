@@ -199,6 +199,39 @@ test("TRUST_PROXY_HEADERS parses boolean-like values, trusting by default", () =
 	);
 });
 
+test("TRUST_CF_CONNECTING_IP is opt-in, defaulting to distrust", async () => {
+	const { shouldTrustCfConnectingIp } = await import("./lib/proxy-auth.js");
+
+	try {
+		for (const value of ["1", "true", "yes", "on", "TRUE", " on "]) {
+			process.env.TRUST_CF_CONNECTING_IP = value;
+			assert.equal(
+				shouldTrustCfConnectingIp(),
+				true,
+				`"${value}" should trust CF-Connecting-IP`,
+			);
+		}
+
+		for (const value of ["0", "false", "no", "off", "FALSE", " off ", ""]) {
+			process.env.TRUST_CF_CONNECTING_IP = value;
+			assert.equal(
+				shouldTrustCfConnectingIp(),
+				false,
+				`"${value ?? ""}" must not trust CF-Connecting-IP`,
+			);
+		}
+
+		delete process.env.TRUST_CF_CONNECTING_IP;
+		assert.equal(
+			shouldTrustCfConnectingIp(),
+			false,
+			"unset must ignore CF-Connecting-IP so a client cannot override XFF",
+		);
+	} finally {
+		delete process.env.TRUST_CF_CONNECTING_IP;
+	}
+});
+
 test("TRUST_PROXY_HEADERS on keys each forwarded IP into its own bucket", async (t) => {
 	const savedRedisUrl = process.env.REDIS_URL;
 
