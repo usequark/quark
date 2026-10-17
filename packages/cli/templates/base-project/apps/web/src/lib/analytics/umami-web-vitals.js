@@ -9,7 +9,9 @@
  * Privacy guarantees:
  *  - Zero user data: no email, name, ID, token, or cookie values.
  *  - Layout timings only: metric name, numeric value, rating string,
- *    and a sanitised URL path (origin stripped, never full URL with query).
+ *    a sanitised URL path (origin stripped, never full URL with query),
+ *    and the bare hostname (as the stock tracker sends; keeps these rows
+ *    out of the NULL-hostname group in Umami's sessions list).
  *  - No referrer, no user-agent, no IP collected by this script.
  *  - Uses sendBeacon for reliable delivery without blocking the page.
  *
@@ -57,12 +59,22 @@ function sanitiseUrl(url) {
 }
 
 /**
- * Dispatches a single CWV observation to the Umami collect endpoint
- * as a custom event (event_type = 2).  The payload is fully anonymous.
+ * Dispatches a single CWV observation to Umami's send endpoint as a custom
+ * event (`name: "cwv"`, metrics in `data`). The payload is fully anonymous.
+ *
+ * Shape matters: Umami derives the event type server-side (`name` present →
+ * custom event) and persists `payload.name`/`payload.data` — `event_name`,
+ * `event_type`, and `event_data` keys are ignored, and posting anywhere
+ * other than `/api/send` (there is no `/api/collect` in Umami v2+) silently
+ * drops the beacon while recording nothing. Both mistakes shipped here
+ * before and were caught by reading Umami's send route, not by any test.
+ *
+ * Exported for tests: the browser-only shape (window/navigator) cannot be
+ * covered by observation in unit tests.
  *
  * @param {{ name: string, value: number, rating: string, navigationType?: string }} metric
  */
-function dispatchMetric(metric) {
+export function dispatchMetric(metric) {
 	const config = getUmamiClientConfig();
 	if (!config.enabled) return;
 
@@ -70,15 +82,15 @@ function dispatchMetric(metric) {
 		type: "event",
 		payload: {
 			website: config.websiteId,
-			event_name: "cwv",
-			event_type: 2, // custom event
-			url: sanitiseUrl(window.location.href),
-			event_data: {
+			name: "cwv",
+			data: {
 				metric_name: metric.name,
 				metric_value: Math.round(metric.value * 1000) / 1000, // round to 3dp
 				metric_rating: metric.rating,
 				navigation_type: metric.navigationType || "navigate",
 			},
+			url: sanitiseUrl(window.location.href),
+			hostname: window.location.hostname,
 		},
 	};
 
@@ -86,7 +98,7 @@ function dispatchMetric(metric) {
 
 	// First-party ingest: same-origin POSTs survive blocklists that match the
 	// upstream analytics host as third-party.
-	const endpoint = config.proxyCollectUrl || `${config.url}/api/collect`;
+	const endpoint = config.proxySendUrl || `${config.url}/api/send`;
 
 	// Use sendBeacon for reliability during page lifecycle transitions.
 	if (navigator.sendBeacon) {

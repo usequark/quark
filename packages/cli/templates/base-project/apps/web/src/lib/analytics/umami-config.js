@@ -58,6 +58,10 @@ export const UMAMI_PROXY_BASE = "/s";
 export const UMAMI_PROXY_SCRIPT_PATH = "/s/script.js";
 export const UMAMI_PROXY_HOST_URL = "/s";
 export const UMAMI_PROXY_SEND_PATH = "/s/api/send";
+// Legacy alias for pre-v2 Umami (whose ingest lived at /api/collect). Nothing
+// in the scaffold posts here anymore — web-vitals uses the send schema — but
+// the pinned path costs nothing to keep forwarding. Do not remove without
+// checking supported upstream versions.
 export const UMAMI_PROXY_COLLECT_PATH = "/s/api/collect";
 export const UMAMI_PROXY_RECORD_PATH = "/s/api/record";
 

@@ -14,9 +14,16 @@
  * - POST-only — every other method answers 405.
  * - Header hygiene — `cookie`, `authorization`, and `x-metrics-token` are
  *   never forwarded; only the analytics-relevant headers cross the boundary.
- * - `X-Forwarded-For` / `X-Real-IP` are preserved so Umami geolocates the
- *   visitor, not the Railway egress IP — unless TRUST_PROXY_HEADERS=false,
- *   in which case "unknown" crosses instead (same rule as proxy.js).
+ * - `X-Forwarded-For` / `X-Real-IP` carry the single resolved visitor IP so
+ *   Umami geolocates the visitor, not the Railway egress IP — unless
+ *   TRUST_PROXY_HEADERS=false, in which case "unknown" crosses instead (same
+ *   rule as proxy.js). Resolution prefers `CF-Connecting-IP` (Cloudflare
+ *   overwrites it; Railway replaces X-Forwarded-For with the edge address, so
+ *   XFF alone misattributes visitors and rotating edge IPs split Umami's
+ *   hash(IP, UA, site) session identity into duplicates). `CF-Connecting-IP`
+ *   is also passed through for Umami's Cloudflare-headers mode — never when
+ *   untrusted. Tracker metadata (`x-umami-cache`) is forwarded; `cookie`,
+ *   `authorization`, and `x-metrics-token` never are.
  * - 1 MB body cap enforced while streaming (a missing/lying Content-Length
  *   cannot force full buffering) + 5s upstream timeout bound abuse cost.
  * - `Cache-Control: no-store` on every response; upstream `Set-Cookie` is
@@ -54,8 +61,8 @@ function methodNotAllowed() {
 	);
 }
 
-// Fail-open without losing replay data. Tracker (`send`) and web-vitals
-// (`collect`) beacons are fire-and-forget with no retry path, so they keep
+// Fail-open without losing replay data. Tracker, web-vitals, and legacy
+// `collect` beacons are fire-and-forget with no retry path, so they keep
 // `{ ok: true }` to avoid any client-side retry storm against a struggling
 // upstream. Replay (`record`) has a restore/retry path keyed on
 // `body.ok === false` in postReplayBatch: answering `ok: true` there would
@@ -73,6 +80,22 @@ function failOpenResponse(endpoint) {
 }
 
 function resolveClientIp(request) {
+	// Preference: Cloudflare overwrites CF-Connecting-IP with the true client
+	// IP and Railway passes it through, while Railway REPLACES X-Forwarded-For
+	// with the Cloudflare edge address. Reading XFF alone therefore
+	// misattributes every visitor behind Cloudflare — wrong geo, and rotating
+	// edge IPs change Umami's hash(IP, UA, site) session identity between
+	// requests of one visit, splitting it into duplicate sessions. Only
+	// consulted when proxy headers are trusted (see the TRUST_PROXY_HEADERS
+	// gate at the call site): on the direct path a caller can set
+	// CF-Connecting-IP arbitrarily, so directly-reachable deployments must set
+	// TRUST_PROXY_HEADERS=false, which forwards "unknown" instead. (The same
+	// spoofing was already possible via X-Forwarded-For before this change,
+	// and the blast radius is confined to the caller's own analytics
+	// attribution — no credential, session, or cross-user boundary.)
+	const cloudflareIp = request.headers.get("cf-connecting-ip")?.trim();
+	if (cloudflareIp) return cloudflareIp;
+
 	const forwardedFor = request.headers.get("x-forwarded-for");
 	if (forwardedFor) {
 		const client = forwardedFor
@@ -188,21 +211,27 @@ export async function POST(request, { params } = {}) {
 	// are attacker-controlled, and forwarding them would poison Umami geo.
 	// "unknown" (never client bytes) crosses the boundary instead.
 	const trustProxyHeaders = shouldTrustProxyHeaders();
-	const incomingForwardedFor = trustProxyHeaders
-		? request.headers.get("x-forwarded-for")
-		: null;
 	const clientIp = trustProxyHeaders ? resolveClientIp(request) : "unknown";
-	const forwardedFor = incomingForwardedFor?.trim()
-		? incomingForwardedFor
-		: clientIp;
 
 	const forwardHeaders = {
 		"Content-Type": "application/json",
-		"X-Forwarded-For": forwardedFor,
-		"X-Real-IP": trustProxyHeaders
-			? request.headers.get("x-real-ip")?.trim() || clientIp
-			: clientIp,
+		// Single stable IP, never the incoming chain: Umami hashes
+		// (IP, UA, site) into its session identity, so a rotating edge IP
+		// anywhere in a forwarded chain splits one visit into duplicate
+		// sessions (and geolocates the edge, not the visitor). Chain entries
+		// beyond the client are proxies — no analytics value, only leak.
+		"X-Forwarded-For": clientIp,
+		"X-Real-IP": clientIp,
 	};
+
+	// Umami reads cf-connecting-ip before X-Forwarded-For, and behind
+	// Cloudflare it is the only header carrying the true client IP (Railway
+	// replaces XFF with the edge address). Pass it through — but never when
+	// untrusted, when it is client-set bytes like every other proxy header.
+	if (trustProxyHeaders) {
+		const cloudflareIp = request.headers.get("cf-connecting-ip")?.trim();
+		if (cloudflareIp) forwardHeaders["CF-Connecting-IP"] = cloudflareIp;
+	}
 
 	const userAgent = request.headers.get("user-agent");
 	if (userAgent) forwardHeaders["User-Agent"] = userAgent;

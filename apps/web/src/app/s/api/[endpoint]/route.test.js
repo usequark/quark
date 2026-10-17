@@ -132,10 +132,9 @@ test("forwards analytics headers and strips credentials", async () => {
 	assert.equal(response.status, 200);
 	assert.equal(response.headers.get("Cache-Control"), "no-store");
 	assert.equal(seen.url, `${UPSTREAM}/api/send`);
-	assert.equal(
-		seen.options.headers["X-Forwarded-For"],
-		"203.0.113.7, 10.0.0.1",
-	);
+	// Single stable IP, never the incoming chain: a rotating edge IP anywhere
+	// in a forwarded chain would split Umami's session identity.
+	assert.equal(seen.options.headers["X-Forwarded-For"], "203.0.113.7");
 	assert.equal(seen.options.headers["X-Real-IP"], "203.0.113.7");
 	assert.equal(seen.options.headers["User-Agent"], "Mozilla/5.0");
 	assert.equal(seen.options.headers["Accept-Language"], "en-NZ");
@@ -145,6 +144,52 @@ test("forwards analytics headers and strips credentials", async () => {
 	assert.ok(!("Authorization" in seen.options.headers));
 	assert.ok(!("authorization" in seen.options.headers));
 	assert.ok(!("x-metrics-token" in seen.options.headers));
+	assert.ok(!("CF-Connecting-IP" in seen.options.headers));
+});
+
+test("prefers CF-Connecting-IP as the stable client IP behind Cloudflare", async () => {
+	let seen;
+	globalThis.fetch = async (url, options) => {
+		seen = { url, options };
+		return new NextResponseShim(200, JSON.stringify({ ok: true }));
+	};
+
+	const response = await POST(
+		postRequest("send", {
+			headers: {
+				"CF-Connecting-IP": "203.0.113.99",
+				"X-Forwarded-For": "203.0.113.7, 10.0.0.1",
+				"X-Real-IP": "203.0.113.7",
+			},
+		}),
+		paramsFor("send"),
+	);
+
+	assert.equal(response.status, 200);
+	assert.equal(seen.options.headers["X-Forwarded-For"], "203.0.113.99");
+	assert.equal(seen.options.headers["X-Real-IP"], "203.0.113.99");
+	assert.equal(seen.options.headers["CF-Connecting-IP"], "203.0.113.99");
+});
+
+test("drops CF-Connecting-IP when proxy headers are untrusted", async () => {
+	process.env.TRUST_PROXY_HEADERS = "false";
+	let seen;
+	globalThis.fetch = async (url, options) => {
+		seen = { url, options };
+		return new NextResponseShim(200, JSON.stringify({ ok: true }));
+	};
+
+	const response = await POST(
+		postRequest("send", {
+			headers: { "CF-Connecting-IP": "203.0.113.99" },
+		}),
+		paramsFor("send"),
+	);
+
+	assert.equal(response.status, 200);
+	assert.equal(seen.options.headers["X-Forwarded-For"], "unknown");
+	assert.equal(seen.options.headers["X-Real-IP"], "unknown");
+	assert.ok(!("CF-Connecting-IP" in seen.options.headers));
 });
 
 test("prefers server-only upstream over the public URL", async () => {
