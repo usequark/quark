@@ -26,10 +26,25 @@ overrides:
   # next-auth/providers/nodemailer.
   "next-auth>nodemailer": "-"
   "@auth/core>nodemailer": "-"
-  # stripe@17.7.0 declares `qs: ^6.11.0`, so 6.16.0 is inside its own range and
-  # `pnpm update` cannot move it (qs is not a direct dependency of any workspace
-  # package). GHSA-g4mx-9h6g-cwc7 / GHSA-hrpp-f998-fjpq both need >=6.16.0.
-  qs@>=6.14.2 <=6.15.3: ">=6.16.0"
+  # stripe@17.7.0 declares `qs: ^6.11.0`, so a current release is inside its
+  # own range and `pnpm update` cannot move it (qs is not a direct dependency
+  # of any workspace package). The floor tracks the newest advisory:
+  # GHSA-g4mx-9h6g-cwc7 / GHSA-hrpp-f998-fjpq needed >=6.16.0, and
+  # GHSA-6pq8-jhm2-2vcw (2026-11-09) needs >=6.16.1.
+  qs@>=6.14.2 <=6.16.0: ">=6.16.1"
+  # node-forge@1.4.0 comes from @expo/cli's tree (`^1.3.3`), so 1.4.1 is
+  # inside the declared range - a same-major patch, build-time only (Expo
+  # code signing). It clears twelve advisories at once: GHSA-4642/6wvx/525v/
+  # 7wch/h6cr/4487/5cwg/jc66/8hrf/hqq3/5x38, plus GHSA-86w9-cpqp-85rv which
+  # 1.4.x also fixed - both were retired from the allowlist on 2026-11-09.
+  node-forge@<=1.4.0: ">=1.4.1"
+  # undici@8.11.2 sits behind dependents that declare ^8.x, so 8.12.2 is
+  # inside their ranges - same major, no API change. Clears GHSA-4qv8/f72v/
+  # 9fm3/55wc (moderate) and xjj6/qrxm/4w7w/2m5v (high).
+  undici@<8.12.2: ">=8.12.2"
+  # launch-editor@2.14.1 (vite / Expo dev tooling); GHSA-698v/r825/587h all
+  # need >=2.14.2, a same-major patch.
+  launch-editor@<=2.14.1: ">=2.14.2"
   # xcode@3.0.1 declares `uuid: ^7.0.3`; GHSA-w5hq-g745-h8pq needs >=11.1.1,
   # four majors ahead. Safe here because xcode only calls uuid.v4() (lib/
   # pbxProject.js), which is unchanged in 11.x, and 11.1.1 still supports
@@ -40,6 +55,9 @@ overrides:
   fast-xml-parser@<5.10.1: ">=5.10.1"
   lodash@>=4.0.0 <=4.17.22: ">=4.17.23"
   hono@<4.12.25: ">=4.12.25"
-  fast-uri@<4.1.3: ">=4.1.4"
+  # fast-uri arrives transitively (fastify stack), so `pnpm update` cannot
+  # move it either. Floor tracks the newest advisory: GHSA-w74x/wjr9/xhq7/
+  # 333x all need >=4.2.3, superseding the earlier >=4.1.4 floor. Same major.
+  fast-uri@<4.2.3: ">=4.2.3"
   deepmerge-ts@<8.0.0: ">=8.0.0"
   mysql2@<3.22.0: ">=3.22.0"

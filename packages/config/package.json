@@ -22,7 +22,7 @@
 	"dependencies": {
 		"@usequark/quark-core": "workspace:*",
 		"ioredis": "^6.0.0",
-		"zod": "^4.6.5"
+		"zod": "^4.6.6"
 	},
 	"keywords": [],
 	"author": "",
