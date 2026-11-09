@@ -44,6 +44,7 @@ Entry point: [../README.md](../README.md)
 | [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) | Common failures and their fixes |
 | [UPGRADING.md](./UPGRADING.md) | Per-release migration notes for behaviour changes |
 | [SECURITY_FEATURES.md](./SECURITY_FEATURES.md) | Security features, checklists, and incident response |
+| [FUTURE_WORK.md](./FUTURE_WORK.md) | Recommended future work and open decisions, each with its gate |
 | [DESIGN_NOTES.md](./DESIGN_NOTES.md) | Design direction, partly superseded. Read the status banner first |
 
 ## Historical Archive
