@@ -34,6 +34,6 @@
 		"@prisma/client": "^7.10.0",
 		"@usequark/quark-core": "workspace:*",
 		"pg": "^8.23.0",
-		"zod": "^4.6.5"
+		"zod": "^4.6.6"
 	}
 }

@@ -5,60 +5,86 @@ const execFileAsync = promisify(execFile);
 
 /**
  * `pnpm audit` exits non-zero whenever it finds *any* advisory, so a bare
- * `pnpm audit` step in CI would fail on the three Expo build-toolchain
- * advisories this repo deliberately accepts - and would have failed the build
- * forever, which is how a security gate turns into noise people learn to skip.
+ * `pnpm audit` step in CI would fail forever on the advisories this repo
+ * deliberately accepts - which is how a security gate turns into noise people
+ * learn to skip.
  *
- * Those three are documented in docs/dependency-audit.md. Two of them
- * (`node-forge`, `braces`) have no patched release at all: their `patched_versions`
- * is `<0.0.0`, and the resolved version *is* the newest published. The third
- * (`decode-uri-component`) needs >=0.5.0, which is ESM-only, while
- * `query-string@7.1.3` is CommonJS and calls it as a function - forcing the
- * upgrade breaks it at runtime with `TypeError: <binding> is not a function`.
- * Overriding `query-string` to the first version that wants 0.5.0 (9.x) breaks
- * the same caller for the same reason, because 9.x is ESM-only too.
+ * The accepted set (six IDs as of 2026-11-09, documented per entry in
+ * docs/dependency-audit.md) is entirely inside `apps/mobile`'s Expo dependency
+ * graph, and each one is unfixable without breaking something else first:
  *
- * All three sit in `apps/mobile`'s Expo dependency graph. Two of them (`node-forge`,
- * `braces`) are build toolchain only and never enter a JS bundle. The third
- * (`decode-uri-component`) does ship: expo-router bundles `query-string` and calls
- * `queryString.parse` on incoming deep-link query strings at app runtime, so it is
- * runtime-reachable and is accepted as a residual risk, not as a non-issue.
- * Fixing any of them breaks something else first. What *can* be fixed is a fourth
- * advisory appearing, and `pnpm audit` alone cannot tell those apart.
+ * - `decode-uri-component` (GHSA-vcc3, GHSA-qr28): the fix is ESM-only while
+ *   `query-string@7.1.3` is CommonJS and calls it as a function - forcing the
+ *   upgrade crashes every deep-link query parse (`TypeError: <binding> is not
+ *   a function`, reproduced on Node v24.21.0). Overriding `query-string` to
+ *   9.x breaks the same caller the same way, and 9.x is ESM-only too.
+ * - `zod` (GHSA-mrhx): the workspace's own zod is fixed (4.6.7, floor
+ *   ^4.6.6); the remaining copy is 3.25.76 deep in Expo's runtime graph and
+ *   the fix exists only on the 4.x line, so taking it means forcing a major
+ *   into framework internals whose validation APIs Expo calls at runtime.
+ * - `glob` / `minimatch` (GHSA-3g3m, GHSA-g3hv): build-time only
+ *   (fingerprinting, prebuild, metro config), never bundled. The fixes are
+ *   majors outside every dependent's declared range, and CI's Mobile job runs
+ *   only lint + tsc - forcing them would be an untested break in native build
+ *   tooling. The globs are repo-authored, not attacker-controlled.
+ * - `deepmerge` (GHSA-gcqx): no patched release exists at all
+ *   (`patched_versions` is `<0.0.0`); 4.3.1 is the newest published.
  *
- * Re-verified 2026-10-12 against the GitHub advisory database and the npm
- * registry: no patched release has landed for `node-forge` or `braces`
- * (`first_patched_version` is still null, and the newest published version of
- * each is still the affected one), and the `decode-uri-component` fix is still
- * unreachable for the reasons above. Resolved versions, modules and exposure
- * paths are unchanged, so all three stay. See docs/dependency-audit.md, section
- * "Re-checked 2026-10-12 - no fix became reachable".
+ * Everything else is fixed in the tree rather than accepted: next 16.4.1,
+ * nodemailer ^10.1.4, zod ^4.6.6 (our copies), plus same-major overrides for
+ * node-forge, undici, fast-uri, launch-editor and qs - each commented with its
+ * reasoning in pnpm-workspace.yaml.
+ *
+ * Two earlier allowlist entries were retired on 2026-11-09: `node-forge`
+ * GHSA-86w9 (node-forge 1.4.3, forced by override, fixed it along with eleven
+ * others) and `braces` GHSA-vfj7 (pnpm audit no longer reports it at all -
+ * braces is still 3.0.3, so this was an upstream advisory-data change, not a
+ * fixed release). The script printed the retirement notice for both; the
+ * entries and their docs sections were removed in the same change.
  *
  * So the gate is an allowlist keyed on the GitHub advisory ID, which is stable
  * across advisory metadata edits in a way the npm advisory ID is not.
  *
  * Deliberately NOT done, matching docs/dependency-audit.md: no
  * `auditConfig.ignoreCves` and no `audit.level` change. Silencing the audit
- * database would hide these three as well as anything new, which is the opposite
- * of what this check is for. The allowlist lives here, in code, where it is
- * reviewable and diffable.
+ * database would hide the accepted six as well as anything new, which is the
+ * opposite of what this check is for. The allowlist lives here, in code, where
+ * it is reviewable and diffable.
  *
  * When an upstream package finally ships a fix, the advisory stops appearing and
  * this script prints a notice naming the entry to retire. That is the signal to
  * delete it from this list and update docs/dependency-audit.md.
  */
 const acceptedAdvisories = {
-	"GHSA-86w9-cpqp-85rv": {
-		module: "node-forge",
+	"GHSA-qr28-fpjm-wq7f": {
+		module: "decode-uri-component",
 		severity: "high",
 		reason:
-			"Re-verified 2026-10-12: no patched release exists (`patched_versions` is `<0.0.0`, GitHub `first_patched_version` is null, 1.4.0 is still the newest published). Build-time only, Expo code signing - `@expo/cli@57.0.28` still declares `^1.3.3`. Do not override: there is nothing to force it to.",
+			"Accepted 2026-11-09: the same ESM/CommonJS breakage as GHSA-vcc3 below, one advisory line further along (fix needs >=0.5.1, still ESM-only). Resolved copy is 0.2.2 via `query-string@7.1.3` in expo-router's deep-link path, so it is runtime-reachable. Taking the fix crashes every deep-link query parse instead of only a pathological one. Evidence in docs/dependency-audit.md under decode-uri-component.",
 	},
-	"GHSA-vfj7-8cjw-p6xm": {
-		module: "braces",
+	"GHSA-mrhx-c7xc-m3w5": {
+		module: "zod",
 		severity: "high",
 		reason:
-			"Re-verified 2026-10-12: no patched release exists (`patched_versions` is `<0.0.0`, GitHub `first_patched_version` is null, 3.0.3 is still the newest published, and `micromatch@4.0.8` still wants `^3.0.3`). Build-time only, via three independent micromatch routes, so a `@expo/metro-file-map` bump would not retire it. Needs a pathological repo-authored glob to reach.",
+			"Accepted 2026-11-09: the workspace's own zod is fixed (4.6.7, floor ^4.6.6). The remaining copy is zod@3.25.76 deep in Expo's runtime graph - expo, expo-router and the expo-* packages all declare ^3. The fix exists only on the 4.x line, so clearing this would force a major into framework internals whose validation APIs Expo calls at runtime. Re-check when Expo declares zod 4.",
+	},
+	"GHSA-3g3m-2fjr-6pw4": {
+		module: "glob",
+		severity: "moderate",
+		reason:
+			"Accepted 2026-11-09: glob@13.0.6 sits in @expo/cli / @expo/config-plugins / @expo/metro-config / @expo/fingerprint - build-time only (fingerprinting, prebuild, metro config), never bundled. The fix needs >=14.0.2, a major outside every dependent's ^13 range, and CI's Mobile job runs only lint + tsc, so forcing it would be an untested break in native build tooling. Globs here are repo-authored, not attacker-controlled. Re-check when Expo widens the range.",
+	},
+	"GHSA-g3hv-75wg-m249": {
+		module: "minimatch",
+		severity: "moderate",
+		reason:
+			"Accepted 2026-11-09: minimatch@10.2.6 via @expo/fingerprint and glob@13 - same class as the retired braces advisory: build-time pattern matching over repo-authored paths, never shipped. The fix needs >=11.0.1, a major outside the dependents' ^10 range, and CI does not exercise these paths (Mobile job = lint + tsc). Re-check when Expo widens the range.",
+	},
+	"GHSA-gcqx-w48m-w2h4": {
+		module: "deepmerge",
+		severity: "low",
+		reason:
+			"Accepted 2026-11-09: no patched release exists (`patched_versions` is `<0.0.0`); 4.3.1 is the newest published. Prototype poisoning of mergeObject()'s return value; the only consumer is @expo/config, which merges config-shaped objects built from repo files, not attacker-controlled keys. Build-time only.",
 	},
 	"GHSA-vcc3-ghjq-m6fr": {
 		module: "decode-uri-component",
@@ -233,7 +259,7 @@ process.stderr.write(
 		"scripts/check-audit.mjs with a reason, and document them in\n" +
 		"docs/dependency-audit.md.\n\n" +
 		"Do not silence this with auditConfig.ignoreCves or audit.level: those hide\n" +
-		"the accepted three as well as anything new.\n\n",
+		"the accepted allowlist as well as anything new.\n\n",
 );
 
 process.exit(1);

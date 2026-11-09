@@ -4,7 +4,16 @@ Status as of the original triage: **21 advisories -> 3.** This document explains
 what was deliberately left, and why.
 
 Since then: **6 Next.js advisories -> 0**, fixed by upgrading `16.3.6` to `16.3.8`. See
-[Next.js](#nextjs---6-advisories-fixed-by-upgrade) below. The standing accepted count is still 3.
+[Next.js](#nextjs---6-advisories-fixed-by-upgrade) below.
+
+Re-checked **2026-11-09**: a wave of new advisories landed in the registry database after the
+2026-10-12 pass (43 reported, 40 unaccepted - CI on `main` went red on the audit gate at the
+2026-11-07 release merge). Of those, **36 were fixed in-tree** (version bumps and same-major
+overrides, listed under [Fixed](#fixed) below) and **one was withdrawn upstream** (`braces`
+GHSA-vfj7 - no new release exists, the advisory simply no longer flags `braces@3.0.3`). The
+standing accepted count is now **6**: the original `decode-uri-component` entry plus five new
+documented accepts (`decode-uri-component` second advisory, `zod`, `glob`, `minimatch`,
+`deepmerge`), each with its evidence under [Not fixed](#not-fixed---documented-accepts).
 
 Re-checked **2026-10-12** against the GitHub advisory database and the npm registry: the three
 open Dependabot alerts are the same three, `pnpm audit` still reports exactly three advisories
@@ -38,6 +47,53 @@ source of truth.
 | `source-map-js` 1.2.1 | 1 | high | lockfile refresh | build only |
 | `uuid` 7.0.3 | 1 | moderate | `overrides`, justified below | build only |
 
+### The 2026-11-09 wave - 36 advisories, fixed in-tree
+
+The registry published a large batch of advisories after the 2026-10-12 pass. None of them was
+accepted unless fixing it would break something: everything below moved to a patched version.
+
+| Package | From -> to | Advisories cleared | How |
+|---|---|---|---|
+| `next` | 16.3.8 -> 16.4.1 | 3 (2 critical, 1 high) | manifest bump (`apps/web`, `packages/ui`), synced to templates |
+| `nodemailer` | 10.0.10 -> 10.4.0 | 5 moderate | floor `^10.1.4` in `packages/core` |
+| `node-forge` | 1.4.0 -> 1.4.3 | 12 (incl. GHSA-86w9, retired from the allowlist) | override `node-forge@<=1.4.0: ">=1.4.1"` - inside `@expo/cli`'s `^1.3.3` |
+| `undici` | 8.11.2 -> 8.12.2 | 8 (4 high, 4 moderate) | override, same major, dependents declare `^8.x` |
+| `fast-uri` | 4.2.1 -> 4.2.3 | 4 (1 moderate, 3 low) | override floor raised to `>=4.2.3`, same major |
+| `launch-editor` | 2.14.1 -> 2.14.2 | 3 (1 high, 2 moderate) | override, same major |
+| `qs` | 6.16.0 -> 6.16.1 | 1 moderate | existing override floor raised (`<=6.16.0` -> `>=6.16.1`), inside `stripe`'s `^6.11.0` |
+
+`zod` also moved `4.6.5 -> 4.6.7` (floor `^4.6.6`) but cleared no advisory on its own: the one
+remaining `zod` advisory is still reported through Expo's `zod@3.25.76` - see the accept entry
+below.
+
+The three critical/high `next` advisories (unauthenticated RCE in Image Optimization and
+`use cache`, DoS in App Router) are production-reachable in scaffolded apps, so they were never
+candidates for the allowlist. `apps/web` and `packages/ui` both move to `16.4.1`, and
+`sync-templates` propagates the bump so new apps do not ship the vulnerable pin.
+
+### node-forge - 12 advisories, fixed by override (retired from the allowlist)
+
+The old accept entry for `node-forge` GHSA-86w9 is gone: an upstream fix landed. The override
+
+```yaml
+node-forge@<=1.4.0: ">=1.4.1"
+```
+
+resolves 1.4.3 (inside `@expo/cli`'s declared `^1.3.3`, so nothing outside a declared range is
+forced) and clears eleven advisories outright - GHSA-4642, 6wvx, 525v, 7wch, h6cr, 4487, 5cwg,
+jc66, 8hrf, hqq3, 5x38 - plus GHSA-86w9 itself, which the registry now marks fixed in 1.4.x.
+The build-time exposure analysis below still holds (iOS code signing only, never bundled); it is
+kept because it explains why the override was safe to take without a runtime test.
+
+### braces - retired from the allowlist (upstream advisory-data change)
+
+`braces` GHSA-vfj7 is no longer reported by `pnpm audit` at all. **No fix was published** -
+`braces@3.0.3` is still the newest version and still what `micromatch@4.0.8` declares - so this
+was an upstream change to the advisory's data, not a release we waited for. The allowlist entry
+and the accept section were removed on 2026-11-09 when the script printed its retirement
+notice. If `pnpm audit` ever starts reporting GHSA-vfj7 again, the old analysis (build-time
+only, needs a pathological repo-authored glob) still applies and the entry comes back.
+
 ### Next.js - 6 advisories, fixed by upgrade
 
 Six advisories landed against `next@16.3.6` after the triage above. All six are patched in
@@ -52,18 +108,19 @@ Six advisories landed against `next@16.3.6` after the triage above. All six are 
 | `GHSA-f87g-xv8r-7p7x` | moderate | Metadata image route disclosure via `dynamicParams` bypass |
 | `GHSA-39w2-rjm5-chcv` | low | Dev server MCP endpoint disclosure |
 
-These are not the accepted three. Two are production-reachable (SSRF in image optimization,
+These are not allowlist material. Two are production-reachable (SSRF in image optimization,
 ISR cache poisoning), so suppressing them would have been the wrong call regardless of the
-gate's rules. `apps/web` and `packages/ui` both move to `16.3.8`, and
-`sync-templates` propagates the bump to scaffolded projects so new apps do not ship the
-vulnerable pin.
+gate's rules. `apps/web` and `packages/ui` both move to `16.3.8` (and to `16.4.1` in the
+2026-11-09 wave above), and `sync-templates` propagates the bump to scaffolded projects so new
+apps do not ship the vulnerable pin.
 
 ### nodemailer - 13 advisories, zero real exposure
 
 This was the largest single block in the audit and the least dangerous of them.
 
-`packages/core` declares `nodemailer: ^10.0.10` and resolves 10.0.10, which is past every
-advisory's patched range. The vulnerable copy was a **second, older** 7.0.13 pulled in as an
+`packages/core` declares `nodemailer: ^10.1.4` (floor raised from `^10.0.10` on 2026-11-09 for
+five new advisories, resolving 10.4.0) and resolves past every advisory's patched range. The
+vulnerable copy was a **second, older** 7.0.13 pulled in as an
 auto-installed **optional peer**:
 
 ```
@@ -94,7 +151,7 @@ This is safe because the provider is never used:
 - `@auth/core`'s index never imports nodemailer statically. Only
   `@auth/core/providers/nodemailer.js` does, and nothing imports that module.
 - Outgoing mail goes through `@usequark/quark-core` (`src/email.js`), which depends on
-  nodemailer `^10.0.10` directly.
+  nodemailer `^10.1.4` directly.
 
 ### The override is guarded, not just documented
 
@@ -123,6 +180,13 @@ this move because qs is not a direct dependency of any workspace package.
 
 ```yaml
 qs@>=6.14.2 <=6.15.3: ">=6.16.0"
+```
+
+On 2026-11-09 GHSA-6pq8-jhm2-2vcw raised the floor again and the override was widened to match
+(`<=6.16.0` -> `>=6.16.1`), still inside stripe's range:
+
+```yaml
+qs@>=6.14.2 <=6.16.0: ">=6.16.1"
 ```
 
 ### shell-quote and source-map-js - no override needed
@@ -158,19 +222,28 @@ that leaves a declared range, so it was checked rather than assumed:
 
 ## Not fixed - documented accepts
 
-These three remain. None has a fix we can take without breaking something, and all three sit in
-`apps/mobile`'s Expo dependency graph.
+**Six remain as of 2026-11-09.** None has a fix we can take without breaking something, and all
+six sit in `apps/mobile`'s Expo dependency graph (the workspace's own dependencies are all
+patched - see [The 2026-11-09 wave](#the-2026-11-09-wave---36-advisories-fixed-in-tree)).
 
-**Two of the three are build-toolchain only** - `node-forge` and `braces` never enter a JS bundle.
-The third, `decode-uri-component`, is the exception: it is **reachable at app runtime**, as
-corrected on 2026-10-12 after review. The original triage's blanket claim that none of them is
-shipped application code was wrong for that one, so exposure is now stated per entry.
+**Four of the six are build-toolchain only** - `glob`, `minimatch`, `deepmerge` and the Expo
+side of `zod` never enter a JS bundle in a form an attacker reaches. `decode-uri-component` is
+the exception: it is **reachable at app runtime**, as corrected on 2026-10-12 after review. The
+original triage's blanket claim that none of them is shipped application code was wrong for that
+one, so exposure is now stated per entry.
 
-**Re-verified 2026-10-12.** The resolved version and the module are unchanged from the original
-triage for all three, and no upstream package has published a patched release that a bump or an
-override could reach.
+The pre-2026-11-09 accepts for `node-forge` and `braces` are gone: both were retired by the
+script's notice and are documented under [Fixed](#fixed) above.
 
-### decode-uri-component 0.2.2 - moderate
+**Re-verified 2026-10-12** (for the original entries). Each entry below carries its own date
+and evidence.
+
+### decode-uri-component 0.2.2 - moderate + high (two advisories)
+
+Accepted: `GHSA-vcc3-ghjq-m6fr` (moderate) and `GHSA-qr28-fpjm-wq7f` (high). Both were reported
+against the same resolved copy after 2026-11-09; the analysis below covers both - the second
+advisory is the same defect one line further along the changelog, and its fix (`>=0.5.1`) is the
+same ESM-only release, so every argument against taking `0.5.0` applies to `0.5.1` unchanged.
 
 - **Path:** `apps/mobile -> expo-router@57.0.23 -> query-string@7.1.3 -> decode-uri-component`
   (re-checked with `pnpm why decode-uri-component`; the same chain repeats through
@@ -237,61 +310,59 @@ override could reach.
   dependency, or a patched `decode-uri-component` release that keeps a CommonJS entry point. Both
   are tracked as the follow-up that would actually retire this advisory.
 
-### node-forge 1.4.0 - high
+### zod 3.25.76 in Expo's graph - high
 
-- **Path:** `apps/mobile -> expo@57.0.25 -> @expo/cli@57.0.27 -> node-forge@1.4.0` (also via
-  `@expo/code-signing-certificates@0.0.6`) - both re-confirmed with `pnpm why node-forge`.
-- **Patched versions: `<0.0.0`.** There is no fixed release. 1.4.0 is the newest version
-  published.
-- **Re-verified 2026-10-12:** GitHub still reports `first_patched_version: null` and
-  `vulnerable_version_range: <= 1.4.0`. The registry's version list ends at 1.4.0 and no
-  dist-tag carries a newer or prerelease build, so there is nothing to upgrade to and nothing
-  to pin an override to.
-- **Advisory:** RSA PKCS#1 v1.5 signature verification accepts extra nested DigestAlgorithm
-  elements (GHSA-86w9-cpqp-85rv).
-- **Exposure: build-time only, and only while Expo generates iOS signing assets. Not in any
-  shipped JS bundle.** Re-checked 2026-10-12 rather than assumed: `expo@57.0.25`'s `bin` is
-  `bin/cli`, so `@expo/cli` is reached through the CLI binary, and `expo`'s own `src`/`build`
-  never imports `@expo/cli`. Inside `@expo/cli@57.0.27`, `node-forge` is imported only by
-  `src/utils/codesigning.js` and `src/run/ios/codeSigning/Security.js` - iOS code signing. The
-  app bundle follows imports from `expo-router/entry` and never reaches either.
-- **Recommendation:** accept and revisit when `@expo/cli` moves off `node-forge@1.4.0`. The
-  newest `@expo/cli@57.0.28` still declares `node-forge: ^1.3.3`.
-  **Do not** force an override: there is no version to force it to.
+- **Advisory:** GHSA-mrhx-c7xc-m3w5 - memory exhaustion while validating oversized constrained
+  collections.
+- **Path:** `apps/mobile -> expo / expo-router / expo-* -> zod@3.25.76` (every Expo package
+  declares `zod: ^3`). The workspace's own copies are fixed: floor `^4.6.6`, resolving 4.6.7
+  (`apps/web`, `packages/config`, `packages/core`, `packages/db`, templates).
+- **Fix available but rejected:** the advisory's patched range is `>=4.6.6`, so the only way to
+  clear it is `zod@<4.6.6: ">=4.6.6"` - forcing Expo's runtime internals onto zod 4, a major
+  with breaking API changes (schema construction, error types, `.strict()`/`.passthrough()`
+  semantics) that expo and expo-router call directly at app runtime. CI would not catch the
+  difference: the Mobile job runs lint + tsc against `apps/mobile`'s own source, not Expo's
+  validation paths.
+- **Exposure:** runtime (Expo's own validation of route/deep-link input), but the advisory is a
+  memory-exhaustion DoS reached only with an oversized constrained value.
+- **Recommendation:** accept until Expo declares zod 4 on a stable release; re-check then and
+  the override becomes the obvious move.
 
-### braces 3.0.3 - high
+### glob 13.0.6 - moderate
 
-- **Patched versions: `<0.0.0`.** No fixed release exists; 3.0.3 is the newest version.
-- **Re-verified 2026-10-12:** GitHub still reports `first_patched_version: null` and
-  `vulnerable_version_range: <= 3.0.3`, and the registry's version list ends at 3.0.3.
-  `micromatch`'s newest release, 4.0.8, declares `braces: ^3.0.3`, so even the newest parent
-  resolves the vulnerable version. Nothing to upgrade to.
-- **Path (re-checked with `pnpm why braces`) - and there is more than one.** The advisory
-  names one chain, `apps/mobile -> expo@57.0.25 -> @expo/cli@57.0.27 ->
-  @expo/metro-file-map@57.0.3 -> micromatch@4.0.8 -> braces@3.0.3`, but `pnpm why braces` shows
-  `braces` entering the tree through three independent routes:
-  1. `@expo/cli -> @expo/metro-file-map@57.0.3 -> micromatch@4.0.8 -> braces`
-  2. `@expo/cli -> @expo/metro@56.0.2 -> metro@0.84.5` and
-     `... -> metro-file-map@0.84.5 -> micromatch@4.0.8 -> braces` (and again via
-     `@expo/cli -> @expo/metro-config@57.0.12 -> @expo/metro@56.0.2`)
-  3. `react-native@0.87.1 -> @react-native/community-cli-plugin@0.87.1 -> metro@0.87.1 ->
-     metro-file-map@0.87.1 -> micromatch@4.0.8 -> braces`
-- **Why a `@expo/metro-file-map` bump would not retire this advisory:**
-  `@expo/metro-file-map@57.0.4` does drop `micromatch` from its own manifest, but that only
-  removes route 1. Routes 2 and 3 resolve `braces@3.0.3` regardless, so `pnpm audit` keeps
-  reporting it. Bumping it would be churn with no security outcome, so it was not done.
-- **Advisory:** stack-exhaustion DoS through deeply nested glob patterns
-  (GHSA-vfj7-8cjw-p6xm).
-- **Exposure: build-time only.** `micromatch` matches file paths against developer-authored
-  glob patterns at bundle time. Reaching the DoS needs a pathological pattern authored in the
-  repo, not attacker-controlled input. Re-checked 2026-10-12 rather than assumed: every route
-  into `micromatch` runs through `metro-file-map`, which is Metro's file crawler and runs in Node
-  during `expo start`/`expo export`. `expo@57.0.25`'s own `src`/`build` never imports
-  `metro-file-map` or `micromatch`, and nothing in `apps/mobile`'s source does either, so it does
-  not enter the app bundle. Unlike `decode-uri-component`, this one is genuinely not shipped.
-- **Recommendation:** accept. Reachable only if `metro-file-map` stops depending on
-  `micromatch@4.0.8` on every route above, or if `micromatch` moves to a `braces` range that
-  admits a fixed version.
+- **Advisory:** GHSA-3g3m-2fjr-6pw4 - AbortSignal cancellation bypass allows post-timeout
+  filesystem traversal.
+- **Path:** `@expo/cli`, `@expo/config-plugins`, `@expo/config`, `@expo/metro-config`,
+  `@expo/fingerprint`, `expo-updates` (all declare `glob: ^13`).
+- **Fix available but rejected:** the fix needs `>=14.0.2`, a major outside every dependent's
+  range. CI's Mobile job runs only lint + tsc, so forcing glob 14 into fingerprinting, prebuild
+  and metro config would ship an untested break in native build tooling for a correctness/DoS
+  issue on a path that never runs in production.
+- **Exposure: build-time only.** Globs here match repo-authored paths; no attacker-controlled
+  pattern reaches them.
+- **Recommendation:** accept until Expo widens the range; re-check then.
+
+### minimatch 10.2.6 - moderate
+
+- **Advisory:** GHSA-g3hv-75wg-m249 - DoS via globparts amplification.
+- **Path:** `@expo/fingerprint` and `glob@13` (declare `minimatch: ^10`).
+- **Fix available but rejected:** needs `>=11.0.1`, a major outside the dependents' range, with
+  the same CI blind spot as `glob` above. This is the same class as the retired `braces`
+  advisory: build-time pattern matching over developer-authored paths, needing a pathological
+  pattern authored in the repo rather than attacker input.
+- **Recommendation:** accept until Expo widens the range; re-check then.
+
+### deepmerge 4.3.1 - low
+
+- **Advisory:** GHSA-gcqx-w48m-w2h4 - `mergeObject()` allows prototype poisoning of its return
+  value.
+- **Patched versions: `<0.0.0`.** No fixed release exists; 4.3.1 is the newest published, so
+  there is nothing to override to.
+- **Path:** `apps/mobile -> expo -> @expo/config -> deepmerge` (config merging during prebuild
+  and CLI startup).
+- **Exposure: build-time only.** The inputs are config objects built from repo files
+  (`app.json`, `expo-plugin` output), not attacker-controlled keys.
+- **Recommendation:** accept; re-check if a 4.4+ appears.
 
 ## Re-checked 2026-10-12 - no fix became reachable
 
@@ -326,24 +397,29 @@ recorded as it is rather than as the old blanket claim described it.
 
 ## Re-checking after an upgrade
 
-Run `pnpm audit:check`. If any of the three remaining advisories disappears, it moved upstream and
-this document should be updated - the check prints a notice naming the entry to retire. Note that
+Run `pnpm audit:check`. If any of the six accepted advisories disappears, it moved upstream and
+this document should be updated - the check prints a notice naming the entry to retire (that is
+how `node-forge` GHSA-86w9 and `braces` GHSA-vfj7 were removed on 2026-11-09). Note that
 `pnpm audit` reads the lockfile, so a stale `.pnpm` directory can make a resolved tree look
 unfixed - `rm -rf node_modules && pnpm install` if a count looks stale.
 
-A refresh of the lockfile on its own will not retire any of the three, for the reasons listed
-under [Re-checked 2026-10-12](#re-checked-2026-10-12---no-fix-became-reachable). The signal to
-watch for is an upstream release, not a lockfile resolution.
+A lockfile refresh on its own will not retire the accepts: their fixes are blocked by declared
+ranges (`zod`, `glob`, `minimatch`), by an ESM-only release a CommonJS caller cannot use
+(`decode-uri-component`), or by there being no release at all (`deepmerge`). The signal to
+watch for is an upstream release or an Expo range change, not a lockfile resolution. The
+history of the last such pass is under
+[Re-checked 2026-10-12](#re-checked-2026-10-12---no-fix-became-reachable).
 
 ## Enforced in CI
 
 `pnpm audit:check` runs `scripts/check-audit.mjs`, which CI invokes on every push and pull
-request. The three accepted advisory IDs are an allowlist in that script, so it passes today and
-turns red when a fourth appears.
+request. The accepted advisory IDs (six as of 2026-11-09) are an allowlist in that script, so
+it passes today and turns red when a new one appears.
 
 A bare `pnpm audit` step could not do this: it exits non-zero for *any* advisory, so it would
-fail forever on the three above and get ignored. The allowlist is keyed on the GitHub advisory ID
-because that is stable across advisory metadata edits in a way the npm advisory ID is not.
+fail forever on the accepted set and get ignored. The allowlist is keyed on the GitHub advisory
+ID because that is stable across advisory metadata edits in a way the npm advisory ID is not -
+the `braces` retirement is exactly the kind of upstream data change that key survives.
 
 The script treats "the audit did not run" as a failure rather than as a clean tree. `pnpm audit`
 reports its own failures as JSON on stdout with exit 1 - for example
@@ -392,9 +468,9 @@ Related: `pnpm build:mobile` invokes a script the mobile package does not have
 
 ## Deliberately not done
 
-- No `auditConfig.ignoreCves` or `audit.level` change. The three remaining advisories are
+- No `auditConfig.ignoreCves` or `audit.level` change. The six accepted advisories are
   reported honestly rather than silenced. Those pnpm settings mute the audit database, which
-  would hide the accepted three *and* anything new; the allowlist in
+  would hide the accepted set *and* anything new; the allowlist in
   `scripts/check-audit.mjs` is code, reviewable in a diff, instead.
 - No Dependabot alert dismissal.
 - No application-level mitigation code for any advisory.

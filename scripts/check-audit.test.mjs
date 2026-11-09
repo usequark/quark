@@ -57,19 +57,32 @@ function runWith(report) {
 }
 
 /**
- * The three advisories docs/dependency-audit.md records as accepted, keyed the way
- * pnpm keys its report: by advisory id, with each value also carrying the id.
+ * The advisories docs/dependency-audit.md records as accepted (six as of
+ * 2026-11-09), keyed the way pnpm keys its report: by advisory id, with each
+ * value also carrying the id.
  */
 const ACCEPTED = {
-	"GHSA-86w9-cpqp-85rv": advisory("GHSA-86w9-cpqp-85rv", {
-		module_name: "node-forge",
-	}),
-	"GHSA-vfj7-8cjw-p6xm": advisory("GHSA-vfj7-8cjw-p6xm", {
-		module_name: "braces",
-	}),
 	"GHSA-vcc3-ghjq-m6fr": advisory("GHSA-vcc3-ghjq-m6fr", {
 		module_name: "decode-uri-component",
 		severity: "moderate",
+	}),
+	"GHSA-qr28-fpjm-wq7f": advisory("GHSA-qr28-fpjm-wq7f", {
+		module_name: "decode-uri-component",
+	}),
+	"GHSA-mrhx-c7xc-m3w5": advisory("GHSA-mrhx-c7xc-m3w5", {
+		module_name: "zod",
+	}),
+	"GHSA-3g3m-2fjr-6pw4": advisory("GHSA-3g3m-2fjr-6pw4", {
+		module_name: "glob",
+		severity: "moderate",
+	}),
+	"GHSA-g3hv-75wg-m249": advisory("GHSA-g3hv-75wg-m249", {
+		module_name: "minimatch",
+		severity: "moderate",
+	}),
+	"GHSA-gcqx-w48m-w2h4": advisory("GHSA-gcqx-w48m-w2h4", {
+		module_name: "deepmerge",
+		severity: "low",
 	}),
 };
 
@@ -79,11 +92,11 @@ test("passes when the tree is clean", () => {
 	assert.match(result.stdout, /No new advisories/);
 });
 
-test("passes when the only advisories are the accepted three", () => {
+test("passes when the only advisories are the accepted set", () => {
 	const result = runWith({ advisories: ACCEPTED, metadata: {} });
 	assert.equal(result.status, 0, result.stderr);
 	assert.match(result.stdout, /No new advisories/);
-	assert.match(result.stdout, /3 accepted/);
+	assert.match(result.stdout, /6 accepted/);
 });
 
 test("fails on an advisory that is not on the allowlist", () => {
@@ -111,7 +124,7 @@ test("an accepted advisory keeps passing when it is the only one present", () =>
 	// Guards against the allowlist being keyed on something unstable like array
 	// position or install order.
 	const single = runWith({
-		advisories: { "GHSA-86w9-cpqp-85rv": advisory("GHSA-86w9-cpqp-85rv") },
+		advisories: { "GHSA-mrhx-c7xc-m3w5": advisory("GHSA-mrhx-c7xc-m3w5") },
 		metadata: {},
 	});
 	assert.equal(single.status, 0, single.stderr);
@@ -245,11 +258,9 @@ test("notices when an accepted advisory stops being reported", () => {
 	// The signal that an upstream fix landed: drop one from the fixture and the
 	// run should still pass, but say which entry is now stale so the allowlist and
 	// docs/dependency-audit.md get updated rather than drifting.
+	const { "GHSA-vcc3-ghjq-m6fr": _dropped, ...stillReported } = ACCEPTED;
 	const result = runWith({
-		advisories: {
-			"GHSA-86w9-cpqp-85rv": advisory("GHSA-86w9-cpqp-85rv"),
-			"GHSA-vfj7-8cjw-p6xm": advisory("GHSA-vfj7-8cjw-p6xm"),
-		},
+		advisories: stillReported,
 		metadata: {},
 	});
 
