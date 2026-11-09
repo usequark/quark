@@ -1,5 +1,21 @@
 # @usequark/quark-create-app
 
+## 1.27.5 - 2026-11-09
+
+### Patch Changes
+
+- [#306](https://github.com/usequark/quark/pull/306) [`744faee`](https://github.com/usequark/quark/commit/744faee9d4a6a2e52b657949c4ba413866cb0bfe) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Security dependency updates (2026-11-09 audit pass): `next` 16.3.8 -> 16.4.1
+  (fixes 2 critical + 1 high in scaffolded apps, synced to templates), `nodemailer`
+  floor `^10.1.4`, `zod` floor `^4.6.6`, plus same-major overrides for
+  `node-forge`, `undici`, `fast-uri`, `launch-editor` and `qs`. Audit allowlist
+  updated: 2 entries retired (fixed upstream), 5 new documented accepts — full
+  reasoning in `docs/dependency-audit.md`.
+
+- [#305](https://github.com/usequark/quark/pull/305) [`94ddd9e`](https://github.com/usequark/quark/commit/94ddd9ed2ab9b3f976ef6c23bc1ae7983cd87265) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Docs-only (no behaviour change): add `docs/FUTURE_WORK.md` — the validated
+  post-release backlog (security advisory draft ready to publish, auth
+  direction decision, Wave-4 site drift, proof app [#2](https://github.com/usequark/quark/issues/2), ZeptoMail key rotation,
+  adoption watch, gated Phase-4 bets) — and link it from `docs/INDEX.md`.
+
 ## 1.27.4 - 2026-10-17
 
 ### Patch Changes
