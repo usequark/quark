@@ -52,7 +52,10 @@ overrides:
   # @expo/config-plugins while generating native projects.
   uuid@<11.1.1: ">=11.1.1"
   fast-xml-builder@<1.1.7: ">=1.1.7"
-  fast-xml-parser@<5.10.1: ">=5.10.1"
+  # GHSA-474x-hrwr-fgx4 needs >=5.12.0. Reached through @aws-sdk/core ->
+  # @aws-sdk/xml-builder, which pins a version range we do not control, so the
+  # floor has to come from here rather than from a direct dependency bump.
+  fast-xml-parser@<5.12.0: ">=5.12.0"
   lodash@>=4.0.0 <=4.17.22: ">=4.17.23"
   hono@<4.12.25: ">=4.12.25"
   # fast-uri arrives transitively (fastify stack), so `pnpm update` cannot
