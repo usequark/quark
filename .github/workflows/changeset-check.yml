@@ -8,6 +8,7 @@ jobs:
   changeset-check:
     name: Changeset Status
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     # Skip the changesets release PR: it has consumed its changesets and bumped
     # versions, so `changeset status` would always report "no changesets found".
     if: github.actor != 'dependabot[bot]' && github.head_ref != 'changeset-release/main'
