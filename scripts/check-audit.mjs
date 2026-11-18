@@ -9,9 +9,10 @@ const execFileAsync = promisify(execFile);
  * deliberately accepts - which is how a security gate turns into noise people
  * learn to skip.
  *
- * The accepted set (three IDs as of 2026-11-19, documented per entry in
- * docs/dependency-audit.md) is entirely inside `apps/mobile`'s Expo dependency
- * graph, and each one is unfixable without breaking something else first:
+ * The accepted set (four IDs as of 2026-11-19, documented per entry in
+ * docs/dependency-audit.md) sits inside `apps/mobile`'s Expo dependency graph;
+ * each one is unfixable - either no patched release exists, or taking the fix
+ * would break something else first:
  *
  * - `decode-uri-component` (GHSA-vcc3, GHSA-qr28): the fix is ESM-only while
  *   `query-string@7.1.3` is CommonJS and calls it as a function - forcing the
@@ -22,6 +23,12 @@ const execFileAsync = promisify(execFile);
  *   ^4.6.6); the remaining copy is 3.25.76 deep in Expo's runtime graph and
  *   the fix exists only on the 4.x line, so taking it means forcing a major
  *   into framework internals whose validation APIs Expo calls at runtime.
+ * - `picomatch` (GHSA-fc5q): unpatchable HIGH (ReDoS via single-branch repeated
+ *   extglobs). `firstPatchedVersion` is null, vulnerable range `<=4.0.7`, and
+ *   4.0.7 is the newest release, so there is no version to override to. Reached
+ *   via `tinyglobby -> fdir -> picomatch@4.0.7` in Expo CLI tooling. Accepted
+ *   2026-11-19 by maintainer decision, REVIEW BY 2027-02-19: re-check the GHSA
+ *   for a published fix; if patched, remove the accept and bump instead.
  *
  * Everything else is fixed in the tree rather than accepted: next 16.4.5,
  * nodemailer ^10.1.4, zod ^4.6.6 (our copies), plus override floors for
@@ -32,10 +39,10 @@ const execFileAsync = promisify(execFile);
  * were retired on 2026-11-19. The first two are now fixed by override floors
  * (`glob >=14.0.2`, `minimatch >=11.0.1`; both majors keep the same dual
  * CJS/ESM entry points and API), and the deepmerge advisory was withdrawn
- * upstream, so pnpm audit no longer reports it. A separate HIGH advisory,
- * GHSA-fc5q-39xc-vjpf (picomatch), is pre-existing and has no patched release
- * (`<0.0.0`, 4.0.7 is newest); it is listed as decision-needed in
- * docs/dependency-audit.md and deliberately not allowlisted here.
+ * upstream, so pnpm audit no longer reports it. A separate pre-existing HIGH
+ * advisory, GHSA-fc5q-39xc-vjpf (picomatch), has no patched release (`<0.0.0`,
+ * 4.0.7 is newest); the maintainer accepted it on 2026-11-19 and it is
+ * allowlisted here with a REVIEW BY 2027-02-19 note.
  *
  * Two earlier allowlist entries were retired on 2026-11-09: `node-forge`
  * GHSA-86w9 (node-forge 1.4.3, forced by override, fixed it along with eleven
@@ -49,7 +56,7 @@ const execFileAsync = promisify(execFile);
  *
  * Deliberately NOT done, matching docs/dependency-audit.md: no
  * `auditConfig.ignoreCves` and no `audit.level` change. Silencing the audit
- * database would hide the accepted six as well as anything new, which is the
+ * database would hide the accepted set as well as anything new, which is the
  * opposite of what this check is for. The allowlist lives here, in code, where
  * it is reviewable and diffable.
  *
@@ -69,6 +76,12 @@ const acceptedAdvisories = {
 		severity: "high",
 		reason:
 			"Accepted 2026-11-09: the workspace's own zod is fixed (4.6.7, floor ^4.6.6). The remaining copy is zod@3.25.76 deep in Expo's runtime graph - expo, expo-router and the expo-* packages all declare ^3. The fix exists only on the 4.x line, so clearing this would force a major into framework internals whose validation APIs Expo calls at runtime. Re-check when Expo declares zod 4.",
+	},
+	"GHSA-fc5q-39xc-vjpf": {
+		module: "picomatch",
+		severity: "high",
+		reason:
+			"Accepted 2026-11-19 by maintainer decision: HIGH ReDoS (single-branch repeated extglobs). Unpatchable - firstPatchedVersion is null, vulnerable range <=4.0.7, 4.0.7 is newest (patched: <0.0.0), so there is no version to override to. Reached via tinyglobby -> fdir -> picomatch@4.0.7 in Expo CLI tooling; picomatch@2.3.2 is outside the range. REVIEW BY 2027-02-19: re-check GHSA-fc5q-39xc-vjpf for a published fix; if patched, remove this acceptance and bump picomatch instead. Evidence in docs/dependency-audit.md.",
 	},
 	"GHSA-vcc3-ghjq-m6fr": {
 		module: "decode-uri-component",

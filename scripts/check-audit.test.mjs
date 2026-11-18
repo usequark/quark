@@ -57,9 +57,9 @@ function runWith(report) {
 }
 
 /**
- * The advisories docs/dependency-audit.md records as accepted (three as of
- * 2026-11-19), keyed the way pnpm keys its report: by advisory id, with each
- * value also carrying the id.
+ * The advisories docs/dependency-audit.md records as accepted (four as of
+ * 2026-11-19, including the unpatchable picomatch HIGH), keyed the way pnpm
+ * keys its report: by advisory id, with each value also carrying the id.
  */
 const ACCEPTED = {
 	"GHSA-vcc3-ghjq-m6fr": advisory("GHSA-vcc3-ghjq-m6fr", {
@@ -71,6 +71,9 @@ const ACCEPTED = {
 	}),
 	"GHSA-mrhx-c7xc-m3w5": advisory("GHSA-mrhx-c7xc-m3w5", {
 		module_name: "zod",
+	}),
+	"GHSA-fc5q-39xc-vjpf": advisory("GHSA-fc5q-39xc-vjpf", {
+		module_name: "picomatch",
 	}),
 };
 
@@ -84,7 +87,7 @@ test("passes when the only advisories are the accepted set", () => {
 	const result = runWith({ advisories: ACCEPTED, metadata: {} });
 	assert.equal(result.status, 0, result.stderr);
 	assert.match(result.stdout, /No new advisories/);
-	assert.match(result.stdout, /3 accepted/);
+	assert.match(result.stdout, /4 accepted/);
 });
 
 test("fails on an advisory that is not on the allowlist", () => {
@@ -116,6 +119,23 @@ test("an accepted advisory keeps passing when it is the only one present", () =>
 		metadata: {},
 	});
 	assert.equal(single.status, 0, single.stderr);
+});
+
+test("picomatch GHSA-fc5q-39xc-vjpf is an accepted, unpatchable HIGH", () => {
+	// Maintainer decision 2026-11-19, REVIEW BY 2027-02-19. No patched release
+	// exists (patched <0.0.0, 4.0.7 is newest), so an acceptance is the only way
+	// to clear the gate. Guard against that acceptance regressing.
+	const result = runWith({
+		advisories: {
+			"GHSA-fc5q-39xc-vjpf": advisory("GHSA-fc5q-39xc-vjpf", {
+				module_name: "picomatch",
+			}),
+		},
+		metadata: {},
+	});
+
+	assert.equal(result.status, 0, result.stderr);
+	assert.match(result.stdout, /No new advisories/);
 });
 
 test("fails on the three accepts retired by the 2026-11-19 bumps", () => {
