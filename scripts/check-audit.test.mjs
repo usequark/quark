@@ -57,9 +57,9 @@ function runWith(report) {
 }
 
 /**
- * The advisories docs/dependency-audit.md records as accepted (six as of
- * 2026-11-09), keyed the way pnpm keys its report: by advisory id, with each
- * value also carrying the id.
+ * The advisories docs/dependency-audit.md records as accepted (four as of
+ * 2026-11-19, including the unpatchable picomatch HIGH), keyed the way pnpm
+ * keys its report: by advisory id, with each value also carrying the id.
  */
 const ACCEPTED = {
 	"GHSA-vcc3-ghjq-m6fr": advisory("GHSA-vcc3-ghjq-m6fr", {
@@ -72,17 +72,8 @@ const ACCEPTED = {
 	"GHSA-mrhx-c7xc-m3w5": advisory("GHSA-mrhx-c7xc-m3w5", {
 		module_name: "zod",
 	}),
-	"GHSA-3g3m-2fjr-6pw4": advisory("GHSA-3g3m-2fjr-6pw4", {
-		module_name: "glob",
-		severity: "moderate",
-	}),
-	"GHSA-g3hv-75wg-m249": advisory("GHSA-g3hv-75wg-m249", {
-		module_name: "minimatch",
-		severity: "moderate",
-	}),
-	"GHSA-gcqx-w48m-w2h4": advisory("GHSA-gcqx-w48m-w2h4", {
-		module_name: "deepmerge",
-		severity: "low",
+	"GHSA-fc5q-39xc-vjpf": advisory("GHSA-fc5q-39xc-vjpf", {
+		module_name: "picomatch",
 	}),
 };
 
@@ -96,7 +87,7 @@ test("passes when the only advisories are the accepted set", () => {
 	const result = runWith({ advisories: ACCEPTED, metadata: {} });
 	assert.equal(result.status, 0, result.stderr);
 	assert.match(result.stdout, /No new advisories/);
-	assert.match(result.stdout, /6 accepted/);
+	assert.match(result.stdout, /4 accepted/);
 });
 
 test("fails on an advisory that is not on the allowlist", () => {
@@ -128,6 +119,42 @@ test("an accepted advisory keeps passing when it is the only one present", () =>
 		metadata: {},
 	});
 	assert.equal(single.status, 0, single.stderr);
+});
+
+test("picomatch GHSA-fc5q-39xc-vjpf is an accepted, unpatchable HIGH", () => {
+	// Maintainer decision 2026-11-19, REVIEW BY 2027-02-19. No patched release
+	// exists (patched <0.0.0, 4.0.7 is newest), so an acceptance is the only way
+	// to clear the gate. Guard against that acceptance regressing.
+	const result = runWith({
+		advisories: {
+			"GHSA-fc5q-39xc-vjpf": advisory("GHSA-fc5q-39xc-vjpf", {
+				module_name: "picomatch",
+			}),
+		},
+		metadata: {},
+	});
+
+	assert.equal(result.status, 0, result.stderr);
+	assert.match(result.stdout, /No new advisories/);
+});
+
+test("fails on the three accepts retired by the 2026-11-19 bumps", () => {
+	// glob/minimatch are fixed by override floors and the deepmerge advisory was
+	// withdrawn upstream. If any ID creeps back into the allowlist, the gate
+	// would silently stop enforcing a fix we already shipped.
+	const retired = {
+		"GHSA-3g3m-2fjr-6pw4": "glob",
+		"GHSA-g3hv-75wg-m249": "minimatch",
+		"GHSA-gcqx-w48m-w2h4": "deepmerge",
+	};
+	for (const [id, moduleName] of Object.entries(retired)) {
+		const result = runWith({
+			advisories: { [id]: advisory(id, { module_name: moduleName }) },
+			metadata: {},
+		});
+		assert.equal(result.status, 1, `${id} must no longer be accepted`);
+		assert.match(result.stderr, /unaccepted advisory/i);
+	}
 });
 
 test("fails when pnpm reports its own error instead of a report", () => {

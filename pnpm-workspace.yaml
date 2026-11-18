@@ -64,3 +64,13 @@ overrides:
   fast-uri@<4.2.3: ">=4.2.3"
   deepmerge-ts@<8.0.0: ">=8.0.0"
   mysql2@<3.22.0: ">=3.22.0"
+  # GHSA-3g3m-2fjr-6pw4 needs glob >=14.0.2. Every copy arrives transitively
+  # through the Expo build toolchain (@expo/cli, @expo/config, @expo/config-
+  # plugins, @expo/fingerprint, @expo/metro-config, expo-updates), each of which
+  # declares `glob: ^13.0.0`, so no direct dependency bump can move it. 14.0.2
+  # keeps the same dual CJS/ESM entry points and glob() API as 13.x.
+  glob@>=9.0.0 <=14.0.1: ">=14.0.2"
+  # GHSA-g3hv-75wg-m249 needs minimatch >=11.0.1. Reached transitively via
+  # glob@13 and directly by @expo/fingerprint (`^10.2.2`), so the floor covers
+  # both edges. 11.0.1 keeps the same dual CJS/ESM entry points and API as 10.x.
+  minimatch@>=7.0.0 <11.0.1: ">=11.0.1"

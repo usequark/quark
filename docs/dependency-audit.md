@@ -11,9 +11,16 @@ Re-checked **2026-11-09**: a wave of new advisories landed in the registry datab
 2026-11-07 release merge). Of those, **36 were fixed in-tree** (version bumps and same-major
 overrides, listed under [Fixed](#fixed) below) and **one was withdrawn upstream** (`braces`
 GHSA-vfj7 - no new release exists, the advisory simply no longer flags `braces@3.0.3`). The
-standing accepted count is now **6**: the original `decode-uri-component` entry plus five new
-documented accepts (`decode-uri-component` second advisory, `zod`, `glob`, `minimatch`,
-`deepmerge`), each with its evidence under [Not fixed](#not-fixed---documented-accepts).
+standing accepted count after that wave was **3**: the original `decode-uri-component` entry plus
+its second advisory and `zod`, each with its evidence under [Not fixed](#not-fixed---documented-accepts).
+On **2026-11-19** the `glob`, `minimatch` and `next` advisories were fixed in-tree (override
+floors and a manifest bump), retiring the first two accepts; the withdrawn `deepmerge` advisory
+is gone from the audit output too. See [The 2026-11-19 bumps](#the-2026-11-19-bumps---4-advisories-fixed-in-tree).
+On the same date the maintainer accepted the pre-existing unpatchable `picomatch` HIGH
+(GHSA-fc5q-39xc-vjpf), raising the standing count to **4** with a review date of **2027-02-19**;
+see [Picomatch](#picomatch-407---accepted-high-unpatchable-review-by-2027-02-19). The constraint
+reasons for `zod` and `decode-uri-component` are unchanged and recorded under
+[Not fixed](#not-fixed---documented-accepts).
 
 Re-checked **2026-10-12** against the GitHub advisory database and the npm registry: the three
 open Dependabot alerts are the same three, `pnpm audit` still reports exactly three advisories
@@ -46,6 +53,28 @@ source of truth.
 | `shell-quote` 1.10.0 | 1 | critical | lockfile refresh | dev only |
 | `source-map-js` 1.2.1 | 1 | high | lockfile refresh | build only |
 | `uuid` 7.0.3 | 1 | moderate | `overrides`, justified below | build only |
+
+### The 2026-11-19 bumps - 4 advisories, fixed in-tree
+
+Four open Dependabot alerts had no auto-generated fix PR, so the bumps were authored manually:
+
+| Package | From -> to | Advisories cleared | How |
+|---|---|---|---|
+| `next` | 16.4.1 -> 16.4.5 | 2 (GHSA-vc7v-qv4w-wrv8, GHSA-mfr8-8qww-v76h; 5 alerts each across manifests/lockfile) | manifest bump in `apps/web` and `packages/ui`, synced to both scaffold templates |
+| `glob` | 13.0.6 -> 14.0.6 | 1 (GHSA-3g3m-2fjr-6pw4) | override floor `glob@>=9.0.0 <=14.0.1: ">=14.0.2"` |
+| `minimatch` | 10.2.6 -> 11.0.9 | 1 (GHSA-g3hv-75wg-m249) | override floor `minimatch@>=7.0.0 <11.0.1: ">=11.0.1"` |
+
+`next@16.4.5` is a same-major bump inside the patched range (`>=16.4.5`) for both "use cache"
+disclosures; production-reachable in scaffolded apps, so it was fixed rather than accepted.
+`glob`/`minimatch` arrive only through Expo's build-time graph (`@expo/cli`, `@expo/config`,
+`@expo/config-plugins`, `@expo/fingerprint`, `@expo/metro-config`, `expo-updates`), so no direct
+manifest owns them: the floors live in `pnpm-workspace.yaml` and are copied verbatim into
+`packages/cli/templates/base-project/pnpm-workspace.yaml` by `sync-templates`. Both 14.0.6 and
+11.0.9 ship the same dual CJS/ESM entry points and keep the same `glob()` / `Minimatch` APIs as
+the versions they replace, so the previously documented "untested break in native build tooling"
+concern does not apply to the API surface; CI's Test/Mobile/Build checks cover the rest.
+
+A patch changeset ships the `pnpm-workspace.yaml` template update to `@usequark/quark-create-app`.
 
 ### The 2026-11-09 wave - 36 advisories, fixed in-tree
 
@@ -222,15 +251,19 @@ that leaves a declared range, so it was checked rather than assumed:
 
 ## Not fixed - documented accepts
 
-**Six remain as of 2026-11-09.** None has a fix we can take without breaking something, and all
-six sit in `apps/mobile`'s Expo dependency graph (the workspace's own dependencies are all
-patched - see [The 2026-11-09 wave](#the-2026-11-09-wave---36-advisories-fixed-in-tree)).
+**Four remain as of 2026-11-19.** Three have no fix we can take without breaking something and sit
+in `apps/mobile`'s Expo dependency graph; the fourth (`picomatch`) is unpatchable, with no patched
+release to bump to (the workspace's own dependencies are all
+patched - see [The 2026-11-19 bumps](#the-2026-11-19-bumps---4-advisories-fixed-in-tree) and
+[The 2026-11-09 wave](#the-2026-11-09-wave---36-advisories-fixed-in-tree)).
 
-**Four of the six are build-toolchain only** - `glob`, `minimatch`, `deepmerge` and the Expo
-side of `zod` never enter a JS bundle in a form an attacker reaches. `decode-uri-component` is
-the exception: it is **reachable at app runtime**, as corrected on 2026-10-12 after review. The
-original triage's blanket claim that none of them is shipped application code was wrong for that
-one, so exposure is now stated per entry.
+`glob`, `minimatch` and `deepmerge` were retired on 2026-11-19: the first two are now fixed by
+override floors and the third's advisory was withdrawn. The Expo side of `zod` is build/runtime
+toolchain only. `decode-uri-component` is the exception: it is **reachable at app runtime**, as
+corrected on 2026-10-12 after review. The original triage's blanket claim that none of them is
+shipped application code was wrong for that one, so exposure is now stated per entry. Picomatch is
+build/tooling-time only and is accepted separately under
+[Picomatch](#picomatch-407---accepted-high-unpatchable-review-by-2027-02-19).
 
 The pre-2026-11-09 accepts for `node-forge` and `braces` are gone: both were retired by the
 script's notice and are documented under [Fixed](#fixed) above.
@@ -328,41 +361,26 @@ same ESM-only release, so every argument against taking `0.5.0` applies to `0.5.
 - **Recommendation:** accept until Expo declares zod 4 on a stable release; re-check then and
   the override becomes the obvious move.
 
-### glob 13.0.6 - moderate
+## Picomatch 4.0.7 - accepted high, unpatchable (review by 2027-02-19)
 
-- **Advisory:** GHSA-3g3m-2fjr-6pw4 - AbortSignal cancellation bypass allows post-timeout
-  filesystem traversal.
-- **Path:** `@expo/cli`, `@expo/config-plugins`, `@expo/config`, `@expo/metro-config`,
-  `@expo/fingerprint`, `expo-updates` (all declare `glob: ^13`).
-- **Fix available but rejected:** the fix needs `>=14.0.2`, a major outside every dependent's
-  range. CI's Mobile job runs only lint + tsc, so forcing glob 14 into fingerprinting, prebuild
-  and metro config would ship an untested break in native build tooling for a correctness/DoS
-  issue on a path that never runs in production.
-- **Exposure: build-time only.** Globs here match repo-authored paths; no attacker-controlled
-  pattern reaches them.
-- **Recommendation:** accept until Expo widens the range; re-check then.
+`pnpm audit` reports `GHSA-fc5q-39xc-vjpf` (ReDoS through single-branch repeated extglobs, HIGH,
+published 2026-10-19). It was pre-existing and is **not** one of the 16 Dependabot alerts in
+scope, so it was originally left both unfixed and un-allowlisted pending a maintainer decision.
+On **2026-11-19** the maintainer accepted it; it is now the fourth entry in `acceptedAdvisories`.
 
-### minimatch 10.2.6 - moderate
-
-- **Advisory:** GHSA-g3hv-75wg-m249 - DoS via globparts amplification.
-- **Path:** `@expo/fingerprint` and `glob@13` (declare `minimatch: ^10`).
-- **Fix available but rejected:** needs `>=11.0.1`, a major outside the dependents' range, with
-  the same CI blind spot as `glob` above. This is the same class as the retired `braces`
-  advisory: build-time pattern matching over developer-authored paths, needing a pathological
-  pattern authored in the repo rather than attacker input.
-- **Recommendation:** accept until Expo widens the range; re-check then.
-
-### deepmerge 4.3.1 - low
-
-- **Advisory:** GHSA-gcqx-w48m-w2h4 - `mergeObject()` allows prototype poisoning of its return
-  value.
-- **Patched versions: `<0.0.0`.** No fixed release exists; 4.3.1 is the newest published, so
-  there is nothing to override to.
-- **Path:** `apps/mobile -> expo -> @expo/config -> deepmerge` (config merging during prebuild
-  and CLI startup).
-- **Exposure: build-time only.** The inputs are config objects built from repo files
-  (`app.json`, `expo-plugin` output), not attacker-controlled keys.
-- **Recommendation:** accept; re-check if a 4.4+ appears.
+- **Patched versions: `<0.0.0`.** `firstPatchedVersion` is `null`; the vulnerable range is
+  `<= 4.0.7` and 4.0.7 is the newest release. There is no version to override to. Unlike the
+  other three accepts, the blocker is not a breaking fix - it is that no fix exists at all.
+- **Path:** `picomatch@4.0.7` is reached through `tinyglobby -> fdir@6.5.0(picomatch@4.0.7)` and
+  Expo CLI tooling; `picomatch@2.3.2` (used by `anymatch`/`chokidar`-style tooling) is outside
+  the vulnerable range.
+- **Exposure:** build/tooling-time only - the ReDoS is in file-glob matching by Expo CLI, not in
+  shipped app code, and reaching it requires a pathological glob pattern.
+- **Constraint / rationale:** no patched release exists, so there is nothing to bump to. Accepting
+  a HIGH advisory is a policy decision, made by the maintainer on 2026-11-19.
+- **REVIEW BY 2027-02-19:** re-check `GHSA-fc5q-39xc-vjpf` for a published fix. If one lands,
+  remove the acceptance from `scripts/check-audit.mjs` and bump `picomatch` to the patched version
+  instead; do not silence it with `auditConfig.ignoreCves` or `audit.level`.
 
 ## Re-checked 2026-10-12 - no fix became reachable
 
@@ -397,24 +415,27 @@ recorded as it is rather than as the old blanket claim described it.
 
 ## Re-checking after an upgrade
 
-Run `pnpm audit:check`. If any of the six accepted advisories disappears, it moved upstream and
+Run `pnpm audit:check`. If any of the four accepted advisories disappears, it moved upstream and
 this document should be updated - the check prints a notice naming the entry to retire (that is
-how `node-forge` GHSA-86w9 and `braces` GHSA-vfj7 were removed on 2026-11-09). Note that
+how `node-forge` GHSA-86w9 and `braces` GHSA-vfj7 were removed on 2026-11-09, and `glob`,
+`minimatch` and `deepmerge` on 2026-11-19). Note that
 `pnpm audit` reads the lockfile, so a stale `.pnpm` directory can make a resolved tree look
 unfixed - `rm -rf node_modules && pnpm install` if a count looks stale.
 
-A lockfile refresh on its own will not retire the accepts: their fixes are blocked by declared
-ranges (`zod`, `glob`, `minimatch`), by an ESM-only release a CommonJS caller cannot use
-(`decode-uri-component`), or by there being no release at all (`deepmerge`). The signal to
-watch for is an upstream release or an Expo range change, not a lockfile resolution. The
-history of the last such pass is under
-[Re-checked 2026-10-12](#re-checked-2026-10-12---no-fix-became-reachable).
+A lockfile refresh on its own will not retire the remaining accepts: the `zod` fix is blocked by
+Expo's declared 3.x range, `decode-uri-component`'s fix is an ESM-only release a CommonJS
+caller cannot use, and `picomatch` has no patched release at all. The signal to watch for is an
+upstream release or an Expo range change, not a lockfile resolution. The history of the last such
+pass is under [Re-checked 2026-10-12](#re-checked-2026-10-12---no-fix-became-reachable).
 
 ## Enforced in CI
 
 `pnpm audit:check` runs `scripts/check-audit.mjs`, which CI invokes on every push and pull
-request. The accepted advisory IDs (six as of 2026-11-09) are an allowlist in that script, so
-it passes today and turns red when a new one appears.
+request. The accepted advisory IDs (four as of 2026-11-19) are an allowlist in that script.
+It turns red when a new, unaccepted advisory appears. The pre-existing HIGH advisory
+`GHSA-fc5q-39xc-vjpf` (picomatch, no patched release) was accepted by maintainer decision on
+2026-11-19 with a REVIEW BY 2027-02-19 date, documented under
+[Picomatch](#picomatch-407---accepted-high-unpatchable-review-by-2027-02-19).
 
 A bare `pnpm audit` step could not do this: it exits non-zero for *any* advisory, so it would
 fail forever on the accepted set and get ignored. The allowlist is keyed on the GitHub advisory
@@ -432,7 +453,7 @@ present but null, or any non-object, is rejected rather than defaulted to an emp
 advisory with no usable `github_advisory_id` - a legacy or CVE-only record with a null ID can
 never match the allowlist, so dropping it would report a clean tree while a vulnerability is
 present. An advisory the check cannot identify is one it cannot clear.
-`scripts/check-audit.test.mjs` (17 tests) covers both directions, including these cases.
+`scripts/check-audit.test.mjs` (19 tests) covers both directions, including these cases.
 
 ## Known unrelated breakage: the mobile bundle does not build
 
@@ -468,7 +489,7 @@ Related: `pnpm build:mobile` invokes a script the mobile package does not have
 
 ## Deliberately not done
 
-- No `auditConfig.ignoreCves` or `audit.level` change. The six accepted advisories are
+- No `auditConfig.ignoreCves` or `audit.level` change. The three accepted advisories are
   reported honestly rather than silenced. Those pnpm settings mute the audit database, which
   would hide the accepted set *and* anything new; the allowlist in
   `scripts/check-audit.mjs` is code, reviewable in a diff, instead.
