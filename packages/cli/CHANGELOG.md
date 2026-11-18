@@ -1,5 +1,41 @@
 # @usequark/quark-create-app
 
+## 1.27.6 - 2026-11-18
+
+### Patch Changes
+
+- [#309](https://github.com/usequark/quark/pull/309) [`d965a0e`](https://github.com/usequark/quark/commit/d965a0e94506b4649e157d0b7ecc290f0f785afa) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Raise the `fast-xml-parser` override floor to `>=5.12.0` (GHSA-474x-hrwr-fgx4).
+  The vulnerable copy arrived transitively through `@aws-sdk/core` ->
+  `@aws-sdk/xml-builder`, so the fix is a `pnpm.overrides` floor in the scaffold
+  template's `pnpm-workspace.yaml` plus a lockfile refresh; no direct dependency
+  changed.
+
+- [#308](https://github.com/usequark/quark/pull/308) [`0d4367b`](https://github.com/usequark/quark/commit/0d4367b61785864e01a6073d61b03d26924bf6ec) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Cap workflow runtime and cancel superseded CI runs in scaffolded projects
+  
+  A stuck job is not free. A single hung job in the monorepo ran for six hours
+  before it was cancelled by hand, billing $2.16 for a run that should have been
+  capped at minutes. Every job in this repository now declares `timeout-minutes`,
+  and the scaffold template ships the same caps so new projects inherit them
+  instead of rediscovering the failure the hard way:
+  
+  - `ci.yml`: lint 10, test 20, build 10, with
+    `concurrency: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}`
+    and `cancel-in-progress: true`, so a superseded pull-request run stops paying
+    for itself while non-PR (push) runs each get a unique group and are never
+    cancelled
+  - `release.yml`: 20 (no cancel-in-progress; deploys are not safe to interrupt)
+  - `install-windows.yml`: 10 (already present)
+  - `dependabot-auto-merge.yml`: 5
+  
+  The monorepo mirrors this policy: CI jobs at 10, release at 20, and the two
+  small guard workflows at 10 and 5.
+
+- [#311](https://github.com/usequark/quark/pull/311) [`b9c13e3`](https://github.com/usequark/quark/commit/b9c13e35d227d2eee0bebdadc1aa36908c14b1cd) Thanks [@Bobnoddle](https://github.com/Bobnoddle)! - Clear the remaining auto-fixless security advisories in scaffolded projects: bump the pinned
+  `next` to `16.4.5` (GHSA-vc7v-qv4w-wrv8, GHSA-mfr8-8qww-v76h), and add override floors for
+  `glob >=14.0.2` (GHSA-3g3m-2fjr-6pw4) and `minimatch >=11.0.1` (GHSA-g3hv-75wg-m249). The
+  `pnpm-workspace.yaml` override floors are copied verbatim into the scaffold template and the
+  lockfile is refreshed; no source API changed.
+
 ## 1.27.5 - 2026-11-09
 
 ### Patch Changes
